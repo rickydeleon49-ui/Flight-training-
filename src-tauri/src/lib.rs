@@ -64,6 +64,12 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
+            // A user-requested full restore is staged during the previous run
+            // and installed here, before SQLite opens the database.
+            if let Err(error) = backup::apply_pending_restore(app.handle()) {
+                eprintln!("Could not restore the selected backup: {error}");
+            }
+
             // Before the frontend opens the database, and therefore before any
             // migration runs, copy it aside if this is a new version's first run.
             if let Err(error) = backup::backup_if_upgraded(app.handle()) {
@@ -78,6 +84,10 @@ pub fn run() {
             documents::delete_document,
             documents::clear_documents,
             backup::create_backup,
+            backup::create_complete_backup,
+            backup::inspect_complete_backup,
+            backup::stage_complete_restore,
+            backup::restart_for_restore,
             backup::list_backups,
             backup::data_directory,
         ])

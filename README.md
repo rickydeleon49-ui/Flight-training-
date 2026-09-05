@@ -183,13 +183,20 @@ copies record a checksum of every migration they have applied, and changing
 one makes those databases refuse to open. Both guards have deliberate
 failure messages explaining what to do instead.
 
-**She can copy it out herself.** Settings shows the folder, opens it in
-Finder or Explorer, and takes a database copy on demand.
+**She can make one complete portable backup.** Settings writes a single
+`.hfdbackup` file containing the database (including her profile photo and
+flight log) plus every imported study document. She chooses where it is saved,
+so it can live on another drive or in a cloud-synced folder.
 
-One honest limit: the automatic copies live *inside* that folder, so they
-protect against a bad update, not against losing the machine or an uninstaller
-that offers to remove application data. For that, copy the folder somewhere
-else — the "Open folder" button in Settings is there to make that easy.
+**Restore is deliberately cautious.** The app validates a selected backup and
+shows its date, app version, file count, and size before asking for confirmation.
+It stages the archive without touching current data, restarts, then moves the
+current database and documents into a recoverable `before-restore` copy before
+installing the restored set.
+
+One honest limit: the automatic database copies live *inside* that folder and
+do not include imported documents, so they protect against a bad update rather
+than losing the machine. Use **Save complete backup** for portable protection.
 
 ---
 

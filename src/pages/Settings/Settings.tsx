@@ -7,6 +7,7 @@ import {
   CardBody,
   CardHeader,
   CheckIcon,
+  ConfirmDialog,
   Field,
   Select,
   TextArea,
@@ -16,14 +17,22 @@ import { restoreAirlineStarterPack } from "@/data/starter";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
+  backupErrorMessage,
   backupsAvailable,
-  createBackup,
+  chooseCompleteBackup,
+  chooseCompleteBackupDestination,
+  createCompleteBackup,
   dataDirectory,
   describeBackup,
+  formatBackupDate,
   formatBytes,
+  inspectCompleteBackup,
   listBackups,
+  restartForRestore,
   revealFolder,
+  stageCompleteRestore,
   type BackupInfo,
+  type CompleteBackupInfo,
 } from "@/services/backups";
 import { trainingDuration } from "@/logic/keyDates";
 import { useAppData } from "@/state/AppDataContext";
@@ -50,7 +59,7 @@ const draftFrom = (profile: Profile): ProfileDraft => ({
 });
 
 export function Settings() {
-  const { data, mutate } = useAppData();
+  const { data, mutate, repositories } = useAppData();
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -60,6 +69,9 @@ export function Settings() {
   const [dataPath, setDataPath] = useState("");
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [backupNote, setBackupNote] = useState<string | null>(null);
+  const [backupProblem, setBackupProblem] = useState(false);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [restoreCandidate, setRestoreCandidate] = useState<CompleteBackupInfo | null>(null);
 
   // Keep the form in step when the stored profile changes.
   useEffect(() => {
@@ -78,13 +90,55 @@ export function Settings() {
 
   const backUpNow = async () => {
     setBackupNote(null);
+    setBackupProblem(false);
+    setBackupBusy(true);
     try {
-      await createBackup();
-      await refreshBackups();
-      setBackupNote("Database copy saved.");
-      window.setTimeout(() => setBackupNote(null), 3000);
+      const destination = await chooseCompleteBackupDestination();
+      if (!destination) return;
+      // Make the main database file self-contained before Rust archives it.
+      if (!repositories) throw new Error("The database is still starting. Try again in a moment.");
+      await repositories.app.checkpoint();
+      const backup = await createCompleteBackup(destination);
+      setBackupNote(`Complete backup saved — ${formatBytes(backup.bytes)} protected.`);
     } catch (error) {
-      setBackupNote(error instanceof Error ? error.message : "That did not work.");
+      setBackupProblem(true);
+      setBackupNote(backupErrorMessage(error, "That backup could not be saved."));
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const chooseRestore = async () => {
+    setBackupNote(null);
+    setBackupProblem(false);
+    setBackupBusy(true);
+    try {
+      const source = await chooseCompleteBackup();
+      if (!source) return;
+      setRestoreCandidate(await inspectCompleteBackup(source));
+    } catch (error) {
+      setBackupProblem(true);
+      setBackupNote(backupErrorMessage(error, "That backup could not be read."));
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const restoreBackup = async () => {
+    const candidate = restoreCandidate;
+    if (!candidate) return;
+    setRestoreCandidate(null);
+    setBackupBusy(true);
+    setBackupProblem(false);
+    setBackupNote("Preparing the restore…");
+    try {
+      await stageCompleteRestore(candidate.path);
+      setBackupNote("Restarting with the restored data…");
+      await restartForRestore();
+    } catch (error) {
+      setBackupProblem(true);
+      setBackupNote(backupErrorMessage(error, "That backup could not be restored."));
+      setBackupBusy(false);
     }
   };
 
@@ -450,17 +504,15 @@ export function Settings() {
         <Card>
           <CardHeader
             title="Your data"
-            eyebrow="Kept across updates"
+            eyebrow="Complete backup and restore"
             action={
               backupsAvailable() ? (
-                <div className="row">
-                  {backupNote ? (
-                    <span className="tiny" style={{ color: "var(--status-complete)" }}>
-                      {backupNote}
-                    </span>
-                  ) : null}
-                  <Button size="small" onClick={backUpNow}>
-                    Back up database
+                <div className="row row--wrap">
+                  <Button size="small" variant="primary" onClick={backUpNow} disabled={backupBusy}>
+                    {backupBusy ? "Working…" : "Save complete backup"}
+                  </Button>
+                  <Button size="small" onClick={chooseRestore} disabled={backupBusy}>
+                    Restore backup
                   </Button>
                 </div>
               ) : null
@@ -468,12 +520,27 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
+              {backupNote ? (
+                <p
+                  className="small"
+                  role={backupProblem ? "alert" : "status"}
+                  style={{ color: backupProblem ? "var(--status-danger)" : "var(--status-complete)" }}
+                >
+                  {backupNote}
+                </p>
+              ) : null}
+
               <p className="small muted">
-                Everything you enter lives in one folder on this computer — your
-                database, your study materials, your photo. Nothing is uploaded
-                anywhere. A safety copy of the database is made automatically before
-                the first run of any new version. Imported study files remain in this
-                folder unchanged.
+                Save one portable <strong>.hfdbackup</strong> file containing the
+                complete database, profile photo, flight log, and every uploaded study
+                document. Nothing is uploaded anywhere. Keep the file on another drive
+                or in a cloud folder so it is safe if this computer is lost.
+              </p>
+
+              <p className="tiny dim">
+                Restore checks the file first and asks for confirmation. Before it
+                replaces anything, the app keeps a recoverable copy of the current data,
+                then restarts with the restored copy.
               </p>
 
               {dataPath ? (
@@ -493,14 +560,14 @@ export function Settings() {
               )}
 
               <p className="tiny dim">
-                These copies sit inside that same folder, so they protect you from a
-                bad update rather than from losing this computer. Copy the folder
-                somewhere else now and then.
+                The database copies below are made automatically before app updates.
+                They stay inside this computer and do not include uploaded documents,
+                so use <strong>Save complete backup</strong> for portable protection.
               </p>
 
               {backups.length > 0 ? (
                 <div className="stack stack--2">
-                  <p className="tiny strong dim">Database copies kept ({backups.length})</p>
+                  <p className="tiny strong dim">Safety copies kept ({backups.length})</p>
                   {backups.slice(0, 6).map((backup) => (
                     <div className="row row--between" key={backup.name}>
                       <span className="small truncate">{describeBackup(backup.name)}</span>
@@ -528,6 +595,20 @@ export function Settings() {
           </CardBody>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={restoreCandidate !== null}
+        title="Restore this complete backup?"
+        message={
+          restoreCandidate
+            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.bytes)}). The app will protect the current data, replace it with this backup, and restart.`
+            : ""
+        }
+        confirmLabel="Restore and restart"
+        destructive
+        onConfirm={restoreBackup}
+        onCancel={() => setRestoreCandidate(null)}
+      />
 
     </>
   );

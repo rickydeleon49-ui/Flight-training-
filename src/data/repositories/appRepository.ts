@@ -18,5 +18,11 @@ export function appRepository(db: SqlDatabase) {
         [key, value],
       );
     },
+
+    /** Fold committed WAL pages into the main file before a portable backup. */
+    async checkpoint(): Promise<void> {
+      await db.select("PRAGMA wal_checkpoint(TRUNCATE)");
+      await db.persist?.();
+    },
   };
 }

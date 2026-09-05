@@ -61,7 +61,7 @@ Once per machine. The release notes say this too, in her words.
 | **Flight Journal** | Structured debriefs, history, and a second view collecting instructor feedback across lessons |
 | **Questions** | Running list with statuses and answers; unasked ones surface before the next lesson |
 | **Finances** | Flight Fund derived entirely from the ledger, upcoming costs, savings target, cost insights |
-| **Settings** | Profile, where she trains, key dates, why she started, photo, accent colour, demo data, her data and backups |
+| **Settings** | Profile, where she trains, key dates, why she started, photo, accent colour, demo data, complete portable backup and safe restore |
 
 ### The core workflow runs end to end
 
@@ -79,7 +79,8 @@ against an empty database; all eight steps pass.
   before any migration touches it. Ten kept.
 - Tests fail the build if a migration drops or renames anything, or if an
   already-shipped migration is edited.
-- Settings shows the folder, opens it, and takes a copy on demand.
+- Settings shows the folder and can save or restore one portable `.hfdbackup`
+  containing the database, profile photo, flight log, and uploaded documents.
 
 ---
 
@@ -87,7 +88,7 @@ against an empty database; all eight steps pass.
 
 ### Verified by running it
 
-- 151 tests, including real SQLite for repositories and migrations
+- 174 tests, including real SQLite for repositories and migrations
 - The Linux desktop app: window, Rust migrations, native GTK file chooser,
   photo reaching the real database (`scripts/desktop-smoke.sh`)
 - The release binary boots and runs under the production content security
@@ -112,11 +113,10 @@ certainly a small fix.
 
 ## Known limits
 
-**Backups live inside the folder they protect.** They save you from a bad
-update, not from a lost machine or an uninstaller that clears application
-data. Copying the folder elsewhere is manual — the "Open folder" button
-exists to make that easy. A real export-to-anywhere is the next thing worth
-building.
+**Automatic update backups live inside the folder they protect.** They save
+you from a bad update, not from a lost machine. Complete `.hfdbackup` files can
+be saved elsewhere and include uploaded documents, but the user still has to
+make one periodically.
 
 **No automatic updates.** A new version means downloading and running the
 installer again. Her data is preserved. Tauri has an updater, but pointing it
@@ -133,16 +133,13 @@ worse than leaving it blank.
 
 ## Worth doing, roughly in order
 
-1. **Export and restore.** One button that writes the database and documents
-   somewhere she chooses, and one that reads them back. Covers a lost
-   machine, and moving between Mac and Windows.
-2. **Windows and macOS smoke checks.** The Linux script cannot be ported, but
+1. **Windows and macOS smoke checks.** The Linux script cannot be ported, but
    a short written checklist she or you can run after an update would catch
    the same class of problem.
-3. **Study material previews.** The spec asks for a preview "when supported";
+2. **Study material previews.** The spec asks for a preview "when supported";
    today it opens in the system viewer. An embedded PDF view is listed as a
    future feature in the spec, not a V1 requirement.
-4. Anything in spec §44 — flashcards, study timer, calendar sync, spending
+3. Anything in spec §44 — flashcards, study timer, calendar sync, spending
    charts. All explicitly out of scope for the first release.
 
 ---

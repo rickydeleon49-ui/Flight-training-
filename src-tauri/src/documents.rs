@@ -78,8 +78,8 @@ pub fn import_document(
 ) -> Result<ImportedDocument, String> {
     let source = PathBuf::from(&source_path);
 
-    let metadata = std::fs::metadata(&source)
-        .map_err(|e| format!("Could not read that file: {e}"))?;
+    let metadata =
+        std::fs::metadata(&source).map_err(|e| format!("Could not read that file: {e}"))?;
     if !metadata.is_file() {
         return Err("Only files can be added to the library.".to_string());
     }
