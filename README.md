@@ -33,6 +33,39 @@ The real application always uses the desktop database.
 | `npm test` | Test suite |
 | `npm run build` | Typecheck and build the frontend |
 | `scripts/desktop-smoke.sh` | Drive the real desktop window (Linux) |
+| `scripts/release.sh <version>` | Bump, check, commit and tag a release |
+
+---
+
+## Getting it to her
+
+She should not have to build anything. Push a version tag and GitHub builds
+both installers and publishes them on the repository's **Releases** page,
+where she downloads one file and opens it.
+
+```bash
+scripts/release.sh 0.2.0                       # bumps, checks, commits, tags
+git push origin <branch> && git push origin v0.2.0
+```
+
+The tag is what triggers it. The release notes are written for her, not for a
+developer: which file to take, what each system asks the first time, and that
+updating keeps everything she has entered.
+
+The version is not just bookkeeping — the application takes a copy of her
+database whenever it notices the version changed since the last run, so the
+release workflow refuses to publish a tag that disagrees with the built
+version, and `scripts/release.sh` refuses to re-release the same number.
+
+**She will need access to the repository to download it.** It is private, so
+that means a GitHub account added as a collaborator. If she does not have one,
+download the file yourself and send it to her — it is a single file, and it
+runs the same either way.
+
+**Neither installer is code-signed**, so each system asks once whether she
+meant to open it. That is unavoidable without a paid Apple Developer account
+and a Windows code signing certificate; the release notes tell her exactly
+what she will see and what to click.
 
 ---
 

@@ -1,9 +1,12 @@
-# Builds installers for macOS and Windows and leaves them to download.
+# Test builds, for checking a change compiles and packages on both platforms
+# without publishing anything.
+#
+# To give someone an installer, push a version tag instead — see release.yml,
+# which puts the files on the Releases page with instructions for her.
 #
 # Manual trigger only. macOS runners bill at ten times the Linux rate and
-# Windows at twice, so this never fires on a push — start it from the Actions
-# tab when you actually want a build.
-name: Build desktop app
+# Windows at twice, so this never fires on a push.
+name: Build desktop app (test)
 
 on:
   workflow_dispatch:

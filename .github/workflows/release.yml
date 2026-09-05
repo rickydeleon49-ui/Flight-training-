@@ -1,0 +1,146 @@
+# Publishes installers she can download and run.
+#
+# Push a tag like v0.2.0 (scripts/release.sh does the bumping and tagging)
+# and this builds the macOS and Windows installers and attaches them to a
+# GitHub Release, with first-run instructions in the notes.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # The application backs her database up when it sees the version has
+      # changed. A tag that disagrees with the built version would skip that,
+      # so refuse to ship one.
+      - name: The tag matches the version everywhere
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          CONF=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          CARGO=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
+          echo "tag=$TAG package.json=$PKG tauri.conf.json=$CONF Cargo.toml=$CARGO"
+          if [ "$TAG" != "$PKG" ] || [ "$TAG" != "$CONF" ] || [ "$TAG" != "$CARGO" ]; then
+            echo "::error::Version mismatch. Use scripts/release.sh to bump them together."
+            exit 1
+          fi
+
+      - run: npm test
+
+  build:
+    name: ${{ matrix.name }}
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14          # Apple Silicon
+            name: macOS
+            bundles: dmg
+            pattern: src-tauri/target/release/bundle/dmg/*.dmg
+          - os: windows-latest
+            name: Windows
+            bundles: nsis
+            pattern: src-tauri/target/release/bundle/nsis/*-setup.exe
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+      - run: npm run tauri build -- --bundles ${{ matrix.bundles }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.name }}
+          path: ${{ matrix.pattern }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+
+      - name: What we are shipping
+        run: ls -lh installers
+
+      - name: Write the release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          {
+            echo "## Her Flight Deck $VERSION"
+            echo
+            echo "Download the file for your computer and open it."
+            echo
+            echo "| Computer | File |"
+            echo "| --- | --- |"
+            echo "| Mac | the \`.dmg\` |"
+            echo "| Windows | the \`.exe\` |"
+            echo
+            echo "### The first time you open it"
+            echo
+            echo "The application is not signed with a paid certificate, so each"
+            echo "system asks once whether you meant to open it. Nothing is wrong."
+            echo
+            echo "**On a Mac** — open the \`.dmg\`, drag Her Flight Deck to"
+            echo "Applications, then open it from Applications. If it says the"
+            echo "developer cannot be verified, go to **System Settings → Privacy &"
+            echo "Security**, scroll down, and choose **Open Anyway**. You only do"
+            echo "this once."
+            echo
+            echo "**On Windows** — run the \`.exe\`. If a blue \"Windows protected"
+            echo "your PC\" box appears, choose **More info → Run anyway**. You only"
+            echo "do this once."
+            echo
+            echo "### Updating"
+            echo
+            echo "Download the newer file and open it as before. Your goals,"
+            echo "lessons, study materials, journal, questions and finances stay"
+            echo "exactly as they were — and a copy of everything is taken"
+            echo "automatically before a new version runs for the first time."
+            echo
+            echo "### Checksums"
+            echo
+            echo '```'
+            ( cd installers && sha256sum * )
+            echo '```'
+          } > notes.md
+          cat notes.md
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Her Flight Deck ${GITHUB_REF_NAME#v}" \
+            --notes-file notes.md \
+            installers/*
