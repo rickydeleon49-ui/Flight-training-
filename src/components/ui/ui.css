@@ -145,7 +145,7 @@
 }
 .badge--berry {
   background: var(--accent-primary-fill);
-  border-color: #eecdd7;
+  border-color: var(--accent-secondary);
   color: var(--accent-primary);
 }
 .badge--study {
@@ -391,7 +391,7 @@
 .meter__fill {
   height: 100%;
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--palette-rose), var(--accent-primary));
+  background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
   transition: width var(--transition);
 }
 

@@ -90,6 +90,13 @@ what it shows is testable.
 **Money is integers.** All amounts are whole cents; dollars exist only at the
 edges, for display and form input.
 
+**The profile is a real profile.** Settings holds who she is (name,
+certificate, current focus), where she trains (school, instructor, home
+airport, aircraft, start date), her medical expiry, and her accent colour.
+The training details pre-fill every new lesson so the instructor and airport
+are not retyped; the accent re-themes the whole interface through the token
+layer, so no component needed changing to support it.
+
 **Fonts are bundled.** Fraunces and Inter ship with the application rather than
 loading from a CDN, so a desktop app that may well be used at an airfield with
 no signal always looks right. Fraunces carries its optical-size axis, so
@@ -114,6 +121,14 @@ policy allows no external style or font origins as a result.
 - **A lesson's cost can only be recorded once.** The repository returns the
   existing transaction, and a partial unique index makes the duplicate
   impossible even if two callers race.
+- **One fact, one place.** Exam and checkride dates live on milestones, and
+  dated deadlines live in the Schedule — neither is duplicated into the
+  profile. The dashboard's "Dates ahead" reads from those, plus the medical
+  expiry, rather than keeping its own copies.
+- **A missed goal date is not a reproach.** An expired medical stays visible
+  because it is a fact she needs; a milestone target that slipped quietly
+  drops off rather than lingering as a rebuke. Finished work never reports
+  its old due date.
 - **Instructors and official guidance stay authoritative.** The application
   organizes what the user puts into it and says so.
 

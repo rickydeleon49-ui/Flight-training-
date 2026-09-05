@@ -6,43 +6,72 @@ import {
   Card,
   CardBody,
   CardHeader,
+  CheckIcon,
   ConfirmDialog,
   Field,
   Select,
   TextInput,
 } from "@/components/ui";
 import { clearAllData, loadDemoData } from "@/data/seed";
+import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
+import { trainingDuration } from "@/logic/keyDates";
 import { useAppData } from "@/state/AppDataContext";
+
+import "./settings.css";
+
+/** The editable slice of the profile. */
+type ProfileDraft = Omit<Profile, "id" | "createdAt" | "updatedAt">;
+
+const draftFrom = (profile: Profile): ProfileDraft => ({
+  pilotName: profile.pilotName,
+  certificateGoal: profile.certificateGoal,
+  currentFocus: profile.currentFocus,
+  currentMilestoneId: profile.currentMilestoneId,
+  flightSchool: profile.flightSchool,
+  instructorName: profile.instructorName,
+  homeAirport: profile.homeAirport,
+  aircraftType: profile.aircraftType,
+  trainingStartedOn: profile.trainingStartedOn,
+  medicalExpiry: profile.medicalExpiry,
+  accentColor: profile.accentColor,
+});
 
 export function Settings() {
   const { data, mutate } = useAppData();
-  const [name, setName] = useState(data.profile.pilotName);
-  const [certificate, setCertificate] = useState(data.profile.certificateGoal);
-  const [focus, setFocus] = useState(data.profile.currentFocus);
-  const [milestoneId, setMilestoneId] = useState(data.profile.currentMilestoneId ?? "");
+  const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   const [saved, setSaved] = useState(false);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [busy, setBusy] = useState(false);
 
   // Keep the form in step when the profile is replaced (demo load, reset).
   useEffect(() => {
-    setName(data.profile.pilotName);
-    setCertificate(data.profile.certificateGoal);
-    setFocus(data.profile.currentFocus);
-    setMilestoneId(data.profile.currentMilestoneId ?? "");
+    setDraft(draftFrom(data.profile));
   }, [data.profile]);
+
+  const update = <K extends keyof ProfileDraft>(key: K, value: ProfileDraft[K]) =>
+    setDraft((current) => ({ ...current, [key]: value }));
 
   const saveProfile = async () => {
     await mutate((repos) =>
       repos.profile.update({
-        pilotName: name.trim(),
-        certificateGoal: certificate.trim() || "Private Pilot",
-        currentFocus: focus.trim(),
-        currentMilestoneId: milestoneId || null,
+        ...draft,
+        pilotName: draft.pilotName.trim(),
+        certificateGoal: draft.certificateGoal.trim() || "Private Pilot",
+        currentFocus: draft.currentFocus.trim(),
+        flightSchool: draft.flightSchool.trim(),
+        instructorName: draft.instructorName.trim(),
+        homeAirport: draft.homeAirport.trim(),
+        aircraftType: draft.aircraftType.trim(),
       }),
     );
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2500);
+  };
+
+  /** The accent applies the moment it is chosen, so she can see it. */
+  const chooseAccent = (accentColor: AccentColor) => {
+    update("accentColor", accentColor);
+    void mutate((repos) => repos.profile.update({ accentColor }));
   };
 
   const runDemo = async () => {
@@ -59,6 +88,7 @@ export function Settings() {
   };
 
   const hasData = data.actions.length > 0 || data.events.length > 0 || data.materials.length > 0;
+  const duration = trainingDuration(draft.trainingStartedOn);
 
   return (
     <>
@@ -66,16 +96,16 @@ export function Settings() {
 
       <div className="stack stack--5">
         <Card>
-          <CardHeader title="Your profile" eyebrow="Greeting and focus" />
+          <CardHeader title="About you" eyebrow="Greeting and focus" />
           <CardBody>
             <div className="form-grid">
               <Field label="What should we call you?">
                 {({ id }) => (
                   <TextInput
                     id={id}
-                    value={name}
+                    value={draft.pilotName}
                     placeholder="Ava"
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => update("pilotName", e.target.value)}
                   />
                 )}
               </Field>
@@ -84,9 +114,9 @@ export function Settings() {
                 {({ id }) => (
                   <TextInput
                     id={id}
-                    value={certificate}
+                    value={draft.certificateGoal}
                     placeholder="Private Pilot"
-                    onChange={(e) => setCertificate(e.target.value)}
+                    onChange={(e) => update("certificateGoal", e.target.value)}
                   />
                 )}
               </Field>
@@ -96,9 +126,9 @@ export function Settings() {
                   <TextInput
                     id={id}
                     aria-describedby={describedBy}
-                    value={focus}
+                    value={draft.currentFocus}
                     placeholder="Landings"
-                    onChange={(e) => setFocus(e.target.value)}
+                    onChange={(e) => update("currentFocus", e.target.value)}
                   />
                 )}
               </Field>
@@ -109,8 +139,94 @@ export function Settings() {
                     id={id}
                     placeholder="Choose automatically"
                     options={data.milestones.map((m) => ({ value: m.id, label: m.title }))}
-                    value={milestoneId}
-                    onChange={(value) => setMilestoneId(value)}
+                    value={draft.currentMilestoneId ?? ""}
+                    onChange={(value) => update("currentMilestoneId", value || null)}
+                  />
+                )}
+              </Field>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Where you train"
+            eyebrow="Used to fill in new lessons"
+          />
+          <CardBody>
+            <div className="form-grid">
+              <Field label="Flight school">
+                {({ id }) => (
+                  <TextInput
+                    id={id}
+                    value={draft.flightSchool}
+                    placeholder="Cedar Field Aviation"
+                    onChange={(e) => update("flightSchool", e.target.value)}
+                  />
+                )}
+              </Field>
+
+              <Field label="Instructor" hint="Filled in on each new lesson.">
+                {({ id, describedBy }) => (
+                  <TextInput
+                    id={id}
+                    aria-describedby={describedBy}
+                    value={draft.instructorName}
+                    placeholder="Dana Whitfield"
+                    onChange={(e) => update("instructorName", e.target.value)}
+                  />
+                )}
+              </Field>
+
+              <Field label="Home airport" hint="Filled in as the location.">
+                {({ id, describedBy }) => (
+                  <TextInput
+                    id={id}
+                    aria-describedby={describedBy}
+                    value={draft.homeAirport}
+                    placeholder="Cedar Field"
+                    onChange={(e) => update("homeAirport", e.target.value)}
+                  />
+                )}
+              </Field>
+
+              <Field label="Aircraft you fly">
+                {({ id }) => (
+                  <TextInput
+                    id={id}
+                    value={draft.aircraftType}
+                    placeholder="Cessna 172"
+                    onChange={(e) => update("aircraftType", e.target.value)}
+                  />
+                )}
+              </Field>
+
+              <Field
+                label="Training started"
+                hint={duration ? `That is ${duration} of training so far.` : "Optional."}
+              >
+                {({ id, describedBy }) => (
+                  <TextInput
+                    id={id}
+                    type="date"
+                    aria-describedby={describedBy}
+                    value={draft.trainingStartedOn ?? ""}
+                    onChange={(e) => update("trainingStartedOn", e.target.value || null)}
+                  />
+                )}
+              </Field>
+
+              <Field
+                label="Medical certificate expires"
+                hint="Your own reminder — the certificate itself is what counts."
+              >
+                {({ id, describedBy }) => (
+                  <TextInput
+                    id={id}
+                    type="date"
+                    aria-describedby={describedBy}
+                    value={draft.medicalExpiry ?? ""}
+                    onChange={(e) => update("medicalExpiry", e.target.value || null)}
                   />
                 )}
               </Field>
@@ -120,7 +236,45 @@ export function Settings() {
               <Button variant="primary" onClick={saveProfile}>
                 Save profile
               </Button>
-              {saved ? <span className="small" style={{ color: "var(--status-complete)" }}>Saved.</span> : null}
+              {saved ? (
+                <span className="small" style={{ color: "var(--status-complete)" }}>
+                  Saved.
+                </span>
+              ) : null}
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Look and feel" eyebrow="Accent colour" />
+          <CardBody>
+            <div className="stack stack--4">
+              <p className="small muted">
+                Changes the accent used across the application. Takes effect straight away.
+              </p>
+              <div className="accent-picker" role="group" aria-label="Accent colour">
+                {ACCENT_ORDER.map((accent) => {
+                  const selected = draft.accentColor === accent;
+                  return (
+                    <button
+                      type="button"
+                      key={accent}
+                      className={`accent-option${selected ? " is-selected" : ""}`}
+                      aria-pressed={selected}
+                      onClick={() => chooseAccent(accent)}
+                    >
+                      <span
+                        className="accent-option__swatch"
+                        style={{ background: `var(--accent-swatch-${accent})` }}
+                        aria-hidden="true"
+                      >
+                        {selected ? <CheckIcon size={15} /> : null}
+                      </span>
+                      {ACCENT_LABELS[accent]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </CardBody>
         </Card>

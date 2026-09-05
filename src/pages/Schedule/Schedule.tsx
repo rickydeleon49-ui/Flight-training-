@@ -180,6 +180,7 @@ export function Schedule() {
       <EventFormDialog
         open={creating}
         goals={data.goals}
+        profile={data.profile}
         onClose={() => setCreating(false)}
         onSave={save}
       />

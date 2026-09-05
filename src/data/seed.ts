@@ -33,10 +33,23 @@ export async function loadDemoData(repositories: Repositories): Promise<void> {
     ["Prepare for Practical Test", "not_started", "Checkride preparation."],
   ];
 
+  // Target dates on the last two stages, so the dashboard has dates to count
+  // down to without inventing any.
+  const milestoneTargets: Record<string, string> = {
+    "Prepare for Written Exam": addDays(today, 68),
+    "Prepare for Practical Test": addDays(today, 152),
+  };
+
   const milestones = [];
   for (const [index, [title, status, description]] of milestoneTitles.entries()) {
     milestones.push(
-      await repositories.milestones.create({ title, status, description, position: index }),
+      await repositories.milestones.create({
+        title,
+        status,
+        description,
+        position: index,
+        targetDate: milestoneTargets[title] ?? null,
+      }),
     );
   }
   const landingMilestone = milestones[3];
@@ -47,6 +60,12 @@ export async function loadDemoData(repositories: Repositories): Promise<void> {
     certificateGoal: "Private Pilot",
     currentFocus: "Landings",
     currentMilestoneId: landingMilestone.id,
+    flightSchool: "Cedar Field Aviation",
+    instructorName: "Dana Whitfield",
+    homeAirport: "Cedar Field",
+    aircraftType: "Cessna 172",
+    trainingStartedOn: addDays(today, -158),
+    medicalExpiry: addDays(today, 47),
   });
 
   const crosswindGoal = await repositories.goals.create({

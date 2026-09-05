@@ -1,6 +1,6 @@
 import { Badge, Checkbox, ClockIcon, EditIcon, IconButton, TrashIcon } from "@/components/ui";
-import { describeRelativeDate, formatDuration, todayIso } from "@/lib/dates";
-import { isOverdue } from "@/logic/actions";
+import { formatDuration, todayIso } from "@/lib/dates";
+import { actionTiming, isOverdue } from "@/logic/actions";
 import type { NextAction } from "@/domain/types";
 
 import "./actions.css";
@@ -30,17 +30,19 @@ export function ActionRow({
   context,
 }: ActionRowProps) {
   const overdue = isOverdue(action, today);
-  const dueToday = action.status === "open" && action.dueDate === today;
+  const timing = actionTiming(action, today);
   const duration = formatDuration(action.estimatedMinutes);
 
   const meta = (
     <span className="action-row__meta">
-      {overdue ? (
-        <Badge tone="overdue">{describeRelativeDate(action.dueDate as string, today)}</Badge>
-      ) : dueToday ? (
-        <Badge tone="due">Today</Badge>
-      ) : action.dueDate ? (
-        <span>{describeRelativeDate(action.dueDate, today)}</span>
+      {timing?.tone === "overdue" ? (
+        <Badge tone="overdue">{timing.text}</Badge>
+      ) : timing?.tone === "due" ? (
+        <Badge tone="due">{timing.text}</Badge>
+      ) : timing?.tone === "done" ? (
+        <Badge tone="complete">{timing.text}</Badge>
+      ) : timing ? (
+        <span>{timing.text}</span>
       ) : null}
       {duration ? (
         <span className="row" style={{ gap: 4 }}>

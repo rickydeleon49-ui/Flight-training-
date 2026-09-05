@@ -1,6 +1,6 @@
 import { nowIso } from "@/lib/dates";
-import type { Profile } from "@/domain/types";
-import { toText, type SqlDatabase } from "../db";
+import { ACCENT_LABELS, type AccentColor, type Profile } from "@/domain/types";
+import { toEnum, toNullableText, toText, type SqlDatabase } from "../db";
 
 const PROFILE_ID = "profile";
 
@@ -10,6 +10,13 @@ interface Row {
   certificate_goal: unknown;
   current_focus: unknown;
   current_milestone_id: unknown;
+  flight_school: unknown;
+  instructor_name: unknown;
+  home_airport: unknown;
+  aircraft_type: unknown;
+  training_started_on: unknown;
+  medical_expiry: unknown;
+  accent_color: unknown;
   created_at: unknown;
   updated_at: unknown;
 }
@@ -19,12 +26,18 @@ const map = (row: Row): Profile => ({
   pilotName: toText(row.pilot_name),
   certificateGoal: toText(row.certificate_goal),
   currentFocus: toText(row.current_focus),
-  currentMilestoneId: row.current_milestone_id ? String(row.current_milestone_id) : null,
+  currentMilestoneId: toNullableText(row.current_milestone_id),
+  flightSchool: toText(row.flight_school),
+  instructorName: toText(row.instructor_name),
+  homeAirport: toText(row.home_airport),
+  aircraftType: toText(row.aircraft_type),
+  trainingStartedOn: toNullableText(row.training_started_on),
+  medicalExpiry: toNullableText(row.medical_expiry),
+  accentColor: toEnum<AccentColor>(row.accent_color, ACCENT_LABELS, "berry"),
   createdAt: toText(row.created_at),
   updatedAt: toText(row.updated_at),
 });
 
-/** Profile is a single row; it is created on first run if absent. */
 export function profileRepository(db: SqlDatabase) {
   return {
     /**
@@ -50,21 +63,22 @@ export function profileRepository(db: SqlDatabase) {
       return map(profile);
     },
 
-    async update(changes: Partial<Omit<Profile, "id" | "createdAt" | "updatedAt">>): Promise<void> {
-      const current = await this.get();
-      const next = { ...current, ...changes };
+    async update(
+      changes: Partial<Omit<Profile, "id" | "createdAt" | "updatedAt">>,
+    ): Promise<void> {
+      const next = { ...(await this.get()), ...changes };
       await db.execute(
         `UPDATE settings
             SET pilot_name = ?, certificate_goal = ?, current_focus = ?,
-                current_milestone_id = ?, updated_at = ?
+                current_milestone_id = ?, flight_school = ?, instructor_name = ?,
+                home_airport = ?, aircraft_type = ?, training_started_on = ?,
+                medical_expiry = ?, accent_color = ?, updated_at = ?
           WHERE id = ?`,
         [
-          next.pilotName,
-          next.certificateGoal,
-          next.currentFocus,
-          next.currentMilestoneId,
-          nowIso(),
-          PROFILE_ID,
+          next.pilotName, next.certificateGoal, next.currentFocus,
+          next.currentMilestoneId, next.flightSchool, next.instructorName,
+          next.homeAirport, next.aircraftType, next.trainingStartedOn,
+          next.medicalExpiry, next.accentColor, nowIso(), PROFILE_ID,
         ],
       );
     },

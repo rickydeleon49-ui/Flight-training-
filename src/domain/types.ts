@@ -413,12 +413,35 @@ export interface FundGoal {
 /* Profile                                                             */
 /* ------------------------------------------------------------------ */
 
+/** The accent colour the interface uses, chosen from the spec palette. */
+export type AccentColor = "berry" | "lavender" | "sky" | "mint";
+export const ACCENT_LABELS: Record<AccentColor, string> = {
+  berry: "Berry",
+  lavender: "Lavender",
+  sky: "Sky",
+  mint: "Mint",
+};
+export const ACCENT_ORDER: AccentColor[] = ["berry", "lavender", "sky", "mint"];
+
 export interface Profile {
   id: Id;
   pilotName: string;
   certificateGoal: string;
   currentFocus: string;
   currentMilestoneId: Id | null;
+
+  /* Where and with whom she trains. These pre-fill new lessons. */
+  flightSchool: string;
+  instructorName: string;
+  homeAirport: string;
+  aircraftType: string;
+  trainingStartedOn: IsoDate | null;
+
+  /** Her own reminder. The certificate itself remains the authority. */
+  medicalExpiry: IsoDate | null;
+
+  accentColor: AccentColor;
+
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
 }

@@ -434,6 +434,7 @@ export function EventDetail() {
         open={editing}
         event={event}
         goals={data.goals}
+        profile={data.profile}
         onClose={() => setEditing(false)}
         onSave={saveEvent}
       />

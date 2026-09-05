@@ -6,12 +6,14 @@ import { ActionRow } from "@/components/actions/ActionRow";
 import { RescheduleDialog } from "@/components/actions/RescheduleDialog";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
+  AlertIcon,
   Badge,
   Button,
   Card,
   CardBody,
   CardHeader,
   CheckIcon,
+  ClockIcon,
   EmptyState,
   PlaneIcon,
   PlusIcon,
@@ -24,7 +26,7 @@ import {
   TOPIC_LABELS,
   type NextAction,
 } from "@/domain/types";
-import { describeRelativeDate, formatLongDate, formatTime } from "@/lib/dates";
+import { describeRelativeDate, formatLongDate, formatShortDate, formatTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { buildDashboard } from "@/logic/dashboard";
 import { useAppData } from "@/state/AppDataContext";
@@ -232,6 +234,7 @@ export function FlightDeck() {
           <NextFlightCard model={model} />
           <MilestoneCard model={model} />
           <StudyFocusCard model={model} />
+          <KeyDatesCard model={model} />
 
           {model.awaitingDebrief.length > 0 ? (
             <Card>
@@ -445,6 +448,43 @@ function MilestoneCard({ model }: { model: Model }) {
           <Link className="button button--ghost button--small" to="/flight-path">
             View Flight Path
           </Link>
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+
+function KeyDatesCard({ model }: { model: Model }) {
+  if (model.keyDates.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader title="Dates ahead" />
+      <CardBody>
+        <div className="stack stack--3">
+          {model.keyDates.map((date) => (
+            <div className="row row--between" key={date.id}>
+              <span className="small truncate">{date.label}</span>
+              <span className="row" style={{ gap: "var(--space-2)", flex: "none" }}>
+                <span className="tiny dim">{formatShortDate(date.date)}</span>
+                {date.passed ? (
+                  <Badge tone="overdue" icon={<AlertIcon size={12} />}>
+                    Expired
+                  </Badge>
+                ) : date.daysAway <= 30 ? (
+                  <Badge tone="due" icon={<ClockIcon size={12} />}>
+                    {date.daysAway === 0 ? "Today" : `${date.daysAway}d`}
+                  </Badge>
+                ) : (
+                  <span className="tiny dim">{date.daysAway}d</span>
+                )}
+              </span>
+            </div>
+          ))}
+          <p className="tiny dim">
+            Your own reminders. Official documents and your instructor remain the
+            authority on what is current.
+          </p>
         </div>
       </CardBody>
     </Card>

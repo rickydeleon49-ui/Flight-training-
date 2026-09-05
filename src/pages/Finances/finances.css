@@ -18,7 +18,7 @@
 }
 
 .fund__figure--primary {
-  background: linear-gradient(150deg, var(--surface-tint-berry), var(--surface-card) 70%);
+  background: linear-gradient(150deg, var(--accent-primary-fill), var(--surface-card) 70%);
   border-color: var(--accent-secondary);
 }
 

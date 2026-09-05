@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { makeAction } from "@/testing/factories";
 import {
+  actionTiming,
   actionsFor,
   byDueDate,
   completedToday,
@@ -189,5 +190,40 @@ describe("relationships", () => {
     const forMaterial = makeAction({ relatedType: "material", relatedId: "goal-1" });
     const found = actionsFor([forGoal, forOther, forMaterial], "goal", "goal-1");
     expect(found).toEqual([forGoal]);
+  });
+});
+
+describe("actionTiming", () => {
+  it("never calls finished work overdue", () => {
+    // Once it is done, its old due date is not something to be reproached with.
+    const done = makeAction({
+      status: "completed",
+      completedAt: `${TODAY}T10:00:00.000Z`,
+      dueDate: "2026-09-01",
+    });
+    expect(actionTiming(done, TODAY)).toEqual({ text: "Done", tone: "done" });
+  });
+
+  it("flags open work that is genuinely overdue", () => {
+    const late = makeAction({ dueDate: "2026-09-03" });
+    expect(actionTiming(late, TODAY)).toEqual({ text: "2 days overdue", tone: "overdue" });
+  });
+
+  it("marks work due today", () => {
+    expect(actionTiming(makeAction({ dueDate: TODAY }), TODAY)).toEqual({
+      text: "Today",
+      tone: "due",
+    });
+  });
+
+  it("states a future date plainly", () => {
+    expect(actionTiming(makeAction({ dueDate: "2026-09-08" }), TODAY)).toEqual({
+      text: "in 3 days",
+      tone: "plain",
+    });
+  });
+
+  it("says nothing for undated work", () => {
+    expect(actionTiming(makeAction({ dueDate: null }), TODAY)).toBeNull();
   });
 });

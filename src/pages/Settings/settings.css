@@ -1,0 +1,41 @@
+/* Accent picker: real swatches, but never colour alone — each is labelled
+   and the chosen one is marked with a tick as well as a ring. */
+
+.accent-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.accent-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  min-width: 5.5rem;
+  transition: border-color var(--transition), background var(--transition);
+}
+.accent-option:hover { background: var(--surface-sunken); }
+
+.accent-option.is-selected {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.accent-option__swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}

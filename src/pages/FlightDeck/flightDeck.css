@@ -22,7 +22,7 @@
 
 .top-action {
   border: 1px solid var(--accent-secondary);
-  background: linear-gradient(140deg, var(--surface-tint-berry), var(--surface-card) 65%);
+  background: linear-gradient(140deg, var(--accent-primary-fill), var(--surface-card) 65%);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }

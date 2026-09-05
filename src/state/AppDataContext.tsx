@@ -71,6 +71,13 @@ const EMPTY_PROFILE: Profile = {
   certificateGoal: "Private Pilot",
   currentFocus: "",
   currentMilestoneId: null,
+  flightSchool: "",
+  instructorName: "",
+  homeAirport: "",
+  aircraftType: "",
+  trainingStartedOn: null,
+  medicalExpiry: null,
+  accentColor: "berry",
   createdAt: "",
   updatedAt: "",
 };

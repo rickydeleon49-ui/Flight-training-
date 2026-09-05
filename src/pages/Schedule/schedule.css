@@ -106,7 +106,7 @@
 .month__day--outside { color: var(--border-strong); }
 .month__day--today {
   border-color: var(--accent-secondary);
-  background: var(--surface-tint-berry);
+  background: var(--accent-primary-fill);
   color: var(--accent-primary);
   font-weight: 600;
 }

@@ -16,12 +16,20 @@ const DB_URL: &str = "sqlite:her-flight-deck.db";
 /// The SQL lives in `migrations/` so the TypeScript fallback database can
 /// load exactly the same statements and the two can never drift apart.
 fn migrations() -> Vec<Migration> {
-    vec![Migration {
-        version: 1,
-        description: "initial_schema",
-        sql: include_str!("../migrations/0001_initial_schema.sql"),
-        kind: MigrationKind::Up,
-    }]
+    vec![
+        Migration {
+            version: 1,
+            description: "initial_schema",
+            sql: include_str!("../migrations/0001_initial_schema.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 2,
+            description: "profile_details",
+            sql: include_str!("../migrations/0002_profile_details.sql"),
+            kind: MigrationKind::Up,
+        },
+    ]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

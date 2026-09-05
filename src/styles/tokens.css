@@ -52,9 +52,17 @@
    * meets contrast requirements for text and icons on white.
    */
   --accent-primary: var(--palette-berry);
-  --accent-primary-hover: #94425e;
-  --accent-primary-fill: #f7e9ee;
+  --accent-primary-hover: #8d3c59;
+  --accent-primary-fill: #fbeff3;
   --accent-secondary: var(--palette-rose);
+  /* Channels of the active accent, for translucent effects. */
+  --accent-rgb: 168 76 107;
+
+  /* Fixed swatch colours, so the picker shows every option as itself. */
+  --accent-swatch-berry: #a84c6b;
+  --accent-swatch-lavender: #5b4d95;
+  --accent-swatch-sky: #2b6285;
+  --accent-swatch-mint: #2f6d59;
 
   --category-study-fill: var(--surface-tint-lavender);
   --category-study-ink: #5b4d95;
@@ -121,13 +129,45 @@
   --shadow-md: 0 2px 10px rgba(23, 35, 60, 0.05);
   --shadow-lg: 0 12px 32px rgba(23, 35, 60, 0.1);
 
-  --focus-ring: 0 0 0 3px rgba(168, 76, 107, 0.28);
+  --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.28);
 
   /* ---- Layout ---- */
   --sidebar-width: 15rem;
   --content-max: 76rem;
 
   --transition: 140ms ease;
+}
+
+/* ------------------------------------------------------------------ *
+ * Accent themes.
+ *
+ * She picks one in Settings and it re-themes the whole interface. Each is
+ * drawn from the spec palette, and each primary is dark enough to carry
+ * white text at the contrast the product requires.
+ * ------------------------------------------------------------------ */
+
+:root[data-accent="lavender"] {
+  --accent-primary: #5b4d95;
+  --accent-primary-hover: #4c4080;
+  --accent-primary-fill: #f2effb;
+  --accent-secondary: var(--palette-lavender);
+  --accent-rgb: 91 77 149;
+}
+
+:root[data-accent="sky"] {
+  --accent-primary: #2b6285;
+  --accent-primary-hover: #22506e;
+  --accent-primary-fill: #eaf3f9;
+  --accent-secondary: var(--palette-sky);
+  --accent-rgb: 43 98 133;
+}
+
+:root[data-accent="mint"] {
+  --accent-primary: #2f6d59;
+  --accent-primary-hover: #265948;
+  --accent-primary-fill: #e9f5f0;
+  --accent-secondary: var(--palette-mint);
+  --accent-rgb: 47 109 89;
 }
 
 /* Respect a request for reduced motion across every animated element. */

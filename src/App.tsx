@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -19,7 +20,12 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 /** Holds the shell back until the database is open, so no screen sees a
  *  half-loaded application. */
 function Gate() {
-  const { status, error, lastError, clearError } = useAppData();
+  const { status, error, lastError, clearError, data } = useAppData();
+
+  // Her chosen accent themes the whole interface.
+  useEffect(() => {
+    document.documentElement.dataset.accent = data.profile.accentColor;
+  }, [data.profile.accentColor]);
 
   if (status === "loading") return <Loading label="Opening your flight deck" />;
 

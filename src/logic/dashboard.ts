@@ -37,6 +37,7 @@ import {
 } from "./preparation";
 import { currentMilestone, milestoneProgress, studyFocus, type MilestoneProgress } from "./progress";
 import { upcomingExpenses } from "./finance";
+import { upcomingKeyDates, type KeyDate } from "./keyDates";
 
 export interface DashboardSources {
   profile: Profile;
@@ -78,6 +79,7 @@ export interface DashboardModel {
     nextAction: NextAction | null;
   } | null;
   needsAttention: NextAction[];
+  keyDates: KeyDate[];
   awaitingDebrief: ScheduleEvent[];
   unansweredBeforeLesson: Question[];
   topAction: NextAction | null;
@@ -171,6 +173,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
       ? { material: focusMaterial, nextAction: relatedAction("material", focusMaterial.id) }
       : null,
     needsAttention: overdue,
+    keyDates: upcomingKeyDates(sources.profile, sources.milestones, today),
     awaitingDebrief: lessonsAwaitingDebrief(sources.events, journalEventIds, today),
     unansweredBeforeLesson: upcoming
       ? sources.questions.filter((q) => q.status === "to_ask" && (q.eventId === upcoming.id || q.eventId === null))

@@ -31,6 +31,7 @@ import {
 } from "@/domain/types";
 import { formatShortDate, todayIso } from "@/lib/dates";
 import { actionsFor } from "@/logic/actions";
+import { trainingDuration } from "@/logic/keyDates";
 import { goalEvidence, hasEvidence, milestoneProgress, reorderMilestones } from "@/logic/progress";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
@@ -54,6 +55,8 @@ export function FlightPath() {
   const unassignedGoals = data.goals.filter(
     (goal) => goal.milestoneId === null || !milestoneIds.has(goal.milestoneId),
   );
+
+  const trainedFor = trainingDuration(data.profile.trainingStartedOn);
 
   const currentId =
     data.profile.currentMilestoneId ??
@@ -130,7 +133,11 @@ export function FlightPath() {
     <>
       <PageHeader
         title="Flight Path"
-        subtitle="Where you are going, and what you are working toward."
+        subtitle={
+          trainedFor
+            ? `Where you are going, and what you are working toward. ${trainedFor} of training so far.`
+            : "Where you are going, and what you are working toward."
+        }
       />
 
       <div className="path">

@@ -8,6 +8,7 @@ import {
   type EventType,
   type Goal,
   type Id,
+  type Profile,
   type ScheduleEvent,
 } from "@/domain/types";
 import { todayIso } from "@/lib/dates";
@@ -28,14 +29,18 @@ export interface EventDraft {
   status: EventStatus;
 }
 
-const emptyDraft = (): EventDraft => ({
+/**
+ * A new event starts from where she actually trains, so the instructor and
+ * airport are not retyped for every lesson. Both stay editable.
+ */
+const emptyDraft = (profile?: Profile): EventDraft => ({
   title: "",
   eventType: "flight_lesson",
   date: todayIso(),
   startTime: "10:00",
   endTime: null,
-  location: "",
-  instructor: "",
+  location: profile?.homeAirport ?? "",
+  instructor: profile?.instructorName ?? "",
   notes: "",
   goalId: null,
   estimatedCost: null,
@@ -47,12 +52,14 @@ interface Props {
   open: boolean;
   event?: ScheduleEvent | null;
   goals: Goal[];
+  /** Supplies the defaults for a new event. */
+  profile?: Profile;
   onClose: () => void;
   onSave: (draft: EventDraft) => void;
 }
 
-export function EventFormDialog({ open, event = null, goals, onClose, onSave }: Props) {
-  const [draft, setDraft] = useState<EventDraft>(emptyDraft);
+export function EventFormDialog({ open, event = null, goals, profile, onClose, onSave }: Props) {
+  const [draft, setDraft] = useState<EventDraft>(() => emptyDraft(profile));
   const [estimated, setEstimated] = useState("");
   const [actual, setActual] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -78,11 +85,11 @@ export function EventFormDialog({ open, event = null, goals, onClose, onSave }: 
       setEstimated(moneyToInput(event.estimatedCost));
       setActual(moneyToInput(event.actualCost));
     } else {
-      setDraft(emptyDraft());
+      setDraft(emptyDraft(profile));
       setEstimated("");
       setActual("");
     }
-  }, [open, event]);
+  }, [open, event, profile]);
 
   const update = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));

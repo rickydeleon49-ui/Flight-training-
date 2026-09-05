@@ -4,7 +4,7 @@
  * The dashboard derives every one of its lists from this module, so there is
  * exactly one definition of "overdue", "due today" and "on the plan".
  */
-import { todayIso } from "@/lib/dates";
+import { describeRelativeDate, todayIso } from "@/lib/dates";
 import {
   ACTION_CATEGORY_ORDER,
   type ActionCategory,
@@ -116,6 +116,27 @@ export function mostImportantAction(
   if (nonNegotiable[0]) return nonNegotiable[0];
 
   return plan.sort(byDueDate)[0] ?? null;
+}
+
+/**
+ * How an action's timing should read.
+ *
+ * Completed work never reports its due date: once something is done, saying
+ * it was "2 days overdue" is both untrue of its current state and exactly
+ * the reproach the product refuses to make.
+ */
+export function actionTiming(
+  action: NextAction,
+  today: IsoDate = todayIso(),
+): { text: string; tone: "overdue" | "due" | "plain" | "done" } | null {
+  if (action.status === "completed") return { text: "Done", tone: "done" };
+  if (action.status === "dismissed") return null;
+  if (action.dueDate === null) return null;
+  if (action.dueDate < today) {
+    return { text: describeRelativeDate(action.dueDate, today), tone: "overdue" };
+  }
+  if (action.dueDate === today) return { text: "Today", tone: "due" };
+  return { text: describeRelativeDate(action.dueDate, today), tone: "plain" };
 }
 
 /** Field changes that complete an action. Kept pure so it is easy to test. */
