@@ -1,0 +1,46 @@
+/**
+ * Schema migrations.
+ *
+ * The SQL is imported from the same files the Rust side compiles in, so the
+ * desktop database and the development fallback are always the same shape.
+ * Add a new file and a new entry here; never edit an applied migration.
+ */
+import initialSchema from "../../src-tauri/migrations/0001_initial_schema.sql?raw";
+
+export interface Migration {
+  version: number;
+  description: string;
+  sql: string;
+}
+
+export const MIGRATIONS: Migration[] = [
+  { version: 1, description: "initial_schema", sql: initialSchema },
+];
+
+/**
+ * Apply any migrations the database has not yet seen.
+ *
+ * Only used by the fallback drivers — in the desktop app the Rust SQL plugin
+ * runs the identical SQL through its own migration table.
+ */
+export async function applyMigrations(
+  exec: (sql: string) => void,
+  appliedVersions: Set<number>,
+): Promise<void> {
+  exec(
+    `CREATE TABLE IF NOT EXISTS schema_migrations (
+       version INTEGER PRIMARY KEY,
+       description TEXT NOT NULL,
+       applied_at TEXT NOT NULL
+     )`,
+  );
+
+  for (const migration of MIGRATIONS) {
+    if (appliedVersions.has(migration.version)) continue;
+    exec(migration.sql);
+    exec(
+      `INSERT INTO schema_migrations (version, description, applied_at)
+       VALUES (${migration.version}, '${migration.description}', '${new Date().toISOString()}')`,
+    );
+  }
+}
