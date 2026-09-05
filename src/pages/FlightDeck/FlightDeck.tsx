@@ -91,6 +91,12 @@ export function FlightDeck() {
             }
           />
         </Card>
+        {/* Her why belongs here most of all: a deck with nothing in it yet is
+            exactly when the reason for starting is worth seeing. */}
+        <div style={{ marginTop: "var(--space-5)", maxWidth: "34rem" }}>
+          <WhyCard model={model} />
+        </div>
+
         <ActionFormDialog
           open={creating}
           onClose={() => setCreating(false)}

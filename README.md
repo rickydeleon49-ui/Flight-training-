@@ -32,6 +32,7 @@ The real application always uses the desktop database.
 | `npm run typecheck` | Strict TypeScript check |
 | `npm test` | Test suite |
 | `npm run build` | Typecheck and build the frontend |
+| `scripts/desktop-smoke.sh` | Drive the real desktop window (Linux) |
 
 Before packaging for macOS or Windows, generate the platform icon formats once
 with `npm run tauri icon src-tauri/icons/icon.png`.
@@ -155,4 +156,26 @@ Covers Flight Fund calculations, transaction totals, upcoming expense
 derivation, overdue detection, completion and rescheduling, lesson preparation
 state, goal evidence, encouragement tone, and the duplicate-lesson-expense
 guard. Repository tests run against real SQLite through `node:sqlite`, so the
-schema's foreign keys and unique indexes are genuinely exercised.
+schema's foreign keys and unique indexes are genuinely exercised, and the
+migration tests apply new migrations to a database that already holds data.
+
+### The desktop smoke test
+
+```bash
+scripts/desktop-smoke.sh
+```
+
+Three things exist only inside the real desktop shell and cannot be reached
+from a browser or a unit test: the Rust migration runner building a real
+database, the **native file chooser** the photo input opens, and writes
+landing in the SQLite file in application data.
+
+On Linux this drives the actual Tauri window on a virtual display — clicking
+through to Settings, opening the GTK file chooser, choosing a generated test
+image — and then asserts against the database rather than against pixels.
+Screenshots of each step are left in `.smoke/` to look at. It needs `Xvfb`,
+`xdotool` and ImageMagick, and it uses a throwaway `XDG_CONFIG_HOME` so it
+never touches real training data.
+
+On macOS and Windows there is no equivalent, so the file chooser is worth a
+manual look after any change to how photos are added.

@@ -128,8 +128,22 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
   };
 }
 
-const describeError = (error: unknown): string =>
-  error instanceof Error ? error.message : "Something went wrong.";
+/**
+ * Turn whatever was thrown into something worth reading.
+ *
+ * Errors crossing the Tauri boundary arrive as plain strings rather than
+ * Error instances, so narrowing only on Error discarded the one useful
+ * detail — the database's own message — and left "Something went wrong."
+ */
+function describeError(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return "Something went wrong.";
+}
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>("loading");

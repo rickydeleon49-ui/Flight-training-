@@ -63,6 +63,15 @@ describe("the personal card", () => {
 });
 
 describe("the dashboard as a whole", () => {
+  it("still carries her why when the application is otherwise empty", () => {
+    // A brand-new deck is exactly when the reason for starting matters.
+    const model = buildDashboard(
+      sources({ profile: makeProfile({ whyNote: "My grandfather flew." }) }),
+    );
+    expect(model.isEmpty).toBe(true);
+    expect(model.personal).not.toBeNull();
+  });
+
   it("reports an empty application rather than pretending otherwise", () => {
     const model = buildDashboard(sources());
     expect(model.isEmpty).toBe(true);

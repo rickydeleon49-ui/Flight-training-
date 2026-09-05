@@ -81,6 +81,8 @@ secrets.json
 credentials.json
 
 # --- Testing and coverage ---
+# Desktop smoke-test output: screenshots and logs from a real app run.
+.smoke/
 coverage/
 .nyc_output/
 playwright-report/
