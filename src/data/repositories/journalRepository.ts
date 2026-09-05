@@ -5,6 +5,11 @@ import { toNullableNumber, toNullableText, toText, type SqlDatabase } from "../d
 
 interface Row {
   id: string; event_id: unknown; date: unknown; title: unknown; mission: unknown;
+  aircraft_type: unknown; aircraft_id: unknown; departure_airport: unknown;
+  arrival_airport: unknown; instructor_name: unknown; total_time: unknown;
+  dual_received: unknown; solo_time: unknown; pic_time: unknown;
+  cross_country_time: unknown; night_time: unknown; actual_instrument_time: unknown;
+  simulated_instrument_time: unknown; day_landings: unknown; night_landings: unknown;
   practiced: unknown; went_well: unknown; was_difficult: unknown;
   instructor_feedback: unknown; questions_for_next_time: unknown; confidence: unknown;
   goal_id: unknown; created_at: unknown; updated_at: unknown;
@@ -15,6 +20,21 @@ const map = (row: Row, materialIds: Id[]): JournalEntry => ({
   eventId: toNullableText(row.event_id),
   date: toText(row.date),
   title: toText(row.title),
+  aircraftType: toText(row.aircraft_type),
+  aircraftId: toText(row.aircraft_id),
+  departureAirport: toText(row.departure_airport),
+  arrivalAirport: toText(row.arrival_airport),
+  instructorName: toText(row.instructor_name),
+  totalTime: toNullableNumber(row.total_time),
+  dualReceived: toNullableNumber(row.dual_received),
+  soloTime: toNullableNumber(row.solo_time),
+  picTime: toNullableNumber(row.pic_time),
+  crossCountryTime: toNullableNumber(row.cross_country_time),
+  nightTime: toNullableNumber(row.night_time),
+  actualInstrumentTime: toNullableNumber(row.actual_instrument_time),
+  simulatedInstrumentTime: toNullableNumber(row.simulated_instrument_time),
+  dayLandings: toNullableNumber(row.day_landings),
+  nightLandings: toNullableNumber(row.night_landings),
   mission: toText(row.mission),
   practiced: toText(row.practiced),
   wentWell: toText(row.went_well),
@@ -61,6 +81,21 @@ export function journalRepository(db: SqlDatabase) {
         eventId: input.eventId ?? null,
         date: input.date,
         title: input.title ?? "",
+        aircraftType: input.aircraftType ?? "",
+        aircraftId: input.aircraftId ?? "",
+        departureAirport: input.departureAirport ?? "",
+        arrivalAirport: input.arrivalAirport ?? "",
+        instructorName: input.instructorName ?? "",
+        totalTime: input.totalTime ?? null,
+        dualReceived: input.dualReceived ?? null,
+        soloTime: input.soloTime ?? null,
+        picTime: input.picTime ?? null,
+        crossCountryTime: input.crossCountryTime ?? null,
+        nightTime: input.nightTime ?? null,
+        actualInstrumentTime: input.actualInstrumentTime ?? null,
+        simulatedInstrumentTime: input.simulatedInstrumentTime ?? null,
+        dayLandings: input.dayLandings ?? null,
+        nightLandings: input.nightLandings ?? null,
         mission: input.mission ?? "",
         practiced: input.practiced ?? "",
         wentWell: input.wentWell ?? "",
@@ -74,15 +109,24 @@ export function journalRepository(db: SqlDatabase) {
         materialIds: input.materialIds ?? [],
       };
       await db.execute(
-        `INSERT INTO journal_entries (id, event_id, date, title, mission, practiced,
-           went_well, was_difficult, instructor_feedback, questions_for_next_time,
+        `INSERT INTO journal_entries (id, event_id, date, title, aircraft_type,
+           aircraft_id, departure_airport, arrival_airport, instructor_name,
+           total_time, dual_received, solo_time, pic_time, cross_country_time,
+           night_time, actual_instrument_time, simulated_instrument_time,
+           day_landings, night_landings, mission, practiced, went_well,
+           was_difficult, instructor_feedback, questions_for_next_time,
            confidence, goal_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          entry.id, entry.eventId, entry.date, entry.title, entry.mission, entry.practiced,
+          entry.id, entry.eventId, entry.date, entry.title, entry.aircraftType,
+          entry.aircraftId, entry.departureAirport, entry.arrivalAirport,
+          entry.instructorName, entry.totalTime, entry.dualReceived, entry.soloTime,
+          entry.picTime, entry.crossCountryTime, entry.nightTime,
+          entry.actualInstrumentTime, entry.simulatedInstrumentTime,
+          entry.dayLandings, entry.nightLandings, entry.mission, entry.practiced,
           entry.wentWell, entry.wasDifficult, entry.instructorFeedback,
-          entry.questionsForNextTime, entry.confidence, entry.goalId,
-          entry.createdAt, entry.updatedAt,
+          entry.questionsForNextTime, entry.confidence, entry.goalId, entry.createdAt,
+          entry.updatedAt,
         ],
       );
       await this.setMaterials(entry.id, entry.materialIds);
@@ -96,14 +140,24 @@ export function journalRepository(db: SqlDatabase) {
       const next = { ...map(existing, []), ...changes, updatedAt: nowIso() };
       await db.execute(
         `UPDATE journal_entries
-            SET event_id = ?, date = ?, title = ?, mission = ?, practiced = ?,
-                went_well = ?, was_difficult = ?, instructor_feedback = ?,
-                questions_for_next_time = ?, confidence = ?, goal_id = ?, updated_at = ?
+            SET event_id = ?, date = ?, title = ?, aircraft_type = ?, aircraft_id = ?,
+                departure_airport = ?, arrival_airport = ?, instructor_name = ?,
+                total_time = ?, dual_received = ?, solo_time = ?, pic_time = ?,
+                cross_country_time = ?, night_time = ?, actual_instrument_time = ?,
+                simulated_instrument_time = ?, day_landings = ?, night_landings = ?,
+                mission = ?, practiced = ?, went_well = ?, was_difficult = ?,
+                instructor_feedback = ?, questions_for_next_time = ?, confidence = ?,
+                goal_id = ?, updated_at = ?
           WHERE id = ?`,
         [
-          next.eventId, next.date, next.title, next.mission, next.practiced,
-          next.wentWell, next.wasDifficult, next.instructorFeedback,
-          next.questionsForNextTime, next.confidence, next.goalId, next.updatedAt, id,
+          next.eventId, next.date, next.title, next.aircraftType, next.aircraftId,
+          next.departureAirport, next.arrivalAirport, next.instructorName,
+          next.totalTime, next.dualReceived, next.soloTime, next.picTime,
+          next.crossCountryTime, next.nightTime, next.actualInstrumentTime,
+          next.simulatedInstrumentTime, next.dayLandings, next.nightLandings,
+          next.mission, next.practiced, next.wentWell, next.wasDifficult,
+          next.instructorFeedback, next.questionsForNextTime, next.confidence,
+          next.goalId, next.updatedAt, id,
         ],
       );
       if (changes.materialIds) await this.setMaterials(id, changes.materialIds);

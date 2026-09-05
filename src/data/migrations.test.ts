@@ -64,6 +64,10 @@ describe("migrations", () => {
       `INSERT INTO milestones (id, title, description, position, status, created_at, updated_at)
        VALUES ('m1', 'Build Landing Confidence', '', 0, 'in_progress', 'then', 'then')`,
     ).run();
+    db.prepare(
+      `INSERT INTO journal_entries (id, date, created_at, updated_at)
+       VALUES ('j1', '2026-09-01', 'then', 'then')`,
+    ).run();
 
     // Now bring it up to date, as an existing install would on next launch.
     await migrate(db, Number.MAX_SAFE_INTEGER);
@@ -83,6 +87,13 @@ describe("migrations", () => {
 
     const milestones = db.prepare("SELECT COUNT(*) c FROM milestones").get() as { c: number };
     expect(milestones.c).toBe(1);
+
+    const journal = db.prepare("SELECT * FROM journal_entries WHERE id = 'j1'").get() as Record<
+      string,
+      unknown
+    >;
+    expect(journal.aircraft_type).toBe("");
+    expect(journal.total_time).toBeNull();
     db.close();
   });
 

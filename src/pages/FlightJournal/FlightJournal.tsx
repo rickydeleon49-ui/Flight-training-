@@ -14,17 +14,18 @@ import {
 } from "@/components/ui";
 import { formatLongDate, todayIso } from "@/lib/dates";
 import { collectFeedback, goalsWithFeedback } from "@/logic/feedback";
+import { flightLogTotals, flightRoute, formatHours, hasFlightLogData } from "@/logic/flightLog";
 import { lessonsAwaitingDebrief } from "@/logic/preparation";
 import { useAppData } from "@/state/AppDataContext";
 
 import "./journal.css";
 
-type View = "debriefs" | "feedback";
+type View = "log" | "debriefs" | "feedback";
 
 export function FlightJournal() {
   const { data } = useAppData();
   const today = todayIso();
-  const [view, setView] = useState<View>("debriefs");
+  const [view, setView] = useState<View>("log");
   const [goalFilter, setGoalFilter] = useState("");
 
   const journalEventIds = new Set(
@@ -40,20 +41,33 @@ export function FlightJournal() {
   const visibleFeedback = goalFilter
     ? feedback.filter((note) => note.goalId === goalFilter)
     : feedback;
+  const loggedFlights = useMemo(
+    () => data.journalEntries.filter(hasFlightLogData),
+    [data.journalEntries],
+  );
+  const totals = useMemo(() => flightLogTotals(data.journalEntries), [data.journalEntries]);
 
   return (
     <>
       <PageHeader
-        title="Flight Journal"
-        subtitle="What happened, what your instructor said, and what to do about it."
+        title="Flight Log & Journal"
+        subtitle="Flight time, lesson notes, and instructor feedback in one training history."
         action={
           <Link className="button button--primary" to="/journal/new">
-            <PlusIcon size={16} /> Write a debrief
+            <PlusIcon size={16} /> Log a flight
           </Link>
         }
       />
 
       <div className="view-tabs filter-chips">
+        <button
+          type="button"
+          className={`filter-chip${view === "log" ? " is-active" : ""}`}
+          aria-pressed={view === "log"}
+          onClick={() => setView("log")}
+        >
+          Flight log{loggedFlights.length > 0 ? ` (${loggedFlights.length})` : ""}
+        </button>
         <button
           type="button"
           className={`filter-chip${view === "debriefs" ? " is-active" : ""}`}
@@ -122,6 +136,89 @@ export function FlightJournal() {
             )}
           </CardBody>
         </Card>
+      ) : view === "log" ? (
+        <div className="stack stack--5">
+          <div className="flight-log-summary">
+            {(
+              [
+                ["Total time", formatHours(totals.totalTime)],
+                ["Training received", formatHours(totals.dualReceived)],
+                ["PIC", formatHours(totals.picTime)],
+                ["Cross-country", formatHours(totals.crossCountryTime)],
+                ["Night", formatHours(totals.nightTime)],
+                ["Instrument", formatHours(totals.instrumentTime)],
+              ] as const
+            ).map(([label, value]) => (
+              <Card variant="quiet" key={label}>
+                <CardBody>
+                  <p className="tiny dim">{label}</p>
+                  <p className="flight-log-summary__value numeric">{value}</p>
+                  <p className="tiny dim">hours</p>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader
+              title="Training flights"
+              action={<span className="tiny dim">{totals.flights} logged</span>}
+            />
+            <CardBody flush>
+              {loggedFlights.length === 0 ? (
+                <EmptyState
+                  icon={<JournalIcon size={28} />}
+                  title="Your flight log is ready."
+                  body="After an instructor flight, enter the aircraft, route, and the flight-time categories agreed with your instructor."
+                  action={
+                    <Link className="button button--primary" to="/journal/new">
+                      Log your first flight
+                    </Link>
+                  }
+                />
+              ) : (
+                <div className="flight-log-table-wrap">
+                  <table className="flight-log-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Route</th>
+                        <th>Aircraft</th>
+                        <th>Total</th>
+                        <th>Dual</th>
+                        <th>PIC</th>
+                        <th>Solo</th>
+                        <th>Night</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loggedFlights.map((entry) => (
+                        <tr key={entry.id}>
+                          <td>
+                            <Link to={`/journal/${entry.id}`}>{entry.date}</Link>
+                          </td>
+                          <td>{flightRoute(entry)}</td>
+                          <td>
+                            {[entry.aircraftType, entry.aircraftId].filter(Boolean).join(" · ") || "—"}
+                          </td>
+                          <td className="numeric">{entry.totalTime?.toFixed(1) ?? "—"}</td>
+                          <td className="numeric">{entry.dualReceived?.toFixed(1) ?? "—"}</td>
+                          <td className="numeric">{entry.picTime?.toFixed(1) ?? "—"}</td>
+                          <td className="numeric">{entry.soloTime?.toFixed(1) ?? "—"}</td>
+                          <td className="numeric">{entry.nightTime?.toFixed(1) ?? "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="flight-log-disclaimer tiny dim">
+                This is a personal training companion. Keep the instructor-endorsed logbook
+                and required records as the authoritative source.
+              </p>
+            </CardBody>
+          </Card>
+        </div>
       ) : (
         <div className="stack stack--5">
           {awaiting.length > 0 ? (
@@ -163,7 +260,7 @@ export function FlightJournal() {
                   body="After your next lesson, write down what you practised, what your instructor said, and the one thing to work on. Over time this becomes the clearest record of how far you have come."
                   action={
                     <Link className="button button--primary" to="/journal/new">
-                      Write your first debrief
+                      Log your first flight
                     </Link>
                   }
                 />

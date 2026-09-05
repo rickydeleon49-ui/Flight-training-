@@ -300,6 +300,22 @@ export interface JournalEntry {
   eventId: Id | null;
   date: IsoDate;
   title: string;
+  /** Training-flight details. Values are entered from the instructor-approved log entry. */
+  aircraftType: string;
+  aircraftId: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  instructorName: string;
+  totalTime: number | null;
+  dualReceived: number | null;
+  soloTime: number | null;
+  picTime: number | null;
+  crossCountryTime: number | null;
+  nightTime: number | null;
+  actualInstrumentTime: number | null;
+  simulatedInstrumentTime: number | null;
+  dayLandings: number | null;
+  nightLandings: number | null;
   mission: string;
   practiced: string;
   wentWell: string;

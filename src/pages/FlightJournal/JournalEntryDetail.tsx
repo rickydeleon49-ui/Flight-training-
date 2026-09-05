@@ -14,6 +14,7 @@ import {
 } from "@/components/ui";
 import { formatLongDate, todayIso } from "@/lib/dates";
 import { actionsFor } from "@/logic/actions";
+import { flightRoute, hasFlightLogData } from "@/logic/flightLog";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
@@ -51,6 +52,23 @@ export function JournalEntryDetail() {
   const goal = data.goals.find((candidate) => candidate.id === entry.goalId);
   const actions = actionsFor(data.actions, "journal", entry.id);
   const questions = data.questions.filter((question) => question.journalId === entry.id);
+  const aircraft = [entry.aircraftType, entry.aircraftId].filter(Boolean).join(" · ");
+  const hours = (value: number | null) => (value == null ? "" : `${value.toFixed(1)} hr`);
+  const flightDetails: Array<[string, string]> = [
+    ["Aircraft", aircraft],
+    ["Route", flightRoute(entry) === "—" ? "" : flightRoute(entry)],
+    ["Instructor", entry.instructorName],
+    ["Total time", hours(entry.totalTime)],
+    ["Training received", hours(entry.dualReceived)],
+    ["Solo", hours(entry.soloTime)],
+    ["PIC", hours(entry.picTime)],
+    ["Cross-country", hours(entry.crossCountryTime)],
+    ["Night", hours(entry.nightTime)],
+    ["Actual instrument", hours(entry.actualInstrumentTime)],
+    ["Simulated instrument", hours(entry.simulatedInstrumentTime)],
+    ["Day landings", entry.dayLandings?.toString() ?? ""],
+    ["Night landings", entry.nightLandings?.toString() ?? ""],
+  ];
 
   const sections: Array<[string, string]> = [
     ["Today's mission", entry.mission],
@@ -121,6 +139,27 @@ export function JournalEntryDetail() {
         </div>
 
         <div className="detail__column">
+          {hasFlightLogData(entry) ? (
+            <Card>
+              <CardHeader title="Flight log" />
+              <CardBody>
+                <dl className="definition">
+                  {flightDetails
+                    .filter(([, value]) => value)
+                    .map(([label, value]) => (
+                      <div key={label} style={{ display: "contents" }}>
+                        <dt>{label}</dt>
+                        <dd className="wrap-anywhere">{value}</dd>
+                      </div>
+                    ))}
+                </dl>
+                <p className="tiny dim" style={{ marginTop: "var(--space-4)" }}>
+                  Personal copy only. The instructor-endorsed logbook remains authoritative.
+                </p>
+              </CardBody>
+            </Card>
+          ) : null}
+
           <Card>
             <CardHeader title="Details" />
             <CardBody>

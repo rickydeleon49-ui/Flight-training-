@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/flight-path", label: "Flight Path", icon: <RouteIcon size={19} /> },
   { to: "/study", label: "Study Library", icon: <BookIcon size={19} /> },
   { to: "/schedule", label: "Schedule", icon: <CalendarIcon size={19} /> },
-  { to: "/journal", label: "Flight Journal", icon: <JournalIcon size={19} /> },
+  { to: "/journal", label: "Flight Log", icon: <JournalIcon size={19} /> },
   { to: "/questions", label: "Questions", icon: <QuestionIcon size={19} /> },
   { to: "/finances", label: "Finances", icon: <WalletIcon size={19} /> },
 ];

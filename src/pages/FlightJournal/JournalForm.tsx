@@ -22,6 +22,21 @@ interface DebriefDraft {
   eventId: string | null;
   date: string;
   title: string;
+  aircraftType: string;
+  aircraftId: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  instructorName: string;
+  totalTime: number | null;
+  dualReceived: number | null;
+  soloTime: number | null;
+  picTime: number | null;
+  crossCountryTime: number | null;
+  nightTime: number | null;
+  actualInstrumentTime: number | null;
+  simulatedInstrumentTime: number | null;
+  dayLandings: number | null;
+  nightLandings: number | null;
   mission: string;
   practiced: string;
   wentWell: string;
@@ -36,6 +51,21 @@ const emptyDraft = (): DebriefDraft => ({
   eventId: null,
   date: todayIso(),
   title: "",
+  aircraftType: "",
+  aircraftId: "",
+  departureAirport: "",
+  arrivalAirport: "",
+  instructorName: "",
+  totalTime: null,
+  dualReceived: null,
+  soloTime: null,
+  picTime: null,
+  crossCountryTime: null,
+  nightTime: null,
+  actualInstrumentTime: null,
+  simulatedInstrumentTime: null,
+  dayLandings: null,
+  nightLandings: null,
   mission: "",
   practiced: "",
   wentWell: "",
@@ -45,6 +75,9 @@ const emptyDraft = (): DebriefDraft => ({
   confidence: null,
   goalId: null,
 });
+
+const optionalNumber = (value: string): number | null =>
+  value.trim() === "" ? null : Number(value);
 
 /**
  * Writing or editing a lesson debrief.
@@ -72,6 +105,21 @@ export function JournalForm() {
         eventId: existing.eventId,
         date: existing.date,
         title: existing.title,
+        aircraftType: existing.aircraftType,
+        aircraftId: existing.aircraftId,
+        departureAirport: existing.departureAirport,
+        arrivalAirport: existing.arrivalAirport,
+        instructorName: existing.instructorName,
+        totalTime: existing.totalTime,
+        dualReceived: existing.dualReceived,
+        soloTime: existing.soloTime,
+        picTime: existing.picTime,
+        crossCountryTime: existing.crossCountryTime,
+        nightTime: existing.nightTime,
+        actualInstrumentTime: existing.actualInstrumentTime,
+        simulatedInstrumentTime: existing.simulatedInstrumentTime,
+        dayLandings: existing.dayLandings,
+        nightLandings: existing.nightLandings,
         mission: existing.mission,
         practiced: existing.practiced,
         wentWell: existing.wentWell,
@@ -93,17 +141,73 @@ export function JournalForm() {
         eventId: event.id,
         date: event.date,
         title: event.title,
+        aircraftType: data.profile.aircraftType,
+        instructorName: event.instructor || data.profile.instructorName,
+        departureAirport: data.profile.homeAirport,
+        arrivalAirport: data.profile.homeAirport,
         goalId: event.goalId,
       });
+      return;
     }
-  }, [existing, searchParams, data.events]);
+
+    setDraft({
+      ...emptyDraft(),
+      aircraftType: data.profile.aircraftType,
+      instructorName: data.profile.instructorName,
+      departureAirport: data.profile.homeAirport,
+      arrivalAirport: data.profile.homeAirport,
+    });
+  }, [existing, searchParams, data.events, data.profile]);
 
   const update = <K extends keyof DebriefDraft>(key: K, value: DebriefDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
+  const chooseLesson = (eventId: string) => {
+    const event = data.events.find((candidate) => candidate.id === eventId);
+    if (!event) {
+      update("eventId", null);
+      return;
+    }
+    setDraft((current) => ({
+      ...current,
+      eventId: event.id,
+      date: event.date,
+      title: current.title || event.title,
+      instructorName: current.instructorName || event.instructor || data.profile.instructorName,
+      aircraftType: current.aircraftType || data.profile.aircraftType,
+      departureAirport: current.departureAirport || data.profile.homeAirport,
+      arrivalAirport: current.arrivalAirport || data.profile.homeAirport,
+      goalId: current.goalId || event.goalId,
+    }));
+  };
+
   const save = async () => {
     if (!draft.date) {
       setError("Choose the date of this lesson.");
+      return;
+    }
+    const numberFields = [
+      draft.totalTime,
+      draft.dualReceived,
+      draft.soloTime,
+      draft.picTime,
+      draft.crossCountryTime,
+      draft.nightTime,
+      draft.actualInstrumentTime,
+      draft.simulatedInstrumentTime,
+      draft.dayLandings,
+      draft.nightLandings,
+    ];
+    if (numberFields.some((value) => value != null && (!Number.isFinite(value) || value < 0))) {
+      setError("Flight times and landing counts must be zero or greater.");
+      return;
+    }
+    if (
+      [draft.dayLandings, draft.nightLandings].some(
+        (value) => value != null && !Number.isInteger(value),
+      )
+    ) {
+      setError("Landing counts must be whole numbers.");
       return;
     }
     setError(null);
@@ -148,8 +252,8 @@ export function JournalForm() {
   return (
     <>
       <PageHeader
-        title={existing ? "Edit debrief" : "Lesson debrief"}
-        subtitle="Write it while it is fresh. Short answers are fine."
+        title={existing ? "Edit flight record" : "Log a training flight"}
+        subtitle="Record the flight and debrief while it is fresh."
         action={
           <Button variant="ghost" onClick={() => navigate(-1)}>
             Cancel
@@ -158,15 +262,20 @@ export function JournalForm() {
       />
 
       <Card>
+        <CardHeader title="Training flight" eyebrow="Personal flight-time record" />
         <CardBody>
+          <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
+            Copy flight times from the entry agreed with her instructor. Categories can overlap,
+            so the application does not calculate PIC, solo, instrument, or cross-country time.
+            Keep the instructor-endorsed logbook as the authoritative record.
+          </p>
+          {error ? <p className="field__error" style={{ marginBottom: "var(--space-4)" }}>{error}</p> : null}
           <div className="form-grid">
-            <Field label="Date" error={error}>
-              {({ id, describedBy, invalid }) => (
+            <Field label="Date">
+              {({ id }) => (
                 <TextInput
                   id={id}
                   type="date"
-                  aria-describedby={describedBy}
-                  aria-invalid={invalid}
                   value={draft.date}
                   onChange={(e) => update("date", e.target.value)}
                 />
@@ -183,7 +292,7 @@ export function JournalForm() {
                     label: `${event.title} · ${event.date}`,
                   }))}
                   value={draft.eventId ?? ""}
-                  onChange={(value) => update("eventId", value || null)}
+                  onChange={chooseLesson}
                 />
               )}
             </Field>
@@ -195,6 +304,134 @@ export function JournalForm() {
                   value={draft.title}
                   placeholder="Crosswind Landings"
                   onChange={(e) => update("title", e.target.value)}
+                />
+              )}
+            </Field>
+
+            <Field label="Aircraft type / model">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  value={draft.aircraftType}
+                  placeholder="Cessna 172S"
+                  onChange={(e) => update("aircraftType", e.target.value)}
+                />
+              )}
+            </Field>
+
+            <Field label="Aircraft registration / ID">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  value={draft.aircraftId}
+                  placeholder="N12345"
+                  onChange={(e) => update("aircraftId", e.target.value.toUpperCase())}
+                />
+              )}
+            </Field>
+
+            <Field label="Departed from">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  value={draft.departureAirport}
+                  placeholder="KPAE"
+                  onChange={(e) => update("departureAirport", e.target.value.toUpperCase())}
+                />
+              )}
+            </Field>
+
+            <Field label="Arrived at">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  value={draft.arrivalAirport}
+                  placeholder="KPAE"
+                  onChange={(e) => update("arrivalAirport", e.target.value.toUpperCase())}
+                />
+              )}
+            </Field>
+
+            <Field label="Instructor">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  value={draft.instructorName}
+                  placeholder="Instructor name"
+                  onChange={(e) => update("instructorName", e.target.value)}
+                />
+              )}
+            </Field>
+
+            <Field label="Total flight time" hint="Hours, normally entered in tenths.">
+              {({ id, describedBy }) => (
+                <TextInput
+                  id={id}
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  inputMode="decimal"
+                  aria-describedby={describedBy}
+                  value={draft.totalTime ?? ""}
+                  placeholder="1.2"
+                  onChange={(e) => update("totalTime", optionalNumber(e.target.value))}
+                />
+              )}
+            </Field>
+
+            {(
+              [
+                ["dualReceived", "Training received (dual)"],
+                ["soloTime", "Solo"],
+                ["picTime", "Pilot in command (PIC)"],
+                ["crossCountryTime", "Cross-country"],
+                ["nightTime", "Night"],
+                ["actualInstrumentTime", "Actual instrument"],
+                ["simulatedInstrumentTime", "Simulated instrument"],
+              ] as const
+            ).map(([key, label]) => (
+              <Field label={label} key={key}>
+                {({ id }) => (
+                  <TextInput
+                    id={id}
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    inputMode="decimal"
+                    value={draft[key] ?? ""}
+                    placeholder="0.0"
+                    onChange={(e) => update(key, optionalNumber(e.target.value))}
+                  />
+                )}
+              </Field>
+            ))}
+
+            <Field label="Day landings">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
+                  value={draft.dayLandings ?? ""}
+                  placeholder="0"
+                  onChange={(e) => update("dayLandings", optionalNumber(e.target.value))}
+                />
+              )}
+            </Field>
+
+            <Field label="Night landings">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
+                  value={draft.nightLandings ?? ""}
+                  placeholder="0"
+                  onChange={(e) => update("nightLandings", optionalNumber(e.target.value))}
                 />
               )}
             </Field>
@@ -345,7 +582,7 @@ export function JournalForm() {
 
       <div className="row" style={{ marginTop: "var(--space-5)" }}>
         <Button variant="primary" onClick={save}>
-          {existing ? "Save changes" : "Save debrief"}
+          {existing ? "Save changes" : "Save flight record"}
         </Button>
         <Button variant="ghost" onClick={() => navigate(-1)}>
           Cancel

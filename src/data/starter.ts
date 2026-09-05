@@ -209,7 +209,7 @@ const MATERIALS: StarterMaterial[] = [
     reviewStatus: "reference_only",
     priority: "important",
     notes:
-      "Capture the lesson while it is fresh:\n• What was today's mission?\n• What did we practice?\n• What went well, and why?\n• What was difficult, and when did it begin?\n• What exact feedback did the instructor give?\n• What should I review before the next lesson?\n• What question should I ask next time?\n• What is the single best next action?\n\nUse the Flight Journal for the personal answers.",
+      "Capture the lesson while it is fresh:\n• What was today's mission?\n• What did we practice?\n• What went well, and why?\n• What was difficult, and when did it begin?\n• What exact feedback did the instructor give?\n• What should I review before the next lesson?\n• What question should I ask next time?\n• What is the single best next action?\n\nUse the Flight Log & Journal for the personal answers.",
     tags: [STARTER_TAG, "debrief"],
   },
   {
