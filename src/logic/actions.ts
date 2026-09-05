@@ -37,6 +37,23 @@ export const planActions = (actions: NextAction[], today: IsoDate = todayIso()):
     (action) => isOpen(action) && (action.dueDate === null || action.dueDate === today),
   );
 
+/**
+ * Work finished today.
+ *
+ * These stay on Today's Plan rather than vanishing the moment they are
+ * ticked, so what she has already done today is visible to her.
+ */
+export const completedToday = (
+  actions: NextAction[],
+  today: IsoDate = todayIso(),
+): NextAction[] =>
+  actions.filter(
+    (action) =>
+      action.status === "completed" &&
+      action.completedAt !== null &&
+      todayIso(new Date(action.completedAt)) === today,
+  );
+
 const PRIORITY_WEIGHT = { next_up: 0, important: 1, later: 2 } as const;
 
 /** Dated work first, then by priority — undated work sinks to the bottom. */
@@ -52,11 +69,19 @@ export interface ActionGroup {
   actions: NextAction[];
 }
 
-/** Group into the four plan sections, in the product's fixed order. */
+/**
+ * Group into the four plan sections, in the product's fixed order.
+ * Within a section, outstanding work comes before anything already done.
+ */
 export function groupByCategory(actions: NextAction[]): ActionGroup[] {
   return ACTION_CATEGORY_ORDER.map((category) => ({
     category,
-    actions: actions.filter((action) => action.category === category).sort(byDueDate),
+    actions: actions
+      .filter((action) => action.category === category)
+      .sort((a, b) => {
+        if (isOpen(a) !== isOpen(b)) return isOpen(a) ? -1 : 1;
+        return byDueDate(a, b);
+      }),
   })).filter((group) => group.actions.length > 0);
 }
 

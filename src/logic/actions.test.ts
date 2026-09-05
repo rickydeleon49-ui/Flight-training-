@@ -4,6 +4,7 @@ import { makeAction } from "@/testing/factories";
 import {
   actionsFor,
   byDueDate,
+  completedToday,
   completionChanges,
   groupByCategory,
   isDueToday,
@@ -80,6 +81,39 @@ describe("today's plan", () => {
       TODAY,
     );
     expect(plan).toHaveLength(1);
+  });
+
+  it("keeps work finished today visible rather than making it vanish", () => {
+    // Ticking something off should show as done, not erase the evidence.
+    const doneNow = makeAction({
+      status: "completed",
+      completedAt: `${TODAY}T14:00:00.000Z`,
+    });
+    const doneYesterday = makeAction({
+      status: "completed",
+      completedAt: "2026-09-04T14:00:00.000Z",
+    });
+
+    expect(completedToday([doneNow, doneYesterday], TODAY)).toEqual([doneNow]);
+  });
+
+  it("ignores completed work with no timestamp", () => {
+    const orphan = makeAction({ status: "completed", completedAt: null });
+    expect(completedToday([orphan], TODAY)).toHaveLength(0);
+  });
+
+  it("sorts outstanding work above anything already done", () => {
+    const done = makeAction({
+      category: "prepare",
+      status: "completed",
+      completedAt: `${TODAY}T09:00:00.000Z`,
+      dueDate: "2026-09-01",
+    });
+    const open = makeAction({ category: "prepare", dueDate: "2026-09-30" });
+
+    const group = groupByCategory([done, open])[0];
+    expect(group?.actions[0]).toBe(open);
+    expect(group?.actions[1]).toBe(done);
   });
 
   it("groups into the product's four sections in a fixed order", () => {

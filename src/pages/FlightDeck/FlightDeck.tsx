@@ -175,7 +175,8 @@ export function FlightDeck() {
               title="Today's plan"
               action={
                 <span className="tiny dim">
-                  {model.planCount} {model.planCount === 1 ? "item" : "items"}
+                  {model.planDoneCount > 0 ? `${model.planDoneCount} done · ` : ""}
+                  {model.planCount} left
                 </span>
               }
             />

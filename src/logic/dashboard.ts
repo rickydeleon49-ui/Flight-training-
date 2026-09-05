@@ -21,6 +21,7 @@ import type {
   ChecklistItem,
 } from "@/domain/types";
 import {
+  completedToday,
   groupByCategory,
   mostImportantAction,
   overdueActions,
@@ -57,7 +58,10 @@ export interface DashboardModel {
   greeting: string;
   subtitle: string;
   planGroups: ActionGroup[];
+  /** Outstanding items on the plan. */
   planCount: number;
+  /** Items already ticked off today, shown alongside them. */
+  planDoneCount: number;
   nextFlight: {
     event: ScheduleEvent;
     preparation: PreparationState;
@@ -94,6 +98,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
   const today = sources.today ?? todayIso(now);
 
   const plan = planActions(sources.actions, today);
+  const doneToday = completedToday(sources.actions, today);
   const overdue = overdueActions(sources.actions, today);
   const upcoming = nextLesson(sources.events, today);
 
@@ -141,8 +146,9 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
     subtitle: [sources.profile.certificateGoal, focusLabel && `Current focus: ${focusLabel}`]
       .filter(Boolean)
       .join(" • "),
-    planGroups: groupByCategory(plan),
+    planGroups: groupByCategory([...plan, ...doneToday]),
     planCount: plan.length,
+    planDoneCount: doneToday.length,
     nextFlight:
       upcoming && preparation
         ? {
