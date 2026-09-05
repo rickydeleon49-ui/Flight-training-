@@ -4,7 +4,9 @@
 //! database setup, while product logic lives in the TypeScript layer behind
 //! repository abstractions.
 
+mod backup;
 mod documents;
+mod storage;
 
 use tauri_plugin_sql::{Migration, MigrationKind};
 
@@ -49,11 +51,22 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
+        .setup(|app| {
+            // Before the frontend opens the database, and therefore before any
+            // migration runs, copy it aside if this is a new version's first run.
+            if let Err(error) = backup::backup_if_upgraded(app.handle()) {
+                eprintln!("Could not back up before upgrading: {error}");
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             documents::import_document,
             documents::document_path,
             documents::document_exists,
             documents::delete_document,
+            backup::create_backup,
+            backup::list_backups,
+            backup::data_directory,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Her Flight Deck");

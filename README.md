@@ -36,14 +36,21 @@ The real application always uses the desktop database.
 
 ---
 
-## On a Mac
+## On a Mac or Windows
 
-Tauri builds for the machine it runs on, so a macOS application has to be
-built on macOS. Two ways to get one.
+Tauri builds for the machine it runs on, so each platform's application has to
+be built on that platform. Two ways to get one.
 
-### Build it yourself
+### Let GitHub build it
 
-Once, to set the machine up:
+The **Build desktop app** workflow under the Actions tab produces a
+downloadable `.dmg` or `.exe` installer with no local toolchain. Pick a
+platform or build both. It is manual-trigger only, because macOS runners bill
+at ten times the Linux rate.
+
+### Or build it yourself
+
+**macOS** — once, to set the machine up:
 
 ```bash
 xcode-select --install                                            # Apple's build tools
@@ -51,7 +58,12 @@ brew install node                                                 # or from node
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh    # Rust
 ```
 
-Then, in the project:
+**Windows** — install [Node](https://nodejs.org),
+[Rust](https://rustup.rs), and the Visual Studio Build Tools with the
+"Desktop development with C++" workload. WebView2 ships with Windows 11; on
+Windows 10 the installer fetches it.
+
+Then, on either:
 
 ```bash
 npm install
@@ -59,79 +71,81 @@ npm run tauri dev      # develop, with live reload
 npm run tauri build    # package
 ```
 
-The build leaves you:
+Which leaves you:
 
 ```
-src-tauri/target/release/bundle/macos/Her Flight Deck.app
-src-tauri/target/release/bundle/dmg/Her Flight Deck_0.1.0_aarch64.dmg
+macOS    src-tauri/target/release/bundle/dmg/Her Flight Deck_0.1.0_aarch64.dmg
+Windows  src-tauri/target/release/bundle/nsis/Her Flight Deck_0.1.0_x64-setup.exe
 ```
 
-Apple Silicon builds arm64 only by default. For one binary that also runs on
-Intel Macs:
+Apple Silicon builds arm64 only. For one binary that also runs on Intel Macs:
 
 ```bash
 rustup target add x86_64-apple-darwin aarch64-apple-darwin
 npm run tauri build -- --target universal-apple-darwin
 ```
 
-### Or let GitHub build it
+### Neither installer is code-signed
 
-The **Build macOS app** workflow under the Actions tab produces a downloadable
-`.dmg` without a local toolchain. It is manual-trigger only, because macOS
-runners bill at ten times the Linux rate.
+Built and run on the same machine that is fine. An installer downloaded from
+GitHub Actions comes from elsewhere, so the first launch needs:
 
-### Things macOS does differently
+- **macOS** — right-click → Open, or
+  `xattr -dr com.apple.quarantine "/Applications/Her Flight Deck.app"`
+- **Windows** — SmartScreen shows "Windows protected your PC"; choose
+  **More info → Run anyway**
 
-**The app is not code-signed.** Built and run on the same Mac that is fine —
-macOS only quarantines files that arrive from elsewhere. A `.dmg` you download
-from GitHub Actions *is* from elsewhere, so the first launch needs either a
-right-click → Open, or:
+Signing properly needs a paid Apple Developer account and a Windows code
+signing certificate. For a private personal application it is not worth it.
 
-```bash
-xattr -dr com.apple.quarantine "/Applications/Her Flight Deck.app"
-```
+### It needs a reasonably current system
 
-Signing it properly needs a paid Apple Developer account; for a private
-personal application it is not worth it.
-
-**It needs a reasonably current macOS.** Every form in the application is a
-native `<dialog>`, which WebKit only supports from Safari 15.4 — macOS 12.3,
-or an older system with Safari updated. The bundle declares 12.0 as its
-minimum. On anything older the dialogs simply will not open, so the floor is
-deliberate rather than cautious.
-
-**Where her data lives:**
-
-```
-~/Library/Application Support/com.herflightdeck.app/
-    her-flight-deck.db     the database
-    documents/             imported study materials
-```
-
-That directory is what to back up, and what to delete for a clean start.
-Nothing is written anywhere else, and nothing leaves the machine.
-
-**`scripts/desktop-smoke.sh` is Linux only.** There is no equivalent for the
-macOS file chooser, so after changing how photos or study materials are added,
-open Settings and add one by hand.
+Every form in the application is a native `<dialog>`. WebKit only supports
+that from Safari 15.4, so the macOS bundle declares **12.0** as its minimum —
+on anything older the dialogs would simply not open. Windows uses WebView2,
+which is evergreen, so any supported Windows 10 or 11 is fine.
 
 ---
 
-## Privacy
+## Her data survives updates
 
-This is a private personal application, and the repository holds source code
-only.
+Everything she enters lives in one folder:
 
-- Imported study materials are copied into the Tauri application data directory
-  and referenced from the database by relative path.
-- The SQLite database lives in that same application data directory — never in
-  the project.
-- `.gitignore` blocks personal document formats, local databases, and the
-  directories uploads would land in.
-- Demo data is clearly fictional and is only ever loaded on request from
-  Settings.
+```
+macOS    ~/Library/Application Support/com.herflightdeck.app/
+Windows  %APPDATA%\com.herflightdeck.app\
 
-Nothing is uploaded anywhere.
+    her-flight-deck.db     the database
+    documents/             imported study materials
+    backups/               automatic copies
+```
+
+Four things keep it safe across releases:
+
+**The folder is keyed to the bundle identifier**, `com.herflightdeck.app`.
+Installing a new version over an old one leaves it untouched. Changing that
+identifier would point the application at an empty folder and look exactly
+like data loss, so it must never change.
+
+**A copy is taken before any new version's first run.** The Rust side records
+which version last ran; when that changes it copies the database aside
+*before* the frontend opens it, and therefore before any migration touches
+it. The ten most recent copies are kept. If a release ever goes wrong, the
+previous state is sitting right there.
+
+**Migrations only ever add.** `npm test` fails the build if a migration drops
+or renames anything, or if an already-shipped migration is edited — installed
+copies record a checksum of every migration they have applied, and changing
+one makes those databases refuse to open. Both guards have deliberate
+failure messages explaining what to do instead.
+
+**She can copy it out herself.** Settings shows the folder, opens it in
+Finder or Explorer, and takes a copy on demand.
+
+One honest limit: the automatic copies live *inside* that folder, so they
+protect against a bad update, not against losing the machine or an uninstaller
+that offers to remove application data. For that, copy the folder somewhere
+else — the "Open folder" button in Settings is there to make that easy.
 
 ---
 

@@ -1,0 +1,67 @@
+# Builds installers for macOS and Windows and leaves them to download.
+#
+# Manual trigger only. macOS runners bill at ten times the Linux rate and
+# Windows at twice, so this never fires on a push — start it from the Actions
+# tab when you actually want a build.
+name: Build desktop app
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Which to build"
+        type: choice
+        options: [both, macos, windows]
+        default: both
+
+jobs:
+  build:
+    strategy:
+      # One platform failing should not cancel the other.
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14          # Apple Silicon
+            name: macOS
+            bundles: dmg
+            artifact: src-tauri/target/release/bundle/dmg/*.dmg
+          - os: windows-latest
+            name: Windows
+            bundles: nsis
+            artifact: src-tauri/target/release/bundle/nsis/*-setup.exe
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    if: >-
+      inputs.platform == 'both'
+      || (inputs.platform == 'macos' && startsWith(matrix.os, 'macos'))
+      || (inputs.platform == 'windows' && startsWith(matrix.os, 'windows'))
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      # Fast, and catches far more than the build does — including the guards
+      # that keep migrations from destroying her data.
+      - run: npm test
+
+      - name: Build
+        run: npm run tauri build -- --bundles ${{ matrix.bundles }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: her-flight-deck-${{ matrix.name }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error

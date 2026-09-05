@@ -16,6 +16,16 @@ import {
 import { clearAllData, loadDemoData } from "@/data/seed";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
+import {
+  backupsAvailable,
+  createBackup,
+  dataDirectory,
+  describeBackup,
+  formatBytes,
+  listBackups,
+  revealFolder,
+  type BackupInfo,
+} from "@/services/backups";
 import { trainingDuration } from "@/logic/keyDates";
 import { useAppData } from "@/state/AppDataContext";
 
@@ -48,11 +58,36 @@ export function Settings() {
   const [busy, setBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInput = useRef<HTMLInputElement>(null);
+  const [dataPath, setDataPath] = useState("");
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [backupNote, setBackupNote] = useState<string | null>(null);
 
   // Keep the form in step when the profile is replaced (demo load, reset).
   useEffect(() => {
     setDraft(draftFrom(data.profile));
   }, [data.profile]);
+
+  const refreshBackups = async () => {
+    if (!backupsAvailable()) return;
+    setDataPath(await dataDirectory());
+    setBackups(await listBackups());
+  };
+
+  useEffect(() => {
+    void refreshBackups();
+  }, []);
+
+  const backUpNow = async () => {
+    setBackupNote(null);
+    try {
+      await createBackup();
+      await refreshBackups();
+      setBackupNote("Copy saved.");
+      window.setTimeout(() => setBackupNote(null), 3000);
+    } catch (error) {
+      setBackupNote(error instanceof Error ? error.message : "That did not work.");
+    }
+  };
 
   const update = <K extends keyof ProfileDraft>(key: K, value: ProfileDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -410,19 +445,69 @@ export function Settings() {
         </Card>
 
         <Card>
-          <CardHeader title="Privacy" eyebrow="Where your material lives" />
+          <CardHeader
+            title="Your data"
+            eyebrow="Kept across updates"
+            action={
+              backupsAvailable() ? (
+                <div className="row">
+                  {backupNote ? (
+                    <span className="tiny" style={{ color: "var(--status-complete)" }}>
+                      {backupNote}
+                    </span>
+                  ) : null}
+                  <Button size="small" onClick={backUpNow}>
+                    Back up now
+                  </Button>
+                </div>
+              ) : null
+            }
+          />
           <CardBody>
-            <div className="stack stack--3 small muted">
-              <p>
-                Study materials you add are copied into this application&rsquo;s own private
-                data directory on this computer. Notes, journal entries, questions,
-                financial records, your photo and why you started are stored in a local
-                database in the same place.
+            <div className="stack stack--4">
+              <p className="small muted">
+                Everything you enter lives in one folder on this computer — your
+                database, your study materials, your photo. Nothing is uploaded
+                anywhere. A copy of it is made automatically before the first run of
+                any new version, so an update can never take your training record
+                with it.
               </p>
-              <p>
-                Nothing is uploaded anywhere, and personal material is never stored in the
-                project&rsquo;s source repository.
+
+              {dataPath ? (
+                <div className="stack stack--2">
+                  <p className="tiny strong dim">Where it lives</p>
+                  <div className="row row--between" style={{ gap: "var(--space-3)" }}>
+                    <code className="tiny wrap-anywhere">{dataPath}</code>
+                    <Button size="small" onClick={() => revealFolder(dataPath)}>
+                      Open folder
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="tiny dim">
+                  Backups and the data folder are part of the desktop application.
+                </p>
+              )}
+
+              <p className="tiny dim">
+                These copies sit inside that same folder, so they protect you from a
+                bad update rather than from losing this computer. Copy the folder
+                somewhere else now and then.
               </p>
+
+              {backups.length > 0 ? (
+                <div className="stack stack--2">
+                  <p className="tiny strong dim">Copies kept ({backups.length})</p>
+                  {backups.slice(0, 6).map((backup) => (
+                    <div className="row row--between" key={backup.name}>
+                      <span className="small truncate">{describeBackup(backup.name)}</span>
+                      <span className="tiny dim numeric">
+                        {backup.name.slice(0, 10)} · {formatBytes(backup.bytes)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </CardBody>
         </Card>

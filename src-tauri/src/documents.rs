@@ -8,7 +8,9 @@
 use std::path::{Path, PathBuf};
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+
+use crate::storage::app_root;
 
 /// Subdirectory of app data that holds imported study materials.
 const DOCUMENTS_DIR: &str = "documents";
@@ -25,11 +27,7 @@ pub struct ImportedDocument {
 
 /// Absolute path of the private documents directory, created if needed.
 fn documents_root(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Could not resolve the application data directory: {e}"))?
-        .join(DOCUMENTS_DIR);
+    let dir = app_root(app)?.join(DOCUMENTS_DIR);
 
     std::fs::create_dir_all(&dir)
         .map_err(|e| format!("Could not create the documents directory: {e}"))?;
