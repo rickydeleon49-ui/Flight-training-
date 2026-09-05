@@ -1,13 +1,26 @@
 # Publishes installers she can download and run.
 #
-# Push a tag like v0.2.0 (scripts/release.sh does the bumping and tagging)
-# and this builds the macOS and Windows installers and attaches them to a
-# GitHub Release, with first-run instructions in the notes.
+# Two ways to start it:
+#
+#   From the browser  Actions -> Release -> Run workflow, and type the
+#                     version. Nothing needs to be installed anywhere. The
+#                     tag is created for you.
+#
+#   From a clone      scripts/release.sh 0.2.0, then push the tag.
+#
+# Either way it builds the macOS and Windows installers and attaches them to
+# a GitHub Release with first-run instructions written for her.
 name: Release
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.0 (must match the version in the repository)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -16,6 +29,9 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      tag: ${{ steps.resolve.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,19 +41,42 @@ jobs:
       - run: npm ci
 
       # The application backs her database up when it sees the version has
-      # changed. A tag that disagrees with the built version would skip that,
-      # so refuse to ship one.
-      - name: The tag matches the version everywhere
+      # changed since the last run. A release whose built version disagrees
+      # with the tag would skip that copy, so refuse to ship one.
+      - name: Work out the version, and check everything agrees
+        id: resolve
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'$VERSION' is not a version like 0.2.0"
+            exit 1
+          fi
+
           PKG=$(node -p "require('./package.json').version")
           CONF=$(node -p "require('./src-tauri/tauri.conf.json').version")
           CARGO=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
-          echo "tag=$TAG package.json=$PKG tauri.conf.json=$CONF Cargo.toml=$CARGO"
-          if [ "$TAG" != "$PKG" ] || [ "$TAG" != "$CONF" ] || [ "$TAG" != "$CARGO" ]; then
-            echo "::error::Version mismatch. Use scripts/release.sh to bump them together."
+          echo "releasing=$VERSION package.json=$PKG tauri.conf.json=$CONF Cargo.toml=$CARGO"
+
+          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ]; then
+            echo "::error::The repository is at $PKG but you asked for $VERSION. Bump it first with scripts/release.sh, or release $PKG."
             exit 1
           fi
+
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::v$VERSION has already been released. Bump the version first."
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: npm test
 
@@ -80,7 +119,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: build
+    needs: [check, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,8 +133,9 @@ jobs:
         run: ls -lh installers
 
       - name: Write the release notes
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           {
             echo "## Her Flight Deck $VERSION"
             echo
@@ -136,11 +176,17 @@ jobs:
           } > notes.md
           cat notes.md
 
+      # --target creates the tag when it does not exist yet, which is what
+      # makes releasing from the browser possible.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.check.outputs.tag }}
+          VERSION: ${{ needs.check.outputs.version }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "Her Flight Deck ${GITHUB_REF_NAME#v}" \
+          gh release create "$TAG" \
+            --title "Her Flight Deck $VERSION" \
             --notes-file notes.md \
+            --target "$GITHUB_SHA" \
             installers/*
+          echo "Published: $(gh release view "$TAG" --json url --jq .url)"

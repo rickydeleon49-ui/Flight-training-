@@ -43,19 +43,30 @@ She should not have to build anything. Push a version tag and GitHub builds
 both installers and publishes them on the repository's **Releases** page,
 where she downloads one file and opens it.
 
+**From the browser**, with nothing installed anywhere:
+
+> Actions → **Release** → Run workflow → type the version → Run
+
+It creates the tag, builds both installers, and publishes them. This is the
+whole process; you never need a clone.
+
+**Or from a clone**, if you have one:
+
 ```bash
 scripts/release.sh 0.2.0                       # bumps, checks, commits, tags
 git push origin <branch> && git push origin v0.2.0
 ```
 
-The tag is what triggers it. The release notes are written for her, not for a
-developer: which file to take, what each system asks the first time, and that
-updating keeps everything she has entered.
+The release notes are written for her, not for a developer: which file to
+take, what each system asks the first time, and that updating keeps
+everything she has entered.
 
 The version is not just bookkeeping — the application takes a copy of her
-database whenever it notices the version changed since the last run, so the
-release workflow refuses to publish a tag that disagrees with the built
-version, and `scripts/release.sh` refuses to re-release the same number.
+database whenever it notices the version changed since the last run. So the
+workflow refuses to publish if the version you ask for disagrees with the one
+in the repository, or if that version has already been released. To ship a
+new version, bump it first (`scripts/release.sh`, or edit `package.json`,
+`src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` together).
 
 **She will need access to the repository to download it.** It is private, so
 that means a GitHub account added as a collaborator. If she does not have one,
