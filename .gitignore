@@ -1,0 +1,121 @@
+# ---------------------------------------------------------------
+# Her Flight Deck
+#
+# Product Spec section 36 (Privacy): personal training materials
+# must never be committed. GitHub contains source code only.
+# ---------------------------------------------------------------
+
+# --- Personal training data (NEVER COMMIT) ---
+# Uploaded study materials, instructor handouts, journal entries,
+# financial records, and any local application database.
+/data/
+/documents/
+/study-materials/
+/uploads/
+/private/
+/personal/
+*.local.db
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+*.db
+*.db-shm
+*.db-wal
+
+# Personal document formats dropped anywhere in the tree.
+# Add explicit exceptions below for real project assets.
+*.pdf
+*.docx
+*.doc
+*.pages
+*.numbers
+*.xlsx
+*.csv
+
+# Exceptions: project documentation and design assets that ARE source.
+!docs/**/*.pdf
+!design/**/*.pdf
+
+# --- Node / frontend ---
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+*.local
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# Package manager logs and state
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+.yarn/cache
+.yarn/install-state.gz
+
+# --- Tauri / Rust ---
+src-tauri/target/
+src-tauri/gen/
+target/
+**/*.rs.bk
+*.pdb
+
+# Tauri build output and signing keys (NEVER COMMIT KEYS)
+src-tauri/WixTools/
+*.tauri-key
+*.tauri-key.pub
+tauri-private.key
+
+# --- Environment and secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!src-tauri/icons/*.key
+secrets.json
+credentials.json
+
+# --- Testing and coverage ---
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# --- Editors and IDEs ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# --- OS files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# --- Logs and temp ---
+logs/
+*.log
+tmp/
+temp/
+.cache/
