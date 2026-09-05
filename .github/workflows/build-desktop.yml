@@ -18,53 +18,50 @@ on:
         default: both
 
 jobs:
-  build:
-    strategy:
-      # One platform failing should not cancel the other.
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-15          # Apple Silicon
-            name: macOS
-            bundles: dmg
-            artifact: src-tauri/target/release/bundle/dmg/*.dmg
-          - os: windows-latest
-            name: Windows
-            bundles: nsis
-            artifact: src-tauri/target/release/bundle/nsis/*-setup.exe
-
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    if: >-
-      inputs.platform == 'both'
-      || (inputs.platform == 'macos' && startsWith(matrix.os, 'macos'))
-      || (inputs.platform == 'windows' && startsWith(matrix.os, 'windows'))
-
+  build-macos:
+    name: macOS
+    runs-on: macos-15
+    if: inputs.platform == 'both' || inputs.platform == 'macos'
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
       - uses: dtolnay/rust-toolchain@stable
-
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
-
       - run: npm ci
-
-      # Fast, and catches far more than the build does — including the guards
-      # that keep migrations from destroying her data.
       - run: npm test
-
       - name: Build
-        run: npm run tauri build -- --bundles ${{ matrix.bundles }}
-
+        run: npm run tauri build -- --bundles dmg
       - uses: actions/upload-artifact@v4
         with:
-          name: her-flight-deck-${{ matrix.name }}
-          path: ${{ matrix.artifact }}
+          name: her-flight-deck-macOS
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    if: inputs.platform == 'both' || inputs.platform == 'windows'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - run: npm test
+      - name: Build
+        run: npm run tauri build -- --bundles nsis
+      - uses: actions/upload-artifact@v4
+        with:
+          name: her-flight-deck-Windows
+          path: src-tauri/target/release/bundle/nsis/*-setup.exe
           if-no-files-found: error
