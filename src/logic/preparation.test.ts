@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { makeAction, makeEvent, makePrepItem, makeQuestion } from "@/testing/factories";
-import { lessonPreparation, lessonsAwaitingDebrief, nextEvent } from "./preparation";
+import { makeEvent, makePrepItem, makeQuestion } from "@/testing/factories";
+import { lessonPreparation, lessonsAwaitingDebrief, nextEvent, nextLesson } from "./preparation";
 
 const TODAY = "2026-09-05";
 
@@ -15,7 +15,6 @@ describe("lessonPreparation", () => {
         makePrepItem({ eventId: "lesson-1", title: "Landing notes", done: false }),
         makePrepItem({ eventId: "lesson-1", title: "Equipment check", done: true }),
       ],
-      actions: [],
       questions: [],
     });
 
@@ -25,29 +24,23 @@ describe("lessonPreparation", () => {
     expect(state.outstanding.map((line) => line.label)).toEqual(["Landing notes"]);
   });
 
-  it("folds in related actions and unasked questions", () => {
+  it("includes questions saved to ask at that lesson", () => {
     const state = lessonPreparation(event, {
       prepItems: [makePrepItem({ eventId: "lesson-1", done: true })],
-      actions: [
-        makeAction({ relatedType: "event", relatedId: "lesson-1", title: "Review notes" }),
-        makeAction({ relatedType: "event", relatedId: "other-lesson" }),
-      ],
       questions: [
         makeQuestion({ eventId: "lesson-1", text: "Rudder timing?", status: "to_ask" }),
         makeQuestion({ eventId: "lesson-1", status: "answered" }),
       ],
     });
 
-    expect(state.total).toBe(4);
+    expect(state.total).toBe(3);
     expect(state.completed).toBe(2);
-    expect(state.lines.map((l) => l.source)).toEqual([
-      "checklist", "action", "question", "question",
-    ]);
+    expect(state.lines.map((l) => l.source)).toEqual(["checklist", "question", "question"]);
   });
 
   it("is not 'ready' when there is nothing to prepare", () => {
     // An empty checklist is not the same as being prepared.
-    const state = lessonPreparation(event, { prepItems: [], actions: [], questions: [] });
+    const state = lessonPreparation(event, { prepItems: [], questions: [] });
     expect(state.total).toBe(0);
     expect(state.ready).toBe(false);
   });
@@ -55,7 +48,6 @@ describe("lessonPreparation", () => {
   it("is ready once every item is done", () => {
     const state = lessonPreparation(event, {
       prepItems: [makePrepItem({ eventId: "lesson-1", done: true })],
-      actions: [],
       questions: [],
     });
     expect(state.ready).toBe(true);
@@ -65,7 +57,6 @@ describe("lessonPreparation", () => {
   it("ignores items belonging to other lessons", () => {
     const state = lessonPreparation(event, {
       prepItems: [makePrepItem({ eventId: "another-lesson" })],
-      actions: [],
       questions: [],
     });
     expect(state.total).toBe(0);
@@ -88,6 +79,22 @@ describe("nextEvent", () => {
 
   it("returns null when the schedule is empty", () => {
     expect(nextEvent([], TODAY)).toBeNull();
+  });
+});
+
+describe("nextLesson", () => {
+  it("skips ground school and other events to find the next flight", () => {
+    // The Next Flight card is about flying; a classroom session must not
+    // take its place.
+    const groundSchool = makeEvent({ id: "ground", date: "2026-09-08", eventType: "ground_school" });
+    const lesson = makeEvent({ id: "lesson", date: "2026-09-12", eventType: "flight_lesson" });
+
+    expect(nextEvent([groundSchool, lesson], TODAY)?.id).toBe("ground");
+    expect(nextLesson([groundSchool, lesson], TODAY)?.id).toBe("lesson");
+  });
+
+  it("returns null when no lesson is booked", () => {
+    expect(nextLesson([makeEvent({ eventType: "medical" })], TODAY)).toBeNull();
   });
 });
 

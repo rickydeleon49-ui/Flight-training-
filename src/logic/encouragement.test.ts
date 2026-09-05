@@ -61,6 +61,14 @@ describe("encouragementMessage", () => {
     expect(message).toBeNull();
   });
 
+  it("phrases the timing in words, never as a bare date", () => {
+    // A lesson exactly a week out must not read "Your next lesson is sep 12."
+    const message = encouragementMessage(
+      input({ nextLessonDate: "2026-09-12", nextLessonTitle: "Crosswind Landings", outstandingPrepCount: 5 }),
+    );
+    expect(message).toBe("Your next lesson is in 7 days. 5 preparation items remain.");
+  });
+
   it("ignores a lesson that is still far away", () => {
     const message = encouragementMessage(
       input({

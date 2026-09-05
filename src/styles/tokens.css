@@ -1,0 +1,143 @@
+/*
+ * Design tokens for Her Flight Deck.
+ *
+ * Components reference semantic names only (--surface-card, --status-overdue)
+ * so the palette can be adjusted in one place. The raw palette values from
+ * the product spec are recorded here as the private --palette-* layer and are
+ * never used directly in a component.
+ *
+ * The product commits to one warm light palette; there is no dark theme, so
+ * every colour is defined once and stated explicitly.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Raw palette (spec section 30). Do not use these in components. -- */
+  --palette-ivory: #faf7f4;
+  --palette-white: #ffffff;
+  --palette-navy: #17233c;
+  --palette-navy-muted: #596276;
+  --palette-berry: #a84c6b;
+  --palette-rose: #dfa7b8;
+  --palette-lavender: #b9addf;
+  --palette-sky: #8ebfda;
+  --palette-mint: #aad4c4;
+
+  /* ---- Surfaces ---- */
+  --surface-page: var(--palette-ivory);
+  --surface-card: var(--palette-white);
+  --surface-sunken: #f3eeea;
+  --surface-raised: #fffdfc;
+  /* Tinted washes for section headers and quiet panels. */
+  --surface-tint-berry: #fdf4f6;
+  --surface-tint-sky: #f1f7fb;
+  --surface-tint-lavender: #f6f4fc;
+  --surface-tint-mint: #f0f8f5;
+  --surface-tint-warn: #fdf3f2;
+
+  /* ---- Text ---- */
+  --text-primary: var(--palette-navy);
+  --text-secondary: var(--palette-navy-muted);
+  --text-tertiary: #7d8598;
+  --text-on-accent: #ffffff;
+
+  /* ---- Lines and edges ---- */
+  --border-subtle: #ece4de;
+  --border-strong: #ddd2ca;
+  --border-focus: var(--palette-berry);
+
+  /* ---- Accents ----
+   * Each accent has a light fill for backgrounds and a darkened "ink" that
+   * meets contrast requirements for text and icons on white.
+   */
+  --accent-primary: var(--palette-berry);
+  --accent-primary-hover: #94425e;
+  --accent-primary-fill: #f7e9ee;
+  --accent-secondary: var(--palette-rose);
+
+  --category-study-fill: var(--surface-tint-lavender);
+  --category-study-ink: #5b4d95;
+  --category-study-edge: var(--palette-lavender);
+
+  --category-flight-fill: var(--surface-tint-sky);
+  --category-flight-ink: #2b6285;
+  --category-flight-edge: var(--palette-sky);
+
+  --category-complete-fill: var(--surface-tint-mint);
+  --category-complete-ink: #2f6d59;
+  --category-complete-edge: var(--palette-mint);
+
+  /* ---- Status ----
+   * Overdue must stay unmistakable. It is a muted red rather than an alarm
+   * red, and it is always paired with text and an icon, never colour alone.
+   */
+  --status-overdue: #b0413c;
+  --status-overdue-fill: var(--surface-tint-warn);
+  --status-overdue-edge: #e8bab6;
+  --status-due-today: #9a6212;
+  --status-due-today-fill: #fdf5e9;
+  --status-complete: var(--category-complete-ink);
+
+  /* ---- Type ---- */
+  --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino,
+    Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", sans-serif;
+  --font-numeric: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.625rem;
+  --text-2xl: 2.125rem;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.55;
+
+  /* ---- Space ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.75rem;
+  --space-8: 3.5rem;
+
+  /* ---- Shape ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* ---- Depth. Kept very soft; the design leans on spacing, not shadow. -- */
+  --shadow-sm: 0 1px 2px rgba(23, 35, 60, 0.04);
+  --shadow-md: 0 2px 10px rgba(23, 35, 60, 0.05);
+  --shadow-lg: 0 12px 32px rgba(23, 35, 60, 0.1);
+
+  --focus-ring: 0 0 0 3px rgba(168, 76, 107, 0.28);
+
+  /* ---- Layout ---- */
+  --sidebar-width: 15rem;
+  --content-max: 76rem;
+
+  --transition: 140ms ease;
+}
+
+/* Respect a request for reduced motion across every animated element. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

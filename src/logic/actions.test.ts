@@ -56,17 +56,22 @@ describe("overdue detection", () => {
 });
 
 describe("today's plan", () => {
-  it("includes work due today, overdue work, and undated work", () => {
+  it("includes work due today and undated work", () => {
     const plan = planActions(
       [
         makeAction({ title: "today", dueDate: TODAY }),
-        makeAction({ title: "overdue", dueDate: "2026-09-01" }),
         makeAction({ title: "undated", dueDate: null }),
         makeAction({ title: "later", dueDate: "2026-09-20" }),
       ],
       TODAY,
     );
-    expect(plan.map((a) => a.title).sort()).toEqual(["overdue", "today", "undated"]);
+    expect(plan.map((a) => a.title).sort()).toEqual(["today", "undated"]);
+  });
+
+  it("leaves overdue work to Needs Attention so nothing is listed twice", () => {
+    const overdue = makeAction({ title: "overdue", dueDate: "2026-09-01" });
+    expect(planActions([overdue], TODAY)).toHaveLength(0);
+    expect(overdueActions([overdue], TODAY)).toHaveLength(1);
   });
 
   it("leaves completed work off the plan", () => {

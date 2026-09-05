@@ -27,12 +27,14 @@ export const overdueActions = (actions: NextAction[], today: IsoDate = todayIso(
   actions.filter((action) => isOverdue(action, today)).sort(byDueDate);
 
 /**
- * What belongs on Today's Flight Plan: open work that is due today, already
- * overdue, or carries no date at all. Work due later stays out of the way.
+ * What belongs on Today's Flight Plan: open work due today, plus undated
+ * work. Overdue items are deliberately excluded — they belong to Needs
+ * Attention, where they get their own reschedule and complete controls, so
+ * nothing appears twice on the same screen.
  */
 export const planActions = (actions: NextAction[], today: IsoDate = todayIso()): NextAction[] =>
   actions.filter(
-    (action) => isOpen(action) && (action.dueDate === null || action.dueDate <= today),
+    (action) => isOpen(action) && (action.dueDate === null || action.dueDate === today),
   );
 
 const PRIORITY_WEIGHT = { next_up: 0, important: 1, later: 2 } as const;

@@ -27,27 +27,27 @@ const map = (row: Row): Profile => ({
 /** Profile is a single row; it is created on first run if absent. */
 export function profileRepository(db: SqlDatabase) {
   return {
+    /**
+     * Read the profile, creating it on first run.
+     *
+     * The insert is idempotent because two callers can reach this at once
+     * (React re-running an effect, or two screens loading together) and both
+     * would otherwise try to create the same row.
+     */
     async get(): Promise<Profile> {
-      const rows = await db.select<Row>("SELECT * FROM settings WHERE id = ?", [PROFILE_ID]);
-      const existing = rows[0];
-      if (existing) return map(existing);
-
       const timestamp = nowIso();
       await db.execute(
         `INSERT INTO settings (id, pilot_name, certificate_goal, current_focus,
            current_milestone_id, created_at, updated_at)
-         VALUES (?, '', 'Private Pilot', '', NULL, ?, ?)`,
+         VALUES (?, '', 'Private Pilot', '', NULL, ?, ?)
+         ON CONFLICT(id) DO NOTHING`,
         [PROFILE_ID, timestamp, timestamp],
       );
-      return {
-        id: PROFILE_ID,
-        pilotName: "",
-        certificateGoal: "Private Pilot",
-        currentFocus: "",
-        currentMilestoneId: null,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      };
+
+      const rows = await db.select<Row>("SELECT * FROM settings WHERE id = ?", [PROFILE_ID]);
+      const profile = rows[0];
+      if (!profile) throw new Error("The profile record could not be created.");
+      return map(profile);
     },
 
     async update(changes: Partial<Omit<Profile, "id" | "createdAt" | "updatedAt">>): Promise<void> {

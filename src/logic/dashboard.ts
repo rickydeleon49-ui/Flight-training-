@@ -28,7 +28,12 @@ import {
   type ActionGroup,
 } from "./actions";
 import { encouragementMessage } from "./encouragement";
-import { lessonPreparation, lessonsAwaitingDebrief, nextEvent, type PreparationState } from "./preparation";
+import {
+  lessonPreparation,
+  lessonsAwaitingDebrief,
+  nextLesson,
+  type PreparationState,
+} from "./preparation";
 import { currentMilestone, milestoneProgress, studyFocus, type MilestoneProgress } from "./progress";
 import { upcomingExpenses } from "./finance";
 
@@ -90,12 +95,11 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
 
   const plan = planActions(sources.actions, today);
   const overdue = overdueActions(sources.actions, today);
-  const upcoming = nextEvent(sources.events, today);
+  const upcoming = nextLesson(sources.events, today);
 
   const preparation = upcoming
     ? lessonPreparation(upcoming, {
         prepItems: sources.prepItems,
-        actions: sources.actions,
         questions: sources.questions,
       })
     : null;

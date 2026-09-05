@@ -5,7 +5,7 @@
  * motivational quotes and no invented praise. When there is genuinely
  * nothing to say, this returns null and the dashboard shows nothing.
  */
-import { daysBetween, describeRelativeDate } from "@/lib/dates";
+import { daysBetween } from "@/lib/dates";
 import type { IsoDate } from "@/domain/types";
 
 export interface EncouragementInput {
@@ -20,6 +20,13 @@ export interface EncouragementInput {
   hasAnyData: boolean;
 }
 
+/** Timing wording for a lesson within the coming week. */
+function describeLessonTiming(days: number): string {
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  return `in ${days} days`;
+}
+
 export function encouragementMessage(input: EncouragementInput): string | null {
   if (!input.hasAnyData) return null;
 
@@ -30,10 +37,10 @@ export function encouragementMessage(input: EncouragementInput): string | null {
   if (daysToLesson !== null && daysToLesson >= 0 && daysToLesson <= 7) {
     if (input.outstandingPrepCount > 0) {
       const item = input.outstandingPrepCount === 1 ? "item" : "items";
-      const when = describeRelativeDate(input.nextLessonDate as IsoDate, input.today).toLowerCase();
-      return `Your next lesson is ${when}. ${input.outstandingPrepCount} preparation ${item} ${
-        input.outstandingPrepCount === 1 ? "remains" : "remain"
-      }.`;
+      const verb = input.outstandingPrepCount === 1 ? "remains" : "remain";
+      return `Your next lesson is ${describeLessonTiming(daysToLesson)}. ${
+        input.outstandingPrepCount
+      } preparation ${item} ${verb}.`;
     }
     if (input.nextLessonTitle) {
       return `You are prepared for ${input.nextLessonTitle}.`;

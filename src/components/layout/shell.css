@@ -1,0 +1,168 @@
+/* Application shell: a quiet sidebar and a generous content column. */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* ------------------------------ Sidebar ----------------------------- */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4);
+  background: var(--surface-card);
+  border-right: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) 0;
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(150deg, var(--accent-primary), #8d3c59);
+  color: #fff;
+  flex: none;
+}
+
+.brand__name {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.brand__tagline {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  text-decoration: none;
+  transition: background var(--transition), color var(--transition);
+}
+
+.nav__link:hover {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.nav__link.is-active {
+  background: var(--accent-primary-fill);
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.nav__icon { flex: none; display: grid; place-items: center; }
+
+/* Count of things wanting attention, e.g. overdue work. */
+.nav__count {
+  margin-left: auto;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--status-overdue-fill);
+  border: 1px solid var(--status-overdue-edge);
+  color: var(--status-overdue);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.nav__count--quiet {
+  background: var(--surface-sunken);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.sidebar__footer { margin-top: auto; }
+
+.sidebar__note {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-tint-sky);
+  color: var(--category-flight-ink);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+/* ------------------------------ Content ----------------------------- */
+
+.content {
+  min-width: 0;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+}
+
+.content__inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.page-header__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  letter-spacing: -0.015em;
+}
+
+.page-header__subtitle {
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+}
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-4);
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .nav { flex-direction: row; }
+  .nav__link span:not(.nav__icon):not(.nav__count) { display: none; }
+  .sidebar__footer { display: none; }
+  .content { padding: var(--space-5) var(--space-4) var(--space-7); }
+}

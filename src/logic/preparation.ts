@@ -6,21 +6,14 @@
  * what is outstanding.
  */
 import { todayIso } from "@/lib/dates";
-import type {
-  IsoDate,
-  NextAction,
-  PrepItem,
-  Question,
-  ScheduleEvent,
-} from "@/domain/types";
-import { isOpen } from "./actions";
+import type { IsoDate, PrepItem, Question, ScheduleEvent } from "@/domain/types";
 
 export interface PreparationLine {
   id: string;
   label: string;
   done: boolean;
   /** Where the line came from, so the UI can link back to it. */
-  source: "checklist" | "action" | "question";
+  source: "checklist" | "question";
 }
 
 export interface PreparationState {
@@ -33,14 +26,17 @@ export interface PreparationState {
 }
 
 /**
- * Combine a lesson's checklist, its related actions, and any unasked
- * questions into one honest readiness picture.
+ * A lesson's readiness: its preparation checklist, plus any questions saved
+ * to ask at that lesson.
+ *
+ * Actions linked to the lesson are deliberately not included. They already
+ * appear on Today's Flight Plan, and showing the same item in two places on
+ * one screen makes the dashboard harder to trust.
  */
 export function lessonPreparation(
   event: ScheduleEvent,
   sources: {
     prepItems: PrepItem[];
-    actions: NextAction[];
     questions: Question[];
   },
 ): PreparationState {
@@ -48,17 +44,6 @@ export function lessonPreparation(
 
   for (const item of sources.prepItems.filter((p) => p.eventId === event.id)) {
     lines.push({ id: item.id, label: item.title, done: item.done, source: "checklist" });
-  }
-
-  for (const action of sources.actions.filter(
-    (a) => a.relatedType === "event" && a.relatedId === event.id,
-  )) {
-    lines.push({
-      id: action.id,
-      label: action.title,
-      done: !isOpen(action),
-      source: "action",
-    });
   }
 
   for (const question of sources.questions.filter((q) => q.eventId === event.id)) {
@@ -80,7 +65,12 @@ export function lessonPreparation(
   };
 }
 
-/** The next lesson or event still ahead of us. */
+const bySoonest = (a: ScheduleEvent, b: ScheduleEvent): number => {
+  if (a.date !== b.date) return a.date.localeCompare(b.date);
+  return (a.startTime ?? "").localeCompare(b.startTime ?? "");
+};
+
+/** The next scheduled item of any kind still ahead of us. */
 export function nextEvent(
   events: ScheduleEvent[],
   today: IsoDate = todayIso(),
@@ -88,10 +78,29 @@ export function nextEvent(
   return (
     events
       .filter((event) => event.date >= today && event.status === "scheduled")
-      .sort((a, b) => {
-        if (a.date !== b.date) return a.date.localeCompare(b.date);
-        return (a.startTime ?? "").localeCompare(b.startTime ?? "");
-      })[0] ?? null
+      .sort(bySoonest)[0] ?? null
+  );
+}
+
+/**
+ * The next flight lesson specifically.
+ *
+ * The Next Flight card is about flying, so ground school or a medical
+ * appointment must not take its place — those belong to the Schedule.
+ */
+export function nextLesson(
+  events: ScheduleEvent[],
+  today: IsoDate = todayIso(),
+): ScheduleEvent | null {
+  return (
+    events
+      .filter(
+        (event) =>
+          event.eventType === "flight_lesson" &&
+          event.date >= today &&
+          event.status === "scheduled",
+      )
+      .sort(bySoonest)[0] ?? null
   );
 }
 
