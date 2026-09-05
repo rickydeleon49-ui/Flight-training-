@@ -67,9 +67,10 @@ export function Questions() {
   const add = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    await mutate((repos) =>
+    const result = await mutate((repos) =>
       repos.questions.create({ text: trimmed, topic, eventId: eventId || null }),
     );
+    if (result === null) return;
     setText("");
     setEventId("");
   };
@@ -262,12 +263,13 @@ function QuestionRow({ question, onDelete }: { question: Question; onDelete: () 
                 size="small"
                 variant="primary"
                 onClick={async () => {
-                  await mutate((repos) =>
+                  const result = await mutate((repos) =>
                     repos.questions.update(question.id, {
                       answer,
                       status: answer.trim() ? "answered" : question.status,
                     }),
                   );
+                  if (result === null) return;
                   setEditingAnswer(false);
                 }}
               >

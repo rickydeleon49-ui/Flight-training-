@@ -66,9 +66,10 @@ export function FlightPath() {
   const addMilestone = async () => {
     const title = newMilestone.trim();
     if (!title) return;
-    await mutate((repos) =>
+    const created = await mutate((repos) =>
       repos.milestones.create({ title, position: data.milestones.length }),
     );
+    if (created === null) return;
     setNewMilestone("");
   };
 
@@ -84,13 +85,18 @@ export function FlightPath() {
 
   const saveMilestone = async (draft: MilestoneDraft) => {
     if (!editingMilestone) return;
-    await mutate((repos) => repos.milestones.update(editingMilestone.id, draft));
+    const result = await mutate((repos) =>
+      repos.milestones.update(editingMilestone.id, draft),
+    );
+    if (result === null) return;
     setEditingMilestone(null);
   };
 
   const saveGoal = async (draft: GoalDraft) => {
-    if (editingGoal) await mutate((repos) => repos.goals.update(editingGoal.id, draft));
-    else await mutate((repos) => repos.goals.create(draft));
+    const result = editingGoal
+      ? await mutate((repos) => repos.goals.update(editingGoal.id, draft))
+      : await mutate((repos) => repos.goals.create(draft));
+    if (result === null) return;
     setEditingGoal(null);
     setCreatingGoalFor(null);
   };
@@ -386,7 +392,10 @@ function GoalCard({
   const addChecklistItem = async () => {
     const title = newItem.trim();
     if (!title) return;
-    await mutate((repos) => repos.goals.addChecklistItem(goal.id, title, checklist.length));
+    const result = await mutate((repos) =>
+      repos.goals.addChecklistItem(goal.id, title, checklist.length),
+    );
+    if (result === null) return;
     setNewItem("");
   };
 
@@ -570,8 +579,9 @@ function GoalCard({
             relatedType="goal"
             relatedId={goal.id}
             onClose={() => setAddingAction(false)}
-            onSave={(draft: ActionDraft) => {
-              operations.create(draft);
+            onSave={async (draft: ActionDraft) => {
+              const result = await operations.create(draft);
+              if (result === null) return;
               setAddingAction(false);
             }}
           />

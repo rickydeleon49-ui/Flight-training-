@@ -64,6 +64,7 @@ pub fn run() {
             documents::document_path,
             documents::document_exists,
             documents::delete_document,
+            documents::clear_documents,
             backup::create_backup,
             backup::list_backups,
             backup::data_directory,

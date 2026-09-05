@@ -46,7 +46,7 @@ export function describeBackup(name: string): string {
   const upgrade = name.match(/-before-(.+)$/);
   if (upgrade) return `Taken before updating to ${upgrade[1]}`;
   if (name.endsWith("-manual")) return "Taken by you";
-  return "Copy of your training data";
+  return "Database copy";
 }
 
 export const formatBytes = (bytes: number): string => {

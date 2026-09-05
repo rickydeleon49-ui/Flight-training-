@@ -60,9 +60,11 @@ export function FlightDeck() {
     [data],
   );
 
-  const saveAction = (draft: ActionDraft) => {
-    if (editing) operations.update(editing.id, draft);
-    else operations.create(draft);
+  const saveAction = async (draft: ActionDraft) => {
+    const result = editing
+      ? await operations.update(editing.id, draft)
+      : await operations.create(draft);
+    if (result === null) return;
     setEditing(null);
     setCreating(false);
   };
@@ -276,8 +278,9 @@ export function FlightDeck() {
       <RescheduleDialog
         action={rescheduling}
         onClose={() => setRescheduling(null)}
-        onReschedule={(action, date) => {
-          operations.reschedule(action, date);
+        onReschedule={async (action, date) => {
+          const result = await operations.reschedule(action, date);
+          if (result === null) return;
           setRescheduling(null);
         }}
       />

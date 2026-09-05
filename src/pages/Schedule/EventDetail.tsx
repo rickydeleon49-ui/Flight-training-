@@ -95,22 +95,27 @@ export function EventDetail() {
   );
 
   const saveEvent = async (draft: EventDraft) => {
-    await mutate((repos) => repos.schedule.update(event.id, draft));
+    const result = await mutate((repos) => repos.schedule.update(event.id, draft));
+    if (result === null) return;
     setEditing(false);
   };
 
   const addPrepItem = async () => {
     const title = newPrepItem.trim();
     if (!title) return;
-    await mutate((repos) => repos.schedule.addPrepItem(event.id, title, prepItems.length));
+    const result = await mutate((repos) =>
+      repos.schedule.addPrepItem(event.id, title, prepItems.length),
+    );
+    if (result === null) return;
     setNewPrepItem("");
   };
 
   const attachMaterial = async (materialId: Id) => {
     if (!materialId) return;
-    await mutate((repos) =>
+    const result = await mutate((repos) =>
       repos.schedule.setMaterials(event.id, [...event.materialIds, materialId]),
     );
+    if (result === null) return;
     setMaterialToAttach("");
   };
 
@@ -444,8 +449,9 @@ export function EventDetail() {
         relatedType="event"
         relatedId={event.id}
         onClose={() => setAddingAction(false)}
-        onSave={(draft: ActionDraft) => {
-          operations.create(draft);
+        onSave={async (draft: ActionDraft) => {
+          const result = await operations.create(draft);
+          if (result === null) return;
           setAddingAction(false);
         }}
       />
@@ -456,8 +462,8 @@ export function EventDetail() {
         message="Its preparation checklist goes with it. Journal entries and expenses you have recorded are kept."
         onConfirm={async () => {
           setConfirmingDelete(false);
-          await mutate((repos) => repos.schedule.remove(event.id));
-          navigate("/schedule");
+          const result = await mutate((repos) => repos.schedule.remove(event.id));
+          if (result !== null) navigate("/schedule");
         }}
         onCancel={() => setConfirmingDelete(false)}
       />

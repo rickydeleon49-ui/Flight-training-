@@ -136,3 +136,18 @@ pub fn delete_document(app: AppHandle, relative_path: String) -> Result<(), Stri
         Err(e) => Err(format!("Could not remove that document: {e}")),
     }
 }
+
+/// Remove every file stored in the private documents directory.
+///
+/// This backs the explicit "Clear everything" action in Settings. Removing
+/// the directory itself also catches files orphaned by an earlier failed
+/// database write; it is recreated immediately for the next import.
+#[tauri::command]
+pub fn clear_documents(app: AppHandle) -> Result<(), String> {
+    let root = documents_root(&app)?;
+    std::fs::remove_dir_all(&root)
+        .map_err(|e| format!("Could not clear the document library: {e}"))?;
+    std::fs::create_dir_all(&root)
+        .map_err(|e| format!("Could not recreate the documents directory: {e}"))?;
+    Ok(())
+}

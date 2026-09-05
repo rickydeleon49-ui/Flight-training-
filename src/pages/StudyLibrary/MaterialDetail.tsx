@@ -105,12 +105,14 @@ export function MaterialDetail() {
   const event = data.events.find((candidate) => candidate.id === material.eventId);
 
   const saveMaterial = async (draft: MaterialDraft) => {
-    await mutate((repos) => repos.documents.update(material.id, draft));
+    const result = await mutate((repos) => repos.documents.update(material.id, draft));
+    if (result === null) return;
     setEditing(false);
   };
 
   const saveNotes = async () => {
-    await mutate((repos) => repos.documents.update(material.id, { notes }));
+    const result = await mutate((repos) => repos.documents.update(material.id, { notes }));
+    if (result === null) return;
     setNotesSaved(true);
     window.setTimeout(() => setNotesSaved(false), 2000);
   };
@@ -118,9 +120,10 @@ export function MaterialDetail() {
   const addQuestion = async () => {
     const text = newQuestion.trim();
     if (!text) return;
-    await mutate((repos) =>
+    const result = await mutate((repos) =>
       repos.questions.create({ text, topic: material.topic, materialId: material.id }),
     );
+    if (result === null) return;
     setNewQuestion("");
   };
 
@@ -379,8 +382,9 @@ export function MaterialDetail() {
         relatedType="material"
         relatedId={material.id}
         onClose={() => setAddingAction(false)}
-        onSave={(draft: ActionDraft) => {
-          operations.create(draft);
+        onSave={async (draft: ActionDraft) => {
+          const result = await operations.create(draft);
+          if (result === null) return;
           setAddingAction(false);
         }}
       />
@@ -393,8 +397,8 @@ export function MaterialDetail() {
           setConfirmingDelete(false);
           // Remove the stored file as well, so deleting really deletes.
           if (material.filePath) await deleteDocument(material.filePath);
-          await mutate((repos) => repos.documents.remove(material.id));
-          navigate("/study");
+          const result = await mutate((repos) => repos.documents.remove(material.id));
+          if (result !== null) navigate("/study");
         }}
         onCancel={() => setConfirmingDelete(false)}
       />

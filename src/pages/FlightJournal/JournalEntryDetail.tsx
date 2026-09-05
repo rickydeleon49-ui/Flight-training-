@@ -186,8 +186,8 @@ export function JournalEntryDetail() {
         message="The debrief is removed. Actions and questions it created are kept."
         onConfirm={async () => {
           setConfirmingDelete(false);
-          await mutate((repos) => repos.journal.remove(entry.id));
-          navigate("/journal");
+          const result = await mutate((repos) => repos.journal.remove(entry.id));
+          if (result !== null) navigate("/journal");
         }}
         onCancel={() => setConfirmingDelete(false)}
       />

@@ -76,7 +76,8 @@ export function StudyLibrary() {
   }, [data.materials, status, topic, type, search]);
 
   const save = async (draft: MaterialDraft) => {
-    await mutate((repos) => repos.documents.create(draft));
+    const created = await mutate((repos) => repos.documents.create(draft));
+    if (created === null) return;
     setDraftId(newId());
     setCreating(false);
   };

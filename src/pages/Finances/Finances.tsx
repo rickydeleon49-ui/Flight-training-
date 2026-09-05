@@ -61,8 +61,10 @@ export function Finances() {
   const recent = data.transactions.slice(0, 20);
 
   const save = async (draft: TransactionDraft) => {
-    if (editing) await mutate((repos) => repos.finance.update(editing.id, draft));
-    else await mutate((repos) => repos.finance.create(draft));
+    const result = editing
+      ? await mutate((repos) => repos.finance.update(editing.id, draft))
+      : await mutate((repos) => repos.finance.create(draft));
+    if (result === null) return;
     setEditing(null);
     setFormType(null);
   };
@@ -308,7 +310,8 @@ export function Finances() {
         currentTarget={fundGoal?.target ?? null}
         onClose={() => setEditingTarget(false)}
         onSave={async (title, target) => {
-          await mutate((repos) => repos.finance.saveFundGoal({ title, target }));
+          const result = await mutate((repos) => repos.finance.saveFundGoal({ title, target }));
+          if (result === null) return;
           setEditingTarget(false);
         }}
       />

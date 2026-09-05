@@ -59,7 +59,8 @@ export function Schedule() {
   }, [data.events]);
 
   const save = async (draft: EventDraft) => {
-    await mutate((repos) => repos.schedule.create(draft));
+    const created = await mutate((repos) => repos.schedule.create(draft));
+    if (created === null) return;
     setCreating(false);
   };
 

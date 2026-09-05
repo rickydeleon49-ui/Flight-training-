@@ -28,7 +28,11 @@ describe("shipped migrations are never edited", () => {
     const recorded = checksums as Record<string, string>;
 
     for (const file of files) {
-      const actual = createHash("sha256").update(readFileSync(join(DIR, file))).digest("hex");
+      // Git may materialize text files with CRLF on Windows. The SQL itself is
+      // platform-independent, so hash a canonical LF representation rather
+      // than treating checkout line endings as a migration edit.
+      const sql = readFileSync(join(DIR, file), "utf8").replace(/\r\n?/g, "\n");
+      const actual = createHash("sha256").update(sql).digest("hex");
       expect(
         recorded[file],
         `${file} has changed, or is new.\n` +

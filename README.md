@@ -184,7 +184,7 @@ one makes those databases refuse to open. Both guards have deliberate
 failure messages explaining what to do instead.
 
 **She can copy it out herself.** Settings shows the folder, opens it in
-Finder or Explorer, and takes a copy on demand.
+Finder or Explorer, and takes a database copy on demand.
 
 One honest limit: the automatic copies live *inside* that folder, so they
 protect against a bad update, not against losing the machine or an uninstaller

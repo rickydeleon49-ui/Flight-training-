@@ -14,7 +14,7 @@ describe("describeBackup", () => {
   });
 
   it("falls back to something readable for anything else", () => {
-    expect(describeBackup("something-else")).toBe("Copy of your training data");
+    expect(describeBackup("something-else")).toBe("Database copy");
   });
 });
 

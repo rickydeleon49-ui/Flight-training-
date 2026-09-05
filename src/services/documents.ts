@@ -73,6 +73,12 @@ export async function deleteDocument(relativePath: string): Promise<void> {
   await invoke("delete_document", { relativePath });
 }
 
+/** Remove every imported file, including files orphaned by an earlier failed write. */
+export async function clearDocuments(): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("clear_documents");
+}
+
 /** Human-readable file size, e.g. "1.4 MB". */
 export function formatFileSize(bytes: number | null): string {
   if (bytes == null) return "";

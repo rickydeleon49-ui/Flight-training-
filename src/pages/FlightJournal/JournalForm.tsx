@@ -109,8 +109,8 @@ export function JournalForm() {
     setError(null);
 
     if (existing) {
-      await mutate((repos) => repos.journal.update(existing.id, draft));
-      navigate(`/journal/${existing.id}`);
+      const result = await mutate((repos) => repos.journal.update(existing.id, draft));
+      if (result !== null) navigate(`/journal/${existing.id}`);
       return;
     }
 

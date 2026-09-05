@@ -26,6 +26,7 @@ import {
   revealFolder,
   type BackupInfo,
 } from "@/services/backups";
+import { clearDocuments } from "@/services/documents";
 import { trainingDuration } from "@/logic/keyDates";
 import { useAppData } from "@/state/AppDataContext";
 
@@ -82,7 +83,7 @@ export function Settings() {
     try {
       await createBackup();
       await refreshBackups();
-      setBackupNote("Copy saved.");
+      setBackupNote("Database copy saved.");
       window.setTimeout(() => setBackupNote(null), 3000);
     } catch (error) {
       setBackupNote(error instanceof Error ? error.message : "That did not work.");
@@ -93,7 +94,7 @@ export function Settings() {
     setDraft((current) => ({ ...current, [key]: value }));
 
   const saveProfile = async () => {
-    await mutate((repos) =>
+    const result = await mutate((repos) =>
       repos.profile.update({
         ...draft,
         pilotName: draft.pilotName.trim(),
@@ -106,14 +107,17 @@ export function Settings() {
         whyNote: draft.whyNote.trim(),
       }),
     );
+    if (result === null) return;
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2500);
   };
 
   /** The accent applies the moment it is chosen, so she can see it. */
-  const chooseAccent = (accentColor: AccentColor) => {
+  const chooseAccent = async (accentColor: AccentColor) => {
+    const previous = draft.accentColor;
     update("accentColor", accentColor);
-    void mutate((repos) => repos.profile.update({ accentColor }));
+    const result = await mutate((repos) => repos.profile.update({ accentColor }));
+    if (result === null) update("accentColor", previous);
   };
 
   const choosePhoto = async (file: File | undefined) => {
@@ -121,8 +125,8 @@ export function Settings() {
     setPhotoError(null);
     try {
       const photo = await readPhotoAsDataUrl(file);
-      update("photo", photo);
-      await mutate((repos) => repos.profile.update({ photo }));
+      const result = await mutate((repos) => repos.profile.update({ photo }));
+      if (result !== null) update("photo", photo);
     } catch (error) {
       setPhotoError(
         error instanceof PhotoError ? error.message : "That photo could not be added.",
@@ -135,8 +139,8 @@ export function Settings() {
 
   const removePhoto = async () => {
     setPhotoError(null);
-    update("photo", null);
-    await mutate((repos) => repos.profile.update({ photo: null }));
+    const result = await mutate((repos) => repos.profile.update({ photo: null }));
+    if (result !== null) update("photo", null);
   };
 
   const runDemo = async () => {
@@ -148,11 +152,28 @@ export function Settings() {
   const runClear = async () => {
     setBusy(true);
     setConfirmingClear(false);
-    await mutate((repos) => clearAllData(repos));
+    await mutate(async (repos) => {
+      // Delete files before their database rows so a file error leaves the
+      // library intact and the user can safely retry.
+      await clearDocuments();
+      await clearAllData(repos);
+    });
     setBusy(false);
   };
 
-  const hasData = data.actions.length > 0 || data.events.length > 0 || data.materials.length > 0;
+  const hasData = [
+    data.milestones,
+    data.goals,
+    data.checklistItems,
+    data.actions,
+    data.materials,
+    data.events,
+    data.prepItems,
+    data.journalEntries,
+    data.questions,
+    data.transactions,
+    data.fundGoals,
+  ].some((items) => items.length > 0);
   const duration = trainingDuration(draft.trainingStartedOn);
 
   return (
@@ -457,7 +478,7 @@ export function Settings() {
                     </span>
                   ) : null}
                   <Button size="small" onClick={backUpNow}>
-                    Back up now
+                    Back up database
                   </Button>
                 </div>
               ) : null
@@ -468,9 +489,9 @@ export function Settings() {
               <p className="small muted">
                 Everything you enter lives in one folder on this computer — your
                 database, your study materials, your photo. Nothing is uploaded
-                anywhere. A copy of it is made automatically before the first run of
-                any new version, so an update can never take your training record
-                with it.
+                anywhere. A safety copy of the database is made automatically before
+                the first run of any new version. Imported study files remain in this
+                folder unchanged.
               </p>
 
               {dataPath ? (
@@ -497,7 +518,7 @@ export function Settings() {
 
               {backups.length > 0 ? (
                 <div className="stack stack--2">
-                  <p className="tiny strong dim">Copies kept ({backups.length})</p>
+                  <p className="tiny strong dim">Database copies kept ({backups.length})</p>
                   {backups.slice(0, 6).map((backup) => (
                     <div className="row row--between" key={backup.name}>
                       <span className="small truncate">{describeBackup(backup.name)}</span>
