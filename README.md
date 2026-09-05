@@ -90,6 +90,13 @@ what it shows is testable.
 **Money is integers.** All amounts are whole cents; dollars exist only at the
 edges, for display and form input.
 
+**Fonts are bundled.** Fraunces and Inter ship with the application rather than
+loading from a CDN, so a desktop app that may well be used at an airfield with
+no signal always looks right. Fraunces carries its optical-size axis, so
+headings are optically adjusted at display sizes. Inter is latin-only; the font
+stacks in `tokens.css` cover anything outside that subset. The content security
+policy allows no external style or font origins as a result.
+
 ---
 
 ## Product rules the code enforces
