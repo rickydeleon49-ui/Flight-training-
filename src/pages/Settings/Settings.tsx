@@ -7,13 +7,12 @@ import {
   CardBody,
   CardHeader,
   CheckIcon,
-  ConfirmDialog,
   Field,
   Select,
   TextArea,
   TextInput,
 } from "@/components/ui";
-import { clearAllData, loadDemoData } from "@/data/seed";
+import { restoreAirlineStarterPack } from "@/data/starter";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
@@ -26,7 +25,6 @@ import {
   revealFolder,
   type BackupInfo,
 } from "@/services/backups";
-import { clearDocuments } from "@/services/documents";
 import { trainingDuration } from "@/logic/keyDates";
 import { useAppData } from "@/state/AppDataContext";
 
@@ -55,15 +53,15 @@ export function Settings() {
   const { data, mutate } = useAppData();
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   const [saved, setSaved] = useState(false);
-  const [confirmingClear, setConfirmingClear] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [starterNote, setStarterNote] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const [dataPath, setDataPath] = useState("");
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [backupNote, setBackupNote] = useState<string | null>(null);
 
-  // Keep the form in step when the profile is replaced (demo load, reset).
+  // Keep the form in step when the stored profile changes.
   useEffect(() => {
     setDraft(draftFrom(data.profile));
   }, [data.profile]);
@@ -143,37 +141,22 @@ export function Settings() {
     if (result !== null) update("photo", null);
   };
 
-  const runDemo = async () => {
+  const restoreStarter = async () => {
     setBusy(true);
-    await mutate((repos) => loadDemoData(repos));
+    setStarterNote(null);
+    const result = await mutate((repos) => restoreAirlineStarterPack(repos));
+    if (result) {
+      const added =
+        result.milestones + result.goals + result.checklistItems + result.materials;
+      setStarterNote(
+        added > 0
+          ? `Starter pack restored — ${added} roadmap and library items added.`
+          : "The airline starter pack is already complete.",
+      );
+    }
     setBusy(false);
   };
 
-  const runClear = async () => {
-    setBusy(true);
-    setConfirmingClear(false);
-    await mutate(async (repos) => {
-      // Delete files before their database rows so a file error leaves the
-      // library intact and the user can safely retry.
-      await clearDocuments();
-      await clearAllData(repos);
-    });
-    setBusy(false);
-  };
-
-  const hasData = [
-    data.milestones,
-    data.goals,
-    data.checklistItems,
-    data.actions,
-    data.materials,
-    data.events,
-    data.prepItems,
-    data.journalEntries,
-    data.questions,
-    data.transactions,
-    data.fundGoals,
-  ].some((items) => items.length > 0);
   const duration = trainingDuration(draft.trainingStartedOn);
 
   return (
@@ -441,25 +424,24 @@ export function Settings() {
         </Card>
 
         <Card>
-          <CardHeader title="Demo data" eyebrow="Development" />
+          <CardHeader title="Airline pilot starter pack" eyebrow="Built-in guidance" />
           <CardBody>
             <div className="stack stack--4">
               <p className="small muted">
-                Fills the application with a clearly fictional training scenario so you can
-                see how the screens behave with real content. None of it refers to a real
-                person, school, or document.
+                Includes a complete career roadmap from training foundations through ATP and
+                airline applications, along with lesson checklists, debrief prompts, record
+                organizers, and official FAA starting points. It never replaces her instructor,
+                logbook, aircraft documents, or current regulations.
               </p>
               <div className="row row--wrap">
-                <Button variant="primary" onClick={runDemo} disabled={busy}>
-                  {busy ? "Working…" : "Load demo data"}
+                <Button variant="primary" onClick={restoreStarter} disabled={busy}>
+                  {busy ? "Working…" : "Restore missing starter items"}
                 </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => setConfirmingClear(true)}
-                  disabled={busy || !hasData}
-                >
-                  Clear everything
-                </Button>
+                {starterNote ? (
+                  <span className="small" style={{ color: "var(--status-complete)" }}>
+                    {starterNote}
+                  </span>
+                ) : null}
               </div>
             </div>
           </CardBody>
@@ -547,14 +529,6 @@ export function Settings() {
         </Card>
       </div>
 
-      <ConfirmDialog
-        open={confirmingClear}
-        title="Clear everything?"
-        message="This removes every goal, lesson, material, journal entry, question and transaction from this application. It cannot be undone."
-        confirmLabel="Clear everything"
-        onConfirm={runClear}
-        onCancel={() => setConfirmingClear(false)}
-      />
     </>
   );
 }

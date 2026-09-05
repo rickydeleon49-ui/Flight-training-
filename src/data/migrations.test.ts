@@ -40,6 +40,7 @@ describe("migrations", () => {
       .map((r) => (r as { name: string }).name);
     expect(tables).toContain("settings");
     expect(tables).toContain("transactions");
+    expect(tables).toContain("app_metadata");
     db.close();
   });
 

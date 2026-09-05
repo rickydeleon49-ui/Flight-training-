@@ -6,6 +6,7 @@
  */
 import type { SqlDatabase } from "../db";
 import { actionRepository } from "./actionRepository";
+import { appRepository } from "./appRepository";
 import { documentRepository } from "./documentRepository";
 import { financeRepository } from "./financeRepository";
 import { goalRepository, milestoneRepository } from "./flightPathRepository";
@@ -15,6 +16,7 @@ import { questionRepository } from "./questionRepository";
 import { scheduleRepository } from "./scheduleRepository";
 
 export interface Repositories {
+  app: ReturnType<typeof appRepository>;
   profile: ReturnType<typeof profileRepository>;
   milestones: ReturnType<typeof milestoneRepository>;
   goals: ReturnType<typeof goalRepository>;
@@ -28,6 +30,7 @@ export interface Repositories {
 
 export function createRepositories(db: SqlDatabase): Repositories {
   return {
+    app: appRepository(db),
     profile: profileRepository(db),
     milestones: milestoneRepository(db),
     goals: goalRepository(db),

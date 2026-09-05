@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 
 import { getDatabase } from "@/data";
 import { createRepositories, type Repositories } from "@/data/repositories";
+import { initializeAirlineStarterPack } from "@/data/starter";
 import type {
   ChecklistItem,
   FundGoal,
@@ -166,6 +167,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const db = await getDatabase();
         const repositories = createRepositories(db);
         repositoriesRef.current = repositories;
+        await initializeAirlineStarterPack(repositories);
         const loaded = await loadAll(repositories);
         if (cancelled) return;
         setData(loaded);
