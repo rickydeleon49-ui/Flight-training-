@@ -80,3 +80,45 @@
   color: var(--text-on-accent);
   font-weight: 600;
 }
+
+/* ------------------------ Instructor feedback ------------------------ */
+/* One chronology of what instructors have actually said, so a repeated
+   note reads as a pattern instead of hiding inside one debrief. */
+
+.feedback-note {
+  display: block;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--transition);
+}
+.feedback-note:last-child { border-bottom: 0; }
+.feedback-note:hover { background: var(--surface-sunken); text-decoration: none; }
+
+.feedback-note__quote {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.45;
+  color: var(--text-primary);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--category-study-edge);
+}
+
+.feedback-note__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-left: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.view-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}

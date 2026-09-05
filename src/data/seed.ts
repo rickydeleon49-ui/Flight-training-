@@ -131,6 +131,20 @@ export async function loadDemoData(repositories: Repositories): Promise<void> {
 
   /* ------------------------------ Schedule ------------------------------ */
 
+  const earlierLesson = await repositories.schedule.create({
+    title: "Approaches and Go-Arounds",
+    eventType: "flight_lesson",
+    date: addDays(today, -19),
+    startTime: "09:00",
+    endTime: "10:30",
+    location: "Cedar Field",
+    instructor: "Dana Whitfield",
+    goalId: flareGoal.id,
+    estimatedCost: 275_00,
+    actualCost: 275_00,
+    status: "completed",
+  });
+
   const lastLesson = await repositories.schedule.create({
     title: "Traffic Pattern Practice",
     eventType: "flight_lesson",
@@ -267,6 +281,22 @@ export async function loadDemoData(repositories: Repositories): Promise<void> {
     confidence: 3,
     goalId: flareGoal.id,
     materialIds: [crosswindNotes.id],
+  });
+
+  // An earlier debrief, so the feedback view shows a note recurring rather
+  // than a single remark.
+  await repositories.journal.create({
+    eventId: earlierLesson.id,
+    date: earlierLesson.date,
+    title: "Approaches and Go-Arounds",
+    mission: "Fly stable approaches and practise going around.",
+    practiced: "Four approaches, two go-arounds from low altitude.",
+    wentWell: "Go-around decisions were quick and the callouts were clear.",
+    wasDifficult: "Holding the centreline once the nose came up.",
+    instructorFeedback: "Keep your eyes at the far end of the runway, not over the nose.",
+    questionsForNextTime: "How early should I commit to a go-around?",
+    confidence: 2,
+    goalId: flareGoal.id,
   });
 
   /* ------------------------------ Questions ----------------------------- */
