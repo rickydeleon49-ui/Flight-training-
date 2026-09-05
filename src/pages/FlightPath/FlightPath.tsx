@@ -11,8 +11,10 @@ import {
   CardBody,
   CheckIcon,
   Checkbox,
+  ChevronLeftIcon,
   ChevronRightIcon,
   ConfirmDialog,
+  EditIcon,
   EmptyState,
   IconButton,
   PlusIcon,
@@ -29,11 +31,12 @@ import {
 } from "@/domain/types";
 import { formatShortDate, todayIso } from "@/lib/dates";
 import { actionsFor } from "@/logic/actions";
-import { goalEvidence, hasEvidence, milestoneProgress } from "@/logic/progress";
+import { goalEvidence, hasEvidence, milestoneProgress, reorderMilestones } from "@/logic/progress";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
 import { GoalFormDialog, type GoalDraft } from "./GoalFormDialog";
+import { MilestoneFormDialog, type MilestoneDraft } from "./MilestoneFormDialog";
 import "./flightPath.css";
 
 export function FlightPath() {
@@ -41,7 +44,16 @@ export function FlightPath() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [creatingGoalFor, setCreatingGoalFor] = useState<string | null>(null);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+  const [deletingMilestone, setDeletingMilestone] = useState<Milestone | null>(null);
   const [newMilestone, setNewMilestone] = useState("");
+
+  // Goals with no stage — created that way, or left behind when a milestone
+  // was deleted. Without this they would exist but be invisible.
+  const milestoneIds = new Set(data.milestones.map((milestone) => milestone.id));
+  const unassignedGoals = data.goals.filter(
+    (goal) => goal.milestoneId === null || !milestoneIds.has(goal.milestoneId),
+  );
 
   const currentId =
     data.profile.currentMilestoneId ??
@@ -55,6 +67,22 @@ export function FlightPath() {
       repos.milestones.create({ title, position: data.milestones.length }),
     );
     setNewMilestone("");
+  };
+
+  const moveMilestone = (milestone: Milestone, direction: "up" | "down") => {
+    const updates = reorderMilestones(data.milestones, milestone.id, direction);
+    if (updates.length === 0) return;
+    return mutate(async (repos) => {
+      for (const update of updates) {
+        await repos.milestones.update(update.id, { position: update.position });
+      }
+    });
+  };
+
+  const saveMilestone = async (draft: MilestoneDraft) => {
+    if (!editingMilestone) return;
+    await mutate((repos) => repos.milestones.update(editingMilestone.id, draft));
+    setEditingMilestone(null);
   };
 
   const saveGoal = async (draft: GoalDraft) => {
@@ -106,7 +134,7 @@ export function FlightPath() {
       />
 
       <div className="path">
-        {data.milestones.map((milestone) => (
+        {data.milestones.map((milestone, index) => (
           <MilestoneSection
             key={milestone.id}
             milestone={milestone}
@@ -115,8 +143,37 @@ export function FlightPath() {
             onToggleGoal={(goalId) => setExpanded(expanded === goalId ? null : goalId)}
             onAddGoal={() => setCreatingGoalFor(milestone.id)}
             onEditGoal={setEditingGoal}
+            onEditMilestone={() => setEditingMilestone(milestone)}
+            onDeleteMilestone={() => setDeletingMilestone(milestone)}
+            onMove={(direction) => moveMilestone(milestone, direction)}
+            canMoveUp={index > 0}
+            canMoveDown={index < data.milestones.length - 1}
           />
         ))}
+
+        {unassignedGoals.length > 0 ? (
+          <section className="waypoint waypoint--unassigned">
+            <span className="waypoint__marker" aria-hidden="true" />
+            <div className="waypoint__head">
+              <h2 className="waypoint__title">Not part of a stage</h2>
+              <span className="tiny dim">
+                {unassignedGoals.length} {unassignedGoals.length === 1 ? "goal" : "goals"}
+              </span>
+            </div>
+            <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
+              These are yours to keep here, or edit one to move it into a stage.
+            </p>
+            {unassignedGoals.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                expanded={expanded === goal.id}
+                onToggle={() => setExpanded(expanded === goal.id ? null : goal.id)}
+                onEdit={() => setEditingGoal(goal)}
+              />
+            ))}
+          </section>
+        ) : null}
       </div>
 
       <Card variant="quiet">
@@ -146,6 +203,25 @@ export function FlightPath() {
         </CardBody>
       </Card>
 
+      <MilestoneFormDialog
+        open={editingMilestone !== null}
+        milestone={editingMilestone}
+        onClose={() => setEditingMilestone(null)}
+        onSave={saveMilestone}
+      />
+
+      <ConfirmDialog
+        open={deletingMilestone !== null}
+        title="Delete this milestone?"
+        message="Goals in it are kept and simply stop belonging to a stage. You can move them to another milestone afterwards."
+        onConfirm={async () => {
+          const milestone = deletingMilestone;
+          setDeletingMilestone(null);
+          if (milestone) await mutate((repos) => repos.milestones.remove(milestone.id));
+        }}
+        onCancel={() => setDeletingMilestone(null)}
+      />
+
       <GoalFormDialog
         open={creatingGoalFor !== null || editingGoal !== null}
         goal={editingGoal}
@@ -168,6 +244,11 @@ function MilestoneSection({
   onToggleGoal,
   onAddGoal,
   onEditGoal,
+  onEditMilestone,
+  onDeleteMilestone,
+  onMove,
+  canMoveUp,
+  canMoveDown,
 }: {
   milestone: Milestone;
   isCurrent: boolean;
@@ -175,6 +256,11 @@ function MilestoneSection({
   onToggleGoal: (goalId: string) => void;
   onAddGoal: () => void;
   onEditGoal: (goal: Goal) => void;
+  onEditMilestone: () => void;
+  onDeleteMilestone: () => void;
+  onMove: (direction: "up" | "down") => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 }) {
   const { data } = useAppData();
   const progress = milestoneProgress(milestone, data.goals);
@@ -197,9 +283,39 @@ function MilestoneSection({
             {progress.completed.length} of {progress.total} goals comfortable or complete
           </span>
         ) : null}
-        <Button size="small" variant="ghost" onClick={onAddGoal} style={{ marginLeft: "auto" }}>
-          <PlusIcon size={13} /> Goal
-        </Button>
+        <div className="waypoint__tools">
+          <Button size="small" variant="ghost" onClick={onAddGoal}>
+            <PlusIcon size={13} /> Goal
+          </Button>
+          <IconButton
+            label={`Move ${milestone.title} earlier`}
+            disabled={!canMoveUp}
+            onClick={() => onMove("up")}
+          >
+            <span style={{ transform: "rotate(90deg)", display: "inline-flex" }}>
+              <ChevronLeftIcon size={15} />
+            </span>
+          </IconButton>
+          <IconButton
+            label={`Move ${milestone.title} later`}
+            disabled={!canMoveDown}
+            onClick={() => onMove("down")}
+          >
+            <span style={{ transform: "rotate(90deg)", display: "inline-flex" }}>
+              <ChevronRightIcon size={15} />
+            </span>
+          </IconButton>
+          <IconButton label={`Edit ${milestone.title}`} onClick={onEditMilestone}>
+            <EditIcon size={15} />
+          </IconButton>
+          <IconButton
+            label={`Delete ${milestone.title}`}
+            tone="danger"
+            onClick={onDeleteMilestone}
+          >
+            <TrashIcon size={15} />
+          </IconButton>
+        </div>
       </div>
 
       {milestone.description ? (

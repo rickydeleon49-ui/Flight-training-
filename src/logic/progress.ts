@@ -93,6 +93,41 @@ export function milestoneProgress(milestone: Milestone, goals: Goal[]): Mileston
   };
 }
 
+/**
+ * Move a milestone one place earlier or later in the journey.
+ *
+ * Returns the positions that actually need writing. Positions are rewritten
+ * sequentially so a list that has drifted (everything added at the same
+ * position) settles into a clean order.
+ */
+export function reorderMilestones(
+  milestones: Milestone[],
+  id: string,
+  direction: "up" | "down",
+): Array<{ id: string; position: number }> {
+  const ordered = [...milestones].sort(
+    (a, b) => a.position - b.position || a.createdAt.localeCompare(b.createdAt),
+  );
+  const index = ordered.findIndex((milestone) => milestone.id === id);
+  if (index === -1) return [];
+
+  const target = direction === "up" ? index - 1 : index + 1;
+  if (target < 0 || target >= ordered.length) return [];
+
+  const moved = [...ordered];
+  const [item] = moved.splice(index, 1);
+  if (!item) return [];
+  moved.splice(target, 0, item);
+
+  // Only report rows whose position actually changes.
+  return moved
+    .map((milestone, position) => ({ id: milestone.id, position }))
+    .filter(({ id: rowId, position }) => {
+      const before = ordered.find((m) => m.id === rowId);
+      return before ? before.position !== position : false;
+    });
+}
+
 /** The milestone the user is currently pursuing. */
 export function currentMilestone(
   milestones: Milestone[],

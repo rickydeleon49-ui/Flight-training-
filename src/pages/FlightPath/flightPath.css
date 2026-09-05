@@ -114,3 +114,24 @@
   background: var(--border-strong);
 }
 .confidence__pip--on { background: var(--accent-primary); }
+
+.waypoint__tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+/* Reachable by keyboard, and revealed on hover for the mouse. */
+.waypoint:hover .waypoint__tools,
+.waypoint__tools:focus-within { opacity: 1; }
+
+.icon-button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Goals that belong to no stage still need somewhere to live. */
+.waypoint--unassigned .waypoint__marker {
+  border-style: dashed;
+  border-color: var(--border-strong);
+}
+.waypoint--unassigned .waypoint__title { color: var(--text-secondary); }

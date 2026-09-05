@@ -8,7 +8,14 @@ import {
   makeMaterial,
   makeMilestone,
 } from "@/testing/factories";
-import { currentMilestone, goalEvidence, hasEvidence, milestoneProgress, studyFocus } from "./progress";
+import {
+  currentMilestone,
+  goalEvidence,
+  hasEvidence,
+  milestoneProgress,
+  reorderMilestones,
+  studyFocus,
+} from "./progress";
 
 describe("goalEvidence", () => {
   const goal = makeGoal({ id: "goal-1", confidence: 3 });
@@ -119,5 +126,53 @@ describe("studyFocus", () => {
 
   it("skips reference-only material", () => {
     expect(studyFocus([makeMaterial({ reviewStatus: "reference_only" })])).toBeNull();
+  });
+});
+
+describe("reorderMilestones", () => {
+  const path = [
+    makeMilestone({ id: "a", position: 0, title: "Explore" }),
+    makeMilestone({ id: "b", position: 1, title: "Ground school" }),
+    makeMilestone({ id: "c", position: 2, title: "Lessons" }),
+  ];
+
+  const applied = (updates: Array<{ id: string; position: number }>) => {
+    const next = path.map((m) => ({
+      ...m,
+      position: updates.find((u) => u.id === m.id)?.position ?? m.position,
+    }));
+    return next.sort((x, y) => x.position - y.position).map((m) => m.id);
+  };
+
+  it("moves a milestone one place earlier", () => {
+    expect(applied(reorderMilestones(path, "c", "up"))).toEqual(["a", "c", "b"]);
+  });
+
+  it("moves a milestone one place later", () => {
+    expect(applied(reorderMilestones(path, "a", "down"))).toEqual(["b", "a", "c"]);
+  });
+
+  it("does nothing at the ends of the journey", () => {
+    expect(reorderMilestones(path, "a", "up")).toEqual([]);
+    expect(reorderMilestones(path, "c", "down")).toEqual([]);
+  });
+
+  it("ignores a milestone that is not there", () => {
+    expect(reorderMilestones(path, "missing", "up")).toEqual([]);
+  });
+
+  it("settles a list whose positions have all drifted to the same value", () => {
+    // Everything added with position 0 still has a stable created-at order.
+    const drifted = [
+      makeMilestone({ id: "x", position: 0, createdAt: "2026-01-01T00:00:00.000Z" }),
+      makeMilestone({ id: "y", position: 0, createdAt: "2026-01-02T00:00:00.000Z" }),
+      makeMilestone({ id: "z", position: 0, createdAt: "2026-01-03T00:00:00.000Z" }),
+    ];
+    const updates = reorderMilestones(drifted, "z", "up");
+    const next = drifted
+      .map((m) => ({ ...m, position: updates.find((u) => u.id === m.id)?.position ?? m.position }))
+      .sort((a, b) => a.position - b.position || a.createdAt.localeCompare(b.createdAt))
+      .map((m) => m.id);
+    expect(next).toEqual(["x", "z", "y"]);
   });
 });
