@@ -440,6 +440,11 @@ export interface Profile {
   /** Her own reminder. The certificate itself remains the authority. */
   medicalExpiry: IsoDate | null;
 
+  /** Why she started. Hers to write, shown back to her, never analysed. */
+  whyNote: string;
+  /** A downscaled data URL, or null. Lives only in her private database. */
+  photo: string | null;
+
   accentColor: AccentColor;
 
   createdAt: IsoDateTime;

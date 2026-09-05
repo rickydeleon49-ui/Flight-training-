@@ -97,6 +97,14 @@ The training details pre-fill every new lesson so the instructor and airport
 are not retyped; the accent re-themes the whole interface through the token
 layer, so no component needed changing to support it.
 
+**Her photo lives in the database, deliberately.** The schema warns against
+putting binaries in SQLite and that still holds for study materials, which go
+to disk. The profile photo is the exception: it is centre-cropped and
+downscaled to 384px before it is ever saved, so a 6 MB phone photo becomes
+roughly 8 KB. One small row beats a second file lifecycle and asset-protocol
+scope for a single avatar, and it keeps her face in the same private database
+as the rest of her.
+
 **Fonts are bundled.** Fraunces and Inter ship with the application rather than
 loading from a CDN, so a desktop app that may well be used at an airfield with
 no signal always looks right. Fraunces carries its optical-size axis, so
@@ -129,6 +137,9 @@ policy allows no external style or font origins as a result.
   because it is a fact she needs; a milestone target that slipped quietly
   drops off rather than lingering as a rebuke. Finished work never reports
   its old due date.
+- **One card asks nothing of her.** Why she started sits at the end of the
+  dashboard, below the work. It is never analysed, scored, or turned into a
+  prompt — it is only shown back to her, and only once she has written it.
 - **Instructors and official guidance stay authoritative.** The application
   organizes what the user puts into it and says so.
 

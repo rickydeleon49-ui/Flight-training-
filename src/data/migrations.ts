@@ -7,6 +7,7 @@
  */
 import initialSchema from "../../src-tauri/migrations/0001_initial_schema.sql?raw";
 import profileDetails from "../../src-tauri/migrations/0002_profile_details.sql?raw";
+import personalNote from "../../src-tauri/migrations/0003_personal_note.sql?raw";
 
 export interface Migration {
   version: number;
@@ -17,6 +18,7 @@ export interface Migration {
 export const MIGRATIONS: Migration[] = [
   { version: 1, description: "initial_schema", sql: initialSchema },
   { version: 2, description: "profile_details", sql: profileDetails },
+  { version: 3, description: "personal_note", sql: personalNote },
 ];
 
 /**

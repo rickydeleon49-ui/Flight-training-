@@ -77,6 +77,8 @@ const EMPTY_PROFILE: Profile = {
   aircraftType: "",
   trainingStartedOn: null,
   medicalExpiry: null,
+  whyNote: "",
+  photo: null,
   accentColor: "berry",
   createdAt: "",
   updatedAt: "",

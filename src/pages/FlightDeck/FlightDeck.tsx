@@ -235,6 +235,7 @@ export function FlightDeck() {
           <MilestoneCard model={model} />
           <StudyFocusCard model={model} />
           <KeyDatesCard model={model} />
+          <WhyCard model={model} />
 
           {model.awaitingDebrief.length > 0 ? (
             <Card>
@@ -451,6 +452,29 @@ function MilestoneCard({ model }: { model: Model }) {
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+/**
+ * Why she started, in her own words.
+ *
+ * Deliberately the quietest thing on the page and the only card that asks
+ * nothing of her — it sits at the end of the column, below the work.
+ */
+function WhyCard({ model }: { model: Model }) {
+  if (!model.personal) return null;
+  const { photo, whyNote } = model.personal;
+
+  return (
+    <section className="why-card">
+      {photo ? <img className="why-card__photo" src={photo} alt="" /> : null}
+      {whyNote ? (
+        <>
+          <p className="why-card__label">Why you started</p>
+          <p className="why-card__note wrap-anywhere">{whyNote}</p>
+        </>
+      ) : null}
+    </section>
   );
 }
 

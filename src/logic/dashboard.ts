@@ -80,6 +80,8 @@ export interface DashboardModel {
   } | null;
   needsAttention: NextAction[];
   keyDates: KeyDate[];
+  /** Her photo and why, shown only once she has written or added one. */
+  personal: { photo: string | null; whyNote: string } | null;
   awaitingDebrief: ScheduleEvent[];
   unansweredBeforeLesson: Question[];
   topAction: NextAction | null;
@@ -174,6 +176,11 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
       : null,
     needsAttention: overdue,
     keyDates: upcomingKeyDates(sources.profile, sources.milestones, today),
+    // Nothing appears until she has actually put something there.
+    personal:
+      sources.profile.whyNote.trim() || sources.profile.photo
+        ? { photo: sources.profile.photo, whyNote: sources.profile.whyNote.trim() }
+        : null,
     awaitingDebrief: lessonsAwaitingDebrief(sources.events, journalEventIds, today),
     unansweredBeforeLesson: upcoming
       ? sources.questions.filter((q) => q.status === "to_ask" && (q.eventId === upcoming.id || q.eventId === null))

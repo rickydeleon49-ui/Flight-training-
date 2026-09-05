@@ -66,6 +66,9 @@ export async function loadDemoData(repositories: Repositories): Promise<void> {
     aircraftType: "Cessna 172",
     trainingStartedOn: addDays(today, -158),
     medicalExpiry: addDays(today, 47),
+    whyNote:
+      "My grandfather flew, and I grew up hearing about it. I want to see the coast " +
+      "from the air the way he described it — and to know I got myself there.",
   });
 
   const crosswindGoal = await repositories.goals.create({

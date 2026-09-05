@@ -77,6 +77,8 @@ describe("migrations", () => {
     expect(profile.accent_color).toBe("berry");
     expect(profile.flight_school).toBe("");
     expect(profile.medical_expiry).toBeNull();
+    expect(profile.why_note).toBe("");
+    expect(profile.photo).toBeNull();
 
     const milestones = db.prepare("SELECT COUNT(*) c FROM milestones").get() as { c: number };
     expect(milestones.c).toBe(1);

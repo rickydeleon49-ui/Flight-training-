@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -10,10 +10,12 @@ import {
   ConfirmDialog,
   Field,
   Select,
+  TextArea,
   TextInput,
 } from "@/components/ui";
 import { clearAllData, loadDemoData } from "@/data/seed";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
+import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import { trainingDuration } from "@/logic/keyDates";
 import { useAppData } from "@/state/AppDataContext";
 
@@ -33,6 +35,8 @@ const draftFrom = (profile: Profile): ProfileDraft => ({
   aircraftType: profile.aircraftType,
   trainingStartedOn: profile.trainingStartedOn,
   medicalExpiry: profile.medicalExpiry,
+  whyNote: profile.whyNote,
+  photo: profile.photo,
   accentColor: profile.accentColor,
 });
 
@@ -42,6 +46,8 @@ export function Settings() {
   const [saved, setSaved] = useState(false);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
 
   // Keep the form in step when the profile is replaced (demo load, reset).
   useEffect(() => {
@@ -62,6 +68,7 @@ export function Settings() {
         instructorName: draft.instructorName.trim(),
         homeAirport: draft.homeAirport.trim(),
         aircraftType: draft.aircraftType.trim(),
+        whyNote: draft.whyNote.trim(),
       }),
     );
     setSaved(true);
@@ -72,6 +79,29 @@ export function Settings() {
   const chooseAccent = (accentColor: AccentColor) => {
     update("accentColor", accentColor);
     void mutate((repos) => repos.profile.update({ accentColor }));
+  };
+
+  const choosePhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setPhotoError(null);
+    try {
+      const photo = await readPhotoAsDataUrl(file);
+      update("photo", photo);
+      await mutate((repos) => repos.profile.update({ photo }));
+    } catch (error) {
+      setPhotoError(
+        error instanceof PhotoError ? error.message : "That photo could not be added.",
+      );
+    } finally {
+      // Let the same file be chosen again after a removal.
+      if (photoInput.current) photoInput.current.value = "";
+    }
+  };
+
+  const removePhoto = async () => {
+    setPhotoError(null);
+    update("photo", null);
+    await mutate((repos) => repos.profile.update({ photo: null }));
   };
 
   const runDemo = async () => {
@@ -246,6 +276,81 @@ export function Settings() {
         </Card>
 
         <Card>
+          <CardHeader title="Why you started" eyebrow="Yours alone" />
+          <CardBody>
+            <div className="stack stack--5">
+              <div className="photo-field">
+                {draft.photo ? (
+                  <img className="photo-preview" src={draft.photo} alt="" />
+                ) : (
+                  <span className="photo-placeholder" aria-hidden="true">
+                    {draft.pilotName.trim().charAt(0).toUpperCase() || "\u2708"}
+                  </span>
+                )}
+
+                <div className="stack stack--2">
+                  <div className="row row--wrap">
+                    <Button onClick={() => photoInput.current?.click()}>
+                      {draft.photo ? "Change photo" : "Add a photo"}
+                    </Button>
+                    {draft.photo ? (
+                      <Button variant="danger" onClick={removePhoto}>
+                        Remove
+                      </Button>
+                    ) : null}
+                  </div>
+                  <p className="tiny dim">
+                    {draft.photo
+                      ? `Stored in your private database, about ${Math.max(
+                          1,
+                          Math.round(dataUrlBytes(draft.photo) / 1024),
+                        )} KB.`
+                      : "Optional. It is resized on this computer and never leaves it."}
+                  </p>
+                  {photoError ? <p className="field__error">{photoError}</p> : null}
+                </div>
+
+                <input
+                  ref={photoInput}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  aria-label="Choose a photo"
+                  onChange={(e) => choosePhoto(e.target.files?.[0])}
+                />
+              </div>
+
+              <Field
+                label="Why did you start flying?"
+                hint="Shown back to you on your Flight Deck. Nobody else reads it."
+              >
+                {({ id, describedBy }) => (
+                  <TextArea
+                    id={id}
+                    rows={4}
+                    aria-describedby={describedBy}
+                    value={draft.whyNote}
+                    placeholder="The first time I saw the airfield from the air, I knew."
+                    onChange={(e) => update("whyNote", e.target.value)}
+                  />
+                )}
+              </Field>
+
+              <div className="row">
+                <Button variant="primary" onClick={saveProfile}>
+                  Save
+                </Button>
+                {saved ? (
+                  <span className="small" style={{ color: "var(--status-complete)" }}>
+                    Saved.
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
           <CardHeader title="Look and feel" eyebrow="Accent colour" />
           <CardBody>
             <div className="stack stack--4">
@@ -310,8 +415,9 @@ export function Settings() {
             <div className="stack stack--3 small muted">
               <p>
                 Study materials you add are copied into this application&rsquo;s own private
-                data directory on this computer. Notes, journal entries, questions and
-                financial records are stored in a local database in the same place.
+                data directory on this computer. Notes, journal entries, questions,
+                financial records, your photo and why you started are stored in a local
+                database in the same place.
               </p>
               <p>
                 Nothing is uploaded anywhere, and personal material is never stored in the

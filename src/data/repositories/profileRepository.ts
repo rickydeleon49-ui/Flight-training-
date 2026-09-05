@@ -16,6 +16,8 @@ interface Row {
   aircraft_type: unknown;
   training_started_on: unknown;
   medical_expiry: unknown;
+  why_note: unknown;
+  photo: unknown;
   accent_color: unknown;
   created_at: unknown;
   updated_at: unknown;
@@ -33,6 +35,8 @@ const map = (row: Row): Profile => ({
   aircraftType: toText(row.aircraft_type),
   trainingStartedOn: toNullableText(row.training_started_on),
   medicalExpiry: toNullableText(row.medical_expiry),
+  whyNote: toText(row.why_note),
+  photo: toNullableText(row.photo),
   accentColor: toEnum<AccentColor>(row.accent_color, ACCENT_LABELS, "berry"),
   createdAt: toText(row.created_at),
   updatedAt: toText(row.updated_at),
@@ -72,13 +76,15 @@ export function profileRepository(db: SqlDatabase) {
             SET pilot_name = ?, certificate_goal = ?, current_focus = ?,
                 current_milestone_id = ?, flight_school = ?, instructor_name = ?,
                 home_airport = ?, aircraft_type = ?, training_started_on = ?,
-                medical_expiry = ?, accent_color = ?, updated_at = ?
+                medical_expiry = ?, why_note = ?, photo = ?, accent_color = ?,
+                updated_at = ?
           WHERE id = ?`,
         [
           next.pilotName, next.certificateGoal, next.currentFocus,
           next.currentMilestoneId, next.flightSchool, next.instructorName,
           next.homeAirport, next.aircraftType, next.trainingStartedOn,
-          next.medicalExpiry, next.accentColor, nowIso(), PROFILE_ID,
+          next.medicalExpiry, next.whyNote, next.photo, next.accentColor,
+          nowIso(), PROFILE_ID,
         ],
       );
     },

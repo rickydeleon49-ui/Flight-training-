@@ -39,3 +39,36 @@
   place-items: center;
   color: #fff;
 }
+
+/* ------------------------- Photo and her why ------------------------- */
+
+.photo-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.photo-preview {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+  flex: none;
+}
+
+.photo-placeholder {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-sunken);
+  color: var(--text-tertiary);
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}

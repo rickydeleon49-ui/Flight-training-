@@ -33,6 +33,8 @@ export const makeProfile = (overrides: Partial<Profile> = {}): Profile => ({
   aircraftType: "",
   trainingStartedOn: null,
   medicalExpiry: null,
+  whyNote: "",
+  photo: null,
   accentColor: "berry",
   createdAt: STAMP,
   updatedAt: STAMP,
