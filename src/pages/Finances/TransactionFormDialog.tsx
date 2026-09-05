@@ -1,0 +1,192 @@
+import { useEffect, useState } from "react";
+
+import { Button, Dialog, Field, Select, TextArea, TextInput } from "@/components/ui";
+import {
+  EXPENSE_CATEGORY_OPTIONS,
+  type ExpenseCategory,
+  type Id,
+  type ScheduleEvent,
+  type Transaction,
+  type TransactionType,
+} from "@/domain/types";
+import { todayIso } from "@/lib/dates";
+import { moneyToInput, parseMoney } from "@/lib/money";
+
+export interface TransactionDraft {
+  type: TransactionType;
+  amount: number;
+  date: string;
+  category: ExpenseCategory;
+  description: string;
+  notes: string;
+  eventId: Id | null;
+}
+
+interface Props {
+  open: boolean;
+  type: TransactionType;
+  transaction?: Transaction | null;
+  events: ScheduleEvent[];
+  onClose: () => void;
+  onSave: (draft: TransactionDraft) => void;
+}
+
+export function TransactionFormDialog({
+  open,
+  type,
+  transaction = null,
+  events,
+  onClose,
+  onSave,
+}: Props) {
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(todayIso());
+  const [category, setCategory] = useState<ExpenseCategory>("flight_lesson");
+  const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
+  const [eventId, setEventId] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const effectiveType = transaction?.type ?? type;
+  const isExpense = effectiveType === "expense";
+
+  useEffect(() => {
+    if (!open) return;
+    setErrors({});
+    if (transaction) {
+      setAmount(moneyToInput(transaction.amount));
+      setDate(transaction.date);
+      setCategory(transaction.category);
+      setDescription(transaction.description);
+      setNotes(transaction.notes);
+      setEventId(transaction.eventId ?? "");
+    } else {
+      setAmount("");
+      setDate(todayIso());
+      setCategory(isExpense ? "flight_lesson" : "other");
+      setDescription("");
+      setNotes("");
+      setEventId("");
+    }
+  }, [open, transaction, isExpense]);
+
+  const submit = () => {
+    const found: Record<string, string> = {};
+    const cents = parseMoney(amount);
+    if (cents === null) found.amount = "Enter an amount like 275 or 275.50.";
+    else if (cents <= 0) found.amount = "Enter an amount greater than zero.";
+    if (!date) found.date = "Choose a date.";
+
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
+
+    onSave({
+      type: effectiveType,
+      amount: cents as number,
+      date,
+      category: isExpense ? category : "other",
+      description: description.trim(),
+      notes: notes.trim(),
+      eventId: eventId || null,
+    });
+  };
+
+  const title = transaction
+    ? "Edit transaction"
+    : isExpense
+      ? "Record an expense"
+      : "Add to your Flight Fund";
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={title}
+      footer={
+        <>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={submit}>
+            {transaction ? "Save changes" : isExpense ? "Record expense" : "Add funds"}
+          </Button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <Field label="Amount" hint="Dollars." error={errors.amount}>
+          {({ id, describedBy, invalid }) => (
+            <TextInput
+              id={id}
+              inputMode="decimal"
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
+              value={amount}
+              placeholder="275"
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          )}
+        </Field>
+
+        <Field label="Date" error={errors.date}>
+          {({ id, describedBy, invalid }) => (
+            <TextInput
+              id={id}
+              type="date"
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          )}
+        </Field>
+
+        {isExpense ? (
+          <Field label="Category">
+            {({ id }) => (
+              <Select
+                id={id}
+                options={EXPENSE_CATEGORY_OPTIONS}
+                value={category}
+                onChange={(value) => setCategory(value)}
+              />
+            )}
+          </Field>
+        ) : null}
+
+        {isExpense ? (
+          <Field label="Related lesson" hint="Optional.">
+            {({ id, describedBy }) => (
+              <Select
+                id={id}
+                aria-describedby={describedBy}
+                placeholder="Not linked to a lesson"
+                options={events.map((event) => ({
+                  value: event.id,
+                  label: `${event.title} · ${event.date}`,
+                }))}
+                value={eventId}
+                onChange={(value) => setEventId(value)}
+              />
+            )}
+          </Field>
+        ) : null}
+
+        <Field label="Description" full>
+          {({ id }) => (
+            <TextInput
+              id={id}
+              value={description}
+              placeholder={isExpense ? "Flight lesson" : "Saved paycheck money"}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          )}
+        </Field>
+
+        <Field label="Notes" full>
+          {({ id }) => (
+            <TextArea id={id} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          )}
+        </Field>
+      </div>
+    </Dialog>
+  );
+}

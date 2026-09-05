@@ -5,6 +5,7 @@ import { App } from "./App";
 
 import "./styles/tokens.css";
 import "./styles/base.css";
+import "./styles/layout.css";
 import "./components/ui/ui.css";
 
 const container = document.getElementById("root");

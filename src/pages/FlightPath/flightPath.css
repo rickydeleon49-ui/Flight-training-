@@ -1,0 +1,116 @@
+/* Flight Path: the training journey as a route with waypoints. */
+
+.path { position: relative; padding-left: var(--space-6); }
+
+/* The route line the waypoints sit on. */
+.path::before {
+  content: "";
+  position: absolute;
+  left: 0.56rem;
+  top: 0.9rem;
+  bottom: 1.5rem;
+  width: 2px;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--category-flight-edge) 0 6px,
+    transparent 6px 13px
+  );
+}
+
+.waypoint { position: relative; padding-bottom: var(--space-6); }
+
+.waypoint__marker {
+  position: absolute;
+  left: calc(var(--space-6) * -1);
+  top: 0.55rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: var(--surface-page);
+  border: 2px solid var(--category-flight-edge);
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+
+.waypoint--done .waypoint__marker {
+  background: var(--category-complete-ink);
+  border-color: var(--category-complete-ink);
+}
+
+.waypoint--current .waypoint__marker {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px var(--accent-primary-fill);
+}
+
+.waypoint__title {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+}
+
+.waypoint--current .waypoint__title {
+  font-size: var(--text-lg);
+  color: var(--accent-primary);
+}
+
+.waypoint__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.goal-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.goal-card + .goal-card { margin-top: var(--space-3); }
+
+.goal-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.goal-card__head:hover { background: var(--surface-sunken); }
+
+.goal-card__title { flex: 1; min-width: 0; font-size: var(--text-base); }
+
+.goal-card__body {
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-4);
+}
+
+/* Evidence, not a percentage. */
+.evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.evidence__item { display: flex; align-items: baseline; gap: 0.35rem; }
+.evidence__value { font-weight: 600; color: var(--text-primary); }
+
+.confidence { display: inline-flex; gap: 3px; }
+.confidence__pip {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+.confidence__pip--on { background: var(--accent-primary); }
