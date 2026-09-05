@@ -34,8 +34,86 @@ The real application always uses the desktop database.
 | `npm run build` | Typecheck and build the frontend |
 | `scripts/desktop-smoke.sh` | Drive the real desktop window (Linux) |
 
-Before packaging for macOS or Windows, generate the platform icon formats once
-with `npm run tauri icon src-tauri/icons/icon.png`.
+---
+
+## On a Mac
+
+Tauri builds for the machine it runs on, so a macOS application has to be
+built on macOS. Two ways to get one.
+
+### Build it yourself
+
+Once, to set the machine up:
+
+```bash
+xcode-select --install                                            # Apple's build tools
+brew install node                                                 # or from nodejs.org
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh    # Rust
+```
+
+Then, in the project:
+
+```bash
+npm install
+npm run tauri dev      # develop, with live reload
+npm run tauri build    # package
+```
+
+The build leaves you:
+
+```
+src-tauri/target/release/bundle/macos/Her Flight Deck.app
+src-tauri/target/release/bundle/dmg/Her Flight Deck_0.1.0_aarch64.dmg
+```
+
+Apple Silicon builds arm64 only by default. For one binary that also runs on
+Intel Macs:
+
+```bash
+rustup target add x86_64-apple-darwin aarch64-apple-darwin
+npm run tauri build -- --target universal-apple-darwin
+```
+
+### Or let GitHub build it
+
+The **Build macOS app** workflow under the Actions tab produces a downloadable
+`.dmg` without a local toolchain. It is manual-trigger only, because macOS
+runners bill at ten times the Linux rate.
+
+### Things macOS does differently
+
+**The app is not code-signed.** Built and run on the same Mac that is fine —
+macOS only quarantines files that arrive from elsewhere. A `.dmg` you download
+from GitHub Actions *is* from elsewhere, so the first launch needs either a
+right-click → Open, or:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/Her Flight Deck.app"
+```
+
+Signing it properly needs a paid Apple Developer account; for a private
+personal application it is not worth it.
+
+**It needs a reasonably current macOS.** Every form in the application is a
+native `<dialog>`, which WebKit only supports from Safari 15.4 — macOS 12.3,
+or an older system with Safari updated. The bundle declares 12.0 as its
+minimum. On anything older the dialogs simply will not open, so the floor is
+deliberate rather than cautious.
+
+**Where her data lives:**
+
+```
+~/Library/Application Support/com.herflightdeck.app/
+    her-flight-deck.db     the database
+    documents/             imported study materials
+```
+
+That directory is what to back up, and what to delete for a clean start.
+Nothing is written anywhere else, and nothing leaves the machine.
+
+**`scripts/desktop-smoke.sh` is Linux only.** There is no equivalent for the
+macOS file chooser, so after changing how photos or study materials are added,
+open Settings and add one by hand.
 
 ---
 
