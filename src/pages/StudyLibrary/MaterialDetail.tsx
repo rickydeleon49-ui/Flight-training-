@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -68,6 +68,8 @@ export function MaterialDetail() {
   const [newQuestion, setNewQuestion] = useState("");
   const [notes, setNotes] = useState("");
   const [notesStatus, setNotesStatus] = useState<"idle" | "saving" | "saved">("idle");
+  /** Which material the notes on screen were loaded from. */
+  const [notesFor, setNotesFor] = useState<string | null>(null);
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
@@ -87,23 +89,59 @@ export function MaterialDetail() {
   }, []);
 
   useEffect(() => {
-    if (material) setNotes(material.notes);
+    if (!material) return;
+    setNotes(material.notes);
+    setNotesFor(material.id);
   }, [material?.id, material?.notes]);
 
   // Notes save themselves shortly after she stops typing, so there is no
   // button to forget and nothing to lose by clicking away.
   const activeMaterialId = material?.id;
   const savedNotes = material?.notes;
+  // What the pause is still holding, kept where leaving the page can reach
+  // it. Clicking away inside those 700ms used to cancel the save and lose
+  // whatever had just been typed.
+  const unsavedNotesRef = useRef<{ materialId: string; notes: string } | null>(null);
+
   useEffect(() => {
-    if (activeMaterialId === undefined || notes === savedNotes) return;
+    // Between opening another material and this catching up with it, what is
+    // on screen still belongs to the last one — it must not be written to the
+    // new one.
+    if (activeMaterialId === undefined || notesFor !== activeMaterialId) return;
+    if (notes === savedNotes) {
+      unsavedNotesRef.current = null;
+      return;
+    }
+    unsavedNotesRef.current = { materialId: activeMaterialId, notes };
     setNotesStatus("saving");
     const timer = window.setTimeout(() => {
-      void mutate((repos) => repos.documents.update(activeMaterialId, { notes })).then((result) =>
-        setNotesStatus(result === null ? "idle" : "saved"),
-      );
+      void mutate((repos) => repos.documents.update(activeMaterialId, { notes })).then((result) => {
+        if (unsavedNotesRef.current?.notes === notes) unsavedNotesRef.current = null;
+        setNotesStatus(result === null ? "idle" : "saved");
+      });
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [notes, savedNotes, activeMaterialId, mutate]);
+  }, [notes, savedNotes, activeMaterialId, notesFor, mutate]);
+
+  /** Write out anything the pause is still holding. */
+  const flushNotes = useCallback(() => {
+    const pending = unsavedNotesRef.current;
+    if (!pending) return;
+    unsavedNotesRef.current = null;
+    void mutate((repos) => repos.documents.update(pending.materialId, { notes: pending.notes }));
+  }, [mutate]);
+
+  // Leaving is a save, not a cancellation: going back to the library, opening
+  // another material, or closing the window all write the pending notes out
+  // first. Declared after the pause above so its cleanup runs once the timer
+  // has been cleared.
+  useEffect(() => {
+    window.addEventListener("beforeunload", flushNotes);
+    return () => {
+      window.removeEventListener("beforeunload", flushNotes);
+      flushNotes();
+    };
+  }, [flushNotes, activeMaterialId]);
 
   // A document can disappear from disk; the library says so rather than failing.
   useEffect(() => {
@@ -658,6 +696,8 @@ export function MaterialDetail() {
         message="Its notes, tags and links are removed. The file is deleted from this application's private storage."
         onConfirm={() => {
           setConfirmingDelete(false);
+          // Nothing pending is worth writing back to a record on its way out.
+          unsavedNotesRef.current = null;
           deleteWithUndo({
             ids: [material.id],
             label: material.title,

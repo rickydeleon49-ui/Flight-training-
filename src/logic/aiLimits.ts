@@ -87,3 +87,52 @@ export function checkFileForGemini(
 
   return { ready: true };
 }
+
+/** A page range, judged before any pages are written. */
+export type SplitRangeVerdict =
+  | { ok: true; pages: number }
+  | { ok: false; pages: number; reason: string };
+
+/**
+ * Whether a chapter taken from these pages is one Google would read.
+ *
+ * The Rust side refuses a range past `maxPagesPerSplit` after doing the work
+ * — see `src-tauri/src/pdf.rs`. Deciding the same thing here means an
+ * impossible range is answered while she is choosing it, instead of being
+ * called "well inside the limits" and then rejected.
+ */
+export function checkSplitRange(
+  firstPage: number,
+  lastPage: number,
+  totalPages: number,
+  maxPagesPerSplit: number,
+): SplitRangeVerdict {
+  const sensible =
+    Number.isInteger(firstPage) &&
+    Number.isInteger(lastPage) &&
+    firstPage >= 1 &&
+    lastPage >= firstPage &&
+    lastPage <= totalPages;
+
+  if (!sensible) {
+    return {
+      ok: false,
+      pages: 0,
+      reason: `Choose a first and last page inside 1–${totalPages.toLocaleString()}.`,
+    };
+  }
+
+  const pages = lastPage - firstPage + 1;
+  if (pages > maxPagesPerSplit) {
+    return {
+      ok: false,
+      pages,
+      reason:
+        `That is ${pages.toLocaleString()} pages. Google reads ` +
+        `${maxPagesPerSplit.toLocaleString()} at a time, so choose a smaller range — a ` +
+        `chapter makes a better study aid than a whole book anyway.`,
+    };
+  }
+
+  return { ok: true, pages };
+}

@@ -23,7 +23,7 @@ The current source is committed and pushed to GitHub:
 - Branch: `main` (the repository default)
 - Latest published release: `v0.4.0`
 - Application version prepared by this change: `0.5.0`
-- Automated tests: **279 passing** across 29 files
+- Automated tests: **283 passing** across 29 files
 - TypeScript production build: **passing**
 - Rust desktop compilation: **passing**
 - GitHub macOS DMG build and upload: **passing**
@@ -32,8 +32,13 @@ The current source is committed and pushed to GitHub:
 
 **`v0.4.0` is published** with Windows and Apple Silicon macOS installers.
 This work prepares `0.5.0`, which adds Notes, local PDF chapter splitting,
-visible Gemini retry progress, and the Flash-Lite fallback. It must finish its
-pull-request and desktop build checks before `v0.5.0` is published.
+visible Gemini retry progress, and the Flash-Lite fallback. A pre-release audit
+of it closed three more defects: study notes are now written out when she
+leaves a material instead of losing the last thing typed, a saved chapter is no
+longer deleted because the screen failed to refresh after saving it, and both
+of Google's PDF limits — 50 MB **and** 1,000 pages — are checked before an
+upload rather than after. It must finish its pull-request and desktop build
+checks before `v0.5.0` is published.
 
 There are no placeholder pages in the main application. The remaining work is
 publishing, hands-on testing with a real Gemini key, and refinement based on
@@ -366,7 +371,7 @@ The application warns about this but does not currently block it — see
 
 Verified on this machine:
 
-- `npm test`: **29 test files and 279 tests pass**.
+- `npm test`: **29 test files and 283 tests pass**.
 - `npm run typecheck`: passes with strict TypeScript settings.
 - `cargo check`: Rust backend compiles, including the Gemini, TLS, and keyring
   code.
