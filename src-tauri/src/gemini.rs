@@ -24,7 +24,14 @@ use crate::storage::app_root;
 /// and the `keyring` dependency can go.
 const LEGACY_SERVICE: &str = "com.herflightdeck.app";
 const LEGACY_ACCOUNT: &str = "gemini-api-key";
-const MODEL: &str = "gemini-2.5-flash";
+/// The model her key is checked against and her documents are sent to.
+///
+/// Pinned deliberately rather than using a `-latest` alias: those are
+/// hot-swapped under you and have themselves resolved to a retired model.
+/// Google publishes a shutdown date per model, so this constant has an expiry
+/// and moving it forward is a normal part of a release. `gemini-2.5-flash`,
+/// which this replaces, shuts down on 16 October 2026.
+const MODEL: &str = "gemini-3.5-flash";
 const MAX_FILE_BYTES: u64 = 50 * 1024 * 1024;
 
 /// Checking a key is one small round trip; it should never hang the dialog.
@@ -151,6 +158,12 @@ async fn verify_key(api_key: &str) -> Result<(), String> {
             "Google did not accept that key. Check it in Google AI Studio and try again."
                 .to_string(),
         )
+    } else if status.as_u16() == 404 {
+        // Her key is fine; this build is asking for a model that is gone.
+        // Blaming the key would send her to fix something that is not broken.
+        Err(format!(
+            "Google has retired the {MODEL} model this version of Her Flight Deck uses. Install the latest version and try again."
+        ))
     } else {
         Err(format!(
             "Gemini returned {status}: {}",

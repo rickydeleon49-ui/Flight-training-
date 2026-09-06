@@ -314,6 +314,9 @@ The application warns about this but does not currently block it — see
   calculates checksums, and publishes a GitHub Release. Run twice, for `v0.2.0`
   and `v0.3.0`; both succeeded.
 - Rust and npm caches reduce later GitHub Actions build times.
+- Every pull request and every push to `main` runs the tests, the typecheck,
+  the production build, `cargo fmt --check`, `cargo clippy -D warnings`, and
+  the Rust backup and restore guards, on Linux.
 - Neither installer is currently code-signed.
 
 ---
@@ -332,6 +335,8 @@ Verified on this machine:
   there after the application is closed and reopened, and a new version's first
   run copies the database aside into a working copy that holds her photo while
   leaving the live data untouched.
+- `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean,
+  and both now run in CI so they stay that way.
 - `cargo test` (31 tests): backup and restore end to end against real files —
   a complete archive put back with every document, a safety copy put back
   without disturbing uploads, the write-ahead log travelling with the database,
@@ -408,6 +413,14 @@ check, not a certificate, medical record, or personal logbook.
 ---
 
 ## Known limitations
+
+- There is no TypeScript linter or formatter. The Rust side is gated on
+  `cargo fmt` and `cargo clippy` in CI; nothing equivalent watches the
+  TypeScript, and it shows — `src/pages/PilotToolkit/PilotToolkit.tsx` has
+  twenty-three lines over two hundred characters, one of them 2,651, and it
+  is the only file in the repository like that. Adding Prettier and ESLint
+  would fix it, but a repository-wide reformat is a large diff that should
+  not land in the same change as a release.
 
 - Google Sign-In does not directly grant a third-party desktop application
   Gemini API access. The student must create and paste a free API key once.
@@ -524,9 +537,19 @@ after every update — installing it over `0.3.0`, and connecting a real free
 Gemini key to generate one study aid from a safe test PDF, then collecting
 feedback from the student and her instructor.
 
-One dated dependency to watch: the Gemini model is the hardcoded constant
-`gemini-2.5-flash` in `src-tauri/src/gemini.rs`, and Google has announced a
-shutdown date of 16 October 2026 for it. When that day comes, every installed
-build asking for it stops working. Moving to a current Flash model is a
-one-line change, but it needs a release to reach her, so it should not wait
-until the day it breaks.
+The Gemini model is a hardcoded constant, `MODEL` in
+`src-tauri/src/gemini.rs`, and it has an expiry: Google publishes a shutdown
+date per model, and after that date every installed build asking for it stops
+working. It now reads `gemini-3.5-flash`, which is generally available and on
+the free tier. It replaced `gemini-2.5-flash`, whose announced shutdown date
+is 16 October 2026.
+
+**This has not been exercised against the live API.** No Gemini key exists in
+any development environment, so the model name is taken from Google's
+documentation rather than from a successful call. It is the first thing to
+check on the first real connection: connecting in Settings verifies the key
+against this exact model, so a wrong name fails immediately and visibly at
+that step, and both that path and generation answer a `404` by naming the
+model and asking her to update. Moving the constant forward is a one-line
+change, but it needs a release to reach her, so it should not wait until the
+day it breaks.

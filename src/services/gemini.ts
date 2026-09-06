@@ -20,7 +20,9 @@ export interface GeneratedStudyAid {
   model: string;
 }
 
-const unavailable: GeminiStatus = { configured: false, model: "gemini-2.5-flash" };
+// Only ever seen outside the desktop shell, where Gemini cannot run at all.
+// Kept in step with MODEL in src-tauri/src/gemini.rs.
+const unavailable: GeminiStatus = { configured: false, model: "gemini-3.5-flash" };
 
 export const geminiAvailable = (): boolean => isTauri();
 

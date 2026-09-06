@@ -7,6 +7,9 @@
 #
 # The TypeScript checks run first so an ordinary mistake fails in about a
 # minute, before the slower Rust toolchain is set up at all.
+#
+# The Rust side is also formatted and linted here. There is no equivalent gate
+# on the TypeScript yet — see the note in STATUS.md.
 name: Checks
 
 on:
@@ -52,8 +55,18 @@ jobs:
             libxdo-dev
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+
+      # Formatting and lint before the tests: both are seconds once the crate
+      # is built, and both are the kind of drift nobody notices by reading.
+      - name: Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+
+      - name: Rust lint
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
       - run: cargo test --manifest-path src-tauri/Cargo.toml
