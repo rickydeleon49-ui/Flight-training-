@@ -28,6 +28,12 @@ describe("describeBackup", () => {
     expect(describeBackup("2026-09-05-174233-manual")).toBe("Taken by you");
   });
 
+  it("still reads a name that was disambiguated within the same second", () => {
+    expect(describeBackup("2026-09-05-174233-2-before-0.2.0")).toBe(
+      "Taken before updating to 0.2.0",
+    );
+  });
+
   it("recognizes the recovery copy made before a restore", () => {
     expect(describeBackup("2026-09-05-174233-before-restore")).toBe(
       "Saved before a restore",

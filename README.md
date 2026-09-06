@@ -188,7 +188,7 @@ Windows  %APPDATA%\com.herflightdeck.app\
     backups/               automatic copies
 ```
 
-Four things keep it safe across releases:
+Seven things keep it safe across releases:
 
 **The folder is keyed to the bundle identifier**, `com.herflightdeck.app`.
 Installing a new version over an old one leaves it untouched. Changing that
@@ -196,10 +196,17 @@ identifier would point the application at an empty folder and look exactly
 like data loss, so it must never change.
 
 **A copy is taken before any new version's first run.** The Rust side records
-which version last ran; when that changes it copies the database aside
-*before* the frontend opens it, and therefore before any migration touches
-it. The ten most recent copies are kept. If a release ever goes wrong, the
-previous state is sitting right there.
+which version last ran; when that changes — or when there is no record at all,
+which is when we know least about what wrote the database — it copies the
+database aside *before* the frontend opens it, and therefore before any
+migration touches it. The ten most recent copies are kept. If a release ever
+goes wrong, the previous state is sitting right there.
+
+**Any of those copies can be put back from Settings.** Each one offers "Put
+this back": the app stages it, restarts, keeps the current database in a
+recoverable `before-restore` copy, and installs the chosen one. These copies
+hold the database only, so her uploaded files are deliberately left exactly
+where they are. She can also take one on demand before doing anything risky.
 
 **Migrations only ever add.** `npm test` fails the build if a migration drops
 or renames anything, or if an already-shipped migration is edited — installed
@@ -210,17 +217,36 @@ failure messages explaining what to do instead.
 **She can make one complete portable backup.** Settings writes a single
 `.hfdbackup` file containing the database (including her profile photo and
 flight log) plus every imported study document. She chooses where it is saved,
-so it can live on another drive or in a cloud-synced folder.
+so it can live on another drive or in a cloud-synced folder. The database's
+write-ahead log is folded in first, and travels with the archive if that could
+not finish, so a backup can never be missing what she did that morning.
 
-**Restore is deliberately cautious.** The app validates a selected backup and
-shows its date, app version, file count, and size before asking for confirmation.
-It stages the archive without touching current data, restarts, then moves the
-current database and documents into a recoverable `before-restore` copy before
-installing the restored set.
+**Settings says whether that backup is still current.** It records when the
+last complete backup was saved and which version wrote it, then says so on the
+card — and asks for a fresh one when the app has been updated since, or when
+two weeks have passed. Saving one before an update, and restoring it if
+anything looks wrong afterwards, is the intended routine.
 
-One honest limit: the automatic database copies live *inside* that folder and
+**Restore is deliberately cautious.** The app checks that the archive holds
+nothing but a real SQLite database and her documents — the header is verified
+before and after extraction — and shows its date, app version, file count and
+size before asking for confirmation. It stages the archive without touching
+current data, restarts, then moves the current database and documents into a
+recoverable `before-restore` copy before installing the restored set. A backup
+written by a *newer* version is refused with an explanation rather than
+installed, because an older app cannot read a newer training record.
+
+**If the database will not open at all, the app offers the way back.** Instead
+of only reporting the error, it shows where her data lives and offers to put
+back either a `.hfdbackup` file or one of the automatic copies, then restarts.
+None of that needs the database, so it still works when everything else does not.
+
+Two honest limits: the automatic database copies live *inside* that folder and
 do not include imported documents, so they protect against a bad update rather
-than losing the machine. Use **Save complete backup** for portable protection.
+than losing the machine — use **Save complete backup** for portable protection.
+And uninstalling on Windows offers to delete application data; leaving that
+box unticked is what keeps her records. A complete backup on another drive is
+the only thing that survives ticking it.
 
 ---
 

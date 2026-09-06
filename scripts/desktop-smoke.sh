@@ -7,10 +7,12 @@
 #
 #   1. the Rust migration runner building a real database,
 #   2. the native file chooser opened by the photo input,
-#   3. writes landing in the real SQLite file in application data.
+#   3. writes landing in the real SQLite file in application data,
+#   4. her data still being there after the app is closed and reopened,
+#   5. the safety copy taken when a new version opens her database.
 #
 # This drives the actual Tauri window on a virtual display and checks all
-# three, asserting against the database rather than against pixels wherever
+# five, asserting against the database rather than against pixels wherever
 # it can. Screenshots are left in the output directory for a human to look at.
 #
 # Linux only. Requires: Xvfb, xdotool, ImageMagick (import).
@@ -52,14 +54,22 @@ trap cleanup EXIT
 
 shot() { DISPLAY="$DISPLAY_NUM" import -window root "$OUT/$1.png" 2>/dev/null; }
 click() { DISPLAY="$DISPLAY_NUM" xdotool mousemove "$1" "$2" click 1; sleep "${3:-2}"; }
-query() { node -e "
+query_db() { node -e "
   const {DatabaseSync}=require('node:sqlite');
   try {
     const d=new DatabaseSync(process.argv[1],{readOnly:true});
     const r=d.prepare(process.argv[2]).get();
     console.log(r ? Object.values(r)[0] : '');
   } catch { console.log(''); }
-" "$DB" "$1" 2>/dev/null; }
+" "$1" "$2" 2>/dev/null; }
+query() { query_db "$DB" "$1"; }
+
+APP="$ROOT/src-tauri/target/debug/her-flight-deck"
+launch() { DISPLAY="$DISPLAY_NUM" "$APP" >>"$OUT/app.log" 2>&1 & sleep "${1:-14}"; }
+quit_app() {
+  for pid in $(ps -eo pid,comm | awk '$2 ~ /^her-flight/ {print $1}'); do kill "$pid" 2>/dev/null; done
+  sleep 3
+}
 
 step "Building"
 ( cd "$ROOT/src-tauri" && cargo build --quiet ) || { echo "cargo build failed"; exit 1; }
@@ -94,8 +104,8 @@ fi
 # src/data/migrations.test.ts, which runs the same SQL against real SQLite.
 mkdir -p "$(dirname "$DB")"
 
-DISPLAY="$DISPLAY_NUM" "$ROOT/src-tauri/target/debug/her-flight-deck" >"$OUT/app.log" 2>&1 &
-sleep 14
+: >"$OUT/app.log"
+launch
 
 step "The window opens"
 if DISPLAY="$DISPLAY_NUM" xdotool search --name "Her Flight Deck" >/dev/null 2>&1; then
@@ -161,6 +171,57 @@ if [ -n "$size" ] && [ "$size" -gt 0 ] && [ "$size" -lt 60000 ]; then
 else
   fail "stored photo is missing or too large (${size:-none} bytes)"
 fi
+
+step "Closing and reopening keeps everything"
+quit_app
+launch
+if DISPLAY="$DISPLAY_NUM" xdotool search --name "Her Flight Deck" >/dev/null 2>&1; then
+  pass "the window opens again"
+else
+  fail "the application did not reopen"
+fi
+reopened="$(query "SELECT LENGTH(photo) FROM settings WHERE id='profile'")"
+if [ -n "$reopened" ] && [ "$reopened" -gt 0 ]; then
+  pass "her photo is still there after a restart (${reopened} bytes)"
+else
+  fail "the photo did not survive closing the application"
+fi
+shot "05-reopened"
+
+step "A new version's first run copies her database aside"
+quit_app
+# Pretend an older version wrote what is on disk, which is what an update means.
+printf '0.0.1' >"$XDG_CONFIG_HOME/$APP_ID/last-run-version.txt"
+launch
+
+VERSION="$(node -p "require('$ROOT/src-tauri/tauri.conf.json').version")"
+COPY="$(ls -d "$XDG_CONFIG_HOME/$APP_ID/backups/"*"-before-$VERSION" 2>/dev/null | head -1)"
+if [ -n "$COPY" ]; then
+  pass "a copy was taken before $VERSION opened her database"
+else
+  fail "no safety copy was taken when the version changed"
+fi
+
+if [ -n "$COPY" ]; then
+  copied="$(query_db "$COPY/her-flight-deck.db" "SELECT LENGTH(photo) FROM settings WHERE id='profile'")"
+  if [ -n "$copied" ] && [ "$copied" -gt 0 ]; then
+    pass "the copy is a working database holding her photo"
+  else
+    fail "the copy does not hold her data"
+  fi
+fi
+
+kept="$(query "SELECT LENGTH(photo) FROM settings WHERE id='profile'")"
+if [ -n "$kept" ] && [ "$kept" -gt 0 ]; then
+  pass "the update left her live data untouched"
+else
+  fail "her data did not survive the version change"
+fi
+
+recorded="$(cat "$XDG_CONFIG_HOME/$APP_ID/last-run-version.txt" 2>/dev/null)"
+[ "$recorded" = "$VERSION" ] && pass "the new version was recorded ($recorded)" \
+                             || fail "expected $VERSION recorded, found '${recorded:-none}'"
+shot "06-after-update"
 
 step "Result"
 if [ "$failures" -eq 0 ]; then

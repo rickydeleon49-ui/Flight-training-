@@ -17,10 +17,15 @@ export interface BackupInfo {
   bytes: number;
   /** Seconds since the Unix epoch. */
   createdAt: number;
+  /** Whether this copy holds a database the app could actually put back. */
+  restorable: boolean;
 }
 
 export interface CompleteBackupInfo {
+  /** The version that wrote the backup. */
   appVersion: string;
+  /** The version running now. */
+  currentAppVersion: string;
   /** Seconds since the Unix epoch. */
   createdAt: number;
   files: number;
@@ -90,9 +95,26 @@ export async function stageCompleteRestore(sourcePath: string): Promise<Complete
   return invoke<CompleteBackupInfo>("stage_complete_restore", { sourcePath });
 }
 
+/**
+ * Stage one of the automatic safety copies, without touching uploaded files.
+ *
+ * These copies are the database as it stood before an update. Her documents
+ * never moved, so a restore from one deliberately leaves them alone.
+ */
+export async function stageLocalRestore(name: string): Promise<BackupInfo> {
+  if (!isTauri()) throw new Error("Restore needs the desktop application.");
+  return invoke<BackupInfo>("stage_local_restore", { name });
+}
+
 export async function restartForRestore(): Promise<void> {
   if (!isTauri()) throw new Error("Restore needs the desktop application.");
   await invoke("restart_for_restore");
+}
+
+/** The version running right now, as the desktop shell reports it. */
+export async function appVersion(): Promise<string> {
+  if (!isTauri()) return "";
+  return invoke<string>("app_version");
 }
 
 export async function dataDirectory(): Promise<string> {

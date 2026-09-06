@@ -256,8 +256,13 @@ The application warns about this but does not currently block it — see
 - The bundle identifier `com.herflightdeck.app` anchors this location and must
   not be changed in a normal update.
 - Before a new application version opens the database, it creates a safety copy.
-  This depends on the version number actually changing between releases.
-- Ten automatic database safety copies are retained.
+  A copy is also taken when the version marker is missing, so a database whose
+  origin is unknown is never opened without one.
+- Ten automatic database safety copies are retained, and folder names are made
+  unique so two copies inside one second cannot overwrite each other.
+- Any safety copy can be put back from Settings, or from the recovery screen.
+  These copies hold the database only, so uploaded documents are left in place.
+- A copy can also be taken on demand: **Save a copy on this computer**.
 - Migrations are additive and protected by checksum tests.
 - Tests reject migrations that drop, rename, truncate, or delete existing data.
 - Every personal setting — name, school, instructor, home airport, aircraft,
@@ -267,8 +272,20 @@ The application warns about this but does not currently block it — see
   schema still reads back intact after every later migration is applied.
 - Settings can create a complete `.hfdbackup` containing the database, photo,
   flight log, generated study aids, and every uploaded document.
-- Restore inspects the archive before changing anything, moves the current data
-  into a recoverable copy, installs the selected backup, and restarts.
+- The write-ahead log is checkpointed into the database before a complete
+  backup is written, a blocked checkpoint stops the backup rather than saving
+  an incomplete one, and the log is archived alongside the database if it still
+  holds anything. A backup can therefore never be missing the current session.
+- Restore inspects the archive before changing anything, checks the SQLite
+  header before and after extraction, moves the current data into a recoverable
+  copy, installs the selected backup, and restarts.
+- A backup written by a newer application version is refused with an
+  explanation instead of installed.
+- Settings records when the last complete backup was saved and which version
+  wrote it, and asks for a fresh one after an update or after fourteen days.
+- If the database cannot be opened at all, a recovery screen replaces the error
+  message: it shows the data folder and offers to put back a `.hfdbackup` file
+  or any automatic copy. It needs no working database.
 
 ### 14. Desktop and release infrastructure
 
@@ -297,7 +314,15 @@ Verified on this machine:
   code.
 - `scripts/desktop-smoke.sh`: the real desktop window opens, the Rust migration
   runner builds all 20 tables, the native file chooser opens from the photo
-  input, and the photo reaches the real database downscaled.
+  input, the photo reaches the real database downscaled, her data is still
+  there after the application is closed and reopened, and a new version's first
+  run copies the database aside into a working copy that holds her photo while
+  leaving the live data untouched.
+- `cargo test` (14 tests): backup and restore end to end against real files —
+  a complete archive put back with every document, a safety copy put back
+  without disturbing uploads, the write-ahead log travelling with the database,
+  a damaged archive refused before anything moves, and an archive carrying an
+  unexpected file refused outright.
 - Database migrations apply to a new database and upgrade an existing populated
   database without losing its records.
 - The Gemini API key appears in no migration, is absent from the backup code,
@@ -392,6 +417,9 @@ check, not a certificate, medical record, or personal logbook.
 - Automatic pre-update database copies remain on the same computer and do not
   include documents. Use complete `.hfdbackup` files for protection against a
   lost or failed computer.
+- Uninstalling on Windows offers to delete application data. Tauri 2 has no
+  configuration option to remove that choice, so it is documented rather than
+  prevented: leave the box unticked, and keep a complete backup elsewhere.
 - Some newer interface files contain very long single lines, which makes review
   and future changes harder than they should be. Worth reformatting.
 
