@@ -1,0 +1,59 @@
+# Every change gets checked before it reaches main.
+#
+# Linux only, and deliberately one job: the packaging workflows already build
+# the real installers on macOS and Windows, and those runners bill at ten and
+# two times the Linux rate. This is the cheap gate that catches a broken test,
+# a type error, or a backup and restore guard that no longer holds.
+#
+# The TypeScript checks run first so an ordinary mistake fails in about a
+# minute, before the slower Rust toolchain is set up at all.
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push makes an older run pointless. Cancelling it keeps the minutes
+# for changes that still matter.
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tests, types, and the data-safety guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+      # `npm run build` typechecks first, then produces the real frontend
+      # bundle — which is also what the Rust side compiles against.
+      - run: npm run build
+
+      # Her backup and restore guards are Rust tests, and they need the same
+      # system libraries a desktop build does.
+      - name: Linux desktop libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libxdo-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
