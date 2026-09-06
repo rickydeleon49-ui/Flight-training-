@@ -45,27 +45,43 @@ pub(crate) fn stored_document_path(
 }
 
 /// Reject anything that would escape the documents directory.
+///
+/// Only a `..` *component* climbs out. Rejecting the two characters wherever
+/// they appeared also refused ordinary names — "Chapter 3 .. Airspace.pdf" was
+/// imported happily and then could never be opened, checked, or deleted again.
 fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
-    let looks_absolute = Path::new(relative_path).is_absolute();
     if relative_path.is_empty()
-        || looks_absolute
-        || relative_path.contains("..")
+        || Path::new(relative_path).is_absolute()
         || relative_path.contains('\\')
+        || relative_path.contains('\0')
     {
+        return Err("Invalid document path.".to_string());
+    }
+    let climbs_out = Path::new(relative_path)
+        .components()
+        .any(|component| !matches!(component, std::path::Component::Normal(_)));
+    if climbs_out {
         return Err("Invalid document path.".to_string());
     }
     Ok(relative_path)
 }
 
 /// Keep only characters that are safe on every platform we target.
+///
+/// Runs of dots collapse to one. A stored name is never meant to be a `..`
+/// component, and one dot reads the same to her as three.
 fn sanitize_file_name(name: &str) -> String {
-    let cleaned: String = name
-        .chars()
-        .map(|c| match c {
-            'a'..='z' | 'A'..='Z' | '0'..='9' | '.' | '-' | '_' | ' ' => c,
+    let mut cleaned = String::with_capacity(name.len());
+    for character in name.chars() {
+        let kept = match character {
+            'a'..='z' | 'A'..='Z' | '0'..='9' | '.' | '-' | '_' | ' ' => character,
             _ => '-',
-        })
-        .collect();
+        };
+        if kept == '.' && cleaned.ends_with('.') {
+            continue;
+        }
+        cleaned.push(kept);
+    }
 
     let trimmed = cleaned.trim().trim_matches('.').to_string();
     if trimmed.is_empty() {
@@ -143,5 +159,89 @@ pub fn delete_document(app: AppHandle, relative_path: String) -> Result<(), Stri
         Ok(()) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(e) => Err(format!("Could not remove that document: {e}")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The name she picked survives, minus anything a filesystem would object to.
+    #[test]
+    fn a_sanitized_name_keeps_the_words_she_recognises() {
+        assert_eq!(
+            sanitize_file_name("PHAK Chapter 3.pdf"),
+            "PHAK Chapter 3.pdf"
+        );
+        assert_eq!(
+            sanitize_file_name("Weather/Notes?.pdf"),
+            "Weather-Notes-.pdf"
+        );
+    }
+
+    /// Two dots in a row used to survive into the stored name and then make the
+    /// file unreachable for the rest of its life.
+    #[test]
+    fn runs_of_dots_collapse_so_a_stored_name_never_holds_two() {
+        assert_eq!(
+            sanitize_file_name("Chapter 3 .. Airspace.pdf"),
+            "Chapter 3 . Airspace.pdf"
+        );
+        assert_eq!(sanitize_file_name("notes..pdf"), "notes.pdf");
+        assert_eq!(
+            sanitize_file_name("final.v2...draft.pdf"),
+            "final.v2.draft.pdf"
+        );
+    }
+
+    #[test]
+    fn a_name_with_nothing_usable_left_still_gets_one() {
+        assert_eq!(sanitize_file_name("..."), "document");
+        assert_eq!(sanitize_file_name("   "), "document");
+    }
+
+    /// The whole point: whatever import stores can be opened again afterwards.
+    #[test]
+    fn every_imported_name_can_be_resolved_again() {
+        for original in [
+            "Chapter 3 .. Airspace.pdf",
+            "notes..pdf",
+            "PHAK — ch.3.pdf",
+            "..",
+            "...",
+            "medical.pdf",
+        ] {
+            let stored = format!(
+                "{}-{}",
+                sanitize_file_name("mat_abc123"),
+                sanitize_file_name(original)
+            );
+            assert!(
+                safe_relative_path(&stored).is_ok(),
+                "{original:?} stored as {stored:?}, which could not be resolved"
+            );
+        }
+    }
+
+    /// An ordinary name that merely contains dots is not an escape attempt.
+    #[test]
+    fn dots_inside_a_name_are_not_treated_as_climbing_out() {
+        assert!(safe_relative_path("mat_1-Chapter 3 .. Airspace.pdf").is_ok());
+        assert!(safe_relative_path("mat_1-notes..pdf").is_ok());
+    }
+
+    #[test]
+    fn climbing_out_of_the_documents_folder_is_refused() {
+        for attempt in ["../secrets", "a/../../b", "..", "/etc/passwd", "", "a\\b"] {
+            assert!(
+                safe_relative_path(attempt).is_err(),
+                "{attempt:?} should have been refused"
+            );
+        }
+    }
+
+    #[test]
+    fn a_nested_stored_path_is_still_allowed() {
+        assert!(safe_relative_path("nested/document.pdf").is_ok());
     }
 }

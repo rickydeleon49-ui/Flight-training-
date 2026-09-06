@@ -7,6 +7,9 @@
 #
 # The TypeScript checks run first so an ordinary mistake fails in about a
 # minute, before the slower Rust toolchain is set up at all.
+#
+# The Rust side is also formatted and linted here. There is no equivalent gate
+# on the TypeScript yet — see the note in STATUS.md.
 name: Checks
 
 on:
@@ -24,6 +27,9 @@ jobs:
   checks:
     name: Tests, types, and the data-safety guards
     runs-on: ubuntu-latest
+    # This job takes two minutes warm and about fifteen cold. The default is
+    # six hours, which is how long a stuck run sat here before anyone noticed.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,8 +58,24 @@ jobs:
             libxdo-dev
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      # A cache is an optimization, and it must never be able to hold the build
+      # up. GitHub's cache service stalled this step for forty-five minutes
+      # without restoring anything or failing, so it is bounded and allowed to
+      # lose: a cold compile is slow, a hung run tells you nothing at all.
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
+
+      # Formatting and lint before the tests: both are seconds once the crate
+      # is built, and both are the kind of drift nobody notices by reading.
+      - name: Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+
+      - name: Rust lint
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
       - run: cargo test --manifest-path src-tauri/Cargo.toml

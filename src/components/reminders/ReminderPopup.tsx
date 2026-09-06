@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Badge, Button, Dialog } from "@/components/ui";
@@ -23,20 +23,46 @@ export function ReminderPopup() {
     [data.actions, data.events, data.profile, data.toolkit, today],
   );
   const sessionKey = `her-flight-deck-reminders-${today}`;
+  const notifiedRef = useRef(false);
 
   useEffect(() => {
     if (!data.toolkit.remindersEnabled || reminders.length === 0) return;
     if (sessionStorage.getItem(sessionKey)) return;
     setOpen(true);
-    if ("Notification" in window && Notification.permission === "granted") {
+
+    // Once per launch. `reminders` is a fresh array whenever anything in the
+    // application changes, so without this the same reminders would announce
+    // themselves again every time she saved a lesson.
+    if (notifiedRef.current) return;
+    notifiedRef.current = true;
+
+    const count = reminders.length;
+    void (async () => {
+      if (!("Notification" in window)) return;
+
+      // Reminders are on from the first launch, and the Toolkit only asks for
+      // permission when the switch is turned on — a switch she never has to
+      // touch. Asking here, at the moment a notification is actually due, is
+      // what makes the system notification the interface promises happen at
+      // all. A refusal is fine: the in-app dialog above is the real one.
+      let permission = Notification.permission;
+      if (permission === "default") {
+        try {
+          permission = await Notification.requestPermission();
+        } catch {
+          return;
+        }
+      }
+      if (permission !== "granted") return;
+
       try {
         new Notification("Her Flight Deck", {
-          body: `${reminders.length} training reminder${reminders.length === 1 ? "" : "s"} need a look.`,
+          body: `${count} training reminder${count === 1 ? "" : "s"} need a look.`,
         });
       } catch {
         // The guaranteed in-app dialog remains available.
       }
-    }
+    })();
   }, [data.toolkit.remindersEnabled, reminders, sessionKey]);
 
   const dismiss = () => {

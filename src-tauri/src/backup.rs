@@ -204,8 +204,8 @@ fn is_sqlite_header(header: &[u8]) -> bool {
 
 /// Read the first bytes of a file and confirm SQLite wrote it.
 fn verify_sqlite_file(path: &Path) -> Result<(), String> {
-    let mut file = File::open(path)
-        .map_err(|e| format!("Could not open the database in that backup: {e}"))?;
+    let mut file =
+        File::open(path).map_err(|e| format!("Could not open the database in that backup: {e}"))?;
     let mut header = [0u8; SQLITE_MAGIC.len()];
     file.read_exact(&mut header)
         .map_err(|_| "The database in that backup is damaged or incomplete.".to_string())?;
@@ -884,7 +884,9 @@ fn apply_pending_restore_in(root: &Path) -> Result<(), String> {
     // this too, but the file has been sitting on disk across a restart since.
     if let Err(error) = verify_sqlite_file(&pending.join(DB_FILES[0])) {
         let _ = std::fs::remove_dir_all(&pending);
-        return Err(format!("The staged restore was not usable, so nothing was changed: {error}"));
+        return Err(format!(
+            "The staged restore was not usable, so nothing was changed: {error}"
+        ));
     }
 
     let plan = read_restore_plan(&pending);
@@ -1229,11 +1231,17 @@ mod tests {
         let staged = stage_complete_restore_in(&root, &archive, "0.2.0").unwrap();
         assert_eq!(staged.files, 3);
         // Staging alone must not have touched anything of hers.
-        assert_eq!(database_contents(&root.join(DB_FILES[0])), "damaged after an update");
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "damaged after an update"
+        );
 
         apply_pending_restore_in(&root).unwrap();
 
-        assert_eq!(database_contents(&root.join(DB_FILES[0])), "her real training record");
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "her real training record"
+        );
         assert_eq!(
             document_contents(&root, "airplane-flying-handbook.pdf").as_deref(),
             Some("chapter nine")
@@ -1276,10 +1284,19 @@ mod tests {
         stage_local_restore_in(&root, &copy).unwrap();
         apply_pending_restore_in(&root).unwrap();
 
-        assert_eq!(database_contents(&root.join(DB_FILES[0])), "before the update");
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "before the update"
+        );
         // Her uploads were never in that copy and must not be swept away by it.
-        assert_eq!(document_contents(&root, "handbook.pdf").as_deref(), Some("still hers"));
-        assert_eq!(document_contents(&root, "new-checklist.pdf").as_deref(), Some("added since"));
+        assert_eq!(
+            document_contents(&root, "handbook.pdf").as_deref(),
+            Some("still hers")
+        );
+        assert_eq!(
+            document_contents(&root, "new-checklist.pdf").as_deref(),
+            Some("added since")
+        );
 
         std::fs::remove_dir_all(&root).unwrap();
     }
@@ -1291,7 +1308,11 @@ mod tests {
         let root = scratch("wal");
         let elsewhere = scratch("wal-out");
         write_database(&root.join(DB_FILES[0]), "checkpointed pages");
-        std::fs::write(root.join(DB_FILES[1]), b"pages written since the last checkpoint").unwrap();
+        std::fs::write(
+            root.join(DB_FILES[1]),
+            b"pages written since the last checkpoint",
+        )
+        .unwrap();
 
         let archive = elsewhere.join("with-log.hfdbackup");
         let saved = write_complete_backup(&root, &archive, "0.2.0").unwrap();
@@ -1303,7 +1324,10 @@ mod tests {
         stage_complete_restore_in(&root, &archive, "0.2.0").unwrap();
         apply_pending_restore_in(&root).unwrap();
 
-        assert_eq!(database_contents(&root.join(DB_FILES[0])), "checkpointed pages");
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "checkpointed pages"
+        );
         assert_eq!(
             std::fs::read(root.join(DB_FILES[1])).unwrap(),
             b"pages written since the last checkpoint"
@@ -1329,8 +1353,14 @@ mod tests {
         assert!(stage_complete_restore_in(&root, &archive, "0.2.0").is_err());
 
         // Refused means refused: her current data is exactly as it was.
-        assert_eq!(database_contents(&root.join(DB_FILES[0])), "her real record");
-        assert_eq!(document_contents(&root, "handbook.pdf").as_deref(), Some("hers"));
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "her real record"
+        );
+        assert_eq!(
+            document_contents(&root, "handbook.pdf").as_deref(),
+            Some("hers")
+        );
         assert!(!root.join(RESTORE_PENDING_DIR).exists());
         assert!(!root.join(RESTORE_STAGING_DIR).exists());
 
@@ -1345,7 +1375,9 @@ mod tests {
 
         let file = File::create(&archive).unwrap();
         let mut writer = ZipWriter::new(file);
-        writer.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
+        writer
+            .start_file(ARCHIVE_MANIFEST, archive_options())
+            .unwrap();
         writer
             .write_all(
                 serde_json::to_string(&CompleteBackupManifest {
@@ -1362,7 +1394,9 @@ mod tests {
         writer.write_all(SQLITE_MAGIC).unwrap();
         // A restore plan would decide whether her documents get replaced.
         writer.start_file(RESTORE_PLAN, archive_options()).unwrap();
-        writer.write_all(b"{\"kind\":\"database\",\"source\":\"\"}").unwrap();
+        writer
+            .write_all(b"{\"kind\":\"database\",\"source\":\"\"}")
+            .unwrap();
         writer.finish().unwrap();
 
         let refusal = inspect_archive(&archive, "0.2.0").unwrap_err();
@@ -1407,11 +1441,10 @@ mod tests {
         let root = scratch("inside");
         write_database(&root.join(DB_FILES[0]), "her record");
 
-        let refusal = write_complete_backup(&root, &root.join("copy.hfdbackup"), "0.2.0")
-            .unwrap_err();
+        let refusal =
+            write_complete_backup(&root, &root.join("copy.hfdbackup"), "0.2.0").unwrap_err();
         assert!(refusal.contains("outside"), "{refusal}");
 
         std::fs::remove_dir_all(&root).unwrap();
     }
 }
-
