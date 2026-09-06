@@ -108,6 +108,10 @@ protection. The same rule applies to every future release: bump first.
 - Regenerating replaces that document's previous AI study set.
 - Gemini receives only the document whose **Create study aid** button is used.
   It does not receive the profile, flight log, finances, notes, or other files.
+- Nothing is sent without an explicit confirmation naming the file, and two
+  categories are refused outright: a file attached to a certificate, medical or
+  identification record, and anything filed as an administrative document. The
+  Gemini card explains the refusal instead of offering the button.
 - Gemini analysis currently accepts PDF, TXT, Markdown, PNG, JPG, and WebP.
   RTF and DOCX files can still be stored, but must be converted to PDF before
   AI analysis.
@@ -331,11 +335,11 @@ check, not a certificate, medical record, or personal logbook.
   Gemini API access. The student must create and paste a free API key once.
 - Gemini requires an internet connection only while connecting or generating.
 - Free-tier Gemini content may be used by Google to improve its products.
-- **The application warns about sensitive documents but does not block them.**
-  The records organizer can hold medicals, certificates and identification with
-  library attachments, and **Create study aid** will send any library file it
-  supports. A confirmation naming the file, or blocking administrative records
-  from AI analysis, would close this gap.
+- Sensitive documents are blocked from AI analysis by material type and by
+  record attachment, which are the signals the application actually holds. A
+  personal document filed as ordinary study material under a study type is not
+  detected; the confirmation names the file so that mistake is visible before
+  anything is sent, but it is not prevented.
 - Gemini results are not authoritative flight instruction and may contain
   mistakes. Source and instructor verification are mandatory.
 - AI-generated guides can be regenerated but do not yet have a dedicated

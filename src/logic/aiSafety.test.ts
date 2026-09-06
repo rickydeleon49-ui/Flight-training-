@@ -1,0 +1,57 @@
+import { describe, expect, it } from "vitest";
+
+import { makeMaterial } from "@/testing/factories";
+import type { CredentialRecord } from "@/domain/types";
+import { checkAiSubmission } from "./aiSafety";
+
+const record = (overrides: Partial<CredentialRecord> = {}): CredentialRecord => ({
+  id: "rec-1",
+  type: "medical",
+  title: "Third-class medical",
+  identifier: "",
+  issuedOn: "2026-01-01",
+  expiresOn: "2028-01-01",
+  notes: "",
+  materialId: null,
+  ...overrides,
+});
+
+const withFile = (overrides = {}) =>
+  makeMaterial({ filePath: "abc-notes.pdf", originalFileName: "notes.pdf", ...overrides });
+
+describe("checkAiSubmission", () => {
+  it("allows ordinary study material, naming the file in the warning", () => {
+    const result = checkAiSubmission(withFile(), []);
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toContain("notes.pdf");
+    expect(result.reason).toMatch(/Google/);
+  });
+
+  it("refuses a file attached to a certificate or medical record", () => {
+    // The one click that must never be possible.
+    const material = withFile({ id: "mat-1" });
+    const result = checkAiSubmission(material, [record({ materialId: "mat-1" })]);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain("Third-class medical");
+  });
+
+  it("refuses anything filed as an administrative document", () => {
+    const result = checkAiSubmission(withFile({ materialType: "admin_document" }), []);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain("Admin Document");
+  });
+
+  it("is not fooled by a record attached to some other material", () => {
+    const material = withFile({ id: "mat-1" });
+    const result = checkAiSubmission(material, [record({ materialId: "mat-2" })]);
+    expect(result.allowed).toBe(true);
+  });
+
+  it("refuses a material with no file at all", () => {
+    expect(checkAiSubmission(makeMaterial({ filePath: null }), []).allowed).toBe(false);
+  });
+
+  it("refuses on type even when the record link is absent", () => {
+    expect(checkAiSubmission(withFile({ materialType: "admin_document" }), []).allowed).toBe(false);
+  });
+});

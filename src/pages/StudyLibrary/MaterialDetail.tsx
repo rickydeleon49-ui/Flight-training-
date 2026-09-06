@@ -30,6 +30,7 @@ import {
 import { formatLongDate, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
+import { checkAiSubmission } from "@/logic/aiSafety";
 import {
   canHandleFiles,
   deleteDocument,
@@ -67,6 +68,7 @@ export function MaterialDetail() {
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
 
@@ -115,6 +117,9 @@ export function MaterialDetail() {
     );
   }
 
+  // Nothing reaches Google without passing this, and without her saying yes.
+  const aiCheck = checkAiSubmission(material, data.toolkit.credentials);
+
   const relatedActions = actionsFor(data.actions, "material", material.id);
   const questions = data.questions.filter((question) => question.materialId === material.id);
   const goal = data.goals.find((candidate) => candidate.id === material.goalId);
@@ -154,7 +159,10 @@ export function MaterialDetail() {
   };
 
   const createStudyAid = async () => {
-    if (!material.filePath) return;
+    // Re-checked here so the refusal holds even if the button is reached another way.
+    if (!material.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+      return;
+    }
     setGenerating(true);
     setGenerationError(null);
     try {
@@ -240,15 +248,25 @@ export function MaterialDetail() {
                 title="Gemini study assistant"
                 eyebrow={studySet ? "Saved on this computer" : "Guide and flashcards"}
                 action={
-                  gemini?.configured ? (
-                    <Button size="small" variant={studySet ? "secondary" : "primary"} disabled={generating || fileMissing} onClick={() => void createStudyAid()}>
+                  gemini?.configured && aiCheck.allowed ? (
+                    <Button
+                      size="small"
+                      variant={studySet ? "secondary" : "primary"}
+                      disabled={generating || fileMissing}
+                      onClick={() => setConfirmingAi(true)}
+                    >
                       {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
                     </Button>
                   ) : undefined
                 }
               />
               <CardBody>
-                {!gemini?.configured ? (
+                {!aiCheck.allowed ? (
+                  <div className="ai-disclaimer" role="note">
+                    <AlertIcon size={16} />
+                    <p className="tiny">{aiCheck.reason}</p>
+                  </div>
+                ) : !gemini?.configured ? (
                   <div className="stack stack--3">
                     <p className="small muted">
                       Connect the free Gemini API in Settings to create a guide and flashcards
@@ -549,6 +567,19 @@ export function MaterialDetail() {
           if (result === null) return;
           setAddingAction(false);
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmingAi}
+        title="Send this file to Google?"
+        message={aiCheck.reason}
+        confirmLabel="Send to Gemini"
+        destructive={false}
+        onConfirm={() => {
+          setConfirmingAi(false);
+          void createStudyAid();
+        }}
+        onCancel={() => setConfirmingAi(false)}
       />
 
       <ConfirmDialog
