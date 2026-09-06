@@ -35,6 +35,15 @@ import {
   type CompleteBackupInfo,
 } from "@/services/backups";
 import { trainingDuration } from "@/logic/keyDates";
+import {
+  configureGemini,
+  disconnectGemini,
+  geminiAvailable,
+  geminiErrorMessage,
+  getGeminiStatus,
+  openGeminiKeyPage,
+  type GeminiStatus,
+} from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
 
 import "./settings.css";
@@ -72,6 +81,11 @@ export function Settings() {
   const [backupProblem, setBackupProblem] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
   const [restoreCandidate, setRestoreCandidate] = useState<CompleteBackupInfo | null>(null);
+  const [gemini, setGemini] = useState<GeminiStatus | null>(null);
+  const [geminiKey, setGeminiKey] = useState("");
+  const [geminiBusy, setGeminiBusy] = useState(false);
+  const [geminiNote, setGeminiNote] = useState<string | null>(null);
+  const [geminiProblem, setGeminiProblem] = useState(false);
 
   // Keep the form in step when the stored profile changes.
   useEffect(() => {
@@ -87,6 +101,41 @@ export function Settings() {
   useEffect(() => {
     void refreshBackups();
   }, []);
+
+  useEffect(() => {
+    void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
+  }, []);
+
+  const connectGemini = async () => {
+    setGeminiBusy(true);
+    setGeminiNote("Checking the connection with Google…");
+    setGeminiProblem(false);
+    try {
+      const status = await configureGemini(geminiKey);
+      setGemini(status);
+      setGeminiKey("");
+      setGeminiNote("Gemini connected. Study tools are ready.");
+    } catch (error) {
+      setGeminiProblem(true);
+      setGeminiNote(geminiErrorMessage(error));
+    } finally {
+      setGeminiBusy(false);
+    }
+  };
+
+  const removeGemini = async () => {
+    setGeminiBusy(true);
+    setGeminiProblem(false);
+    try {
+      setGemini(await disconnectGemini());
+      setGeminiNote("Gemini disconnected. Saved study guides and flashcards were kept.");
+    } catch (error) {
+      setGeminiProblem(true);
+      setGeminiNote(geminiErrorMessage(error));
+    } finally {
+      setGeminiBusy(false);
+    }
+  };
 
   const backUpNow = async () => {
     setBackupNote(null);
@@ -592,6 +641,90 @@ export function Settings() {
               application and an official or instructor-provided source disagree, the
               official source is correct.
             </p>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Gemini study assistant"
+            eyebrow={gemini?.configured ? "Connected" : "Optional online AI"}
+          />
+          <CardBody>
+            <div className="stack stack--4">
+              <p className="small muted">
+                Gemini can turn a selected Study Library document into a study guide and
+                flashcards. Only files you deliberately analyze are sent to Google. Personal
+                notes, flight logs, profile details, and other library files are never sent.
+              </p>
+
+              {gemini?.configured ? (
+                <div className="gemini-connected">
+                  <span className="gemini-connected__mark" aria-hidden="true">
+                    <CheckIcon size={16} />
+                  </span>
+                  <div>
+                    <p className="small strong">Ready to use</p>
+                    <p className="tiny dim">{gemini.model} · key protected by this computer</p>
+                  </div>
+                </div>
+              ) : geminiAvailable() ? (
+                <div className="stack stack--3">
+                  <div className="setup-steps small">
+                    <p><strong>1.</strong> Open Google AI Studio and sign in with her Google account.</p>
+                    <p><strong>2.</strong> Choose <em>Create API key</em>, then copy the key.</p>
+                    <p><strong>3.</strong> Paste it below. The complete key is never shown again.</p>
+                  </div>
+                  <div className="row row--wrap">
+                    <Button onClick={() => void openGeminiKeyPage()}>
+                      Sign in with Google
+                    </Button>
+                    <TextInput
+                      className="gemini-key-input"
+                      type="password"
+                      autoComplete="off"
+                      aria-label="Gemini API key"
+                      value={geminiKey}
+                      placeholder="Paste Gemini API key"
+                      onChange={(event) => setGeminiKey(event.target.value)}
+                    />
+                    <Button
+                      variant="primary"
+                      disabled={geminiBusy || geminiKey.trim().length < 20}
+                      onClick={() => void connectGemini()}
+                    >
+                      {geminiBusy ? "Connecting…" : "Connect Gemini"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="tiny dim">Gemini setup is available in the desktop application.</p>
+              )}
+
+              {geminiNote ? (
+                <p
+                  className="small"
+                  role={geminiProblem ? "alert" : "status"}
+                  style={{ color: geminiProblem ? "var(--status-danger)" : "var(--status-complete)" }}
+                >
+                  {geminiNote}
+                </p>
+              ) : null}
+
+              <p className="tiny dim">
+                Google states that free-tier content may be used to improve its products. Do
+                not analyze medical records, certificates, addresses, or documents containing
+                sensitive personal information. AI study material must be checked against the
+                current source, FAA publications, aircraft documents, and her instructor.
+              </p>
+
+              {gemini?.configured ? (
+                <div>
+                  <Button variant="danger" size="small" disabled={geminiBusy} onClick={() => void removeGemini()}>
+                    Disconnect Gemini
+                  </Button>
+                </div>
+              ) : null}
+            </div>
           </CardBody>
         </Card>
       </div>

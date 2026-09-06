@@ -6,6 +6,7 @@
 
 mod backup;
 mod documents;
+mod gemini;
 mod storage;
 
 use tauri_plugin_sql::{Migration, MigrationKind};
@@ -55,6 +56,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0006_pilot_toolkit.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "ai_study",
+            sql: include_str!("../migrations/0007_ai_study.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -89,6 +96,10 @@ pub fn run() {
             documents::document_exists,
             documents::delete_document,
             documents::clear_documents,
+            gemini::gemini_status,
+            gemini::configure_gemini,
+            gemini::disconnect_gemini,
+            gemini::generate_study_aid,
             backup::create_backup,
             backup::create_complete_backup,
             backup::inspect_complete_backup,

@@ -24,6 +24,7 @@ import type {
   Question,
   ScheduleEvent,
   StudyMaterial,
+  AiStudySet,
   Transaction,
   ToolkitState,
 } from "@/domain/types";
@@ -44,6 +45,7 @@ export interface AppData {
   checklistItems: ChecklistItem[];
   actions: NextAction[];
   materials: StudyMaterial[];
+  aiStudySets: AiStudySet[];
   tags: string[];
   events: ScheduleEvent[];
   prepItems: PrepItem[];
@@ -95,6 +97,7 @@ export const EMPTY_DATA: AppData = {
   checklistItems: [],
   actions: [],
   materials: [],
+  aiStudySets: [],
   tags: [],
   events: [],
   prepItems: [],
@@ -109,7 +112,7 @@ const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 async function loadAll(repositories: Repositories): Promise<AppData> {
   const [
-    profile, milestones, goals, checklistItems, actions, materials, tags,
+    profile, milestones, goals, checklistItems, actions, materials, aiStudySets, tags,
     events, prepItems, journalEntries, questions, transactions, fundGoals, toolkit,
   ] = await Promise.all([
     repositories.profile.get(),
@@ -118,6 +121,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.goals.listChecklistItems(),
     repositories.actions.list(),
     repositories.documents.list(),
+    repositories.documents.listAiStudySets(),
     repositories.documents.listTags(),
     repositories.schedule.list(),
     repositories.schedule.listPrepItems(),
@@ -129,7 +133,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
   ]);
 
   return {
-    profile, milestones, goals, checklistItems, actions, materials, tags,
+    profile, milestones, goals, checklistItems, actions, materials, aiStudySets, tags,
     events, prepItems, journalEntries, questions, transactions, fundGoals, toolkit,
   };
 }

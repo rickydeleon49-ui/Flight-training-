@@ -35,6 +35,15 @@ fn documents_root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
+/// Resolve a stored study document without exposing the absolute path to the webview.
+pub(crate) fn stored_document_path(
+    app: &AppHandle,
+    relative_path: &str,
+) -> Result<PathBuf, String> {
+    let safe = safe_relative_path(relative_path)?;
+    Ok(documents_root(app)?.join(safe))
+}
+
 /// Reject anything that would escape the documents directory.
 fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
     let looks_absolute = Path::new(relative_path).is_absolute();

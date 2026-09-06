@@ -37,6 +37,12 @@ import {
   formatFileSize,
   openDocument,
 } from "@/services/documents";
+import {
+  geminiErrorMessage,
+  generateStudyAid,
+  getGeminiStatus,
+  type GeminiStatus,
+} from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
@@ -58,8 +64,18 @@ export function MaterialDetail() {
   const [notesSaved, setNotesSaved] = useState(false);
   const [fileMissing, setFileMissing] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
+  const [gemini, setGemini] = useState<GeminiStatus | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [cardIndex, setCardIndex] = useState(0);
+  const [cardRevealed, setCardRevealed] = useState(false);
 
   const material = data.materials.find((candidate) => candidate.id === materialId) ?? null;
+  const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
+
+  useEffect(() => {
+    void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
+  }, []);
 
   useEffect(() => {
     if (material) setNotes(material.notes);
@@ -137,6 +153,33 @@ export function MaterialDetail() {
     }
   };
 
+  const createStudyAid = async () => {
+    if (!material.filePath) return;
+    setGenerating(true);
+    setGenerationError(null);
+    try {
+      const generated = await generateStudyAid(material.filePath, material.title);
+      const saved = await mutate((repos) =>
+        repos.documents.saveAiStudySet({
+          sourceMaterialId: material.id,
+          title: generated.title,
+          summary: generated.summary,
+          sections: generated.sections,
+          flashcards: generated.flashcards,
+          sourceNotes: generated.sourceNotes,
+          model: generated.model,
+        }),
+      );
+      if (saved === null) return;
+      setCardIndex(0);
+      setCardRevealed(false);
+    } catch (error) {
+      setGenerationError(geminiErrorMessage(error));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -185,6 +228,125 @@ export function MaterialDetail() {
                 {openError ? (
                   <p className="field__error" style={{ marginTop: "var(--space-3)" }}>
                     {openError}
+                  </p>
+                ) : null}
+              </CardBody>
+            </Card>
+          ) : null}
+
+          {material.filePath ? (
+            <Card>
+              <CardHeader
+                title="Gemini study assistant"
+                eyebrow={studySet ? "Saved on this computer" : "Guide and flashcards"}
+                action={
+                  gemini?.configured ? (
+                    <Button size="small" variant={studySet ? "secondary" : "primary"} disabled={generating || fileMissing} onClick={() => void createStudyAid()}>
+                      {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
+                    </Button>
+                  ) : undefined
+                }
+              />
+              <CardBody>
+                {!gemini?.configured ? (
+                  <div className="stack stack--3">
+                    <p className="small muted">
+                      Connect the free Gemini API in Settings to create a guide and flashcards
+                      from this document.
+                    </p>
+                    <div>
+                      <Link className="button button--secondary" to="/settings">Open Settings</Link>
+                    </div>
+                  </div>
+                ) : generating ? (
+                  <div className="ai-working" role="status">
+                    <span className="ai-working__dot" aria-hidden="true" />
+                    <div>
+                      <p className="small strong">Gemini is reviewing this document</p>
+                      <p className="tiny dim">Large illustrated PDFs can take a little longer.</p>
+                    </div>
+                  </div>
+                ) : studySet ? (
+                  <div className="stack stack--5">
+                    <div className="ai-disclaimer">
+                      <AlertIcon size={16} />
+                      <p className="tiny">
+                        AI-generated study aid. Verify everything against the source, current FAA
+                        material, aircraft documents, and your instructor before using it.
+                      </p>
+                    </div>
+
+                    <section className="stack stack--3" aria-labelledby="ai-guide-title">
+                      <div>
+                        <p className="eyebrow">Study guide</p>
+                        <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
+                      </div>
+                      <p className="small ai-copy">{studySet.summary}</p>
+                      {studySet.sections.map((section, index) => (
+                        <div className="ai-guide__section" key={`${section.heading}-${index}`}>
+                          <h4>{section.heading}</h4>
+                          <p className="small ai-copy">{section.body}</p>
+                        </div>
+                      ))}
+                      {studySet.sourceNotes ? (
+                        <p className="tiny dim ai-copy">{studySet.sourceNotes}</p>
+                      ) : null}
+                    </section>
+
+                    {studySet.flashcards.length > 0 ? (
+                      <section className="stack stack--3" aria-labelledby="flashcards-title">
+                        <div className="row row--between">
+                          <div>
+                            <p className="eyebrow">Flashcards</p>
+                            <h3 id="flashcards-title" className="ai-guide__title">
+                              Card {cardIndex + 1} of {studySet.flashcards.length}
+                            </h3>
+                          </div>
+                          <Badge tone="study">
+                            {studySet.flashcards[cardIndex]?.sourcePage
+                              ? `Source p. ${studySet.flashcards[cardIndex]?.sourcePage}`
+                              : "Check source"}
+                          </Badge>
+                        </div>
+                        <button
+                          className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
+                          type="button"
+                          onClick={() => setCardRevealed((current) => !current)}
+                          aria-label={cardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
+                        >
+                          <span className="tiny dim">{cardRevealed ? "Answer" : "Question"}</span>
+                          <span>{cardRevealed ? studySet.flashcards[cardIndex]?.back : studySet.flashcards[cardIndex]?.front}</span>
+                          <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
+                        </button>
+                        <div className="row row--between">
+                          <Button
+                            size="small"
+                            disabled={cardIndex === 0}
+                            onClick={() => { setCardIndex((index) => index - 1); setCardRevealed(false); }}
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            size="small"
+                            disabled={cardIndex >= studySet.flashcards.length - 1}
+                            onClick={() => { setCardIndex((index) => index + 1); setCardRevealed(false); }}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </section>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="small muted">
+                    Gemini will read only this file and create a source-based study guide plus
+                    10–20 flashcards. The result will be saved locally with your other data.
+                  </p>
+                )}
+
+                {generationError ? (
+                  <p className="field__error" role="alert" style={{ marginTop: "var(--space-3)" }}>
+                    {generationError}
                   </p>
                 ) : null}
               </CardBody>

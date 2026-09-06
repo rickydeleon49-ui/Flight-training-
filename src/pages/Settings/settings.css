@@ -72,3 +72,27 @@
   font-family: var(--font-display);
   font-size: var(--text-lg);
 }
+
+.gemini-connected {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--category-study-edge);
+  border-radius: var(--radius-md);
+  background: var(--category-study-fill);
+}
+
+.gemini-connected__mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--status-complete);
+  color: white;
+}
+
+.gemini-key-input { flex: 1; min-width: 15rem; }
+.setup-steps { display: grid; gap: var(--space-2); }

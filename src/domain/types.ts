@@ -228,6 +228,31 @@ export interface StudyMaterial {
   tags: string[];
 }
 
+export interface StudyGuideSection {
+  heading: string;
+  body: string;
+}
+
+export interface StudyFlashcard {
+  front: string;
+  back: string;
+  sourcePage: number | null;
+}
+
+/** AI output saved locally and tied to the document it came from. */
+export interface AiStudySet {
+  sourceMaterialId: Id;
+  title: string;
+  summary: string;
+  sections: StudyGuideSection[];
+  flashcards: StudyFlashcard[];
+  sourceNotes: string;
+  provider: "gemini";
+  model: string;
+  generatedAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}
+
 /* ------------------------------------------------------------------ */
 /* Schedule                                                            */
 /* ------------------------------------------------------------------ */

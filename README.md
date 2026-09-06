@@ -151,6 +151,30 @@ which is evergreen, so any supported Windows 10 or 11 is fine.
 
 ---
 
+## Optional Gemini study assistant
+
+Settings can connect a personal Gemini API key from
+[Google AI Studio](https://aistudio.google.com/app/apikey). The learner signs
+in with her Google account, creates a free key, and pastes it into the app once.
+The key is held by Windows Credential Manager or macOS Keychain; it is never
+stored in SQLite, included in a backup, returned to the webview, or committed
+to this repository.
+
+After connecting, an uploaded PDF, TXT, Markdown, PNG, JPG, or WebP document can
+produce a source-based study guide and a set of interactive flashcards. Only
+the document whose **Create study aid** button she presses is sent to Google.
+The generated result is stored locally in SQLite and remains available offline.
+DOCX and RTF files can remain in the library, but must be converted to PDF before
+Gemini can analyze them.
+
+Google's free-tier terms say submitted content may be used to improve its
+products. Do not send medical records, certificates, addresses, logbooks with
+personal information, or other sensitive documents. Generated aviation material
+is explicitly labelled as a study aid and must be checked against its source,
+current FAA guidance, aircraft documents, the flight school, and the instructor.
+
+---
+
 ## Her data survives updates
 
 Everything she enters lives in one folder:

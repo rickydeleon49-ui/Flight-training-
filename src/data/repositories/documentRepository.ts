@@ -10,6 +10,9 @@ import {
   type Priority,
   type ReviewStatus,
   type StudyMaterial,
+  type AiStudySet,
+  type StudyFlashcard,
+  type StudyGuideSection,
   type Topic,
 } from "@/domain/types";
 import { toEnum, toNullableNumber, toNullableText, toText, type SqlDatabase } from "../db";
@@ -20,6 +23,34 @@ interface Row {
   notes: unknown; file_path: unknown; original_file_name: unknown; file_size: unknown;
   created_at: unknown; updated_at: unknown; last_reviewed_at: unknown;
 }
+
+interface AiRow {
+  source_material_id: string; title: unknown; summary: unknown;
+  sections_json: unknown; flashcards_json: unknown; source_notes: unknown;
+  provider: unknown; model: unknown; generated_at: unknown; updated_at: unknown;
+}
+
+function jsonArray<T>(value: unknown): T[] {
+  try {
+    const parsed = JSON.parse(toText(value));
+    return Array.isArray(parsed) ? parsed as T[] : [];
+  } catch {
+    return [];
+  }
+}
+
+const mapAiStudySet = (row: AiRow): AiStudySet => ({
+  sourceMaterialId: row.source_material_id,
+  title: toText(row.title),
+  summary: toText(row.summary),
+  sections: jsonArray<StudyGuideSection>(row.sections_json),
+  flashcards: jsonArray<StudyFlashcard>(row.flashcards_json),
+  sourceNotes: toText(row.source_notes),
+  provider: "gemini",
+  model: toText(row.model),
+  generatedAt: toText(row.generated_at),
+  updatedAt: toText(row.updated_at),
+});
 
 const map = (row: Row, tags: string[]): StudyMaterial => ({
   id: row.id,
@@ -111,6 +142,35 @@ export function documentRepository(db: SqlDatabase) {
     async listTags(): Promise<string[]> {
       const rows = await db.select<{ name: string }>("SELECT name FROM tags ORDER BY name");
       return rows.map((row) => row.name);
+    },
+
+    async listAiStudySets(): Promise<AiStudySet[]> {
+      const rows = await db.select<AiRow>("SELECT * FROM ai_study_sets ORDER BY updated_at DESC");
+      return rows.map(mapAiStudySet);
+    },
+
+    async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">): Promise<void> {
+      const timestamp = nowIso();
+      await db.execute(
+        `INSERT INTO ai_study_sets
+           (source_material_id, title, summary, sections_json, flashcards_json,
+            source_notes, provider, model, generated_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'gemini', ?, ?, ?)
+         ON CONFLICT(source_material_id) DO UPDATE SET
+           title = excluded.title, summary = excluded.summary,
+           sections_json = excluded.sections_json, flashcards_json = excluded.flashcards_json,
+           source_notes = excluded.source_notes, model = excluded.model,
+           generated_at = excluded.generated_at, updated_at = excluded.updated_at`,
+        [
+          input.sourceMaterialId, input.title, input.summary,
+          JSON.stringify(input.sections), JSON.stringify(input.flashcards), input.sourceNotes,
+          input.model, timestamp, timestamp,
+        ],
+      );
+    },
+
+    async removeAiStudySet(sourceMaterialId: Id): Promise<void> {
+      await db.execute("DELETE FROM ai_study_sets WHERE source_material_id = ?", [sourceMaterialId]);
     },
 
     /**

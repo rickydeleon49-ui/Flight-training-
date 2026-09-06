@@ -11,6 +11,10 @@
     "dialog:allow-message",
     "dialog:allow-confirm",
     "opener:allow-open-path",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://aistudio.google.com/**" }]
+    },
     "sql:default",
     "sql:allow-load",
     "sql:allow-execute",

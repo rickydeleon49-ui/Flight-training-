@@ -43,4 +43,24 @@ describe("pilot toolkit persistence", () => {
     ]);
     expect(await repos.documents.listTags()).toEqual(["Shared"]);
   });
+
+  it("keeps a Gemini study aid tied to its source material", async () => {
+    const source = await repos.documents.create({ title: "Weather chapter" });
+    await repos.documents.saveAiStudySet({
+      sourceMaterialId: source.id,
+      title: "Weather study guide",
+      summary: "A source-based summary.",
+      sections: [{ heading: "Clouds", body: "Review the source." }],
+      flashcards: [{ front: "What is a cloud?", back: "Check the source definition.", sourcePage: 4 }],
+      sourceNotes: "Verify current guidance.",
+      model: "gemini-2.5-flash",
+    });
+
+    const saved = (await repos.documents.listAiStudySets())[0];
+    expect(saved?.sourceMaterialId).toBe(source.id);
+    expect(saved?.flashcards[0]?.sourcePage).toBe(4);
+
+    await repos.documents.remove(source.id);
+    expect(await repos.documents.listAiStudySets()).toEqual([]);
+  });
 });
