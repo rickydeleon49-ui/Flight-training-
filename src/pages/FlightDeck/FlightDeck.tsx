@@ -89,8 +89,8 @@ export function FlightDeck() {
                 <Link className="button button--secondary" to="/schedule">
                   Schedule a lesson
                 </Link>
-                <Link className="button button--secondary" to="/settings">
-                  Load demo data
+                <Link className="button button--secondary" to="/study">
+                  Add study material
                 </Link>
               </div>
             }
