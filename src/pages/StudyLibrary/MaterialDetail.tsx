@@ -201,8 +201,9 @@ export function MaterialDetail() {
     setGenerationProgress(null);
     // Waiting out a busy model takes several pauses; she should be able to see
     // that something is still happening.
-    const stopWatching = await watchGeminiProgress(setGenerationProgress);
+    let stopWatching = () => {};
     try {
+      stopWatching = await watchGeminiProgress(setGenerationProgress);
       const generated = await generateStudyAid(material.filePath);
       const saved = await mutate((repos) =>
         repos.documents.saveAiStudySet({

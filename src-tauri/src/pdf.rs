@@ -81,6 +81,11 @@ fn write_page_range(
             "This PDF has {total} pages, so there is no page {first}."
         ));
     }
+    if last > total {
+        return Err(format!(
+            "This PDF has {total} pages, so there is no page {last}."
+        ));
+    }
 
     // Everything outside the range goes; what is left is her chapter.
     let removing: Vec<u32> = numbers
@@ -280,6 +285,9 @@ mod tests {
             .contains("before the first"));
         // Past the end of the book, said with the number she can act on.
         assert!(write_page_range(&source, &out, 44, 50)
+            .unwrap_err()
+            .contains("30 pages"));
+        assert!(write_page_range(&source, &out, 22, 44)
             .unwrap_err()
             .contains("30 pages"));
     }

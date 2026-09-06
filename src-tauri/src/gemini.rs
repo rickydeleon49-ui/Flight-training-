@@ -36,9 +36,9 @@ const MODEL: &str = "gemini-3.5-flash";
 ///
 /// A 503 is Google's capacity, not her key and not her file, and it is
 /// usually specific to one model — so an overloaded current model is worth
-/// one attempt on the previous stable generation before giving up. Its
+/// one attempt on the lighter stable model before giving up. Its
 /// support status is checked before each release exactly like `MODEL`.
-const FALLBACK_MODEL: &str = "gemini-2.5-flash";
+const FALLBACK_MODEL: &str = "gemini-3.5-flash-lite";
 
 /* ------------------------------------------------------------------ */
 /* What Google will accept                                             */
@@ -543,7 +543,7 @@ async fn generate_with_retries(
             Attempt::Answered(raw) => return Ok((raw, MODEL)),
             Attempt::Refused { status, body } => {
                 if !is_retryable(status) {
-                    return Err(describe_refusal(status, &body));
+                    return Err(describe_refusal(status, &body, MODEL));
                 }
                 if attempt + 1 < MAX_ATTEMPTS {
                     let pause = backoff_delay(attempt, jitter_millis());
@@ -554,16 +554,17 @@ async fn generate_with_retries(
         }
     }
 
-    // The standby exists only to rescue an overloaded primary. If it will not
+    // The backup exists only to rescue an overloaded primary. If it will not
     // answer either, the honest report is that Google is busy — not whatever
     // second-hand complaint the standby made, which would send her looking at
     // a model this application only reached for on her behalf.
-    say(
-        app,
-        "Google is still busy. Trying the standby model…".to_string(),
-    );
-    if let Ok(Attempt::Answered(raw)) = generate_once(&http, api_key, FALLBACK_MODEL, body).await {
-        return Ok((raw, FALLBACK_MODEL));
+    say(app, "Gemini is busy—trying a backup model…".to_string());
+    match generate_once(&http, api_key, FALLBACK_MODEL, body).await? {
+        Attempt::Answered(raw) => return Ok((raw, FALLBACK_MODEL)),
+        Attempt::Refused { status, body } if !is_retryable(status) => {
+            return Err(describe_refusal(status, &body, FALLBACK_MODEL));
+        }
+        Attempt::Refused { .. } => {}
     }
 
     Err(busy_message())
@@ -582,7 +583,7 @@ fn waiting_message(attempt: u32, pause: Duration) -> String {
 fn busy_message() -> String {
     format!(
         "Google's servers are busy. Her Flight Deck tried {MAX_ATTEMPTS} times over about \
-         {} seconds and then tried the standby model, and Google was still at capacity. \
+         {} seconds and then tried the backup Flash-Lite model, and Google was still at capacity. \
          This is Google's side, not your key or your document — the same file usually works \
          a few minutes later.",
         total_wait_seconds(),
@@ -598,7 +599,7 @@ fn total_wait_seconds() -> u64 {
 }
 
 /// Turn a refusal Google will not reconsider into something worth reading.
-fn describe_refusal(status: u16, body: &str) -> String {
+fn describe_refusal(status: u16, body: &str, model: &str) -> String {
     match status {
         429 => "The free Gemini limit has been reached. Wait for Google's quota to reset, then try again."
             .to_string(),
@@ -606,7 +607,7 @@ fn describe_refusal(status: u16, body: &str) -> String {
         // build asks for something that no longer exists, and the honest answer
         // is that the application needs updating, not that her key is wrong.
         404 => format!(
-            "Google has retired the {MODEL} model this version of Her Flight Deck uses. Install the latest version and try again."
+            "Google has retired the {model} model this version of Her Flight Deck uses. Install the latest version and try again."
         ),
         _ => format!("Gemini returned {status}: {}", compact_error(body)),
     }

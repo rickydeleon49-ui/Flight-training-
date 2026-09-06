@@ -124,16 +124,11 @@ npm run tauri build    # package
 Which leaves you:
 
 ```
-macOS    src-tauri/target/release/bundle/dmg/Her Flight Deck_0.1.0_aarch64.dmg
-Windows  src-tauri/target/release/bundle/nsis/Her Flight Deck_0.1.0_x64-setup.exe
+macOS    src-tauri/target/release/bundle/dmg/Her Flight Deck_<version>_aarch64.dmg
+Windows  src-tauri/target/release/bundle/nsis/Her Flight Deck_<version>_x64-setup.exe
 ```
 
-Apple Silicon builds arm64 only. For one binary that also runs on Intel Macs:
-
-```bash
-rustup target add x86_64-apple-darwin aarch64-apple-darwin
-npm run tauri build -- --target universal-apple-darwin
-```
+macOS builds target Apple Silicon (M-series Macs) only.
 
 ### Neither installer is code-signed
 
@@ -189,15 +184,15 @@ upload.
 
 **When Google is busy.** A `503` means Google's own capacity is short for a
 moment — nothing to do with her key, her quota, or her document. Generating
-retries four times with a growing pause, then tries a standby model once, and
+retries four times with a growing pause, then tries Gemini Flash-Lite once, and
 only then reports that Google is busy and the same file will probably work in a
 few minutes. The waiting is narrated rather than silent: the Rust side emits
 each pause to the window, so "Gemini is reviewing this document" becomes
 "Google is busy. Waiting 3 seconds, then trying again — attempt 3 of 4."
 Connecting a key retries the same way, so an overloaded model never reads as a
-bad key. Settings says the one thing that actually reduces 503s: free-tier
-requests are turned away first, so enabling billing on the same key moves her
-out of that queue.
+bad key. Settings explains that enabling billing moves the Google Cloud project
+to paid Tier 1 with higher rate limits, while making clear that billing cannot
+guarantee model capacity.
 
 **Taking out a chapter.** A handbook past those limits is not a dead end. The
 Study Library splits a PDF on her own machine — she picks a page range, and it

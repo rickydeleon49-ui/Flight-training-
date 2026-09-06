@@ -64,6 +64,13 @@ node -e '
     fs.writeFileSync(file, JSON.stringify(json, null, 2) + "\n");
   }
 
+  // npm ci reads both copies of the package version from the lockfile.
+  const lockFile = "package-lock.json";
+  const lock = JSON.parse(fs.readFileSync(lockFile, "utf8"));
+  lock.version = version;
+  lock.packages[""].version = version;
+  fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2) + "\n");
+
   // Only the package version, never a dependency that happens to match.
   const cargo = fs.readFileSync("src-tauri/Cargo.toml", "utf8");
   fs.writeFileSync(
@@ -83,7 +90,7 @@ npm test
 
 echo
 if [ "$BUMP" = true ]; then
-  git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+  git add package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
   git commit -q -m "release: $VERSION"
 fi
 git tag -a "v$VERSION" -m "Her Flight Deck $VERSION"

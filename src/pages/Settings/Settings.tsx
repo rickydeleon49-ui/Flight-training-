@@ -860,16 +860,13 @@ export function Settings() {
                 current source, FAA publications, aircraft documents, and her instructor.
               </p>
 
-              {/* The one thing that actually reduces "the model is overloaded",
-                  said where she would look for it after seeing that message. */}
               <p className="tiny dim">
                 <span className="strong">If Gemini keeps saying it is busy:</span> a “503 —
-                high demand” is Google&rsquo;s capacity, not your key, and free-tier requests
-                are the first turned away when the model is full. Her Flight Deck already
-                waits and retries several times before reporting it. If it still happens
-                often, turning on billing for this same key in Google AI Studio moves you out
-                of the free queue — a study aid costs a fraction of a cent, and nothing else
-                about the application changes.
+                high demand” is Google&rsquo;s capacity, not your key. Her Flight Deck already
+                waits, retries, and tries Flash-Lite before reporting it. If it happens often,
+                enabling billing for the same Google Cloud project moves the key to paid Tier 1,
+                which has higher rate limits. Billing does not guarantee that a model will
+                always have capacity, so you may still need to try again later.
               </p>
 
               {gemini?.configured ? (
