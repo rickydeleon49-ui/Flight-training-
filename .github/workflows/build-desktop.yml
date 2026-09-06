@@ -21,10 +21,11 @@ jobs:
   build-macos:
     name: macOS
     runs-on: macos-15
+    timeout-minutes: 45
     if: inputs.platform == 'both' || inputs.platform == 'macos'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -32,13 +33,15 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
       - run: npm ci
       - run: npm test
       # The backup and restore guards live in Rust, so they have to run too.
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Build
         run: npm run tauri build -- --bundles dmg
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: her-flight-deck-macOS
           path: src-tauri/target/release/bundle/dmg/*.dmg
@@ -47,10 +50,11 @@ jobs:
   build-windows:
     name: Windows
     runs-on: windows-latest
+    timeout-minutes: 60
     if: inputs.platform == 'both' || inputs.platform == 'windows'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -58,13 +62,15 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
       - run: npm ci
       - run: npm test
       # The backup and restore guards live in Rust, so they have to run too.
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Build
         run: npm run tauri build -- --bundles nsis
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: her-flight-deck-Windows
           path: src-tauri/target/release/bundle/nsis/*-setup.exe

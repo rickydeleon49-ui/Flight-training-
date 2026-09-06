@@ -29,14 +29,15 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       version: ${{ steps.resolve.outputs.version }}
       tag: ${{ steps.resolve.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -96,6 +97,7 @@ jobs:
   build:
     name: ${{ matrix.name }}
     needs: check
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -111,8 +113,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -120,13 +122,15 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
 
       - run: npm ci
       # Nothing gets published without the backup and restore guards passing.
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - run: npm run tauri build -- --bundles ${{ matrix.bundles }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: installer-${{ matrix.name }}
           path: ${{ matrix.pattern }}
@@ -136,10 +140,11 @@ jobs:
     name: Publish
     needs: [check, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: installers
           merge-multiple: true
