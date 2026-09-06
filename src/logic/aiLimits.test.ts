@@ -5,6 +5,7 @@ import {
   MAX_PDF_BYTES,
   MAX_TEXT_BYTES,
   checkFileForGemini,
+  checkSplitRange,
   describeFileSize,
 } from "./aiLimits";
 
@@ -58,5 +59,32 @@ describe("describeFileSize", () => {
     expect(describeFileSize(50 * 1024 * 1024)).toBe("50 MB");
     expect(describeFileSize(3 * 1024)).toBe("3 KB");
     expect(describeFileSize(1)).toBe("1 KB");
+  });
+});
+
+describe("checkSplitRange", () => {
+  it("accepts a chapter", () => {
+    expect(checkSplitRange(41, 78, 640, 1000)).toEqual({ ok: true, pages: 38 });
+  });
+
+  it("counts a single page as one page", () => {
+    expect(checkSplitRange(7, 7, 640, 1000)).toEqual({ ok: true, pages: 1 });
+  });
+
+  it("refuses a range Google would refuse afterwards", () => {
+    // The old form called 1,200 pages "well inside the limits" and left Rust
+    // to say no once the work was done.
+    const verdict = checkSplitRange(1, 1200, 1600, 1000);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.ok ? "" : verdict.reason).toContain("1,200 pages");
+    expect(verdict.ok ? "" : verdict.reason).toContain("1,000");
+  });
+
+  it("refuses a range that cannot be meant, naming the pages there are", () => {
+    expect(checkSplitRange(0, 4, 30, 1000).ok).toBe(false);
+    expect(checkSplitRange(9, 4, 30, 1000).ok).toBe(false);
+    const past = checkSplitRange(22, 44, 30, 1000);
+    expect(past.ok ? "" : past.reason).toContain("1–30");
+    expect(checkSplitRange(Number.NaN, 4, 30, 1000).ok).toBe(false);
   });
 });

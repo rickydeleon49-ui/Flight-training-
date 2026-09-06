@@ -233,15 +233,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     async <T,>(work: (repos: Repositories) => Promise<T>): Promise<T | null> => {
       const repositories = repositoriesRef.current;
       if (!repositories) return null;
+      let result: T;
       try {
-        const result = await work(repositories);
-        await refresh();
-        setLastError(null);
-        return result;
+        result = await work(repositories);
       } catch (mutationError) {
         setLastError(describeError(mutationError));
         return null;
       }
+      // The write has happened and cannot be taken back. Reloading is how the
+      // screens catch up with it, and that can fail on its own — a stale
+      // screen is worth saying, but it is not a failed save. Callers undo
+      // their own work when this returns null (the split dialog deletes the
+      // chapter file it just wrote), so null has to mean the write failed.
+      try {
+        await refresh();
+        setLastError(null);
+      } catch (refreshError) {
+        setLastError(describeError(refreshError));
+      }
+      return result;
     },
     [refresh],
   );

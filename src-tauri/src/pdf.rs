@@ -9,7 +9,7 @@
 //! into a new file in the same private storage as everything else, and the
 //! original is left exactly as it was.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use lopdf::Document;
 use tauri::AppHandle;
@@ -20,7 +20,7 @@ use crate::documents::{self, ImportedDocument};
 ///
 /// Google reads 1,000 pages at a time, so a wider range would produce a file
 /// it still refuses — and she would have done the work for nothing.
-const MAX_PAGES: u32 = 1_000;
+pub(crate) const MAX_PAGES: u32 = 1_000;
 
 /// What a stored PDF holds, so a page range can be asked for sensibly.
 #[derive(Debug, serde::Serialize)]
@@ -109,12 +109,20 @@ fn write_page_range(
     Ok(kept)
 }
 
+/// How many pages a stored PDF has, counted away from the interface thread.
+///
+/// Also used before a document is sent to Google, which reads 1,000 pages at
+/// a time: see `MAX_PAGES` and `gemini`.
+// Parsing a large handbook takes a moment; the window must stay alive.
+pub(crate) async fn count_pages(path: PathBuf) -> Result<u32, String> {
+    run_off_thread(move || page_count(&path)).await
+}
+
 /// Read a stored PDF's shape, so a page range can be asked for.
 #[tauri::command]
 pub async fn inspect_pdf(app: AppHandle, relative_path: String) -> Result<PdfOutline, String> {
     let path = documents::stored_document_path(&app, &relative_path)?;
-    // Parsing a large handbook takes a moment; the window must stay alive.
-    let pages = run_off_thread(move || page_count(&path)).await?;
+    let pages = count_pages(path).await?;
     Ok(PdfOutline {
         pages,
         max_pages_per_split: MAX_PAGES,

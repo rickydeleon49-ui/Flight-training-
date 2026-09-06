@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button, Dialog, Field, TextInput } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
 import { newId } from "@/lib/id";
-import { MAX_PDF_BYTES, describeFileSize } from "@/logic/aiLimits";
+import { MAX_PDF_BYTES, checkSplitRange, describeFileSize } from "@/logic/aiLimits";
 import { deleteDocument, formatFileSize } from "@/services/documents";
 import { inspectPdf, splitPdf, type PdfOutline } from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
@@ -59,13 +59,13 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
 
   const firstPage = Number.parseInt(first, 10);
   const lastPage = Number.parseInt(last, 10);
-  const rangeIsSensible =
-    Number.isFinite(firstPage) &&
-    Number.isFinite(lastPage) &&
-    firstPage >= 1 &&
-    lastPage >= firstPage &&
-    (!outline || lastPage <= outline.pages);
-  const pageCount = rangeIsSensible ? lastPage - firstPage + 1 : 0;
+  // Judged against both of Google's limits, not only the ends of the book:
+  // a 1,200-page selection is refused here rather than after the split.
+  const range = outline
+    ? checkSplitRange(firstPage, lastPage, outline.pages, outline.maxPagesPerSplit)
+    : null;
+  const rangeIsSensible = range?.ok === true;
+  const pageCount = range?.pages ?? 0;
 
   const save = async () => {
     if (!material.filePath || !rangeIsSensible) return;
@@ -107,7 +107,15 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
         // The pages were written but the record was not. Leaving the file
         // behind would put a document in her library storage that nothing
         // points at and nothing can remove.
+        //
+        // `mutate` only answers null when the write itself failed — a save
+        // that worked and then failed to refresh the screen still returns the
+        // record — so nothing is deleted out from under a chapter that exists.
         await deleteDocument(document.relativePath);
+        setError(
+          "Those pages could not be saved to your library, so the file was removed again. " +
+            "The handbook itself is untouched — try once more.",
+        );
         return;
       }
       onCreated(created.id);
@@ -192,17 +200,18 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
           )}
         </Field>
 
-        {outline && rangeIsSensible ? (
+        {outline && range?.ok ? (
           <p className="tiny dim">
-            {pageCount} {pageCount === 1 ? "page" : "pages"}, well inside the{" "}
-            {describeFileSize(MAX_PDF_BYTES)} and {outline.maxPagesPerSplit.toLocaleString()}
-            -page limits Google reads.
+            {pageCount.toLocaleString()} {pageCount === 1 ? "page" : "pages"}, inside the{" "}
+            {outline.maxPagesPerSplit.toLocaleString()}-page limit Google reads. Its size is
+            known once the chapter is saved; the study button says so if it comes out over{" "}
+            {describeFileSize(MAX_PDF_BYTES)}.
           </p>
         ) : null}
 
-        {outline && !rangeIsSensible ? (
+        {outline && range && !range.ok ? (
           <p className="tiny" style={{ color: "var(--status-overdue)" }}>
-            Choose a first and last page inside 1–{outline.pages}.
+            {range.reason}
           </p>
         ) : null}
 

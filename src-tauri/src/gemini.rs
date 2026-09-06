@@ -16,6 +16,7 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter};
 
 use crate::documents;
+use crate::pdf;
 use crate::secrets;
 use crate::storage::app_root;
 
@@ -165,6 +166,38 @@ fn check_size(mime: &str, bytes: u64) -> Result<(), String> {
         describe_size(bytes),
         describe_size(limit),
     ))
+}
+
+/// Whether a PDF is short enough for Google to read.
+///
+/// Google's PDF limit is 50 MB **or** 1,000 pages, whichever comes first, and
+/// a handbook reaches the page limit long before the size one — a 900-page
+/// PHAK is well under 50 MB. Checking only the bytes let those through to be
+/// refused by Google after the whole upload, with an error she could not act
+/// on. The page limit is `pdf::MAX_PAGES`, the same number the split tool
+/// holds a chapter to.
+fn check_page_count(pages: u32) -> Result<(), String> {
+    if pages <= pdf::MAX_PAGES {
+        return Ok(());
+    }
+    Err(format!(
+        "That PDF is {pages} pages, over the {} Google reads at a time. Take out the chapter \
+         you are studying and make the study aid from that — a study aid from one chapter is \
+         more useful than one from the whole book anyway.",
+        pdf::MAX_PAGES
+    ))
+}
+
+/// Count a stored PDF's pages and hold it to Google's limit.
+///
+/// A PDF this application cannot parse is let through rather than stopped:
+/// its length is unknown, not known to be too great, and Google may well read
+/// it. Refusing on a failed count would be inventing a reason to say no.
+async fn check_pdf_length(path: &Path) -> Result<(), String> {
+    match pdf::count_pages(path.to_path_buf()).await {
+        Ok(pages) => check_page_count(pages),
+        Err(_) => Ok(()),
+    }
 }
 
 /// Bytes as she would say them: "62 MB", not "65,011,712 bytes".
@@ -423,6 +456,10 @@ pub async fn generate_study_aid(
         .unwrap_or("document");
     let mime = mime_type(file_name)?;
     check_size(mime, metadata.len())?;
+    // Size is only half of Google's PDF limit; the other half is pages.
+    if mime == "application/pdf" {
+        check_pdf_length(&path).await?;
+    }
     let bytes = std::fs::read(&path).map_err(|e| format!("Could not read that study file: {e}"))?;
 
     let prompt =
@@ -679,6 +716,18 @@ mod tests {
         assert!(complaint.contains("50 MB"));
         assert!(complaint.contains("1,000 pages"));
         assert!(complaint.contains("Split"));
+    }
+
+    #[test]
+    fn a_pdf_is_held_to_googles_page_limit_as_well_as_its_size() {
+        // A handbook can be well under 50 MB and still far too long, so the
+        // pages are counted before anything is uploaded.
+        assert!(check_page_count(pdf::MAX_PAGES).is_ok());
+
+        let complaint = check_page_count(1_200).unwrap_err();
+        assert!(complaint.contains("1200 pages"));
+        assert!(complaint.contains("1000"));
+        assert!(complaint.contains("chapter"));
     }
 
     #[test]
