@@ -55,16 +55,20 @@ export async function generateStudyAid(relativePath: string): Promise<GeneratedS
   return invoke<GeneratedStudyAid>("generate_study_aid", { relativePath });
 }
 
-export interface GeminiProgress {
-  message: string;
-  model: string;
-}
-
-export async function listenForGeminiProgress(
-  handler: (progress: GeminiProgress) => void,
+/**
+ * Follow along while a request is being waited out.
+ *
+ * A busy model means several pauses before an answer, and a spinner that says
+ * nothing for half a minute reads as a hang. The Rust side sends the sentence;
+ * this only carries it. Returns a function that stops listening.
+ */
+export async function watchGeminiProgress(
+  onMessage: (message: string) => void,
 ): Promise<UnlistenFn> {
-  if (!isTauri()) return () => undefined;
-  return listen<GeminiProgress>("gemini-progress", (event) => handler(event.payload));
+  if (!isTauri()) return () => {};
+  return listen<{ message: string }>("gemini-progress", (event) => {
+    onMessage(event.payload.message);
+  });
 }
 
 export function geminiErrorMessage(error: unknown): string {

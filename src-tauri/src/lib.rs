@@ -7,6 +7,7 @@
 mod backup;
 mod documents;
 mod gemini;
+mod pdf;
 mod secrets;
 mod storage;
 
@@ -63,6 +64,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0007_ai_study.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 8,
+            description: "notes",
+            sql: include_str!("../migrations/0008_notes.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -96,6 +103,8 @@ pub fn run() {
             documents::document_path,
             documents::document_exists,
             documents::delete_document,
+            pdf::inspect_pdf,
+            pdf::split_pdf,
             gemini::gemini_status,
             gemini::configure_gemini,
             gemini::disconnect_gemini,

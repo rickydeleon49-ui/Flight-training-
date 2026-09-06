@@ -19,6 +19,7 @@ import type {
   JournalEntry,
   Milestone,
   NextAction,
+  Note,
   PrepItem,
   Profile,
   Question,
@@ -53,6 +54,7 @@ export interface AppData {
   prepItems: PrepItem[];
   journalEntries: JournalEntry[];
   questions: Question[];
+  notes: Note[];
   transactions: Transaction[];
   fundGoals: FundGoal[];
   toolkit: ToolkitState;
@@ -126,6 +128,7 @@ export const EMPTY_DATA: AppData = {
   prepItems: [],
   journalEntries: [],
   questions: [],
+  notes: [],
   transactions: [],
   fundGoals: [],
   toolkit: DEFAULT_TOOLKIT_STATE,
@@ -136,7 +139,7 @@ const AppDataContext = createContext<AppDataContextValue | null>(null);
 async function loadAll(repositories: Repositories): Promise<AppData> {
   const [
     profile, milestones, goals, checklistItems, actions, materials, aiStudySets, tags,
-    events, prepItems, journalEntries, questions, transactions, fundGoals, toolkit,
+    events, prepItems, journalEntries, questions, notes, transactions, fundGoals, toolkit,
   ] = await Promise.all([
     repositories.profile.get(),
     repositories.milestones.list(),
@@ -150,6 +153,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.schedule.listPrepItems(),
     repositories.journal.list(),
     repositories.questions.list(),
+    repositories.notes.list(),
     repositories.finance.list(),
     repositories.finance.listFundGoals(),
     repositories.toolkit.get(),
@@ -157,7 +161,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
 
   return {
     profile, milestones, goals, checklistItems, actions, materials, aiStudySets, tags,
-    events, prepItems, journalEntries, questions, transactions, fundGoals, toolkit,
+    events, prepItems, journalEntries, questions, notes, transactions, fundGoals, toolkit,
   };
 }
 

@@ -12,6 +12,17 @@ Its primary purpose is to answer one question:
 
 The application combines study materials, training goals, flight lessons, schedules, instructor feedback, personal notes, finances, and progress into one private workspace.
 
+## Where she is today
+
+She has not enrolled in flight school. She is studying and flying — lessons and discovery flights — while she decides which school and which training route to take.
+
+The application must therefore be fully useful before an enrolment exists:
+
+- A school, an instructor, and a start date are optional everywhere they appear.
+- The roadmap opens on choosing a training route, not on a syllabus already underway.
+- School selection, comparison, and cost are ordinary training work, not preamble to it.
+- Anything worth writing down has somewhere to go even when it belongs to no lesson, material, or goal yet.
+
 The experience should feel encouraging and beautiful while remaining disciplined about preparation, deadlines, study, lessons, money, and measurable progress.
 
 ---
@@ -190,7 +201,8 @@ The primary application navigation should contain:
 4. Schedule
 5. Flight Journal
 6. Questions
-7. Finances
+7. Notes
+8. Finances
 
 Settings and application preferences can be accessible separately.
 
@@ -856,6 +868,34 @@ The Flight Deck can surface unanswered questions before an instructor lesson.
 
 ---
 
+# 21a. Notes
+
+Every other place a thought can be typed asks what it belongs to first: which lesson, which material, which goal, which topic.
+
+That is the right shape for a debrief and the wrong shape for a phone number, a school worth calling, or a sentence she wants to keep.
+
+**Notes** is the section that asks nothing.
+
+A note contains:
+
+- Title, which may be left blank
+- The text itself
+- Whether it is pinned
+- When it was written, and when it was last changed
+
+Behaviour:
+
+- A note needs text and nothing else.
+- With no title, the note is listed under the first line she typed.
+- Pinned notes are read first, then the most recently changed.
+- Notes are searchable by title and text, and appear in Quick Find.
+- Line breaks are preserved exactly as written.
+- Deleting a note is undoable for the same window as everything else.
+
+Notes should never be categorized, scored, analysed, or turned into a prompt. Adding a required field to a note would remove the reason it exists.
+
+---
+
 # 22. Feedback
 
 Instructor feedback should be preserved.
@@ -1385,6 +1425,10 @@ Structured post-lesson debriefs.
 
 Questions to ask and revisit.
 
+### Notes
+
+Free writing that belongs to nothing else.
+
 ### Finances
 
 Flight Fund contributions, expenses, upcoming costs, and training-spending history.
@@ -1500,6 +1544,8 @@ Relationships should be optional where appropriate.
 A document does not need a lesson.
 
 A transaction does not need a goal.
+
+A note relates to nothing at all, deliberately.
 
 But when relationships exist, the application should use them to provide better context.
 

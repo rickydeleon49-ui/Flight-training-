@@ -1,6 +1,6 @@
 [package]
 name = "her-flight-deck"
-version = "0.4.0"
+version = "0.5.0"
 description = "A personal flight-training companion"
 authors = ["Her Flight Deck"]
 edition = "2021"
@@ -25,7 +25,9 @@ zip = { version = "=2.4.2", default-features = false, features = ["deflate"] }
 base64 = "0.22"
 keyring = "3.6"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# Only for the pauses between retries; Tauri already builds on this runtime.
 tokio = { version = "1", features = ["time"] }
+lopdf = { version = "0.36.0", default-features = false }
 
 [profile.release]
 codegen-units = 1

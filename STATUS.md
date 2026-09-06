@@ -1,6 +1,6 @@
 # Her Flight Deck — Current Project Status
 
-_Last updated: 6 September 2026 · application version `0.4.0` · branch `main`_
+_Last updated: 6 September 2026 · next application version `0.5.0` · branch `main`_
 
 ## Current position
 
@@ -9,25 +9,31 @@ It is designed for a student pilot working toward an airline career and brings
 her schedule, flight training, study materials, instructor feedback, finances,
 records, reminders, and career planning into one application.
 
+She has not started flight school. She is studying and flying — lessons and
+discovery flights — while she works out which school and which training route
+to take. The application is built to be useful at that stage: the school,
+instructor and start date are optional wherever they appear, the roadmap opens
+on choosing a training route rather than on a syllabus already underway, and
+**Notes** takes anything worth writing down that does not belong to a lesson,
+material or goal yet.
+
 The current source is committed and pushed to GitHub:
 
 - Repository: <https://github.com/rickydeleon49-ui/Flight-training->
 - Branch: `main` (the repository default)
-- Latest merged audit: `8287ddc` — `fix: pre-release audit`
-- Application version: `0.4.0`
-- Automated tests: **251 passing** across 26 files
+- Latest published release: `v0.4.0`
+- Application version prepared by this change: `0.5.0`
+- Automated tests: **279 passing** across 29 files
 - TypeScript production build: **passing**
 - Rust desktop compilation: **passing**
 - GitHub macOS DMG build and upload: **passing**
 - GitHub Windows EXE build and upload: **passing**
 - Linux desktop smoke test (`scripts/desktop-smoke.sh`): **passing**
 
-**`0.4.0` is built but not published.** `v0.2.0` and `v0.3.0` are on the
-Releases page with both installers attached, so the Release workflow is proven.
-The version was bumped to `0.4.0` on `main` in `67579ee` and the Checks
-workflow passed, but no `v0.4.0` tag was ever pushed — so the newest installers
-she can download are still `0.3.0`, which predate the Gemini key fix in `#3`.
-Publishing `0.4.0` is the next step and is described below.
+**`v0.4.0` is published** with Windows and Apple Silicon macOS installers.
+This work prepares `0.5.0`, which adds Notes, local PDF chapter splitting,
+visible Gemini retry progress, and the Flash-Lite fallback. It must finish its
+pull-request and desktop build checks before `v0.5.0` is published.
 
 There are no placeholder pages in the main application. The remaining work is
 publishing, hands-on testing with a real Gemini key, and refinement based on
@@ -43,11 +49,10 @@ applied with **no safety copy taken**. Releasing as `0.2.0` restored that
 protection, and the same rule has applied to every release since: bump first,
 and never rebuild an already-published number.
 
-That rule is also why `scripts/release.sh 0.4.0` refuses to run today. The
-repository is already at `0.4.0` and tags exist, so the script treats it as a
-re-release. Publishing `0.4.0` has to go through **Actions → Release → Run
-workflow**, which checks that the tag does not exist yet rather than that the
-number changed. `scripts/release.sh` is the right tool for `0.5.0` onwards.
+That rule is why this feature release is `0.5.0` instead of rebuilding the
+already-published `0.4.0`. The release script now updates `package-lock.json`
+alongside every other version source, and CI refuses a release if any of them
+disagree.
 
 ---
 
@@ -128,12 +133,7 @@ number changed. `scripts/release.sh` is the right tool for `0.5.0` onwards.
 - Gemini analysis currently accepts PDF, TXT, Markdown, PNG, JPG, and WebP.
   RTF and DOCX files can still be stored, but must be converted to PDF before
   AI analysis.
-- Files are limited to Gemini's current 50 MB document limit.
-- Free-tier quota errors receive a clear wait-and-retry message.
-- Temporary 503 capacity failures retry the primary Flash model after 2, 5,
-  and 10 seconds, then automatically use Flash-Lite. The working card explains
-  when the backup model is being tried, and no raw 503 is shown if both models
-  remain busy.
+- Free-tier quota errors receive a clear wait-and-try-later message.
 - Every AI result is visibly identified as a study aid that must be checked
   against the source, current FAA publications, aircraft documents, the flight
   school, and the instructor.
@@ -143,6 +143,30 @@ improve its products. Medical documents, certificate copies, addresses,
 personal logbook information, or other sensitive material should not be sent.
 The application warns about this but does not currently block it — see
 "Known limitations".
+
+### 5b. Gemini reliability and limits
+
+- A `503` "the model is overloaded" is Google's capacity, not her key: the
+  request is retried four times with a growing, jittered pause, then once on
+  Gemini 3.5 Flash-Lite, before it reports that Google is busy.
+- Connecting a key retries the same way, so a busy model never reads as a bad
+  key.
+- File limits are per type and per Google's published ceilings: 50 MB or 1,000
+  pages for a PDF, 4 MB for text, 100 MB inline for images. They are checked in
+  the interface before she clicks and enforced again in Rust.
+- An oversized or unreadable file says which limit it broke and what to do
+  about it — split the handbook, add the chapter — instead of only refusing.
+- **Splitting a handbook.** Any library PDF can be split by page range on her
+  own machine into a study document of its own, carrying the topic, priority,
+  goal, lesson and tags of the book it came from. The original is never
+  changed, deleted pages are pruned rather than unlinked (so the chapter is a
+  fraction of the size, not nearly all of it), and a range past Google's
+  1,000-page limit is refused before the work is done rather than after.
+- The wait is narrated: each retry pause is emitted to the window, so a busy
+  model reads as "Waiting 3 seconds, then trying again — attempt 3 of 4"
+  instead of a spinner that says nothing for half a minute.
+- Settings accurately explains that billing moves the project to paid Tier 1
+  with higher rate limits, without promising that billing guarantees capacity.
 
 ### 6. Schedule and lesson preparation
 
@@ -178,6 +202,17 @@ The application warns about this but does not currently block it — see
 - Store answers and connect questions to lessons, journal entries, or study
   materials.
 - Unanswered questions appear in preparation and dashboard views.
+
+### 8b. Notes
+
+- A page that asks nothing before she writes: an optional title, the text, and
+  a pin for the few worth keeping at the top.
+- Pinned notes are read first, then whatever she touched most recently.
+- Search across titles and text, and every note is reachable from Quick Find —
+  an untitled note is listed under the first line she typed.
+- Her line breaks are kept exactly as written.
+- Half-written notes survive leaving the page, and deleting one is undoable
+  like everything else.
 
 ### 9. Finances and Flight Fund
 
@@ -243,21 +278,22 @@ The application warns about this but does not currently block it — see
 
 - **Quick Find** opens from anywhere with ⌘K on macOS or Ctrl+K on Windows,
   and from the Search button above the navigation. It searches materials,
-  lessons, flight records, goals, milestones and questions at once, ranks a
-  title that starts with what she typed above one that merely contains it,
-  and also jumps to any section by name. Arrow keys move, Enter opens,
+  lessons, flight records, goals, milestones, questions and notes at once,
+  ranks a title that starts with what she typed above one that merely contains
+  it, and also jumps to any section by name. Arrow keys move, Enter opens,
   Escape closes.
 - **Undo after deleting.** Confirming a deletion hides the record and starts a
   seven-second window with an Undo bar; the removal happens for real only when
   the window closes. Materials, lessons, flight records, goals, milestones,
-  questions, transactions, next actions and records-organizer entries all go
-  through it. Quitting inside the window leaves the record in place, which
-  errs toward keeping her data.
+  questions, notes, transactions, next actions and records-organizer entries
+  all go through it. Quitting inside the window leaves the record in place,
+  which errs toward keeping her data.
 - **Nothing typed is lost.** A flight debrief is mirrored to local browser
   storage as it is written and comes back if she leaves the page, with a
   "Start fresh" button to throw it away. The draft is cleared once the entry
-  is saved. Personal notes on a study material save themselves shortly after
-  she stops typing, and show "Saving…" then "Saved".
+  is saved. A note being written on the Notes page comes back the same way.
+  Personal notes on a study material save themselves shortly after she stops
+  typing, and show "Saving…" then "Saved".
 - **Filters stay put.** The Study Library's search, topic, type, status and
   sort, and the Questions status filter, are kept for as long as the app is
   open, so opening a material and coming back does not reset them. Each launch
@@ -312,11 +348,12 @@ The application warns about this but does not currently block it — see
 - Production content-security policy is active.
 - Windows builds an x64 NSIS `.exe` installer on a GitHub Windows runner.
 - macOS builds an Apple Silicon `.dmg` installer on a GitHub macOS runner.
-- A universal macOS build can be produced separately for Intel compatibility.
+- macOS builds target Apple Silicon; Intel compatibility is not required for
+  this application.
 - Manual test-build workflow can build Windows, macOS, or both.
 - Release workflow validates the version, creates a tag, builds both installers,
-  calculates checksums, and publishes a GitHub Release. Run twice, for `v0.2.0`
-  and `v0.3.0`; both succeeded.
+  calculates checksums, and publishes a GitHub Release. Proven through
+  `v0.4.0`.
 - Rust and npm caches reduce later GitHub Actions build times.
 - Every pull request and every push to `main` runs the tests, the typecheck,
   the production build, `cargo fmt --check`, `cargo clippy -D warnings`, and
@@ -329,23 +366,28 @@ The application warns about this but does not currently block it — see
 
 Verified on this machine:
 
-- `npm test`: **26 test files and 251 tests pass**.
+- `npm test`: **29 test files and 279 tests pass**.
 - `npm run typecheck`: passes with strict TypeScript settings.
 - `cargo check`: Rust backend compiles, including the Gemini, TLS, and keyring
   code.
 - `scripts/desktop-smoke.sh`: the real desktop window opens, the Rust migration
-  runner builds all 20 tables, the native file chooser opens from the photo
-  input, the photo reaches the real database downscaled, her data is still
-  there after the application is closed and reopened, and a new version's first
-  run copies the database aside into a working copy that holds her photo while
-  leaving the live data untouched.
+  runner builds every table in the schema, the native file chooser opens from
+  the photo input, the photo reaches the real database downscaled, her data is
+  still there after the application is closed and reopened, and a new version's
+  first run copies the database aside into a working copy that holds her photo
+  while leaving the live data untouched.
 - `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean,
   and both now run in CI so they stay that way.
-- `cargo test` (31 tests): backup and restore end to end against real files —
-  a complete archive put back with every document, a safety copy put back
-  without disturbing uploads, the write-ahead log travelling with the database,
-  a damaged archive refused before anything moves, and an archive carrying an
-  unexpected file refused outright.
+- `cargo test` (48 tests). Backup and restore end to end against real files: a
+  complete archive put back with every document, a safety copy put back without
+  disturbing uploads, the write-ahead log travelling with the database, a
+  damaged archive refused before anything moves, and an archive carrying an
+  unexpected file refused outright. Gemini: which failures are worth retrying,
+  that each pause is longer than the last and capped, and that an oversized
+  file is answered with the limit it broke and what to do about it. PDF
+  splitting, against real PDFs written by the test: a page range comes out with
+  only its own pages, the book it came from is unchanged, the pages left behind
+  do not come with it, and an impossible range is refused by name.
 - Database migrations apply to a new database and upgrade an existing populated
   database without losing its records.
 - The Gemini API key appears in no migration, is absent from the backup code,
@@ -364,7 +406,7 @@ Verified on GitHub Actions:
 
 - macOS build, DMG packaging, and artifact upload succeed.
 - Windows build, NSIS packaging, and artifact upload succeed.
-- The Release workflow, twice: `v0.2.0` and `v0.3.0` both published with the
+- The Release workflow has published `v0.2.0`, `v0.3.0`, and `v0.4.0` with the
   `.dmg` and the `.exe` attached.
 - Checks (tests, types, production build, Rust backup and restore guards) on
   every pull request and every push to `main`.
@@ -373,7 +415,7 @@ Not verified anywhere yet:
 
 - A real Gemini API request. No key is stored in any development environment.
 - The native file chooser on macOS and Windows. It is verified only on Linux.
-- Installing `0.4.0` over an existing `0.3.0` install.
+- Installing `0.5.0` over an existing `0.4.0` install.
 
 GitHub test-build artifacts appear at the bottom of a completed Actions run as
 `her-flight-deck-macOS` and `her-flight-deck-Windows`. GitHub packages each as
@@ -406,7 +448,7 @@ check, not a certificate, medical record, or personal logbook.
 ### Normal desktop smoke check
 
 - Confirm the existing data remains after installing over the prior version,
-  and that a copy appears under `backups/` ending in `before-0.4.0`.
+  and that a copy appears under `backups/` ending in `before-0.5.0`.
 - Upload and open a document through the native file chooser.
 - Add and edit a lesson.
 - Save a flight-journal entry with flight time.
@@ -446,8 +488,7 @@ check, not a certificate, medical record, or personal logbook.
   existing one; the student's data remains in place.
 - Installers are unsigned, so Windows SmartScreen and macOS Gatekeeper show a
   first-run warning.
-- The standard macOS workflow builds for Apple Silicon. An Intel or universal
-  Mac build requires an additional target.
+- The macOS workflow intentionally builds for Apple Silicon only.
 - Automatic pre-update database copies remain on the same computer and do not
   include documents. Use complete `.hfdbackup` files for protection against a
   lost or failed computer.
@@ -471,19 +512,16 @@ check, not a certificate, medical record, or personal logbook.
 
 Artifacts are temporary test downloads, not permanent releases.
 
-### Publish version 0.4.0
+### Publish version 0.5.0 after the checks pass
 
 1. Open **Actions → Release → Run workflow**.
-2. Enter `0.4.0`.
+2. Enter `0.5.0`.
 3. Run the workflow.
 4. Download or share the installers from the repository's **Releases** page.
 
-The release workflow creates `v0.4.0`, packages both installers, and writes
-human-readable installation and update instructions. It has done this twice
-already; if it fails, the Actions log will say why.
-
-Do not use `scripts/release.sh 0.4.0` for this one — see "Why the version is
-load-bearing" above. From `0.5.0` onwards the script is the right route.
+The release workflow creates `v0.5.0`, packages both installers, and writes
+human-readable installation and update instructions. Do not publish until the
+pull-request checks and the Windows/macOS test builds are green.
 
 Because the repository is private, the recipient needs repository access to
 download directly. Otherwise, download the installer and send the single file
@@ -534,10 +572,9 @@ to her yourself.
 
 ## Bottom line
 
-The application is built, both platforms package successfully, and `0.3.0` is
-published and installable. The immediate next steps are publishing `0.4.0` —
-which carries the Gemini key fix she needs so she stops re-pasting her key
-after every update — installing it over `0.3.0`, and connecting a real free
+The application is built, both platforms have packaged successfully, and
+`v0.4.0` is published and installable. Version `0.5.0` is the next release. Its
+remaining hands-on checks are installing it over `0.4.0` and connecting a real
 Gemini key to generate one study aid from a safe test PDF, then collecting
 feedback from the student and her instructor.
 
@@ -545,8 +582,8 @@ The Gemini model is a hardcoded constant, `MODEL` in
 `src-tauri/src/gemini.rs`. Google publishes model shutdown dates, so this must
 be checked before each release. It now reads `gemini-3.5-flash`, which is
 generally available and on the free tier, with no announced shutdown date.
-Google also currently lists no shutdown date for `gemini-2.5-flash`; the move
-to 3.5 keeps the application on the newer stable generation.
+The capacity fallback is `gemini-3.5-flash-lite`, keeping both paths on the
+same stable model generation.
 
 **This has not been exercised against the live API.** No Gemini key exists in
 any development environment, so the model name is taken from Google's

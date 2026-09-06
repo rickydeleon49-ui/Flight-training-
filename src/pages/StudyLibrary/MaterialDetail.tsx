@@ -31,6 +31,7 @@ import { formatLongDate, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
 import { checkAiSubmission } from "@/logic/aiSafety";
+import { checkFileForGemini } from "@/logic/aiLimits";
 import {
   canHandleFiles,
   deleteDocument,
@@ -42,13 +43,16 @@ import {
   geminiErrorMessage,
   generateStudyAid,
   getGeminiStatus,
-  listenForGeminiProgress,
+  watchGeminiProgress,
   type GeminiStatus,
 } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
+import { canSplitPdfs } from "@/services/pdf";
+
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
+import { SplitPdfDialog } from "./SplitPdfDialog";
 import "./studyLibrary.css";
 
 export function MaterialDetail() {
@@ -65,11 +69,12 @@ export function MaterialDetail() {
   const [notes, setNotes] = useState("");
   const [notesStatus, setNotesStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [fileMissing, setFileMissing] = useState(false);
+  const [splitting, setSplitting] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState("Gemini is reviewing this document");
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<string | null>(null);
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
@@ -79,21 +84,6 @@ export function MaterialDetail() {
 
   useEffect(() => {
     void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
-  }, []);
-
-  useEffect(() => {
-    let disposed = false;
-    let stopListening: (() => void) | undefined;
-    void listenForGeminiProgress((progress) => {
-      if (!disposed) setGenerationProgress(progress.message);
-    }).then((unlisten) => {
-      if (disposed) unlisten();
-      else stopListening = unlisten;
-    });
-    return () => {
-      disposed = true;
-      stopListening?.();
-    };
   }, []);
 
   useEffect(() => {
@@ -157,6 +147,18 @@ export function MaterialDetail() {
 
   // Nothing reaches Google without passing this, and without her saying yes.
   const aiCheck = checkAiSubmission(material, data.toolkit.credentials);
+  // Whether Google would read it at all. Answered here rather than after a
+  // click and an upload, so an oversized handbook is a next step and not a
+  // wasted wait.
+  const fileForAi = checkFileForGemini(
+    material.originalFileName ?? material.filePath ?? "",
+    material.fileSize,
+  );
+  // A handbook Google will not read can still be studied a chapter at a time.
+  const isPdf = (material.originalFileName ?? material.filePath ?? "")
+    .toLowerCase()
+    .endsWith(".pdf");
+  const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
 
   const relatedActions = actionsFor(data.actions, "material", material.id);
   const questions = data.questions.filter((question) => question.materialId === material.id);
@@ -195,9 +197,13 @@ export function MaterialDetail() {
       return;
     }
     setGenerating(true);
-    setGenerationProgress("Gemini is reviewing this document");
     setGenerationError(null);
+    setGenerationProgress(null);
+    // Waiting out a busy model takes several pauses; she should be able to see
+    // that something is still happening.
+    let stopWatching = () => {};
     try {
+      stopWatching = await watchGeminiProgress(setGenerationProgress);
       const generated = await generateStudyAid(material.filePath);
       const saved = await mutate((repos) =>
         repos.documents.saveAiStudySet({
@@ -216,6 +222,8 @@ export function MaterialDetail() {
     } catch (error) {
       setGenerationError(geminiErrorMessage(error));
     } finally {
+      stopWatching();
+      setGenerationProgress(null);
       setGenerating(false);
     }
   };
@@ -253,6 +261,9 @@ export function MaterialDetail() {
                         : formatFileSize(material.fileSize)}
                     </p>
                   </div>
+                  {canSplit ? (
+                    <Button onClick={() => setSplitting(true)}>Split</Button>
+                  ) : null}
                   {!fileMissing && canHandleFiles() ? (
                     <Button onClick={open}>
                       <ExternalIcon size={15} /> Open
@@ -280,7 +291,7 @@ export function MaterialDetail() {
                 title="Gemini study assistant"
                 eyebrow={studySet ? "Saved on this computer" : "Guide and flashcards"}
                 action={
-                  gemini?.configured && aiCheck.allowed ? (
+                  gemini?.configured && aiCheck.allowed && fileForAi.ready ? (
                     <Button
                       size="small"
                       variant={studySet ? "secondary" : "primary"}
@@ -298,6 +309,20 @@ export function MaterialDetail() {
                     <AlertIcon size={16} />
                     <p className="tiny">{aiCheck.reason}</p>
                   </div>
+                ) : !fileForAi.ready ? (
+                  <div className="stack stack--3">
+                    <div className="ai-disclaimer" role="note">
+                      <AlertIcon size={16} />
+                      <p className="tiny">{fileForAi.reason}</p>
+                    </div>
+                    {canSplit ? (
+                      <div>
+                        <Button variant="secondary" onClick={() => setSplitting(true)}>
+                          Take out a chapter
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 ) : !gemini?.configured ? (
                   <div className="stack stack--3">
                     <p className="small muted">
@@ -312,11 +337,10 @@ export function MaterialDetail() {
                   <div className="ai-working" role="status">
                     <span className="ai-working__dot" aria-hidden="true" />
                     <div>
-                      <p className="small strong">{generationProgress}</p>
+                      <p className="small strong">Gemini is reviewing this document</p>
                       <p className="tiny dim">
-                        {generationProgress.includes("backup")
-                          ? "Your document is still being processed; no action is needed."
-                          : "Large illustrated PDFs can take a little longer."}
+                        {generationProgress ??
+                          "Large illustrated PDFs can take a little longer, and if Google\u2019s servers are busy this waits and tries again on its own."}
                       </p>
                     </div>
                   </div>
@@ -580,6 +604,18 @@ export function MaterialDetail() {
           </Card>
         </div>
       </div>
+
+      {canSplit ? (
+        <SplitPdfDialog
+          open={splitting}
+          material={material}
+          onClose={() => setSplitting(false)}
+          onCreated={(newMaterialId) => {
+            setSplitting(false);
+            navigate(`/study/${newMaterialId}`);
+          }}
+        />
+      ) : null}
 
       <MaterialFormDialog
         open={editing}

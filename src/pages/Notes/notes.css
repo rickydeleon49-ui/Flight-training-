@@ -1,0 +1,53 @@
+/* Notes: a running page of whatever she wanted to keep. */
+
+.note-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* A pinned note is marked at the edge rather than given its own section, so
+   the list stays one list. */
+.note-row--pinned { border-left: 3px solid var(--accent-primary); }
+
+.note-row--editing { background: var(--surface-sunken); }
+
+.note-row__main { flex: 1; min-width: 0; }
+
+.note-row__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.note-row__title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.note-row__body {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  /* Her line breaks are part of what she wrote. */
+  white-space: pre-wrap;
+}
+
+/* Three small controls sit better in a row than stacked down a tall note. */
+.note-row__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+@media (max-width: 720px) {
+  .note-row { flex-direction: column; }
+  .note-row__tools { align-self: flex-end; }
+}

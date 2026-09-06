@@ -6,6 +6,7 @@ import {
   makeGoal,
   makeJournalEntry,
   makeMaterial,
+  makeNote,
   makeQuestion,
 } from "@/testing/factories";
 import { quickFind } from "./quickFind";
@@ -22,6 +23,10 @@ const data: AppData = {
   journalEntries: [makeJournalEntry({ id: "j1", title: "First solo", date: "2026-08-30" })],
   goals: [makeGoal({ id: "g1", title: "Land confidently in wind" })],
   questions: [makeQuestion({ id: "q1", text: "When do I use a forward slip?" })],
+  notes: [
+    makeNote({ id: "n1", title: "Schools to call", body: "the one on the north field" }),
+    makeNote({ id: "n2", title: "", body: "Bring the headset receipt to the next lesson" }),
+  ],
 };
 
 const labels = (query: string) => quickFind(data, query, TODAY).map((result) => result.label);
@@ -40,6 +45,11 @@ describe("quickFind", () => {
     expect(labels("solo")).toContain("First solo");
     expect(labels("slip")).toContain("When do I use a forward slip?");
     expect(labels("land confidently")).toContain("Land confidently in wind");
+    expect(labels("schools")).toContain("Schools to call");
+  });
+
+  it("finds an untitled note by the line it starts with", () => {
+    expect(labels("headset")).toContain("Bring the headset receipt to the next lesson");
   });
 
   it("ranks a title that starts with the query above one that merely contains it", () => {

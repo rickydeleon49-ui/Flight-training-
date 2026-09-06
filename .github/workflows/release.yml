@@ -71,11 +71,12 @@ jobs:
           fi
 
           PKG=$(node -p "require('./package.json').version")
+          LOCK=$(node -p "require('./package-lock.json').version")
           CONF=$(node -p "require('./src-tauri/tauri.conf.json').version")
           CARGO=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
-          echo "releasing=$VERSION package.json=$PKG tauri.conf.json=$CONF Cargo.toml=$CARGO"
+          echo "releasing=$VERSION package.json=$PKG package-lock.json=$LOCK tauri.conf.json=$CONF Cargo.toml=$CARGO"
 
-          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ]; then
+          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$LOCK" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ]; then
             echo "::error::The repository is at $PKG but you asked for $VERSION. Bump it first with scripts/release.sh, or release $PKG."
             exit 1
           fi

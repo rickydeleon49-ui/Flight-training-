@@ -17,6 +17,7 @@ import {
   SearchIcon,
   DeckIcon,
   JournalIcon,
+  NoteIcon,
   PlaneIcon,
   QuestionIcon,
   RouteIcon,
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/schedule", label: "Schedule", icon: <CalendarIcon size={19} /> },
   { to: "/journal", label: "Flight Log", icon: <JournalIcon size={19} /> },
   { to: "/questions", label: "Questions", icon: <QuestionIcon size={19} /> },
+  { to: "/notes", label: "Notes", icon: <NoteIcon size={19} /> },
   { to: "/finances", label: "Finances", icon: <WalletIcon size={19} /> },
   { to: "/toolkit", label: "Pilot Toolkit", icon: <TargetIcon size={19} /> },
 ];

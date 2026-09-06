@@ -3,6 +3,12 @@
 A personal flight-training companion that keeps study, lessons, goals, notes,
 finances, and next steps organized in one private workspace.
 
+**She has not started flight school yet.** She is studying and flying — lessons
+and discovery flights while she works out which school and which route to take.
+So nothing in the application requires a school, an instructor, or an enrolment
+to be useful: those fields stay optional, the roadmap opens on choosing a
+training route, and Notes exists for everything that has no home yet.
+
 The product specification lives in [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) and is
 the source of truth for purpose, philosophy, terminology, and visual direction.
 
@@ -118,16 +124,11 @@ npm run tauri build    # package
 Which leaves you:
 
 ```
-macOS    src-tauri/target/release/bundle/dmg/Her Flight Deck_0.1.0_aarch64.dmg
-Windows  src-tauri/target/release/bundle/nsis/Her Flight Deck_0.1.0_x64-setup.exe
+macOS    src-tauri/target/release/bundle/dmg/Her Flight Deck_<version>_aarch64.dmg
+Windows  src-tauri/target/release/bundle/nsis/Her Flight Deck_<version>_x64-setup.exe
 ```
 
-Apple Silicon builds arm64 only. For one binary that also runs on Intel Macs:
-
-```bash
-rustup target add x86_64-apple-darwin aarch64-apple-darwin
-npm run tauri build -- --target universal-apple-darwin
-```
+macOS builds target Apple Silicon (M-series Macs) only.
 
 ### Neither installer is code-signed
 
@@ -173,11 +174,33 @@ The generated result is stored locally in SQLite and remains available offline.
 DOCX and RTF files can remain in the library, but must be converted to PDF before
 Gemini can analyze them.
 
-Temporary Gemini capacity failures are handled inside the app. The primary
-Flash model is retried after 2, 5, and 10 seconds; if it is still unavailable,
-the request moves automatically to Flash-Lite and the screen explains that a
-backup model is working. If both capacity pools are busy, the learner receives
-a plain wait-and-try-again message rather than a technical HTTP error.
+**What Google will read.** A PDF up to 50 MB or 1,000 pages, whichever comes
+first — that ceiling is Google's and is the same however the file is sent, so a
+larger handbook has to be split into the chapter being studied. Text and
+Markdown are held to 4 MB, which is roughly what the model can hold in mind at
+once; images ride the 100 MB inline request cap. The application checks all of
+this before she clicks, so an oversized file is a next step rather than a wasted
+upload.
+
+**When Google is busy.** A `503` means Google's own capacity is short for a
+moment — nothing to do with her key, her quota, or her document. Generating
+retries four times with a growing pause, then tries Gemini Flash-Lite once, and
+only then reports that Google is busy and the same file will probably work in a
+few minutes. The waiting is narrated rather than silent: the Rust side emits
+each pause to the window, so "Gemini is reviewing this document" becomes
+"Google is busy. Waiting 3 seconds, then trying again — attempt 3 of 4."
+Connecting a key retries the same way, so an overloaded model never reads as a
+bad key. Settings explains that enabling billing moves the Google Cloud project
+to paid Tier 1 with higher rate limits, while making clear that billing cannot
+guarantee model capacity.
+
+**Taking out a chapter.** A handbook past those limits is not a dead end. The
+Study Library splits a PDF on her own machine — she picks a page range, and it
+is saved as a study document of its own with the metadata of the book it came
+from, leaving the original untouched. Deleted pages are pruned rather than
+merely unlinked, so a chapter is a fraction of the book's size rather than
+nearly all of it, and a study aid from one chapter is better than one from a
+whole book anyway.
 
 Google's free-tier terms say submitted content may be used to improve its
 products. Do not send medical records, certificates, addresses, logbooks with
@@ -298,7 +321,8 @@ edges, for display and form input.
 
 **The profile is a real profile.** Settings holds who she is (name,
 certificate, current focus), where she trains (school, instructor, home
-airport, aircraft, start date), her medical expiry, and her accent colour.
+airport, aircraft, start date — all optional while she is still choosing a
+school), her medical expiry, and her accent colour.
 The training details pre-fill every new lesson so the instructor and airport
 are not retyped; the accent re-themes the whole interface through the token
 layer, so no component needed changing to support it.
@@ -346,6 +370,10 @@ policy allows no external style or font origins as a result.
 - **One card asks nothing of her.** Why she started sits at the end of the
   dashboard, below the work. It is never analysed, scored, or turned into a
   prompt — it is only shown back to her, and only once she has written it.
+- **One page asks nothing first.** Everywhere else a thought is typed, it has
+  to belong to a lesson, a material, or a goal. Notes has a title she can leave
+  blank and a box. It is the right shape for the stage she is at, where half of
+  what is worth writing down does not belong to anything yet.
 - **Instructors and official guidance stay authoritative.** The application
   organizes what the user puts into it and says so.
 
@@ -359,8 +387,8 @@ npm test
 
 Covers Flight Fund calculations, transaction totals, upcoming expense
 derivation, overdue detection, completion and rescheduling, lesson preparation
-state, goal evidence, encouragement tone, and the duplicate-lesson-expense
-guard. Repository tests run against real SQLite through `node:sqlite`, so the
+state, goal evidence, encouragement tone, how a free-form note reads back when
+she left the title blank, and the duplicate-lesson-expense guard. Repository tests run against real SQLite through `node:sqlite`, so the
 schema's foreign keys and unique indexes are genuinely exercised, and the
 migration tests apply new migrations to a database that already holds data.
 

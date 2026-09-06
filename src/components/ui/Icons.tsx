@@ -166,6 +166,21 @@ export const ExternalIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const NoteIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 4.5h14v10L14 20H5z" />
+    <path d="M19 14.5h-5v5.4" />
+    <path d="M8.5 9h7M8.5 12.5h4.5" />
+  </Icon>
+);
+
+export const PinIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9.5 3.5h5l-.8 5.1 3.3 3.2H7l3.3-3.2z" />
+    <path d="M12 11.8v8.7" />
+  </Icon>
+);
+
 export const TargetIcon = (p: IconProps) => (
   <Icon {...p}>
     <circle cx="12" cy="12" r="8.5" />

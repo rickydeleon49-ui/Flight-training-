@@ -10,6 +10,7 @@ import type {
   JournalEntry,
   Milestone,
   NextAction,
+  Note,
   PrepItem,
   Profile,
   Question,
@@ -192,6 +193,16 @@ export const makeQuestion = (overrides: Partial<Question> = {}): Question => ({
   createdAt: STAMP,
   updatedAt: STAMP,
   answeredAt: null,
+  ...overrides,
+});
+
+export const makeNote = (overrides: Partial<Note> = {}): Note => ({
+  id: id(),
+  title: "",
+  body: "Ask about the discovery flight price",
+  pinned: false,
+  createdAt: STAMP,
+  updatedAt: STAMP,
   ...overrides,
 });
 
