@@ -3,6 +3,12 @@
 A personal flight-training companion that keeps study, lessons, goals, notes,
 finances, and next steps organized in one private workspace.
 
+**She has not started flight school yet.** She is studying and flying — lessons
+and discovery flights while she works out which school and which route to take.
+So nothing in the application requires a school, an instructor, or an enrolment
+to be useful: those fields stay optional, the roadmap opens on choosing a
+training route, and Notes exists for everything that has no home yet.
+
 The product specification lives in [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) and is
 the source of truth for purpose, philosophy, terminology, and visual direction.
 
@@ -292,7 +298,8 @@ edges, for display and form input.
 
 **The profile is a real profile.** Settings holds who she is (name,
 certificate, current focus), where she trains (school, instructor, home
-airport, aircraft, start date), her medical expiry, and her accent colour.
+airport, aircraft, start date — all optional while she is still choosing a
+school), her medical expiry, and her accent colour.
 The training details pre-fill every new lesson so the instructor and airport
 are not retyped; the accent re-themes the whole interface through the token
 layer, so no component needed changing to support it.
@@ -340,6 +347,10 @@ policy allows no external style or font origins as a result.
 - **One card asks nothing of her.** Why she started sits at the end of the
   dashboard, below the work. It is never analysed, scored, or turned into a
   prompt — it is only shown back to her, and only once she has written it.
+- **One page asks nothing first.** Everywhere else a thought is typed, it has
+  to belong to a lesson, a material, or a goal. Notes has a title she can leave
+  blank and a box. It is the right shape for the stage she is at, where half of
+  what is worth writing down does not belong to anything yet.
 - **Instructors and official guidance stay authoritative.** The application
   organizes what the user puts into it and says so.
 
@@ -353,8 +364,8 @@ npm test
 
 Covers Flight Fund calculations, transaction totals, upcoming expense
 derivation, overdue detection, completion and rescheduling, lesson preparation
-state, goal evidence, encouragement tone, and the duplicate-lesson-expense
-guard. Repository tests run against real SQLite through `node:sqlite`, so the
+state, goal evidence, encouragement tone, how a free-form note reads back when
+she left the title blank, and the duplicate-lesson-expense guard. Repository tests run against real SQLite through `node:sqlite`, so the
 schema's foreign keys and unique indexes are genuinely exercised, and the
 migration tests apply new migrations to a database that already holds data.
 

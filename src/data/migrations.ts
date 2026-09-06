@@ -12,6 +12,7 @@ import appMetadata from "../../src-tauri/migrations/0004_app_metadata.sql?raw";
 import flightLog from "../../src-tauri/migrations/0005_flight_log.sql?raw";
 import pilotToolkit from "../../src-tauri/migrations/0006_pilot_toolkit.sql?raw";
 import aiStudy from "../../src-tauri/migrations/0007_ai_study.sql?raw";
+import notes from "../../src-tauri/migrations/0008_notes.sql?raw";
 
 export interface Migration {
   version: number;
@@ -27,6 +28,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 5, description: "flight_log", sql: flightLog },
   { version: 6, description: "pilot_toolkit", sql: pilotToolkit },
   { version: 7, description: "ai_study", sql: aiStudy },
+  { version: 8, description: "notes", sql: notes },
 ];
 
 /**

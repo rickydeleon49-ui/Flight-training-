@@ -40,3 +40,21 @@
 
 .inline-add { display: flex; gap: var(--space-2); }
 .inline-add .input { flex: 1; }
+
+/* Shown when a form comes back with typing that was never saved. */
+.draft-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  background: var(--accent-primary-fill);
+}
+
+.draft-note p {
+  flex: 1;
+  margin: 0;
+}

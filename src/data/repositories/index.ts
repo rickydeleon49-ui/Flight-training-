@@ -11,6 +11,7 @@ import { documentRepository } from "./documentRepository";
 import { financeRepository } from "./financeRepository";
 import { goalRepository, milestoneRepository } from "./flightPathRepository";
 import { journalRepository } from "./journalRepository";
+import { noteRepository } from "./noteRepository";
 import { profileRepository } from "./profileRepository";
 import { questionRepository } from "./questionRepository";
 import { scheduleRepository } from "./scheduleRepository";
@@ -26,6 +27,7 @@ export interface Repositories {
   schedule: ReturnType<typeof scheduleRepository>;
   journal: ReturnType<typeof journalRepository>;
   questions: ReturnType<typeof questionRepository>;
+  notes: ReturnType<typeof noteRepository>;
   finance: ReturnType<typeof financeRepository>;
   toolkit: ReturnType<typeof toolkitRepository>;
 }
@@ -41,6 +43,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
     schedule: scheduleRepository(db),
     journal: journalRepository(db),
     questions: questionRepository(db),
+    notes: noteRepository(db),
     finance: financeRepository(db),
     toolkit: toolkitRepository(db),
   };

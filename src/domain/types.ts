@@ -356,6 +356,26 @@ export interface JournalEntry {
 }
 
 /* ------------------------------------------------------------------ */
+/* Notes — free writing that belongs to nothing else                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A note she wrote for no reason but wanting to keep it.
+ *
+ * Everywhere else a thought can be typed is attached to something — a lesson,
+ * a material, a goal. This is the one that is not: a title she can leave
+ * blank, the text, and a pin for the handful worth keeping at the top.
+ */
+export interface Note {
+  id: Id;
+  title: string;
+  body: string;
+  pinned: boolean;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}
+
+/* ------------------------------------------------------------------ */
 /* Questions                                                           */
 /* ------------------------------------------------------------------ */
 

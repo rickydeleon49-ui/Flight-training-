@@ -1,7 +1,7 @@
 /**
  * One search box over the whole training record.
  *
- * Nine sections is a lot of clicking when she only wants the handout from
+ * Ten sections is a lot of clicking when she only wants the handout from
  * Tuesday. Quick Find matches across every record that has somewhere to go,
  * plus the sections themselves, and ranks so that what she typed the start
  * of comes first.
@@ -12,6 +12,7 @@ import {
   TOPIC_LABELS,
 } from "@/domain/types";
 import { formatLongDate } from "@/lib/dates";
+import { noteHeading } from "@/logic/notes";
 import type { AppData } from "@/state/AppDataContext";
 
 export type QuickFindSection =
@@ -21,6 +22,7 @@ export type QuickFindSection =
   | "Schedule"
   | "Flight Log"
   | "Questions"
+  | "Notes"
   | "Finances"
   | "Pilot Toolkit"
   | "Settings"
@@ -50,6 +52,7 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string }> = [
   { label: "Schedule", to: "/schedule", detail: "Lessons and events" },
   { label: "Flight Log", to: "/journal", detail: "Flights and reflections" },
   { label: "Questions", to: "/questions", detail: "To ask your instructor" },
+  { label: "Notes", to: "/notes", detail: "Anything you wrote down" },
   { label: "Finances", to: "/finances", detail: "Spending and funds" },
   { label: "Pilot Toolkit", to: "/toolkit", detail: "Checkride readiness" },
   { label: "Settings", to: "/settings", detail: "Profile and preferences" },
@@ -143,6 +146,17 @@ function buildCandidates(data: AppData, today: string): Candidate[] {
       question.status === "answered" ? "Answered" : "To ask",
       "/questions",
       question.answer,
+    );
+  }
+
+  for (const note of data.notes) {
+    push(
+      `note:${note.id}`,
+      "Notes",
+      noteHeading(note),
+      note.pinned ? "Pinned note" : "Note",
+      "/notes",
+      note.body,
     );
   }
 

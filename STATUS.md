@@ -9,13 +9,21 @@ It is designed for a student pilot working toward an airline career and brings
 her schedule, flight training, study materials, instructor feedback, finances,
 records, reminders, and career planning into one application.
 
+She has not started flight school. She is studying and flying — lessons and
+discovery flights — while she works out which school and which training route
+to take. The application is built to be useful at that stage: the school,
+instructor and start date are optional wherever they appear, the roadmap opens
+on choosing a training route rather than on a syllabus already underway, and
+**Notes** takes anything worth writing down that does not belong to a lesson,
+material or goal yet.
+
 The current source is committed and pushed to GitHub:
 
 - Repository: <https://github.com/rickydeleon49-ui/Flight-training->
 - Branch: `main` (the repository default)
 - Latest merged audit: `8287ddc` — `fix: pre-release audit`
 - Application version: `0.4.0`
-- Automated tests: **251 passing** across 26 files
+- Automated tests: **271 passing** across 28 files
 - TypeScript production build: **passing**
 - Rust desktop compilation: **passing**
 - GitHub macOS DMG build and upload: **passing**
@@ -175,6 +183,17 @@ The application warns about this but does not currently block it — see
   materials.
 - Unanswered questions appear in preparation and dashboard views.
 
+### 8b. Notes
+
+- A page that asks nothing before she writes: an optional title, the text, and
+  a pin for the few worth keeping at the top.
+- Pinned notes are read first, then whatever she touched most recently.
+- Search across titles and text, and every note is reachable from Quick Find —
+  an untitled note is listed under the first line she typed.
+- Her line breaks are kept exactly as written.
+- Half-written notes survive leaving the page, and deleting one is undoable
+  like everything else.
+
 ### 9. Finances and Flight Fund
 
 - Contributions and training expenses in one ledger.
@@ -239,21 +258,22 @@ The application warns about this but does not currently block it — see
 
 - **Quick Find** opens from anywhere with ⌘K on macOS or Ctrl+K on Windows,
   and from the Search button above the navigation. It searches materials,
-  lessons, flight records, goals, milestones and questions at once, ranks a
-  title that starts with what she typed above one that merely contains it,
-  and also jumps to any section by name. Arrow keys move, Enter opens,
+  lessons, flight records, goals, milestones, questions and notes at once,
+  ranks a title that starts with what she typed above one that merely contains
+  it, and also jumps to any section by name. Arrow keys move, Enter opens,
   Escape closes.
 - **Undo after deleting.** Confirming a deletion hides the record and starts a
   seven-second window with an Undo bar; the removal happens for real only when
   the window closes. Materials, lessons, flight records, goals, milestones,
-  questions, transactions, next actions and records-organizer entries all go
-  through it. Quitting inside the window leaves the record in place, which
-  errs toward keeping her data.
+  questions, notes, transactions, next actions and records-organizer entries
+  all go through it. Quitting inside the window leaves the record in place,
+  which errs toward keeping her data.
 - **Nothing typed is lost.** A flight debrief is mirrored to local browser
   storage as it is written and comes back if she leaves the page, with a
   "Start fresh" button to throw it away. The draft is cleared once the entry
-  is saved. Personal notes on a study material save themselves shortly after
-  she stops typing, and show "Saving…" then "Saved".
+  is saved. A note being written on the Notes page comes back the same way.
+  Personal notes on a study material save themselves shortly after she stops
+  typing, and show "Saving…" then "Saved".
 - **Filters stay put.** The Study Library's search, topic, type, status and
   sort, and the Questions status filter, are kept for as long as the app is
   open, so opening a material and coming back does not reset them. Each launch
@@ -325,16 +345,16 @@ The application warns about this but does not currently block it — see
 
 Verified on this machine:
 
-- `npm test`: **26 test files and 251 tests pass**.
+- `npm test`: **28 test files and 271 tests pass**.
 - `npm run typecheck`: passes with strict TypeScript settings.
 - `cargo check`: Rust backend compiles, including the Gemini, TLS, and keyring
   code.
 - `scripts/desktop-smoke.sh`: the real desktop window opens, the Rust migration
-  runner builds all 20 tables, the native file chooser opens from the photo
-  input, the photo reaches the real database downscaled, her data is still
-  there after the application is closed and reopened, and a new version's first
-  run copies the database aside into a working copy that holds her photo while
-  leaving the live data untouched.
+  runner builds every table in the schema, the native file chooser opens from
+  the photo input, the photo reaches the real database downscaled, her data is
+  still there after the application is closed and reopened, and a new version's
+  first run copies the database aside into a working copy that holds her photo
+  while leaving the live data untouched.
 - `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean,
   and both now run in CI so they stay that way.
 - `cargo test` (31 tests): backup and restore end to end against real files —

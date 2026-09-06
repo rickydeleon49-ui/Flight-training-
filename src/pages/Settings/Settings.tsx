@@ -412,11 +412,16 @@ export function Settings() {
             eyebrow="Used to fill in new lessons"
           />
           <CardBody>
+            <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
+              None of this is required. Before you have settled on a school you can
+              leave it empty, or fill in only the parts that are true today.
+            </p>
             <div className="form-grid">
-              <Field label="Flight school">
-                {({ id }) => (
+              <Field label="Flight school" hint="Leave it blank while you are still choosing.">
+                {({ id, describedBy }) => (
                   <TextInput
                     id={id}
+                    aria-describedby={describedBy}
                     value={draft.flightSchool}
                     placeholder="Cedar Field Aviation"
                     onChange={(e) => update("flightSchool", e.target.value)}
@@ -461,7 +466,11 @@ export function Settings() {
 
               <Field
                 label="Training started"
-                hint={duration ? `That is ${duration} of training so far.` : "Optional."}
+                hint={
+                  duration
+                    ? `That is ${duration} of training so far.`
+                    : "Optional — your first flight counts, school or not."
+                }
               >
                 {({ id, describedBy }) => (
                   <TextInput
