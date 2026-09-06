@@ -191,8 +191,21 @@ upload.
 moment — nothing to do with her key, her quota, or her document. Generating
 retries four times with a growing pause, then tries a standby model once, and
 only then reports that Google is busy and the same file will probably work in a
-few minutes. Connecting a key retries the same way, so an overloaded model never
-reads as a bad key.
+few minutes. The waiting is narrated rather than silent: the Rust side emits
+each pause to the window, so "Gemini is reviewing this document" becomes
+"Google is busy. Waiting 3 seconds, then trying again — attempt 3 of 4."
+Connecting a key retries the same way, so an overloaded model never reads as a
+bad key. Settings says the one thing that actually reduces 503s: free-tier
+requests are turned away first, so enabling billing on the same key moves her
+out of that queue.
+
+**Taking out a chapter.** A handbook past those limits is not a dead end. The
+Study Library splits a PDF on her own machine — she picks a page range, and it
+is saved as a study document of its own with the metadata of the book it came
+from, leaving the original untouched. Deleted pages are pruned rather than
+merely unlinked, so a chapter is a fraction of the book's size rather than
+nearly all of it, and a study aid from one chapter is better than one from a
+whole book anyway.
 
 Google's free-tier terms say submitted content may be used to improve its
 products. Do not send medical records, certificates, addresses, logbooks with

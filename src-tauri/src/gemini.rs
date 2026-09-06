@@ -13,7 +13,7 @@ use keyring::Entry;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use crate::documents;
 use crate::secrets;
@@ -175,6 +175,26 @@ fn describe_size(bytes: u64) -> String {
     } else {
         format!("{} KB", bytes.div_ceil(1024).max(1))
     }
+}
+
+/// Sent to the interface while a request is being waited out.
+///
+/// Without it, four retries and a standby attempt are a silent half-minute
+/// under "Gemini is reviewing this document" — which reads as a hang. The
+/// sentence is written here, beside the logic that knows what is happening.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GeminiProgress {
+    message: String,
+}
+
+/// The event the Study Library listens for.
+const PROGRESS_EVENT: &str = "gemini-progress";
+
+fn say(app: &AppHandle, message: String) {
+    // Progress is a courtesy. A window that will not take it changes nothing
+    // about whether the study aid arrives.
+    let _ = app.emit(PROGRESS_EVENT, GeminiProgress { message });
 }
 
 /// What Google said when it would not produce a study aid.
@@ -456,7 +476,7 @@ pub async fn generate_study_aid(
             "maxOutputTokens": 8192
         }
     });
-    let (raw, model_used) = generate_with_retries(&api_key, &body).await?;
+    let (raw, model_used) = generate_with_retries(&app, &api_key, &body).await?;
 
     let envelope: Value = serde_json::from_str(&raw)
         .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
@@ -512,6 +532,7 @@ async fn generate_once(
 ///
 /// Returns the response body and the model that produced it.
 async fn generate_with_retries(
+    app: &AppHandle,
     api_key: &str,
     body: &Value,
 ) -> Result<(String, &'static str), String> {
@@ -525,7 +546,9 @@ async fn generate_with_retries(
                     return Err(describe_refusal(status, &body));
                 }
                 if attempt + 1 < MAX_ATTEMPTS {
-                    tokio::time::sleep(backoff_delay(attempt, jitter_millis())).await;
+                    let pause = backoff_delay(attempt, jitter_millis());
+                    say(app, waiting_message(attempt, pause));
+                    tokio::time::sleep(pause).await;
                 }
             }
         }
@@ -535,11 +558,24 @@ async fn generate_with_retries(
     // answer either, the honest report is that Google is busy — not whatever
     // second-hand complaint the standby made, which would send her looking at
     // a model this application only reached for on her behalf.
+    say(
+        app,
+        "Google is still busy. Trying the standby model…".to_string(),
+    );
     if let Ok(Attempt::Answered(raw)) = generate_once(&http, api_key, FALLBACK_MODEL, body).await {
         return Ok((raw, FALLBACK_MODEL));
     }
 
     Err(busy_message())
+}
+
+/// What the interface says during one of the pauses.
+fn waiting_message(attempt: u32, pause: Duration) -> String {
+    let seconds = pause.as_millis().div_ceil(1000);
+    format!(
+        "Google is busy. Waiting {seconds} seconds, then trying again — attempt {} of {MAX_ATTEMPTS}.",
+        attempt + 2,
+    )
 }
 
 /// Said after every attempt has been made and Google is still overloaded.
@@ -622,6 +658,15 @@ mod tests {
         assert!(message.contains("busy"));
         assert!(message.contains("not your key"));
         assert!(total_wait_seconds() >= 1);
+    }
+
+    #[test]
+    fn a_wait_says_how_long_and_which_attempt_is_next() {
+        let message = waiting_message(0, Duration::from_millis(1_500));
+        assert!(message.contains("2 seconds"));
+        // Attempt 2 of 4: the one about to happen, counted the way she counts.
+        assert!(message.contains("attempt 2 of 4"));
+        assert!(waiting_message(2, Duration::from_millis(6_000)).contains("attempt 4 of 4"));
     }
 
     #[test]

@@ -91,6 +91,22 @@ fn sanitize_file_name(name: &str) -> String {
     }
 }
 
+/// Where a new stored document goes, and the name it will be kept under.
+///
+/// `material_id` namespaces the stored file so two documents with the same
+/// name cannot collide. Anything that writes into the library goes through
+/// here, so the naming rules live in one place.
+pub(crate) fn stored_destination(
+    app: &AppHandle,
+    material_id: &str,
+    file_name: &str,
+) -> Result<(PathBuf, String), String> {
+    let safe_id = sanitize_file_name(material_id);
+    let stored_name = format!("{safe_id}-{}", sanitize_file_name(file_name));
+    let destination = documents_root(app)?.join(&stored_name);
+    Ok((destination, stored_name))
+}
+
 /// Copy a file the user picked into private application storage.
 ///
 /// `material_id` namespaces the stored file so two documents with the same
@@ -115,11 +131,7 @@ pub fn import_document(
         .unwrap_or("document")
         .to_string();
 
-    let safe_id = sanitize_file_name(&material_id);
-    let stored_name = format!("{safe_id}-{}", sanitize_file_name(&original_file_name));
-
-    let root = documents_root(&app)?;
-    let destination = root.join(&stored_name);
+    let (destination, stored_name) = stored_destination(&app, &material_id, &original_file_name)?;
 
     std::fs::copy(&source, &destination)
         .map_err(|e| format!("Could not copy that file into the library: {e}"))?;

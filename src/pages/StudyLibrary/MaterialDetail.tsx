@@ -43,12 +43,16 @@ import {
   geminiErrorMessage,
   generateStudyAid,
   getGeminiStatus,
+  watchGeminiProgress,
   type GeminiStatus,
 } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
+import { canSplitPdfs } from "@/services/pdf";
+
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
+import { SplitPdfDialog } from "./SplitPdfDialog";
 import "./studyLibrary.css";
 
 export function MaterialDetail() {
@@ -65,10 +69,12 @@ export function MaterialDetail() {
   const [notes, setNotes] = useState("");
   const [notesStatus, setNotesStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [fileMissing, setFileMissing] = useState(false);
+  const [splitting, setSplitting] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<string | null>(null);
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
@@ -148,6 +154,11 @@ export function MaterialDetail() {
     material.originalFileName ?? material.filePath ?? "",
     material.fileSize,
   );
+  // A handbook Google will not read can still be studied a chapter at a time.
+  const isPdf = (material.originalFileName ?? material.filePath ?? "")
+    .toLowerCase()
+    .endsWith(".pdf");
+  const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
 
   const relatedActions = actionsFor(data.actions, "material", material.id);
   const questions = data.questions.filter((question) => question.materialId === material.id);
@@ -187,6 +198,10 @@ export function MaterialDetail() {
     }
     setGenerating(true);
     setGenerationError(null);
+    setGenerationProgress(null);
+    // Waiting out a busy model takes several pauses; she should be able to see
+    // that something is still happening.
+    const stopWatching = await watchGeminiProgress(setGenerationProgress);
     try {
       const generated = await generateStudyAid(material.filePath);
       const saved = await mutate((repos) =>
@@ -206,6 +221,8 @@ export function MaterialDetail() {
     } catch (error) {
       setGenerationError(geminiErrorMessage(error));
     } finally {
+      stopWatching();
+      setGenerationProgress(null);
       setGenerating(false);
     }
   };
@@ -243,6 +260,9 @@ export function MaterialDetail() {
                         : formatFileSize(material.fileSize)}
                     </p>
                   </div>
+                  {canSplit ? (
+                    <Button onClick={() => setSplitting(true)}>Split</Button>
+                  ) : null}
                   {!fileMissing && canHandleFiles() ? (
                     <Button onClick={open}>
                       <ExternalIcon size={15} /> Open
@@ -289,9 +309,18 @@ export function MaterialDetail() {
                     <p className="tiny">{aiCheck.reason}</p>
                   </div>
                 ) : !fileForAi.ready ? (
-                  <div className="ai-disclaimer" role="note">
-                    <AlertIcon size={16} />
-                    <p className="tiny">{fileForAi.reason}</p>
+                  <div className="stack stack--3">
+                    <div className="ai-disclaimer" role="note">
+                      <AlertIcon size={16} />
+                      <p className="tiny">{fileForAi.reason}</p>
+                    </div>
+                    {canSplit ? (
+                      <div>
+                        <Button variant="secondary" onClick={() => setSplitting(true)}>
+                          Take out a chapter
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                 ) : !gemini?.configured ? (
                   <div className="stack stack--3">
@@ -309,8 +338,8 @@ export function MaterialDetail() {
                     <div>
                       <p className="small strong">Gemini is reviewing this document</p>
                       <p className="tiny dim">
-                        Large illustrated PDFs can take a little longer, and if Google&rsquo;s
-                        servers are busy this waits and tries again on its own.
+                        {generationProgress ??
+                          "Large illustrated PDFs can take a little longer, and if Google\u2019s servers are busy this waits and tries again on its own."}
                       </p>
                     </div>
                   </div>
@@ -574,6 +603,18 @@ export function MaterialDetail() {
           </Card>
         </div>
       </div>
+
+      {canSplit ? (
+        <SplitPdfDialog
+          open={splitting}
+          material={material}
+          onClose={() => setSplitting(false)}
+          onCreated={(newMaterialId) => {
+            setSplitting(false);
+            navigate(`/study/${newMaterialId}`);
+          }}
+        />
+      ) : null}
 
       <MaterialFormDialog
         open={editing}

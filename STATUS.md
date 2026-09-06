@@ -160,6 +160,17 @@ The application warns about this but does not currently block it — see
   the interface before she clicks and enforced again in Rust.
 - An oversized or unreadable file says which limit it broke and what to do
   about it — split the handbook, add the chapter — instead of only refusing.
+- **Splitting a handbook.** Any library PDF can be split by page range on her
+  own machine into a study document of its own, carrying the topic, priority,
+  goal, lesson and tags of the book it came from. The original is never
+  changed, deleted pages are pruned rather than unlinked (so the chapter is a
+  fraction of the size, not nearly all of it), and a range past Google's
+  1,000-page limit is refused before the work is done rather than after.
+- The wait is narrated: each retry pause is emitted to the window, so a busy
+  model reads as "Waiting 3 seconds, then trying again — attempt 3 of 4"
+  instead of a spinner that says nothing for half a minute.
+- Settings names the one thing that reduces 503s — free-tier requests are
+  turned away first, so billing on the same key moves her out of that queue.
 
 ### 6. Schedule and lesson preparation
 
@@ -370,13 +381,16 @@ Verified on this machine:
   while leaving the live data untouched.
 - `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean,
   and both now run in CI so they stay that way.
-- `cargo test` (40 tests): backup and restore end to end against real files —
-  a complete archive put back with every document, a safety copy put back
-  without disturbing uploads, the write-ahead log travelling with the database,
-  a damaged archive refused before anything moves, and an archive carrying an
-  unexpected file refused outright — plus which Gemini failures are worth
-  retrying, that each pause is longer than the last and capped, and that an
-  oversized file is answered with the limit it broke and what to do about it.
+- `cargo test` (49 tests). Backup and restore end to end against real files: a
+  complete archive put back with every document, a safety copy put back without
+  disturbing uploads, the write-ahead log travelling with the database, a
+  damaged archive refused before anything moves, and an archive carrying an
+  unexpected file refused outright. Gemini: which failures are worth retrying,
+  that each pause is longer than the last and capped, and that an oversized
+  file is answered with the limit it broke and what to do about it. PDF
+  splitting, against real PDFs written by the test: a page range comes out with
+  only its own pages, the book it came from is unchanged, the pages left behind
+  do not come with it, and an impossible range is refused by name.
 - Database migrations apply to a new database and upgrade an existing populated
   database without losing its records.
 - The Gemini API key appears in no migration, is absent from the backup code,
