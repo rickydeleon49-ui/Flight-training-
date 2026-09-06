@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { DataRecovery } from "@/components/recovery/DataRecovery";
 import { Card, EmptyState, ErrorNote, Loading } from "@/components/ui";
 import { Finances } from "@/pages/Finances/Finances";
 import { FlightDeck } from "@/pages/FlightDeck/FlightDeck";
@@ -30,16 +31,9 @@ function Gate() {
 
   if (status === "loading") return <Loading label="Opening your flight deck" />;
 
-  if (status === "error") {
-    return (
-      <div style={{ padding: "var(--space-6)", maxWidth: "40rem", margin: "0 auto" }}>
-        <ErrorNote>
-          <p className="strong">Your training data could not be opened.</p>
-          <p style={{ marginTop: "var(--space-2)" }}>{error}</p>
-        </ErrorNote>
-      </div>
-    );
-  }
+  // A database that will not open is the one failure she cannot work around
+  // herself, so this screen offers the way back rather than only the bad news.
+  if (status === "error") return <DataRecovery error={error} />;
 
   return (
     <>

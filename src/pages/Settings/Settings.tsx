@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -14,10 +14,13 @@ import {
   TextInput,
 } from "@/components/ui";
 import { restoreAirlineStarterPack } from "@/data/starter";
+import type { LastCompleteBackup } from "@/data/repositories/appRepository";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
+  appVersion,
   backupErrorMessage,
+  createBackup,
   backupsAvailable,
   chooseCompleteBackup,
   chooseCompleteBackupDestination,
@@ -31,9 +34,11 @@ import {
   restartForRestore,
   revealFolder,
   stageCompleteRestore,
+  stageLocalRestore,
   type BackupInfo,
   type CompleteBackupInfo,
 } from "@/services/backups";
+import { backupHealth, restoreWarning } from "@/logic/dataSafety";
 import { trainingDuration } from "@/logic/keyDates";
 import {
   configureGemini,
@@ -81,6 +86,9 @@ export function Settings() {
   const [backupProblem, setBackupProblem] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
   const [restoreCandidate, setRestoreCandidate] = useState<CompleteBackupInfo | null>(null);
+  const [localRestoreCandidate, setLocalRestoreCandidate] = useState<BackupInfo | null>(null);
+  const [version, setVersion] = useState("");
+  const [lastBackup, setLastBackup] = useState<LastCompleteBackup | null>(null);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiBusy, setGeminiBusy] = useState(false);
@@ -96,11 +104,29 @@ export function Settings() {
     if (!backupsAvailable()) return;
     setDataPath(await dataDirectory());
     setBackups(await listBackups());
+    setVersion(await appVersion());
   };
 
   useEffect(() => {
     void refreshBackups();
   }, []);
+
+  // How well protected she is right now, which is worth saying out loud.
+  useEffect(() => {
+    if (!repositories) return;
+    void repositories.app.lastCompleteBackup().then(setLastBackup).catch(() => setLastBackup(null));
+  }, [repositories]);
+
+  const protection = useMemo(
+    () =>
+      backupHealth({
+        lastBackupAt: lastBackup?.at ?? null,
+        lastBackupVersion: lastBackup?.version ?? null,
+        appVersion: version,
+        now: new Date(),
+      }),
+    [lastBackup, version],
+  );
 
   useEffect(() => {
     void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
@@ -148,10 +174,42 @@ export function Settings() {
       if (!repositories) throw new Error("The database is still starting. Try again in a moment.");
       await repositories.app.checkpoint();
       const backup = await createCompleteBackup(destination);
-      setBackupNote(`Complete backup saved — ${formatBytes(backup.bytes)} protected.`);
+
+      // Remembering this is what lets the app tell her later that the backup
+      // she has predates an update.
+      const record = {
+        at: new Date().toISOString(),
+        version: backup.appVersion,
+        path: backup.path,
+      };
+      await repositories.app.recordCompleteBackup(record);
+      setLastBackup(record);
+      setBackupNote(
+        `Complete backup saved — ${backup.files} files, ${formatBytes(backup.bytes)} protected.`,
+      );
     } catch (error) {
       setBackupProblem(true);
       setBackupNote(backupErrorMessage(error, "That backup could not be saved."));
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const copyDatabaseNow = async () => {
+    setBackupNote(null);
+    setBackupProblem(false);
+    setBackupBusy(true);
+    try {
+      if (!repositories) throw new Error("The database is still starting. Try again in a moment.");
+      await repositories.app.checkpoint();
+      await createBackup();
+      await refreshBackups();
+      setBackupNote(
+        "Copy saved on this computer. It is in the list below, and can be put back at any time.",
+      );
+    } catch (error) {
+      setBackupProblem(true);
+      setBackupNote(backupErrorMessage(error, "That copy could not be saved."));
     } finally {
       setBackupBusy(false);
     }
@@ -164,7 +222,17 @@ export function Settings() {
     try {
       const source = await chooseCompleteBackup();
       if (!source) return;
-      setRestoreCandidate(await inspectCompleteBackup(source));
+      const candidate = await inspectCompleteBackup(source);
+
+      // An older app cannot read a record a newer one wrote. Saying so is far
+      // kinder than installing it and leaving her with an app that won't open.
+      const warning = restoreWarning(candidate.appVersion, candidate.currentAppVersion);
+      if (warning) {
+        setBackupProblem(true);
+        setBackupNote(warning);
+        return;
+      }
+      setRestoreCandidate(candidate);
     } catch (error) {
       setBackupProblem(true);
       setBackupNote(backupErrorMessage(error, "That backup could not be read."));
@@ -187,6 +255,24 @@ export function Settings() {
     } catch (error) {
       setBackupProblem(true);
       setBackupNote(backupErrorMessage(error, "That backup could not be restored."));
+      setBackupBusy(false);
+    }
+  };
+
+  const restoreLocalCopy = async () => {
+    const candidate = localRestoreCandidate;
+    if (!candidate) return;
+    setLocalRestoreCandidate(null);
+    setBackupBusy(true);
+    setBackupProblem(false);
+    setBackupNote("Preparing the safety copy…");
+    try {
+      await stageLocalRestore(candidate.name);
+      setBackupNote("Restarting with that copy of your training record…");
+      await restartForRestore();
+    } catch (error) {
+      setBackupProblem(true);
+      setBackupNote(backupErrorMessage(error, "That safety copy could not be put back."));
       setBackupBusy(false);
     }
   };
@@ -579,11 +665,38 @@ export function Settings() {
                 </p>
               ) : null}
 
+              {backupsAvailable() ? (
+                <p
+                  className="small"
+                  role="status"
+                  style={{
+                    color: protection.needsAttention
+                      ? "var(--status-danger)"
+                      : "var(--status-complete)",
+                  }}
+                >
+                  <strong>{protection.needsAttention ? "Worth doing now: " : "Protected. "}</strong>
+                  {protection.message}
+                </p>
+              ) : null}
+
+              {lastBackup?.path ? (
+                <p className="tiny dim wrap-anywhere">
+                  Last saved to <code className="tiny">{lastBackup.path}</code>
+                </p>
+              ) : null}
+
               <p className="small muted">
                 Save one portable <strong>.hfdbackup</strong> file containing the
                 complete database, profile photo, flight log, and every uploaded study
                 document. Nothing is uploaded anywhere. Keep the file on another drive
                 or in a cloud folder so it is safe if this computer is lost.
+              </p>
+
+              <p className="tiny dim">
+                Save a fresh backup <strong>before installing an update</strong>. If
+                anything looks wrong afterwards, <strong>Restore backup</strong> puts
+                that file back exactly as it was.
               </p>
 
               <p className="tiny dim">
@@ -609,10 +722,20 @@ export function Settings() {
               )}
 
               <p className="tiny dim">
-                The database copies below are made automatically before app updates.
-                They stay inside this computer and do not include uploaded documents,
-                so use <strong>Save complete backup</strong> for portable protection.
+                The database copies below are made automatically before an update runs
+                for the first time. They stay on this computer and hold your records,
+                lessons and settings — not the uploaded files themselves, which are
+                never moved. Use <strong>Save complete backup</strong> for protection
+                against losing this computer.
               </p>
+
+              {backupsAvailable() ? (
+                <div className="row">
+                  <Button size="small" onClick={copyDatabaseNow} disabled={backupBusy}>
+                    Save a copy on this computer
+                  </Button>
+                </div>
+              ) : null}
 
               {backups.length > 0 ? (
                 <div className="stack stack--2">
@@ -620,8 +743,19 @@ export function Settings() {
                   {backups.slice(0, 6).map((backup) => (
                     <div className="row row--between" key={backup.name}>
                       <span className="small truncate">{describeBackup(backup.name)}</span>
-                      <span className="tiny dim numeric">
-                        {backup.name.slice(0, 10)} · {formatBytes(backup.bytes)}
+                      <span className="row" style={{ gap: "var(--space-3)" }}>
+                        <span className="tiny dim numeric">
+                          {backup.name.slice(0, 10)} · {formatBytes(backup.bytes)}
+                        </span>
+                        {backup.restorable ? (
+                          <Button
+                            size="small"
+                            onClick={() => setLocalRestoreCandidate(backup)}
+                            disabled={backupBusy}
+                          >
+                            Put this back
+                          </Button>
+                        ) : null}
                       </span>
                     </div>
                   ))}
@@ -741,6 +875,20 @@ export function Settings() {
         destructive
         onConfirm={restoreBackup}
         onCancel={() => setRestoreCandidate(null)}
+      />
+
+      <ConfirmDialog
+        open={localRestoreCandidate !== null}
+        title="Put this safety copy back?"
+        message={
+          localRestoreCandidate
+            ? `This copy was ${describeBackup(localRestoreCandidate.name).toLowerCase()}, on ${localRestoreCandidate.name.slice(0, 10)}. Your records, lessons, notes and settings go back to how they were then; anything added since will not be in them. Your uploaded files are not touched. The app keeps a recoverable copy of the current data first, then restarts.`
+            : ""
+        }
+        confirmLabel="Put it back and restart"
+        destructive
+        onConfirm={restoreLocalCopy}
+        onCancel={() => setLocalRestoreCandidate(null)}
       />
 
     </>

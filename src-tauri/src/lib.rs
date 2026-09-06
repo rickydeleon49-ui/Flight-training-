@@ -95,7 +95,6 @@ pub fn run() {
             documents::document_path,
             documents::document_exists,
             documents::delete_document,
-            documents::clear_documents,
             gemini::gemini_status,
             gemini::configure_gemini,
             gemini::disconnect_gemini,
@@ -104,9 +103,11 @@ pub fn run() {
             backup::create_complete_backup,
             backup::inspect_complete_backup,
             backup::stage_complete_restore,
+            backup::stage_local_restore,
             backup::restart_for_restore,
             backup::list_backups,
             backup::data_directory,
+            backup::app_version,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Her Flight Deck");

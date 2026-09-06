@@ -34,6 +34,8 @@ jobs:
           workspaces: src-tauri
       - run: npm ci
       - run: npm test
+      # The backup and restore guards live in Rust, so they have to run too.
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Build
         run: npm run tauri build -- --bundles dmg
       - uses: actions/upload-artifact@v4
@@ -58,6 +60,8 @@ jobs:
           workspaces: src-tauri
       - run: npm ci
       - run: npm test
+      # The backup and restore guards live in Rust, so they have to run too.
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Build
         run: npm run tauri build -- --bundles nsis
       - uses: actions/upload-artifact@v4
