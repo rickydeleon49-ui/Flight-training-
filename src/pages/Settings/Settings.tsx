@@ -798,7 +798,7 @@ export function Settings() {
                   </span>
                   <div>
                     <p className="small strong">Ready to use</p>
-                    <p className="tiny dim">{gemini.model} · key protected by this computer</p>
+                    <p className="tiny dim">{gemini.model} · key saved on this computer</p>
                   </div>
                 </div>
               ) : geminiAvailable() ? (

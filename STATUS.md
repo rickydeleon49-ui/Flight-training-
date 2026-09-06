@@ -95,9 +95,15 @@ protection. The same rule applies to every future release: bump first.
 - Optional Gemini connection in Settings.
 - **Sign in with Google** opens Google AI Studio so the student can sign in and
   create a free Gemini API key.
-- The key is entered once and stored in Windows Credential Manager or macOS
-  Keychain; it is never saved in SQLite, included in backups, displayed again,
-  returned to the interface, or committed to GitHub.
+- The key is entered once and stored in a file inside the application data
+  folder, restricted to her account where the platform supports it; it is never
+  saved in SQLite, included in backups, displayed again, returned to the
+  interface, or committed to GitHub.
+- It moved there out of the operating system's credential manager: a macOS
+  keychain item is tied to the saving application's code signature, and this
+  application is unsigned, so each update was a stranger to the keychain and
+  she had to paste the key again. An existing key is migrated automatically on
+  first run when the keychain still permits it.
 - The application checks the key with Google before accepting it.
 - Disconnecting Gemini removes the stored credential but keeps generated work.
 - A selected document can generate a summary, an organized study guide,
