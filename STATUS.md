@@ -1,6 +1,6 @@
 # Her Flight Deck — Current Project Status
 
-_Last updated: 6 September 2026 · application version `0.2.0` · branch `main`_
+_Last updated: 6 September 2026 · application version `0.4.0` · branch `main`_
 
 ## Current position
 
@@ -13,34 +13,41 @@ The current source is committed and pushed to GitHub:
 
 - Repository: <https://github.com/rickydeleon49-ui/Flight-training->
 - Branch: `main` (the repository default)
-- Last feature commit: `27c51af` — `feat: add Gemini study assistant`
-- Application version: `0.2.0`
-- Automated tests: **197 passing** across 19 files
+- Last feature commit: `0266d2c` — `fix: keep her Gemini key across updates`
+- Application version: `0.4.0`
+- Automated tests: **251 passing** across 26 files
 - TypeScript production build: **passing**
 - Rust desktop compilation: **passing**
 - GitHub macOS DMG build and upload: **passing**
 - GitHub Windows EXE build and upload: **passing**
 - Linux desktop smoke test (`scripts/desktop-smoke.sh`): **passing**
 
-The most recent cross-platform test build is:
-<https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/34001641155>
-
-**No release has been published yet.** Every workflow run so far has been the
-test-build workflow; the Release workflow has never run, and the Releases page
-is empty. Publishing `0.2.0` is the next step and is described below.
+**`0.4.0` is built but not published.** `v0.2.0` and `v0.3.0` are on the
+Releases page with both installers attached, so the Release workflow is proven.
+The version was bumped to `0.4.0` on `main` in `67579ee` and the Checks
+workflow passed, but no `v0.4.0` tag was ever pushed — so the newest installers
+she can download are still `0.3.0`, which predate the Gemini key fix in `#3`.
+Publishing `0.4.0` is the next step and is described below.
 
 There are no placeholder pages in the main application. The remaining work is
 publishing, hands-on testing with a real Gemini key, and refinement based on
 what the student and instructor find useful.
 
-### Why the version is 0.2.0
+### Why the version is load-bearing
 
 The application copies her database aside only when it notices the version has
 changed since the last run. Four migrations (`0004`–`0007`) were added while
 the version stayed at `0.1.0`, so anyone who installed an early `0.1.0` test
 build and then installed a `0.1.0` release would have had four schema changes
-applied with **no safety copy taken**. Releasing as `0.2.0` restores that
-protection. The same rule applies to every future release: bump first.
+applied with **no safety copy taken**. Releasing as `0.2.0` restored that
+protection, and the same rule has applied to every release since: bump first,
+and never rebuild an already-published number.
+
+That rule is also why `scripts/release.sh 0.4.0` refuses to run today. The
+repository is already at `0.4.0` and tags exist, so the script treats it as a
+re-release. Publishing `0.4.0` has to go through **Actions → Release → Run
+workflow**, which checks that the tag does not exist yet rather than that the
+number changed. `scripts/release.sh` is the right tool for `0.5.0` onwards.
 
 ---
 
@@ -304,7 +311,8 @@ The application warns about this but does not currently block it — see
 - A universal macOS build can be produced separately for Intel compatibility.
 - Manual test-build workflow can build Windows, macOS, or both.
 - Release workflow validates the version, creates a tag, builds both installers,
-  calculates checksums, and publishes a GitHub Release. **Not yet exercised.**
+  calculates checksums, and publishes a GitHub Release. Run twice, for `v0.2.0`
+  and `v0.3.0`; both succeeded.
 - Rust and npm caches reduce later GitHub Actions build times.
 - Neither installer is currently code-signed.
 
@@ -314,7 +322,7 @@ The application warns about this but does not currently block it — see
 
 Verified on this machine:
 
-- `npm test`: **24 test files and 235 tests pass**.
+- `npm test`: **26 test files and 251 tests pass**.
 - `npm run typecheck`: passes with strict TypeScript settings.
 - `cargo check`: Rust backend compiles, including the Gemini, TLS, and keyring
   code.
@@ -324,7 +332,7 @@ Verified on this machine:
   there after the application is closed and reopened, and a new version's first
   run copies the database aside into a working copy that holds her photo while
   leaving the live data untouched.
-- `cargo test` (14 tests): backup and restore end to end against real files —
+- `cargo test` (31 tests): backup and restore end to end against real files —
   a complete archive put back with every document, a safety copy put back
   without disturbing uploads, the write-ahead log travelling with the database,
   a damaged archive refused before anything moves, and an archive carrying an
@@ -347,13 +355,16 @@ Verified on GitHub Actions:
 
 - macOS build, DMG packaging, and artifact upload succeed.
 - Windows build, NSIS packaging, and artifact upload succeed.
-- Run: <https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/34001641155>
+- The Release workflow, twice: `v0.2.0` and `v0.3.0` both published with the
+  `.dmg` and the `.exe` attached.
+- Checks (tests, types, production build, Rust backup and restore guards) on
+  every pull request and every push to `main`.
 
 Not verified anywhere yet:
 
-- The Release workflow. It has never run. Treat its first run as unproven.
 - A real Gemini API request. No key is stored in any development environment.
 - The native file chooser on macOS and Windows. It is verified only on Linux.
+- Installing `0.4.0` over an existing `0.3.0` install.
 
 GitHub test-build artifacts appear at the bottom of a completed Actions run as
 `her-flight-deck-macOS` and `her-flight-deck-Windows`. GitHub packages each as
@@ -386,7 +397,7 @@ check, not a certificate, medical record, or personal logbook.
 ### Normal desktop smoke check
 
 - Confirm the existing data remains after installing over the prior version,
-  and that a copy appears under `backups/` named `before-0.2.0`.
+  and that a copy appears under `backups/` ending in `before-0.4.0`.
 - Upload and open a document through the native file chooser.
 - Add and edit a lesson.
 - Save a flight-journal entry with flight time.
@@ -443,16 +454,19 @@ check, not a certificate, medical record, or personal logbook.
 
 Artifacts are temporary test downloads, not permanent releases.
 
-### Publish version 0.2.0
+### Publish version 0.4.0
 
 1. Open **Actions → Release → Run workflow**.
-2. Enter `0.2.0`.
+2. Enter `0.4.0`.
 3. Run the workflow.
 4. Download or share the installers from the repository's **Releases** page.
 
-The release workflow creates `v0.2.0`, packages both installers, and writes
-human-readable installation and update instructions. This will be its first
-run; if it fails, the Actions log will say why.
+The release workflow creates `v0.4.0`, packages both installers, and writes
+human-readable installation and update instructions. It has done this twice
+already; if it fails, the Actions log will say why.
+
+Do not use `scripts/release.sh 0.4.0` for this one — see "Why the version is
+load-bearing" above. From `0.5.0` onwards the script is the right route.
 
 Because the repository is private, the recipient needs repository access to
 download directly. Otherwise, download the installer and send the single file
@@ -489,6 +503,8 @@ to her yourself.
 
 | Commit | Completed work |
 | --- | --- |
+| `0266d2c` | Gemini key kept across updates, in a file beside her data |
+| `75c50f4` | Recovery screen, safety-copy restore, WAL-safe complete backups |
 | `27c51af` | Gemini study assistant, secure key storage, generated guides and flashcards |
 | `15a0338` | Integrated pilot toolkit, reminders, readiness, records, safety, quizzes, forecast, and career portfolio |
 | `014e1cf` | Complete portable backup and safe restore |
@@ -501,8 +517,16 @@ to her yourself.
 
 ## Bottom line
 
-The application is built and both platforms package successfully on GitHub.
-It is not yet in her hands: no release exists. The immediate next steps are
-publishing `0.2.0`, installing it, and connecting a real free Gemini key to
-generate one study aid from a safe test PDF — then collecting feedback from
-the student and her instructor.
+The application is built, both platforms package successfully, and `0.3.0` is
+published and installable. The immediate next steps are publishing `0.4.0` —
+which carries the Gemini key fix she needs so she stops re-pasting her key
+after every update — installing it over `0.3.0`, and connecting a real free
+Gemini key to generate one study aid from a safe test PDF, then collecting
+feedback from the student and her instructor.
+
+One dated dependency to watch: the Gemini model is the hardcoded constant
+`gemini-2.5-flash` in `src-tauri/src/gemini.rs`, and Google has announced a
+shutdown date of 16 October 2026 for it. When that day comes, every installed
+build asking for it stops working. Moving to a current Flash model is a
+one-line change, but it needs a release to reach her, so it should not wait
+until the day it breaks.

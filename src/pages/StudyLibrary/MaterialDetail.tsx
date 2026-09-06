@@ -105,9 +105,15 @@ export function MaterialDetail() {
       setFileMissing(false);
       return;
     }
-    documentExists(material.filePath).then((exists) => {
-      if (!cancelled) setFileMissing(!exists);
-    });
+    documentExists(material.filePath)
+      .then((exists) => {
+        if (!cancelled) setFileMissing(!exists);
+      })
+      // A check that fails outright is not a reassurance. Saying the file needs
+      // looking at is closer to the truth than quietly showing it as fine.
+      .catch(() => {
+        if (!cancelled) setFileMissing(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -598,9 +604,14 @@ export function MaterialDetail() {
             ids: [material.id],
             label: material.title,
             // The stored file goes with it, so deleting really deletes.
+            //
+            // The record goes first. Windows refuses to remove a file that is
+            // open in a viewer, and doing the file first meant that deleting a
+            // material she happened to have open failed completely and left
+            // the record behind after the screen had already moved on.
             run: async (repos) => {
-              if (material.filePath) await deleteDocument(material.filePath);
               await repos.documents.remove(material.id);
+              if (material.filePath) await deleteDocument(material.filePath);
             },
           });
           navigate("/study");

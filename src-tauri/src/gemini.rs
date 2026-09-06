@@ -6,6 +6,7 @@
 
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use keyring::Entry;
@@ -25,6 +26,31 @@ const LEGACY_SERVICE: &str = "com.herflightdeck.app";
 const LEGACY_ACCOUNT: &str = "gemini-api-key";
 const MODEL: &str = "gemini-2.5-flash";
 const MAX_FILE_BYTES: u64 = 50 * 1024 * 1024;
+
+/// Checking a key is one small round trip; it should never hang the dialog.
+const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
+/// Generating reads a whole document, so it is given room — but not forever.
+/// Without a bound, a stalled connection leaves "Creating study aid…" spinning
+/// with nothing to cancel it.
+const GENERATE_TIMEOUT: Duration = Duration::from_secs(300);
+
+fn client(timeout: Duration) -> Result<Client, String> {
+    Client::builder()
+        .timeout(timeout)
+        .build()
+        .map_err(|e| format!("Could not start the connection to Gemini: {e}"))
+}
+
+/// Say plainly which failures are worth waiting out and which are not.
+fn describe_transport_error(error: &reqwest::Error) -> String {
+    if error.is_timeout() {
+        "Gemini did not answer in time. Check the internet connection and try again.".to_string()
+    } else if error.is_connect() {
+        "Could not reach Gemini. Check the internet connection and try again.".to_string()
+    } else {
+        format!("Could not reach Gemini: {error}")
+    }
+}
 
 /// Whether this run has already looked in the old credential manager.
 static LEGACY_CHECKED: AtomicBool = AtomicBool::new(false);
@@ -107,12 +133,12 @@ fn stored_key(app: &AppHandle) -> Result<String, String> {
 
 async fn verify_key(api_key: &str) -> Result<(), String> {
     let url = format!("https://generativelanguage.googleapis.com/v1beta/models/{MODEL}");
-    let response = Client::new()
+    let response = client(VERIFY_TIMEOUT)?
         .get(url)
         .header("x-goog-api-key", api_key)
         .send()
         .await
-        .map_err(|e| format!("Could not reach Gemini: {e}"))?;
+        .map_err(|e| describe_transport_error(&e))?;
 
     if response.status().is_success() {
         return Ok(());
@@ -279,13 +305,13 @@ pub async fn generate_study_aid(
     });
     let url =
         format!("https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent");
-    let response = Client::new()
+    let response = client(GENERATE_TIMEOUT)?
         .post(url)
         .header("x-goog-api-key", api_key)
         .json(&body)
         .send()
         .await
-        .map_err(|e| format!("Could not reach Gemini: {e}"))?;
+        .map_err(|e| describe_transport_error(&e))?;
 
     let status = response.status();
     let raw = response
@@ -295,6 +321,14 @@ pub async fn generate_study_aid(
     if !status.is_success() {
         if status.as_u16() == 429 {
             return Err("The free Gemini limit has been reached. Wait for Google's quota to reset, then try again.".to_string());
+        }
+        // Google retires a model on a published date. When that day comes this
+        // build asks for something that no longer exists, and the honest answer
+        // is that the application needs updating, not that her key is wrong.
+        if status.as_u16() == 404 {
+            return Err(format!(
+                "Google has retired the {MODEL} model this version of Her Flight Deck uses. Install the latest version and try again."
+            ));
         }
         return Err(format!("Gemini returned {status}: {}", compact_error(&raw)));
     }
