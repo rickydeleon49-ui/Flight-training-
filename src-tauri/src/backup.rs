@@ -1119,6 +1119,11 @@ mod tests {
             Path::new("last-run-version.txt"),
             false
         ));
+        // Nor hand her a Gemini key chosen by whoever wrote the archive.
+        assert!(!allowed_archive_path(
+            Path::new(crate::secrets::KEY_FILE),
+            false
+        ));
         assert!(!allowed_archive_path(Path::new("documents"), false));
         assert!(!allowed_archive_path(Path::new(DB_FILES[0]), true));
     }

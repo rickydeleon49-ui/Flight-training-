@@ -1,7 +1,11 @@
 //! Gemini connection and document analysis.
 //!
-//! The user supplies her own Google AI Studio key. It is stored by the
-//! operating system's credential manager and never returned to JavaScript.
+//! The user supplies her own Google AI Studio key. It is kept in a file beside
+//! her other data — see `secrets` for why it is not in the operating system's
+//! credential manager any more — and never returned to JavaScript.
+
+use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use keyring::Entry;
@@ -11,11 +15,19 @@ use serde_json::{json, Value};
 use tauri::AppHandle;
 
 use crate::documents;
+use crate::secrets;
+use crate::storage::app_root;
 
-const SERVICE: &str = "com.herflightdeck.app";
-const ACCOUNT: &str = "gemini-api-key";
+/// Where the key used to be kept. Retained only long enough to move an
+/// existing key across; once no one is upgrading from 0.3.0 or earlier this
+/// and the `keyring` dependency can go.
+const LEGACY_SERVICE: &str = "com.herflightdeck.app";
+const LEGACY_ACCOUNT: &str = "gemini-api-key";
 const MODEL: &str = "gemini-2.5-flash";
 const MAX_FILE_BYTES: u64 = 50 * 1024 * 1024;
+
+/// Whether this run has already looked in the old credential manager.
+static LEGACY_CHECKED: AtomicBool = AtomicBool::new(false);
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -51,15 +63,46 @@ pub struct GeneratedStudyAid {
     model: String,
 }
 
-fn entry() -> Result<Entry, String> {
-    Entry::new(SERVICE, ACCOUNT)
-        .map_err(|e| format!("Could not open secure credential storage: {e}"))
+/// Move a key out of the operating system's credential manager, once.
+///
+/// On macOS this usually fails after an update — an unsigned application is a
+/// different application to the keychain every time it is rebuilt, which is
+/// the whole reason the key moved. When the keychain does still release it,
+/// she is spared pasting the key one last time.
+fn migrate_legacy_key(root: &Path) -> Option<String> {
+    // Ask the credential manager at most once per run. On macOS an item it
+    // refuses can raise a system prompt, and reaching for it on every status
+    // check would pester her about a key she may have disconnected on purpose.
+    if LEGACY_CHECKED.swap(true, Ordering::SeqCst) {
+        return None;
+    }
+    let entry = Entry::new(LEGACY_SERVICE, LEGACY_ACCOUNT).ok()?;
+    let found = entry.get_password().ok()?;
+    let key = found.trim();
+    if key.is_empty() {
+        return None;
+    }
+    secrets::save_key(root, key).ok()?;
+    // Best effort: the same signature check that blocks reading blocks this.
+    let _ = entry.delete_credential();
+    Some(key.to_string())
 }
 
-fn stored_key() -> Result<String, String> {
-    entry()?
-        .get_password()
-        .map_err(|_| "Gemini is not connected. Connect it in Settings first.".to_string())
+/// The key she has connected, if there is one.
+///
+/// `Ok(None)` means none is stored. That is deliberately distinct from an
+/// error, so a folder we cannot read never again looks like a key she never
+/// entered.
+fn current_key(root: &Path) -> Result<Option<String>, String> {
+    if let Some(key) = secrets::load_key(root)? {
+        return Ok(Some(key));
+    }
+    Ok(migrate_legacy_key(root))
+}
+
+fn stored_key(app: &AppHandle) -> Result<String, String> {
+    current_key(&app_root(app)?)?
+        .ok_or_else(|| "Gemini is not connected. Connect it in Settings first.".to_string())
 }
 
 async fn verify_key(api_key: &str) -> Result<(), String> {
@@ -103,25 +146,25 @@ fn compact_error(raw: &str) -> String {
 }
 
 #[tauri::command]
-pub fn gemini_status() -> GeminiStatus {
+pub fn gemini_status(app: AppHandle) -> GeminiStatus {
     GeminiStatus {
-        configured: entry()
-            .and_then(|item| item.get_password().map_err(|e| e.to_string()))
-            .is_ok(),
+        configured: app_root(&app)
+            .and_then(|root| current_key(&root))
+            .ok()
+            .flatten()
+            .is_some(),
         model: MODEL,
     }
 }
 
 #[tauri::command]
-pub async fn configure_gemini(api_key: String) -> Result<GeminiStatus, String> {
+pub async fn configure_gemini(app: AppHandle, api_key: String) -> Result<GeminiStatus, String> {
     let trimmed = api_key.trim();
     if trimmed.len() < 20 {
         return Err("Paste the complete Gemini API key from Google AI Studio.".to_string());
     }
     verify_key(trimmed).await?;
-    entry()?
-        .set_password(trimmed)
-        .map_err(|e| format!("Could not save the key securely: {e}"))?;
+    secrets::save_key(&app_root(&app)?, trimmed)?;
     Ok(GeminiStatus {
         configured: true,
         model: MODEL,
@@ -129,15 +172,18 @@ pub async fn configure_gemini(api_key: String) -> Result<GeminiStatus, String> {
 }
 
 #[tauri::command]
-pub fn disconnect_gemini() -> Result<GeminiStatus, String> {
-    let item = entry()?;
-    match item.delete_credential() {
-        Ok(()) | Err(keyring::Error::NoEntry) => Ok(GeminiStatus {
-            configured: false,
-            model: MODEL,
-        }),
-        Err(e) => Err(format!("Could not remove the Gemini key: {e}")),
+pub fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
+    secrets::forget_key(&app_root(&app)?)?;
+    // Clear anything still sitting in the old credential manager as well, so
+    // disconnecting really does leave no key behind. Best effort: on macOS an
+    // updated build is usually refused access to its predecessor's item.
+    if let Ok(entry) = Entry::new(LEGACY_SERVICE, LEGACY_ACCOUNT) {
+        let _ = entry.delete_credential();
     }
+    Ok(GeminiStatus {
+        configured: false,
+        model: MODEL,
+    })
 }
 
 fn mime_type(file_name: &str) -> Result<&'static str, String> {
@@ -163,7 +209,7 @@ pub async fn generate_study_aid(
     relative_path: String,
     material_title: String,
 ) -> Result<GeneratedStudyAid, String> {
-    let api_key = stored_key()?;
+    let api_key = stored_key(&app)?;
     let path = documents::stored_document_path(&app, &relative_path)?;
     let metadata =
         std::fs::metadata(&path).map_err(|e| format!("Could not read that study file: {e}"))?;

@@ -7,6 +7,7 @@
 mod backup;
 mod documents;
 mod gemini;
+mod secrets;
 mod storage;
 
 use tauri_plugin_sql::{Migration, MigrationKind};

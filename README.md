@@ -156,9 +156,15 @@ which is evergreen, so any supported Windows 10 or 11 is fine.
 Settings can connect a personal Gemini API key from
 [Google AI Studio](https://aistudio.google.com/app/apikey). The learner signs
 in with her Google account, creates a free key, and pastes it into the app once.
-The key is held by Windows Credential Manager or macOS Keychain; it is never
-stored in SQLite, included in a backup, returned to the webview, or committed
-to this repository.
+The key is kept in a file inside the application data folder, readable by her
+account alone where the platform supports it; it is never stored in SQLite,
+included in a backup, returned to the webview, or committed to this repository.
+
+It used to live in Windows Credential Manager or macOS Keychain. A keychain
+item on macOS belongs to the code signature of the application that saved it,
+and this application has no stable signing identity, so every update looked
+like a different application and she had to enter the key again. A file in her
+own data folder does not care which build is asking.
 
 After connecting, an uploaded PDF, TXT, Markdown, PNG, JPG, or WebP document can
 produce a source-based study guide and a set of interactive flashcards. Only
