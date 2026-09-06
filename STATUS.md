@@ -130,6 +130,10 @@ number changed. `scripts/release.sh` is the right tool for `0.5.0` onwards.
   AI analysis.
 - Files are limited to Gemini's current 50 MB document limit.
 - Free-tier quota errors receive a clear wait-and-retry message.
+- Temporary 503 capacity failures retry the primary Flash model after 2, 5,
+  and 10 seconds, then automatically use Flash-Lite. The working card explains
+  when the backup model is being tried, and no raw 503 is shown if both models
+  remain busy.
 - Every AI result is visibly identified as a study aid that must be checked
   against the source, current FAA publications, aircraft documents, the flight
   school, and the instructor.

@@ -42,6 +42,7 @@ import {
   geminiErrorMessage,
   generateStudyAid,
   getGeminiStatus,
+  listenForGeminiProgress,
   type GeminiStatus,
 } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
@@ -67,6 +68,7 @@ export function MaterialDetail() {
   const [openError, setOpenError] = useState<string | null>(null);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState("Gemini is reviewing this document");
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
@@ -77,6 +79,21 @@ export function MaterialDetail() {
 
   useEffect(() => {
     void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
+  }, []);
+
+  useEffect(() => {
+    let disposed = false;
+    let stopListening: (() => void) | undefined;
+    void listenForGeminiProgress((progress) => {
+      if (!disposed) setGenerationProgress(progress.message);
+    }).then((unlisten) => {
+      if (disposed) unlisten();
+      else stopListening = unlisten;
+    });
+    return () => {
+      disposed = true;
+      stopListening?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -178,6 +195,7 @@ export function MaterialDetail() {
       return;
     }
     setGenerating(true);
+    setGenerationProgress("Gemini is reviewing this document");
     setGenerationError(null);
     try {
       const generated = await generateStudyAid(material.filePath);
@@ -294,8 +312,12 @@ export function MaterialDetail() {
                   <div className="ai-working" role="status">
                     <span className="ai-working__dot" aria-hidden="true" />
                     <div>
-                      <p className="small strong">Gemini is reviewing this document</p>
-                      <p className="tiny dim">Large illustrated PDFs can take a little longer.</p>
+                      <p className="small strong">{generationProgress}</p>
+                      <p className="tiny dim">
+                        {generationProgress.includes("backup")
+                          ? "Your document is still being processed; no action is needed."
+                          : "Large illustrated PDFs can take a little longer."}
+                      </p>
                     </div>
                   </div>
                 ) : studySet ? (

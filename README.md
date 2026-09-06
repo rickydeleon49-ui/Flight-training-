@@ -173,6 +173,12 @@ The generated result is stored locally in SQLite and remains available offline.
 DOCX and RTF files can remain in the library, but must be converted to PDF before
 Gemini can analyze them.
 
+Temporary Gemini capacity failures are handled inside the app. The primary
+Flash model is retried after 2, 5, and 10 seconds; if it is still unavailable,
+the request moves automatically to Flash-Lite and the screen explains that a
+backup model is working. If both capacity pools are busy, the learner receives
+a plain wait-and-try-again message rather than a technical HTTP error.
+
 Google's free-tier terms say submitted content may be used to improve its
 products. Do not send medical records, certificates, addresses, logbooks with
 personal information, or other sensitive documents. Generated aviation material

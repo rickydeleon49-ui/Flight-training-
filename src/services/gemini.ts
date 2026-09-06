@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
@@ -52,6 +53,18 @@ export async function disconnectGemini(): Promise<GeminiStatus> {
 export async function generateStudyAid(relativePath: string): Promise<GeneratedStudyAid> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
   return invoke<GeneratedStudyAid>("generate_study_aid", { relativePath });
+}
+
+export interface GeminiProgress {
+  message: string;
+  model: string;
+}
+
+export async function listenForGeminiProgress(
+  handler: (progress: GeminiProgress) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => undefined;
+  return listen<GeminiProgress>("gemini-progress", (event) => handler(event.payload));
 }
 
 export function geminiErrorMessage(error: unknown): string {

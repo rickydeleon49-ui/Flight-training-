@@ -13,7 +13,7 @@ use keyring::Entry;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use crate::documents;
 use crate::secrets;
@@ -31,7 +31,16 @@ const LEGACY_ACCOUNT: &str = "gemini-api-key";
 /// Google publishes shutdown dates for individual models, so its support
 /// status is checked against the official model documentation before release.
 const MODEL: &str = "gemini-3.5-flash";
+/// A smaller model on a separate capacity pool. It is only used after the
+/// primary model has returned 503 through every retry.
+const FALLBACK_MODEL: &str = "gemini-3.5-flash-lite";
 const MAX_FILE_BYTES: u64 = 50 * 1024 * 1024;
+const RETRY_DELAYS: [Duration; 3] = [
+    Duration::from_secs(2),
+    Duration::from_secs(5),
+    Duration::from_secs(10),
+];
+const PROGRESS_EVENT: &str = "gemini-progress";
 
 /// Checking a key is one small round trip; it should never hang the dialog.
 const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
@@ -65,6 +74,13 @@ static LEGACY_CHECKED: AtomicBool = AtomicBool::new(false);
 #[serde(rename_all = "camelCase")]
 pub struct GeminiStatus {
     configured: bool,
+    model: &'static str,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GeminiProgress {
+    message: &'static str,
     model: &'static str,
 }
 
@@ -181,6 +197,34 @@ fn compact_error(raw: &str) -> String {
                 .map(str::to_string)
         })
         .unwrap_or_else(|| "The request could not be completed.".to_string())
+}
+
+async fn request_study_aid(
+    http: &Client,
+    api_key: &str,
+    model: &str,
+    body: &Value,
+) -> Result<(u16, String), String> {
+    let url =
+        format!("https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent");
+    let response = http
+        .post(url)
+        .header("x-goog-api-key", api_key)
+        .json(body)
+        .send()
+        .await
+        .map_err(|e| describe_transport_error(&e))?;
+    let status = response.status().as_u16();
+    let raw = response
+        .text()
+        .await
+        .map_err(|e| format!("Could not read Gemini's response: {e}"))?;
+    Ok((status, raw))
+}
+
+fn busy_message() -> String {
+    "Gemini is busy right now. The primary and backup models are both at capacity. Wait a few minutes and try again."
+        .to_string()
 }
 
 #[tauri::command]
@@ -312,34 +356,49 @@ pub async fn generate_study_aid(
             "maxOutputTokens": 8192
         }
     });
-    let url =
-        format!("https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent");
-    let response = client(GENERATE_TIMEOUT)?
-        .post(url)
-        .header("x-goog-api-key", api_key)
-        .json(&body)
-        .send()
-        .await
-        .map_err(|e| describe_transport_error(&e))?;
+    let http = client(GENERATE_TIMEOUT)?;
+    let (mut status, mut raw) = request_study_aid(&http, &api_key, MODEL, &body).await?;
 
-    let status = response.status();
-    let raw = response
-        .text()
-        .await
-        .map_err(|e| format!("Could not read Gemini's response: {e}"))?;
-    if !status.is_success() {
-        if status.as_u16() == 429 {
+    for delay in RETRY_DELAYS {
+        if status != 503 {
+            break;
+        }
+        tokio::time::sleep(delay).await;
+        (status, raw) = request_study_aid(&http, &api_key, MODEL, &body).await?;
+    }
+
+    let mut used_model = MODEL;
+    if status == 503 {
+        let _ = app.emit(
+            PROGRESS_EVENT,
+            GeminiProgress {
+                message: "Gemini is busy—trying a backup model",
+                model: FALLBACK_MODEL,
+            },
+        );
+        used_model = FALLBACK_MODEL;
+        (status, raw) = request_study_aid(&http, &api_key, FALLBACK_MODEL, &body).await?;
+    }
+
+    if !(200..300).contains(&status) {
+        if status == 503 {
+            return Err(busy_message());
+        }
+        if status == 429 {
             return Err("The free Gemini limit has been reached. Wait for Google's quota to reset, then try again.".to_string());
         }
         // Google retires a model on a published date. When that day comes this
         // build asks for something that no longer exists, and the honest answer
         // is that the application needs updating, not that her key is wrong.
-        if status.as_u16() == 404 {
+        if status == 404 {
             return Err(format!(
-                "Google has retired the {MODEL} model this version of Her Flight Deck uses. Install the latest version and try again."
+                "Google has retired the {used_model} model this version of Her Flight Deck uses. Install the latest version and try again."
             ));
         }
-        return Err(format!("Gemini returned {status}: {}", compact_error(&raw)));
+        return Err(format!(
+            "Gemini returned HTTP {status}: {}",
+            compact_error(&raw)
+        ));
     }
 
     let envelope: Value = serde_json::from_str(&raw)
@@ -352,6 +411,30 @@ pub async fn generate_study_aid(
         })?;
     let mut result: GeneratedStudyAid = serde_json::from_str(text)
         .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
-    result.model = MODEL.to_string();
+    result.model = used_model.to_string();
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn retry_schedule_is_bounded_and_deliberate() {
+        assert_eq!(
+            RETRY_DELAYS,
+            [
+                Duration::from_secs(2),
+                Duration::from_secs(5),
+                Duration::from_secs(10)
+            ]
+        );
+    }
+
+    #[test]
+    fn exhausted_capacity_error_does_not_expose_a_technical_503() {
+        let message = busy_message();
+        assert!(message.contains("backup models"));
+        assert!(!message.contains("503"));
+    }
 }
