@@ -1,6 +1,6 @@
 # Her Flight Deck — Current Project Status
 
-_Last updated: 5 September 2026 · application version `0.1.0` · branch `main`_
+_Last updated: 6 September 2026 · application version `0.2.0` · branch `main`_
 
 ## Current position
 
@@ -12,22 +12,35 @@ records, reminders, and career planning into one application.
 The current source is committed and pushed to GitHub:
 
 - Repository: <https://github.com/rickydeleon49-ui/Flight-training->
-- Branch: `main`
-- Latest application commit: `27c51af` — `feat: add Gemini study assistant`
-- Application version: `0.1.0`
-- Automated tests: **197 passing**
+- Branch: `main` (the repository default)
+- Last feature commit: `27c51af` — `feat: add Gemini study assistant`
+- Application version: `0.2.0`
+- Automated tests: **197 passing** across 19 files
 - TypeScript production build: **passing**
 - Rust desktop compilation: **passing**
-- Local Windows NSIS installer build: **passing**
 - GitHub macOS DMG build and upload: **passing**
 - GitHub Windows EXE build and upload: **passing**
+- Linux desktop smoke test (`scripts/desktop-smoke.sh`): **passing**
 
 The most recent cross-platform test build is:
 <https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/34001641155>
 
+**No release has been published yet.** Every workflow run so far has been the
+test-build workflow; the Release workflow has never run, and the Releases page
+is empty. Publishing `0.2.0` is the next step and is described below.
+
 There are no placeholder pages in the main application. The remaining work is
-hands-on testing with a real Gemini key and continued refinement based on what
-the student and instructor find useful.
+publishing, hands-on testing with a real Gemini key, and refinement based on
+what the student and instructor find useful.
+
+### Why the version is 0.2.0
+
+The application copies her database aside only when it notices the version has
+changed since the last run. Four migrations (`0004`–`0007`) were added while
+the version stayed at `0.1.0`, so anyone who installed an early `0.1.0` test
+build and then installed a `0.1.0` release would have had four schema changes
+applied with **no safety copy taken**. Releasing as `0.2.0` restores that
+protection. The same rule applies to every future release: bump first.
 
 ---
 
@@ -61,9 +74,7 @@ the student and instructor find useful.
 - Includes training foundations, checkride preparation, certificate stages,
   airline-career planning, study references, lesson checklists, and prompts.
 - Missing starter items can be restored from Settings without overwriting her
-  personal information.
-- Restoring missing starter items does not overwrite her personal uploads or
-  records.
+  personal information or uploads.
 
 ### 4. Study Library
 
@@ -76,7 +87,8 @@ the student and instructor find useful.
 - Questions and next actions attached to a material.
 - Missing-file detection with an understandable warning.
 - Open a stored file in the operating system's normal viewer.
-- Deleting a material also deletes its private stored copy after confirmation.
+- Deleting a material also deletes its private stored copy after confirmation,
+  and its generated study set.
 
 ### 5. Gemini study assistant
 
@@ -85,16 +97,12 @@ the student and instructor find useful.
   create a free Gemini API key.
 - The key is entered once and stored in Windows Credential Manager or macOS
   Keychain; it is never saved in SQLite, included in backups, displayed again,
-  or committed to GitHub.
+  returned to the interface, or committed to GitHub.
 - The application checks the key with Google before accepting it.
 - Disconnecting Gemini removes the stored credential but keeps generated work.
-- A selected document can generate:
-  - a concise summary;
-  - an organized study guide;
-  - source-focused sections;
-  - 10–20 interactive question-and-answer flashcards;
-  - page references when Gemini can support them from the source;
-  - cautions when the source may be ambiguous or outdated.
+- A selected document can generate a summary, an organized study guide,
+  source-focused sections, 10–20 flashcards, page references where the source
+  supports them, and cautions where the source is ambiguous or outdated.
 - Generated guides and flashcards are saved locally in SQLite and remain
   available without an internet connection.
 - Regenerating replaces that document's previous AI study set.
@@ -112,6 +120,8 @@ the student and instructor find useful.
 Important: Google states that free-tier inputs and outputs may be used to
 improve its products. Medical documents, certificate copies, addresses,
 personal logbook information, or other sensitive material should not be sent.
+The application warns about this but does not currently block it — see
+"Known limitations".
 
 ### 6. Schedule and lesson preparation
 
@@ -128,9 +138,7 @@ personal logbook information, or other sensitive material should not be sent.
 ### 7. Flight Journal and instructor flight log
 
 - Structured post-flight debriefs connected to scheduled lessons.
-- Aircraft type and aircraft identifier.
-- Departure and arrival airports.
-- Instructor name.
+- Aircraft type and identifier, departure and arrival airports, instructor.
 - Total, dual received, solo, PIC, cross-country, night, actual instrument, and
   simulated instrument time.
 - Day and night landing counts.
@@ -176,8 +184,11 @@ personal logbook information, or other sensitive material should not be sent.
 - **Safety check:** IMSAFE-style personal check-in plus weather, aircraft, and
   personal-minimum prompts. It records the student's own Go, Discuss, or No-Go
   note but never makes the decision for her.
-- **Knowledge quizzes:** built-in private-pilot review questions, explanations,
-  scores, attempt history, and weak-topic suggestions.
+- **Knowledge quizzes:** eight built-in conceptual review questions with
+  explanations, scores, attempt history, and weak-topic suggestions. They cover
+  fundamentals such as angle of attack, transponder codes, and priority order,
+  and deliberately avoid specific regulatory numbers, which change and belong
+  to current FAA sources.
 - **Reminders:** configurable reminder window for actions, training events,
   medical dates, and saved credential expiry dates.
 - **Career portfolio:** printable airline-career snapshot with total time, PIC,
@@ -200,7 +211,7 @@ personal logbook information, or other sensitive material should not be sent.
 - Student name, certificate goal, and current focus.
 - Flight school, instructor, home airport, usual aircraft, and training start.
 - Medical-expiration reminder.
-- Personal “why I started flying” note.
+- Personal "why I started flying" note.
 - Locally resized profile photo.
 - Berry, lavender, sky, and mint accent themes.
 - Restore missing airline starter items.
@@ -216,14 +227,14 @@ personal logbook information, or other sensitive material should not be sent.
 - The bundle identifier `com.herflightdeck.app` anchors this location and must
   not be changed in a normal update.
 - Before a new application version opens the database, it creates a safety copy.
+  This depends on the version number actually changing between releases.
 - Ten automatic database safety copies are retained.
 - Migrations are additive and protected by checksum tests.
 - Tests reject migrations that drop, rename, truncate, or delete existing data.
 - Settings can create a complete `.hfdbackup` containing the database, photo,
   flight log, generated study aids, and every uploaded document.
-- Restore validates the archive before changing anything.
-- Restore makes a recoverable copy of the current data before installing the
-  selected backup, then restarts the application.
+- Restore inspects the archive before changing anything, moves the current data
+  into a recoverable copy, installs the selected backup, and restarts.
 
 ### 14. Desktop and release infrastructure
 
@@ -231,12 +242,12 @@ personal logbook information, or other sensitive material should not be sent.
 - Hash routing supports packaged desktop navigation.
 - Bundled fonts and assets require no CDN.
 - Production content-security policy is active.
-- Windows builds an x64 NSIS `.exe` installer.
-- macOS builds an Apple Silicon `.dmg` installer.
+- Windows builds an x64 NSIS `.exe` installer on a GitHub Windows runner.
+- macOS builds an Apple Silicon `.dmg` installer on a GitHub macOS runner.
 - A universal macOS build can be produced separately for Intel compatibility.
 - Manual test-build workflow can build Windows, macOS, or both.
 - Release workflow validates the version, creates a tag, builds both installers,
-  calculates checksums, and publishes a GitHub Release.
+  calculates checksums, and publishes a GitHub Release. **Not yet exercised.**
 - Rust and npm caches reduce later GitHub Actions build times.
 - Neither installer is currently code-signed.
 
@@ -244,33 +255,38 @@ personal logbook information, or other sensitive material should not be sent.
 
 ## Verified behavior
 
+Verified on this machine:
+
 - `npm test`: **19 test files and 197 tests pass**.
 - `npm run typecheck`: passes with strict TypeScript settings.
-- `npm run build`: production frontend build passes.
-- `cargo check`: Rust backend compiles with the Gemini, TLS, and keyring code.
-- `npm run tauri build -- --bundles nsis`: local Windows installer succeeds.
-- GitHub Actions macOS build, DMG packaging, and artifact upload succeed.
-- GitHub Actions Windows build, NSIS packaging, and artifact upload succeed.
+- `cargo check`: Rust backend compiles, including the Gemini, TLS, and keyring
+  code.
+- `scripts/desktop-smoke.sh`: the real desktop window opens, the Rust migration
+  runner builds all 20 tables, the native file chooser opens from the photo
+  input, and the photo reaches the real database downscaled.
 - Database migrations apply to a new database and upgrade an existing populated
   database without losing its records.
-- Gemini study sets persist, reload, and are removed automatically if their
-  source study material is deleted.
+- The Gemini API key appears in no migration, is absent from the backup code,
+  and is never part of any value returned to the interface.
+- Generating a study aid sends only the prompt and the one selected document.
 - The complete end-to-end application workflow is covered through lesson
   preparation, study, debrief, follow-up action, and cost recording.
 
-Local Windows installer output:
+Verified on GitHub Actions:
 
-```text
-src-tauri/target/release/bundle/nsis/Her Flight Deck_0.1.0_x64-setup.exe
-```
+- macOS build, DMG packaging, and artifact upload succeed.
+- Windows build, NSIS packaging, and artifact upload succeed.
+- Run: <https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/34001641155>
 
-GitHub test-build artifacts appear at the bottom of the completed Actions run:
+Not verified anywhere yet:
 
-- `her-flight-deck-macOS`
-- `her-flight-deck-Windows`
+- The Release workflow. It has never run. Treat its first run as unproven.
+- A real Gemini API request. No key is stored in any development environment.
+- The native file chooser on macOS and Windows. It is verified only on Linux.
 
-GitHub packages each artifact as a ZIP download. Extract it to obtain the `.dmg`
-or `.exe` installer.
+GitHub test-build artifacts appear at the bottom of a completed Actions run as
+`her-flight-deck-macOS` and `her-flight-deck-Windows`. GitHub packages each as
+a ZIP; extract it to obtain the `.dmg` or `.exe`.
 
 ---
 
@@ -298,7 +314,8 @@ check, not a certificate, medical record, or personal logbook.
 
 ### Normal desktop smoke check
 
-- Confirm the existing data remains after installing over the prior version.
+- Confirm the existing data remains after installing over the prior version,
+  and that a copy appears under `backups/` named `before-0.2.0`.
 - Upload and open a document through the native file chooser.
 - Add and edit a lesson.
 - Save a flight-journal entry with flight time.
@@ -314,6 +331,11 @@ check, not a certificate, medical record, or personal logbook.
   Gemini API access. The student must create and paste a free API key once.
 - Gemini requires an internet connection only while connecting or generating.
 - Free-tier Gemini content may be used by Google to improve its products.
+- **The application warns about sensitive documents but does not block them.**
+  The records organizer can hold medicals, certificates and identification with
+  library attachments, and **Create study aid** will send any library file it
+  supports. A confirmation naming the file, or blocking administrative records
+  from AI analysis, would close this gap.
 - Gemini results are not authoritative flight instruction and may contain
   mistakes. Source and instructor verification are mandatory.
 - AI-generated guides can be regenerated but do not yet have a dedicated
@@ -330,6 +352,8 @@ check, not a certificate, medical record, or personal logbook.
 - Automatic pre-update database copies remain on the same computer and do not
   include documents. Use complete `.hfdbackup` files for protection against a
   lost or failed computer.
+- Some newer interface files contain very long single lines, which makes review
+  and future changes harder than they should be. Worth reformatting.
 
 ---
 
@@ -345,15 +369,16 @@ check, not a certificate, medical record, or personal logbook.
 
 Artifacts are temporary test downloads, not permanent releases.
 
-### Publish version 0.1.0
+### Publish version 0.2.0
 
 1. Open **Actions → Release → Run workflow**.
-2. Enter `0.1.0`.
+2. Enter `0.2.0`.
 3. Run the workflow.
 4. Download or share the installers from the repository's **Releases** page.
 
-The release workflow creates `v0.1.0`, packages both installers, and writes
-human-readable installation and update instructions.
+The release workflow creates `v0.2.0`, packages both installers, and writes
+human-readable installation and update instructions. This will be its first
+run; if it fails, the Actions log will say why.
 
 Because the repository is private, the recipient needs repository access to
 download directly. Otherwise, download the installer and send the single file
@@ -371,8 +396,7 @@ to her yourself.
 
 - Do not change `com.herflightdeck.app` without a deliberate data migration.
 - Never edit an already-shipped migration; add the next numbered migration.
-- Register every migration in Rust and TypeScript and record its normalized
-  checksum.
+- Register every migration in Rust and TypeScript and record its checksum.
 - Never embed or commit a Gemini key.
 - Never return the Gemini key to the React webview.
 - Keep Gemini document submission explicit and limited to one selected file.
@@ -380,8 +404,10 @@ to her yourself.
 - Keep monetary values stored as integer cents.
 - Keep errors crossing the Tauri boundary readable as strings.
 - Keep macOS minimum version at 12.0 or higher while native `<dialog>` is used.
-- Increase the version before publishing a later release so the pre-update
-  safety backup is triggered.
+- **Increase the version before publishing a release**, or the pre-update
+  safety copy of her database will not be taken.
+- GitHub Actions expressions cannot use the `matrix` context in a job-level
+  `if:`. A workflow that does is rejected as invalid and fails on every push.
 
 ---
 
@@ -401,8 +427,8 @@ to her yourself.
 
 ## Bottom line
 
-The application is ready for installation and structured real-world testing.
-Both Windows and macOS packages build successfully with the same feature set.
-The immediate next milestone is connecting a real free Gemini key, generating
-one study aid from a safe test PDF, and collecting feedback from the student
-and her instructor about the guide and flashcard experience.
+The application is built and both platforms package successfully on GitHub.
+It is not yet in her hands: no release exists. The immediate next steps are
+publishing `0.2.0`, installing it, and connecting a real free Gemini key to
+generate one study aid from a safe test PDF — then collecting feedback from
+the student and her instructor.
