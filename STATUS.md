@@ -23,7 +23,7 @@ The current source is committed and pushed to GitHub:
 - Branch: `main` (the repository default)
 - Latest merged audit: `8287ddc` — `fix: pre-release audit`
 - Application version: `0.4.0`
-- Automated tests: **271 passing** across 28 files
+- Automated tests: **279 passing** across 29 files
 - TypeScript production build: **passing**
 - Rust desktop compilation: **passing**
 - GitHub macOS DMG build and upload: **passing**
@@ -147,6 +147,19 @@ improve its products. Medical documents, certificate copies, addresses,
 personal logbook information, or other sensitive material should not be sent.
 The application warns about this but does not currently block it — see
 "Known limitations".
+
+### 5b. Gemini reliability and limits
+
+- A `503` "the model is overloaded" is Google's capacity, not her key: the
+  request is retried four times with a growing, jittered pause, then once on a
+  standby model, before it reports that Google is busy.
+- Connecting a key retries the same way, so a busy model never reads as a bad
+  key.
+- File limits are per type and per Google's published ceilings: 50 MB or 1,000
+  pages for a PDF, 4 MB for text, 100 MB inline for images. They are checked in
+  the interface before she clicks and enforced again in Rust.
+- An oversized or unreadable file says which limit it broke and what to do
+  about it — split the handbook, add the chapter — instead of only refusing.
 
 ### 6. Schedule and lesson preparation
 
@@ -345,7 +358,7 @@ The application warns about this but does not currently block it — see
 
 Verified on this machine:
 
-- `npm test`: **28 test files and 271 tests pass**.
+- `npm test`: **29 test files and 279 tests pass**.
 - `npm run typecheck`: passes with strict TypeScript settings.
 - `cargo check`: Rust backend compiles, including the Gemini, TLS, and keyring
   code.
@@ -357,11 +370,13 @@ Verified on this machine:
   while leaving the live data untouched.
 - `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean,
   and both now run in CI so they stay that way.
-- `cargo test` (31 tests): backup and restore end to end against real files —
+- `cargo test` (40 tests): backup and restore end to end against real files —
   a complete archive put back with every document, a safety copy put back
   without disturbing uploads, the write-ahead log travelling with the database,
   a damaged archive refused before anything moves, and an archive carrying an
-  unexpected file refused outright.
+  unexpected file refused outright — plus which Gemini failures are worth
+  retrying, that each pause is longer than the last and capped, and that an
+  oversized file is answered with the limit it broke and what to do about it.
 - Database migrations apply to a new database and upgrade an existing populated
   database without losing its records.
 - The Gemini API key appears in no migration, is absent from the backup code,

@@ -179,6 +179,21 @@ The generated result is stored locally in SQLite and remains available offline.
 DOCX and RTF files can remain in the library, but must be converted to PDF before
 Gemini can analyze them.
 
+**What Google will read.** A PDF up to 50 MB or 1,000 pages, whichever comes
+first — that ceiling is Google's and is the same however the file is sent, so a
+larger handbook has to be split into the chapter being studied. Text and
+Markdown are held to 4 MB, which is roughly what the model can hold in mind at
+once; images ride the 100 MB inline request cap. The application checks all of
+this before she clicks, so an oversized file is a next step rather than a wasted
+upload.
+
+**When Google is busy.** A `503` means Google's own capacity is short for a
+moment — nothing to do with her key, her quota, or her document. Generating
+retries four times with a growing pause, then tries a standby model once, and
+only then reports that Google is busy and the same file will probably work in a
+few minutes. Connecting a key retries the same way, so an overloaded model never
+reads as a bad key.
+
 Google's free-tier terms say submitted content may be used to improve its
 products. Do not send medical records, certificates, addresses, logbooks with
 personal information, or other sensitive documents. Generated aviation material

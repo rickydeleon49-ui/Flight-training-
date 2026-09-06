@@ -31,6 +31,7 @@ import { formatLongDate, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
 import { checkAiSubmission } from "@/logic/aiSafety";
+import { checkFileForGemini } from "@/logic/aiLimits";
 import {
   canHandleFiles,
   deleteDocument,
@@ -140,6 +141,13 @@ export function MaterialDetail() {
 
   // Nothing reaches Google without passing this, and without her saying yes.
   const aiCheck = checkAiSubmission(material, data.toolkit.credentials);
+  // Whether Google would read it at all. Answered here rather than after a
+  // click and an upload, so an oversized handbook is a next step and not a
+  // wasted wait.
+  const fileForAi = checkFileForGemini(
+    material.originalFileName ?? material.filePath ?? "",
+    material.fileSize,
+  );
 
   const relatedActions = actionsFor(data.actions, "material", material.id);
   const questions = data.questions.filter((question) => question.materialId === material.id);
@@ -262,7 +270,7 @@ export function MaterialDetail() {
                 title="Gemini study assistant"
                 eyebrow={studySet ? "Saved on this computer" : "Guide and flashcards"}
                 action={
-                  gemini?.configured && aiCheck.allowed ? (
+                  gemini?.configured && aiCheck.allowed && fileForAi.ready ? (
                     <Button
                       size="small"
                       variant={studySet ? "secondary" : "primary"}
@@ -280,6 +288,11 @@ export function MaterialDetail() {
                     <AlertIcon size={16} />
                     <p className="tiny">{aiCheck.reason}</p>
                   </div>
+                ) : !fileForAi.ready ? (
+                  <div className="ai-disclaimer" role="note">
+                    <AlertIcon size={16} />
+                    <p className="tiny">{fileForAi.reason}</p>
+                  </div>
                 ) : !gemini?.configured ? (
                   <div className="stack stack--3">
                     <p className="small muted">
@@ -295,7 +308,10 @@ export function MaterialDetail() {
                     <span className="ai-working__dot" aria-hidden="true" />
                     <div>
                       <p className="small strong">Gemini is reviewing this document</p>
-                      <p className="tiny dim">Large illustrated PDFs can take a little longer.</p>
+                      <p className="tiny dim">
+                        Large illustrated PDFs can take a little longer, and if Google&rsquo;s
+                        servers are busy this waits and tries again on its own.
+                      </p>
                     </div>
                   </div>
                 ) : studySet ? (
