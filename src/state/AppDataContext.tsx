@@ -29,6 +29,8 @@ import type {
   ToolkitState,
 } from "@/domain/types";
 import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
+import { hidePending } from "@/logic/pendingDeletes";
+import type { Id } from "@/domain/types";
 
 /**
  * Everything the application knows about, held in memory.
@@ -58,6 +60,17 @@ export interface AppData {
 
 type Status = "loading" | "ready" | "error";
 
+/** How long "Undo" stays available after a deletion is confirmed. */
+export const UNDO_WINDOW_MS = 7000;
+
+interface PendingDelete {
+  /** Records to hide while the window is open. */
+  ids: Id[];
+  /** What the undo bar says was removed, e.g. "Crosswind landings". */
+  label: string;
+  run: (repos: Repositories) => Promise<unknown>;
+}
+
 interface AppDataContextValue {
   status: Status;
   /** Fatal load error. Mutation problems surface through `lastError`. */
@@ -67,6 +80,16 @@ interface AppDataContextValue {
   /** Run a write and refresh. Returns null if the write failed. */
   mutate: <T>(work: (repos: Repositories) => Promise<T>) => Promise<T | null>;
   refresh: () => Promise<void>;
+  /**
+   * Delete after a short pause, so it can be taken back.
+   *
+   * The record disappears from the interface at once and is removed for real
+   * when the window closes. See logic/pendingDeletes.
+   */
+  deleteWithUndo: (request: PendingDelete) => void;
+  /** What is currently deletable-back, if anything. */
+  pendingDelete: { label: string } | null;
+  undoDelete: () => void;
   lastError: string | null;
   clearError: () => void;
 }
@@ -160,8 +183,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [data, setData] = useState<AppData>(EMPTY_DATA);
+  const [pending, setPending] = useState<PendingDelete | null>(null);
   const repositoriesRef = useRef<Repositories | null>(null);
   const startupRef = useRef<Promise<AppData> | null>(null);
+  const pendingRef = useRef<PendingDelete | null>(null);
+  const undoTimerRef = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
     const repositories = repositoriesRef.current;
@@ -216,18 +242,57 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  /** Carry out the waiting deletion now. */
+  const commitPending = useCallback(async () => {
+    const waiting = pendingRef.current;
+    if (!waiting) return;
+    pendingRef.current = null;
+    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = null;
+    setPending(null);
+    await mutate(waiting.run);
+  }, [mutate]);
+
+  const deleteWithUndo = useCallback(
+    (request: PendingDelete) => {
+      // One pending deletion at a time: a second one settles the first.
+      void commitPending().then(() => {
+        pendingRef.current = request;
+        setPending(request);
+        undoTimerRef.current = window.setTimeout(() => void commitPending(), UNDO_WINDOW_MS);
+      });
+    },
+    [commitPending],
+  );
+
+  const undoDelete = useCallback(() => {
+    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = null;
+    pendingRef.current = null;
+    setPending(null);
+  }, []);
+
+  // A record that is about to go is already gone as far as the screens know.
+  const visibleData = useMemo(
+    () => (pending ? hidePending(data, new Set(pending.ids)) : data),
+    [data, pending],
+  );
+
   const value = useMemo<AppDataContextValue>(
     () => ({
       status,
       error,
-      data,
+      data: visibleData,
       repositories: repositoriesRef.current,
       mutate,
       refresh,
+      deleteWithUndo,
+      pendingDelete: pending ? { label: pending.label } : null,
+      undoDelete,
       lastError,
       clearError: () => setLastError(null),
     }),
-    [status, error, data, mutate, refresh, lastError],
+    [status, error, visibleData, mutate, refresh, deleteWithUndo, pending, undoDelete, lastError],
   );
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

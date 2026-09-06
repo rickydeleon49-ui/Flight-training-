@@ -26,7 +26,9 @@ import {
   type Topic,
 } from "@/domain/types";
 import { newId } from "@/lib/id";
+import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
 import { useAppData } from "@/state/AppDataContext";
+import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import "./studyLibrary.css";
@@ -42,19 +44,33 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
   { value: "reference_only", label: "Reference Only" },
 ];
 
+const STATUS_VALUES = STATUS_FILTERS.map((filter) => filter.value);
+const SORT_VALUES = MATERIAL_SORT_OPTIONS.map((option) => option.value);
+
 export function StudyLibrary() {
   const { data, mutate } = useAppData();
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [topic, setTopic] = useState<Topic | "">("");
-  const [type, setType] = useState<MaterialType | "">("");
-  const [search, setSearch] = useState("");
+  // Kept while the app is open, so moving to a material and back does not
+  // throw away the filtering she just set up.
+  const [status, setStatus] = useRememberedState<StatusFilter>(
+    "library.status", "all", isOneOf(STATUS_VALUES),
+  );
+  const [topic, setTopic] = useRememberedState<Topic | "">(
+    "library.topic", "", isOneOf(["", ...TOPIC_OPTIONS.map((option) => option.value)]),
+  );
+  const [type, setType] = useRememberedState<MaterialType | "">(
+    "library.type", "", isOneOf(["", ...MATERIAL_TYPE_OPTIONS.map((option) => option.value)]),
+  );
+  const [search, setSearch] = useRememberedState<string>("library.search", "", isText);
+  const [sort, setSort] = useRememberedState<MaterialSort>(
+    "library.sort", "recent", isOneOf(SORT_VALUES),
+  );
   const [creating, setCreating] = useState(false);
   // Reserved up front so an imported file can be stored under the material's id.
   const [draftId, setDraftId] = useState(newId);
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return data.materials.filter((material) => {
+    const matching = data.materials.filter((material) => {
       if (status === "next_up" && material.priority !== "next_up") return false;
       if (status !== "all" && status !== "next_up" && material.reviewStatus !== status) return false;
       if (topic && material.topic !== topic) return false;
@@ -73,7 +89,8 @@ export function StudyLibrary() {
       }
       return true;
     });
-  }, [data.materials, status, topic, type, search]);
+    return sortMaterials(matching, sort);
+  }, [data.materials, status, topic, type, search, sort]);
 
   const save = async (draft: MaterialDraft) => {
     const created = await mutate((repos) => repos.documents.create(draft));
@@ -133,6 +150,13 @@ export function StudyLibrary() {
             onChange={(value) => setType(value)}
             style={{ width: "auto" }}
           />
+          <Select
+            aria-label="Sort materials"
+            options={MATERIAL_SORT_OPTIONS}
+            value={sort}
+            onChange={(value) => setSort(value)}
+            style={{ width: "auto" }}
+          />
         </div>
       ) : null}
 
@@ -177,6 +201,7 @@ export function StudyLibrary() {
                   setTopic("");
                   setType("");
                   setSearch("");
+                  setSort("recent");
                 }}
               >
                 Clear filters

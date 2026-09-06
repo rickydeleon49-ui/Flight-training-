@@ -34,7 +34,7 @@ import "./schedule.css";
 export function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const { data, mutate } = useAppData();
+  const { data, mutate, deleteWithUndo } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
 
@@ -265,7 +265,7 @@ export function EventDetail() {
                       action={action}
                       today={today}
                       onToggle={operations.toggle}
-                      onDelete={(a) => operations.remove(a.id)}
+                      onDelete={operations.remove}
                     />
                   ))}
                 </div>
@@ -460,10 +460,15 @@ export function EventDetail() {
         open={confirmingDelete}
         title="Delete this event?"
         message="Its preparation checklist goes with it. Journal entries and expenses you have recorded are kept."
-        onConfirm={async () => {
+        onConfirm={() => {
           setConfirmingDelete(false);
-          const result = await mutate((repos) => repos.schedule.remove(event.id));
-          if (result !== null) navigate("/schedule");
+          deleteWithUndo({
+            // Its preparation checklist disappears with it.
+            ids: [event.id, ...prepItems.map((item) => item.id)],
+            label: event.title,
+            run: (repos) => repos.schedule.remove(event.id),
+          });
+          navigate("/schedule");
         }}
         onCancel={() => setConfirmingDelete(false)}
       />

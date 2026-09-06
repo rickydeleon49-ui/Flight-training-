@@ -11,7 +11,7 @@ import type { Id, NextAction } from "@/domain/types";
  * behaviour of completing or rescheduling is defined exactly once.
  */
 export function useActionOperations() {
-  const { mutate } = useAppData();
+  const { mutate, deleteWithUndo } = useAppData();
 
   const toggle = useCallback(
     (action: NextAction) =>
@@ -41,8 +41,13 @@ export function useActionOperations() {
   );
 
   const remove = useCallback(
-    (id: Id) => mutate((repos) => repos.actions.remove(id)),
-    [mutate],
+    (action: NextAction) =>
+      deleteWithUndo({
+        ids: [action.id],
+        label: action.title,
+        run: (repos) => repos.actions.remove(action.id),
+      }),
+    [deleteWithUndo],
   );
 
   return { toggle, reschedule, create, update, remove };

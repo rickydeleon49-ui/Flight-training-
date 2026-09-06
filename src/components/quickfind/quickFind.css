@@ -1,0 +1,102 @@
+.quick-find {
+  width: min(38rem, calc(100vw - var(--space-6)));
+  max-height: min(30rem, calc(100vh - var(--space-8)));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  /* Sits high rather than centred; the eye goes there first. */
+  margin: 12vh auto auto;
+}
+
+.quick-find::backdrop {
+  background: rgb(23 35 60 / 0.28);
+}
+
+.quick-find__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+}
+
+.quick-find__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-md);
+}
+
+.quick-find__input:focus {
+  outline: none;
+}
+
+.quick-find__hint {
+  flex: none;
+  padding: 2px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.quick-find__results {
+  max-height: 24rem;
+  margin: 0;
+  padding: var(--space-2);
+  overflow-y: auto;
+  list-style: none;
+}
+
+.quick-find__result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quick-find__result.is-highlighted {
+  background: var(--accent-primary-fill);
+}
+
+.quick-find__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.quick-find__detail {
+  grid-column: 1;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.quick-find__section {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.quick-find__empty {
+  padding: var(--space-5);
+  margin: 0;
+}

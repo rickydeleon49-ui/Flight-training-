@@ -99,6 +99,43 @@ describe("migrations", () => {
     db.close();
   });
 
+  it("carries a fully personalized profile through every later migration", async () => {
+    // The promise behind app updates: her name, school, why-note, photo and
+    // accent are still there after the new schema arrives.
+    const db = new DatabaseSync(":memory:");
+    await migrate(db, 3);
+
+    db.prepare(
+      `INSERT INTO settings (id, certificate_goal, current_focus, created_at, updated_at,
+         pilot_name, flight_school, instructor_name, home_airport, aircraft_type,
+         training_started_on, medical_expiry, why_note, photo, accent_color)
+       VALUES ('profile', 'Private Pilot', 'Landings', 'then', 'then',
+         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      "Ava", "Lakeside Aviation", "Dana", "KRHV", "C172S", "2026-01-12",
+      "2028-03-31", "So my daughter sees it was possible.",
+      "data:image/webp;base64,UklGRhIAAABXRUJQ", "sky",
+    );
+
+    await migrate(db, Number.MAX_SAFE_INTEGER);
+
+    const profile = db.prepare("SELECT * FROM settings WHERE id = 'profile'").get() as Record<
+      string,
+      unknown
+    >;
+    expect(profile.pilot_name).toBe("Ava");
+    expect(profile.flight_school).toBe("Lakeside Aviation");
+    expect(profile.instructor_name).toBe("Dana");
+    expect(profile.home_airport).toBe("KRHV");
+    expect(profile.aircraft_type).toBe("C172S");
+    expect(profile.training_started_on).toBe("2026-01-12");
+    expect(profile.medical_expiry).toBe("2028-03-31");
+    expect(profile.why_note).toBe("So my daughter sees it was possible.");
+    expect(profile.photo).toBe("data:image/webp;base64,UklGRhIAAABXRUJQ");
+    expect(profile.accent_color).toBe("sky");
+    db.close();
+  });
+
   it("is idempotent — running again changes nothing", async () => {
     const db = new DatabaseSync(":memory:");
     await migrate(db, Number.MAX_SAFE_INTEGER);

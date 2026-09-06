@@ -220,7 +220,7 @@ function ReportMetric({ label, value }: { label: string; value: string }) {
 }
 
 function RecordsTool({ state, save }: ToolProps) {
-  const { data } = useAppData();
+  const { data, deleteWithUndo } = useAppData();
   const [draft, setDraft] = useState({ type: "pilot_certificate" as CredentialType, title: "", identifier: "", issuedOn: "", expiresOn: "", notes: "", materialId: "" });
   const [removing, setRemoving] = useState<CredentialRecord | null>(null);
   const today = todayIso();
@@ -262,7 +262,7 @@ function RecordsTool({ state, save }: ToolProps) {
         </CardBody>
       </Card>
       <p className="tiny dim">This organizer does not replace original certificates, endorsements, test reports, identification, or records required by the FAA or flight school.</p>
-      <ConfirmDialog open={removing !== null} title="Remove this record?" message="This removes the organizer entry. An attached Study Library file is not deleted." onCancel={() => setRemoving(null)} onConfirm={() => { if (!removing) return; void save({ ...state, credentials: state.credentials.filter((item) => item.id !== removing.id) }); setRemoving(null); }} />
+      <ConfirmDialog open={removing !== null} title="Remove this record?" message="This removes the organizer entry. An attached Study Library file is not deleted." onCancel={() => setRemoving(null)} onConfirm={() => { if (!removing) return; const record = removing; setRemoving(null); deleteWithUndo({ ids: [record.id], label: record.title, run: () => save({ ...state, credentials: state.credentials.filter((item) => item.id !== record.id) }) }); }} />
     </div>
   );
 }

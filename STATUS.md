@@ -222,6 +222,31 @@ The application warns about this but does not currently block it — see
 - Gemini connection and privacy information.
 - Data-location display, portable backup, and safe restore.
 
+### 12b. Everyday conveniences
+
+- **Quick Find** opens from anywhere with ⌘K on macOS or Ctrl+K on Windows,
+  and from the Search button above the navigation. It searches materials,
+  lessons, flight records, goals, milestones and questions at once, ranks a
+  title that starts with what she typed above one that merely contains it,
+  and also jumps to any section by name. Arrow keys move, Enter opens,
+  Escape closes.
+- **Undo after deleting.** Confirming a deletion hides the record and starts a
+  seven-second window with an Undo bar; the removal happens for real only when
+  the window closes. Materials, lessons, flight records, goals, milestones,
+  questions, transactions, next actions and records-organizer entries all go
+  through it. Quitting inside the window leaves the record in place, which
+  errs toward keeping her data.
+- **Nothing typed is lost.** A flight debrief is mirrored to local browser
+  storage as it is written and comes back if she leaves the page, with a
+  "Start fresh" button to throw it away. The draft is cleared once the entry
+  is saved. Personal notes on a study material save themselves shortly after
+  she stops typing, and show "Saving…" then "Saved".
+- **Filters stay put.** The Study Library's search, topic, type, status and
+  sort, and the Questions status filter, are kept for as long as the app is
+  open, so opening a material and coming back does not reset them. Each launch
+  starts clean. The library also gained a sort control: recently added,
+  priority, or title.
+
 ### 13. Data protection
 
 - SQLite stores structured application data locally.
@@ -235,6 +260,11 @@ The application warns about this but does not currently block it — see
 - Ten automatic database safety copies are retained.
 - Migrations are additive and protected by checksum tests.
 - Tests reject migrations that drop, rename, truncate, or delete existing data.
+- Every personal setting — name, school, instructor, home airport, aircraft,
+  training start, medical date, why-note, photo and accent — lives in one row
+  of the same database. Tests prove it survives closing and reopening the
+  application, and prove a fully personalized profile written under an older
+  schema still reads back intact after every later migration is applied.
 - Settings can create a complete `.hfdbackup` containing the database, photo,
   flight log, generated study aids, and every uploaded document.
 - Restore inspects the archive before changing anything, moves the current data
@@ -261,7 +291,7 @@ The application warns about this but does not currently block it — see
 
 Verified on this machine:
 
-- `npm test`: **19 test files and 197 tests pass**.
+- `npm test`: **24 test files and 235 tests pass**.
 - `npm run typecheck`: passes with strict TypeScript settings.
 - `cargo check`: Rust backend compiles, including the Gemini, TLS, and keyring
   code.
@@ -275,6 +305,12 @@ Verified on this machine:
 - Generating a study aid sends only the prompt and the one selected document.
 - The complete end-to-end application workflow is covered through lesson
   preparation, study, debrief, follow-up action, and cost recording.
+- Driven in a real browser against the running interface: Quick Find opens by
+  keyboard and by button, filters as she types, navigates on Enter and closes
+  on Escape; deleting shows the Undo bar, Undo keeps the record, and a
+  deletion left alone is still gone after a reload; library filters and sort
+  survive leaving the page; an unsaved debrief comes back; material notes save
+  themselves without a button.
 
 Verified on GitHub Actions:
 

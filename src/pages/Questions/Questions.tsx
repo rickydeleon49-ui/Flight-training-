@@ -28,6 +28,7 @@ import {
 import { formatShortDate, todayIso } from "@/lib/dates";
 import { nextLesson } from "@/logic/preparation";
 import { useAppData } from "@/state/AppDataContext";
+import { isOneOf, useRememberedState } from "@/state/useRememberedState";
 
 import "./questions.css";
 
@@ -41,10 +42,15 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
   { value: "revisit", label: "Revisit" },
 ];
 
+const FILTER_VALUES = FILTERS.map((filter) => filter.value);
+
 export function Questions() {
-  const { data, mutate } = useAppData();
+  const { data, mutate, deleteWithUndo } = useAppData();
   const today = todayIso();
-  const [filter, setFilter] = useState<Filter>("all");
+  // Held for as long as the app is open, like the library's filters.
+  const [filter, setFilter] = useRememberedState<Filter>(
+    "questions.filter", "all", isOneOf(FILTER_VALUES),
+  );
   const [text, setText] = useState("");
   const [topic, setTopic] = useState<Topic>("general");
   const [eventId, setEventId] = useState("");
@@ -200,10 +206,16 @@ export function Questions() {
         open={confirmingDelete !== null}
         title="Delete this question?"
         message={confirmingDelete?.text ?? ""}
-        onConfirm={async () => {
+        onConfirm={() => {
           const question = confirmingDelete;
           setConfirmingDelete(null);
-          if (question) await mutate((repos) => repos.questions.remove(question.id));
+          if (question) {
+            deleteWithUndo({
+              ids: [question.id],
+              label: question.text,
+              run: (repos) => repos.questions.remove(question.id),
+            });
+          }
         }}
         onCancel={() => setConfirmingDelete(null)}
       />

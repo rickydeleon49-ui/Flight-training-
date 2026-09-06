@@ -1,13 +1,20 @@
 import type { ReactElement } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
+import {
+  QUICK_FIND_EVENT,
+  QuickFind,
+  quickFindShortcutLabel,
+} from "@/components/quickfind/QuickFind";
 import { ReminderPopup } from "@/components/reminders/ReminderPopup";
+import { UndoBar } from "@/components/undo/UndoBar";
 import { useAppData } from "@/state/AppDataContext";
 import { overdueActions } from "@/logic/actions";
 import { todayIso } from "@/lib/dates";
 import {
   BookIcon,
   CalendarIcon,
+  SearchIcon,
   DeckIcon,
   JournalIcon,
   PlaneIcon,
@@ -63,6 +70,18 @@ export function AppShell() {
           </div>
         </div>
 
+        <button
+          type="button"
+          className="nav__search"
+          onClick={() => window.dispatchEvent(new Event(QUICK_FIND_EVENT))}
+        >
+          <span className="nav__icon">
+            <SearchIcon size={17} />
+          </span>
+          <span>Search</span>
+          <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>
+        </button>
+
         <nav className="nav" aria-label="Main">
           {NAV_ITEMS.map((item) => {
             const count = countFor(item.to);
@@ -111,6 +130,8 @@ export function AppShell() {
         </div>
       </main>
       <ReminderPopup />
+      <QuickFind />
+      <UndoBar />
     </div>
   );
 }

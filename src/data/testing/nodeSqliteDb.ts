@@ -16,7 +16,18 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
   const db = new DatabaseSync(path);
   db.exec("PRAGMA foreign_keys = ON");
 
-  await applyMigrations((sql) => db.exec(sql), new Set());
+  // Reopening an existing file must skip the migrations it already has, the
+  // same way the real drivers do; otherwise a second launch fails outright.
+  const applied = new Set<number>();
+  try {
+    for (const row of db.prepare("SELECT version FROM schema_migrations").all()) {
+      applied.add(Number((row as { version: number }).version));
+    }
+  } catch {
+    // No migrations table yet — this is a fresh database.
+  }
+
+  await applyMigrations((sql) => db.exec(sql), applied);
 
   return {
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {

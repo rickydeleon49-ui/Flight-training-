@@ -41,7 +41,7 @@ import { MilestoneFormDialog, type MilestoneDraft } from "./MilestoneFormDialog"
 import "./flightPath.css";
 
 export function FlightPath() {
-  const { data, mutate } = useAppData();
+  const { data, mutate, deleteWithUndo } = useAppData();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [creatingGoalFor, setCreatingGoalFor] = useState<string | null>(null);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -227,10 +227,16 @@ export function FlightPath() {
         open={deletingMilestone !== null}
         title="Delete this milestone?"
         message="Goals in it are kept and simply stop belonging to a stage. You can move them to another milestone afterwards."
-        onConfirm={async () => {
+        onConfirm={() => {
           const milestone = deletingMilestone;
           setDeletingMilestone(null);
-          if (milestone) await mutate((repos) => repos.milestones.remove(milestone.id));
+          if (milestone) {
+            deleteWithUndo({
+              ids: [milestone.id],
+              label: milestone.title,
+              run: (repos) => repos.milestones.remove(milestone.id),
+            });
+          }
         }}
         onCancel={() => setDeletingMilestone(null)}
       />
@@ -365,7 +371,7 @@ function GoalCard({
   onToggle: () => void;
   onEdit: () => void;
 }) {
-  const { data, mutate } = useAppData();
+  const { data, mutate, deleteWithUndo } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
   const [addingAction, setAddingAction] = useState(false);
@@ -536,7 +542,7 @@ function GoalCard({
                   action={action}
                   today={today}
                   onToggle={operations.toggle}
-                  onDelete={(a) => operations.remove(a.id)}
+                  onDelete={operations.remove}
                 />
               ))}
             </div>
@@ -592,7 +598,12 @@ function GoalCard({
             message="Its checklist is removed. Lessons, materials and journal entries linked to it are kept and simply unlinked."
             onConfirm={() => {
               setConfirmingDelete(false);
-              mutate((repos) => repos.goals.remove(goal.id));
+              deleteWithUndo({
+                // The checklist goes with the goal, so it hides with it too.
+                ids: [goal.id, ...checklist.map((item) => item.id)],
+                label: goal.title,
+                run: (repos) => repos.goals.remove(goal.id),
+              });
             }}
             onCancel={() => setConfirmingDelete(false)}
           />

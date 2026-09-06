@@ -41,7 +41,7 @@ import { TransactionFormDialog, type TransactionDraft } from "./TransactionFormD
 import "./finances.css";
 
 export function Finances() {
-  const { data, mutate } = useAppData();
+  const { data, mutate, deleteWithUndo } = useAppData();
   const today = todayIso();
 
   const [formType, setFormType] = useState<TransactionType | null>(null);
@@ -320,10 +320,16 @@ export function Finances() {
         open={deleting !== null}
         title="Delete this transaction?"
         message="Your balance is recalculated from what is left, so it stays correct."
-        onConfirm={async () => {
+        onConfirm={() => {
           const transaction = deleting;
           setDeleting(null);
-          if (transaction) await mutate((repos) => repos.finance.remove(transaction.id));
+          if (transaction) {
+            deleteWithUndo({
+              ids: [transaction.id],
+              label: transaction.description,
+              run: (repos) => repos.finance.remove(transaction.id),
+            });
+          }
         }}
         onCancel={() => setDeleting(null)}
       />

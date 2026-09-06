@@ -166,3 +166,36 @@
   .sidebar__footer { display: none; }
   .content { padding: var(--space-5) var(--space-4) var(--space-7); }
 }
+
+/* Quick Find's doorway. Sits with the navigation so it is found without
+   having to already know the keyboard shortcut. */
+.nav__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-tertiary);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav__search:hover {
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.nav__shortcut {
+  margin-left: auto;
+  padding: 1px 5px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-xs);
+}

@@ -223,7 +223,7 @@ export function FlightDeck() {
                           onToggle={operations.toggle}
                           onEdit={setEditing}
                           onReschedule={setRescheduling}
-                          onDelete={(a) => operations.remove(a.id)}
+                          onDelete={operations.remove}
                         />
                       ))}
                     </section>

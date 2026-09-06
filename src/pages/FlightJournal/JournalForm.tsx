@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui";
 import { todayIso } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
+import { useDraftRecovery } from "@/state/useDraftRecovery";
 
 import "./journal.css";
 
@@ -99,9 +100,10 @@ export function JournalForm() {
   const [saveQuestion, setSaveQuestion] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  /** What the form starts from: the saved entry, a lesson, or her defaults. */
+  const startingDraft = useCallback((): DebriefDraft => {
     if (existing) {
-      setDraft({
+      return {
         eventId: existing.eventId,
         date: existing.date,
         title: existing.title,
@@ -128,15 +130,14 @@ export function JournalForm() {
         questionsForNextTime: existing.questionsForNextTime,
         confidence: existing.confidence,
         goalId: existing.goalId,
-      });
-      return;
+      };
     }
 
     // Arriving from a lesson pre-fills what we already know about it.
     const eventId = searchParams.get("event");
     const event = eventId ? data.events.find((candidate) => candidate.id === eventId) : null;
     if (event) {
-      setDraft({
+      return {
         ...emptyDraft(),
         eventId: event.id,
         date: event.date,
@@ -146,18 +147,25 @@ export function JournalForm() {
         departureAirport: data.profile.homeAirport,
         arrivalAirport: data.profile.homeAirport,
         goalId: event.goalId,
-      });
-      return;
+      };
     }
 
-    setDraft({
+    return {
       ...emptyDraft(),
       aircraftType: data.profile.aircraftType,
       instructorName: data.profile.instructorName,
       departureAirport: data.profile.homeAirport,
       arrivalAirport: data.profile.homeAirport,
-    });
+    };
   }, [existing, searchParams, data.events, data.profile]);
+
+  useEffect(() => {
+    setDraft(startingDraft());
+  }, [startingDraft]);
+
+  // A debrief takes a while to write; leaving the page must not lose it.
+  const draftKey = existing ? `journal.${existing.id}` : "journal.new";
+  const { recovered, forget } = useDraftRecovery(draftKey, draft, setDraft);
 
   const update = <K extends keyof DebriefDraft>(key: K, value: DebriefDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -214,7 +222,10 @@ export function JournalForm() {
 
     if (existing) {
       const result = await mutate((repos) => repos.journal.update(existing.id, draft));
-      if (result !== null) navigate(`/journal/${existing.id}`);
+      if (result !== null) {
+        forget();
+        navigate(`/journal/${existing.id}`);
+      }
       return;
     }
 
@@ -244,7 +255,10 @@ export function JournalForm() {
       return created;
     });
 
-    if (entry) navigate(`/journal/${entry.id}`);
+    if (entry) {
+      forget();
+      navigate(`/journal/${entry.id}`);
+    }
   };
 
   const lessons = data.events.filter((event) => event.eventType === "flight_lesson");
@@ -260,6 +274,23 @@ export function JournalForm() {
           </Button>
         }
       />
+
+      {recovered ? (
+        <div className="draft-note" role="status">
+          <p className="small">
+            Picked up where you left off — this is what you had typed but not saved.
+          </p>
+          <Button
+            size="small"
+            onClick={() => {
+              forget();
+              setDraft(startingDraft());
+            }}
+          >
+            Start fresh
+          </Button>
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader title="Training flight" eyebrow="Personal flight-time record" />

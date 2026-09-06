@@ -1,0 +1,67 @@
+.undo-bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-6);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 20rem;
+  max-width: min(34rem, calc(100vw - var(--space-8)));
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(-50%);
+  animation: undo-bar-in 160ms ease-out;
+}
+
+@keyframes undo-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, var(--space-3));
+  }
+}
+
+/* Shows how much of the window is left, so the wait is not a guess. */
+.undo-bar__progress {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: var(--accent-primary);
+  transform-origin: left center;
+  transition: transform 100ms linear;
+}
+
+.undo-bar__text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.undo-bar__action {
+  flex: none;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--accent-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.undo-bar__action:hover {
+  border-color: var(--accent-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .undo-bar {
+    animation: none;
+  }
+}

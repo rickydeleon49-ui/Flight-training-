@@ -23,7 +23,7 @@ import "./journal.css";
 export function JournalEntryDetail() {
   const { entryId } = useParams();
   const navigate = useNavigate();
-  const { data, mutate } = useAppData();
+  const { data, deleteWithUndo } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -129,7 +129,7 @@ export function JournalEntryDetail() {
                       action={action}
                       today={today}
                       onToggle={operations.toggle}
-                      onDelete={(a) => operations.remove(a.id)}
+                      onDelete={operations.remove}
                     />
                   ))}
                 </div>
@@ -223,10 +223,14 @@ export function JournalEntryDetail() {
         open={confirmingDelete}
         title="Delete this entry?"
         message="The debrief is removed. Actions and questions it created are kept."
-        onConfirm={async () => {
+        onConfirm={() => {
           setConfirmingDelete(false);
-          const result = await mutate((repos) => repos.journal.remove(entry.id));
-          if (result !== null) navigate("/journal");
+          deleteWithUndo({
+            ids: [entry.id],
+            label: entry.title || formatLongDate(entry.date, today),
+            run: (repos) => repos.journal.remove(entry.id),
+          });
+          navigate("/journal");
         }}
         onCancel={() => setConfirmingDelete(false)}
       />

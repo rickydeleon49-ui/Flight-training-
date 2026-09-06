@@ -53,7 +53,7 @@ import "./studyLibrary.css";
 export function MaterialDetail() {
   const { materialId } = useParams();
   const navigate = useNavigate();
-  const { data, mutate } = useAppData();
+  const { data, mutate, deleteWithUndo } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
 
@@ -62,7 +62,7 @@ export function MaterialDetail() {
   const [addingAction, setAddingAction] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
   const [notes, setNotes] = useState("");
-  const [notesSaved, setNotesSaved] = useState(false);
+  const [notesStatus, setNotesStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [fileMissing, setFileMissing] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
@@ -82,6 +82,21 @@ export function MaterialDetail() {
   useEffect(() => {
     if (material) setNotes(material.notes);
   }, [material?.id, material?.notes]);
+
+  // Notes save themselves shortly after she stops typing, so there is no
+  // button to forget and nothing to lose by clicking away.
+  const activeMaterialId = material?.id;
+  const savedNotes = material?.notes;
+  useEffect(() => {
+    if (activeMaterialId === undefined || notes === savedNotes) return;
+    setNotesStatus("saving");
+    const timer = window.setTimeout(() => {
+      void mutate((repos) => repos.documents.update(activeMaterialId, { notes })).then((result) =>
+        setNotesStatus(result === null ? "idle" : "saved"),
+      );
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [notes, savedNotes, activeMaterialId, mutate]);
 
   // A document can disappear from disk; the library says so rather than failing.
   useEffect(() => {
@@ -129,13 +144,6 @@ export function MaterialDetail() {
     const result = await mutate((repos) => repos.documents.update(material.id, draft));
     if (result === null) return;
     setEditing(false);
-  };
-
-  const saveNotes = async () => {
-    const result = await mutate((repos) => repos.documents.update(material.id, { notes }));
-    if (result === null) return;
-    setNotesSaved(true);
-    window.setTimeout(() => setNotesSaved(false), 2000);
   };
 
   const addQuestion = async () => {
@@ -375,32 +383,30 @@ export function MaterialDetail() {
             <CardHeader
               title="Personal notes"
               action={
-                notesSaved ? (
-                  <span className="tiny" style={{ color: "var(--status-complete)" }}>
-                    Saved
+                notesStatus === "idle" ? null : (
+                  <span
+                    className="tiny"
+                    role="status"
+                    style={{
+                      color:
+                        notesStatus === "saved"
+                          ? "var(--status-complete)"
+                          : "var(--text-tertiary)",
+                    }}
+                  >
+                    {notesStatus === "saving" ? "Saving…" : "Saved"}
                   </span>
-                ) : null
+                )
               }
             />
             <CardBody>
-              <div className="stack stack--3">
-                <TextArea
-                  rows={6}
-                  value={notes}
-                  aria-label="Personal notes"
-                  placeholder="What matters in this material, and what you want to remember."
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-                <div className="row">
-                  <Button
-                    variant="primary"
-                    onClick={saveNotes}
-                    disabled={notes === material.notes}
-                  >
-                    Save notes
-                  </Button>
-                </div>
-              </div>
+              <TextArea
+                rows={6}
+                value={notes}
+                aria-label="Personal notes"
+                placeholder="What matters in this material, and what you want to remember."
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </CardBody>
           </Card>
 
@@ -427,7 +433,7 @@ export function MaterialDetail() {
                       action={action}
                       today={today}
                       onToggle={operations.toggle}
-                      onDelete={(a) => operations.remove(a.id)}
+                      onDelete={operations.remove}
                     />
                   ))}
                 </div>
@@ -586,12 +592,18 @@ export function MaterialDetail() {
         open={confirmingDelete}
         title="Delete this material?"
         message="Its notes, tags and links are removed. The file is deleted from this application's private storage."
-        onConfirm={async () => {
+        onConfirm={() => {
           setConfirmingDelete(false);
-          // Remove the stored file as well, so deleting really deletes.
-          if (material.filePath) await deleteDocument(material.filePath);
-          const result = await mutate((repos) => repos.documents.remove(material.id));
-          if (result !== null) navigate("/study");
+          deleteWithUndo({
+            ids: [material.id],
+            label: material.title,
+            // The stored file goes with it, so deleting really deletes.
+            run: async (repos) => {
+              if (material.filePath) await deleteDocument(material.filePath);
+              await repos.documents.remove(material.id);
+            },
+          });
+          navigate("/study");
         }}
         onCancel={() => setConfirmingDelete(false)}
       />
