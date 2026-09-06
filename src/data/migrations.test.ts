@@ -41,6 +41,7 @@ describe("migrations", () => {
     expect(tables).toContain("settings");
     expect(tables).toContain("transactions");
     expect(tables).toContain("app_metadata");
+    expect(tables).toContain("pilot_toolkit");
     db.close();
   });
 

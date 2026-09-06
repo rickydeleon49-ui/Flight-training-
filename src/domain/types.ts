@@ -466,3 +466,94 @@ export interface Profile {
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
 }
+
+/* ------------------------------------------------------------------ */
+/* Pilot Toolkit                                                       */
+/* ------------------------------------------------------------------ */
+
+export type ReadinessStatus = "not_started" | "learning" | "ready" | "instructor_signed_off";
+export const READINESS_STATUS_LABELS: Record<ReadinessStatus, string> = {
+  not_started: "Not Started",
+  learning: "Learning",
+  ready: "Feels Ready",
+  instructor_signed_off: "Instructor Signed Off",
+};
+export const READINESS_STATUS_OPTIONS = options(READINESS_STATUS_LABELS);
+
+export interface ReadinessItem {
+  id: Id;
+  area: "knowledge" | "flight" | "administration";
+  title: string;
+  status: ReadinessStatus;
+  notes: string;
+}
+
+export type CredentialType =
+  | "pilot_certificate"
+  | "medical"
+  | "endorsement"
+  | "knowledge_test"
+  | "practical_test"
+  | "identification"
+  | "other";
+export const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
+  pilot_certificate: "Pilot Certificate",
+  medical: "Medical Certificate",
+  endorsement: "Instructor Endorsement",
+  knowledge_test: "Knowledge Test",
+  practical_test: "Practical Test",
+  identification: "Identification",
+  other: "Other Record",
+};
+export const CREDENTIAL_TYPE_OPTIONS = options(CREDENTIAL_TYPE_LABELS);
+
+export interface CredentialRecord {
+  id: Id;
+  type: CredentialType;
+  title: string;
+  identifier: string;
+  issuedOn: IsoDate | null;
+  expiresOn: IsoDate | null;
+  notes: string;
+  materialId: Id | null;
+}
+
+export type SafetyDecision = "go" | "discuss" | "no_go";
+export interface SafetyCheck {
+  id: Id;
+  date: IsoDateTime;
+  illnessOkay: boolean;
+  medicationOkay: boolean;
+  stressOkay: boolean;
+  alcoholOkay: boolean;
+  fatigueOkay: boolean;
+  emotionOkay: boolean;
+  weatherReviewed: boolean;
+  aircraftReviewed: boolean;
+  personalMinimumsMet: boolean;
+  decision: SafetyDecision;
+  notes: string;
+}
+
+export interface QuizAttempt {
+  id: Id;
+  date: IsoDateTime;
+  score: number;
+  total: number;
+  weakTopics: Topic[];
+}
+
+export interface ToolkitState {
+  version: 1;
+  readinessItems: ReadinessItem[];
+  credentials: CredentialRecord[];
+  safetyChecks: SafetyCheck[];
+  quizAttempts: QuizAttempt[];
+  remindersEnabled: boolean;
+  reminderLeadDays: number;
+  estimatedHourlyCost: Cents;
+  additionalTrainingCosts: Cents;
+  targetAirline: string;
+  careerSummary: string;
+  nextCareerStep: string;
+}

@@ -60,10 +60,15 @@ export function documentRepository(db: SqlDatabase) {
         ids.push(found.id);
       } else {
         const id = newId();
-        await db.execute("INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?)", [
+        // Starter initialization can overlap in React's development strict mode.
+        // Let the database settle that race, then use whichever id won.
+        await db.execute("INSERT OR IGNORE INTO tags (id, name, created_at) VALUES (?, ?, ?)", [
           id, name, nowIso(),
         ]);
-        ids.push(id);
+        const resolved = await db.select<{ id: string }>("SELECT id FROM tags WHERE name = ?", [name]);
+        const winner = resolved[0];
+        if (!winner) throw new Error(`Could not save the tag “${name}”.`);
+        ids.push(winner.id);
       }
     }
     return ids;

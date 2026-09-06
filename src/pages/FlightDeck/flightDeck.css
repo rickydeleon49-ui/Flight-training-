@@ -89,6 +89,34 @@
 
 .prep-summary { font-size: var(--text-sm); color: var(--text-secondary); }
 
+/* -------------------------- Flight hours --------------------------- */
+
+.deck-flight-hours {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-5);
+}
+
+.deck-flight-hours__total {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: 1;
+  color: var(--category-flight-ink);
+}
+
+.deck-flight-hours__recent {
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.deck-flight-hours__categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-4);
+}
+
 /* --------------------------- Milestone ----------------------------- */
 
 .evidence-list {

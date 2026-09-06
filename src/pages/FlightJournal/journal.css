@@ -138,6 +138,57 @@
   color: var(--text-primary);
 }
 
+.flight-progress-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: var(--space-5);
+}
+
+.flight-rhythm {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.flight-rhythm__value {
+  margin-top: var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--text-primary);
+}
+
+.flight-rhythm__value span {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.hour-reference-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.hour-reference__track {
+  height: 0.45rem;
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+}
+
+.hour-reference__track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--category-flight-ink);
+}
+
+.flight-reference-note {
+  margin-top: var(--space-4);
+  line-height: 1.5;
+}
+
 .flight-log-table-wrap { overflow-x: auto; }
 
 .flight-log-table {
@@ -173,8 +224,10 @@
 
 @media (max-width: 1100px) {
   .flight-log-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .flight-progress-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
   .flight-log-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .flight-rhythm { grid-template-columns: 1fr; }
 }

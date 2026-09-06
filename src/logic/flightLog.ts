@@ -1,4 +1,5 @@
-import type { JournalEntry } from "@/domain/types";
+import type { IsoDate, JournalEntry } from "@/domain/types";
+import { addDays, todayIso } from "@/lib/dates";
 
 export const hasFlightLogData = (entry: JournalEntry): boolean =>
   Boolean(
@@ -53,6 +54,75 @@ export function flightLogTotals(entries: JournalEntry[]): FlightLogTotals {
 }
 
 export const formatHours = (hours: number): string => hours.toFixed(1);
+
+export interface FlightActivity {
+  flightsLast30Days: number;
+  hoursLast30Days: number;
+  averageFlightTime: number;
+  lastFlightDate: IsoDate | null;
+}
+
+/** A training-rhythm snapshot. Future-dated entries are deliberately excluded. */
+export function flightActivity(
+  entries: JournalEntry[],
+  today: IsoDate = todayIso(),
+): FlightActivity {
+  const logged = entries.filter(hasFlightLogData);
+  const completed = logged.filter((entry) => entry.date <= today);
+  const start = addDays(today, -29);
+  const recent = completed.filter((entry) => entry.date >= start);
+  const timed = completed.filter((entry) => entry.totalTime != null);
+
+  return {
+    flightsLast30Days: recent.length,
+    hoursLast30Days: recent.reduce((total, entry) => total + (entry.totalTime ?? 0), 0),
+    averageFlightTime:
+      timed.length === 0
+        ? 0
+        : timed.reduce((total, entry) => total + (entry.totalTime ?? 0), 0) / timed.length,
+    lastFlightDate:
+      completed.length === 0
+        ? null
+        : completed.reduce(
+            (latest, entry) => (entry.date > latest ? entry.date : latest),
+            completed[0]!.date,
+          ),
+  };
+}
+
+export interface HourReference {
+  key: "total" | "training" | "solo";
+  label: string;
+  logged: number;
+  reference: number;
+  percent: number;
+}
+
+/**
+ * A narrow comparison with the headline Part 61 airplane minimums. It is not
+ * an eligibility calculation: the log does not capture every required subset,
+ * endorsement, or whether each hour qualifies under the current rules.
+ */
+export function privatePilotPart61Reference(totals: FlightLogTotals): HourReference[] {
+  const line = (
+    key: HourReference["key"],
+    label: string,
+    logged: number,
+    reference: number,
+  ): HourReference => ({
+    key,
+    label,
+    logged,
+    reference,
+    percent: Math.min(100, Math.max(0, (logged / reference) * 100)),
+  });
+
+  return [
+    line("total", "Total flight time", totals.totalTime, 40),
+    line("training", "Training received", totals.dualReceived, 20),
+    line("solo", "Solo flight time", totals.soloTime, 10),
+  ];
+}
 
 export function flightRoute(entry: JournalEntry): string {
   const from = entry.departureAirport.trim();

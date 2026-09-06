@@ -25,7 +25,9 @@ import type {
   ScheduleEvent,
   StudyMaterial,
   Transaction,
+  ToolkitState,
 } from "@/domain/types";
+import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
 
 /**
  * Everything the application knows about, held in memory.
@@ -49,6 +51,7 @@ export interface AppData {
   questions: Question[];
   transactions: Transaction[];
   fundGoals: FundGoal[];
+  toolkit: ToolkitState;
 }
 
 type Status = "loading" | "ready" | "error";
@@ -99,6 +102,7 @@ export const EMPTY_DATA: AppData = {
   questions: [],
   transactions: [],
   fundGoals: [],
+  toolkit: DEFAULT_TOOLKIT_STATE,
 };
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -106,7 +110,7 @@ const AppDataContext = createContext<AppDataContextValue | null>(null);
 async function loadAll(repositories: Repositories): Promise<AppData> {
   const [
     profile, milestones, goals, checklistItems, actions, materials, tags,
-    events, prepItems, journalEntries, questions, transactions, fundGoals,
+    events, prepItems, journalEntries, questions, transactions, fundGoals, toolkit,
   ] = await Promise.all([
     repositories.profile.get(),
     repositories.milestones.list(),
@@ -121,11 +125,12 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.questions.list(),
     repositories.finance.list(),
     repositories.finance.listFundGoals(),
+    repositories.toolkit.get(),
   ]);
 
   return {
     profile, milestones, goals, checklistItems, actions, materials, tags,
-    events, prepItems, journalEntries, questions, transactions, fundGoals,
+    events, prepItems, journalEntries, questions, transactions, fundGoals, toolkit,
   };
 }
 
@@ -152,6 +157,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [lastError, setLastError] = useState<string | null>(null);
   const [data, setData] = useState<AppData>(EMPTY_DATA);
   const repositoriesRef = useRef<Repositories | null>(null);
+  const startupRef = useRef<Promise<AppData> | null>(null);
 
   const refresh = useCallback(async () => {
     const repositories = repositoriesRef.current;
@@ -162,22 +168,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
-      try {
+    if (!startupRef.current) {
+      startupRef.current = (async () => {
         const db = await getDatabase();
         const repositories = createRepositories(db);
         repositoriesRef.current = repositories;
         await initializeAirlineStarterPack(repositories);
-        const loaded = await loadAll(repositories);
+        return loadAll(repositories);
+      })();
+    }
+
+    startupRef.current
+      .then((loaded) => {
         if (cancelled) return;
         setData(loaded);
         setStatus("ready");
-      } catch (loadError) {
+      })
+      .catch((loadError) => {
         if (cancelled) return;
         setError(describeError(loadError));
         setStatus("error");
-      }
-    })();
+      });
 
     return () => {
       cancelled = true;

@@ -24,11 +24,14 @@ import {
   ACTION_CATEGORY_LABELS,
   REVIEW_STATUS_LABELS,
   TOPIC_LABELS,
+  type IsoDate,
+  type JournalEntry,
   type NextAction,
 } from "@/domain/types";
 import { describeRelativeDate, formatLongDate, formatShortDate, formatTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { buildDashboard } from "@/logic/dashboard";
+import { flightActivity, flightLogTotals, formatHours } from "@/logic/flightLog";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
@@ -240,6 +243,7 @@ export function FlightDeck() {
 
         <div className="deck__column">
           <NextFlightCard model={model} />
+          <FlightHoursCard entries={data.journalEntries} today={model.today} />
           <MilestoneCard model={model} />
           <StudyFocusCard model={model} />
           <KeyDatesCard model={model} />
@@ -291,6 +295,53 @@ export function FlightDeck() {
 /* ----------------------------- Sub-cards ----------------------------- */
 
 type Model = ReturnType<typeof buildDashboard>;
+
+function FlightHoursCard({
+  entries,
+  today,
+}: {
+  entries: JournalEntry[];
+  today: IsoDate;
+}) {
+  const totals = flightLogTotals(entries);
+  if (totals.flights === 0) return null;
+  const activity = flightActivity(entries, today);
+
+  return (
+    <Card>
+      <CardHeader
+        title="Flight hours"
+        eyebrow="Logbook snapshot"
+        action={<span className="tiny dim">{totals.flights} flights</span>}
+      />
+      <CardBody>
+        <div className="deck-flight-hours">
+          <div>
+            <p className="deck-flight-hours__total numeric">{formatHours(totals.totalTime)}</p>
+            <p className="tiny dim">total hours</p>
+          </div>
+          <div className="deck-flight-hours__recent">
+            <p className="strong numeric">{formatHours(activity.hoursLast30Days)} hr</p>
+            <p className="tiny dim">across {activity.flightsLast30Days} flights in 30 days</p>
+          </div>
+        </div>
+        <div className="deck-flight-hours__categories tiny dim">
+          <span>Dual {formatHours(totals.dualReceived)}</span>
+          <span>Solo {formatHours(totals.soloTime)}</span>
+          <span>XC {formatHours(totals.crossCountryTime)}</span>
+          <span>Night {formatHours(totals.nightTime)}</span>
+        </div>
+        <Link
+          className="button button--ghost button--small"
+          style={{ marginTop: "var(--space-3)" }}
+          to="/journal"
+        >
+          View hour dashboard
+        </Link>
+      </CardBody>
+    </Card>
+  );
+}
 
 function NextFlightCard({ model }: { model: Model }) {
   if (!model.nextFlight) {

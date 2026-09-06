@@ -14,7 +14,14 @@ import {
 } from "@/components/ui";
 import { formatLongDate, todayIso } from "@/lib/dates";
 import { collectFeedback, goalsWithFeedback } from "@/logic/feedback";
-import { flightLogTotals, flightRoute, formatHours, hasFlightLogData } from "@/logic/flightLog";
+import {
+  flightActivity,
+  flightLogTotals,
+  flightRoute,
+  formatHours,
+  hasFlightLogData,
+  privatePilotPart61Reference,
+} from "@/logic/flightLog";
 import { lessonsAwaitingDebrief } from "@/logic/preparation";
 import { useAppData } from "@/state/AppDataContext";
 
@@ -46,6 +53,11 @@ export function FlightJournal() {
     [data.journalEntries],
   );
   const totals = useMemo(() => flightLogTotals(data.journalEntries), [data.journalEntries]);
+  const activity = useMemo(
+    () => flightActivity(data.journalEntries, today),
+    [data.journalEntries, today],
+  );
+  const privatePilotReference = useMemo(() => privatePilotPart61Reference(totals), [totals]);
 
   return (
     <>
@@ -158,6 +170,76 @@ export function FlightJournal() {
               </Card>
             ))}
           </div>
+
+          {loggedFlights.length > 0 ? (
+            <div className="flight-progress-grid">
+              <Card>
+                <CardHeader title="Training rhythm" eyebrow="Last 30 days" />
+                <CardBody>
+                  <div className="flight-rhythm">
+                    <div>
+                      <p className="tiny dim">Recent time</p>
+                      <p className="flight-rhythm__value numeric">
+                        {formatHours(activity.hoursLast30Days)} <span>hr</span>
+                      </p>
+                    </div>
+                    <div>
+                      <p className="tiny dim">Recent flights</p>
+                      <p className="flight-rhythm__value numeric">{activity.flightsLast30Days}</p>
+                    </div>
+                    <div>
+                      <p className="tiny dim">Average flight</p>
+                      <p className="flight-rhythm__value numeric">
+                        {formatHours(activity.averageFlightTime)} <span>hr</span>
+                      </p>
+                    </div>
+                  </div>
+                  <p className="small muted" style={{ marginTop: "var(--space-4)" }}>
+                    {activity.lastFlightDate
+                      ? `Last logged flight: ${formatLongDate(activity.lastFlightDate, today)}`
+                      : "No completed flight has been logged yet."}
+                  </p>
+                </CardBody>
+              </Card>
+
+              <Card>
+                <CardHeader
+                  title="Private pilot hour reference"
+                  eyebrow="Part 61 planning view"
+                />
+                <CardBody>
+                  <div className="hour-reference-list">
+                    {privatePilotReference.map((item) => (
+                      <div className="hour-reference" key={item.key}>
+                        <div className="row row--between">
+                          <span className="small">{item.label}</span>
+                          <span className="tiny dim numeric">
+                            {formatHours(item.logged)} / {item.reference} hr
+                          </span>
+                        </div>
+                        <div
+                          className="hour-reference__track"
+                          role="progressbar"
+                          aria-label={`${item.label}: ${formatHours(item.logged)} logged, compared with ${item.reference} hours`}
+                          aria-valuemin={0}
+                          aria-valuemax={item.reference}
+                          aria-valuenow={Math.min(item.logged, item.reference)}
+                        >
+                          <span style={{ width: `${item.percent}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="flight-reference-note tiny dim">
+                    Planning comparison only. Logged categories can overlap, and the rules
+                    include specific training, cross-country, night, instrument, takeoff,
+                    landing, endorsement, and proficiency requirements. Confirm qualifying
+                    time with her instructor and authoritative logbook.
+                  </p>
+                </CardBody>
+              </Card>
+            </div>
+          ) : null}
 
           <Card>
             <CardHeader

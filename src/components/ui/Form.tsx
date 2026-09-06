@@ -1,6 +1,7 @@
-import { useId } from "react";
+import { cloneElement, isValidElement, useId } from "react";
 import type {
   InputHTMLAttributes,
+  ReactElement,
   ReactNode,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
@@ -13,7 +14,9 @@ interface FieldProps {
   hint?: string;
   error?: string | null;
   full?: boolean;
-  children: (props: { id: string; describedBy: string | undefined; invalid: boolean }) => ReactNode;
+  children:
+    | ReactNode
+    | ((props: { id: string; describedBy: string | undefined; invalid: boolean }) => ReactNode);
 }
 
 /**
@@ -28,13 +31,31 @@ export function Field({ label, hint, error, full = false, children }: FieldProps
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
+  const controlProps = { id, describedBy, invalid: Boolean(error) };
+  const control =
+    typeof children === "function"
+      ? children(controlProps)
+      : isValidElement(children)
+        ? cloneElement(
+            children as ReactElement<{
+              id?: string;
+              "aria-describedby"?: string;
+              "aria-invalid"?: boolean;
+            }>,
+            {
+              id,
+              "aria-describedby": describedBy,
+              "aria-invalid": Boolean(error) || undefined,
+            },
+          )
+        : children;
 
   return (
     <div className={`field${full ? " field--full" : ""}`}>
       <label className="field__label" htmlFor={id}>
         {label}
       </label>
-      {children({ id, describedBy, invalid: Boolean(error) })}
+      {control}
       {hint && !error ? (
         <p className="field__hint" id={hintId}>
           {hint}

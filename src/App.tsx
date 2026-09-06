@@ -10,6 +10,7 @@ import { JournalEntryDetail } from "@/pages/FlightJournal/JournalEntryDetail";
 import { JournalForm } from "@/pages/FlightJournal/JournalForm";
 import { FlightPath } from "@/pages/FlightPath/FlightPath";
 import { Questions } from "@/pages/Questions/Questions";
+import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
 import { EventDetail } from "@/pages/Schedule/EventDetail";
 import { Schedule } from "@/pages/Schedule/Schedule";
 import { Settings } from "@/pages/Settings/Settings";
@@ -69,6 +70,7 @@ function Gate() {
           <Route path="journal/:entryId/edit" element={<JournalForm />} />
           <Route path="questions" element={<Questions />} />
           <Route path="finances" element={<Finances />} />
+          <Route path="toolkit" element={<PilotToolkit />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Route>

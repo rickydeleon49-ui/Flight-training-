@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
+import { ReminderPopup } from "@/components/reminders/ReminderPopup";
 import { useAppData } from "@/state/AppDataContext";
 import { overdueActions } from "@/logic/actions";
 import { todayIso } from "@/lib/dates";
@@ -13,6 +14,7 @@ import {
   QuestionIcon,
   RouteIcon,
   SettingsIcon,
+  TargetIcon,
   WalletIcon,
 } from "@/components/ui";
 
@@ -32,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/journal", label: "Flight Log", icon: <JournalIcon size={19} /> },
   { to: "/questions", label: "Questions", icon: <QuestionIcon size={19} /> },
   { to: "/finances", label: "Finances", icon: <WalletIcon size={19} /> },
+  { to: "/toolkit", label: "Pilot Toolkit", icon: <TargetIcon size={19} /> },
 ];
 
 export function AppShell() {
@@ -107,6 +110,7 @@ export function AppShell() {
           <Outlet />
         </div>
       </main>
+      <ReminderPopup />
     </div>
   );
 }

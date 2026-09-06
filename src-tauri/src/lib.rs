@@ -49,6 +49,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0005_flight_log.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "pilot_toolkit",
+            sql: include_str!("../migrations/0006_pilot_toolkit.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

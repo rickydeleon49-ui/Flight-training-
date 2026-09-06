@@ -407,6 +407,7 @@ export async function clearAllData(repositories: Repositories): Promise<void> {
   for (const item of events) await repositories.schedule.remove(item.id);
   for (const item of goals) await repositories.goals.remove(item.id);
   for (const item of milestones) await repositories.milestones.remove(item.id);
+  await repositories.toolkit.clear();
 
   await repositories.profile.update({
     pilotName: "",
