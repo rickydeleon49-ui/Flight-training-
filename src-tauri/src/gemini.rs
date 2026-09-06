@@ -28,9 +28,8 @@ const LEGACY_ACCOUNT: &str = "gemini-api-key";
 ///
 /// Pinned deliberately rather than using a `-latest` alias: those are
 /// hot-swapped under you and have themselves resolved to a retired model.
-/// Google publishes a shutdown date per model, so this constant has an expiry
-/// and moving it forward is a normal part of a release. `gemini-2.5-flash`,
-/// which this replaces, shuts down on 16 October 2026.
+/// Google publishes shutdown dates for individual models, so its support
+/// status is checked against the official model documentation before release.
 const MODEL: &str = "gemini-3.5-flash";
 const MAX_FILE_BYTES: u64 = 50 * 1024 * 1024;
 
@@ -246,7 +245,6 @@ fn mime_type(file_name: &str) -> Result<&'static str, String> {
 pub async fn generate_study_aid(
     app: AppHandle,
     relative_path: String,
-    material_title: String,
 ) -> Result<GeneratedStudyAid, String> {
     let api_key = stored_key(&app)?;
     let path = documents::stored_document_path(&app, &relative_path)?;
@@ -263,15 +261,14 @@ pub async fn generate_study_aid(
     let mime = mime_type(file_name)?;
     let bytes = std::fs::read(&path).map_err(|e| format!("Could not read that study file: {e}"))?;
 
-    let prompt = format!(
-        "Create an accurate private-pilot study aid from the attached source titled {material_title:?}. \
+    let prompt =
+        "Create an accurate private-pilot study aid from the attached source. \
          Use only facts supported by the source. Do not invent regulations, procedures, numbers, or page references. \
          Return JSON only with: title (string), summary (string), sections (array of objects with heading and body), \
          flashcards (10-20 objects with front, back, and sourcePage as a page number or null), and sourceNotes (string). \
          Keep explanations clear for a student pilot. When the source is ambiguous or may be outdated, say so. \
          This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, \
-         flight-school, and instructor guidance."
-    );
+         flight-school, and instructor guidance.";
 
     let body = json!({
         "contents": [{"role": "user", "parts": [
@@ -312,7 +309,6 @@ pub async fn generate_study_aid(
                     "sourceNotes": {"type": "STRING"}
                 }
             },
-            "temperature": 0.2,
             "maxOutputTokens": 8192
         }
     });

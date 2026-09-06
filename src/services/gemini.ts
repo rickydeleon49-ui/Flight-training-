@@ -49,12 +49,9 @@ export async function disconnectGemini(): Promise<GeminiStatus> {
   return invoke<GeminiStatus>("disconnect_gemini");
 }
 
-export async function generateStudyAid(
-  relativePath: string,
-  materialTitle: string,
-): Promise<GeneratedStudyAid> {
+export async function generateStudyAid(relativePath: string): Promise<GeneratedStudyAid> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
-  return invoke<GeneratedStudyAid>("generate_study_aid", { relativePath, materialTitle });
+  return invoke<GeneratedStudyAid>("generate_study_aid", { relativePath });
 }
 
 export function geminiErrorMessage(error: unknown): string {

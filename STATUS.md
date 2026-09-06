@@ -13,7 +13,7 @@ The current source is committed and pushed to GitHub:
 
 - Repository: <https://github.com/rickydeleon49-ui/Flight-training->
 - Branch: `main` (the repository default)
-- Last feature commit: `0266d2c` — `fix: keep her Gemini key across updates`
+- Latest merged audit: `8287ddc` — `fix: pre-release audit`
 - Application version: `0.4.0`
 - Automated tests: **251 passing** across 26 files
 - TypeScript production build: **passing**
@@ -538,11 +538,11 @@ Gemini key to generate one study aid from a safe test PDF, then collecting
 feedback from the student and her instructor.
 
 The Gemini model is a hardcoded constant, `MODEL` in
-`src-tauri/src/gemini.rs`, and it has an expiry: Google publishes a shutdown
-date per model, and after that date every installed build asking for it stops
-working. It now reads `gemini-3.5-flash`, which is generally available and on
-the free tier. It replaced `gemini-2.5-flash`, whose announced shutdown date
-is 16 October 2026.
+`src-tauri/src/gemini.rs`. Google publishes model shutdown dates, so this must
+be checked before each release. It now reads `gemini-3.5-flash`, which is
+generally available and on the free tier, with no announced shutdown date.
+Google also currently lists no shutdown date for `gemini-2.5-flash`; the move
+to 3.5 keeps the application on the newer stable generation.
 
 **This has not been exercised against the live API.** No Gemini key exists in
 any development environment, so the model name is taken from Google's

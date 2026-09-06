@@ -34,6 +34,8 @@ jobs:
       tag: ${{ steps.resolve.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -46,6 +48,16 @@ jobs:
       - name: Work out the version, and check everything agrees
         id: resolve
         run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "$GITHUB_REF_NAME" != "main" ]; then
+            echo "::error::Browser releases must be run from the main branch, not $GITHUB_REF_NAME."
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::The selected commit is not part of main. Merge it before releasing."
+            exit 1
+          fi
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ inputs.version }}"
             VERSION="${VERSION#v}"
@@ -145,7 +157,7 @@ jobs:
             echo
             echo "| Computer | File |"
             echo "| --- | --- |"
-            echo "| Mac | the \`.dmg\` |"
+            echo "| Mac with Apple silicon | the \`.dmg\` |"
             echo "| Windows | the \`.exe\` |"
             echo
             echo "### The first time you open it"
@@ -153,7 +165,7 @@ jobs:
             echo "The application is not signed with a paid certificate, so each"
             echo "system asks once whether you meant to open it. Nothing is wrong."
             echo
-            echo "**On a Mac** — open the \`.dmg\`, drag Her Flight Deck to"
+            echo "**On an Apple silicon Mac** — open the \`.dmg\`, drag Her Flight Deck to"
             echo "Applications, then open it from Applications. If it says the"
             echo "developer cannot be verified, go to **System Settings → Privacy &"
             echo "Security**, scroll down, and choose **Open Anyway**. You only do"

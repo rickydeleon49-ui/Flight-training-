@@ -180,7 +180,7 @@ export function MaterialDetail() {
     setGenerating(true);
     setGenerationError(null);
     try {
-      const generated = await generateStudyAid(material.filePath, material.title);
+      const generated = await generateStudyAid(material.filePath);
       const saved = await mutate((repos) =>
         repos.documents.saveAiStudySet({
           sourceMaterialId: material.id,
