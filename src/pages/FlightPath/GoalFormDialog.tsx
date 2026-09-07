@@ -72,7 +72,7 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
           }
         : emptyDraft(milestoneId),
     );
-  }, [open, goal, milestoneId]);
+  }, [open, goal?.id, milestoneId]);
 
   const update = <K extends keyof GoalDraft>(key: K, value: GoalDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));

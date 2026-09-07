@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -89,12 +89,17 @@ const optionalNumber = (value: string): number | null =>
 export function JournalForm() {
   const { entryId } = useParams();
   const [searchParams] = useSearchParams();
+  return <JournalFormPage key={`${entryId ?? "new"}:${searchParams.get("event") ?? ""}`} />;
+}
+
+function JournalFormPage() {
+  const { entryId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { data, mutate } = useAppData();
 
   const existing = entryId ? data.journalEntries.find((entry) => entry.id === entryId) : null;
 
-  const [draft, setDraft] = useState<DebriefDraft>(emptyDraft);
   const [nextActionTitle, setNextActionTitle] = useState("");
   const [addToPlan, setAddToPlan] = useState(true);
   const [saveQuestion, setSaveQuestion] = useState(true);
@@ -159,9 +164,7 @@ export function JournalForm() {
     };
   }, [existing, searchParams, data.events, data.profile]);
 
-  useEffect(() => {
-    setDraft(startingDraft());
-  }, [startingDraft]);
+  const [draft, setDraft] = useState<DebriefDraft>(startingDraft);
 
   // A debrief takes a while to write; leaving the page must not lose it.
   const draftKey = existing ? `journal.${existing.id}` : "journal.new";

@@ -53,6 +53,7 @@ fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
     if relative_path.is_empty()
         || Path::new(relative_path).is_absolute()
         || relative_path.contains('\\')
+        || relative_path.contains(':')
         || relative_path.contains('\0')
     {
         return Err("Invalid document path.".to_string());
@@ -103,8 +104,30 @@ pub(crate) fn stored_destination(
 ) -> Result<(PathBuf, String), String> {
     let safe_id = sanitize_file_name(material_id);
     let stored_name = format!("{safe_id}-{}", sanitize_file_name(file_name));
-    let destination = documents_root(app)?.join(&stored_name);
-    Ok((destination, stored_name))
+    reserve_destination(&documents_root(app)?, &stored_name)
+}
+
+/// Reserve a fresh name atomically. Replacing a same-named attachment used to
+/// overwrite its bytes before the edit was saved (even when later cancelled).
+fn reserve_destination(root: &Path, name: &str) -> Result<(PathBuf, String), String> {
+    for attempt in 0..10_000 {
+        let candidate = if attempt == 0 {
+            name.to_string()
+        } else {
+            format!("{attempt}-{name}")
+        };
+        let path = root.join(&candidate);
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(_) => return Ok((path, candidate)),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(format!("Could not reserve a document file: {error}")),
+        }
+    }
+    Err("Too many documents have the same stored name.".to_string())
 }
 
 /// Copy a file the user picked into private application storage.
@@ -133,8 +156,12 @@ pub fn import_document(
 
     let (destination, stored_name) = stored_destination(&app, &material_id, &original_file_name)?;
 
-    std::fs::copy(&source, &destination)
-        .map_err(|e| format!("Could not copy that file into the library: {e}"))?;
+    if let Err(error) = std::fs::copy(&source, &destination) {
+        let _ = std::fs::remove_file(&destination);
+        return Err(format!(
+            "Could not copy that file into the library: {error}"
+        ));
+    }
 
     Ok(ImportedDocument {
         relative_path: stored_name,
@@ -255,5 +282,27 @@ mod tests {
     #[test]
     fn a_nested_stored_path_is_still_allowed() {
         assert!(safe_relative_path("nested/document.pdf").is_ok());
+    }
+
+    #[test]
+    fn windows_drive_and_alternate_stream_paths_are_refused_on_every_platform() {
+        for path in ["C:secrets", "C:/secrets", "notes.pdf:hidden"] {
+            assert!(safe_relative_path(path).is_err());
+        }
+    }
+
+    #[test]
+    fn replacing_an_attachment_never_overwrites_the_saved_file() {
+        let root = std::env::temp_dir().join(format!("hfd-import-reserve-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let (first, _) = reserve_destination(&root, "material-handbook.pdf").unwrap();
+        std::fs::write(&first, b"original saved attachment").unwrap();
+        let (second, _) = reserve_destination(&root, "material-handbook.pdf").unwrap();
+        std::fs::write(&second, b"replacement not yet saved").unwrap();
+        assert_ne!(first, second);
+        assert_eq!(std::fs::read(&first).unwrap(), b"original saved attachment");
+        let (third, _) = reserve_destination(&root, "material-handbook.pdf").unwrap();
+        assert_ne!(second, third);
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

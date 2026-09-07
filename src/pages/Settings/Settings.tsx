@@ -95,10 +95,7 @@ export function Settings() {
   const [geminiNote, setGeminiNote] = useState<string | null>(null);
   const [geminiProblem, setGeminiProblem] = useState(false);
 
-  // Keep the form in step when the stored profile changes.
-  useEffect(() => {
-    setDraft(draftFrom(data.profile));
-  }, [data.profile]);
+  // Initialize once; background saves elsewhere must not reset this form.
 
   const refreshBackups = async () => {
     if (!backupsAvailable()) return;

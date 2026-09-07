@@ -68,7 +68,7 @@ export function TransactionFormDialog({
       setNotes("");
       setEventId("");
     }
-  }, [open, transaction, isExpense]);
+  }, [open, transaction?.id, isExpense]);
 
   const submit = () => {
     const found: Record<string, string> = {};

@@ -89,7 +89,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
       setEstimated("");
       setActual("");
     }
-  }, [open, event, profile]);
+  }, [open, event?.id]);
 
   const update = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));

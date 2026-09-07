@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { clearDraft, readDraft, writeDraft } from "@/lib/drafts";
 
@@ -27,25 +27,32 @@ export function useDraftRecovery<T>(
   ready = true,
 ): DraftRecovery {
   const [recovered, setRecovered] = useState(false);
-  const checkedRef = useRef(false);
+  const checkedRef = useRef<string | null>(null);
+  const skipMirror = useRef(false);
   const restoreRef = useRef(restore);
   restoreRef.current = restore;
 
-  useEffect(() => {
-    if (!ready || checkedRef.current) return;
-    checkedRef.current = true;
+  useLayoutEffect(() => {
+    if (!ready || checkedRef.current === key) return;
+    checkedRef.current = key;
     const saved = readDraft<T>(key);
     if (saved === null) return;
+    skipMirror.current = true;
     restoreRef.current(saved);
     setRecovered(true);
   }, [key, ready]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Only start mirroring once the recovery check has had its turn, or the
     // form's own starting values would immediately overwrite the draft.
-    if (!ready || !checkedRef.current) return;
-    const timer = window.setTimeout(() => writeDraft(key, value), 400);
-    return () => window.clearTimeout(timer);
+    if (!ready || checkedRef.current !== key) return;
+    if (skipMirror.current) {
+      skipMirror.current = false;
+      return;
+    }
+    // Commit before paint. Cancelling a debounce on navigation lost the last
+    // 400 ms of typing, and async unload work cannot finish after webview exit.
+    writeDraft(key, value);
   }, [key, value, ready]);
 
   return {

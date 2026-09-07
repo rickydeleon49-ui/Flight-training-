@@ -138,8 +138,22 @@ const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 async function loadAll(repositories: Repositories): Promise<AppData> {
   const [
-    profile, milestones, goals, checklistItems, actions, materials, aiStudySets, tags,
-    events, prepItems, journalEntries, questions, notes, transactions, fundGoals, toolkit,
+    profile,
+    milestones,
+    goals,
+    checklistItems,
+    actions,
+    materials,
+    aiStudySets,
+    tags,
+    events,
+    prepItems,
+    journalEntries,
+    questions,
+    notes,
+    transactions,
+    fundGoals,
+    toolkit,
   ] = await Promise.all([
     repositories.profile.get(),
     repositories.milestones.list(),
@@ -160,8 +174,22 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
   ]);
 
   return {
-    profile, milestones, goals, checklistItems, actions, materials, aiStudySets, tags,
-    events, prepItems, journalEntries, questions, notes, transactions, fundGoals, toolkit,
+    profile,
+    milestones,
+    goals,
+    checklistItems,
+    actions,
+    materials,
+    aiStudySets,
+    tags,
+    events,
+    prepItems,
+    journalEntries,
+    questions,
+    notes,
+    transactions,
+    fundGoals,
+    toolkit,
   };
 }
 
@@ -193,10 +221,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const pendingRef = useRef<PendingDelete | null>(null);
   const undoTimerRef = useRef<number | null>(null);
 
+  const writeQueue = useRef(Promise.resolve());
+  const refreshVersion = useRef(0);
+
   const refresh = useCallback(async () => {
     const repositories = repositoriesRef.current;
     if (!repositories) return;
-    setData(await loadAll(repositories));
+    const version = ++refreshVersion.current;
+    const loaded = await loadAll(repositories);
+    if (version === refreshVersion.current) setData(loaded);
   }, []);
 
   useEffect(() => {
@@ -230,28 +263,39 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const mutate = useCallback(
-    async <T,>(work: (repos: Repositories) => Promise<T>): Promise<T | null> => {
+    async <T,>(
+      work: (repos: Repositories) => Promise<T>,
+    ): Promise<T | null> => {
       const repositories = repositoriesRef.current;
       if (!repositories) return null;
-      let result: T;
-      try {
-        result = await work(repositories);
-      } catch (mutationError) {
-        setLastError(describeError(mutationError));
-        return null;
-      }
-      // The write has happened and cannot be taken back. Reloading is how the
-      // screens catch up with it, and that can fail on its own — a stale
-      // screen is worth saying, but it is not a failed save. Callers undo
-      // their own work when this returns null (the split dialog deletes the
-      // chapter file it just wrote), so null has to mean the write failed.
-      try {
-        await refresh();
-        setLastError(null);
-      } catch (refreshError) {
-        setLastError(describeError(refreshError));
-      }
-      return result;
+      const run = async (): Promise<T | null> => {
+        let result: T;
+        try {
+          result = await work(repositories);
+        } catch (mutationError) {
+          setLastError(describeError(mutationError));
+          return null;
+        }
+        // The write has happened and cannot be taken back. Reloading is how the
+        // screens catch up with it, and that can fail on its own — a stale
+        // screen is worth saying, but it is not a failed save. Callers undo
+        // their own work when this returns null (the split dialog deletes the
+        // chapter file it just wrote), so null has to mean the write failed.
+        try {
+          await refresh();
+          setLastError(null);
+        } catch (refreshError) {
+          setLastError(describeError(refreshError));
+        }
+        return result;
+      };
+      // Repository updates read then write whole rows. Keep user mutations in order.
+      const queued = writeQueue.current.then(run);
+      writeQueue.current = queued.then(
+        () => undefined,
+        () => undefined,
+      );
+      return queued;
     },
     [refresh],
   );
@@ -261,7 +305,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const waiting = pendingRef.current;
     if (!waiting) return;
     pendingRef.current = null;
-    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    if (undoTimerRef.current !== null)
+      window.clearTimeout(undoTimerRef.current);
     undoTimerRef.current = null;
     setPending(null);
     await mutate(waiting.run);
@@ -270,17 +315,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const deleteWithUndo = useCallback(
     (request: PendingDelete) => {
       // One pending deletion at a time: a second one settles the first.
-      void commitPending().then(() => {
-        pendingRef.current = request;
-        setPending(request);
-        undoTimerRef.current = window.setTimeout(() => void commitPending(), UNDO_WINDOW_MS);
-      });
+      void commitPending();
+      pendingRef.current = request;
+      setPending(request);
+      undoTimerRef.current = window.setTimeout(
+        () => void commitPending(),
+        UNDO_WINDOW_MS,
+      );
     },
     [commitPending],
   );
 
   const undoDelete = useCallback(() => {
-    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    if (undoTimerRef.current !== null)
+      window.clearTimeout(undoTimerRef.current);
     undoTimerRef.current = null;
     pendingRef.current = null;
     setPending(null);
@@ -306,14 +354,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       lastError,
       clearError: () => setLastError(null),
     }),
-    [status, error, visibleData, mutate, refresh, deleteWithUndo, pending, undoDelete, lastError],
+    [
+      status,
+      error,
+      visibleData,
+      mutate,
+      refresh,
+      deleteWithUndo,
+      pending,
+      undoDelete,
+      lastError,
+    ],
   );
 
-  return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
+  return (
+    <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>
+  );
 }
 
 export function useAppData(): AppDataContextValue {
   const context = useContext(AppDataContext);
-  if (!context) throw new Error("useAppData must be used inside AppDataProvider");
+  if (!context)
+    throw new Error("useAppData must be used inside AppDataProvider");
   return context;
 }

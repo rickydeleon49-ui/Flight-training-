@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 
 import { Button, IconButton } from "./Button";
@@ -31,6 +31,7 @@ export function Dialog({
   narrow = false,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const element = ref.current;
@@ -52,7 +53,7 @@ export function Dialog({
     <dialog
       ref={ref}
       className={`dialog${narrow ? " dialog--narrow" : ""}`}
-      aria-labelledby="dialog-title"
+      aria-labelledby={titleId}
       // Clicking the backdrop (the dialog element itself) dismisses.
       onClick={(event) => {
         if (event.target === ref.current) onClose();
@@ -60,7 +61,7 @@ export function Dialog({
     >
       <div className="dialog__header">
         <div>
-          <h2 className="dialog__title" id="dialog-title">
+          <h2 className="dialog__title" id={titleId}>
             {title}
           </h2>
           {description ? <p className="dialog__description">{description}</p> : null}
