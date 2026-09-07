@@ -2,6 +2,18 @@
 
 _Last updated: 6 September 2026 · next application version `0.5.0` · branch `main`_
 
+## Final audit update — 6 September 2026
+
+**Do not publish or tag v0.5.0.** See [AUDIT.md](AUDIT.md) for findings,
+regression coverage, scope, limitations and continuation instructions.
+
+Remote main was verified at babba51 before this branch. Current local results:
+303 TypeScript tests in 32 files; 51 Windows Rust tests (52 expected on Unix);
+typecheck, production build, Rust formatting, Clippy and scoped Prettier pass.
+The notes autosave/closing fixes and broader data-preservation audit are on
+`fix/notes-recovery-release-audit`. PR/CI and post-merge installer results are
+recorded in the task handoff. These counts supersede historical counts below.
+
 ## Current position
 
 Her Flight Deck is a working private desktop application for Windows and macOS.
@@ -146,8 +158,8 @@ disagree.
 Important: Google states that free-tier inputs and outputs may be used to
 improve its products. Medical documents, certificate copies, addresses,
 personal logbook information, or other sensitive material should not be sent.
-The application warns about this but does not currently block it — see
-"Known limitations".
+Administrative materials and record attachments are blocked; misclassified
+personal documents still require user care — see "Known limitations".
 
 ### 5b. Gemini reliability and limits
 
@@ -383,7 +395,7 @@ Verified on this machine:
   while leaving the live data untouched.
 - `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean,
   and both now run in CI so they stay that way.
-- `cargo test` (48 tests). Backup and restore end to end against real files: a
+- `cargo test` (51 Windows tests; Unix adds one permissions test). Backup and restore end to end against real files: a
   complete archive put back with every document, a safety copy put back without
   disturbing uploads, the write-ahead log travelling with the database, a
   damaged archive refused before anything moves, and an archive carrying an
@@ -465,13 +477,9 @@ check, not a certificate, medical record, or personal logbook.
 
 ## Known limitations
 
-- There is no TypeScript linter or formatter. The Rust side is gated on
-  `cargo fmt` and `cargo clippy` in CI; nothing equivalent watches the
-  TypeScript, and it shows — `src/pages/PilotToolkit/PilotToolkit.tsx` has
-  twenty-three lines over two hundred characters, one of them 2,651, and it
-  is the only file in the repository like that. Adding Prettier and ESLint
-  would fix it, but a repository-wide reformat is a large diff that should
-  not land in the same change as a release.
+- No repository-wide TypeScript lint/format gate exists. Substantially changed
+  files, including PilotToolkit, passed scoped Prettier 3.6.2 checks in this audit.
+  Rust formatting and Clippy remain enforced in CI.
 
 - Google Sign-In does not directly grant a third-party desktop application
   Gemini API access. The student must create and paste a free API key once.

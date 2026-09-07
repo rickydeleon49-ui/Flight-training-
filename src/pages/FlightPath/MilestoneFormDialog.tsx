@@ -43,7 +43,7 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
       status: milestone.status,
       targetDate: milestone.targetDate,
     });
-  }, [open, milestone]);
+  }, [open, milestone?.id]);
 
   const update = <K extends keyof MilestoneDraft>(key: K, value: MilestoneDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));

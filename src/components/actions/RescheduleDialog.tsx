@@ -21,7 +21,7 @@ export function RescheduleDialog({ action, onClose, onReschedule }: RescheduleDi
 
   useEffect(() => {
     if (action) setDate(todayIso());
-  }, [action]);
+  }, [action?.id]);
 
   if (!action) return null;
 

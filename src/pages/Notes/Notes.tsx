@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -46,6 +46,10 @@ export function Notes() {
   const today = todayIso();
 
   const [draft, setDraft] = useState<NoteDraft>(EMPTY_DRAFT);
+  const latestDraft = useRef(draft);
+  latestDraft.current = draft;
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Note | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<Note | null>(null);
   const [search, setSearch] = useRememberedState("notes.search", "", isText);
@@ -53,16 +57,24 @@ export function Notes() {
   // A note half-written when she closes the page is still worth keeping.
   const { recovered, forget } = useDraftRecovery("notes.new", draft, setDraft);
 
-  const visible = useMemo(() => searchNotes(data.notes, search), [data.notes, search]);
+  const visible = useMemo(
+    () => searchNotes(data.notes, search),
+    [data.notes, search],
+  );
   const pinnedCount = data.notes.filter((note) => note.pinned).length;
 
   const save = async () => {
+    if (saving.current) return;
     const body = draft.body.trim();
     if (!body) return;
+    saving.current = true;
+    setBusy(true);
     const result = await mutate((repos) =>
       repos.notes.create({ title: draft.title.trim(), body }),
     );
-    if (result === null) return;
+    saving.current = false;
+    setBusy(false);
+    if (result === null || latestDraft.current !== draft) return;
     setDraft(EMPTY_DRAFT);
     forget();
   };
@@ -77,7 +89,8 @@ export function Notes() {
       {recovered ? (
         <div className="draft-note" role="status">
           <p className="small">
-            Picked up where you left off — this is what you had typed but not saved.
+            Picked up where you left off — this is what you had typed but not
+            saved.
           </p>
           <Button
             size="small"
@@ -100,18 +113,28 @@ export function Notes() {
                 value={draft.title}
                 aria-label="Title (optional)"
                 placeholder="Title — optional"
-                onChange={(e) => setDraft((current) => ({ ...current, title: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((current) => ({ ...current, title: e.target.value }))
+                }
               />
               <TextArea
                 rows={4}
                 value={draft.body}
                 aria-label="Note"
                 placeholder="The school on the north field returns calls after four. Ask about their discovery flight."
-                onChange={(e) => setDraft((current) => ({ ...current, body: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((current) => ({ ...current, body: e.target.value }))
+                }
               />
               <div className="row row--between">
-                <span className="tiny dim">Saved here only — nothing is sent anywhere.</span>
-                <Button variant="primary" onClick={save} disabled={!draft.body.trim()}>
+                <span className="tiny dim">
+                  Saved here only — nothing is sent anywhere.
+                </span>
+                <Button
+                  variant="primary"
+                  onClick={save}
+                  disabled={busy || !draft.body.trim()}
+                >
                   Save note
                 </Button>
               </div>
@@ -224,7 +247,9 @@ function NoteRow({
           <h3 className="note-row__title wrap-anywhere">{heading}</h3>
           {note.pinned ? <Badge tone="berry">Pinned</Badge> : null}
         </div>
-        {preview ? <p className="note-row__body wrap-anywhere">{preview}</p> : null}
+        {preview ? (
+          <p className="note-row__body wrap-anywhere">{preview}</p>
+        ) : null}
         <p className="tiny dim">
           {changed === written
             ? formatLongDate(written, today)
@@ -234,15 +259,25 @@ function NoteRow({
 
       <div className="note-row__tools">
         <IconButton
-          label={note.pinned ? `Unpin note: ${heading}` : `Pin note: ${heading}`}
-          onClick={() => mutate((repos) => repos.notes.update(note.id, { pinned: !note.pinned }))}
+          label={
+            note.pinned ? `Unpin note: ${heading}` : `Pin note: ${heading}`
+          }
+          onClick={() =>
+            mutate((repos) =>
+              repos.notes.update(note.id, { pinned: !note.pinned }),
+            )
+          }
         >
           <PinIcon size={16} />
         </IconButton>
         <Button size="small" variant="ghost" onClick={onEdit}>
           Edit
         </Button>
-        <IconButton label={`Delete note: ${heading}`} tone="danger" onClick={onDelete}>
+        <IconButton
+          label={`Delete note: ${heading}`}
+          tone="danger"
+          onClick={onDelete}
+        >
           <TrashIcon size={16} />
         </IconButton>
       </div>
@@ -252,15 +287,29 @@ function NoteRow({
 
 function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
   const { mutate } = useAppData();
-  const [draft, setDraft] = useState<NoteDraft>({ title: note.title, body: note.body });
+  const [draft, setDraft] = useState<NoteDraft>({
+    title: note.title,
+    body: note.body,
+  });
+  const latestDraft = useRef(draft);
+  latestDraft.current = draft;
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const { forget } = useDraftRecovery(`notes.${note.id}`, draft, setDraft);
 
   const save = async () => {
+    if (saving.current) return;
     const body = draft.body.trim();
     if (!body) return;
+    saving.current = true;
+    setBusy(true);
     const result = await mutate((repos) =>
       repos.notes.update(note.id, { title: draft.title.trim(), body }),
     );
-    if (result === null) return;
+    saving.current = false;
+    setBusy(false);
+    if (result === null || latestDraft.current !== draft) return;
+    forget();
     onClose();
   };
 
@@ -271,19 +320,36 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
           value={draft.title}
           aria-label="Title (optional)"
           placeholder="Title — optional"
-          onChange={(e) => setDraft((current) => ({ ...current, title: e.target.value }))}
+          onChange={(e) =>
+            setDraft((current) => ({ ...current, title: e.target.value }))
+          }
         />
         <TextArea
           rows={5}
           value={draft.body}
           aria-label="Note"
-          onChange={(e) => setDraft((current) => ({ ...current, body: e.target.value }))}
+          onChange={(e) =>
+            setDraft((current) => ({ ...current, body: e.target.value }))
+          }
         />
         <div className="row">
-          <Button size="small" variant="primary" onClick={save} disabled={!draft.body.trim()}>
+          <Button
+            size="small"
+            variant="primary"
+            onClick={save}
+            disabled={busy || !draft.body.trim()}
+          >
             Save changes
           </Button>
-          <Button size="small" variant="ghost" onClick={onClose}>
+          <Button
+            size="small"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => {
+              forget();
+              onClose();
+            }}
+          >
             Cancel
           </Button>
         </div>

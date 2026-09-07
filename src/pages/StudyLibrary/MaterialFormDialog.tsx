@@ -85,7 +85,7 @@ export function MaterialFormDialog({
       setDraft(emptyDraft());
       setTagText("");
     }
-  }, [open, material]);
+  }, [open, material?.id]);
 
   const update = <K extends keyof MaterialDraft>(key: K, value: MaterialDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -286,7 +286,7 @@ export function MaterialFormDialog({
             )}
           </Field>
 
-          <Field label="Personal notes" full>
+          {!material ? <Field label="Personal notes" full>
             {({ id }) => (
               <TextArea
                 id={id}
@@ -296,7 +296,7 @@ export function MaterialFormDialog({
                 onChange={(e) => update("notes", e.target.value)}
               />
             )}
-          </Field>
+          </Field> : <p className="tiny dim">Edit personal notes on the material page; they save automatically.</p>}
         </div>
       </div>
     </Dialog>

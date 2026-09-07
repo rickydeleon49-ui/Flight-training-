@@ -148,7 +148,12 @@ pub async fn split_pdf(
         documents::stored_destination(&app, &material_id, &original_file_name)?;
 
     let written = destination.clone();
-    run_off_thread(move || write_page_range(&source, &written, first_page, last_page)).await?;
+    if let Err(error) =
+        run_off_thread(move || write_page_range(&source, &written, first_page, last_page)).await
+    {
+        let _ = std::fs::remove_file(&destination);
+        return Err(error);
+    }
 
     let file_size = std::fs::metadata(&destination)
         .map_err(|e| format!("The split PDF could not be read back: {e}"))?

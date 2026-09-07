@@ -31,13 +31,15 @@ export function readDraft<T>(key: string): T | null {
   }
 }
 
-export function writeDraft<T>(key: string, value: T): void {
+export function writeDraft<T>(key: string, value: T): boolean {
   const store = storage();
-  if (!store) return;
+  if (!store) return false;
   try {
     store.setItem(PREFIX + key, JSON.stringify(value));
+    return true;
   } catch {
     // Out of space, or private mode. The form still works.
+    return false;
   }
 }
 

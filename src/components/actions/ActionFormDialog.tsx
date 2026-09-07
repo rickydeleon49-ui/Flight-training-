@@ -83,7 +83,7 @@ export function ActionFormDialog({
           }
         : emptyDraft(relatedType, relatedId, defaultCategory),
     );
-  }, [open, action, relatedType, relatedId, defaultCategory]);
+  }, [open, action?.id, relatedType, relatedId, defaultCategory]);
 
   const update = <K extends keyof ActionDraft>(key: K, value: ActionDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
