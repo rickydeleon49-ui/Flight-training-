@@ -3,8 +3,8 @@
 Version 0.5.0 remains unreleased. **Do not publish, tag, or run release.yml.**
 The authorized endpoint is green CI, PR merge, and both test installer builds.
 Starting remote main was verified at babba51d04a6890384d3b4dfaea06c0f616cbd9d.
-The old checkout was clean and left untouched; this branch is
-`fix/notes-recovery-release-audit` in a fresh checkout.
+The automatic PDF work is on `feat/automatic-pdf-parts`, based on the audited
+and merged notes-recovery work.
 
 ## Findings fixed
 
@@ -32,13 +32,27 @@ The old checkout was clean and left untouched; this branch is
    Atomic filename reservation preserves existing bytes for imports and PDF
    splits. Failed writes clean up reserved destinations. Windows drive-relative
    and alternate-stream paths are refused on all platforms.
-9. Multiple dialogs reused one title ID. Each now has a unique accessible ID.
+9. Oversized PDFs previously required guessing and saving one manual page range
+   at a time, and size was only known after the split. The app now creates the
+   complete labeled set automatically, caps every part at 50 MB and 1,000 pages,
+   preserves continuous source page ranges, and rolls back files and library
+   records after partial failures. Each part is independently eligible for a
+   study guide.
+
+## Current verification
+
+- 305 TypeScript tests pass in 33 files.
+- 53 Windows Rust tests pass.
+- TypeScript typecheck and production build pass.
+- Rust formatting and Clippy with warnings denied pass.
+- The npm dependency audit reports zero vulnerabilities.
+10. Multiple dialogs reused one title ID. Each now has a unique accessible ID.
 
 ## Validation
 
-- 303 TypeScript tests across 32 files (283 baseline plus 20 new regressions).
-- 51 Windows Rust tests passed (49 baseline plus 2); Unix has an additional
-  permissions test, so 52 are expected in Linux CI and macOS builds.
+- 305 TypeScript tests across 33 files.
+- 53 Windows Rust tests passed; Unix has an additional permissions test, so 54
+  are expected in Linux CI and macOS builds.
 - Explicit typecheck, production build, cargo fmt --check, and
   cargo clippy --all-targets -- -D warnings passed locally.
 - Substantially changed TypeScript files passed pinned Prettier 3.6.2 checks,

@@ -1,4 +1,4 @@
-//! Taking one chapter out of a study PDF.
+//! Turning an oversized study PDF into study-sized parts.
 //!
 //! Google reads a PDF up to 50 MB or 1,000 pages, whichever comes first, and
 //! an FAA handbook is comfortably past both. That limit is Google's and the
@@ -21,6 +21,7 @@ use crate::documents::{self, ImportedDocument};
 /// Google reads 1,000 pages at a time, so a wider range would produce a file
 /// it still refuses — and she would have done the work for nothing.
 pub(crate) const MAX_PAGES: u32 = 1_000;
+pub(crate) const MAX_PDF_BYTES: u64 = 50 * 1024 * 1024;
 
 /// What a stored PDF holds, so a page range can be asked for sensibly.
 #[derive(Debug, serde::Serialize)]
@@ -29,6 +30,16 @@ pub struct PdfOutline {
     pub pages: u32,
     /// The most pages one split may take, so the interface can say so.
     pub max_pages_per_split: u32,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfPart {
+    pub relative_path: String,
+    pub original_file_name: String,
+    pub file_size: u64,
+    pub first_page: u32,
+    pub last_page: u32,
 }
 
 fn open_pdf(path: &Path) -> Result<Document, String> {
@@ -73,7 +84,17 @@ fn write_page_range(
         ));
     }
 
-    let mut document = open_pdf(source)?;
+    let document = open_pdf(source)?;
+    write_page_range_from_document(&document, destination, first, last)
+}
+
+fn write_page_range_from_document(
+    source: &Document,
+    destination: &Path,
+    first: u32,
+    last: u32,
+) -> Result<u32, String> {
+    let mut document = source.clone();
     let numbers: Vec<u32> = document.get_pages().into_keys().collect();
     let total = u32::try_from(numbers.len()).unwrap_or(u32::MAX);
     if first > total {
@@ -107,6 +128,41 @@ fn write_page_range(
         .map_err(|e| format!("Could not save the split PDF: {e}"))?;
 
     Ok(kept)
+}
+
+fn largest_fitting_last_page<F>(
+    first: u32,
+    total: u32,
+    max_pages: u32,
+    max_bytes: u64,
+    mut write_candidate: F,
+) -> Result<(u32, u64), String>
+where
+    F: FnMut(u32) -> Result<u64, String>,
+{
+    let mut low = first;
+    let mut high = total.min(first.saturating_add(max_pages - 1));
+    let mut best = None;
+
+    while low <= high {
+        let middle = low + (high - low) / 2;
+        let bytes = write_candidate(middle)?;
+        if bytes <= max_bytes {
+            best = Some((middle, bytes));
+            low = middle.saturating_add(1);
+        } else if middle == first {
+            break;
+        } else {
+            high = middle - 1;
+        }
+    }
+
+    match best {
+        Some((last, _)) => Ok((last, write_candidate(last)?)),
+        None => Err(format!(
+            "Page {first} is larger than 50 MB by itself. Compress that PDF and try again."
+        )),
+    }
 }
 
 /// How many pages a stored PDF has, counted away from the interface thread.
@@ -164,6 +220,79 @@ pub async fn split_pdf(
         original_file_name,
         file_size,
     })
+}
+
+/// Split a stored PDF into consecutive parts that Google can read.
+///
+/// The original is read only. All output files are removed if any part fails,
+/// so the library can never be left with half of an automatic split.
+#[tauri::command]
+pub async fn split_pdf_automatically(
+    app: AppHandle,
+    relative_path: String,
+    batch_id: String,
+    file_name: String,
+) -> Result<Vec<PdfPart>, String> {
+    let source = documents::stored_document_path(&app, &relative_path)?;
+    run_off_thread(move || {
+        let document = open_pdf(&source)?;
+        let total = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
+        if total == 0 {
+            return Err("That PDF has no pages this application can read.".to_string());
+        }
+
+        let base = file_name.trim().trim_end_matches(".pdf").trim();
+        let base = if base.is_empty() {
+            "Study document"
+        } else {
+            base
+        };
+        let mut created_paths = Vec::new();
+        let result = (|| {
+            let mut parts = Vec::new();
+            let mut first = 1;
+            let mut number = 1;
+            while first <= total {
+                let part_name = format!("{base} - Part {number}.pdf");
+                let part_id = format!("{batch_id}-part-{number}");
+                let (destination, stored_name) =
+                    documents::stored_destination(&app, &part_id, &part_name)?;
+                created_paths.push(destination.clone());
+
+                let (last, file_size) = largest_fitting_last_page(
+                    first,
+                    total,
+                    MAX_PAGES,
+                    MAX_PDF_BYTES,
+                    |candidate| {
+                        write_page_range_from_document(&document, &destination, first, candidate)?;
+                        std::fs::metadata(&destination)
+                            .map(|metadata| metadata.len())
+                            .map_err(|e| format!("The split PDF could not be read back: {e}"))
+                    },
+                )?;
+
+                parts.push(PdfPart {
+                    relative_path: stored_name,
+                    original_file_name: part_name,
+                    file_size,
+                    first_page: first,
+                    last_page: last,
+                });
+                first = last + 1;
+                number += 1;
+            }
+            Ok(parts)
+        })();
+
+        if result.is_err() {
+            for path in created_paths {
+                let _ = std::fs::remove_file(path);
+            }
+        }
+        result
+    })
+    .await
 }
 
 /// Make sure the new document is named like the PDF it is.
@@ -383,5 +512,24 @@ mod tests {
         assert_eq!(pdf_file_name("PHAK chapter 3"), "PHAK chapter 3.pdf");
         assert_eq!(pdf_file_name("PHAK chapter 3.pdf"), "PHAK chapter 3.pdf");
         assert_eq!(pdf_file_name("  "), "chapter.pdf");
+    }
+
+    #[test]
+    fn automatic_ranges_use_the_largest_fitting_page_and_respect_page_limit() {
+        let (last, bytes) =
+            largest_fitting_last_page(1, 2_500, 1_000, 50, |page| Ok(u64::from(page) / 10))
+                .unwrap();
+        assert_eq!((last, bytes), (509, 50));
+
+        let (last, _) =
+            largest_fitting_last_page(1, 2_500, 1_000, 5_000, |page| Ok(u64::from(page))).unwrap();
+        assert_eq!(last, 1_000);
+    }
+
+    #[test]
+    fn a_single_oversized_page_gets_an_actionable_error() {
+        let error = largest_fitting_last_page(17, 30, 1_000, 50, |_| Ok(51)).unwrap_err();
+        assert!(error.contains("Page 17"));
+        assert!(error.contains("Compress"));
     }
 }

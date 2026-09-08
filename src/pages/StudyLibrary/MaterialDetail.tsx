@@ -253,7 +253,7 @@ function MaterialDetailPage() {
                     </p>
                   </div>
                   {canSplit ? (
-                    <Button onClick={() => setSplitting(true)}>Split</Button>
+                    <Button onClick={() => setSplitting(true)}>Split automatically</Button>
                   ) : null}
                   {!fileMissing && canHandleFiles() ? (
                     <Button onClick={open}>
@@ -309,7 +309,7 @@ function MaterialDetailPage() {
                     {canSplit ? (
                       <div>
                         <Button variant="secondary" onClick={() => setSplitting(true)}>
-                          Take out a chapter
+                          Create study-size parts
                         </Button>
                       </div>
                     ) : null}
@@ -607,9 +607,9 @@ function MaterialDetailPage() {
           open={splitting}
           material={material}
           onClose={() => setSplitting(false)}
-          onCreated={(newMaterialId) => {
+          onCreated={() => {
             setSplitting(false);
-            navigate(`/study/${newMaterialId}`);
+            navigate("/study");
           }}
         />
       ) : null}

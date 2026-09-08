@@ -1,6 +1,20 @@
 # Her Flight Deck — Current Project Status
 
-_Last updated: 6 September 2026 · next application version `0.5.0` · branch `main`_
+_Last updated: 7 September 2026 · next application version `0.5.0` · branch `feat/automatic-pdf-parts`_
+
+## Automatic study-size PDF parts — 7 September 2026
+
+An oversized PDF can now be divided in one step into consecutive parts that
+are each no larger than 50 MB and no longer than 1,000 pages. The source PDF is
+preserved. Every result is a separate Study Library item labeled “Part X of Y,”
+inherits the source material's organization, records its original page range,
+and can generate its own Gemini study guide.
+
+The splitter chooses the largest fitting consecutive page range, continues
+without gaps, and removes the complete output set if any part fails. A single
+page over 50 MB receives an actionable compression message. Current local
+results: 305 TypeScript tests in 33 files; 53 Windows Rust tests; typecheck,
+production build, Rust formatting, Clippy, and dependency audit pass.
 
 ## Final audit update — 6 September 2026
 
@@ -8,7 +22,7 @@ _Last updated: 6 September 2026 · next application version `0.5.0` · branch `m
 regression coverage, scope, limitations and continuation instructions.
 
 Remote main was verified at babba51 before this branch. Current local results:
-303 TypeScript tests in 32 files; 51 Windows Rust tests (52 expected on Unix);
+305 TypeScript tests in 33 files; 53 Windows Rust tests (54 expected on Unix);
 typecheck, production build, Rust formatting, Clippy and scoped Prettier pass.
 The notes autosave/closing fixes and broader data-preservation audit are on
 `fix/notes-recovery-release-audit`. PR/CI and post-merge installer results are
@@ -173,12 +187,11 @@ personal documents still require user care — see "Known limitations".
   the interface before she clicks and enforced again in Rust.
 - An oversized or unreadable file says which limit it broke and what to do
   about it — split the handbook, add the chapter — instead of only refusing.
-- **Splitting a handbook.** Any library PDF can be split by page range on her
-  own machine into a study document of its own, carrying the topic, priority,
-  goal, lesson and tags of the book it came from. The original is never
-  changed, deleted pages are pruned rather than unlinked (so the chapter is a
-  fraction of the size, not nearly all of it), and a range past Google's
-  1,000-page limit is refused before the work is done rather than after.
+- **Splitting a handbook.** Any library PDF can be split automatically on her
+  own machine into a complete sequence of parts capped at 50 MB and 1,000
+  pages. Each labeled library item carries the source topic, priority, goal,
+  lesson, tags and page range, and can generate its own study guide. The
+  original is never changed and incomplete output is cleaned up.
 - The wait is narrated: each retry pause is emitted to the window, so a busy
   model reads as "Waiting 3 seconds, then trying again — attempt 3 of 4"
   instead of a spinner that says nothing for half a minute.

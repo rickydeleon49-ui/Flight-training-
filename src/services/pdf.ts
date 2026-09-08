@@ -16,6 +16,11 @@ export interface PdfOutline {
   maxPagesPerSplit: number;
 }
 
+export interface PdfPart extends ImportedDocument {
+  firstPage: number;
+  lastPage: number;
+}
+
 export const canSplitPdfs = (): boolean => isTauri();
 
 /** How many pages a stored PDF has. */
@@ -39,4 +44,14 @@ export async function splitPdf(request: {
 }): Promise<ImportedDocument> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke<ImportedDocument>("split_pdf", request);
+}
+
+/** Create consecutive, study-sized parts while preserving the source PDF. */
+export async function splitPdfAutomatically(request: {
+  relativePath: string;
+  batchId: string;
+  fileName: string;
+}): Promise<PdfPart[]> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<PdfPart[]>("split_pdf_automatically", request);
 }
