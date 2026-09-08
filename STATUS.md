@@ -1,6 +1,20 @@
 # Her Flight Deck — Current Project Status
 
-_Last updated: 7 September 2026 · next application version `0.5.0` · branch `feat/automatic-pdf-parts`_
+_Last updated: 7 September 2026 · next application version `0.5.0` · branch `fix/desktop-attachments-macos-settings`_
+
+## Desktop attachments and macOS guidance — 7 September 2026
+
+Imported files continue to be copied into Her Flight Deck's private desktop
+storage. A missing stored copy can now be located and imported again without
+losing its material notes, tags, review state or generated study guide. When a
+present file has no working default viewer, the actual operating-system error
+is shown and the file can be revealed in Finder or File Explorer.
+
+Every Settings section now includes a macOS-specific note covering profile
+saves, regional dates, Photos/Finder, appearance, local starter data, complete
+backups and Application Support, first launch of the unsigned app, and Gemini
+browser/key behavior. Current local results: 310 TypeScript tests in 35 files
+and the production build pass.
 
 ## Automatic study-size PDF parts — 7 September 2026
 
@@ -22,7 +36,7 @@ production build, Rust formatting, Clippy, and dependency audit pass.
 regression coverage, scope, limitations and continuation instructions.
 
 Remote main was verified at babba51 before this branch. Current local results:
-305 TypeScript tests in 33 files; 53 Windows Rust tests (54 expected on Unix);
+310 TypeScript tests in 35 files; 53 Windows Rust tests (54 expected on Unix);
 typecheck, production build, Rust formatting, Clippy and scoped Prettier pass.
 The notes autosave/closing fixes and broader data-preservation audit are on
 `fix/notes-recovery-release-audit`. PR/CI and post-merge installer results are

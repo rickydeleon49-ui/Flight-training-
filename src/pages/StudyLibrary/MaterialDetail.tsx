@@ -32,12 +32,16 @@ import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
 import { checkAiSubmission } from "@/logic/aiSafety";
 import { checkFileForGemini } from "@/logic/aiLimits";
+import { restoreDocumentCopy } from "@/logic/documentRecovery";
 import {
   canHandleFiles,
   deleteDocument,
+  documentErrorMessage,
   documentExists,
   formatFileSize,
   openDocument,
+  pickAndImportDocument,
+  revealDocument,
 } from "@/services/documents";
 import {
   geminiErrorMessage,
@@ -75,6 +79,7 @@ function MaterialDetailPage() {
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
+  const [restoringFile, setRestoringFile] = useState(false);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -178,7 +183,43 @@ function MaterialDetailPage() {
     try {
       await openDocument(material.filePath);
     } catch (error) {
-      setOpenError(error instanceof Error ? error.message : "That file could not be opened.");
+      setOpenError(documentErrorMessage(error, "That file could not be opened."));
+    }
+  };
+
+  const revealStoredFile = async () => {
+    if (!material.filePath) return;
+    try {
+      await revealDocument(material.filePath);
+    } catch (error) {
+      setOpenError(documentErrorMessage(error, "The stored file could not be shown."));
+    }
+  };
+
+  const restoreFile = async () => {
+    setOpenError(null);
+    setRestoringFile(true);
+    try {
+      const restored = await restoreDocumentCopy(
+        material.id,
+        pickAndImportDocument,
+        async (imported) => {
+          const saved = await mutate((repos) =>
+            repos.documents.update(material.id, {
+              filePath: imported.relativePath,
+              originalFileName: imported.originalFileName,
+              fileSize: imported.fileSize,
+            }),
+          );
+          if (saved === null) throw new Error("That file could not be saved to your library.");
+        },
+        deleteDocument,
+      );
+      if (restored) setFileMissing(false);
+    } catch (error) {
+      setOpenError(error instanceof Error ? error.message : "That file could not be restored.");
+    } finally {
+      setRestoringFile(false);
     }
   };
 
@@ -262,15 +303,30 @@ function MaterialDetailPage() {
                   ) : null}
                 </div>
                 {fileMissing ? (
-                  <p className="tiny muted" style={{ marginTop: "var(--space-3)" }}>
-                    Everything you wrote about it is still here. Edit this material to add
-                    the file again.
-                  </p>
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="tiny muted">
+                      Everything you wrote is still here. Choose the original or a replacement
+                      copy; it will be copied back inside the desktop app.
+                    </p>
+                    <Button
+                      size="small"
+                      variant="primary"
+                      disabled={restoringFile}
+                      onClick={() => void restoreFile()}
+                    >
+                      {restoringFile ? "Restoring…" : "Find and restore file"}
+                    </Button>
+                  </div>
                 ) : null}
                 {openError ? (
-                  <p className="field__error" style={{ marginTop: "var(--space-3)" }}>
-                    {openError}
-                  </p>
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="field__error">{openError}</p>
+                    {!fileMissing ? (
+                      <Button size="small" onClick={() => void revealStoredFile()}>
+                        Show in Finder or File Explorer
+                      </Button>
+                    ) : null}
+                  </div>
                 ) : null}
               </CardBody>
             </Card>
