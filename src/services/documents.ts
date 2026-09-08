@@ -11,7 +11,7 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { openPath, revealItemInDir } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
 
@@ -29,6 +29,12 @@ export class DesktopOnlyError extends Error {
 }
 
 export const canHandleFiles = (): boolean => isTauri();
+
+export function documentErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  return fallback;
+}
 
 /** Ask the user for a file and copy it into private storage. */
 export async function pickAndImportDocument(materialId: string): Promise<ImportedDocument | null> {
@@ -65,6 +71,13 @@ export async function openDocument(relativePath: string): Promise<void> {
   if (!isTauri()) throw new DesktopOnlyError();
   const absolute = await invoke<string>("document_path", { relativePath });
   await openPath(absolute);
+}
+
+/** Select a stored document in Finder or File Explorer when its default app cannot open it. */
+export async function revealDocument(relativePath: string): Promise<void> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  const absolute = await invoke<string>("document_path", { relativePath });
+  await revealItemInDir(absolute);
 }
 
 /** Remove a stored document from private storage. */

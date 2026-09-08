@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -71,6 +72,14 @@ const draftFrom = (profile: Profile): ProfileDraft => ({
   photo: profile.photo,
   accentColor: profile.accentColor,
 });
+
+function MacNote({ children }: { children: ReactNode }) {
+  return (
+    <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+      <strong>On macOS:</strong> {children}
+    </p>
+  );
+}
 
 export function Settings() {
   const { data, mutate, repositories } = useAppData();
@@ -353,6 +362,7 @@ export function Settings() {
         <Card>
           <CardHeader title="About you" eyebrow="Greeting and focus" />
           <CardBody>
+            <MacNote>Use Save profile before closing the window with the red button.</MacNote>
             <div className="form-grid">
               <Field label="What should we call you?">
                 {({ id }) => (
@@ -409,6 +419,9 @@ export function Settings() {
             eyebrow="Used to fill in new lessons"
           />
           <CardBody>
+            <MacNote>
+              Dates use the Mac&rsquo;s region and calendar settings; these fields remain optional.
+            </MacNote>
             <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
               None of this is required. Before you have settled on a school you can
               leave it empty, or fill in only the parts that are true today.
@@ -512,6 +525,10 @@ export function Settings() {
         <Card>
           <CardHeader title="Why you started" eyebrow="Yours alone" />
           <CardBody>
+            <MacNote>
+              Export a picture from Photos or choose one from Finder. It is resized and stored
+              in the app&rsquo;s private database.
+            </MacNote>
             <div className="stack stack--5">
               <div className="photo-field">
                 {draft.photo ? (
@@ -587,6 +604,7 @@ export function Settings() {
         <Card>
           <CardHeader title="Look and feel" eyebrow="Accent colour" />
           <CardBody>
+            <MacNote>The accent follows Her Flight Deck on this Mac and changes immediately.</MacNote>
             <div className="stack stack--4">
               <p className="small muted">
                 Changes the accent used across the application. Takes effect straight away.
@@ -621,6 +639,7 @@ export function Settings() {
         <Card>
           <CardHeader title="Airline pilot starter pack" eyebrow="Built-in guidance" />
           <CardBody>
+            <MacNote>Restoring starter items changes only this Mac&rsquo;s local library.</MacNote>
             <div className="stack stack--4">
               <p className="small muted">
                 Includes a complete career roadmap from training foundations through ATP and
@@ -661,6 +680,11 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
+              <MacNote>
+                Complete backups can be saved to iCloud Drive and include uploaded documents.
+                Finder&rsquo;s Go to Folder opens the Application Support path shown below.
+              </MacNote>
+
               {backupNote ? (
                 <p
                   className="small"
@@ -774,6 +798,10 @@ export function Settings() {
         <Card>
           <CardHeader title="About this application" eyebrow="Scope" />
           <CardBody>
+            <MacNote>
+              This release is unsigned. On first launch, Control-click the app in Finder,
+              choose Open, then confirm Open if macOS asks.
+            </MacNote>
             <p className="small muted">
               Her Flight Deck organizes the training information you put into it. It does not
               replace your flight instructor, your flight school, official aviation
@@ -791,6 +819,10 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
+              <MacNote>
+                Google AI Studio opens in the default browser. The API key stays in this
+                Mac&rsquo;s Application Support folder and is not included in backups.
+              </MacNote>
               <p className="small muted">
                 Gemini can turn a selected Study Library document into a study guide and
                 flashcards. Only files you deliberately analyze are sent to Google. Personal

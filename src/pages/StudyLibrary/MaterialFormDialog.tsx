@@ -182,8 +182,9 @@ export function MaterialFormDialog({
             </p>
           ) : (
             <p className="tiny dim">
-              The file is copied into this application&rsquo;s private storage. Optional — a
-              material can be notes alone.
+              The file is copied into the desktop app&rsquo;s private storage on this computer,
+              so moving or deleting the original will not break this copy. Include it in a
+              complete backup before moving to another computer.
             </p>
           )}
           {fileError ? <p className="field__error">{fileError}</p> : null}

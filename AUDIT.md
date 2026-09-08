@@ -1,12 +1,19 @@
-# Release candidate audit — 6 September 2026
+# Release candidate audit — updated 7 September 2026
 
 Version 0.5.0 remains unreleased. **Do not publish, tag, or run release.yml.**
 The authorized endpoint is green CI, PR merge, and both test installer builds.
 Starting remote main was verified at babba51d04a6890384d3b4dfaea06c0f616cbd9d.
-The automatic PDF work is on `feat/automatic-pdf-parts`, based on the audited
-and merged notes-recovery work.
+The automatic PDF work is merged. This attachment and macOS follow-up is on
+`fix/desktop-attachments-macos-settings`.
 
 ## Findings fixed
+
+**Desktop attachment follow-up.** Library attachments were already copied into
+private app storage, but a missing copy required an indirect edit flow and an
+external-viewer failure hid the desktop shell's real error. Materials now offer
+transactional file recovery, preserve useful open errors, and can reveal the
+stored copy in Finder or File Explorer. Settings now documents macOS behavior
+section by section.
 
 1. Material notes followed stale autosave refresh snapshots. The keyed editor
    now owns active text and drains later edits after the in-flight save.
@@ -41,7 +48,7 @@ and merged notes-recovery work.
 
 ## Current verification
 
-- 305 TypeScript tests pass in 33 files.
+- 310 TypeScript tests pass in 35 files.
 - 53 Windows Rust tests pass.
 - TypeScript typecheck and production build pass.
 - Rust formatting and Clippy with warnings denied pass.
@@ -50,7 +57,7 @@ and merged notes-recovery work.
 
 ## Validation
 
-- 305 TypeScript tests across 33 files.
+- 310 TypeScript tests across 35 files.
 - 53 Windows Rust tests passed; Unix has an additional permissions test, so 54
   are expected in Linux CI and macOS builds.
 - Explicit typecheck, production build, cargo fmt --check, and
