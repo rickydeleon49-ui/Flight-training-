@@ -194,13 +194,12 @@ bad key. Settings explains that enabling billing moves the Google Cloud project
 to paid Tier 1 with higher rate limits, while making clear that billing cannot
 guarantee model capacity.
 
-**Taking out a chapter.** A handbook past those limits is not a dead end. The
-Study Library splits a PDF on her own machine — she picks a page range, and it
-is saved as a study document of its own with the metadata of the book it came
-from, leaving the original untouched. Deleted pages are pruned rather than
-merely unlinked, so a chapter is a fraction of the book's size rather than
-nearly all of it, and a study aid from one chapter is better than one from a
-whole book anyway.
+**Creating study-size parts.** A handbook past those limits is not a dead end.
+The Study Library splits the complete PDF on her own machine into consecutive
+parts no larger than 50 MB or 1,000 pages. It labels them “Part X of Y,” keeps
+their original page ranges and the book's metadata, and gives each part its own
+study-guide action. The original stays untouched. Deleted pages are pruned
+rather than merely unlinked, so each part carries only the pages it needs.
 
 Google's free-tier terms say submitted content may be used to improve its
 products. Do not send medical records, certificates, addresses, logbooks with

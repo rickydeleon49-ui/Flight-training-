@@ -105,6 +105,7 @@ pub fn run() {
             documents::delete_document,
             pdf::inspect_pdf,
             pdf::split_pdf,
+            pdf::split_pdf_automatically,
             gemini::gemini_status,
             gemini::configure_gemini,
             gemini::disconnect_gemini,
