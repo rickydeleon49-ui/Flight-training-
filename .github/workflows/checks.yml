@@ -31,8 +31,8 @@ jobs:
     # six hours, which is how long a stuck run sat here before anyone noticed.
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: npm
@@ -57,14 +57,14 @@ jobs:
             libsoup-3.0-dev \
             libxdo-dev
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           components: rustfmt, clippy
       # A cache is an optimization, and it must never be able to hold the build
       # up. GitHub's cache service stalled this step for forty-five minutes
       # without restoring anything or failing, so it is bounded and allowed to
       # lose: a cold compile is slow, a hung run tells you nothing at all.
-      - uses: swatinem/rust-cache@v2
+      - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
         with:
           workspaces: src-tauri
         timeout-minutes: 10

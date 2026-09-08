@@ -86,6 +86,15 @@ export async function deleteDocument(relativePath: string): Promise<void> {
   await invoke("delete_document", { relativePath });
 }
 
+/** Delete every generated file and return the paths that could not be removed. */
+export async function cleanupDocuments(
+  relativePaths: string[],
+  remove: (relativePath: string) => Promise<void> = deleteDocument,
+): Promise<string[]> {
+  const results = await Promise.allSettled(relativePaths.map((path) => remove(path)));
+  return relativePaths.filter((_, index) => results[index]?.status === "rejected");
+}
+
 /** Human-readable file size, e.g. "1.4 MB". */
 export function formatFileSize(bytes: number | null): string {
   if (bytes == null) return "";

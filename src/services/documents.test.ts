@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { documentErrorMessage } from "./documents";
+import { cleanupDocuments, documentErrorMessage } from "./documents";
 
 describe("document desktop errors", () => {
   it("keeps string errors returned by the desktop shell", () => {
@@ -13,5 +13,18 @@ describe("document desktop errors", () => {
     expect(documentErrorMessage(null, "That file could not be opened.")).toBe(
       "That file could not be opened.",
     );
+  });
+});
+
+describe("generated document cleanup", () => {
+  it("attempts every file and reports each one that remains", async () => {
+    const attempted: string[] = [];
+    const failed = await cleanupDocuments(["one.pdf", "two.pdf", "three.pdf"], async (path) => {
+      attempted.push(path);
+      if (path !== "two.pdf") throw new Error("injected delete failure");
+    });
+
+    expect(attempted).toEqual(["one.pdf", "two.pdf", "three.pdf"]);
+    expect(failed).toEqual(["one.pdf", "three.pdf"]);
   });
 });

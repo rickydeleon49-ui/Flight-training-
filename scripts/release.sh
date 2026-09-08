@@ -37,18 +37,10 @@ if git rev-parse "v$VERSION" >/dev/null 2>&1; then
   exit 1
 fi
 
-# Re-releasing the version already in the files is only sensible the first
-# time, when nothing has shipped yet. After that a bump is required, because
-# the application only takes its safety copy when the version changes.
 BUMP=true
 if [ "$VERSION" = "$CURRENT" ]; then
-  if [ -n "$(git tag --list 'v*')" ]; then
-    echo "Already at $CURRENT and earlier releases exist."
-    echo "Pick a higher version, or her database will not be copied on update."
-    exit 1
-  fi
   BUMP=false
-  echo "First release of $VERSION"
+  echo "Repository is already prepared for the unreleased version $VERSION"
 else
   echo "Releasing $CURRENT -> $VERSION"
 fi
