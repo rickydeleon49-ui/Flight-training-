@@ -1,0 +1,4 @@
+[advisories]
+# This lockfile entry is not selected for any release target. Keep the
+# exception narrow and remove it when the upstream lock graph drops rsa.
+ignore = ["RUSTSEC-2023-0071"]

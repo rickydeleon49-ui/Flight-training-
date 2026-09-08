@@ -79,6 +79,42 @@ export type NewMaterial = Partial<Omit<StudyMaterial, "id" | "createdAt" | "upda
  * directory; only metadata and a relative path are stored here.
  */
 export function documentRepository(db: SqlDatabase) {
+  async function insertMaterial(input: NewMaterial & { id?: Id }): Promise<StudyMaterial> {
+    const timestamp = nowIso();
+    const material: StudyMaterial = {
+      id: input.id ?? newId(),
+      title: input.title,
+      materialType: input.materialType ?? "study_guide",
+      topic: input.topic ?? "general",
+      reviewStatus: input.reviewStatus ?? "needs_review",
+      priority: input.priority ?? "later",
+      goalId: input.goalId ?? null,
+      eventId: input.eventId ?? null,
+      notes: input.notes ?? "",
+      filePath: input.filePath ?? null,
+      originalFileName: input.originalFileName ?? null,
+      fileSize: input.fileSize ?? null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      lastReviewedAt: input.lastReviewedAt ?? null,
+      tags: input.tags ?? [],
+    };
+    await db.execute(
+      `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority,
+         goal_id, event_id, notes, file_path, original_file_name, file_size,
+         created_at, updated_at, last_reviewed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        material.id, material.title, material.materialType, material.topic,
+        material.reviewStatus, material.priority, material.goalId, material.eventId,
+        material.notes, material.filePath, material.originalFileName, material.fileSize,
+        material.createdAt, material.updatedAt, material.lastReviewedAt,
+      ],
+    );
+    if (material.tags.length) await replaceTags(material.id, material.tags);
+    return material;
+  }
+
   /** Resolve tag names to ids, creating any that are new. */
   async function resolveTagIds(names: string[]): Promise<string[]> {
     const ids: string[] = [];
@@ -178,39 +214,25 @@ export function documentRepository(db: SqlDatabase) {
      * under the material's own id before the row exists.
      */
     async create(input: NewMaterial & { id?: Id }): Promise<StudyMaterial> {
-      const timestamp = nowIso();
-      const material: StudyMaterial = {
-        id: input.id ?? newId(),
-        title: input.title,
-        materialType: input.materialType ?? "study_guide",
-        topic: input.topic ?? "general",
-        reviewStatus: input.reviewStatus ?? "needs_review",
-        priority: input.priority ?? "later",
-        goalId: input.goalId ?? null,
-        eventId: input.eventId ?? null,
-        notes: input.notes ?? "",
-        filePath: input.filePath ?? null,
-        originalFileName: input.originalFileName ?? null,
-        fileSize: input.fileSize ?? null,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        lastReviewedAt: input.lastReviewedAt ?? null,
-        tags: input.tags ?? [],
-      };
-      await db.execute(
-        `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority,
-           goal_id, event_id, notes, file_path, original_file_name, file_size,
-           created_at, updated_at, last_reviewed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          material.id, material.title, material.materialType, material.topic,
-          material.reviewStatus, material.priority, material.goalId, material.eventId,
-          material.notes, material.filePath, material.originalFileName, material.fileSize,
-          material.createdAt, material.updatedAt, material.lastReviewedAt,
-        ],
-      );
-      if (material.tags.length) await replaceTags(material.id, material.tags);
-      return material;
+      return insertMaterial(input);
+    },
+
+    /** Create every PDF part and its tags as one durable database change. */
+    async createMany(inputs: Array<NewMaterial & { id?: Id }>): Promise<StudyMaterial[]> {
+      await db.execute("BEGIN IMMEDIATE");
+      try {
+        const materials: StudyMaterial[] = [];
+        for (const input of inputs) materials.push(await insertMaterial(input));
+        await db.execute("COMMIT");
+        return materials;
+      } catch (cause) {
+        try {
+          await db.execute("ROLLBACK");
+        } catch (rollbackError) {
+          throw new AggregateError([cause, rollbackError], "Saving PDF parts failed and the database rollback also failed.");
+        }
+        throw cause;
+      }
     },
 
     async update(id: Id, changes: Partial<StudyMaterial>): Promise<void> {

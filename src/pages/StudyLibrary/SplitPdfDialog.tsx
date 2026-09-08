@@ -5,7 +5,7 @@ import type { StudyMaterial } from "@/domain/types";
 import { newId } from "@/lib/id";
 import { MAX_PDF_BYTES, describeFileSize } from "@/logic/aiLimits";
 import { pdfPartNotes, pdfPartTitle } from "@/logic/pdfParts";
-import { deleteDocument, formatFileSize } from "@/services/documents";
+import { cleanupDocuments, formatFileSize } from "@/services/documents";
 import { inspectPdf, splitPdfAutomatically, type PdfOutline } from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
 
@@ -51,38 +51,33 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
         batchId: newId(),
         fileName: material.originalFileName ?? material.title,
       });
-      const createdIds: string[] = [];
       const created = await mutate(async (repos) => {
-        try {
-          for (const [index, document] of documents.entries()) {
-            const id = newId();
-            await repos.documents.create({
-              id,
-              title: pdfPartTitle(material.title, index, documents.length),
-              materialType: material.materialType,
-              topic: material.topic,
-              priority: material.priority,
-              goalId: material.goalId,
-              eventId: material.eventId,
-              tags: material.tags,
-              notes: pdfPartNotes(material.title, document),
-              filePath: document.relativePath,
-              originalFileName: document.originalFileName,
-              fileSize: document.fileSize,
-            });
-            createdIds.push(id);
-          }
-          return createdIds;
-        } catch (cause) {
-          for (const id of createdIds.reverse()) await repos.documents.remove(id);
-          throw cause;
-        }
+        const inputs = documents.map((document, index) => ({
+          id: newId(),
+          title: pdfPartTitle(material.title, index, documents.length),
+          materialType: material.materialType,
+          topic: material.topic,
+          priority: material.priority,
+          goalId: material.goalId,
+          eventId: material.eventId,
+          tags: material.tags,
+          notes: pdfPartNotes(material.title, document),
+          filePath: document.relativePath,
+          originalFileName: document.originalFileName,
+          fileSize: document.fileSize,
+        }));
+        return (await repos.documents.createMany(inputs)).map((part) => part.id);
       });
       if (created === null) {
-        await Promise.allSettled(documents.map((document) => deleteDocument(document.relativePath)));
+        const cleanupFailures = await cleanupDocuments(
+          documents.map((document) => document.relativePath),
+        );
         setError(
-          "The parts could not be saved to your library, so their files were removed again. " +
-            "The original PDF is untouched — try once more.",
+          cleanupFailures.length === 0
+            ? "The parts could not be saved to your library, so their files were removed again. " +
+                "The original PDF is untouched — try once more."
+            : "The parts could not be saved to your library. Some temporary files could not be " +
+                "removed; restart the app before trying again. The original PDF is untouched.",
         );
         return;
       }

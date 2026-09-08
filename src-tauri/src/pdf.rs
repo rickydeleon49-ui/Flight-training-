@@ -508,6 +508,21 @@ mod tests {
     }
 
     #[test]
+    fn a_deeply_nested_malformed_pdf_is_rejected_without_exhausting_the_stack() {
+        let dir = scratch();
+        let malformed = dir.join("deeply-nested.pdf");
+        let depth = 2_000;
+        let mut bytes = b"%PDF-1.7\n1 0 obj\n".to_vec();
+        bytes.extend(std::iter::repeat_n(b'[', depth));
+        bytes.extend_from_slice(b"0");
+        bytes.extend(std::iter::repeat_n(b']', depth));
+        bytes.extend_from_slice(b"\nendobj\n%%EOF\n");
+        std::fs::write(&malformed, bytes).unwrap();
+
+        assert!(page_count(&malformed).is_err());
+    }
+
+    #[test]
     fn the_new_document_is_named_like_the_pdf_it_is() {
         assert_eq!(pdf_file_name("PHAK chapter 3"), "PHAK chapter 3.pdf");
         assert_eq!(pdf_file_name("PHAK chapter 3.pdf"), "PHAK chapter 3.pdf");
