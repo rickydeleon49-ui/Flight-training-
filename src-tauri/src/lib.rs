@@ -8,6 +8,10 @@ mod backup;
 mod documents;
 mod gemini;
 mod pdf;
+// Platform abstraction scaffolding for the iOS port. Not yet wired into any
+// command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
+// comment for why.
+mod platform;
 mod secrets;
 mod storage;
 
