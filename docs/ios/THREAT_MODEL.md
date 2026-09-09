@@ -113,6 +113,35 @@ with:
   `split_pdf_automatically`, which removes all partial output on any
   failure, as the pattern to match).
 
+## Testing gap: fault injection between the protect and install steps
+
+Two of `apply_pending_restore_in`'s four documented properties (see
+"Restoration strategy" above) have direct test coverage:
+`a_damaged_backup_is_refused_before_anything_of_hers_moves` proves a bad
+archive changes nothing, and `a_complete_backup_puts_back_the_database_and_
+every_document` proves a good one installs correctly *and* leaves a
+recoverable rollback copy. What is **not** directly tested is a fault
+occurring **between** the protect step (current data moved to the rollback
+folder) and the install step (staged data moved into place) — the exact
+window the "move it back if installation fails" code exists for.
+
+This was attempted during the Milestone 2 review: removing write
+permission on the data directory before calling
+`apply_pending_restore_in`, expecting the protect step's own rename calls
+to fail. It does not work in a session running as `root` — root bypasses
+Unix DAC permission checks, so the intended failure never occurs, and the
+function completes successfully instead of exercising any rollback path.
+Because this session cannot confirm the test would behave correctly on a
+non-root CI runner either (no way to run it there from here), the test was
+written, observed to fail for an environment-specific reason, and then
+**reverted** rather than committed unverified. See
+`docs/ios/CHECKLIST.md`'s Milestone 2 entry for the same note.
+
+This remains a real, open gap in test coverage — not a claim that the
+underlying code is wrong, only that this specific property is unverified
+by an automated test. A future session with a non-root runner (real CI, or
+a Mac) is better positioned to attempt it than this one was.
+
 ## Summary judgment for this milestone
 
 `format_version` 1's Replace-restore protections are thorough and already
