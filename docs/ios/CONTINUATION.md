@@ -175,3 +175,135 @@ list and `docs/ios/SETUP.md` for the ordered sequence to run them in.
 | `npm test` | Pass — 313/313 across 36 files |
 | `npm run build` | Pass |
 | Any iOS-target build or test | **Not run — no Xcode/macOS available** |
+
+---
+
+# Milestone 2 — review and close-out
+
+_Session date: 9 September 2026, continued. Branch:
+`feature/ios-milestone-2-review`, from `main` @ `c1bf1d9` (Milestone 1
+merged via PR #14)._
+
+## Where Milestone 1 left off, and what this picked up
+
+Milestone 1's audit had already found Milestone 2's core asks — safe
+desktop export, safe Replace restore, round-trip tests, Settings UI, Mac
+guidance — essentially complete on `main` before this work began. This
+session's job was to **verify that claim rather than assume it**: check
+every item in the task brief's testing-requirements list against the
+actual test suite, attempt to close any real gap found, and decide
+honestly what (if anything) still needed building.
+
+## What was done
+
+1. Re-fetched and reset to `main` (now at `c1bf1d9`, carrying Milestone
+   1's merge) and started a fresh branch — Milestone 1's own branch had
+   already been merged and deleted as a unit, so continuing on it was not
+   an option; per-milestone branches is now the pattern going forward.
+2. Went through the task brief's "Testing requirements" list item by item
+   against `backup.rs`'s actual test names and bodies (not just names —
+   read the bodies of `a_damaged_backup_is_refused_before_anything_of_
+   hers_moves`, `an_archive_carrying_anything_unexpected_is_refused`, and
+   `a_complete_backup_puts_back_the_database_and_every_document` in full).
+   Confirmed manifest validation, format-version compatibility, checksum
+   (SQLite-header) mismatch rejection, missing-file rejection, path
+   traversal rejection, size/entry-count limits, snapshot consistency, and
+   round-trip export/import all have real, passing coverage already.
+3. Identified one genuine gap: no test forces a failure **between** the
+   protect and install steps of `apply_pending_restore_in` (as opposed to
+   before anything moves, or a fully successful install). Wrote one, using
+   a Unix permission removal (matching the existing precedent in
+   `secrets.rs`'s `#[cfg(unix)]` test) to force the protect step's rename
+   to fail.
+4. **Ran it. It failed** — not because the restore logic is wrong, but
+   because this session's shell runs as `root`, which ignores Unix DAC
+   permission bits entirely, so the intended fault never occurred and the
+   restore actually completed instead of erroring.
+5. Could not confirm the test would behave correctly on a non-root runner
+   either (no such runner reachable from here), so **reverted the test**
+   rather than commit something unverified — `git diff` against `main`
+   after the revert is empty, confirmed before proceeding. This is
+   recorded as an open, explicitly-flagged gap in
+   `docs/ios/THREAT_MODEL.md` and `docs/ios/CHECKLIST.md`, not silently
+   dropped.
+6. Considered adding the task brief's requested Mac Settings copy
+   ("explain how to export a portable backup for transfer to iPhone or
+   iPad") and **decided not to**: no iOS app exists yet to receive such a
+   file, so telling this app's real, current user they can send a backup
+   to an iPhone app that doesn't exist would be a false claim shipped into
+   production UI. Deferred to whichever milestone actually ships iOS
+   import capability.
+
+## Commands run
+
+```
+git fetch origin main
+git checkout main && git reset --hard origin/main   # now at c1bf1d9
+git checkout -b feature/ios-milestone-2-review
+
+# read backup.rs test bodies in full (grep + sed -n ranges), cross-checked
+# against the task brief's testing-requirements list
+
+# wrote a_restore_that_cannot_protect_current_data_changes_nothing
+cargo test backup::tests::a_restore_that_cannot_protect_current_data_changes_nothing
+# FAILED: `unwrap_err()` called on `Ok(())` — chmod 0o500 had no effect
+# because the process runs as root
+
+# reverted the test (Edit tool, restoring the exact prior content)
+git diff --stat            # empty — confirmed clean revert of backup.rs
+
+cd src-tauri
+cargo fmt --check           # pass
+cargo test                  # pass — 58/58 (back to Milestone 1's baseline)
+cd ..
+
+# then: docs/ios/CHECKLIST.md and docs/ios/THREAT_MODEL.md updated with
+# the review findings and the reverted-test note; this entry added
+```
+
+## Decision log
+
+- **New branch per milestone, not one long-lived branch** — Milestone 1's
+  branch was squash-merged and is gone; the task brief's suggested single
+  branch name no longer fits once merges are happening per-milestone. This
+  entry doesn't rename anything retroactively, just notes the pattern
+  going forward.
+- **Reverted a failing test rather than fix-and-keep** — the failure here
+  is a property of *this sandbox* (root execution), not proof the test's
+  approach is wrong on real CI. But since this session cannot verify the
+  positive case either, keeping an unverified test would violate the same
+  "don't claim what you haven't confirmed" standard this whole effort is
+  held to. Flagged prominently instead of silently dropped.
+- **No premature product copy** — a documentation requirement in the task
+  brief ("Mac guidance for iPhone/iPad transfer") was read against what it
+  would actually do if implemented literally right now (mislead a real
+  user of a real shipped app), and skipped for that reason rather than
+  implemented to satisfy the letter of the brief.
+
+## Where this leaves things, and what's next
+
+**Milestone 2 is now confirmed, not just assumed, complete** for every
+part achievable without a native iOS build: export, Replace restore,
+rollback-on-corruption, round-trip tests, and Settings UI all verified
+against the task brief's own requirements list. The one remaining gap
+(fault injection strictly between protect and install) is real but narrow,
+and needs a non-root test environment to attempt safely — flagged, not
+solved, here.
+
+**Nothing in Milestone 2 needed new production code** — this session's
+net contribution is verification and two documentation updates
+(`CHECKLIST.md`, `THREAT_MODEL.md`), no `src/` or `src-tauri/src/` diff
+against `main`.
+
+**Next is Milestone 3**, and it is fully blocked on the same thing
+Milestone 1 already flagged: no macOS, no Xcode, no iOS SDK anywhere in
+this environment. Nothing in Milestone 3 (`tauri ios init`, any iOS Rust
+target compilation, Keychain/Quick Look/share-sheet plugins, receiving
+files from Files/AirDrop) can be attempted from here — see
+`docs/ios/SETUP.md` for the exact ordered sequence a Mac session needs to
+run. Until a Mac is available, further progress on this task without one
+would mean either fabricating results (not acceptable) or continuing to
+polish documentation that is already thorough — so the honest status to
+report is: **this environment has taken the desktop/documentation side as
+far as it can go, and the next real step requires a macOS machine with
+Xcode.**

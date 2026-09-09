@@ -48,6 +48,43 @@ audit of what's already implemented and tested:
 - [x] Confirmed this milestone's own changes did not regress any of the
       above: full desktop test suite re-run on this branch (see
       `docs/ios/CONTINUATION.md` for the exact commands and results).
+- [x] **Reviewed against the task brief's testing-requirements list item by
+      item.** Manifest validation, format-version compatibility, checksum
+      (SQLite-header-and-size) mismatch rejection, missing-file rejection,
+      ZIP path traversal rejection, archive-size/entry-count limits, SQLite
+      snapshot consistency, and round-trip export/import all have existing,
+      passing tests in `backup.rs` — see `docs/ios/THREAT_MODEL.md`'s
+      threat table for the mapping from requirement to test. Duplicate-file
+      and filename-collision handling are Merge-mode concerns and stay out
+      of scope until Merge is built (see below).
+- [ ] **Attempted and reverted: a dedicated "Replace rollback after an
+      injected failure" test.** Tried forcing `apply_pending_restore_in`'s
+      protect step to fail by removing write permission on the data
+      directory before calling it. It does not work in this session's
+      execution environment — commands here run as `root`, which bypasses
+      Unix permission checks entirely, so the intended failure never
+      occurred and the test's own assertions would have been unverifiable
+      (possibly still passing for the wrong reason, possibly flaky on real,
+      non-root CI runners — no way to tell from here either way). Reverted
+      rather than commit a test whose behavior in the environment that
+      actually gates merges could not be confirmed. The existing tests
+      (`a_damaged_backup_is_refused_before_anything_of_hers_moves`,
+      `a_complete_backup_puts_back_the_database_and_every_document`) still
+      cover "refused before anything moves" and "successful install
+      followed by a recoverable rollback copy," respectively — what remains
+      genuinely untested is a fault injected *between* the protect and
+      install steps specifically. Left as a known, explicitly-flagged gap
+      rather than a silently-dropped one; a non-root CI environment (or a
+      Mac session) is a more reliable place to attempt this than here.
+- [x] **Deliberately did not add "export for iPhone/iPad" Settings UI
+      copy.** The task brief asks for Mac guidance explaining how to export
+      a portable backup for transfer to iPhone/iPad, but no iOS app exists
+      yet to receive one — adding that copy to the *shipping* desktop
+      Settings screen now would tell this app's actual user something
+      false (that they can send a backup to an iPhone app that doesn't
+      exist). This is deferred to whichever milestone actually ships an
+      iOS build capable of importing a `.hfdbackup` file (Milestone 3/4),
+      not treated as a Milestone 2 checkbox to satisfy prematurely.
 - [ ] Per-file checksum manifest (`formatVersion` 2) — **deliberately not
       built**; documented as a tracked future addition in
       `docs/backup-format.md`, not needed to satisfy this milestone's
