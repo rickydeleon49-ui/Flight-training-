@@ -27,5 +27,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Node 22 can import node:sqlite but does not list it in builtinModules,
+    // so Vitest 4's jsdom transform needs the explicit native external.
+    server: { deps: { external: ["node:sqlite"] } },
   },
 });
