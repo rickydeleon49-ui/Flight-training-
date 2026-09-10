@@ -8,12 +8,15 @@
 //! The backup happens in Tauri's setup, before the frontend opens the
 //! database and therefore before any migration runs.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
+use rusqlite::{backup::Backup, Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use tauri::AppHandle;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipArchive, ZipWriter};
@@ -26,8 +29,10 @@ const BACKUP_DIR: &str = "backups";
 const VERSION_FILE: &str = "last-run-version.txt";
 const DOCUMENTS_DIR: &str = "documents";
 const ARCHIVE_MANIFEST: &str = "manifest.json";
+const ARCHIVE_INTEGRITY: &str = "integrity.json";
 const ARCHIVE_FORMAT: &str = "her-flight-deck-complete-backup";
-const ARCHIVE_VERSION: u32 = 1;
+const ARCHIVE_VERSION: u32 = 2;
+const LEGACY_ARCHIVE_VERSION: u32 = 1;
 const RESTORE_STAGING_DIR: &str = ".restore-staging";
 const RESTORE_PENDING_DIR: &str = ".restore-pending";
 /// Written into the staged folder to say what kind of restore was asked for.
@@ -38,6 +43,13 @@ const RESTORE_PENDING_DIR: &str = ".restore-pending";
 const RESTORE_PLAN: &str = "restore.json";
 const MAX_RESTORE_FILES: usize = 10_000;
 const MAX_RESTORE_BYTES: u64 = 10 * 1024 * 1024 * 1024;
+const MAX_ARCHIVE_PATH_BYTES: usize = 1_024;
+const MAX_ARCHIVE_COMPONENT_BYTES: usize = 255;
+// SQLite files can contain large runs of empty pages, so leave ample room for
+// legitimate databases while still refusing classic tiny-payload ZIP bombs.
+const MAX_COMPRESSION_RATIO: u64 = 1_000;
+const COMPRESSION_RATIO_FLOOR: u64 = 1024 * 1024;
+const CURRENT_SCHEMA_VERSION: i64 = 8;
 /// How many automatic copies to keep before the oldest is removed.
 const KEEP_BACKUPS: usize = 10;
 
@@ -73,6 +85,21 @@ struct CompleteBackupManifest {
     format_version: u32,
     app_version: String,
     created_at: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct IntegrityEntry {
+    path: String,
+    bytes: u64,
+    sha256: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CompleteBackupIntegrity {
+    algorithm: String,
+    files: Vec<IntegrityEntry>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -252,7 +279,7 @@ fn add_file_to_archive<W: Write + Seek>(
     archive: &mut ZipWriter<W>,
     source: &Path,
     archive_name: &str,
-) -> Result<u64, String> {
+) -> Result<IntegrityEntry, String> {
     let metadata = std::fs::symlink_metadata(source)
         .map_err(|e| format!("Could not read {}: {e}", source.display()))?;
     if metadata.file_type().is_symlink() || !metadata.is_file() {
@@ -267,9 +294,127 @@ fn add_file_to_archive<W: Write + Seek>(
         .map_err(|e| zip_error("Could not add a file to the backup", e))?;
     let mut input =
         File::open(source).map_err(|e| format!("Could not open {}: {e}", source.display()))?;
-    std::io::copy(&mut input, archive)
-        .map_err(|e| format!("Could not copy {} into the backup: {e}", source.display()))?;
-    Ok(metadata.len())
+    let mut hasher = Sha256::new();
+    let mut copied = 0u64;
+    let mut buffer = [0u8; 64 * 1024];
+    loop {
+        let read = input
+            .read(&mut buffer)
+            .map_err(|e| format!("Could not read {}: {e}", source.display()))?;
+        if read == 0 {
+            break;
+        }
+        archive
+            .write_all(&buffer[..read])
+            .map_err(|e| format!("Could not copy {} into the backup: {e}", source.display()))?;
+        hasher.update(&buffer[..read]);
+        copied = copied
+            .checked_add(read as u64)
+            .ok_or_else(|| "The backup is too large.".to_string())?;
+    }
+    if copied != metadata.len() {
+        return Err(format!(
+            "{} changed while the backup was being saved. Try again.",
+            source.display()
+        ));
+    }
+    Ok(IntegrityEntry {
+        path: archive_name.to_string(),
+        bytes: copied,
+        sha256: hex::encode(hasher.finalize()),
+    })
+}
+
+fn verify_application_database(path: &Path) -> Result<(), String> {
+    verify_sqlite_file(path)?;
+    let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .map_err(|e| format!("Could not open the database in that backup: {e}"))?;
+    let quick_check: String = connection
+        .query_row("PRAGMA quick_check", [], |row| row.get(0))
+        .map_err(|e| format!("Could not check the database in that backup: {e}"))?;
+    if quick_check != "ok" {
+        return Err("The database in that backup is damaged or incomplete.".to_string());
+    }
+
+    for table in ["settings", "study_materials"] {
+        let present: i64 = connection
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+                [table],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Could not inspect the database schema: {e}"))?;
+        if present != 1 {
+            return Err(format!(
+                "That backup does not contain a Her Flight Deck database (missing {table})."
+            ));
+        }
+    }
+
+    let migration_table = ["_sqlx_migrations", "schema_migrations"]
+        .into_iter()
+        .find(|table| {
+            connection
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+                    [table],
+                    |row| row.get::<_, i64>(0),
+                )
+                .unwrap_or(0)
+                == 1
+        })
+        .ok_or_else(|| {
+            "That backup does not contain Her Flight Deck migration history.".to_string()
+        })?;
+    let newest_migration: i64 = connection
+        .query_row(
+            &format!("SELECT COALESCE(MAX(version), 0) FROM {migration_table}"),
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("Could not inspect the database version: {e}"))?;
+    if newest_migration > CURRENT_SCHEMA_VERSION {
+        return Err(
+            "That backup was created by a newer database format. Update the app first.".to_string(),
+        );
+    }
+    Ok(())
+}
+
+fn database_snapshot(root: &Path) -> Result<PathBuf, String> {
+    let source_path = root.join(DB_FILES[0]);
+    verify_application_database(&source_path)?;
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    let snapshot = root.join(format!(
+        ".backup-snapshot-{}-{}.db",
+        std::process::id(),
+        nonce
+    ));
+
+    let result = (|| {
+        let source = Connection::open_with_flags(&source_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .map_err(|e| format!("Could not open the database for backup: {e}"))?;
+        let mut destination = Connection::open(&snapshot)
+            .map_err(|e| format!("Could not create the database snapshot: {e}"))?;
+        {
+            let backup = Backup::new(&source, &mut destination)
+                .map_err(|e| format!("Could not start the database snapshot: {e}"))?;
+            backup
+                .run_to_completion(100, Duration::from_millis(10), None)
+                .map_err(|e| format!("Could not finish the database snapshot: {e}"))?;
+        }
+        drop(destination);
+        drop(source);
+        verify_application_database(&snapshot)?;
+        Ok(snapshot.clone())
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&snapshot);
+    }
+    result
 }
 
 fn add_documents_to_archive<W: Write + Seek>(
@@ -278,6 +423,7 @@ fn add_documents_to_archive<W: Write + Seek>(
     relative: &Path,
     files: &mut usize,
     bytes: &mut u64,
+    integrity: &mut Vec<IntegrityEntry>,
 ) -> Result<(), String> {
     if !directory.exists() {
         return Ok(());
@@ -298,16 +444,25 @@ fn add_documents_to_archive<W: Write + Seek>(
 
         let next_relative = relative.join(entry.file_name());
         if metadata.is_dir() {
-            add_documents_to_archive(archive, &entry.path(), &next_relative, files, bytes)?;
+            add_documents_to_archive(
+                archive,
+                &entry.path(),
+                &next_relative,
+                files,
+                bytes,
+                integrity,
+            )?;
         } else if metadata.is_file() {
             let name = Path::new(DOCUMENTS_DIR)
                 .join(&next_relative)
                 .to_string_lossy()
                 .replace('\\', "/");
+            let saved = add_file_to_archive(archive, &entry.path(), &name)?;
             *bytes = bytes
-                .checked_add(add_file_to_archive(archive, &entry.path(), &name)?)
+                .checked_add(saved.bytes)
                 .ok_or_else(|| "The backup is too large.".to_string())?;
             *files += 1;
+            integrity.push(saved);
             if *files > MAX_RESTORE_FILES || *bytes > MAX_RESTORE_BYTES {
                 return Err("The documents are too large to put in one safe backup.".to_string());
             }
@@ -320,6 +475,7 @@ fn allowed_archive_path(path: &Path, is_dir: bool) -> bool {
     // The write-ahead log travels with the database: if a checkpoint could not
     // finish, her most recent entries are in it and nowhere else.
     if path == Path::new(ARCHIVE_MANIFEST)
+        || path == Path::new(ARCHIVE_INTEGRITY)
         || path == Path::new(DB_FILES[0])
         || path == Path::new(DB_FILES[1])
     {
@@ -329,6 +485,76 @@ fn allowed_archive_path(path: &Path, is_dir: bool) -> bool {
         return is_dir || path.components().count() > 1;
     }
     false
+}
+
+fn validate_archive_path(raw_name: &str, path: &Path) -> Result<(), String> {
+    if raw_name.len() > MAX_ARCHIVE_PATH_BYTES
+        || raw_name.contains('\\')
+        || raw_name.contains(':')
+        || path.components().any(|component| {
+            component.as_os_str().to_string_lossy().len() > MAX_ARCHIVE_COMPONENT_BYTES
+        })
+    {
+        return Err("The backup contains an unsafe or excessively long file path.".to_string());
+    }
+    Ok(())
+}
+
+fn validate_compression_ratio(uncompressed: u64, compressed: u64) -> Result<(), String> {
+    if uncompressed <= COMPRESSION_RATIO_FLOOR {
+        return Ok(());
+    }
+    if compressed == 0
+        || uncompressed.checked_div(compressed).unwrap_or(u64::MAX) > MAX_COMPRESSION_RATIO
+    {
+        return Err("The backup contains an unsafe compression ratio.".to_string());
+    }
+    Ok(())
+}
+
+fn sha256_file(path: &Path) -> Result<(u64, String), String> {
+    let mut file = File::open(path)
+        .map_err(|e| format!("Could not verify restored file {}: {e}", path.display()))?;
+    let mut hasher = Sha256::new();
+    let mut bytes = 0u64;
+    let mut buffer = [0u8; 64 * 1024];
+    loop {
+        let read = file
+            .read(&mut buffer)
+            .map_err(|e| format!("Could not verify restored file {}: {e}", path.display()))?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+        bytes = bytes
+            .checked_add(read as u64)
+            .ok_or_else(|| "The restored file is too large.".to_string())?;
+    }
+    Ok((bytes, hex::encode(hasher.finalize())))
+}
+
+fn sha256_file_from_reader(reader: &mut impl Read) -> Result<(u64, String, Vec<u8>), String> {
+    let mut hasher = Sha256::new();
+    let mut bytes = 0u64;
+    let mut prefix = Vec::with_capacity(SQLITE_MAGIC.len());
+    let mut buffer = [0u8; 64 * 1024];
+    loop {
+        let read = reader
+            .read(&mut buffer)
+            .map_err(|e| format!("Could not verify a file in that backup: {e}"))?;
+        if read == 0 {
+            break;
+        }
+        if prefix.len() < SQLITE_MAGIC.len() {
+            let wanted = (SQLITE_MAGIC.len() - prefix.len()).min(read);
+            prefix.extend_from_slice(&buffer[..wanted]);
+        }
+        hasher.update(&buffer[..read]);
+        bytes = bytes
+            .checked_add(read as u64)
+            .ok_or_else(|| "The backup is too large.".to_string())?;
+    }
+    Ok((bytes, hex::encode(hasher.finalize()), prefix))
 }
 
 fn inspect_archive(source: &Path, current_app_version: &str) -> Result<CompleteBackupInfo, String> {
@@ -350,16 +576,51 @@ fn inspect_archive(source: &Path, current_app_version: &str) -> Result<CompleteB
         serde_json::from_str(&json).map_err(|e| format!("The backup manifest is invalid: {e}"))?
     };
 
-    if manifest.format != ARCHIVE_FORMAT || manifest.format_version != ARCHIVE_VERSION {
+    if manifest.format != ARCHIVE_FORMAT
+        || !matches!(
+            manifest.format_version,
+            LEGACY_ARCHIVE_VERSION | ARCHIVE_VERSION
+        )
+    {
         return Err("That backup format is not supported by this version of the app.".to_string());
     }
+
+    let mut expected_integrity = if manifest.format_version == ARCHIVE_VERSION {
+        let mut entry = archive
+            .by_name(ARCHIVE_INTEGRITY)
+            .map_err(|_| "That backup does not contain integrity information.".to_string())?;
+        if entry.size() > 2 * 1024 * 1024 {
+            return Err("That backup's integrity information is unexpectedly large.".to_string());
+        }
+        let mut json = String::new();
+        entry
+            .read_to_string(&mut json)
+            .map_err(|e| format!("Could not read backup integrity information: {e}"))?;
+        let integrity: CompleteBackupIntegrity = serde_json::from_str(&json)
+            .map_err(|e| format!("The backup integrity information is invalid: {e}"))?;
+        if integrity.algorithm != "sha256" {
+            return Err("That backup uses an unsupported integrity algorithm.".to_string());
+        }
+        let mut files = HashMap::new();
+        for item in integrity.files {
+            if item.sha256.len() != 64
+                || !item.sha256.bytes().all(|byte| byte.is_ascii_hexdigit())
+                || files.insert(item.path.clone(), item).is_some()
+            {
+                return Err("That backup contains invalid integrity information.".to_string());
+            }
+        }
+        Some(files)
+    } else {
+        None
+    };
 
     let mut names = HashSet::new();
     let mut files = 0usize;
     let mut bytes = 0u64;
     let mut has_database = false;
 
-    if archive.len() > MAX_RESTORE_FILES + 1 {
+    if archive.len() > MAX_RESTORE_FILES + 2 {
         return Err("That backup contains too many files.".to_string());
     }
 
@@ -368,12 +629,11 @@ fn inspect_archive(source: &Path, current_app_version: &str) -> Result<CompleteB
             .by_index(index)
             .map_err(|e| zip_error("Could not inspect the backup", e))?;
         let raw_name = entry.name().to_string();
-        if raw_name.contains('\\') {
-            return Err("The backup contains an unsafe file path.".to_string());
-        }
         let path = entry
             .enclosed_name()
             .ok_or_else(|| "The backup contains an unsafe file path.".to_string())?;
+        validate_archive_path(&raw_name, &path)?;
+        validate_compression_ratio(entry.size(), entry.compressed_size())?;
         if !allowed_archive_path(&path, entry.is_dir()) {
             return Err(format!(
                 "The backup contains an unexpected file: {raw_name}"
@@ -389,7 +649,16 @@ fn inspect_archive(source: &Path, current_app_version: &str) -> Result<CompleteB
             return Err("Linked files are not allowed in a backup.".to_string());
         }
 
+        if manifest.format_version == LEGACY_ARCHIVE_VERSION && path == Path::new(ARCHIVE_INTEGRITY)
+        {
+            return Err(format!(
+                "The backup contains an unexpected file: {raw_name}"
+            ));
+        }
         if path == Path::new(DB_FILES[0]) {
+            has_database = true;
+        }
+        if path == Path::new(DB_FILES[0]) && manifest.format_version == LEGACY_ARCHIVE_VERSION {
             // Read the first bytes now. A truncated or wrong file is far
             // better discovered here than after her data has been moved aside.
             let mut header = [0u8; SQLITE_MAGIC.len()];
@@ -399,9 +668,11 @@ fn inspect_archive(source: &Path, current_app_version: &str) -> Result<CompleteB
                         .to_string(),
                 );
             }
-            has_database = true;
         }
-        if path != Path::new(ARCHIVE_MANIFEST) && !entry.is_dir() {
+        if path != Path::new(ARCHIVE_MANIFEST)
+            && path != Path::new(ARCHIVE_INTEGRITY)
+            && !entry.is_dir()
+        {
             files += 1;
             bytes = bytes
                 .checked_add(entry.size())
@@ -409,7 +680,38 @@ fn inspect_archive(source: &Path, current_app_version: &str) -> Result<CompleteB
             if bytes > MAX_RESTORE_BYTES {
                 return Err("That backup is larger than this app can safely restore.".to_string());
             }
+
+            if let Some(expected) = expected_integrity.as_mut() {
+                let normalized = path.to_string_lossy().replace('\\', "/");
+                let expected = expected
+                    .remove(&normalized)
+                    .ok_or_else(|| format!("The backup has no integrity record for {raw_name}"))?;
+                let (actual_bytes, actual_sha256, prefix) = sha256_file_from_reader(&mut entry)?;
+                if actual_bytes != expected.bytes
+                    || entry.size() != expected.bytes
+                    || !actual_sha256.eq_ignore_ascii_case(&expected.sha256)
+                {
+                    return Err(format!(
+                        "The backup failed its integrity check for {raw_name}"
+                    ));
+                }
+                if path == Path::new(DB_FILES[0]) && !is_sqlite_header(&prefix) {
+                    return Err(
+                        "The database in that backup is damaged, or that file is not a Her Flight Deck backup."
+                            .to_string(),
+                    );
+                }
+            }
         }
+    }
+
+    if expected_integrity
+        .as_ref()
+        .is_some_and(|expected| !expected.is_empty())
+    {
+        return Err(
+            "The backup integrity list contains files that are not in the archive.".to_string(),
+        );
     }
 
     if !has_database {
@@ -499,20 +801,42 @@ pub fn create_complete_backup(
     app: AppHandle,
     destination_path: String,
 ) -> Result<CompleteBackupInfo, String> {
-    write_complete_backup(
-        &app_root(&app)?,
+    let root = app_root(&app)?;
+    let snapshot = database_snapshot(&root)?;
+    let result = write_complete_backup_from_database(
+        &root,
         Path::new(&destination_path),
         &app.package_info().version.to_string(),
-    )
+        &snapshot,
+        false,
+    );
+    let _ = std::fs::remove_file(snapshot);
+    result
 }
 
 /// Write the archive itself, against plain directories so it can be tested.
+#[cfg(test)]
 fn write_complete_backup(
     root: &Path,
     destination_path: &Path,
     app_version: &str,
 ) -> Result<CompleteBackupInfo, String> {
-    let database = root.join(DB_FILES[0]);
+    write_complete_backup_from_database(
+        root,
+        destination_path,
+        app_version,
+        &root.join(DB_FILES[0]),
+        true,
+    )
+}
+
+fn write_complete_backup_from_database(
+    root: &Path,
+    destination_path: &Path,
+    app_version: &str,
+    database: &Path,
+    include_wal: bool,
+) -> Result<CompleteBackupInfo, String> {
     if !database.is_file() {
         return Err("There is no database to back up yet.".to_string());
     }
@@ -565,22 +889,26 @@ fn write_complete_backup(
             )
             .map_err(|e| format!("Could not write the backup manifest: {e}"))?;
 
+        let mut integrity = Vec::new();
+        let saved_database = add_file_to_archive(&mut archive, database, DB_FILES[0])?;
         let mut files = 1usize;
-        let mut bytes = add_file_to_archive(&mut archive, &database, DB_FILES[0])?;
+        let mut bytes = saved_database.bytes;
+        integrity.push(saved_database);
         if bytes > MAX_RESTORE_BYTES {
             return Err("The database is too large to put in one safe backup.".to_string());
         }
 
-        // The interface checkpoints the write-ahead log before calling this, so
-        // it is normally empty. If a checkpoint could not finish — another
-        // connection was mid-read — her newest entries live only in the log, so
-        // it goes into the archive and SQLite folds it back in on restore.
+        // The production path archives an online SQLite snapshot and therefore
+        // never needs a WAL. Tests retain this option to prove that legacy v1
+        // archives carrying a real WAL still restore correctly.
         let wal = root.join(DB_FILES[1]);
-        if std::fs::metadata(&wal).map(|m| m.len()).unwrap_or(0) > 0 {
+        if include_wal && std::fs::metadata(&wal).map(|m| m.len()).unwrap_or(0) > 0 {
+            let saved_wal = add_file_to_archive(&mut archive, &wal, DB_FILES[1])?;
             bytes = bytes
-                .checked_add(add_file_to_archive(&mut archive, &wal, DB_FILES[1])?)
+                .checked_add(saved_wal.bytes)
                 .ok_or_else(|| "The backup is too large.".to_string())?;
             files += 1;
+            integrity.push(saved_wal);
         }
 
         add_documents_to_archive(
@@ -589,7 +917,23 @@ fn write_complete_backup(
             Path::new(""),
             &mut files,
             &mut bytes,
+            &mut integrity,
         )?;
+
+        integrity.sort_by(|left, right| left.path.cmp(&right.path));
+        archive
+            .start_file(ARCHIVE_INTEGRITY, archive_options())
+            .map_err(|e| zip_error("Could not write backup integrity data", e))?;
+        archive
+            .write_all(
+                serde_json::to_string_pretty(&CompleteBackupIntegrity {
+                    algorithm: "sha256".to_string(),
+                    files: integrity,
+                })
+                .map_err(|e| format!("Could not prepare backup integrity data: {e}"))?
+                .as_bytes(),
+            )
+            .map_err(|e| format!("Could not write backup integrity data: {e}"))?;
 
         let output = archive
             .finish()
@@ -721,6 +1065,26 @@ fn stage_complete_restore_in(
         let file = File::open(source).map_err(|e| format!("Could not open that backup: {e}"))?;
         let mut archive =
             ZipArchive::new(file).map_err(|e| zip_error("Could not read that backup", e))?;
+        let mut expected_integrity = if archive.by_name(ARCHIVE_INTEGRITY).is_ok() {
+            let mut entry = archive
+                .by_name(ARCHIVE_INTEGRITY)
+                .map_err(|e| zip_error("Could not read backup integrity information", e))?;
+            let mut json = String::new();
+            entry
+                .read_to_string(&mut json)
+                .map_err(|e| format!("Could not read backup integrity information: {e}"))?;
+            let integrity: CompleteBackupIntegrity = serde_json::from_str(&json)
+                .map_err(|e| format!("The backup integrity information is invalid: {e}"))?;
+            Some(
+                integrity
+                    .files
+                    .into_iter()
+                    .map(|item| (item.path.clone(), item))
+                    .collect::<HashMap<_, _>>(),
+            )
+        } else {
+            None
+        };
         let mut extracted_files = 0usize;
         let mut extracted_bytes = 0u64;
         let mut extracted_names = HashSet::new();
@@ -730,12 +1094,11 @@ fn stage_complete_restore_in(
                 .by_index(index)
                 .map_err(|e| zip_error("Could not read a file from the backup", e))?;
             let raw_name = entry.name().to_string();
-            if raw_name.contains('\\') {
-                return Err("The backup contains an unsafe file path.".to_string());
-            }
             let path = entry
                 .enclosed_name()
                 .ok_or_else(|| "The backup contains an unsafe file path.".to_string())?;
+            validate_archive_path(&raw_name, &path)?;
+            validate_compression_ratio(entry.size(), entry.compressed_size())?;
             if !allowed_archive_path(&path, entry.is_dir()) {
                 return Err(format!(
                     "The backup contains an unexpected file: {raw_name}"
@@ -750,10 +1113,10 @@ fn stage_complete_restore_in(
             {
                 return Err("Linked files are not allowed in a backup.".to_string());
             }
-            if path == Path::new(ARCHIVE_MANIFEST) {
+            if path == Path::new(ARCHIVE_MANIFEST) || path == Path::new(ARCHIVE_INTEGRITY) {
                 continue;
             }
-            let destination = staging.join(path);
+            let destination = staging.join(&path);
             if entry.is_dir() {
                 std::fs::create_dir_all(&destination)
                     .map_err(|e| format!("Could not create a restored folder: {e}"))?;
@@ -787,13 +1150,37 @@ fn stage_complete_restore_in(
             output
                 .sync_all()
                 .map_err(|e| format!("Could not finish a restored file: {e}"))?;
+
+            if let Some(expected) = expected_integrity.as_mut() {
+                let normalized = path.to_string_lossy().replace('\\', "/");
+                let expected = expected
+                    .remove(&normalized)
+                    .ok_or_else(|| format!("The backup has no integrity record for {raw_name}"))?;
+                let (actual_bytes, actual_sha256) = sha256_file(&destination)?;
+                if actual_bytes != expected.bytes
+                    || !actual_sha256.eq_ignore_ascii_case(&expected.sha256)
+                {
+                    return Err(format!(
+                        "The backup failed its integrity check for {raw_name}"
+                    ));
+                }
+            }
+        }
+
+        if expected_integrity
+            .as_ref()
+            .is_some_and(|expected| !expected.is_empty())
+        {
+            return Err(
+                "The backup integrity list contains files that are not in the archive.".to_string(),
+            );
         }
 
         if !staging.join(DB_FILES[0]).is_file() {
             return Err("That backup does not contain a usable database.".to_string());
         }
         // Check the extracted file itself, not just what the archive claimed.
-        verify_sqlite_file(&staging.join(DB_FILES[0]))?;
+        verify_application_database(&staging.join(DB_FILES[0]))?;
         write_restore_plan(&staging, RestoreKind::Complete, &source.to_string_lossy())?;
         std::fs::rename(&staging, &pending)
             .map_err(|e| format!("Could not stage the restore: {e}"))?;
@@ -870,6 +1257,13 @@ pub fn apply_pending_restore(app: &AppHandle) -> Result<(), String> {
 
 /// Install whatever was staged, against a plain directory.
 fn apply_pending_restore_in(root: &Path) -> Result<(), String> {
+    apply_pending_restore_in_with(root, || Ok(()))
+}
+
+fn apply_pending_restore_in_with<F>(root: &Path, before_install: F) -> Result<(), String>
+where
+    F: FnOnce() -> Result<(), String>,
+{
     let pending = root.join(RESTORE_PENDING_DIR);
     if !pending.is_dir() {
         return Ok(());
@@ -932,6 +1326,7 @@ fn apply_pending_restore_in(root: &Path) -> Result<(), String> {
     }
 
     let install_result = (|| {
+        before_install()?;
         std::fs::rename(pending.join(DB_FILES[0]), root.join(DB_FILES[0]))
             .map_err(|e| format!("Could not install the restored database: {e}"))?;
 
@@ -1078,19 +1473,37 @@ mod tests {
         dir
     }
 
-    /// A file with SQLite's header and recognizable contents after it.
+    /// A minimal real application database with recognizable test contents.
     fn write_database(path: &Path, contents: &str) {
-        let mut bytes = SQLITE_MAGIC.to_vec();
-        bytes.extend_from_slice(contents.as_bytes());
-        bytes.extend_from_slice(&[0u8; 64]);
-        std::fs::write(path, bytes).unwrap();
+        for candidate in [
+            path.to_path_buf(),
+            PathBuf::from(format!("{}-wal", path.to_string_lossy())),
+            PathBuf::from(format!("{}-shm", path.to_string_lossy())),
+        ] {
+            let _ = std::fs::remove_file(candidate);
+        }
+        let connection = Connection::open(path).unwrap();
+        connection
+            .execute_batch(
+                "CREATE TABLE settings (id TEXT PRIMARY KEY);
+                 CREATE TABLE study_materials (id TEXT PRIMARY KEY);
+                 CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);
+                 CREATE TABLE audit_payload (value TEXT NOT NULL);
+                 INSERT INTO _sqlx_migrations(version) VALUES (8);",
+            )
+            .unwrap();
+        connection
+            .execute("INSERT INTO audit_payload(value) VALUES (?1)", [contents])
+            .unwrap();
     }
 
     fn database_contents(path: &Path) -> String {
-        let bytes = std::fs::read(path).unwrap();
-        String::from_utf8_lossy(&bytes[SQLITE_MAGIC.len()..])
-            .trim_end_matches('\0')
-            .to_string()
+        Connection::open(path)
+            .unwrap()
+            .query_row("SELECT value FROM audit_payload LIMIT 1", [], |row| {
+                row.get(0)
+            })
+            .unwrap()
     }
 
     fn write_document(root: &Path, relative: &str, contents: &str) {
@@ -1101,6 +1514,48 @@ mod tests {
 
     fn document_contents(root: &Path, relative: &str) -> Option<String> {
         std::fs::read_to_string(root.join(DOCUMENTS_DIR).join(relative)).ok()
+    }
+
+    fn rewrite_entry(archive_path: &Path, target: &str, replacement: &[u8]) {
+        let input = File::open(archive_path).unwrap();
+        let mut input = ZipArchive::new(input).unwrap();
+        let rewritten = archive_path.with_extension("rewritten");
+        let output = File::create(&rewritten).unwrap();
+        let mut output = ZipWriter::new(output);
+        for index in 0..input.len() {
+            let mut entry = input.by_index(index).unwrap();
+            let name = entry.name().to_string();
+            let mut bytes = Vec::new();
+            entry.read_to_end(&mut bytes).unwrap();
+            output.start_file(&name, archive_options()).unwrap();
+            output
+                .write_all(if name == target { replacement } else { &bytes })
+                .unwrap();
+        }
+        output.finish().unwrap();
+        std::fs::rename(rewritten, archive_path).unwrap();
+    }
+
+    fn write_legacy_backup(root: &Path, archive_path: &Path, app_version: &str) {
+        let output = File::create(archive_path).unwrap();
+        let mut archive = ZipWriter::new(output);
+        archive
+            .start_file(ARCHIVE_MANIFEST, archive_options())
+            .unwrap();
+        archive
+            .write_all(
+                serde_json::to_string(&CompleteBackupManifest {
+                    format: ARCHIVE_FORMAT.to_string(),
+                    format_version: LEGACY_ARCHIVE_VERSION,
+                    app_version: app_version.to_string(),
+                    created_at: 0,
+                })
+                .unwrap()
+                .as_bytes(),
+            )
+            .unwrap();
+        add_file_to_archive(&mut archive, &root.join(DB_FILES[0]), DB_FILES[0]).unwrap();
+        archive.finish().unwrap();
     }
 
     #[test]
@@ -1308,17 +1763,27 @@ mod tests {
         let root = scratch("wal");
         let elsewhere = scratch("wal-out");
         write_database(&root.join(DB_FILES[0]), "checkpointed pages");
-        std::fs::write(
-            root.join(DB_FILES[1]),
-            b"pages written since the last checkpoint",
-        )
-        .unwrap();
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        connection
+            .pragma_update(None, "journal_mode", "WAL")
+            .unwrap();
+        connection
+            .pragma_update(None, "wal_autocheckpoint", 0)
+            .unwrap();
+        connection
+            .execute(
+                "UPDATE audit_payload SET value = 'pages written since the last checkpoint'",
+                [],
+            )
+            .unwrap();
+        assert!(root.join(DB_FILES[1]).is_file());
 
         let archive = elsewhere.join("with-log.hfdbackup");
         let saved = write_complete_backup(&root, &archive, "0.2.0").unwrap();
         assert_eq!(saved.files, 2);
+        drop(connection);
 
-        std::fs::remove_file(root.join(DB_FILES[1])).unwrap();
+        let _ = std::fs::remove_file(root.join(DB_FILES[1]));
         write_database(&root.join(DB_FILES[0]), "something else entirely");
 
         stage_complete_restore_in(&root, &archive, "0.2.0").unwrap();
@@ -1326,11 +1791,7 @@ mod tests {
 
         assert_eq!(
             database_contents(&root.join(DB_FILES[0])),
-            "checkpointed pages"
-        );
-        assert_eq!(
-            std::fs::read(root.join(DB_FILES[1])).unwrap(),
-            b"pages written since the last checkpoint"
+            "pages written since the last checkpoint"
         );
 
         std::fs::remove_dir_all(&root).unwrap();
@@ -1382,7 +1843,7 @@ mod tests {
             .write_all(
                 serde_json::to_string(&CompleteBackupManifest {
                     format: ARCHIVE_FORMAT.to_string(),
-                    format_version: ARCHIVE_VERSION,
+                    format_version: LEGACY_ARCHIVE_VERSION,
                     app_version: "0.2.0".to_string(),
                     created_at: 0,
                 })
@@ -1446,5 +1907,140 @@ mod tests {
         assert!(refusal.contains("outside"), "{refusal}");
 
         std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn a_same_size_content_change_fails_the_integrity_check() {
+        let root = scratch("checksum");
+        let elsewhere = scratch("checksum-out");
+        write_database(&root.join(DB_FILES[0]), "training record");
+        write_document(&root, "handbook.pdf", "original bytes");
+        let archive = elsewhere.join("checked.hfdbackup");
+        write_complete_backup(&root, &archive, "0.5.1").unwrap();
+
+        rewrite_entry(&archive, "documents/handbook.pdf", b"tampered bytes");
+        let error = inspect_archive(&archive, "0.5.1").unwrap_err();
+        assert!(error.contains("integrity check"), "{error}");
+        assert!(stage_complete_restore_in(&root, &archive, "0.5.1").is_err());
+
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_dir_all(elsewhere).unwrap();
+    }
+
+    #[test]
+    fn a_format_version_one_backup_still_restores() {
+        let root = scratch("legacy-v1");
+        let elsewhere = scratch("legacy-v1-out");
+        write_database(&root.join(DB_FILES[0]), "from version one");
+        let archive = elsewhere.join("legacy.hfdbackup");
+        write_legacy_backup(&root, &archive, "0.5.1");
+        write_database(&root.join(DB_FILES[0]), "current");
+
+        stage_complete_restore_in(&root, &archive, "0.5.1").unwrap();
+        apply_pending_restore_in(&root).unwrap();
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "from version one"
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_dir_all(elsewhere).unwrap();
+    }
+
+    #[test]
+    fn a_valid_sqlite_file_with_the_wrong_schema_is_refused() {
+        let root = scratch("wrong-schema");
+        let elsewhere = scratch("wrong-schema-out");
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        connection
+            .execute("CREATE TABLE somebody_elses_data (value TEXT)", [])
+            .unwrap();
+        drop(connection);
+        let archive = elsewhere.join("wrong-schema.hfdbackup");
+        write_complete_backup(&root, &archive, "0.5.1").unwrap();
+
+        let error = stage_complete_restore_in(&root, &archive, "0.5.1").unwrap_err();
+        assert!(error.contains("missing settings"), "{error}");
+        assert!(!root.join(RESTORE_PENDING_DIR).exists());
+
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_dir_all(elsewhere).unwrap();
+    }
+
+    #[test]
+    fn an_online_snapshot_includes_committed_wal_changes() {
+        let root = scratch("online-snapshot");
+        write_database(&root.join(DB_FILES[0]), "before");
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        connection
+            .pragma_update(None, "journal_mode", "WAL")
+            .unwrap();
+        connection
+            .pragma_update(None, "wal_autocheckpoint", 0)
+            .unwrap();
+        connection
+            .execute("UPDATE audit_payload SET value = 'after'", [])
+            .unwrap();
+
+        let snapshot = database_snapshot(&root).unwrap();
+        assert_eq!(database_contents(&snapshot), "after");
+        verify_application_database(&snapshot).unwrap();
+
+        drop(connection);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn archive_names_reject_windows_streams_and_excessive_lengths() {
+        assert!(validate_archive_path(
+            "documents/handbook.pdf",
+            Path::new("documents/handbook.pdf")
+        )
+        .is_ok());
+        assert!(validate_archive_path(
+            "documents/handbook.pdf:hidden",
+            Path::new("documents/handbook.pdf:hidden")
+        )
+        .is_err());
+        let long = format!(
+            "documents/{}.pdf",
+            "x".repeat(MAX_ARCHIVE_COMPONENT_BYTES + 1)
+        );
+        assert!(validate_archive_path(&long, Path::new(&long)).is_err());
+    }
+
+    #[test]
+    fn extreme_compression_ratios_are_refused() {
+        assert!(validate_compression_ratio(1024, 1).is_ok());
+        assert!(validate_compression_ratio(2 * 1024 * 1024, 1024).is_err());
+        assert!(validate_compression_ratio(2 * 1024 * 1024, 0).is_err());
+    }
+
+    #[test]
+    fn an_install_failure_after_protection_restores_current_data() {
+        let root = scratch("install-rollback");
+        let elsewhere = scratch("install-rollback-out");
+        write_database(&root.join(DB_FILES[0]), "backup data");
+        write_document(&root, "handbook.pdf", "backup document");
+        let archive = elsewhere.join("rollback.hfdbackup");
+        write_complete_backup(&root, &archive, "0.5.1").unwrap();
+
+        write_database(&root.join(DB_FILES[0]), "current data");
+        write_document(&root, "handbook.pdf", "current document");
+        stage_complete_restore_in(&root, &archive, "0.5.1").unwrap();
+
+        let error = apply_pending_restore_in_with(&root, || {
+            Err("injected failure before install".to_string())
+        })
+        .unwrap_err();
+        assert!(error.contains("previous data was recovered"), "{error}");
+        assert_eq!(database_contents(&root.join(DB_FILES[0])), "current data");
+        assert_eq!(
+            document_contents(&root, "handbook.pdf").as_deref(),
+            Some("current document")
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_dir_all(elsewhere).unwrap();
     }
 }

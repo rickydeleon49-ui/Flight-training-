@@ -307,3 +307,20 @@ polish documentation that is already thorough — so the honest status to
 report is: **this environment has taken the desktop/documentation side as
 far as it can go, and the next real step requires a macOS machine with
 Xcode.**
+
+# Audit cleanup — 9 September 2026
+
+The clean audit was implemented on `audit/cleanup-2026-09-09` from remote main `e23de3a`.
+
+Completed on Windows:
+
+- upgraded Vitest past GHSA-82fw-gwwq-j7x9;
+- introduced `.hfdbackup` format version 2 with SHA-256 inventory while retaining version 1 restore;
+- switched complete exports to SQLite's online backup API;
+- added staged `PRAGMA quick_check`, core-schema, and future-schema validation;
+- tightened archive compression ratio, path length, component length, and Windows colon checks;
+- added regression tests for content tampering, wrong-schema SQLite files, WAL-aware online snapshots, hostile names, compression ratios, and legacy format compatibility;
+- gated the desktop platform assertion away from future mobile test targets;
+- refreshed root audit/status and backup-format documentation.
+
+Still requires macOS/Xcode: Tauri iOS initialization, simulator/device execution, mobile capabilities, Files/AirDrop receiving, Quick Look, share sheet, Keychain, cold-launch restore, mobile layouts, Instruments, signing, and TestFlight.

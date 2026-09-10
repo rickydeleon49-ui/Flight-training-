@@ -1,103 +1,36 @@
-# Release candidate audit — updated 7 September 2026
+# Release and data-safety audit — 9 September 2026
 
-Version 0.5.0 remains unreleased. **Do not publish, tag, or run release.yml.**
-The authorized endpoint is green CI, PR merge, and both test installer builds.
-Starting remote main was verified at babba51d04a6890384d3b4dfaea06c0f616cbd9d.
-The automatic PDF work is merged. This attachment and macOS follow-up is on
-`fix/desktop-attachments-macos-settings`.
+Her Flight Deck `v0.5.1` is published for Windows and Apple silicon Macs. The desktop release passed its exact-head checks and hosted installer builds. The next project phase is the dedicated iOS application described under `docs/ios/`.
 
-## Findings fixed
+## Current audit fixes
 
-**Desktop attachment follow-up.** Library attachments were already copied into
-private app storage, but a missing copy required an indirect edit flow and an
-external-viewer failure hid the desktop shell's real error. Materials now offer
-transactional file recovery, preserve useful open errors, and can reveal the
-stored copy in Finder or File Explorer. Settings now documents macOS behavior
-section by section.
+- Portable backups now use `formatVersion: 2` and include SHA-256, byte count, and path records for the database and every document. Restore verifies the complete inventory. Existing format-version-1 backups remain readable.
+- Complete exports use SQLite's online backup API to create an immutable, consistent snapshot while the live app may still receive writes.
+- Restore opens the staged database read-only, runs `PRAGMA quick_check`, checks core Her Flight Deck tables, and rejects future schema versions before moving current data.
+- Archive validation rejects extreme compression ratios, overlong paths and path components, Windows alternate-data-stream names, traversal, duplicates, symlinks, unexpected entries, excessive entry counts, and excessive expanded size.
+- Vitest was upgraded past GHSA-82fw-gwwq-j7x9.
+- The platform-info unit test is desktop-gated so a future iOS test run does not fail merely because it correctly reports iOS.
 
-1. Material notes followed stale autosave refresh snapshots. The keyed editor
-   now owns active text and drains later edits after the in-flight save.
-2. Async beforeunload could not guarantee SQLite completion. Each keystroke now
-   synchronously stores a recovery draft. Successful matching saves clear it;
-   failed saves retain it and offer Retry. Storage-full warnings and ownership
-   across remounted editors are covered, including saving when storage fills.
-3. General draft recovery cancelled its final 400ms on navigation. Layout-time
-   mirroring replaces that debounce. Existing Notes edits now recover too, and
-   saving cannot clear newer typing or accept duplicate submissions.
-4. Settings, Journal and edit dialogs reset on unrelated refresh. Initialization
-   now follows editing sessions/record identity. Material metadata editing leaves
-   notes to their dedicated autosaving editor.
-5. Concurrent read-modify-write repository operations could lose independent
-   fields. Application writes/refreshes are queued; stale refresh results are
-   ignored. Successful writes remain successful when a subsequent refresh fails.
-6. Toolkit updates carried stale full snapshots. They now read current state
-   inside queued mutations. Deferred certificate deletion also reads current
-   state and does not recursively queue a mutation.
-7. Rapid deletions could replace the wrong waiting Undo request. The latest
-   request is installed synchronously while earlier deletes settle.
-8. Same-name imports could overwrite saved attachments before Save or on Cancel.
-   Atomic filename reservation preserves existing bytes for imports and PDF
-   splits. Failed writes clean up reserved destinations. Windows drive-relative
-   and alternate-stream paths are refused on all platforms.
-9. Oversized PDFs previously required guessing and saving one manual page range
-   at a time, and size was only known after the split. The app now creates the
-   complete labeled set automatically, caps every part at 50 MB and 1,000 pages,
-   preserves continuous source page ranges, and rolls back files and library
-   records after partial failures. Each part is independently eligible for a
-   study guide.
+## Existing protections retained
 
-## Current verification
+- Imports and PDF parts live in app-owned storage and receive collision-safe names.
+- Automatic PDF splitting keeps each part within 50 MiB and 1,000 pages, labels its range, creates a separate Study Library item, and cleans up partial work.
+- Restore stages data before activation and preserves the current library in a rollback folder before installing the replacement.
+- Database migrations are additive, checksummed, and shared by desktop and the browser test database.
+- The Gemini key never enters the webview or a portable backup. Desktop stores it in a user-only app-data file because unsigned desktop builds cannot retain stable keychain identity; iOS must use Keychain.
+- GitHub workflows use scoped permissions and commit-pinned actions.
 
-- 310 TypeScript tests pass in 35 files.
-- 53 Windows Rust tests pass.
-- TypeScript typecheck and production build pass.
-- Rust formatting and Clippy with warnings denied pass.
-- The npm dependency audit reports zero vulnerabilities.
-10. Multiple dialogs reused one title ID. Each now has a unique accessible ID.
+## Validation results
 
-## Validation
+- `npm ci` completed from the committed lockfile, all 313 frontend tests passed, and the production TypeScript/Vite build succeeded.
+- `npm audit` reports zero vulnerabilities after upgrading Vitest to 4.1.11.
+- All 64 Rust tests passed. `cargo fmt --check` and strict Clippy (`-D warnings`) are clean.
+- A complete Windows x64 NSIS installer build succeeded with the audited dependency set.
+- `cargo audit` reports RUSTSEC-2023-0071 for `rsa` 0.9.10. That crate belongs to SQLx's optional MySQL driver, is present only in the resolved lockfile, and is absent from `cargo tree` for every build target; this app enables SQLite only. RustSec lists no fixed release. The remaining cargo-audit notices are unmaintained or unsoundness warnings in upstream PDF/Tauri platform dependencies.
+- Pull-request and post-merge Checks results are recorded by GitHub Actions. Both exact-head runs must be green to close this audit.
 
-- 310 TypeScript tests across 35 files.
-- 53 Windows Rust tests passed; Unix has an additional permissions test, so 54
-  are expected in Linux CI and macOS builds.
-- Explicit typecheck, production build, cargo fmt --check, and
-  cargo clippy --all-targets -- -D warnings passed locally.
-- Substantially changed TypeScript files passed pinned Prettier 3.6.2 checks,
-  including PilotToolkit. No repository-wide formatter rollout was added.
-- npm audit: zero vulnerabilities.
-- React integration tests exercise the real provider, router, pages and SQLite.
-  Tests cover delayed refresh, closing with IPC unfinished, navigation, remount
-  ownership, failed saves/retry, empty notes, storage quota, rapid toolkit edits,
-  rapid Undo, modal refresh, and newer typing during a Notes save.
-- Browser smoke: all main pages and all eight Toolkit panels rendered. Material
-  notes survived immediate navigation/reload; standalone draft recovery appeared.
+## Remaining platform work
 
-Reviewed persistence/migrations, backup/restore and path checks, documents, PDF
-splitting, Gemini submission/key handling, finance and flight-record validation,
-actions, reminders, navigation, and editing behavior. Existing tests also cover
-migration checksums, upgrades, WAL/backup recovery, financial totals, AI refusal
-and file limits, and cross-feature repository workflows.
+No iOS build has been compiled or run. The current iOS files are architecture, configuration, and platform-boundary scaffolding. A Mac with Xcode is required for `tauri ios init`, simulator/device builds, Files and AirDrop import, Quick Look, share sheet, Keychain, restore-on-cold-launch, mobile layout, memory profiling, signing, and TestFlight.
 
-Gemini model support was checked against official documentation; no shutdown was
-announced for the pinned models. This is not a live API test:
-- https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash
-- https://ai.google.dev/gemini-api/docs/deprecations
-- https://ai.google.dev/gemini-api/docs/document-processing
-
-## Limits and continuation
-
-No live Gemini key, native file-chooser test, macOS hands-on test, or installation
-over populated v0.4.0 data was performed. Browser smoke uses the development
-SQLite driver, not Tauri IPC. Closing recovery is tested by destroying/remounting
-editors with save promises permanently unresolved and by browser reload; native
-Windows/macOS close/reopen remains a hands-on check. Drafts live in local webview
-storage and are excluded from portable backups. If draft storage fails, keep the
-window open until Saved. Cancelled imports may leave unreferenced private files,
-but cannot overwrite saved attachments. Installers remain unsigned.
-
-Read the task handoff for PR number, exact head/merge, CI and installer results.
-Use the connected GitHub tools for PR creation/merge: the existing gh credential
-can clone/push and access Actions/releases but PR GraphQL access is denied.
-Merge only when Checks is green for the exact head. Then dispatch
-`build-desktop.yml` on main with `platform=both` and verify Windows EXE and Apple
-Silicon macOS DMG jobs/artifacts. **Never dispatch release.yml or tag v0.5.0.**
+Desktop installers remain unsigned, macOS packaging remains Apple-silicon-only, and native file-picker/viewer plus live Gemini behavior still require release smoke testing.

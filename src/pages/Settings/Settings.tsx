@@ -174,11 +174,10 @@ export function Settings() {
     setBackupProblem(false);
     setBackupBusy(true);
     try {
+      if (!repositories) throw new Error("The database is still starting. Try again in a moment.");
       const destination = await chooseCompleteBackupDestination();
       if (!destination) return;
-      // Make the main database file self-contained before Rust archives it.
-      if (!repositories) throw new Error("The database is still starting. Try again in a moment.");
-      await repositories.app.checkpoint();
+      // Rust takes a consistent SQLite online snapshot before archiving it.
       const backup = await createCompleteBackup(destination);
 
       // Remembering this is what lets the app tell her later that the backup
