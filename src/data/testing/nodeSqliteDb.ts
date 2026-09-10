@@ -3,8 +3,6 @@
  * repositories are exercised against real SQLite — including foreign keys
  * and partial unique indexes — rather than a hand-written fake.
  */
-import { DatabaseSync } from "node:sqlite";
-
 import type { SqlDatabase, SqlValue } from "../db";
 import { applyMigrations } from "../migrations";
 
@@ -13,6 +11,11 @@ export interface TestDatabase extends SqlDatabase {
 }
 
 export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestDatabase> {
+  // Keep this native-only module out of Vite's jsdom client transform. Node 22
+  // supports it, but does not expose it through builtinModules for Vite to
+  // recognize automatically.
+  const nativeSqlite = "node:sqlite";
+  const { DatabaseSync } = await import(/* @vite-ignore */ nativeSqlite);
   const db = new DatabaseSync(path);
   db.exec("PRAGMA foreign_keys = ON");
 

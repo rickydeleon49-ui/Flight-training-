@@ -28,6 +28,9 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 # Only for the pauses between retries; Tauri already builds on this runtime.
 tokio = { version = "1", features = ["time"] }
 lopdf = { version = "0.42.0", default-features = false }
+sha2 = "0.10"
+hex = "0.4"
+rusqlite = { version = "0.32", features = ["backup"] }
 
 [profile.release]
 codegen-units = 1

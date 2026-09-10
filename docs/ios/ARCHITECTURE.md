@@ -1,10 +1,10 @@
 # iOS architecture and compatibility audit
 
-_Milestone 1 deliverable. Written from `main` at `2dbf6df` (app version
-`0.5.1`), branch `feature/ios-portable-backup`. This machine is Linux with
-no Xcode and no Apple Developer tooling, so nothing in this document that
-requires a Mac has been executed — it is marked as such throughout. See
-`docs/ios/SETUP.md` for exactly what a Mac session needs to run next._
+_Milestone 1 deliverable, updated during the 2026-09-09 release audit. The
+desktop app is version `0.5.1`. This Windows machine has no Xcode or Apple
+Developer tooling, so nothing in this document that requires a Mac has been
+executed — it is marked as such throughout. See `docs/ios/SETUP.md` for exactly
+what a Mac session needs to run next._
 
 ## 1. What already exists that this project can build on
 
@@ -15,9 +15,11 @@ codebase change the shape of the work substantially:
    `src-tauri/src/backup.rs` (54 KB, ~1,450 lines, extensive test coverage
    including hostile-archive, damaged-database, and WAL-carrying cases) is
    the "Portable backup format" and most of "Import and restore behavior"
-   this task asked for — already built, for desktop, at `format_version`
-   1. See `docs/backup-format.md` for the full specification. iOS work does
-   not need to design this format; it needs to **read** it.
+   this task asked for — already built for desktop. New archives use
+   `format_version` 2 with per-file SHA-256 integrity records, and version 1
+   archives remain readable. See `docs/backup-format.md` for the full
+   specification. iOS work does not need to design this format; it needs to
+   **read and write** it compatibly.
 2. **The frontend already runs on two SQLite backends behind one interface.**
    `src/data/index.ts` picks `tauriDb.ts` (real SQLite via
    `tauri-plugin-sql`) or `sqlJsDb.ts` (an in-browser WASM fallback) purely

@@ -7,20 +7,19 @@ entry._
 
 ## Milestone 1 — Audit, interfaces, format spec, threat model
 
-- [x] Repository audit: branch, working tree, version, test commands
-      confirmed (`main` @ `2dbf6df`, app version `0.5.1`, clean tree).
+- [x] Repository audit refreshed from remote `main` at `e23de3a`; app version
+      remains `0.5.1`.
 - [x] Compatibility matrix — Rust crates, npm packages, Tauri plugins,
       capabilities surface (`docs/ios/ARCHITECTURE.md` §2).
-- [x] Discovered and documented: a complete portable backup format
-      (`.hfdbackup`, format_version 1) already ships on desktop — this
-      was not previously written up as a spec (`docs/backup-format.md`).
+- [x] Portable `.hfdbackup` format documented. Writers now produce format
+      version 2; readers retain version 1 compatibility.
 - [x] Discovered and documented: desktop deliberately avoids the OS
       keychain for a reason that does not apply to iOS
       (`docs/ios/ARCHITECTURE.md` §4).
 - [x] Threat model and restoration strategy (`docs/ios/THREAT_MODEL.md`).
 - [x] Platform abstraction interfaces: `CredentialStore`, `PlatformInfo`
-      traits added (`src-tauri/src/platform.rs`), desktop implementation
-      wired and unit-tested, iOS implementation explicitly deferred.
+      traits added (`src-tauri/src/platform.rs`), desktop adapter unit-tested
+      but not yet wired, iOS implementation explicitly deferred.
 - [x] `src-tauri/tauri.ios.conf.json` added as an unverified starting
       point for `tauri ios init` (Tauri 2 platform-override convention).
 - [ ] `src-tauri/capabilities/mobile.json` — **not written**; needs a real
@@ -48,15 +47,11 @@ audit of what's already implemented and tested:
 - [x] Confirmed this milestone's own changes did not regress any of the
       above: full desktop test suite re-run on this branch (see
       `docs/ios/CONTINUATION.md` for the exact commands and results).
-- [x] **Reviewed against the task brief's testing-requirements list item by
-      item.** Manifest validation, format-version compatibility, checksum
-      (SQLite-header-and-size) mismatch rejection, missing-file rejection,
-      ZIP path traversal rejection, archive-size/entry-count limits, SQLite
-      snapshot consistency, and round-trip export/import all have existing,
-      passing tests in `backup.rs` — see `docs/ios/THREAT_MODEL.md`'s
-      threat table for the mapping from requirement to test. Duplicate-file
-      and filename-collision handling are Merge-mode concerns and stay out
-      of scope until Merge is built (see below).
+- [x] Reviewed against the task brief's testing requirements. Format version
+      2 now provides SHA-256 inventory verification, an online SQLite snapshot,
+      staged `PRAGMA quick_check` and schema validation, stricter path and
+      compression limits, and regression tests. Version 1 restore remains
+      supported. Merge-only conflict handling remains deferred.
 - [ ] **Attempted and reverted: a dedicated "Replace rollback after an
       injected failure" test.** Tried forcing `apply_pending_restore_in`'s
       protect step to fail by removing write permission on the data
@@ -85,10 +80,8 @@ audit of what's already implemented and tested:
       exist). This is deferred to whichever milestone actually ships an
       iOS build capable of importing a `.hfdbackup` file (Milestone 3/4),
       not treated as a Milestone 2 checkbox to satisfy prematurely.
-- [ ] Per-file checksum manifest (`formatVersion` 2) — **deliberately not
-      built**; documented as a tracked future addition in
-      `docs/backup-format.md`, not needed to satisfy this milestone's
-      Replace-only scope.
+- [x] Per-file SHA-256 inventory (`formatVersion` 2), with explicit
+      backward-compatible version 1 restore.
 
 ## Milestone 3 — iOS target, native surfaces
 
@@ -147,7 +140,7 @@ this section has been attempted.**
 - Do not claim App Store/TestFlight readiness before signing,
   entitlements, privacy manifest, archive validation, and TestFlight
   installation have all actually happened.
-- Do not merge this branch into `main` until reviewed and all checks
+- Do not merge an implementation branch into `main` until reviewed and all checks
   available in the working environment pass.
 - Do not rewrite shared git history, move release tags, publish a
   release, or alter signing credentials.

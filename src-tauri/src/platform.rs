@@ -156,6 +156,7 @@ mod tests {
         store.forget().unwrap();
     }
 
+    #[cfg(not(any(target_os = "ios", target_os = "android")))]
     #[test]
     fn compiled_platform_info_never_reports_ios_or_mobile_on_this_desktop_build() {
         // This crate is compiled for a desktop target in every environment
