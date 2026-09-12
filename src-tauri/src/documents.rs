@@ -305,4 +305,46 @@ mod tests {
         assert_ne!(second, third);
         std::fs::remove_dir_all(root).unwrap();
     }
+
+    /// `tauri-plugin-opener`'s `open_path` and `reveal_item_in_dir` deny
+    /// every path unless the capability that grants them also carries a
+    /// scope entry that matches it — an unscoped `"opener:allow-open-path"`
+    /// string looks like it grants access, but the plugin's own scope check
+    /// (`self.allowed.iter().any(...)` over an *empty* list) refuses every
+    /// path, including her own documents. That produced exactly the bug this
+    /// scope exists to fix: "Not allowed to open path
+    /// .../documents/....pdf" on open, with the identical failure on reveal.
+    /// This reads the real capability file so a future edit that drops the
+    /// scope, or narrows it to the wrong directory, fails a test instead of
+    /// only showing up when a document is actually opened.
+    #[test]
+    fn opening_or_revealing_a_document_is_scoped_to_the_documents_folder() {
+        let raw = include_str!("../capabilities/default.json");
+        let capabilities: serde_json::Value = serde_json::from_str(raw).unwrap();
+        let permissions = capabilities["permissions"]
+            .as_array()
+            .expect("capabilities file must list permissions");
+
+        for identifier in ["opener:allow-open-path", "opener:allow-reveal-item-in-dir"] {
+            let entry = permissions
+                .iter()
+                .find(|permission| {
+                    permission.get("identifier").and_then(|id| id.as_str()) == Some(identifier)
+                })
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{identifier} must be granted with a path scope, not as a bare \
+                         permission string — see the module comment on `documents_root`."
+                    )
+                });
+            let allowed_path = entry["allow"][0]["path"]
+                .as_str()
+                .unwrap_or_else(|| panic!("{identifier} has no scoped path entry"));
+            assert!(
+                allowed_path.starts_with("$APPCONFIG/documents"),
+                "{identifier} is scoped to {allowed_path}, not the documents folder \
+                 (`storage::app_root` resolves to `$APPCONFIG`)"
+            );
+        }
+    }
 }

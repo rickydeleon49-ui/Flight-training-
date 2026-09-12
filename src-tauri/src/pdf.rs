@@ -12,9 +12,25 @@
 use std::path::{Path, PathBuf};
 
 use lopdf::Document;
-use tauri::AppHandle;
+use serde::Serialize;
+use tauri::{AppHandle, Emitter};
 
 use crate::documents::{self, ImportedDocument};
+
+#[derive(Clone, Serialize)]
+struct SplitProgress {
+    message: String,
+}
+
+const SPLIT_PROGRESS_EVENT: &str = "pdf-split-progress";
+
+/// Say which part is being read or has just been written.
+///
+/// Progress is a courtesy, exactly like Gemini's — a window that will not
+/// take the event changes nothing about whether the split finishes.
+fn say(app: &AppHandle, message: String) {
+    let _ = app.emit(SPLIT_PROGRESS_EVENT, SplitProgress { message });
+}
 
 /// The most pages one split may carry.
 ///
@@ -130,26 +146,33 @@ fn write_page_range_from_document(
     Ok(kept)
 }
 
+/// Binary-search the largest page range starting at `first` that still fits
+/// `max_bytes`, trying at most `max_pages` pages.
+///
+/// `render_candidate` hands back the *actual bytes* a given last page would
+/// produce, not just their count — the winning candidate's bytes are kept
+/// from whichever trial found them, so the caller never has to render the
+/// same range twice to get hold of what it already measured.
 fn largest_fitting_last_page<F>(
     first: u32,
     total: u32,
     max_pages: u32,
     max_bytes: u64,
-    mut write_candidate: F,
-) -> Result<(u32, u64), String>
+    mut render_candidate: F,
+) -> Result<(u32, Vec<u8>), String>
 where
-    F: FnMut(u32) -> Result<u64, String>,
+    F: FnMut(u32) -> Result<Vec<u8>, String>,
 {
     let mut low = first;
     let mut high = total.min(first.saturating_add(max_pages - 1));
-    let mut best = None;
+    let mut best: Option<(u32, Vec<u8>)> = None;
 
     while low <= high {
         let middle = low + (high - low) / 2;
-        let bytes = write_candidate(middle)?;
-        if bytes <= max_bytes {
-            best = Some((middle, bytes));
+        let bytes = render_candidate(middle)?;
+        if bytes.len() as u64 <= max_bytes {
             low = middle.saturating_add(1);
+            best = Some((middle, bytes));
         } else if middle == first {
             break;
         } else {
@@ -157,12 +180,55 @@ where
         }
     }
 
-    match best {
-        Some((last, _)) => Ok((last, write_candidate(last)?)),
-        None => Err(format!(
-            "Page {first} is larger than 50 MB by itself. Compress that PDF and try again."
-        )),
-    }
+    best.ok_or_else(|| {
+        format!("Page {first} is larger than 50 MB by itself. Compress that PDF and try again.")
+    })
+}
+
+/// Copy of `source` holding only pages `first..=high`, pruned and compressed
+/// once — the bounded base every candidate inside one part is trimmed from,
+/// instead of each candidate re-cloning and re-compressing the *entire*
+/// remaining book. For a book far longer than one part's page limit, this is
+/// the difference between paying that cost once per part and paying it once
+/// per binary-search step per part.
+///
+/// `prune_objects` does a fresh reachability sweep from the current page
+/// tree every time it runs (see `lopdf`'s `processor.rs`), and `compress`
+/// only rewrites each stream object's own bytes — neither depends on how
+/// many *other* objects exist, so trimming a document in two stages (once to
+/// this window, later further within it) produces exactly the same kept
+/// objects and bytes as trimming directly to the final range in one stage.
+fn window_document(source: &Document, first: u32, high: u32, total: u32) -> Document {
+    let mut window = source.clone();
+    let outside: Vec<u32> = (1..=total)
+        .filter(|page| *page < first || *page > high)
+        .collect();
+    window.delete_pages(&outside);
+    window.prune_objects();
+    window.compress();
+    window
+}
+
+/// Render pages `first..=last` of an already-windowed document to bytes, in
+/// memory — nothing touches disk until the caller has the winning candidate.
+///
+/// `window`'s own page numbering restarts at 1 (lopdf numbers a document's
+/// pages by tree order, not by any number carried over from where it was cut
+/// from), so `first` here is relative to the window, not the original book.
+fn render_window_range(window: &Document, first: u32, last: u32) -> Result<Vec<u8>, String> {
+    let mut candidate = window.clone();
+    let total = u32::try_from(candidate.get_pages().len()).unwrap_or(u32::MAX);
+    let outside: Vec<u32> = (1..=total)
+        .filter(|page| *page < first || *page > last)
+        .collect();
+    candidate.delete_pages(&outside);
+    candidate.prune_objects();
+
+    let mut bytes = Vec::new();
+    candidate
+        .save_to(&mut bytes)
+        .map_err(|e| format!("Could not save the split PDF: {e}"))?;
+    Ok(bytes)
 }
 
 /// How many pages a stored PDF has, counted away from the interface thread.
@@ -247,30 +313,51 @@ pub async fn split_pdf_automatically(
         } else {
             base
         };
+        let total_parts_estimate = total.div_ceil(MAX_PAGES).max(1);
         let mut created_paths = Vec::new();
         let result = (|| {
             let mut parts = Vec::new();
             let mut first = 1;
             let mut number = 1;
             while first <= total {
+                let window_high = total.min(first.saturating_add(MAX_PAGES - 1));
+                say(
+                    &app,
+                    format!(
+                        "Reading pages {first}\u{2013}{window_high} (part {number} of about \
+                         {total_parts_estimate})…"
+                    ),
+                );
+                // Bounded to at most MAX_PAGES pages, however long the book
+                // is — every candidate below is cloned and pruned from this,
+                // not from the whole remaining document. See `window_document`.
+                let window = window_document(&document, first, window_high, total);
+
                 let part_name = format!("{base} - Part {number}.pdf");
                 let part_id = format!("{batch_id}-part-{number}");
                 let (destination, stored_name) =
                     documents::stored_destination(&app, &part_id, &part_name)?;
                 created_paths.push(destination.clone());
 
-                let (last, file_size) = largest_fitting_last_page(
+                let (last, bytes) = largest_fitting_last_page(
                     first,
-                    total,
+                    window_high,
                     MAX_PAGES,
                     MAX_PDF_BYTES,
-                    |candidate| {
-                        write_page_range_from_document(&document, &destination, first, candidate)?;
-                        std::fs::metadata(&destination)
-                            .map(|metadata| metadata.len())
-                            .map_err(|e| format!("The split PDF could not be read back: {e}"))
-                    },
+                    |candidate| render_window_range(&window, 1, candidate - first + 1),
                 )?;
+                let file_size = bytes.len() as u64;
+                std::fs::write(&destination, &bytes)
+                    .map_err(|e| format!("Could not save the split PDF: {e}"))?;
+
+                say(
+                    &app,
+                    format!(
+                        "Created part {number}: pages {first}\u{2013}{last} \
+                         ({} MB)",
+                        file_size.div_ceil(1024 * 1024)
+                    ),
+                );
 
                 parts.push(PdfPart {
                     relative_path: stored_name,
@@ -531,20 +618,99 @@ mod tests {
 
     #[test]
     fn automatic_ranges_use_the_largest_fitting_page_and_respect_page_limit() {
-        let (last, bytes) =
-            largest_fitting_last_page(1, 2_500, 1_000, 50, |page| Ok(u64::from(page) / 10))
-                .unwrap();
-        assert_eq!((last, bytes), (509, 50));
+        let (last, bytes) = largest_fitting_last_page(1, 2_500, 1_000, 50, |page| {
+            Ok(vec![0u8; (page / 10) as usize])
+        })
+        .unwrap();
+        assert_eq!((last, bytes.len() as u64), (509, 50));
 
         let (last, _) =
-            largest_fitting_last_page(1, 2_500, 1_000, 5_000, |page| Ok(u64::from(page))).unwrap();
+            largest_fitting_last_page(1, 2_500, 1_000, 5_000, |page| Ok(vec![0u8; page as usize]))
+                .unwrap();
         assert_eq!(last, 1_000);
     }
 
     #[test]
     fn a_single_oversized_page_gets_an_actionable_error() {
-        let error = largest_fitting_last_page(17, 30, 1_000, 50, |_| Ok(51)).unwrap_err();
+        let error =
+            largest_fitting_last_page(17, 30, 1_000, 50, |_| Ok(vec![0u8; 51])).unwrap_err();
         assert!(error.contains("Page 17"));
         assert!(error.contains("Compress"));
+    }
+
+    #[test]
+    fn windowing_a_document_first_produces_the_same_split_as_windowing_it_directly() {
+        // Kept small deliberately: `delete_pages` walks the whole live object
+        // graph once per page it removes (see `lopdf`'s `delete_object`), so
+        // a page count picked to demonstrate scale rather than prove
+        // equivalence turns this one test into most of the suite's runtime.
+        let full = pdf_with_pages(60);
+
+        // The old, single-stage approach: clone the whole book and trim
+        // straight to the final range.
+        let mut direct = full.clone();
+        let direct_total = u32::try_from(direct.get_pages().len()).unwrap();
+        let direct_outside: Vec<u32> = (1..=direct_total)
+            .filter(|page| *page < 21 || *page > 35)
+            .collect();
+        direct.delete_pages(&direct_outside);
+        direct.prune_objects();
+        direct.compress();
+        let mut direct_bytes = Vec::new();
+        direct.save_to(&mut direct_bytes).unwrap();
+
+        // The new, two-stage approach this module now uses: window to a
+        // bound first, then trim further within that window.
+        let window = window_document(&full, 11, 40, 60);
+        let windowed_bytes = render_window_range(&window, 11, 25).unwrap();
+
+        assert_eq!(direct_bytes, windowed_bytes);
+    }
+
+    /// Not a strict timing assertion — CI hardware varies — but the ratio
+    /// between "reload and re-clone the whole remaining book for every
+    /// binary-search candidate" (what this module did before) and "clone a
+    /// bounded window once per part" (what it does now) should be large and
+    /// growing with page count, which is the actual claim being made.
+    /// `#[ignore]`d: it exists to be run by hand while working on this code,
+    /// not on every `cargo test`, since it deliberately reproduces the slow
+    /// path to measure it.
+    #[test]
+    #[ignore = "run explicitly to measure the improvement; deliberately slow on purpose"]
+    fn windowing_is_substantially_faster_than_reprocessing_the_whole_book_per_candidate() {
+        use std::time::Instant;
+
+        let pages = 3_000;
+        let document = pdf_with_pages(pages);
+
+        let old_way = Instant::now();
+        for candidate in [250u32, 375, 438, 469, 485] {
+            // What every candidate used to cost: clone the *whole* document,
+            // trim to just this one range, save.
+            write_page_range_from_document(
+                &document,
+                &std::env::temp_dir().join("hfd-old-way-bench.pdf"),
+                1,
+                candidate,
+            )
+            .unwrap();
+        }
+        let old_elapsed = old_way.elapsed();
+
+        let new_way = Instant::now();
+        let window = window_document(&document, 1, 1_000.min(pages), pages);
+        for candidate in [250u32, 375, 438, 469, 485] {
+            render_window_range(&window, 1, candidate).unwrap();
+        }
+        let new_elapsed = new_way.elapsed();
+
+        println!("old (whole-book clone per candidate): {old_elapsed:?}");
+        println!("new (windowed clone per candidate):    {new_elapsed:?}");
+        assert!(
+            new_elapsed < old_elapsed,
+            "windowing should be faster, not just different: old {old_elapsed:?} vs new {new_elapsed:?}"
+        );
+
+        let _ = std::fs::remove_file(std::env::temp_dir().join("hfd-old-way-bench.pdf"));
     }
 }

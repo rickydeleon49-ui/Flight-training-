@@ -253,6 +253,26 @@ export interface AiStudySet {
   updatedAt: IsoDateTime;
 }
 
+export interface PracticeQuestion {
+  question: string;
+  /** At least two choices; `correctIndex` always points inside this array. */
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  sourcePage: number | null;
+}
+
+/** A saved Gemini practice test, tied to the document it came from. */
+export interface PracticeTest {
+  sourceMaterialId: Id;
+  title: string;
+  questions: PracticeQuestion[];
+  provider: "gemini";
+  model: string;
+  generatedAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}
+
 /* ------------------------------------------------------------------ */
 /* Schedule                                                            */
 /* ------------------------------------------------------------------ */

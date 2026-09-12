@@ -10,8 +10,14 @@
     "dialog:allow-save",
     "dialog:allow-message",
     "dialog:allow-confirm",
-    "opener:allow-open-path",
-    "opener:allow-reveal-item-in-dir",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "$APPCONFIG/documents/**" }]
+    },
+    {
+      "identifier": "opener:allow-reveal-item-in-dir",
+      "allow": [{ "path": "$APPCONFIG/documents/**" }]
+    },
     {
       "identifier": "opener:allow-open-url",
       "allow": [{ "url": "https://aistudio.google.com/**" }]

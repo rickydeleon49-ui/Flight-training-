@@ -11,6 +11,8 @@ import {
   type ReviewStatus,
   type StudyMaterial,
   type AiStudySet,
+  type PracticeQuestion,
+  type PracticeTest,
   type StudyFlashcard,
   type StudyGuideSection,
   type Topic,
@@ -30,6 +32,11 @@ interface AiRow {
   provider: unknown; model: unknown; generated_at: unknown; updated_at: unknown;
 }
 
+interface PracticeTestRow {
+  source_material_id: string; title: unknown; questions_json: unknown;
+  provider: unknown; model: unknown; generated_at: unknown; updated_at: unknown;
+}
+
 function jsonArray<T>(value: unknown): T[] {
   try {
     const parsed = JSON.parse(toText(value));
@@ -46,6 +53,16 @@ const mapAiStudySet = (row: AiRow): AiStudySet => ({
   sections: jsonArray<StudyGuideSection>(row.sections_json),
   flashcards: jsonArray<StudyFlashcard>(row.flashcards_json),
   sourceNotes: toText(row.source_notes),
+  provider: "gemini",
+  model: toText(row.model),
+  generatedAt: toText(row.generated_at),
+  updatedAt: toText(row.updated_at),
+});
+
+const mapPracticeTest = (row: PracticeTestRow): PracticeTest => ({
+  sourceMaterialId: row.source_material_id,
+  title: toText(row.title),
+  questions: jsonArray<PracticeQuestion>(row.questions_json),
   provider: "gemini",
   model: toText(row.model),
   generatedAt: toText(row.generated_at),
@@ -207,6 +224,36 @@ export function documentRepository(db: SqlDatabase) {
 
     async removeAiStudySet(sourceMaterialId: Id): Promise<void> {
       await db.execute("DELETE FROM ai_study_sets WHERE source_material_id = ?", [sourceMaterialId]);
+    },
+
+    async listPracticeTests(): Promise<PracticeTest[]> {
+      const rows = await db.select<PracticeTestRow>(
+        "SELECT * FROM practice_tests ORDER BY updated_at DESC",
+      );
+      return rows.map(mapPracticeTest);
+    },
+
+    async savePracticeTest(
+      input: Omit<PracticeTest, "provider" | "generatedAt" | "updatedAt">,
+    ): Promise<void> {
+      const timestamp = nowIso();
+      await db.execute(
+        `INSERT INTO practice_tests
+           (source_material_id, title, questions_json, provider, model, generated_at, updated_at)
+         VALUES (?, ?, ?, 'gemini', ?, ?, ?)
+         ON CONFLICT(source_material_id) DO UPDATE SET
+           title = excluded.title, questions_json = excluded.questions_json,
+           model = excluded.model, generated_at = excluded.generated_at,
+           updated_at = excluded.updated_at`,
+        [
+          input.sourceMaterialId, input.title, JSON.stringify(input.questions),
+          input.model, timestamp, timestamp,
+        ],
+      );
+    },
+
+    async removePracticeTest(sourceMaterialId: Id): Promise<void> {
+      await db.execute("DELETE FROM practice_tests WHERE source_material_id = ?", [sourceMaterialId]);
     },
 
     /**

@@ -6,6 +6,7 @@
  * own machine; nothing here leaves the computer.
  */
 import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import { isTauri } from "@/data";
 import { DesktopOnlyError, type ImportedDocument } from "./documents";
@@ -54,4 +55,20 @@ export async function splitPdfAutomatically(request: {
 }): Promise<PdfPart[]> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke<PdfPart[]>("split_pdf_automatically", request);
+}
+
+/**
+ * Follow along while an automatic split reads and writes each part.
+ *
+ * A large or illustrated handbook can take real time per part; a spinner
+ * that says nothing that whole time reads as a hang. The Rust side sends the
+ * sentence; this only carries it. Returns a function that stops listening.
+ */
+export async function watchSplitProgress(
+  onMessage: (message: string) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return listen<{ message: string }>("pdf-split-progress", (event) => {
+    onMessage(event.payload.message);
+  });
 }

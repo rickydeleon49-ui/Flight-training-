@@ -26,6 +26,7 @@ import type {
   ScheduleEvent,
   StudyMaterial,
   AiStudySet,
+  PracticeTest,
   Transaction,
   ToolkitState,
 } from "@/domain/types";
@@ -49,6 +50,7 @@ export interface AppData {
   actions: NextAction[];
   materials: StudyMaterial[];
   aiStudySets: AiStudySet[];
+  practiceTests: PracticeTest[];
   tags: string[];
   events: ScheduleEvent[];
   prepItems: PrepItem[];
@@ -123,6 +125,7 @@ export const EMPTY_DATA: AppData = {
   actions: [],
   materials: [],
   aiStudySets: [],
+  practiceTests: [],
   tags: [],
   events: [],
   prepItems: [],
@@ -145,6 +148,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     actions,
     materials,
     aiStudySets,
+    practiceTests,
     tags,
     events,
     prepItems,
@@ -162,6 +166,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.actions.list(),
     repositories.documents.list(),
     repositories.documents.listAiStudySets(),
+    repositories.documents.listPracticeTests(),
     repositories.documents.listTags(),
     repositories.schedule.list(),
     repositories.schedule.listPrepItems(),
@@ -181,6 +186,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     actions,
     materials,
     aiStudySets,
+    practiceTests,
     tags,
     events,
     prepItems,
