@@ -9,9 +9,10 @@
 //! into a new file in the same private storage as everything else, and the
 //! original is left exactly as it was.
 
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use lopdf::Document;
+use lopdf::{Dictionary, Document, Object, ObjectId};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
@@ -131,7 +132,7 @@ fn write_page_range_from_document(
         .filter(|number| *number < first || *number > last)
         .collect();
     let kept = total - u32::try_from(removing.len()).unwrap_or(0);
-    document.delete_pages(&removing);
+    delete_pages_batch(&mut document, &removing);
 
     // Deleting pages leaves their content, fonts and images behind as
     // unreferenced objects. Without this the "chapter" is very nearly the
@@ -203,7 +204,7 @@ fn window_document(source: &Document, first: u32, high: u32, total: u32) -> Docu
     let outside: Vec<u32> = (1..=total)
         .filter(|page| *page < first || *page > high)
         .collect();
-    window.delete_pages(&outside);
+    delete_pages_batch(&mut window, &outside);
     window.prune_objects();
     window.compress();
     window
@@ -221,7 +222,7 @@ fn render_window_range(window: &Document, first: u32, last: u32) -> Result<Vec<u
     let outside: Vec<u32> = (1..=total)
         .filter(|page| *page < first || *page > last)
         .collect();
-    candidate.delete_pages(&outside);
+    delete_pages_batch(&mut candidate, &outside);
     candidate.prune_objects();
 
     let mut bytes = Vec::new();
@@ -229,6 +230,85 @@ fn render_window_range(window: &Document, first: u32, last: u32) -> Result<Vec<u
         .save_to(&mut bytes)
         .map_err(|e| format!("Could not save the split PDF: {e}"))?;
     Ok(bytes)
+}
+
+/// Remove all unwanted page references in one pass. `lopdf::delete_pages`
+/// traverses the entire object graph for *each* removed page; on a long book
+/// that makes splitting quadratic even before any candidate is rendered.
+/// Keep its page-tree Count updates and reference cleanup, but batch both.
+fn delete_pages_batch(document: &mut Document, page_numbers: &[u32]) {
+    let pages = document.get_pages();
+    let removed: HashSet<ObjectId> = page_numbers
+        .iter()
+        .filter_map(|number| pages.get(number).copied())
+        .collect();
+    if removed.is_empty() {
+        return;
+    }
+
+    let mut decrements: HashMap<ObjectId, i64> = HashMap::new();
+    for page_id in &removed {
+        let mut parent = document
+            .get_dictionary(*page_id)
+            .ok()
+            .and_then(|page| page.get(b"Parent").ok())
+            .and_then(|value| value.as_reference().ok());
+        let mut visited = HashSet::new();
+        while let Some(id) = parent {
+            if !visited.insert(id) {
+                break;
+            }
+            *decrements.entry(id).or_default() += 1;
+            parent = document
+                .get_dictionary(id)
+                .ok()
+                .and_then(|tree| tree.get(b"Parent").ok())
+                .and_then(|value| value.as_reference().ok());
+        }
+    }
+    for (id, decrement) in decrements {
+        if let Some(Ok(tree)) = document.objects.get_mut(&id).map(Object::as_dict_mut) {
+            if let Ok(count) = tree.get(b"Count").and_then(Object::as_i64) {
+                tree.set("Count", count - decrement);
+            }
+        }
+    }
+
+    strip_references_from_dictionary(&mut document.trailer, &removed);
+    for object in document.objects.values_mut() {
+        strip_references(object, &removed);
+    }
+    document.objects.retain(|id, _| !removed.contains(id));
+}
+
+fn strip_references_from_dictionary(dictionary: &mut Dictionary, removed: &HashSet<ObjectId>) {
+    let keys: Vec<Vec<u8>> = dictionary
+        .iter()
+        .filter_map(|(key, value)| match value {
+            Object::Reference(id) if removed.contains(id) => Some(key.clone()),
+            _ => None,
+        })
+        .collect();
+    for key in keys {
+        dictionary.remove(&key);
+    }
+    for (_, value) in dictionary.iter_mut() {
+        strip_references(value, removed);
+    }
+}
+
+fn strip_references(object: &mut Object, removed: &HashSet<ObjectId>) {
+    match object {
+        Object::Array(items) => {
+            items.retain(|item| !matches!(item, Object::Reference(id) if removed.contains(id)));
+            for item in items {
+                strip_references(item, removed);
+            }
+        }
+        Object::Dictionary(dictionary) => strip_references_from_dictionary(dictionary, removed),
+        Object::Stream(stream) => strip_references_from_dictionary(&mut stream.dict, removed),
+        _ => {}
+    }
 }
 
 /// How many pages a stored PDF has, counted away from the interface thread.
@@ -474,6 +554,176 @@ mod tests {
         });
         document.trailer.set("Root", catalog_id);
         document
+    }
+
+    fn illustrated_pdf_with_pages(pages: u32) -> Document {
+        let mut document = Document::with_version("1.5");
+        let pages_id = document.new_object_id();
+        let kids: Vec<Object> =
+            (0..pages)
+                .map(|page| {
+                    // Distinct RGB raster data on every page. This is a valid
+                    // image XObject rather than a page-count-only fixture.
+                    let mut seed = page + 1;
+                    let pixels: Vec<u8> = (0..128 * 128 * 3)
+                        .map(|_| {
+                            seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                            (seed >> 16) as u8
+                        })
+                        .collect();
+                    let image = document.add_object(Stream::new(
+                        dictionary! {
+                            "Type" => "XObject", "Subtype" => "Image",
+                            "Width" => 128, "Height" => 128,
+                            "ColorSpace" => "DeviceRGB", "BitsPerComponent" => 8,
+                        },
+                        pixels,
+                    ));
+                    let contents = document.add_object(Stream::new(
+                        dictionary! {},
+                        b"q 128 0 0 128 0 0 cm /Im0 Do Q".to_vec(),
+                    ));
+                    document.add_object(dictionary! {
+                    "Type" => "Page", "Parent" => pages_id,
+                    "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+                    "Resources" => dictionary! { "XObject" => dictionary! { "Im0" => image } },
+                    "Contents" => contents,
+                }).into()
+                })
+                .collect();
+        document.objects.insert(
+            pages_id,
+            Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Count" => i64::from(pages), "Kids" => kids,
+            }),
+        );
+        let catalog_id =
+            document.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+        document.trailer.set("Root", catalog_id);
+        document
+    }
+
+    fn assert_batch_matches_lopdf(source: &Document, outside: &[u32]) {
+        let mut original = source.clone();
+        original.delete_pages(outside);
+        original.prune_objects();
+        original.compress();
+        let mut old_bytes = Vec::new();
+        original.save_to(&mut old_bytes).unwrap();
+
+        let mut batched = source.clone();
+        delete_pages_batch(&mut batched, outside);
+        batched.prune_objects();
+        batched.compress();
+        let mut new_bytes = Vec::new();
+        batched.save_to(&mut new_bytes).unwrap();
+        assert_eq!(old_bytes, new_bytes);
+        assert_eq!(original.get_pages().len(), batched.get_pages().len());
+    }
+
+    #[test]
+    fn batch_deletion_matches_lopdf_on_illustrated_pages() {
+        let document = illustrated_pdf_with_pages(40);
+        let outside: Vec<u32> = (1..=40).filter(|page| *page < 11 || *page > 25).collect();
+        assert_batch_matches_lopdf(&document, &outside);
+    }
+
+    #[test]
+    fn batch_deletion_updates_nested_page_tree_counts() {
+        let mut document = pdf_with_pages(30);
+        let root = document
+            .catalog()
+            .unwrap()
+            .get(b"Pages")
+            .unwrap()
+            .as_reference()
+            .unwrap();
+        let first_branch = document.new_object_id();
+        let second_branch = document.new_object_id();
+        let original_kids = document
+            .get_dictionary(root)
+            .unwrap()
+            .get(b"Kids")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .clone();
+        for (index, page) in original_kids.iter().enumerate() {
+            let page_id = page.as_reference().unwrap();
+            document.get_dictionary_mut(page_id).unwrap().set(
+                "Parent",
+                if index < 15 {
+                    first_branch
+                } else {
+                    second_branch
+                },
+            );
+        }
+        document.objects.insert(
+            first_branch,
+            Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Parent" => root, "Count" => 15,
+                "Kids" => original_kids[..15].to_vec(),
+            }),
+        );
+        document.objects.insert(
+            second_branch,
+            Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Parent" => root, "Count" => 15,
+                "Kids" => original_kids[15..].to_vec(),
+            }),
+        );
+        document.get_dictionary_mut(root).unwrap().set(
+            "Kids",
+            vec![
+                Object::Reference(first_branch),
+                Object::Reference(second_branch),
+            ],
+        );
+
+        let outside: Vec<u32> = (1..=30).filter(|page| *page < 8 || *page > 22).collect();
+        assert_batch_matches_lopdf(&document, &outside);
+    }
+
+    #[test]
+    #[ignore = "manual performance measurement on a long and image-heavy PDF"]
+    fn batch_deletion_benchmark() {
+        use std::time::Instant;
+
+        let long = pdf_with_pages(3_000);
+        let start = Instant::now();
+        let window = window_document(&long, 1, 1_000, 3_000);
+        for candidate in [250u32, 375, 438, 469, 485] {
+            render_window_range(&window, 1, candidate).unwrap();
+        }
+        println!(
+            "batch long-book window + 5 candidates: {:?}",
+            start.elapsed()
+        );
+
+        let illustrated = illustrated_pdf_with_pages(120);
+        let outside: Vec<u32> = (1..=120).filter(|page| *page > 50).collect();
+        let old_start = Instant::now();
+        let mut old = illustrated.clone();
+        old.delete_pages(&outside);
+        old.prune_objects();
+        old.compress();
+        let old_elapsed = old_start.elapsed();
+        let new_start = Instant::now();
+        let mut new = illustrated.clone();
+        delete_pages_batch(&mut new, &outside);
+        new.prune_objects();
+        new.compress();
+        println!(
+            "illustrated 120-page cut: old {:?}, batch {:?}",
+            old_elapsed,
+            new_start.elapsed()
+        );
+        let mut old_bytes = Vec::new();
+        let mut new_bytes = Vec::new();
+        old.save_to(&mut old_bytes).unwrap();
+        new.save_to(&mut new_bytes).unwrap();
+        assert_eq!(old_bytes, new_bytes);
     }
 
     fn write_pdf(dir: &Path, name: &str, pages: u32) -> PathBuf {

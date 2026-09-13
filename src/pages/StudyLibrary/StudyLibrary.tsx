@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -46,6 +46,7 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
 
 const STATUS_VALUES = STATUS_FILTERS.map((filter) => filter.value);
 const SORT_VALUES = MATERIAL_SORT_OPTIONS.map((option) => option.value);
+const MATERIAL_PAGE_SIZE = 100;
 
 export function StudyLibrary() {
   const { data, mutate } = useAppData();
@@ -64,6 +65,10 @@ export function StudyLibrary() {
   const [sort, setSort] = useRememberedState<MaterialSort>(
     "library.sort", "recent", isOneOf(SORT_VALUES),
   );
+  const filterKey = [status, topic, type, search, sort].join("\0");
+  const [page, setPage] = useState({ key: filterKey, limit: MATERIAL_PAGE_SIZE });
+  const visibleLimit = page.key === filterKey ? page.limit : MATERIAL_PAGE_SIZE;
+  useEffect(() => setPage({ key: filterKey, limit: MATERIAL_PAGE_SIZE }), [filterKey]);
   const [creating, setCreating] = useState(false);
   // Reserved up front so an imported file can be stored under the material's id.
   const [draftId, setDraftId] = useState(newId);
@@ -92,6 +97,17 @@ export function StudyLibrary() {
     return sortMaterials(matching, sort);
   }, [data.materials, status, topic, type, search, sort]);
 
+  const nextActionTitles = useMemo(() => {
+    const titles = new Map<string, string>();
+    for (const action of data.actions) {
+      if (action.status === "open" && action.relatedType === "material" && action.relatedId &&
+          !titles.has(action.relatedId)) {
+        titles.set(action.relatedId, action.title);
+      }
+    }
+    return titles;
+  }, [data.actions]);
+
   const save = async (draft: MaterialDraft) => {
     const created = await mutate((repos) => repos.documents.create(draft));
     if (created === null) return false;
@@ -99,14 +115,6 @@ export function StudyLibrary() {
     setCreating(false);
     return true;
   };
-
-  const nextActionFor = (materialId: string) =>
-    data.actions.find(
-      (action) =>
-        action.status === "open" &&
-        action.relatedType === "material" &&
-        action.relatedId === materialId,
-    );
 
   const hasAny = data.materials.length > 0;
 
@@ -211,15 +219,27 @@ export function StudyLibrary() {
           />
         </Card>
       ) : (
-        <div className="material-grid">
-          {visible.map((material) => (
-            <MaterialCard
-              key={material.id}
-              material={material}
-              nextActionTitle={nextActionFor(material.id)?.title}
-            />
-          ))}
-        </div>
+        <>
+          <p className="small muted library__result-count">
+            Showing {Math.min(visibleLimit, visible.length).toLocaleString()} of {visible.length.toLocaleString()} materials
+          </p>
+          <div className="material-grid">
+            {visible.slice(0, visibleLimit).map((material) => (
+              <MaterialCard
+                key={material.id}
+                material={material}
+                nextActionTitle={nextActionTitles.get(material.id)}
+              />
+            ))}
+          </div>
+          {visible.length > visibleLimit ? (
+            <div className="library__more">
+              <Button onClick={() => setPage({ key: filterKey, limit: visibleLimit + MATERIAL_PAGE_SIZE })}>
+                Show 100 more materials
+              </Button>
+            </div>
+          ) : null}
+        </>
       )}
 
       <MaterialFormDialog
