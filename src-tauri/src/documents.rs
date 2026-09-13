@@ -137,10 +137,22 @@ fn reserve_destination(root: &Path, name: &str) -> Result<(PathBuf, String), Str
 /// `material_id` namespaces the stored file so two documents with the same
 /// name cannot collide.
 #[tauri::command]
-pub fn import_document(
+pub async fn import_document(
     app: AppHandle,
     source_path: String,
     material_id: String,
+) -> Result<ImportedDocument, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        import_document_from_path(&app, &source_path, &material_id)
+    })
+    .await
+    .map_err(|error| format!("Could not finish importing that file: {error}"))?
+}
+
+fn import_document_from_path(
+    app: &AppHandle,
+    source_path: &str,
+    material_id: &str,
 ) -> Result<ImportedDocument, String> {
     let source = PathBuf::from(&source_path);
 
@@ -156,19 +168,22 @@ pub fn import_document(
         .unwrap_or("document")
         .to_string();
 
-    let (destination, stored_name) = stored_destination(&app, &material_id, &original_file_name)?;
+    let (destination, stored_name) = stored_destination(app, material_id, &original_file_name)?;
 
-    if let Err(error) = std::fs::copy(&source, &destination) {
-        let _ = std::fs::remove_file(&destination);
-        return Err(format!(
-            "Could not copy that file into the library: {error}"
-        ));
-    }
+    let copied = match std::fs::copy(&source, &destination) {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            let _ = std::fs::remove_file(&destination);
+            return Err(format!(
+                "Could not copy that file into the library: {error}"
+            ));
+        }
+    };
 
     Ok(ImportedDocument {
         relative_path: stored_name,
         original_file_name,
-        file_size: metadata.len(),
+        file_size: copied,
     })
 }
 

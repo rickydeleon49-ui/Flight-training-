@@ -1,6 +1,10 @@
 # Her Flight Deck — current project status
 
-_Updated 12 September 2026 · desktop version `0.5.1` · app polish and macOS verification in progress_
+_Updated 13 September 2026 · desktop version `0.5.1` · performance polish and macOS verification in progress_
+
+## Performance polish update
+
+The 13 September pass bounds Study Library rendering to 100 cards at a time while still searching, filtering, and sorting the whole library. A synthetic 5,000-material server-render benchmark on Windows fell from 437 ms to 8 ms median; this does not measure a painted desktop window. The PDF splitter now batches page-reference removal; a synthetic 3,000-page window plus five candidates fell from 26.74 s to 0.085 s, with byte-equivalent output tests for simple, nested, and image-bearing PDFs. Import and backup disk work now run outside Tauri's UI thread. See [the detailed measurement and validation note](docs/PERFORMANCE_POLISH_2026-09-13.md). The installed Mac app still requires hands-on testing, and no release was published.
 
 ## App polish update
 

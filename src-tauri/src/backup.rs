@@ -844,8 +844,10 @@ fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), String> {
 
 /// Make a copy right now, on request.
 #[tauri::command]
-pub fn create_backup(app: AppHandle) -> Result<String, String> {
-    create_consistent_local_backup(&app_root(&app)?)
+pub async fn create_backup(app: AppHandle) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || create_consistent_local_backup(&app_root(&app)?))
+        .await
+        .map_err(|error| format!("Could not finish saving the safety copy: {error}"))?
 }
 
 /// Manual safety copies run while the app is open. Use SQLite's online backup
@@ -868,22 +870,26 @@ fn create_consistent_local_backup(root: &Path) -> Result<String, String> {
 
 /// Export one portable file containing the database and every imported document.
 #[tauri::command]
-pub fn create_complete_backup(
+pub async fn create_complete_backup(
     app: AppHandle,
     destination_path: String,
 ) -> Result<CompleteBackupInfo, String> {
-    let root = app_root(&app)?;
-    let snapshot = database_snapshot_with_retry(&root)?;
-    let result = write_complete_backup_from_database(
-        &root,
-        Path::new(&destination_path),
-        &app.package_info().version.to_string(),
-        &snapshot,
-        false,
-        true,
-    );
-    let _ = std::fs::remove_file(snapshot);
-    result
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        let snapshot = database_snapshot_with_retry(&root)?;
+        let result = write_complete_backup_from_database(
+            &root,
+            Path::new(&destination_path),
+            &app.package_info().version.to_string(),
+            &snapshot,
+            false,
+            true,
+        );
+        let _ = std::fs::remove_file(snapshot);
+        result
+    })
+    .await
+    .map_err(|error| format!("Could not finish saving the backup: {error}"))?
 }
 
 /// Write the archive itself, against plain directories so it can be tested.
@@ -1070,14 +1076,18 @@ fn write_complete_backup_from_database(
 }
 
 #[tauri::command]
-pub fn inspect_complete_backup(
+pub async fn inspect_complete_backup(
     app: AppHandle,
     source_path: String,
 ) -> Result<CompleteBackupInfo, String> {
-    inspect_archive(
-        Path::new(&source_path),
-        &app.package_info().version.to_string(),
-    )
+    tauri::async_runtime::spawn_blocking(move || {
+        inspect_archive(
+            Path::new(&source_path),
+            &app.package_info().version.to_string(),
+        )
+    })
+    .await
+    .map_err(|error| format!("Could not finish reading that backup: {error}"))?
 }
 
 /// The version running right now, for the interface to reason about backups.
@@ -1131,15 +1141,19 @@ fn read_restore_plan(pending: &Path) -> RestorePlan {
 
 /// Validate and extract into a private staging directory. Current data is untouched.
 #[tauri::command]
-pub fn stage_complete_restore(
+pub async fn stage_complete_restore(
     app: AppHandle,
     source_path: String,
 ) -> Result<CompleteBackupInfo, String> {
-    stage_complete_restore_in(
-        &app_root(&app)?,
-        Path::new(&source_path),
-        &app.package_info().version.to_string(),
-    )
+    tauri::async_runtime::spawn_blocking(move || {
+        stage_complete_restore_in(
+            &app_root(&app)?,
+            Path::new(&source_path),
+            &app.package_info().version.to_string(),
+        )
+    })
+    .await
+    .map_err(|error| format!("Could not finish restoring that backup: {error}"))?
 }
 
 /// Unpack and check an archive into staging, against a plain directory.
@@ -1289,8 +1303,10 @@ fn stage_complete_restore_in(
 /// left exactly where they are: the copy is the database as it stood before an
 /// update, and her files never went anywhere.
 #[tauri::command]
-pub fn stage_local_restore(app: AppHandle, name: String) -> Result<BackupInfo, String> {
-    stage_local_restore_in(&app_root(&app)?, &name)
+pub async fn stage_local_restore(app: AppHandle, name: String) -> Result<BackupInfo, String> {
+    tauri::async_runtime::spawn_blocking(move || stage_local_restore_in(&app_root(&app)?, &name))
+        .await
+        .map_err(|error| format!("Could not finish restoring that safety copy: {error}"))?
 }
 
 /// Stage a named safety copy, against a plain directory.

@@ -44,6 +44,9 @@
   gap: var(--space-4);
 }
 
+.library__result-count { margin-bottom: var(--space-3); }
+.library__more { display: flex; justify-content: center; margin-top: var(--space-5); }
+
 .material-card {
   display: flex;
   flex-direction: column;
