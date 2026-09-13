@@ -59,6 +59,7 @@ import { canSplitPdfs } from "@/services/pdf";
 
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { PracticeTestPanel } from "./PracticeTestPanel";
+import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import "./studyLibrary.css";
 
@@ -80,6 +81,7 @@ function MaterialDetailPage() {
   const [newQuestion, setNewQuestion] = useState("");
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
+  const [splittingManually, setSplittingManually] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
@@ -334,6 +336,11 @@ function MaterialDetailPage() {
                   </div>
                   {canSplit ? (
                     <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                  ) : null}
+                  {canSplit ? (
+                    <Button variant="secondary" onClick={() => setSplittingManually(true)}>
+                      Take out a chapter
+                    </Button>
                   ) : null}
                   {!fileMissing && canHandleFiles() ? (
                     <Button onClick={open}>
@@ -764,6 +771,18 @@ function MaterialDetailPage() {
           onCreated={() => {
             setSplitting(false);
             navigate("/study");
+          }}
+        />
+      ) : null}
+
+      {canSplit ? (
+        <ManualSplitDialog
+          open={splittingManually}
+          material={material}
+          onClose={() => setSplittingManually(false)}
+          onCreated={(materialId) => {
+            setSplittingManually(false);
+            navigate(`/study/${materialId}`);
           }}
         />
       ) : null}

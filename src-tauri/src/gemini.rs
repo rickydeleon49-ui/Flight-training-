@@ -201,7 +201,7 @@ async fn check_pdf_length(path: &Path) -> Result<(), String> {
 }
 
 /// Bytes as she would say them: "62 MB", not "65,011,712 bytes".
-fn describe_size(bytes: u64) -> String {
+pub(crate) fn describe_size(bytes: u64) -> String {
     const MB: u64 = 1024 * 1024;
     if bytes >= MB {
         format!("{} MB", bytes.div_ceil(MB))

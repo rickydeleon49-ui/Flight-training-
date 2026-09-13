@@ -87,11 +87,25 @@ is now scoped to `$APPCONFIG` as well as `$APPCONFIG/documents/**`, and the
 button now shows a real error if the OS still refuses the request instead of
 failing silently.
 
+## Manual chapter extraction
+
+Alongside automatic splitting, **Take out a chapter** takes one exact page
+range by hand — first page, last page, an optional title. The existing
+`split_pdf` command already refused a range past 1,000 pages; it now also
+measures the actual result and refuses one over 50 MiB (illustrated pages
+can land over the byte limit well before the page limit does), naming the
+size and suggesting a smaller range, and removes the oversized file rather
+than leaving it stored. A safety copy of the database is taken before
+anything else changes — no file is written and no record is touched until
+one exists — and if saving the new material's record fails after the file
+is written, the file is removed the same way automatic splitting's own
+rollback already works. The extracted chapter is an ordinary Study Library
+item: its own study guide, its own practice test, its page range recorded
+in its notes, the source handbook untouched.
+
 ## Queued for the next session (not started)
 
-- Add a manual PDF split option beside automatic splitting, with its own
-  page-range/size validation, a pre-change safety backup, and atomic
-  rollback if creating the file or saving its record fails.
+Nothing outstanding from this pass.
 
 ## Known limitation: automatic splitting's remaining bottleneck
 

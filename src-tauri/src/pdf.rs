@@ -280,12 +280,34 @@ pub async fn split_pdf(
     let file_size = std::fs::metadata(&destination)
         .map_err(|e| format!("The split PDF could not be read back: {e}"))?
         .len();
+    enforce_pdf_size_limit(&destination, file_size)?;
 
     Ok(ImportedDocument {
         relative_path: stored_name,
         original_file_name,
         file_size,
     })
+}
+
+/// Refuse a split result over Google's PDF limit, against a plain path and
+/// size so this can be tested without a full split.
+///
+/// The page-count check inside `write_page_range` only rules out what
+/// Google would refuse on page count alone; a chosen range can still land
+/// over the byte limit on an illustrated handbook. Nothing about a chapter
+/// this size can be studied with Gemini, so it is refused here — removing
+/// the oversized file so a rejected range never lingers as a stored document
+/// nothing points at — rather than saved and only discovered unusable later.
+fn enforce_pdf_size_limit(destination: &Path, file_size: u64) -> Result<(), String> {
+    if file_size <= MAX_PDF_BYTES {
+        return Ok(());
+    }
+    let _ = std::fs::remove_file(destination);
+    Err(format!(
+        "That range came out to {}, over the {} limit Google reads. Choose a smaller page range.",
+        crate::gemini::describe_size(file_size),
+        crate::gemini::describe_size(MAX_PDF_BYTES),
+    ))
 }
 
 /// Split a stored PDF into consecutive parts that Google can read.
@@ -636,6 +658,33 @@ mod tests {
             largest_fitting_last_page(17, 30, 1_000, 50, |_| Ok(vec![0u8; 51])).unwrap_err();
         assert!(error.contains("Page 17"));
         assert!(error.contains("Compress"));
+    }
+
+    #[test]
+    fn a_manual_range_under_the_byte_limit_is_left_alone() {
+        let dir = scratch();
+        let file = dir.join("chapter.pdf");
+        std::fs::write(&file, b"pretend pdf bytes").unwrap();
+
+        assert!(enforce_pdf_size_limit(&file, MAX_PDF_BYTES).is_ok());
+        assert!(
+            file.is_file(),
+            "a range within the limit must not be removed"
+        );
+    }
+
+    #[test]
+    fn a_manual_range_over_the_byte_limit_is_refused_and_removed() {
+        let dir = scratch();
+        let file = dir.join("chapter.pdf");
+        std::fs::write(&file, b"pretend pdf bytes").unwrap();
+
+        let error = enforce_pdf_size_limit(&file, MAX_PDF_BYTES + 1).unwrap_err();
+        assert!(error.contains("Choose a smaller page range"), "{error}");
+        assert!(
+            !file.exists(),
+            "an oversized manual range must not be left as a stored document"
+        );
     }
 
     #[test]
