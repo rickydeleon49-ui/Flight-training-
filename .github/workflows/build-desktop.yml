@@ -48,12 +48,20 @@ jobs:
         run: npm run tauri build -- --bundles dmg
       - name: Verify Apple Silicon bundle metadata
         run: |
-          app="src-tauri/target/release/bundle/macos/Her Flight Deck.app"
+          dmg=$(find src-tauri/target/release/bundle/dmg -name '*_aarch64.dmg' -print -quit)
+          test -n "$dmg"
+          audit_mount="$RUNNER_TEMP/hfd-audit-mount"
+          mkdir -p "$audit_mount"
+          hdiutil attach -quiet -readonly -nobrowse -mountpoint "$audit_mount" "$dmg"
+          trap 'hdiutil detach -quiet "$audit_mount"' EXIT
+          app="$audit_mount/Her Flight Deck.app"
           test -d "$app"
-          test "$(plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")" = "com.herflightdeck.app"
-          test "$(plutil -extract LSMinimumSystemVersion raw -o - "$app/Contents/Info.plist")" = "12.0"
+          identifier=$(plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")
+          minimum=$(plutil -extract LSMinimumSystemVersion raw -o - "$app/Contents/Info.plist")
+          echo "Bundle identifier: $identifier; minimum macOS: $minimum"
+          test "$identifier" = "com.herflightdeck.app"
+          test "$minimum" = "12.0"
           file "$app/Contents/MacOS/"* | grep -q arm64
-          find src-tauri/target/release/bundle/dmg -name '*_aarch64.dmg' -print -quit | grep -q .
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: her-flight-deck-macOS
