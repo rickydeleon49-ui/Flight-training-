@@ -152,19 +152,40 @@
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar {
+    display: grid;
+    grid-template-columns: auto minmax(8rem, 1fr) auto;
+    grid-template-areas: "brand search settings" "nav nav nav";
     position: static;
     height: auto;
-    flex-direction: row;
     align-items: center;
-    gap: var(--space-4);
-    overflow-x: auto;
+    gap: var(--space-2) var(--space-4);
+    overflow: visible;
     border-right: 0;
     border-bottom: 1px solid var(--border-subtle);
   }
-  .nav { flex-direction: row; }
-  .nav__link span:not(.nav__icon):not(.nav__count) { display: none; }
-  .sidebar__footer { display: none; }
+  .brand { grid-area: brand; padding: 0; }
+  .brand__tagline { display: none; }
+  .nav__search { grid-area: search; width: 100%; margin: 0; }
+  .nav {
+    grid-area: nav;
+    min-width: 0;
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+  .nav__link { white-space: nowrap; }
+  .sidebar__footer { display: contents; }
+  .sidebar__footer > .nav__link { grid-area: settings; }
+  .sidebar__note { display: none; }
   .content { padding: var(--space-5) var(--space-4) var(--space-7); }
+}
+
+@media (max-width: 600px) {
+  .sidebar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "brand settings" "search search" "nav nav";
+  }
+  .nav__shortcut { display: none; }
 }
 
 /* Quick Find's doorway. Sits with the navigation so it is found without

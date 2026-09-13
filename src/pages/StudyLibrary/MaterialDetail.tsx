@@ -174,8 +174,9 @@ function MaterialDetailPage() {
   const saveMaterial = async (draft: MaterialDraft) => {
     const { notes: _notes, ...metadata } = draft;
     const result = await mutate((repos) => repos.documents.update(material.id, metadata));
-    if (result === null) return;
+    if (result === null) return false;
     setEditing(false);
+    return true;
   };
 
   const addQuestion = async () => {

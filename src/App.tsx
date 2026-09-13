@@ -1,24 +1,26 @@
-import { useEffect } from "react";
+import { lazy, useEffect } from "react";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { DataRecovery } from "@/components/recovery/DataRecovery";
 import { Card, EmptyState, ErrorNote, Loading } from "@/components/ui";
-import { Finances } from "@/pages/Finances/Finances";
 import { FlightDeck } from "@/pages/FlightDeck/FlightDeck";
-import { FlightJournal } from "@/pages/FlightJournal/FlightJournal";
-import { JournalEntryDetail } from "@/pages/FlightJournal/JournalEntryDetail";
-import { JournalForm } from "@/pages/FlightJournal/JournalForm";
-import { FlightPath } from "@/pages/FlightPath/FlightPath";
-import { Notes } from "@/pages/Notes/Notes";
-import { Questions } from "@/pages/Questions/Questions";
-import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
-import { EventDetail } from "@/pages/Schedule/EventDetail";
-import { Schedule } from "@/pages/Schedule/Schedule";
-import { Settings } from "@/pages/Settings/Settings";
-import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
-import { StudyLibrary } from "@/pages/StudyLibrary/StudyLibrary";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+
+// Keep the first screen small; each section loads when it is first opened.
+const Finances = lazy(() => import("@/pages/Finances/Finances").then((m) => ({ default: m.Finances })));
+const FlightJournal = lazy(() => import("@/pages/FlightJournal/FlightJournal").then((m) => ({ default: m.FlightJournal })));
+const JournalEntryDetail = lazy(() => import("@/pages/FlightJournal/JournalEntryDetail").then((m) => ({ default: m.JournalEntryDetail })));
+const JournalForm = lazy(() => import("@/pages/FlightJournal/JournalForm").then((m) => ({ default: m.JournalForm })));
+const FlightPath = lazy(() => import("@/pages/FlightPath/FlightPath").then((m) => ({ default: m.FlightPath })));
+const Notes = lazy(() => import("@/pages/Notes/Notes").then((m) => ({ default: m.Notes })));
+const Questions = lazy(() => import("@/pages/Questions/Questions").then((m) => ({ default: m.Questions })));
+const PilotToolkit = lazy(() => import("@/pages/PilotToolkit/PilotToolkit").then((m) => ({ default: m.PilotToolkit })));
+const EventDetail = lazy(() => import("@/pages/Schedule/EventDetail").then((m) => ({ default: m.EventDetail })));
+const Schedule = lazy(() => import("@/pages/Schedule/Schedule").then((m) => ({ default: m.Schedule })));
+const Settings = lazy(() => import("@/pages/Settings/Settings").then((m) => ({ default: m.Settings })));
+const MaterialDetail = lazy(() => import("@/pages/StudyLibrary/MaterialDetail").then((m) => ({ default: m.MaterialDetail })));
+const StudyLibrary = lazy(() => import("@/pages/StudyLibrary/StudyLibrary").then((m) => ({ default: m.StudyLibrary })));
 
 /** Holds the shell back until the database is open, so no screen sees a
  *  half-loaded application. */

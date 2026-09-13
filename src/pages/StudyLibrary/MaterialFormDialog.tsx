@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button, Dialog, DocumentIcon, Field, Select, TextArea, TextInput } from "@/components/ui";
 import {
@@ -15,7 +15,7 @@ import {
   type StudyMaterial,
   type Topic,
 } from "@/domain/types";
-import { canHandleFiles, formatFileSize, pickAndImportDocument } from "@/services/documents";
+import { canHandleFiles, cleanupDocuments, formatFileSize, pickAndImportDocument } from "@/services/documents";
 
 export interface MaterialDraft {
   id?: Id;
@@ -56,7 +56,7 @@ interface Props {
   /** Id reserved for a new material, so a file can be imported under it. */
   newMaterialId: Id;
   onClose: () => void;
-  onSave: (draft: MaterialDraft) => void;
+  onSave: (draft: MaterialDraft) => Promise<boolean>;
 }
 
 export function MaterialFormDialog({
@@ -73,11 +73,15 @@ export function MaterialFormDialog({
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const ownedPaths = useRef(new Set<string>());
+  const submitting = useRef(false);
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     setFileError(null);
+    ownedPaths.current.clear();
     if (material) {
       setDraft({ ...material });
       setTagText(material.tags.join(", "));
@@ -96,6 +100,7 @@ export function MaterialFormDialog({
     try {
       const imported = await pickAndImportDocument(material?.id ?? newMaterialId);
       if (imported) {
+        ownedPaths.current.add(imported.relativePath);
         setDraft((current) => ({
           ...current,
           filePath: imported.relativePath,
@@ -114,33 +119,63 @@ export function MaterialFormDialog({
     }
   };
 
-  const submit = () => {
+  const discardAndClose = async () => {
+    if (importing || saving) return;
+    const failures = await cleanupDocuments([...ownedPaths.current]);
+    if (failures.length > 0) {
+      setFileError("An unused file could not be removed from app storage. Try Cancel again.");
+      return;
+    }
+    ownedPaths.current.clear();
+    onClose();
+  };
+
+  const submit = async () => {
+    if (submitting.current || importing) return;
     if (!draft.title.trim()) {
       setError("Give this a title you will recognise later.");
       return;
     }
-    onSave({
-      ...draft,
-      id: material?.id ?? newMaterialId,
-      title: draft.title.trim(),
-      tags: tagText
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    });
+    submitting.current = true;
+    setSaving(true);
+    try {
+      const unused = [...ownedPaths.current].filter((path) => path !== draft.filePath);
+      const failures = await cleanupDocuments(unused);
+      if (failures.length > 0) {
+        setFileError("An unused file could not be removed from app storage. Try saving again.");
+        return;
+      }
+      unused.forEach((path) => ownedPaths.current.delete(path));
+      const saved = await onSave({
+        ...draft,
+        id: material?.id ?? newMaterialId,
+        title: draft.title.trim(),
+        tags: tagText
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      });
+      if (saved) ownedPaths.current.clear();
+    } catch {
+      setError("That material could not be saved. Your choices are still here to retry.");
+    } finally {
+      submitting.current = false;
+      setSaving(false);
+    }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => void discardAndClose()}
+      dismissible={!importing && !saving}
       title={material ? "Edit material" : "Add to your library"}
       description="Give it a place in your training, not just a filename."
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={submit}>
-            {material ? "Save changes" : "Add material"}
+          <Button onClick={() => void discardAndClose()} disabled={importing || saving}>Cancel</Button>
+          <Button variant="primary" onClick={() => void submit()} disabled={importing || saving}>
+            {saving ? "Saving…" : material ? "Save changes" : "Add material"}
           </Button>
         </>
       }

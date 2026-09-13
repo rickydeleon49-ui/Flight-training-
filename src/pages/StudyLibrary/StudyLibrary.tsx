@@ -94,9 +94,10 @@ export function StudyLibrary() {
 
   const save = async (draft: MaterialDraft) => {
     const created = await mutate((repos) => repos.documents.create(draft));
-    if (created === null) return;
+    if (created === null) return false;
     setDraftId(newId());
     setCreating(false);
+    return true;
   };
 
   const nextActionFor = (materialId: string) =>

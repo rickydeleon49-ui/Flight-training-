@@ -1,6 +1,10 @@
 # Her Flight Deck — current project status
 
-_Updated 12 September 2026 · desktop version `0.5.1` · macOS audit in progress_
+_Updated 12 September 2026 · desktop version `0.5.1` · app polish and macOS verification in progress_
+
+## App polish update
+
+The current polish pass reduces the first-screen JavaScript bundle by loading other sections when opened, keeps Settings and Search visible in compact windows, prevents long-running PDF work from being dismissed mid-operation, and cleans up file imports abandoned before a material is saved. The manual page-range form now rejects fractional input, and a backup that was finalized successfully no longer reports itself as failed solely because the separate reminder write failed. See [the polish note](docs/APP_POLISH_2026-09-12.md) for checks and remaining device verification. No release tag was changed.
 
 ## macOS audit update
 

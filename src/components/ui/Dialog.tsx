@@ -12,6 +12,7 @@ interface DialogProps {
   children: ReactNode;
   footer?: ReactNode;
   narrow?: boolean;
+  dismissible?: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ export function Dialog({
   children,
   footer,
   narrow = false,
+  dismissible = true,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -40,23 +42,20 @@ export function Dialog({
     if (!open && element.open) element.close();
   }, [open]);
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    // Fires for Escape as well as element.close().
-    const handleClose = () => onClose();
-    element.addEventListener("close", handleClose);
-    return () => element.removeEventListener("close", handleClose);
-  }, [onClose]);
-
   return (
     <dialog
       ref={ref}
       className={`dialog${narrow ? " dialog--narrow" : ""}`}
       aria-labelledby={titleId}
+      onCancel={(event) => {
+        // Keep the native dialog visible until the owner confirms the close.
+        // An async cleanup can fail, in which case the error remains visible.
+        event.preventDefault();
+        if (dismissible) onClose();
+      }}
       // Clicking the backdrop (the dialog element itself) dismisses.
       onClick={(event) => {
-        if (event.target === ref.current) onClose();
+        if (dismissible && event.target === ref.current) onClose();
       }}
     >
       <div className="dialog__header">
@@ -66,7 +65,7 @@ export function Dialog({
           </h2>
           {description ? <p className="dialog__description">{description}</p> : null}
         </div>
-        <IconButton label="Close" onClick={onClose}>
+        <IconButton label="Close" onClick={onClose} disabled={!dismissible}>
           <CloseIcon />
         </IconButton>
       </div>

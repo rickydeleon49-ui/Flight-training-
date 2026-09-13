@@ -188,11 +188,20 @@ export function Settings() {
         version: backup.appVersion,
         path: backup.path,
       };
-      await repositories.app.recordCompleteBackup(record);
-      setLastBackup(record);
-      setBackupNote(
-        `Complete backup saved — ${backup.files} files, ${formatBytes(backup.bytes)} protected.`,
-      );
+      try {
+        await repositories.app.recordCompleteBackup(record);
+        setLastBackup(record);
+        setBackupNote(
+          `Complete backup saved — ${backup.files} files, ${formatBytes(backup.bytes)} protected.`,
+        );
+      } catch {
+        // The archive is already finalized and verified. A failed reminder
+        // write must not tell her that the actual backup failed.
+        setBackupProblem(true);
+        setBackupNote(
+          `Complete backup saved at ${backup.path}, but the app could not update its backup reminder. Keep the file somewhere safe.`,
+        );
+      }
     } catch (error) {
       setBackupProblem(true);
       setBackupNote(backupErrorMessage(error, "That backup could not be saved."));
