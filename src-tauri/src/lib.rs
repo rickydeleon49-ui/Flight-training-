@@ -74,6 +74,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0008_notes.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 9,
+            description: "practice_tests",
+            sql: include_str!("../migrations/0009_practice_tests.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -114,6 +120,7 @@ pub fn run() {
             gemini::configure_gemini,
             gemini::disconnect_gemini,
             gemini::generate_study_aid,
+            gemini::generate_practice_test,
             backup::create_backup,
             backup::create_complete_backup,
             backup::inspect_complete_backup,

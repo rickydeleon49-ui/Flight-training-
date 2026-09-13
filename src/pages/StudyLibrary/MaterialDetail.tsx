@@ -45,6 +45,7 @@ import {
 } from "@/services/documents";
 import {
   geminiErrorMessage,
+  generatePracticeTest,
   generateStudyAid,
   getGeminiStatus,
   watchGeminiProgress,
@@ -57,6 +58,8 @@ import { useActionOperations } from "@/state/useActions";
 import { canSplitPdfs } from "@/services/pdf";
 
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
+import { PracticeTestPanel } from "./PracticeTestPanel";
+import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import "./studyLibrary.css";
 
@@ -78,6 +81,7 @@ function MaterialDetailPage() {
   const [newQuestion, setNewQuestion] = useState("");
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
+  const [splittingManually, setSplittingManually] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
@@ -87,9 +91,16 @@ function MaterialDetailPage() {
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
+  const [generatingPractice, setGeneratingPractice] = useState(false);
+  const [practiceGenerationError, setPracticeGenerationError] = useState<string | null>(null);
+  const [practiceGenerationProgress, setPracticeGenerationProgress] = useState<string | null>(null);
+  const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
 
   const material = data.materials.find((candidate) => candidate.id === materialId) ?? null;
   const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
+  const practiceTest = data.practiceTests.find(
+    (candidate) => candidate.sourceMaterialId === materialId,
+  );
 
   useEffect(() => {
     void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
@@ -260,6 +271,36 @@ function MaterialDetailPage() {
     }
   };
 
+  const createPracticeTest = async () => {
+    // Re-checked here so the refusal holds even if the button is reached another way.
+    if (!material.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+      return;
+    }
+    setGeneratingPractice(true);
+    setPracticeGenerationError(null);
+    setPracticeGenerationProgress(null);
+    let stopWatching = () => {};
+    try {
+      stopWatching = await watchGeminiProgress(setPracticeGenerationProgress);
+      const generated = await generatePracticeTest(material.filePath);
+      const saved = await mutate((repos) =>
+        repos.documents.savePracticeTest({
+          sourceMaterialId: material.id,
+          title: generated.title,
+          questions: generated.questions,
+          model: generated.model,
+        }),
+      );
+      if (saved === null) return;
+    } catch (error) {
+      setPracticeGenerationError(geminiErrorMessage(error));
+    } finally {
+      stopWatching();
+      setPracticeGenerationProgress(null);
+      setGeneratingPractice(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -295,6 +336,11 @@ function MaterialDetailPage() {
                   </div>
                   {canSplit ? (
                     <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                  ) : null}
+                  {canSplit ? (
+                    <Button variant="secondary" onClick={() => setSplittingManually(true)}>
+                      Take out a chapter
+                    </Button>
                   ) : null}
                   {!fileMissing && canHandleFiles() ? (
                     <Button onClick={open}>
@@ -472,6 +518,65 @@ function MaterialDetailPage() {
                 {generationError ? (
                   <p className="field__error" role="alert" style={{ marginTop: "var(--space-3)" }}>
                     {generationError}
+                  </p>
+                ) : null}
+              </CardBody>
+            </Card>
+          ) : null}
+
+          {material.filePath && gemini?.configured && aiCheck.allowed && fileForAi.ready ? (
+            <Card>
+              <CardHeader
+                title="Practice test"
+                eyebrow={practiceTest ? "Saved on this computer" : "Optional, from this document"}
+                action={
+                  <Button
+                    size="small"
+                    variant={practiceTest ? "secondary" : "primary"}
+                    disabled={generatingPractice || fileMissing}
+                    onClick={() => setConfirmingPracticeTest(true)}
+                  >
+                    {generatingPractice
+                      ? "Reading document…"
+                      : practiceTest
+                        ? "Regenerate"
+                        : "Create practice test"}
+                  </Button>
+                }
+              />
+              <CardBody>
+                {generatingPractice ? (
+                  <div className="ai-working" role="status">
+                    <span className="ai-working__dot" aria-hidden="true" />
+                    <div>
+                      <p className="small strong">Gemini is writing practice questions</p>
+                      <p className="tiny dim">
+                        {practiceGenerationProgress ??
+                          "Large illustrated PDFs can take a little longer, and if Google’s servers are busy this waits and tries again on its own."}
+                      </p>
+                    </div>
+                  </div>
+                ) : practiceTest ? (
+                  <div className="stack stack--4">
+                    <div className="ai-disclaimer">
+                      <AlertIcon size={16} />
+                      <p className="tiny">
+                        AI-generated practice test. Verify every answer against the source, current
+                        FAA material, aircraft documents, and your instructor before relying on it.
+                      </p>
+                    </div>
+                    <PracticeTestPanel practiceTest={practiceTest} key={practiceTest.updatedAt} />
+                  </div>
+                ) : (
+                  <p className="small muted">
+                    Gemini will read only this file and create a multiple-choice practice test with
+                    explanations. The result will be saved locally with your other data.
+                  </p>
+                )}
+
+                {practiceGenerationError ? (
+                  <p className="field__error" role="alert" style={{ marginTop: "var(--space-3)" }}>
+                    {practiceGenerationError}
                   </p>
                 ) : null}
               </CardBody>
@@ -670,6 +775,18 @@ function MaterialDetailPage() {
         />
       ) : null}
 
+      {canSplit ? (
+        <ManualSplitDialog
+          open={splittingManually}
+          material={material}
+          onClose={() => setSplittingManually(false)}
+          onCreated={(materialId) => {
+            setSplittingManually(false);
+            navigate(`/study/${materialId}`);
+          }}
+        />
+      ) : null}
+
       <MaterialFormDialog
         open={editing}
         material={material}
@@ -703,6 +820,19 @@ function MaterialDetailPage() {
           void createStudyAid();
         }}
         onCancel={() => setConfirmingAi(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmingPracticeTest}
+        title="Send this file to Google?"
+        message={aiCheck.reason}
+        confirmLabel="Send to Gemini"
+        destructive={false}
+        onConfirm={() => {
+          setConfirmingPracticeTest(false);
+          void createPracticeTest();
+        }}
+        onCancel={() => setConfirmingPracticeTest(false)}
       />
 
       <ConfirmDialog

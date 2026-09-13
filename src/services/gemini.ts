@@ -3,7 +3,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
-import type { StudyFlashcard, StudyGuideSection } from "@/domain/types";
+import type { PracticeQuestion, StudyFlashcard, StudyGuideSection } from "@/domain/types";
 
 export const GOOGLE_AI_STUDIO_KEY_URL = "https://aistudio.google.com/app/apikey";
 
@@ -18,6 +18,12 @@ export interface GeneratedStudyAid {
   sections: StudyGuideSection[];
   flashcards: StudyFlashcard[];
   sourceNotes: string;
+  model: string;
+}
+
+export interface GeneratedPracticeTest {
+  title: string;
+  questions: PracticeQuestion[];
   model: string;
 }
 
@@ -53,6 +59,11 @@ export async function disconnectGemini(): Promise<GeminiStatus> {
 export async function generateStudyAid(relativePath: string): Promise<GeneratedStudyAid> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
   return invoke<GeneratedStudyAid>("generate_study_aid", { relativePath });
+}
+
+export async function generatePracticeTest(relativePath: string): Promise<GeneratedPracticeTest> {
+  if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
+  return invoke<GeneratedPracticeTest>("generate_practice_test", { relativePath });
 }
 
 /**

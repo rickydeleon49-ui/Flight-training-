@@ -201,7 +201,7 @@ async fn check_pdf_length(path: &Path) -> Result<(), String> {
 }
 
 /// Bytes as she would say them: "62 MB", not "65,011,712 bytes".
-fn describe_size(bytes: u64) -> String {
+pub(crate) fn describe_size(bytes: u64) -> String {
     const MB: u64 = 1024 * 1024;
     if bytes >= MB {
         format!("{} MB", bytes.div_ceil(MB))
@@ -441,13 +441,19 @@ fn mime_type(file_name: &str) -> Result<&'static str, String> {
     }
 }
 
-#[tauri::command]
-pub async fn generate_study_aid(
-    app: AppHandle,
-    relative_path: String,
-) -> Result<GeneratedStudyAid, String> {
-    let api_key = stored_key(&app)?;
-    let path = documents::stored_document_path(&app, &relative_path)?;
+/// What one Gemini submission needs: her key, and the one file she chose,
+/// validated against Google's document limits before a single byte leaves
+/// this computer.
+///
+/// Both `generate_study_aid` and `generate_practice_test` read the same
+/// stored document through this, so "Gemini reads only the selected study
+/// document" is one guarded path rather than two copies that could drift.
+async fn prepare_submission(
+    app: &AppHandle,
+    relative_path: &str,
+) -> Result<(String, Vec<u8>, &'static str), String> {
+    let api_key = stored_key(app)?;
+    let path = documents::stored_document_path(app, relative_path)?;
     let metadata =
         std::fs::metadata(&path).map_err(|e| format!("Could not read that study file: {e}"))?;
     let file_name = path
@@ -461,6 +467,15 @@ pub async fn generate_study_aid(
         check_pdf_length(&path).await?;
     }
     let bytes = std::fs::read(&path).map_err(|e| format!("Could not read that study file: {e}"))?;
+    Ok((api_key, bytes, mime))
+}
+
+#[tauri::command]
+pub async fn generate_study_aid(
+    app: AppHandle,
+    relative_path: String,
+) -> Result<GeneratedStudyAid, String> {
+    let (api_key, bytes, mime) = prepare_submission(&app, &relative_path).await?;
 
     let prompt =
         "Create an accurate private-pilot study aid from the attached source. \
@@ -525,6 +540,141 @@ pub async fn generate_study_aid(
         })?;
     let mut result: GeneratedStudyAid = serde_json::from_str(text)
         .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
+    result.model = model_used.to_string();
+    Ok(result)
+}
+
+/// Pull the model's actual answer out of Gemini's response envelope.
+///
+/// Shared by every kind of generation this application asks Gemini for, so a
+/// malformed envelope is refused the same way regardless of what was asked.
+fn extract_text(raw: &str) -> Result<String, String> {
+    let envelope: Value = serde_json::from_str(raw)
+        .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
+    envelope
+        .pointer("/candidates/0/content/parts/0/text")
+        .and_then(Value::as_str)
+        .map(str::to_string)
+        .ok_or_else(|| "Gemini did not return a usable answer. Try the document again.".to_string())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PracticeQuestion {
+    question: String,
+    options: Vec<String>,
+    correct_index: u32,
+    explanation: String,
+    source_page: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneratedPracticeTest {
+    title: String,
+    questions: Vec<PracticeQuestion>,
+    #[serde(default)]
+    model: String,
+}
+
+/// Keep only the questions a quiz screen can actually render safely.
+///
+/// Gemini's response schema below already asks for well-shaped questions, but
+/// a schema is a request, not a guarantee — nothing stops a returned
+/// `correctIndex` from pointing past the end of its own `options`, or
+/// `options` from holding fewer than two choices. Indexing either blindly in
+/// the interface would be a crash over a document that is otherwise fine to
+/// study from, so a malformed question is dropped rather than trusted, and
+/// only the ones that are safe to render reach the caller. A response that is
+/// *entirely* malformed still fails outright: an empty test would look like
+/// "this document has no practice questions", which is a different claim than
+/// "Gemini's answer could not be used."
+fn sanitize_practice_test(
+    mut test: GeneratedPracticeTest,
+) -> Result<GeneratedPracticeTest, String> {
+    test.questions.retain(|question| {
+        !question.question.trim().is_empty()
+            && !question.explanation.trim().is_empty()
+            && question.options.len() >= 2
+            && question
+                .options
+                .iter()
+                .all(|option| !option.trim().is_empty())
+            && (question.correct_index as usize) < question.options.len()
+    });
+
+    if test.questions.is_empty() {
+        return Err(
+            "Gemini's practice test did not come back usable. Try generating it again.".to_string(),
+        );
+    }
+    Ok(test)
+}
+
+/// Create a multiple-choice practice test from the selected study document.
+///
+/// Reuses the exact same validated read as `generate_study_aid` — the same
+/// file, checked against the same size and page limits, and nothing else —
+/// so a practice test can never be generated from a document that would have
+/// been refused for a study guide.
+#[tauri::command]
+pub async fn generate_practice_test(
+    app: AppHandle,
+    relative_path: String,
+) -> Result<GeneratedPracticeTest, String> {
+    let (api_key, bytes, mime) = prepare_submission(&app, &relative_path).await?;
+
+    let prompt =
+        "Create an accurate private-pilot practice test from the attached source. \
+         Use only facts supported by the source. Do not invent regulations, procedures, numbers, or page references. \
+         Return JSON only with: title (string) and questions (10-20 objects with question, options as an array of \
+         3 to 5 short answer choices, correctIndex as the zero-based index into options of the single correct \
+         choice, explanation, and sourcePage as a page number or null). Each question must have exactly one \
+         correct option. Keep the questions clear for a student pilot studying this material. When the source is \
+         ambiguous or may be outdated, say so in the explanation rather than guessing. This is a practice test, \
+         not operational flight instruction; the learner must verify every answer against current FAA material, \
+         aircraft documentation, and their instructor.";
+
+    let body = json!({
+        "contents": [{"role": "user", "parts": [
+            {"text": prompt},
+            {"inline_data": {"mime_type": mime, "data": BASE64.encode(bytes)}}
+        ]}],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseSchema": {
+                "type": "OBJECT",
+                "required": ["title", "questions"],
+                "properties": {
+                    "title": {"type": "STRING"},
+                    "questions": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "required": ["question", "options", "correctIndex", "explanation", "sourcePage"],
+                            "properties": {
+                                "question": {"type": "STRING"},
+                                "options": {
+                                    "type": "ARRAY",
+                                    "items": {"type": "STRING"}
+                                },
+                                "correctIndex": {"type": "INTEGER"},
+                                "explanation": {"type": "STRING"},
+                                "sourcePage": {"type": "INTEGER", "nullable": true}
+                            }
+                        }
+                    }
+                }
+            },
+            "maxOutputTokens": 8192
+        }
+    });
+    let (raw, model_used) = generate_with_retries(&app, &api_key, &body).await?;
+    let text = extract_text(&raw)?;
+    let result: GeneratedPracticeTest = serde_json::from_str(&text).map_err(|_| {
+        "Gemini's practice test was incomplete. Try generating it again.".to_string()
+    })?;
+    let mut result = sanitize_practice_test(result)?;
     result.model = model_used.to_string();
     Ok(result)
 }
@@ -761,5 +911,91 @@ mod tests {
         assert_eq!(mime_type("chart.jpeg").unwrap(), "image/jpeg");
         assert_eq!(mime_type("notes.md").unwrap(), "text/plain");
         assert!(mime_type("syllabus.docx").is_err());
+    }
+
+    fn valid_question() -> PracticeQuestion {
+        PracticeQuestion {
+            question: "What is the standard traffic pattern altitude?".to_string(),
+            options: vec!["800 ft AGL".to_string(), "1,000 ft AGL".to_string()],
+            correct_index: 1,
+            explanation: "1,000 ft AGL is the standard pattern altitude absent other guidance."
+                .to_string(),
+            source_page: Some(42),
+        }
+    }
+
+    #[test]
+    fn a_well_formed_practice_test_passes_through_untouched() {
+        let test = GeneratedPracticeTest {
+            title: "Traffic patterns".to_string(),
+            questions: vec![valid_question(), valid_question()],
+            model: String::new(),
+        };
+        let sanitized = sanitize_practice_test(test).unwrap();
+        assert_eq!(sanitized.questions.len(), 2);
+    }
+
+    #[test]
+    fn a_correct_index_past_the_end_of_its_own_options_is_dropped() {
+        let mut broken = valid_question();
+        broken.correct_index = 5; // Only two options exist.
+        let test = GeneratedPracticeTest {
+            title: "Bad index".to_string(),
+            questions: vec![broken, valid_question()],
+            model: String::new(),
+        };
+        let sanitized = sanitize_practice_test(test).unwrap();
+        assert_eq!(sanitized.questions.len(), 1);
+    }
+
+    #[test]
+    fn a_question_with_fewer_than_two_options_is_dropped() {
+        let mut broken = valid_question();
+        broken.options = vec!["Only one choice".to_string()];
+        let test = GeneratedPracticeTest {
+            title: "Too few options".to_string(),
+            questions: vec![broken, valid_question()],
+            model: String::new(),
+        };
+        let sanitized = sanitize_practice_test(test).unwrap();
+        assert_eq!(sanitized.questions.len(), 1);
+    }
+
+    #[test]
+    fn blank_question_or_explanation_text_is_dropped() {
+        let mut blank_question = valid_question();
+        blank_question.question = "   ".to_string();
+        let mut blank_explanation = valid_question();
+        blank_explanation.explanation = "".to_string();
+        let test = GeneratedPracticeTest {
+            title: "Blank text".to_string(),
+            questions: vec![blank_question, blank_explanation, valid_question()],
+            model: String::new(),
+        };
+        let sanitized = sanitize_practice_test(test).unwrap();
+        assert_eq!(sanitized.questions.len(), 1);
+    }
+
+    #[test]
+    fn a_test_left_with_no_usable_questions_is_an_error_not_an_empty_test() {
+        let mut broken = valid_question();
+        broken.correct_index = 99;
+        let test = GeneratedPracticeTest {
+            title: "All broken".to_string(),
+            questions: vec![broken],
+            model: String::new(),
+        };
+        let error = sanitize_practice_test(test).unwrap_err();
+        assert!(error.contains("Try generating it again"), "{error}");
+    }
+
+    #[test]
+    fn extract_text_refuses_an_envelope_with_no_answer() {
+        assert!(extract_text("{}").is_err());
+        assert!(extract_text("not json at all").is_err());
+        assert_eq!(
+            extract_text(r#"{"candidates":[{"content":{"parts":[{"text":"hello"}]}}]}"#).unwrap(),
+            "hello"
+        );
     }
 }

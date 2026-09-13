@@ -11,6 +11,8 @@ import {
   type ReviewStatus,
   type StudyMaterial,
   type AiStudySet,
+  type PracticeQuestion,
+  type PracticeTest,
   type StudyFlashcard,
   type StudyGuideSection,
   type Topic,
@@ -30,6 +32,42 @@ interface AiRow {
   provider: unknown; model: unknown; generated_at: unknown; updated_at: unknown;
 }
 
+interface PracticeTestRow {
+  source_material_id: string; title: unknown; questions_json: unknown;
+  provider: unknown; model: unknown; generated_at: unknown; updated_at: unknown;
+}
+
+/**
+ * How long to wait before each retry of a transaction that hit a transient
+ * SQLite lock — short and bounded. Three tries beyond the first covers a
+ * competing autosave or backup snapshot that releases its own lock quickly;
+ * anything still locked after roughly a second is treated as a real failure,
+ * not retried further, and reported plainly.
+ */
+const LOCK_RETRY_DELAYS_MS = [100, 300, 700];
+
+/**
+ * SQLite reports lock contention the same way whether it is `BEGIN
+ * IMMEDIATE` unable to get a reserved lock or a statement mid-transaction
+ * losing one — both surface through the SQL plugin as an error whose message
+ * names the SQLite result code or says so directly.
+ */
+function isTransientLockError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /database is locked|SQLITE_BUSY|\(code:\s*5\)/i.test(message);
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function lockGaveUpError(): Error {
+  return new Error(
+    "The database was busy, so these parts could not be saved after several tries. " +
+      "Close any other window and try again.",
+  );
+}
+
 function jsonArray<T>(value: unknown): T[] {
   try {
     const parsed = JSON.parse(toText(value));
@@ -46,6 +84,16 @@ const mapAiStudySet = (row: AiRow): AiStudySet => ({
   sections: jsonArray<StudyGuideSection>(row.sections_json),
   flashcards: jsonArray<StudyFlashcard>(row.flashcards_json),
   sourceNotes: toText(row.source_notes),
+  provider: "gemini",
+  model: toText(row.model),
+  generatedAt: toText(row.generated_at),
+  updatedAt: toText(row.updated_at),
+});
+
+const mapPracticeTest = (row: PracticeTestRow): PracticeTest => ({
+  sourceMaterialId: row.source_material_id,
+  title: toText(row.title),
+  questions: jsonArray<PracticeQuestion>(row.questions_json),
   provider: "gemini",
   model: toText(row.model),
   generatedAt: toText(row.generated_at),
@@ -209,6 +257,36 @@ export function documentRepository(db: SqlDatabase) {
       await db.execute("DELETE FROM ai_study_sets WHERE source_material_id = ?", [sourceMaterialId]);
     },
 
+    async listPracticeTests(): Promise<PracticeTest[]> {
+      const rows = await db.select<PracticeTestRow>(
+        "SELECT * FROM practice_tests ORDER BY updated_at DESC",
+      );
+      return rows.map(mapPracticeTest);
+    },
+
+    async savePracticeTest(
+      input: Omit<PracticeTest, "provider" | "generatedAt" | "updatedAt">,
+    ): Promise<void> {
+      const timestamp = nowIso();
+      await db.execute(
+        `INSERT INTO practice_tests
+           (source_material_id, title, questions_json, provider, model, generated_at, updated_at)
+         VALUES (?, ?, ?, 'gemini', ?, ?, ?)
+         ON CONFLICT(source_material_id) DO UPDATE SET
+           title = excluded.title, questions_json = excluded.questions_json,
+           model = excluded.model, generated_at = excluded.generated_at,
+           updated_at = excluded.updated_at`,
+        [
+          input.sourceMaterialId, input.title, JSON.stringify(input.questions),
+          input.model, timestamp, timestamp,
+        ],
+      );
+    },
+
+    async removePracticeTest(sourceMaterialId: Id): Promise<void> {
+      await db.execute("DELETE FROM practice_tests WHERE source_material_id = ?", [sourceMaterialId]);
+    },
+
     /**
      * Create a material. The id can be supplied so a file can be imported
      * under the material's own id before the row exists.
@@ -217,21 +295,48 @@ export function documentRepository(db: SqlDatabase) {
       return insertMaterial(input);
     },
 
-    /** Create every PDF part and its tags as one durable database change. */
+    /**
+     * Create every PDF part and its tags as one durable database change.
+     *
+     * Splitting a large PDF finishes its slow file work in Rust *before*
+     * this runs — nothing here waits on that — but the transaction below can
+     * still land at the same moment as an unrelated autosave or a backup's
+     * database snapshot. Both are ordinary, brief operations; the only
+     * failure worth retrying is SQLite reporting the file locked, and only a
+     * bounded number of times — anything else, or still locked after those
+     * tries, is a real failure and is reported as one.
+     */
     async createMany(inputs: Array<NewMaterial & { id?: Id }>): Promise<StudyMaterial[]> {
-      await db.execute("BEGIN IMMEDIATE");
-      try {
-        const materials: StudyMaterial[] = [];
-        for (const input of inputs) materials.push(await insertMaterial(input));
-        await db.execute("COMMIT");
-        return materials;
-      } catch (cause) {
+      for (let attempt = 0; ; attempt++) {
+        const canRetry = attempt < LOCK_RETRY_DELAYS_MS.length;
+
         try {
-          await db.execute("ROLLBACK");
-        } catch (rollbackError) {
-          throw new AggregateError([cause, rollbackError], "Saving PDF parts failed and the database rollback also failed.");
+          await db.execute("BEGIN IMMEDIATE");
+        } catch (beginError) {
+          if (canRetry && isTransientLockError(beginError)) {
+            await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
+            continue;
+          }
+          throw isTransientLockError(beginError) ? lockGaveUpError() : beginError;
         }
-        throw cause;
+
+        try {
+          const materials: StudyMaterial[] = [];
+          for (const input of inputs) materials.push(await insertMaterial(input));
+          await db.execute("COMMIT");
+          return materials;
+        } catch (cause) {
+          try {
+            await db.execute("ROLLBACK");
+          } catch (rollbackError) {
+            throw new AggregateError([cause, rollbackError], "Saving PDF parts failed and the database rollback also failed.");
+          }
+          if (canRetry && isTransientLockError(cause)) {
+            await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
+            continue;
+          }
+          throw isTransientLockError(cause) ? lockGaveUpError() : cause;
+        }
       }
     },
 

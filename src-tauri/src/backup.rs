@@ -24,6 +24,16 @@ use zip::{CompressionMethod, ZipArchive, ZipWriter};
 use crate::storage::app_root;
 
 /// Where copies are kept, inside application data.
+/// How long a raw `rusqlite` connection waits for a lock before giving up.
+/// Matches the five seconds the app's own connection pool already gets by
+/// default from its driver — long enough to ride out an ordinary autosave
+/// or transaction, short enough that a genuinely stuck lock still surfaces.
+const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
+/// How many extra attempts a database snapshot gets after a transient lock,
+/// beyond the first — bounded, so a lock that never clears still fails
+/// rather than retrying forever.
+const SNAPSHOT_LOCK_RETRIES: u32 = 3;
+
 const BACKUP_DIR: &str = "backups";
 /// Records which version last ran, so an upgrade can be detected.
 const VERSION_FILE: &str = "last-run-version.txt";
@@ -329,6 +339,13 @@ fn verify_application_database(path: &Path) -> Result<(), String> {
     verify_sqlite_file(path)?;
     let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Could not open the database in that backup: {e}"))?;
+    // `rusqlite` opens with no busy timeout of its own — unlike the app's
+    // main connection pool, which gets one from its own driver by default —
+    // so without this, a lock briefly held by an ordinary write elsewhere
+    // (an autosave, a split saving its parts) fails this check immediately
+    // instead of just waiting the moment out. Checking a live database, not
+    // only a staged one, is exactly the case this matters for.
+    let _ = connection.busy_timeout(BUSY_TIMEOUT);
     let quick_check: String = connection
         .query_row("PRAGMA quick_check", [], |row| row.get(0))
         .map_err(|e| format!("Could not check the database in that backup: {e}"))?;
@@ -381,6 +398,44 @@ fn verify_application_database(path: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Whether a failure looks like transient SQLite lock contention rather than
+/// a real problem with the database.
+fn is_transient_lock_error(message: &str) -> bool {
+    let lower = message.to_ascii_lowercase();
+    lower.contains("database is locked") || lower.contains("sqlite_busy")
+}
+
+/// Take a database snapshot, retrying a bounded number of times if the
+/// reason it failed was another connection briefly holding a lock.
+///
+/// Each attempt is independent and cleans up its own partial file on
+/// failure (see `database_snapshot`), so retrying is just trying again —
+/// nothing from a failed attempt is reused or left behind.
+fn database_snapshot_with_retry(root: &Path) -> Result<PathBuf, String> {
+    let mut last_error = String::new();
+    for attempt in 0..=SNAPSHOT_LOCK_RETRIES {
+        match database_snapshot(root) {
+            Ok(snapshot) => return Ok(snapshot),
+            Err(error) if attempt < SNAPSHOT_LOCK_RETRIES && is_transient_lock_error(&error) => {
+                last_error = error;
+                std::thread::sleep(Duration::from_millis(200 * u64::from(attempt + 1)));
+            }
+            Err(error) if is_transient_lock_error(&error) => {
+                return Err(
+                    "The database was busy, so the backup could not be started after several \
+                     tries. Close any other window and try again."
+                        .to_string(),
+                );
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    // Unreachable in practice — the loop always returns on its last
+    // iteration — but a bound that could fall through silently defeats the
+    // point of having one.
+    Err(last_error)
+}
+
 fn database_snapshot(root: &Path) -> Result<PathBuf, String> {
     let source_path = root.join(DB_FILES[0]);
     verify_application_database(&source_path)?;
@@ -397,8 +452,10 @@ fn database_snapshot(root: &Path) -> Result<PathBuf, String> {
     let result = (|| {
         let source = Connection::open_with_flags(&source_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
             .map_err(|e| format!("Could not open the database for backup: {e}"))?;
+        let _ = source.busy_timeout(BUSY_TIMEOUT);
         let mut destination = Connection::open(&snapshot)
             .map_err(|e| format!("Could not create the database snapshot: {e}"))?;
+        let _ = destination.busy_timeout(BUSY_TIMEOUT);
         {
             let backup = Backup::new(&source, &mut destination)
                 .map_err(|e| format!("Could not start the database snapshot: {e}"))?;
@@ -802,19 +859,25 @@ pub fn create_complete_backup(
     destination_path: String,
 ) -> Result<CompleteBackupInfo, String> {
     let root = app_root(&app)?;
-    let snapshot = database_snapshot(&root)?;
+    let snapshot = database_snapshot_with_retry(&root)?;
     let result = write_complete_backup_from_database(
         &root,
         Path::new(&destination_path),
         &app.package_info().version.to_string(),
         &snapshot,
         false,
+        true,
     );
     let _ = std::fs::remove_file(snapshot);
     result
 }
 
 /// Write the archive itself, against plain directories so it can be tested.
+///
+/// Skips the finished-archive verification `create_complete_backup` uses in
+/// production: several tests deliberately build a damaged or hostile archive
+/// through this exact path to prove the *import* side refuses it, and that
+/// stops being possible if writing one already refuses to produce it.
 #[cfg(test)]
 fn write_complete_backup(
     root: &Path,
@@ -827,6 +890,7 @@ fn write_complete_backup(
         app_version,
         &root.join(DB_FILES[0]),
         true,
+        false,
     )
 }
 
@@ -836,6 +900,7 @@ fn write_complete_backup_from_database(
     app_version: &str,
     database: &Path,
     include_wal: bool,
+    verify_before_finish: bool,
 ) -> Result<CompleteBackupInfo, String> {
     if !database.is_file() {
         return Err("There is no database to back up yet.".to_string());
@@ -941,6 +1006,17 @@ fn write_complete_backup_from_database(
         output
             .sync_all()
             .map_err(|e| format!("Could not finish writing the backup: {e}"))?;
+
+        // Read the file back and run it through the same validation a
+        // restore would — readable ZIP, manifest, integrity inventory,
+        // structural limits — before it is ever renamed into place or
+        // reported as saved. Writing bytes successfully is not the same
+        // guarantee as the result actually being a usable backup.
+        if verify_before_finish {
+            inspect_archive(&temporary, app_version).map_err(|e| {
+                format!("The backup was written but did not pass its own integrity check: {e}")
+            })?;
+        }
 
         if destination.exists() {
             if destination.is_dir() {
@@ -1988,6 +2064,112 @@ mod tests {
 
         drop(connection);
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_transient_lock_during_snapshot_clears_and_the_backup_still_completes() {
+        let root = scratch("snapshot-transient-lock");
+        write_database(&root.join(DB_FILES[0]), "before the lock");
+
+        let locker = Connection::open(root.join(DB_FILES[0])).unwrap();
+        locker.execute("BEGIN EXCLUSIVE", []).unwrap();
+        // Held briefly on another thread — long enough that the snapshot's
+        // own read has to wait for it, short enough that the busy timeout
+        // (and, if that were not enough, the bounded retry around the whole
+        // snapshot) comfortably outlasts it. This is the same shape of
+        // collision as an ordinary autosave or a split saving its parts
+        // landing at the same moment as a backup.
+        let handle = std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(300));
+            locker.execute("COMMIT", []).unwrap();
+        });
+
+        let snapshot = database_snapshot_with_retry(&root).unwrap();
+        assert_eq!(database_contents(&snapshot), "before the lock");
+
+        handle.join().unwrap();
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_lock_that_never_clears_fails_the_snapshot_boundedly_with_a_plain_message() {
+        let root = scratch("snapshot-permanent-lock");
+        write_database(&root.join(DB_FILES[0]), "locked forever");
+
+        let locker = Connection::open(root.join(DB_FILES[0])).unwrap();
+        locker.execute("BEGIN EXCLUSIVE", []).unwrap();
+
+        let started = std::time::Instant::now();
+        let error = database_snapshot_with_retry(&root).unwrap_err();
+        let elapsed = started.elapsed();
+
+        assert!(error.contains("busy"), "{error}");
+        // Bounded by (SNAPSHOT_LOCK_RETRIES + 1) attempts, each capped at
+        // BUSY_TIMEOUT — not an unlimited or open-ended wait, however long a
+        // real lock happens to be held.
+        assert!(
+            elapsed < Duration::from_secs(30),
+            "gave up after {elapsed:?}, longer than the configured bound allows"
+        );
+
+        locker.execute("ROLLBACK", []).unwrap();
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_valid_backup_still_passes_its_own_finished_archive_check() {
+        let root = scratch("verified-finish");
+        let elsewhere = scratch("verified-finish-out");
+        write_database(&root.join(DB_FILES[0]), "her real record");
+        let archive = elsewhere.join("verified.hfdbackup");
+
+        let info = write_complete_backup_from_database(
+            &root,
+            &archive,
+            "0.2.0",
+            &root.join(DB_FILES[0]),
+            false,
+            true,
+        )
+        .unwrap();
+        assert!(archive.is_file());
+        assert_eq!(info.app_version, "0.2.0");
+
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&elsewhere).unwrap();
+    }
+
+    #[test]
+    fn a_failed_rewrite_leaves_an_existing_backup_exactly_as_it_was() {
+        let root = scratch("preserve-existing");
+        let elsewhere = scratch("preserve-existing-out");
+        write_database(&root.join(DB_FILES[0]), "the real record");
+        let archive = elsewhere.join("her-flight-deck.hfdbackup");
+
+        // A first, successful backup already exists at the destination.
+        write_complete_backup(&root, &archive, "0.2.0").unwrap();
+        let original_bytes = std::fs::read(&archive).unwrap();
+
+        // A second attempt whose database is damaged must fail its
+        // pre-rename integrity check — and never touch the file already
+        // sitting at the destination.
+        std::fs::write(root.join(DB_FILES[0]), b"not a database").unwrap();
+        let result = write_complete_backup_from_database(
+            &root,
+            &archive,
+            "0.2.0",
+            &root.join(DB_FILES[0]),
+            false,
+            true,
+        );
+        assert!(result.is_err());
+
+        assert_eq!(std::fs::read(&archive).unwrap(), original_bytes);
+        assert!(!PathBuf::from(format!("{}.part", archive.to_string_lossy())).exists());
+        assert!(!PathBuf::from(format!("{}.replaced", archive.to_string_lossy())).exists());
+
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&elsewhere).unwrap();
     }
 
     #[test]

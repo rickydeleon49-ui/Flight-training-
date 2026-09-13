@@ -185,6 +185,32 @@
 
 .flashcard.is-revealed { background: var(--surface-card); }
 
+.practice-option {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--category-study-edge);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.practice-option:disabled { cursor: default; }
+
+.practice-option--correct {
+  border-color: var(--category-complete-edge);
+  background: var(--category-complete-fill);
+  color: var(--status-complete);
+}
+
+.practice-option--incorrect {
+  border-color: var(--status-overdue-edge);
+  background: var(--status-overdue-fill);
+  color: var(--status-overdue);
+}
+
 @keyframes ai-pulse {
   0%, 100% { opacity: 0.35; transform: scale(0.85); }
   50% { opacity: 1; transform: scale(1); }

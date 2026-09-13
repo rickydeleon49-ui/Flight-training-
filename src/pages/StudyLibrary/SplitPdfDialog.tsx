@@ -6,7 +6,12 @@ import { newId } from "@/lib/id";
 import { MAX_PDF_BYTES, describeFileSize } from "@/logic/aiLimits";
 import { pdfPartNotes, pdfPartTitle } from "@/logic/pdfParts";
 import { cleanupDocuments, formatFileSize } from "@/services/documents";
-import { inspectPdf, splitPdfAutomatically, type PdfOutline } from "@/services/pdf";
+import {
+  inspectPdf,
+  splitPdfAutomatically,
+  watchSplitProgress,
+  type PdfOutline,
+} from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
 
 interface Props {
@@ -21,6 +26,7 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
   const [outline, setOutline] = useState<PdfOutline | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !material.filePath) return;
@@ -44,8 +50,11 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
   const save = async () => {
     if (!material.filePath || !outline) return;
     setError(null);
+    setProgress(null);
     setWorking(true);
+    let stopWatching = () => {};
     try {
+      stopWatching = await watchSplitProgress(setProgress);
       const documents = await splitPdfAutomatically({
         relativePath: material.filePath,
         batchId: newId(),
@@ -85,6 +94,8 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
     } catch (splitError) {
       setError(splitError instanceof Error ? splitError.message : String(splitError));
     } finally {
+      stopWatching();
+      setProgress(null);
       setWorking(false);
     }
   };
@@ -119,6 +130,14 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
             {outline.maxPagesPerSplit.toLocaleString()} pages. Parts are labeled in order and
             appear as separate library items with their own study-guide action.
           </p>
+        ) : null}
+        {working ? (
+          <div className="ai-working" role="status">
+            <span className="ai-working__dot" aria-hidden="true" />
+            <p className="tiny dim">
+              {progress ?? "A large or illustrated PDF can take a little longer per part."}
+            </p>
+          </div>
         ) : null}
         {error ? (
           <p className="field__error" role="alert">
