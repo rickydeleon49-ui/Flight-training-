@@ -19,6 +19,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 9;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -113,6 +114,7 @@ pub fn run() {
             documents::document_path,
             documents::document_exists,
             documents::delete_document,
+            documents::save_split_materials,
             pdf::inspect_pdf,
             pdf::split_pdf,
             pdf::split_pdf_automatically,

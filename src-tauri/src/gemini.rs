@@ -100,13 +100,11 @@ fn describe_transport_error(error: &reqwest::Error) -> String {
 
 /// Which failures are worth waiting out.
 ///
-/// 500, 502, 503 and 504 are Google's own capacity being short or briefly
-/// broken, and the identical request usually succeeds a moment later — its
-/// troubleshooting guidance names them as retryable. A 429 is her quota,
-/// which no pause inside one click will restore, and any other 4xx means the
-/// request itself is wrong. Repeating those would only waste her time.
+/// Google's troubleshooting guidance calls 429 (rate limiting) and transient
+/// 5xx failures retryable. Attempts and pauses are bounded below; other 4xx
+/// responses indicate a request or authorization problem.
 fn is_retryable(status: u16) -> bool {
-    matches!(status, 500 | 502 | 503 | 504)
+    matches!(status, 429 | 500 | 502 | 503 | 504)
 }
 
 /// A few milliseconds of noise, so retries do not march in lockstep.
@@ -349,6 +347,9 @@ async fn verify_key(api_key: &str) -> Result<(), String> {
 
     let status = response.status();
     let detail = response.text().await.unwrap_or_default();
+    if status.as_u16() == 429 {
+        return Err(rate_limit_message());
+    }
     if is_retryable(status.as_u16()) {
         return Err(busy_message());
     }
@@ -724,11 +725,13 @@ async fn generate_with_retries(
     body: &Value,
 ) -> Result<(String, &'static str), String> {
     let http = client(GENERATE_TIMEOUT)?;
+    let mut primary_rate_limited = false;
 
     for attempt in 0..MAX_ATTEMPTS {
         match generate_once(&http, api_key, MODEL, body).await? {
             Attempt::Answered(raw) => return Ok((raw, MODEL)),
             Attempt::Refused { status, body } => {
+                primary_rate_limited |= status == 429;
                 if !is_retryable(status) {
                     return Err(describe_refusal(status, &body, MODEL));
                 }
@@ -741,27 +744,29 @@ async fn generate_with_retries(
         }
     }
 
-    // The backup exists only to rescue an overloaded primary. If it will not
-    // answer either, the honest report is that Google is busy — not whatever
-    // second-hand complaint the standby made, which would send her looking at
-    // a model this application only reached for on her behalf.
-    say(app, "Gemini is busy—trying a backup model…".to_string());
+    // A model-specific rate or capacity limit may spare the backup model.
+    say(app, "Trying the backup Gemini model…".to_string());
     match generate_once(&http, api_key, FALLBACK_MODEL, body).await? {
         Attempt::Answered(raw) => return Ok((raw, FALLBACK_MODEL)),
         Attempt::Refused { status, body } if !is_retryable(status) => {
             return Err(describe_refusal(status, &body, FALLBACK_MODEL));
         }
+        Attempt::Refused { status: 429, .. } => return Err(rate_limit_message()),
         Attempt::Refused { .. } => {}
     }
 
-    Err(busy_message())
+    if primary_rate_limited {
+        Err(rate_limit_message())
+    } else {
+        Err(busy_message())
+    }
 }
 
 /// What the interface says during one of the pauses.
 fn waiting_message(attempt: u32, pause: Duration) -> String {
     let seconds = pause.as_millis().div_ceil(1000);
     format!(
-        "Google is busy. Waiting {seconds} seconds, then trying again — attempt {} of {MAX_ATTEMPTS}.",
+        "Gemini is busy or rate-limited. Waiting {seconds} seconds, then trying again — attempt {} of {MAX_ATTEMPTS}.",
         attempt + 2,
     )
 }
@@ -777,6 +782,10 @@ fn busy_message() -> String {
     )
 }
 
+fn rate_limit_message() -> String {
+    "Gemini's rate or spending limit was reached for this project. Her Flight Deck retried briefly and tried its backup model. Check the project's limits and billing in Google AI Studio, or wait and try again.".to_string()
+}
+
 /// Roughly how long the retries took, for the message above.
 fn total_wait_seconds() -> u64 {
     let millis: u64 = (0..MAX_ATTEMPTS.saturating_sub(1))
@@ -788,8 +797,7 @@ fn total_wait_seconds() -> u64 {
 /// Turn a refusal Google will not reconsider into something worth reading.
 fn describe_refusal(status: u16, body: &str, model: &str) -> String {
     match status {
-        429 => "The free Gemini limit has been reached. Wait for Google's quota to reset, then try again."
-            .to_string(),
+        429 => rate_limit_message(),
         // Google retires a model on a published date. When that day comes this
         // build asks for something that no longer exists, and the honest answer
         // is that the application needs updating, not that her key is wrong.
@@ -806,15 +814,22 @@ mod tests {
 
     #[test]
     fn only_googles_own_capacity_is_worth_waiting_out() {
-        // Busy or briefly broken: the same request usually works in a moment.
-        for status in [500, 502, 503, 504] {
+        // Rate-limited, busy or briefly broken: retry briefly and boundedly.
+        for status in [429, 500, 502, 503, 504] {
             assert!(is_retryable(status), "{status} should be retried");
         }
-        // Her quota, a retired model, a bad key, a bad request: waiting does
-        // nothing, and repeating only makes her wait to hear the same thing.
-        for status in [200, 400, 401, 403, 404, 429] {
+        // A retired model, a bad key or a bad request should fail immediately.
+        for status in [200, 400, 401, 403, 404] {
             assert!(!is_retryable(status), "{status} should not be retried");
         }
+    }
+
+    #[test]
+    fn rate_limit_error_does_not_invent_a_free_tier_or_blame_the_key() {
+        let message = describe_refusal(429, "", MODEL);
+        assert!(message.contains("rate or spending limit"));
+        assert!(!message.contains("free Gemini"));
+        assert!(!message.contains("key is invalid"));
     }
 
     #[test]

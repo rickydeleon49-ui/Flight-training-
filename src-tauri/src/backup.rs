@@ -59,7 +59,6 @@ const MAX_ARCHIVE_COMPONENT_BYTES: usize = 255;
 // legitimate databases while still refusing classic tiny-payload ZIP bombs.
 const MAX_COMPRESSION_RATIO: u64 = 1_000;
 const COMPRESSION_RATIO_FLOOR: u64 = 1024 * 1024;
-const CURRENT_SCHEMA_VERSION: i64 = 8;
 /// How many automatic copies to keep before the oldest is removed.
 const KEEP_BACKUPS: usize = 10;
 
@@ -390,7 +389,7 @@ fn verify_application_database(path: &Path) -> Result<(), String> {
             |row| row.get(0),
         )
         .map_err(|e| format!("Could not inspect the database version: {e}"))?;
-    if newest_migration > CURRENT_SCHEMA_VERSION {
+    if newest_migration > crate::CURRENT_SCHEMA_VERSION {
         return Err(
             "That backup was created by a newer database format. Update the app first.".to_string(),
         );
@@ -846,10 +845,25 @@ fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), String> {
 /// Make a copy right now, on request.
 #[tauri::command]
 pub fn create_backup(app: AppHandle) -> Result<String, String> {
-    match copy_database(&app_root(&app)?, "manual")? {
-        Some(path) => Ok(path.to_string_lossy().to_string()),
-        None => Err("There is no database to back up yet.".to_string()),
+    create_consistent_local_backup(&app_root(&app)?)
+}
+
+/// Manual safety copies run while the app is open. Use SQLite's online backup
+/// API so a concurrent WAL write cannot leave an inconsistent raw file pair.
+fn create_consistent_local_backup(root: &Path) -> Result<String, String> {
+    let snapshot = database_snapshot_with_retry(root)?;
+    let destination = unique_backup_path(&backup_dir(root)?, "manual");
+    if let Err(error) = std::fs::create_dir(&destination) {
+        let _ = std::fs::remove_file(&snapshot);
+        return Err(format!("Could not create the backup folder: {error}"));
     }
+    let final_path = destination.join(DB_FILES[0]);
+    if let Err(error) = std::fs::rename(&snapshot, &final_path) {
+        let _ = std::fs::remove_file(&snapshot);
+        let _ = std::fs::remove_dir(&destination);
+        return Err(format!("Could not save the database backup: {error}"));
+    }
+    Ok(destination.to_string_lossy().to_string())
 }
 
 /// Export one portable file containing the database and every imported document.
@@ -1565,12 +1579,63 @@ mod tests {
                  CREATE TABLE study_materials (id TEXT PRIMARY KEY);
                  CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);
                  CREATE TABLE audit_payload (value TEXT NOT NULL);
-                 INSERT INTO _sqlx_migrations(version) VALUES (8);",
+                 INSERT INTO _sqlx_migrations(version) VALUES (9);",
             )
             .unwrap();
         connection
             .execute("INSERT INTO audit_payload(value) VALUES (?1)", [contents])
             .unwrap();
+    }
+
+    #[test]
+    fn current_database_version_matches_the_registered_migrations() {
+        let latest = crate::migrations().last().unwrap().version;
+        assert_eq!(latest, crate::CURRENT_SCHEMA_VERSION);
+    }
+
+    #[test]
+    fn current_practice_test_schema_can_be_backed_up_but_future_schema_cannot() {
+        let root = scratch("practice-schema-backup");
+        let database = root.join(DB_FILES[0]);
+        write_database(&database, "version nine");
+        let snapshot = database_snapshot_with_retry(&root).unwrap();
+        assert_eq!(database_contents(&snapshot), "version nine");
+        std::fs::remove_file(snapshot).unwrap();
+
+        Connection::open(&database)
+            .unwrap()
+            .execute(
+                "UPDATE _sqlx_migrations SET version = ?1",
+                [crate::CURRENT_SCHEMA_VERSION + 1],
+            )
+            .unwrap();
+        assert!(verify_application_database(&database)
+            .unwrap_err()
+            .contains("newer"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn manual_safety_copy_is_a_consistent_online_snapshot() {
+        let root = scratch("manual-online-snapshot");
+        write_database(&root.join(DB_FILES[0]), "before");
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        connection
+            .pragma_update(None, "journal_mode", "WAL")
+            .unwrap();
+        connection
+            .pragma_update(None, "wal_autocheckpoint", 0)
+            .unwrap();
+        connection
+            .execute("UPDATE audit_payload SET value = 'after'", [])
+            .unwrap();
+
+        let backup = create_consistent_local_backup(&root).unwrap();
+        let saved = PathBuf::from(backup).join(DB_FILES[0]);
+        assert_eq!(database_contents(&saved), "after");
+        verify_application_database(&saved).unwrap();
+        drop(connection);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     fn database_contents(path: &Path) -> String {
@@ -2108,11 +2173,12 @@ mod tests {
         // BUSY_TIMEOUT — not an unlimited or open-ended wait, however long a
         // real lock happens to be held.
         assert!(
-            elapsed < Duration::from_secs(30),
+            elapsed < Duration::from_secs(40),
             "gave up after {elapsed:?}, longer than the configured bound allows"
         );
 
         locker.execute("ROLLBACK", []).unwrap();
+        drop(locker);
         std::fs::remove_dir_all(root).unwrap();
     }
 

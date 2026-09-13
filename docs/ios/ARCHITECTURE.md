@@ -1,5 +1,10 @@
 # iOS architecture and compatibility audit
 
+> Desktop audit update, 12 September 2026: migration 9 adds practice tests.
+> A future iPhone backup importer must accept schema 9 from current Mac
+> exports. See `docs/MAC_AUDIT_2026-09-12.md`. Apple Silicon packaging passed;
+> an installed-app smoke test is still outstanding.
+
 _Milestone 1 deliverable, updated during the 2026-09-09 release audit. The
 desktop app is version `0.5.1`. This Windows machine has no Xcode or Apple
 Developer tooling, so nothing in this document that requires a Mac has been

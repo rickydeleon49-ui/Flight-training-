@@ -91,7 +91,7 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
       });
 
       const created = await mutate((repos) =>
-        repos.documents.create({
+        repos.documents.createMany([{
           id: materialId,
           title: chosenTitle,
           materialType: material.materialType,
@@ -104,7 +104,7 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
           filePath: document.relativePath,
           originalFileName: document.originalFileName,
           fileSize: document.fileSize,
-        }),
+        }]).then((parts) => parts[0]!),
       );
       if (created === null) {
         const cleanupFailures = await cleanupDocuments([document.relativePath]);

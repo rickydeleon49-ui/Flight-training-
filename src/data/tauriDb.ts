@@ -5,6 +5,8 @@
  * inside the project, so private training data is never near the repository.
  */
 import Database from "@tauri-apps/plugin-sql";
+import { invoke } from "@tauri-apps/api/core";
+import type { StudyMaterial } from "@/domain/types";
 
 import { toNumberedPlaceholders, type SqlDatabase, type SqlValue } from "./db";
 
@@ -46,6 +48,9 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
   }
 
   return {
+    async saveMaterialsAtomically(materials: StudyMaterial[]): Promise<void> {
+      await invoke("save_split_materials", { materials });
+    },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);
     },
