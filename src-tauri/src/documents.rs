@@ -347,4 +347,36 @@ mod tests {
             );
         }
     }
+
+    /// Settings' "Open folder" button reveals the whole data directory
+    /// (`data_directory` returns `app_root`, i.e. `$APPCONFIG` itself), not a
+    /// path under `documents/` — it needs its own scope entry on the same
+    /// permission, or it fails with the identical "Not allowed to open path"
+    /// error the documents-folder scope above exists to prevent.
+    #[test]
+    fn opening_the_whole_data_directory_from_settings_is_also_scoped() {
+        let raw = include_str!("../capabilities/default.json");
+        let capabilities: serde_json::Value = serde_json::from_str(raw).unwrap();
+        let permissions = capabilities["permissions"].as_array().unwrap();
+
+        let entry = permissions
+            .iter()
+            .find(|permission| {
+                permission.get("identifier").and_then(|id| id.as_str())
+                    == Some("opener:allow-open-path")
+            })
+            .expect("opener:allow-open-path must be present");
+        let allowed_paths: Vec<&str> = entry["allow"]
+            .as_array()
+            .expect("opener:allow-open-path must have a scope array")
+            .iter()
+            .filter_map(|allowed| allowed["path"].as_str())
+            .collect();
+
+        assert!(
+            allowed_paths.contains(&"$APPCONFIG"),
+            "opener:allow-open-path scope {allowed_paths:?} does not cover $APPCONFIG itself, \
+             which is exactly what `data_directory` returns for Settings' \"Open folder\" button"
+        );
+    }
 }

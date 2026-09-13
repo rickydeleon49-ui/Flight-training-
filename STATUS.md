@@ -52,14 +52,46 @@ Milestone 3 requires a Mac with Xcode to initialize and validate Tauri's Apple p
 - Complete the Apple-only checklist before distributing an iOS build.
 - Time automatic splitting against a real large or image-heavy handbook, not only the synthetic benchmark used during development — the windowing fix is measured, but only against a page-count-only synthetic PDF (see "Known limitation" below).
 
+## SQLite lock reliability
+
+Three related failures — automatic-split saves, backup exports, and the
+Settings **Open folder** button — traced back to two gaps:
+
+- The live database was left in SQLite's default rollback-journal mode, so
+  any write held a lock that blocked *every* reader too, not only other
+  writers. It now runs in WAL mode (set once at startup, a property of the
+  database file itself, so it applies pool-wide and to every future launch).
+- The Rust side's own `rusqlite` connections — used to verify a database and
+  to take a backup's online snapshot — opened with no busy timeout at all,
+  unlike the app's main connection pool, which already gets one from its own
+  driver by default. A lock briefly held by an ordinary write failed these
+  instantly instead of just waiting the moment out. They now get an explicit
+  five-second timeout, and `create_complete_backup`'s snapshot step retries
+  up to three more times, with a short backoff, if it is still a lock
+  (never for any other kind of failure, and never unboundedly — a
+  regression test holds a lock that never clears and confirms the export
+  still gives up, with a plain message, well under thirty seconds).
+
+Saving a split's parts (`documentRepository.createMany`) has the same
+bounded retry on the frontend side, for the same reason: it can land at the
+same moment as an unrelated autosave. A backup export now also reads its own
+finished `.hfdbackup` back and runs it through the same validation a restore
+would — readable archive, manifest, integrity inventory — before renaming it
+into place or reporting success; a failure there leaves any backup already
+at that destination untouched.
+
+Settings' **Open folder** button was refused by the same capability-scope
+gap the Study Library **Open** button was fixed for earlier in this pass, for
+the whole data directory rather than a file inside it — `opener:allow-open-path`
+is now scoped to `$APPCONFIG` as well as `$APPCONFIG/documents/**`, and the
+button now shows a real error if the OS still refuses the request instead of
+failing silently.
+
 ## Queued for the next session (not started)
 
-Reported by the user for a following pass — investigated only far enough to make sure this session's own changes do not conflict with them:
-
-- Fix the automatic-splitting `database is locked` (SQLite code 5) failure: identify the overlapping autosave/refresh/migration/split transaction, add a bounded busy-timeout/retry, and add a regression test with a competing write.
-- Fix the Settings **Open folder** button, which shows the correct app-data path but does not open Finder/Explorer — almost certainly the same capability-scope gap as the Study Library **Open** button fixed this session, but for a directory rather than a file, and not yet investigated.
-- Add a manual PDF split option beside automatic splitting, with a pre-change safety backup and atomic rollback on failure.
-- Fix complete-backup exports that report the database busy/locked and save nothing: bounded retry around the online SQLite snapshot, and never reporting success until the finished `.hfdbackup` is read back and validated.
+- Add a manual PDF split option beside automatic splitting, with its own
+  page-range/size validation, a pre-change safety backup, and atomic
+  rollback if creating the file or saving its record fails.
 
 ## Known limitation: automatic splitting's remaining bottleneck
 

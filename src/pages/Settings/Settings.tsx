@@ -90,6 +90,7 @@ export function Settings() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const [dataPath, setDataPath] = useState("");
+  const [folderOpenError, setFolderOpenError] = useState<string | null>(null);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [backupNote, setBackupNote] = useState<string | null>(null);
   const [backupProblem, setBackupProblem] = useState(false);
@@ -739,10 +740,27 @@ export function Settings() {
                   <p className="tiny strong dim">Where it lives</p>
                   <div className="row row--between" style={{ gap: "var(--space-3)" }}>
                     <code className="tiny wrap-anywhere">{dataPath}</code>
-                    <Button size="small" onClick={() => revealFolder(dataPath)}>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setFolderOpenError(null);
+                        revealFolder(dataPath).catch((error: unknown) => {
+                          setFolderOpenError(
+                            error instanceof Error
+                              ? error.message
+                              : "That folder could not be opened.",
+                          );
+                        });
+                      }}
+                    >
                       Open folder
                     </Button>
                   </div>
+                  {folderOpenError ? (
+                    <p className="field__error" role="alert">
+                      {folderOpenError}
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <p className="tiny dim">
