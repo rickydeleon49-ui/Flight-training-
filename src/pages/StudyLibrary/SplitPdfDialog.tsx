@@ -104,6 +104,7 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
     <Dialog
       open={open}
       onClose={onClose}
+      dismissible={!working}
       title="Create study-size parts"
       description="Automatically divides this PDF into labeled parts that can each have their own study guide. The original is left exactly as it is."
       narrow

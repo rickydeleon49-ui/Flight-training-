@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { Suspense, type ReactElement } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 import {
@@ -24,6 +24,7 @@ import {
   SettingsIcon,
   TargetIcon,
   WalletIcon,
+  Loading,
 } from "@/components/ui";
 
 import "./shell.css";
@@ -128,7 +129,9 @@ export function AppShell() {
 
       <main className="content">
         <div className="content__inner">
-          <Outlet />
+          <Suspense fallback={<Loading label="Opening this section" />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
       <ReminderPopup />

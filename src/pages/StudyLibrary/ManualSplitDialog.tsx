@@ -59,8 +59,8 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
     };
   }, [open, material.filePath]);
 
-  const first = Number.parseInt(firstPage, 10);
-  const last = Number.parseInt(lastPage, 10);
+  const first = Number(firstPage);
+  const last = Number(lastPage);
   const verdict = outline ? checkSplitRange(first, last, outline.pages, outline.maxPagesPerSplit) : null;
 
   const save = async () => {
@@ -130,6 +130,7 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
     <Dialog
       open={open}
       onClose={onClose}
+      dismissible={!working}
       title="Take out a chapter"
       description="Saves the pages you choose as a study document of its own. The original handbook is left exactly as it is."
       narrow
