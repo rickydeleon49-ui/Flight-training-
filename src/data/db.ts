@@ -14,6 +14,8 @@ export interface SqlDatabase {
   execute(sql: string, params?: SqlValue[]): Promise<void>;
   /** Flush to durable storage where the driver needs it. Optional. */
   persist?(): Promise<void>;
+  /** Desktop-only pinned transaction for a batch of PDF part records. */
+  saveMaterialsAtomically?(materials: import("@/domain/types").StudyMaterial[]): Promise<void>;
 }
 
 export type SqlValue = string | number | null;

@@ -13,6 +13,23 @@ beforeEach(async () => {
 afterEach(() => db.close());
 
 describe("creating PDF parts atomically", () => {
+  it("uses the desktop's pinned batch instead of pooled transaction statements", async () => {
+    const saved: string[] = [];
+    const desktopDb: SqlDatabase = {
+      select: <T>(sql: string, params?: SqlValue[]) => db.select<T>(sql, params),
+      execute: async () => { throw new Error("pooled SQL transaction must not be used"); },
+      saveMaterialsAtomically: async (materials) => {
+        saved.push(...materials.map((material) => material.id));
+      },
+    };
+    const result = await createRepositories(desktopDb).documents.createMany([
+      { id: "part-1", title: "Part 1" },
+      { id: "part-2", title: "Part 2" },
+    ]);
+    expect(saved).toEqual(["part-1", "part-2"]);
+    expect(result.map((material) => material.id)).toEqual(saved);
+  });
+
   it("rolls back every material when a tag insert fails", async () => {
     let tagInserts = 0;
     const failingDb: SqlDatabase = {

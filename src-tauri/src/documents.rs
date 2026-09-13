@@ -7,7 +7,9 @@
 
 use std::path::{Path, PathBuf};
 
-use serde::Serialize;
+use rusqlite::{params, Connection, TransactionBehavior};
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use tauri::AppHandle;
 
 use crate::storage::app_root;
@@ -201,9 +203,226 @@ pub fn delete_document(app: AppHandle, relative_path: String) -> Result<(), Stri
     }
 }
 
+/// A split's metadata is committed on one SQLite connection. Tauri's SQL
+/// plugin pools connections, so separate webview BEGIN/INSERT/COMMIT calls
+/// cannot provide a transaction and can strand half a split in the library.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitMaterial {
+    id: String,
+    title: String,
+    material_type: String,
+    topic: String,
+    review_status: String,
+    priority: String,
+    goal_id: Option<String>,
+    event_id: Option<String>,
+    notes: String,
+    file_path: Option<String>,
+    original_file_name: Option<String>,
+    file_size: Option<i64>,
+    created_at: String,
+    updated_at: String,
+    last_reviewed_at: Option<String>,
+    tags: Vec<String>,
+}
+
+#[tauri::command]
+pub async fn save_split_materials(
+    app: AppHandle,
+    materials: Vec<SplitMaterial>,
+) -> Result<(), String> {
+    let root = app_root(&app)?;
+    tauri::async_runtime::spawn_blocking(move || save_split_materials_at(&root, &materials))
+        .await
+        .map_err(|error| format!("Could not finish saving PDF parts: {error}"))?
+}
+
+fn save_split_materials_at(root: &Path, materials: &[SplitMaterial]) -> Result<(), String> {
+    if materials.is_empty() {
+        return Ok(());
+    }
+    for material in materials {
+        let path = material
+            .file_path
+            .as_deref()
+            .ok_or_else(|| "A split part must have a stored PDF file.".to_string())?;
+        let safe = safe_relative_path(path)?;
+        let metadata = std::fs::metadata(root.join(DOCUMENTS_DIR).join(safe))
+            .map_err(|_| format!("The PDF part is missing: {path}"))?;
+        let bytes = metadata.len();
+        if !metadata.is_file()
+            || bytes == 0
+            || bytes > crate::pdf::MAX_PDF_BYTES
+            || material.file_size != Some(bytes as i64)
+        {
+            return Err(format!("The PDF part has an invalid size: {path}"));
+        }
+    }
+    let database = root.join("her-flight-deck.db");
+    if !database.is_file() {
+        return Err("The library database is missing.".to_string());
+    }
+    let mut connection = Connection::open(database)
+        .map_err(|error| format!("Could not open the library database: {error}"))?;
+    connection
+        .busy_timeout(Duration::from_secs(5))
+        .map_err(|error| format!("Could not configure the library database: {error}"))?;
+    connection
+        .pragma_update(None, "foreign_keys", "ON")
+        .map_err(|error| format!("Could not protect library references: {error}"))?;
+    let transaction = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|error| format!("Could not start saving PDF parts: {error}"))?;
+    for material in materials {
+        transaction.execute(
+            "INSERT INTO study_materials (id, title, material_type, topic, review_status, priority,
+               goal_id, event_id, notes, file_path, original_file_name, file_size,
+               created_at, updated_at, last_reviewed_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+            params![
+                material.id, material.title, material.material_type, material.topic,
+                material.review_status, material.priority, material.goal_id, material.event_id,
+                material.notes, material.file_path, material.original_file_name, material.file_size,
+                material.created_at, material.updated_at, material.last_reviewed_at,
+            ],
+        ).map_err(|error| format!("Could not save a PDF part: {error}"))?;
+        for (index, raw) in material.tags.iter().enumerate() {
+            let name = raw.trim();
+            if name.is_empty() {
+                continue;
+            }
+            transaction
+                .execute(
+                    "INSERT OR IGNORE INTO tags (id, name, created_at) VALUES (?1, ?2, ?3)",
+                    params![
+                        format!("{}-split-tag-{index}", material.id),
+                        name,
+                        material.created_at
+                    ],
+                )
+                .map_err(|error| format!("Could not save a PDF tag: {error}"))?;
+            transaction
+                .execute(
+                    "INSERT INTO material_tags (material_id, tag_id)
+                 SELECT ?1, id FROM tags WHERE name = ?2",
+                    params![material.id, name],
+                )
+                .map_err(|error| format!("Could not attach a PDF tag: {error}"))?;
+        }
+    }
+    transaction
+        .commit()
+        .map_err(|error| format!("Could not commit PDF parts: {error}"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn split_test_root() -> PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "hfd-split-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(root.join(DOCUMENTS_DIR)).unwrap();
+        let connection = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        connection
+            .execute_batch(
+                "CREATE TABLE study_materials (
+               id TEXT PRIMARY KEY, title TEXT, material_type TEXT, topic TEXT,
+               review_status TEXT, priority TEXT, goal_id TEXT, event_id TEXT,
+               notes TEXT, file_path TEXT, original_file_name TEXT, file_size INTEGER,
+               created_at TEXT, updated_at TEXT, last_reviewed_at TEXT);
+             CREATE TABLE tags (id TEXT PRIMARY KEY, name TEXT UNIQUE, created_at TEXT);
+             CREATE TABLE material_tags (
+               material_id TEXT REFERENCES study_materials(id),
+               tag_id TEXT REFERENCES tags(id), PRIMARY KEY (material_id, tag_id));",
+            )
+            .unwrap();
+        root
+    }
+
+    fn split_material(id: &str) -> SplitMaterial {
+        SplitMaterial {
+            id: id.to_string(),
+            title: id.to_string(),
+            material_type: "study_guide".to_string(),
+            topic: "general".to_string(),
+            review_status: "needs_review".to_string(),
+            priority: "later".to_string(),
+            goal_id: None,
+            event_id: None,
+            notes: String::new(),
+            file_path: Some(format!("{id}.pdf")),
+            original_file_name: Some(format!("{id}.pdf")),
+            file_size: Some(3),
+            created_at: "2026-09-12T00:00:00Z".to_string(),
+            updated_at: "2026-09-12T00:00:00Z".to_string(),
+            last_reviewed_at: None,
+            tags: vec!["handbook".to_string()],
+        }
+    }
+
+    #[test]
+    fn split_parts_and_tags_commit_together_on_one_connection() {
+        let root = split_test_root();
+        for id in ["one", "two"] {
+            std::fs::write(root.join(DOCUMENTS_DIR).join(format!("{id}.pdf")), "pdf").unwrap();
+        }
+        save_split_materials_at(&root, &[split_material("one"), split_material("two")]).unwrap();
+        let db = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        let count: i64 = db
+            .query_row("SELECT COUNT(*) FROM study_materials", [], |row| row.get(0))
+            .unwrap();
+        let tags: i64 = db
+            .query_row("SELECT COUNT(*) FROM material_tags", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!((count, tags), (2, 2));
+        drop(db);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_failed_split_record_rolls_back_every_part_and_tag() {
+        let root = split_test_root();
+        std::fs::write(root.join(DOCUMENTS_DIR).join("one.pdf"), "pdf").unwrap();
+        assert!(
+            save_split_materials_at(&root, &[split_material("one"), split_material("one")])
+                .is_err()
+        );
+        let db = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        for table in ["study_materials", "tags", "material_tags"] {
+            let count: i64 = db
+                .query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
+                    row.get(0)
+                })
+                .unwrap();
+            assert_eq!(count, 0, "{table} retained part of a failed split");
+        }
+        drop(db);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn split_records_refuse_missing_or_mismatched_files_before_writing() {
+        let root = split_test_root();
+        let material = split_material("one");
+        assert!(save_split_materials_at(&root, &[split_material("one")]).is_err());
+        std::fs::write(root.join(DOCUMENTS_DIR).join("one.pdf"), "larger").unwrap();
+        assert!(save_split_materials_at(&root, &[material]).is_err());
+        let db = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        let count: i64 = db
+            .query_row("SELECT COUNT(*) FROM study_materials", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 0);
+        drop(db);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     /// The name she picked survives, minus anything a filesystem would object to.
     #[test]

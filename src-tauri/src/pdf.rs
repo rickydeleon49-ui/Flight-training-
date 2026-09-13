@@ -277,9 +277,13 @@ pub async fn split_pdf(
         return Err(error);
     }
 
-    let file_size = std::fs::metadata(&destination)
-        .map_err(|e| format!("The split PDF could not be read back: {e}"))?
-        .len();
+    let file_size = match std::fs::metadata(&destination) {
+        Ok(metadata) => metadata.len(),
+        Err(error) => {
+            let _ = std::fs::remove_file(&destination);
+            return Err(format!("The split PDF could not be read back: {error}"));
+        }
+    };
     enforce_pdf_size_limit(&destination, file_size)?;
 
     Ok(ImportedDocument {

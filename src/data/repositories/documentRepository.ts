@@ -127,9 +127,9 @@ export type NewMaterial = Partial<Omit<StudyMaterial, "id" | "createdAt" | "upda
  * directory; only metadata and a relative path are stored here.
  */
 export function documentRepository(db: SqlDatabase) {
-  async function insertMaterial(input: NewMaterial & { id?: Id }): Promise<StudyMaterial> {
+  function buildMaterial(input: NewMaterial & { id?: Id }): StudyMaterial {
     const timestamp = nowIso();
-    const material: StudyMaterial = {
+    return {
       id: input.id ?? newId(),
       title: input.title,
       materialType: input.materialType ?? "study_guide",
@@ -147,6 +147,10 @@ export function documentRepository(db: SqlDatabase) {
       lastReviewedAt: input.lastReviewedAt ?? null,
       tags: input.tags ?? [],
     };
+  }
+
+  async function insertMaterial(input: NewMaterial & { id?: Id }): Promise<StudyMaterial> {
+    const material = buildMaterial(input);
     await db.execute(
       `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority,
          goal_id, event_id, notes, file_path, original_file_name, file_size,
@@ -307,6 +311,22 @@ export function documentRepository(db: SqlDatabase) {
      * tries, is a real failure and is reported as one.
      */
     async createMany(inputs: Array<NewMaterial & { id?: Id }>): Promise<StudyMaterial[]> {
+      if (inputs.length === 0) return [];
+      // The desktop SQL plugin uses a pool: separate BEGIN/INSERT/COMMIT calls
+      // may hit different connections. Its native batch owns one connection.
+      if (db.saveMaterialsAtomically) {
+        const materials = inputs.map(buildMaterial);
+        for (let attempt = 0; ; attempt++) {
+          try {
+            await db.saveMaterialsAtomically(materials);
+            return materials;
+          } catch (error) {
+            if (!isTransientLockError(error)) throw error;
+            if (attempt >= LOCK_RETRY_DELAYS_MS.length) throw lockGaveUpError();
+            await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
+          }
+        }
+      }
       for (let attempt = 0; ; attempt++) {
         const canRetry = attempt < LOCK_RETRY_DELAYS_MS.length;
 
