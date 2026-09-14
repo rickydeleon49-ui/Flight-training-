@@ -147,6 +147,29 @@ GitHub Actions comes from elsewhere, so the first launch needs:
 Signing properly needs a paid Apple Developer account and a Windows code
 signing certificate. For a private personal application it is not worth it.
 
+### "Virus detected" on the downloaded file itself
+
+That is a different warning from SmartScreen above, and shows up earlier —
+in the browser, while the file is still downloading, before Windows ever
+gets to run it. Chrome and Edge score every download by how many other
+people have downloaded that exact file before; a fresh, unsigned `.exe`
+(or the `.zip` GitHub wraps a workflow artifact in) has no history yet, so
+Safe Browsing calls it dangerous outright. It is a reputation check, not a
+scan result — nothing in the file changes between the build that trips it
+and the one after it earns downloads.
+
+- Prefer the **Releases** page over a workflow run's raw artifact. Both are
+  unsigned, but a Release asset is a direct download rather than a
+  browser-zipped Actions artifact, and it ships with a SHA-256 checksum in
+  the release notes to check instead of trusting either warning.
+- If the browser blocks the file outright rather than offering to keep it,
+  open the downloads list, expand the blocked entry, and choose **Keep** (or
+  temporarily switch Chrome's Safe Browsing from "Enhanced" to "Standard"
+  protection if no **Keep** option appears, then switch it back after).
+- Verify the file against the checksum published in that release's notes
+  before opening it, rather than treating the warning itself as evidence
+  either way.
+
 ### It needs a reasonably current system
 
 Every form in the application is a native `<dialog>`. WebKit only supports
