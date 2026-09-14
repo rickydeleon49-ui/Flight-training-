@@ -67,6 +67,16 @@ Complete `.hfdbackup` exports contain the SQLite library and managed documents. 
 - Installers: unsigned
 - Automatic updater: not implemented
 
+### Release safety hold
+
+The attempted `v0.5.2` Windows installer was withdrawn after Microsoft
+Defender detected it as `Trojan:Win32/Wacatac.B!ml`. It was not executed.
+Microsoft Security Intelligence submission `9656710a-e9d3-4c15-83dc-9b9f3451be8b`
+contains a locally rebuilt `0.5.2` installer and is pending analysis. Do not
+recreate or publish `v0.5.2` while that review is pending. Future workflow
+runs create release drafts with checksums; review the exact draft assets using
+[the release review process](docs/RELEASE_REVIEW_PROCESS.md) before publishing.
+
 Installing a newer version over an existing installation preserves app data and creates an automatic database safety copy before migrations run. A complete backup should still be saved separately before an update or computer transfer.
 
 ## iOS project
