@@ -1,10 +1,40 @@
 # Her Flight Deck — current project status
 
-_Updated 13 September 2026 · desktop release candidate `0.5.2` · installed macOS verification pending_
+_Updated 14 September 2026 · desktop release candidate `0.5.2` · **Windows release on hold, see below**_
 
 ## Release preparation
 
-Version `0.5.2` is prepared but **not published**. The latest published release remains `v0.5.1`. The version bump preserves `com.herflightdeck.app` so updates continue to use the same app-owned data folder and trigger the pre-migration safety copy. See [the release preparation note](docs/RELEASE_PREP_0.5.2.md) for validation and the one-step tag process. The installed Mac smoke test is still required before tagging; a successful Apple Silicon CI package build alone is not that test.
+Version `0.5.2` was published on 14 September and then withdrawn the same day — see "Windows release on hold" below. The latest release fit to distribute remains `v0.5.1`. The version bump preserves `com.herflightdeck.app` so updates continue to use the same app-owned data folder and trigger the pre-migration safety copy. See [the release preparation note](docs/RELEASE_PREP_0.5.2.md) for validation and the one-step tag process. The installed Mac smoke test is still required before tagging; a successful Apple Silicon CI package build alone is not that test. Windows additionally now needs the Defender clearance below before its installer can be republished.
+
+## Windows release on hold: Defender flags the installer as Wacatac.B!ml
+
+`v0.5.2`'s Windows installer (`Her Flight Deck_0.5.2_x64-setup.exe`,
+`sha256:12f6cd530b0301e67bce952bd20fff27b1fa4fb8760cfe4579721e940e7f8a8b`) was
+flagged by Windows Defender as `Trojan:Win32/Wacatac.B!ml` on download,
+including a direct download from the GitHub Release — reported by hand,
+without the file being run. The release and its tag were withdrawn the same
+day; nothing currently published carries this build.
+
+The `!ml` suffix means this is Defender's machine-learning heuristic, not a
+signature match, and it is a well-documented false-positive pattern for
+unsigned Rust/Tauri NSIS installers specifically — several other Tauri
+projects have hit the identical detection for the identical reason: a
+fresh, unsigned, low-reputation binary. Nothing in the repository's build
+config supports an alternate explanation — no custom installer script, a
+stock `tauri-plugin-*` + NSIS bundle, unchanged since earlier releases that
+were never flagged. That pattern is not the same as confirmed-clean, so the
+Windows installer stays unpublished until one of these closes it:
+
+- Microsoft's file-submission review clears the specific binary
+  (https://www.microsoft.com/wdsi/filesubmission, "Software developer"
+  dispute) — the usual path, typically resolved in a few days, or
+- the Windows installer is code-signed, which removes the dominant trigger
+  for this class of detection outright.
+
+Per the engineering rules, `v0.5.2`'s tag cannot be reused once it existed —
+a Windows-fit release after this is cleared ships as `0.5.3` or later, built
+fresh, checksummed again, and re-verified before publishing. The macOS
+`.dmg` was not flagged and is not affected by this hold.
 
 ## Performance polish update
 
