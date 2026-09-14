@@ -1,6 +1,10 @@
 # Her Flight Deck — current project status
 
-_Updated 13 September 2026 · desktop version `0.5.1` · performance polish and macOS verification in progress_
+_Updated 13 September 2026 · desktop release candidate `0.5.2` · installed macOS verification pending_
+
+## Release preparation
+
+Version `0.5.2` is prepared but **not published**. The latest published release remains `v0.5.1`. The version bump preserves `com.herflightdeck.app` so updates continue to use the same app-owned data folder and trigger the pre-migration safety copy. See [the release preparation note](docs/RELEASE_PREP_0.5.2.md) for validation and the one-step tag process. The installed Mac smoke test is still required before tagging; a successful Apple Silicon CI package build alone is not that test.
 
 ## Performance polish update
 

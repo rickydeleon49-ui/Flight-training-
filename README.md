@@ -67,6 +67,10 @@ The release notes are written for her, not for a developer: which file to
 take, what each system asks the first time, and that updating keeps
 everything she has entered.
 
+For the prepared `0.5.2` release, the version is already bumped. Follow
+[the release preparation note](docs/RELEASE_PREP_0.5.2.md) and complete its
+installed-Mac smoke test before starting the tag-driven workflow.
+
 The version is not just bookkeeping — the application takes a copy of her
 database whenever it notices the version changed since the last run. So the
 workflow refuses to publish if the version you ask for disagrees with the one
