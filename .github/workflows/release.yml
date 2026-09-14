@@ -1,15 +1,16 @@
-# Publishes installers she can download and run.
+# Builds installers and prepares them for release review.
 #
 # Two ways to start it:
 #
 #   From the browser  Actions -> Release -> Run workflow, and type the
 #                     version. Nothing needs to be installed anywhere. The
-#                     tag is created for you.
+#                     tag and an unpublished draft are created for you.
 #
 #   From a clone      scripts/release.sh 0.2.0, then push the tag.
 #
 # Either way it builds the macOS and Windows installers and attaches them to
-# a GitHub Release with first-run instructions written for her.
+# a private GitHub Release draft. The draft must be reviewed before anybody
+# can download its installers.
 name: Release
 
 on:
@@ -18,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release, e.g. 0.1.0 (must match the version in the repository)"
+        description: "Version to prepare as a private release draft, e.g. 0.1.0 (must match the version in the repository)"
         required: true
         type: string
 
@@ -143,7 +144,7 @@ jobs:
   publish:
     permissions:
       contents: write
-    name: Publish
+    name: Prepare release draft
     needs: [check, build]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -158,7 +159,7 @@ jobs:
       - name: What we are shipping
         run: ls -lh installers
 
-      - name: Write the release notes
+      - name: Write the release notes and checksums
         env:
           VERSION: ${{ needs.check.outputs.version }}
         run: |
@@ -172,20 +173,14 @@ jobs:
             echo "| Mac with Apple silicon | the \`.dmg\` |"
             echo "| Windows | the \`.exe\` |"
             echo
-            echo "### The first time you open it"
+            echo "### Before publishing this draft"
             echo
-            echo "The application is not signed with a paid certificate, so each"
-            echo "system asks once whether you meant to open it. Nothing is wrong."
+            echo "Download and test the exact draft installers before publishing."
+            echo "Confirm the Windows file is not detected by Microsoft Defender and"
+            echo "confirm the Mac file installs and opens normally on an Apple silicon Mac."
             echo
-            echo "**On an Apple silicon Mac** — open the \`.dmg\`, drag Her Flight Deck to"
-            echo "Applications, then open it from Applications. If it says the"
-            echo "developer cannot be verified, go to **System Settings → Privacy &"
-            echo "Security**, scroll down, and choose **Open Anyway**. You only do"
-            echo "this once."
-            echo
-            echo "**On Windows** — run the \`.exe\`. If a blue \"Windows protected"
-            echo "your PC\" box appears, choose **More info → Run anyway**. You only"
-            echo "do this once."
+            echo "Do not publish a release that asks people to disable or bypass platform"
+            echo "security protections."
             echo
             echo "### Updating"
             echo
@@ -200,19 +195,23 @@ jobs:
             ( cd installers && sha256sum * )
             echo '```'
           } > notes.md
+          ( cd installers && sha256sum * > SHA256SUMS.txt )
           cat notes.md
 
       # --target creates the tag when it does not exist yet, which is what
-      # makes releasing from the browser possible.
-      - name: Publish the release
+      # makes preparing a release from the browser possible. --draft means
+      # the installers remain private until an owner explicitly publishes it
+      # after reviewing the exact files.
+      - name: Create a private release draft
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.check.outputs.tag }}
           VERSION: ${{ needs.check.outputs.version }}
         run: |
           gh release create "$TAG" \
+            --draft \
             --title "Her Flight Deck $VERSION" \
             --notes-file notes.md \
             --target "$GITHUB_SHA" \
             installers/*
-          echo "Published: $(gh release view "$TAG" --json url --jq .url)"
+          echo "Draft ready for review: $(gh release view "$TAG" --json url --jq .url)"
