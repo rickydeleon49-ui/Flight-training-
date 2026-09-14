@@ -120,6 +120,23 @@ rollback already works. The extracted chapter is an ordinary Study Library
 item: its own study guide, its own practice test, its page range recorded
 in its notes, the source handbook untouched.
 
+## Known limitation: browser "virus detected" on download
+
+Neither installer is code-signed, so beyond Windows SmartScreen's "Windows
+protected your PC" prompt at first launch (already covered in the release
+notes and `README.md`), Chrome and Edge can flag the download itself —
+before it is ever run — as a "Virus detected" or "dangerous file" block.
+That is Safe Browsing's file-reputation check, not a scan result: a fresh,
+unsigned `.exe`, or the `.zip` GitHub wraps a workflow-run artifact in, has
+no download history yet, so it is scored as suspicious regardless of its
+contents. `README.md` now documents it separately from the SmartScreen
+prompt, with the same underlying fix in both cases — prefer the Releases
+page over a raw workflow artifact, check the published SHA-256 checksum,
+and use the browser's **Keep** option (or Standard protection) if the
+download is blocked outright. This is a Google/Microsoft reputation system
+reacting to low download counts, not something fixable from the codebase
+without a paid code signing certificate.
+
 ## Still requiring a Mac
 
 The installed-app checklist and the transient Gemini-key webview issue are
