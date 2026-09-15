@@ -185,15 +185,13 @@ material.
 
 **Decision for this milestone**: keep `secrets.rs` and its plain-file
 behavior completely unchanged for desktop (zero regression risk — this
-document changes no desktop-facing behavior). Add the `CredentialStore`
-trait (§3) with a `FileCredentialStore` desktop implementation that
-delegates to the existing `secrets::{load_key, save_key, forget_key}`
-functions unmodified. An iOS `KeychainCredentialStore` implementation using
-`keyring`'s iOS Protected Store backend is Milestone 3 work, gated behind
-`#[cfg(target_os = "ios")]`, and cannot be written with any confidence
-until it can be built and exercised on a Mac with the iOS SDK — a
-credential-storage bug is exactly the kind of thing that must not ship
-unverified.
+document changes no desktop-facing behavior). The `CredentialStore`
+trait (§3) and `FileCredentialStore` desktop implementation delegate
+to the existing `secrets::{load_key, save_key, forget_key}` functions
+unmodified as isolated scaffolding. The iOS Keychain implementation is
+deferred until real Mac/Xcode/device validation, and active credential
+operations in `gemini.rs` continue calling desktop `secrets` directly so
+placeholder stubs never cause runtime failures.
 
 ## 5. Native surfaces with no desktop equivalent
 
