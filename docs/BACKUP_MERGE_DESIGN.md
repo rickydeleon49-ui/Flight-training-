@@ -51,7 +51,9 @@ When foreign keys are active (`PRAGMA foreign_keys = ON;`), deleting an existing
   - Triggers `ON DELETE SET NULL` on `schedule_events`, `study_materials`, `journal_entries`, and `transactions`!
 
 ### Mandatory Rule
-**Merge logic must never execute `INSERT OR REPLACE`.**
+**`INSERT OR REPLACE` is strictly prohibited across every merge-related table, including internal metadata such as `merge_ledger`, even where no foreign keys currently exist.**
+
+Even on tables without foreign keys (such as `app_metadata` or `merge_ledger`), using `INSERT OR REPLACE` creates a dangerous precedent, risks silent row replacement or trigger side effects, and would introduce catastrophic cascade deletion bugs if future schema migrations ever attach foreign keys.
 
 All merge operations must strictly distinguish between **inserting novel rows** (using standard `INSERT INTO`) and **updating existing rows** (using targeted `UPDATE ... WHERE id = ...` or `INSERT INTO ... ON CONFLICT(id) DO UPDATE SET ...` updating specific columns while leaving the underlying row identity and child foreign-key associations intact).
 
@@ -331,8 +333,8 @@ State 2: "commit_prepared"
 State 3: SQLite Transaction Execution & Database Ledger
          - In live SQLite: BEGIN IMMEDIATE TRANSACTION.
          - Execute all entity inserts, updates, and tombstones.
-         - Insert or update the `merge_ledger` row:
-           `INSERT OR REPLACE INTO merge_ledger (merge_id, state, snapshot_path, committed_at) VALUES (?, 'committed', ?, ?);`
+         - Record the merge in `merge_ledger` using a safe upsert (or a standard `INSERT` since each merge session allocates a guaranteed-new UUID v4):
+           `INSERT INTO merge_ledger (merge_id, state, snapshot_path, committed_at) VALUES (?, 'committed', ?, ?) ON CONFLICT(merge_id) DO UPDATE SET state = excluded.state, snapshot_path = excluded.snapshot_path, committed_at = excluded.committed_at;`
          - Execute `PRAGMA foreign_key_check;` and assert it returns EXACTLY ZERO ROWS.
            (If any row is returned, foreign key integrity was violated; roll back immediately).
          - COMMIT TRANSACTION.
