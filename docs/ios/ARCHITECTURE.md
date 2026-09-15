@@ -183,7 +183,15 @@ Keychain access requires no extra dependency (see §2.1 — `keyring` is
 already vendored) and is what App Store review expects for credential
 material.
 
-**Update (14 September 2026)**: The `CredentialStore` trait is now fully wired into the application. `gemini.rs` uses `platform::active_credential_store()`, which returns `FileCredentialStore` on desktop and the `KeychainCredentialStore` stub on iOS. The iOS `KeychainCredentialStore` implementation using `keyring`'s iOS Protected Store backend remains Milestone 3 work, and cannot be written with any confidence until it can be built and exercised on a Mac with the iOS SDK.
+**Decision for this milestone**: keep `secrets.rs` and its plain-file
+behavior completely unchanged for desktop (zero regression risk — this
+document changes no desktop-facing behavior). The `CredentialStore`
+trait (§3) and `FileCredentialStore` desktop implementation delegate
+to the existing `secrets::{load_key, save_key, forget_key}` functions
+unmodified as isolated scaffolding. The iOS Keychain implementation is
+deferred until real Mac/Xcode/device validation, and active credential
+operations in `gemini.rs` continue calling desktop `secrets` directly so
+placeholder stubs never cause runtime failures.
 
 ## 5. Native surfaces with no desktop equivalent
 

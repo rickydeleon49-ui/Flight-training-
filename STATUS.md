@@ -81,9 +81,9 @@ Installing a newer version over an existing installation preserves app data and 
 
 ## iOS project
 
-The iOS effort is active and documented in `docs/ios/`, `docs/backup-format.md`, and `docs/BACKUP_MERGE_DESIGN.md`. Milestones 1 and 2 cover architecture, compatibility, platform boundaries, and desktop backup hardening. An iOS-readiness preparation pass has wired the `CredentialStore` trait into the Rust backend so the Keychain implementation can be dropped in. There is no runnable iOS app yet.
+The iOS effort is active and documented in `docs/ios/`, `docs/backup-format.md`, and `docs/BACKUP_MERGE_DESIGN.md`. Milestones 1 and 2 cover architecture, compatibility, platform boundaries, and desktop backup hardening. An iOS-readiness preparation pass established isolated `CredentialStore` trait and desktop adapter scaffolding in `platform.rs`, while active credential operations remain on desktop `secrets` and Keychain implementation is deferred until real Mac/Xcode/device validation. There is no runnable iOS app yet.
 
-Milestone 3 requires a Mac with Xcode to initialize and validate Tauri's Apple project, implement Files/AirDrop import, Keychain (`KeychainCredentialStore`), Quick Look, sharing, and the iOS restore lifecycle. Milestone 4 covers iPhone/iPad layout, device memory testing, CI, signing, TestFlight, and App Store preparation.
+Milestone 3 requires a Mac with Xcode to initialize and validate Tauri's Apple project, implement Files/AirDrop import, Keychain, Quick Look, sharing, and the iOS restore lifecycle. Milestone 4 covers iPhone/iPad layout, device memory testing, CI, signing, TestFlight, and App Store preparation.
 
 ## Engineering rules
 

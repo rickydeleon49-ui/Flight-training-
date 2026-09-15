@@ -7,12 +7,15 @@
 //! genuinely differ by platform are credential storage (§4 of that document)
 //! and platform identification for UI copy.
 //!
-//! Only the desktop implementations below are wired into the running app.
-//! An iOS `CredentialStore` needs Apple's Keychain Protected Store (via the
-//! `keyring` crate's iOS backend — already a dependency, see `gemini.rs`'s
-//! legacy-migration use of it) and cannot be written with confidence until
-//! it can be built and exercised on a Mac with the iOS SDK. See
-//! `docs/ios/SETUP.md` Step 6.
+//! Only the desktop implementations below are present, and active credential
+//! operations continue calling `secrets` directly. Keychain implementation is
+//! deferred until real Mac/Xcode/device validation; an iOS `CredentialStore`
+//! needs Apple's Keychain Protected Store (via the `keyring` crate's iOS backend —
+//! already a dependency, see `gemini.rs`'s legacy-migration use of it) and
+//! cannot be written with confidence until it can be built and exercised on a
+//! Mac with the iOS SDK. See `docs/ios/SETUP.md` Step 6. `CredentialStore` and
+//! `FileCredentialStore` remain isolated scaffolding with no production behavior
+//! change.
 
 // Not yet called from any Tauri command — see the module doc comment and
 // `docs/ios/ARCHITECTURE.md` §3. `#[cfg(test)]` code doesn't count as usage
@@ -48,10 +51,10 @@ pub trait CredentialStore {
 ///
 /// This delegates to `secrets::{load_key, save_key, forget_key}` unchanged —
 /// it is an adapter onto already-shipped, already-tested behavior, not a
-/// reimplementation. Wiring `gemini.rs`'s commands through this trait
-/// instead of calling `secrets` directly is left for when an iOS
-/// implementation actually exists to select between; doing so today would
-/// change working code for a platform that cannot yet be built or tested.
+/// reimplementation. Keychain implementation is deferred until real
+/// Mac/Xcode/device validation, so active operations in `gemini.rs` continue
+/// to call `secrets` directly. This store and trait remain isolated
+/// scaffolding with no production behavior change.
 pub struct FileCredentialStore {
     root: PathBuf,
 }
@@ -114,34 +117,12 @@ impl PlatformInfo for CompiledPlatformInfo {
     }
 }
 
-#[cfg(target_os = "ios")]
-pub struct KeychainCredentialStore;
-
-#[cfg(target_os = "ios")]
-impl CredentialStore for KeychainCredentialStore {
-    fn load(&self) -> Result<Option<String>, String> {
-        // A genuine implementation will use keyring::Entry here, which is already a dependency.
-        Err("Keychain implementation pending Mac compilation".to_string())
-    }
-    fn save(&self, _key: &str) -> Result<(), String> {
-        Err("Keychain implementation pending Mac compilation".to_string())
-    }
-    fn forget(&self) -> Result<(), String> {
-        Err("Keychain implementation pending Mac compilation".to_string())
-    }
-}
-
-/// Convenience constructor returning the active credential store for the current platform.
-pub fn active_credential_store(root: &Path) -> Box<dyn CredentialStore> {
-    #[cfg(target_os = "ios")]
-    {
-        let _ = root; // Root path is not needed for Keychain
-        Box::new(KeychainCredentialStore)
-    }
-    #[cfg(not(target_os = "ios"))]
-    {
-        Box::new(FileCredentialStore::new(root.to_path_buf()))
-    }
+/// Convenience constructor mirroring `storage::app_root`'s signature shape,
+/// for the day `gemini.rs` is wired through the trait instead of calling
+/// `secrets` directly. Keychain implementation is deferred until real
+/// Mac/Xcode/device validation.
+pub fn file_credential_store(root: &Path) -> FileCredentialStore {
+    FileCredentialStore::new(root.to_path_buf())
 }
 
 #[cfg(test)]
@@ -161,7 +142,7 @@ mod tests {
     #[test]
     fn the_file_credential_store_round_trips_through_the_existing_secrets_module() {
         let root = scratch("round-trip");
-        let store = active_credential_store(&root);
+        let store = file_credential_store(&root);
 
         assert_eq!(store.load().unwrap(), None);
 
@@ -175,7 +156,7 @@ mod tests {
     #[test]
     fn forgetting_an_absent_key_is_not_an_error() {
         let root = scratch("forget-absent");
-        let store = active_credential_store(&root);
+        let store = file_credential_store(&root);
         store.forget().unwrap();
     }
 

@@ -17,7 +17,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::documents;
 use crate::pdf;
-use crate::platform;
+use crate::secrets;
 use crate::storage::app_root;
 
 /// Where the key used to be kept. Retained only long enough to move an
@@ -292,7 +292,7 @@ fn migrate_legacy_key(root: &Path) -> Option<String> {
     if key.is_empty() {
         return None;
     }
-    platform::active_credential_store(root).save(key).ok()?;
+    secrets::save_key(root, key).ok()?;
     // Best effort: the same signature check that blocks reading blocks this.
     let _ = entry.delete_credential();
     Some(key.to_string())
@@ -304,7 +304,7 @@ fn migrate_legacy_key(root: &Path) -> Option<String> {
 /// error, so a folder we cannot read never again looks like a key she never
 /// entered.
 fn current_key(root: &Path) -> Result<Option<String>, String> {
-    if let Some(key) = platform::active_credential_store(root).load()? {
+    if let Some(key) = secrets::load_key(root)? {
         return Ok(Some(key));
     }
     Ok(migrate_legacy_key(root))
@@ -403,7 +403,7 @@ pub async fn configure_gemini(app: AppHandle, api_key: String) -> Result<GeminiS
         return Err("Paste the complete Gemini API key from Google AI Studio.".to_string());
     }
     verify_key(trimmed).await?;
-    platform::active_credential_store(&app_root(&app)?).save(trimmed)?;
+    secrets::save_key(&app_root(&app)?, trimmed)?;
     Ok(GeminiStatus {
         configured: true,
         model: MODEL,
@@ -412,7 +412,7 @@ pub async fn configure_gemini(app: AppHandle, api_key: String) -> Result<GeminiS
 
 #[tauri::command]
 pub fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
-    platform::active_credential_store(&app_root(&app)?).forget()?;
+    secrets::forget_key(&app_root(&app)?)?;
     // Clear anything still sitting in the old credential manager as well, so
     // disconnecting really does leave no key behind. Best effort: on macOS an
     // updated build is usually refused access to its predecessor's item.
