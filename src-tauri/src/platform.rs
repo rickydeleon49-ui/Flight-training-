@@ -114,11 +114,34 @@ impl PlatformInfo for CompiledPlatformInfo {
     }
 }
 
-/// Convenience constructor mirroring `storage::app_root`'s signature shape,
-/// for the day `gemini.rs` is wired through the trait instead of calling
-/// `secrets` directly.
-pub fn file_credential_store(root: &Path) -> FileCredentialStore {
-    FileCredentialStore::new(root.to_path_buf())
+#[cfg(target_os = "ios")]
+pub struct KeychainCredentialStore;
+
+#[cfg(target_os = "ios")]
+impl CredentialStore for KeychainCredentialStore {
+    fn load(&self) -> Result<Option<String>, String> {
+        // A genuine implementation will use keyring::Entry here, which is already a dependency.
+        Err("Keychain implementation pending Mac compilation".to_string())
+    }
+    fn save(&self, _key: &str) -> Result<(), String> {
+        Err("Keychain implementation pending Mac compilation".to_string())
+    }
+    fn forget(&self) -> Result<(), String> {
+        Err("Keychain implementation pending Mac compilation".to_string())
+    }
+}
+
+/// Convenience constructor returning the active credential store for the current platform.
+pub fn active_credential_store(root: &Path) -> Box<dyn CredentialStore> {
+    #[cfg(target_os = "ios")]
+    {
+        let _ = root; // Root path is not needed for Keychain
+        Box::new(KeychainCredentialStore)
+    }
+    #[cfg(not(target_os = "ios"))]
+    {
+        Box::new(FileCredentialStore::new(root.to_path_buf()))
+    }
 }
 
 #[cfg(test)]
@@ -138,7 +161,7 @@ mod tests {
     #[test]
     fn the_file_credential_store_round_trips_through_the_existing_secrets_module() {
         let root = scratch("round-trip");
-        let store = file_credential_store(&root);
+        let store = active_credential_store(&root);
 
         assert_eq!(store.load().unwrap(), None);
 
@@ -152,7 +175,7 @@ mod tests {
     #[test]
     fn forgetting_an_absent_key_is_not_an_error() {
         let root = scratch("forget-absent");
-        let store = file_credential_store(&root);
+        let store = active_credential_store(&root);
         store.forget().unwrap();
     }
 
