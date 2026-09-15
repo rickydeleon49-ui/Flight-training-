@@ -261,19 +261,37 @@ Because automated heuristics cannot infer pilot intent, the merge engine must se
 
 ---
 
-## 7. Durable Dual-Layer Rollback & Recovery Journal
+## 7. Durable Dual-Layer Rollback, Merge Ledger & Recovery Protocol
 
-### The Atomicity Problem
+### The Atomicity Problem & The Post-Commit Crash Window
 SQLite transactions (`BEGIN TRANSACTION ... COMMIT`) provide ACID guarantees for database pages. However, **SQLite cannot roll back filesystem copy, move, or delete operations.** If 500 MB of PDF documents are copied into `<app_root>/documents/` and the SQLite transaction then fails on a constraint violation, or if the process crashes mid-copy, the application is left in a corrupted, half-merged state.
 
-To guarantee atomicity across both storage layers, the merge engine employs an on-disk crash-resilient journal with staged promotion and pre-boot recovery.
+Furthermore, a naive multi-stage protocol where SQLite commits first and the filesystem journal is updated to `"db_committed"` second creates an unacceptable **crash vulnerability window**:
+- If power fails or the application crashes *after* the SQLite `COMMIT` succeeds but *before* the filesystem journal can flush `"db_committed"`, the journal remains at `"files_staged"` or `"commit_prepared"`.
+- If startup recovery checked only the filesystem journal, it would conclude the database transaction never completed, delete all `.incoming` staged files, and leave the active database with committed records pointing to files that were just destroyed!
 
-### 1. File Manifest Schema in Recovery Journal
-The recovery journal (`<app_root>/merge_journal.json`) records the exact status and cryptographic hash for every file involved:
+To eliminate this window, the design mandates a **durable database merge ledger** written inside the *exact same SQLite transaction* as the merge mutations, paired with a synchronous filesystem journal and early pre-boot recovery.
+
+### 1. Dedicated Database Merge Ledger Table
+When the Backup Merge feature is implemented, it must introduce a dedicated table via its own schema migration (e.g., `0010_merge_ledger.sql`):
+
+```sql
+CREATE TABLE merge_ledger (
+  merge_id      TEXT PRIMARY KEY,
+  state         TEXT NOT NULL CHECK (state IN ('in_progress', 'committed')),
+  snapshot_path TEXT NOT NULL,
+  committed_at  TEXT NOT NULL
+);
+```
+
+Because this table is mutated and committed in the **identical SQLite transaction** as all domain entities and tombstones, the database's committed status is 100% atomic with the merge itself.
+
+### 2. File Manifest Schema in Recovery Journal
+The filesystem recovery journal (`<app_root>/merge_journal.json`) records the exact status and cryptographic hash for every file involved:
 ```json
 {
   "merge_id": "b1a4...",
-  "journal_state": "files_staged",
+  "journal_state": "commit_prepared",
   "snapshot_path": "<app_root>/rollback/pre_merge_db.sqlite",
   "files": [
     {
@@ -288,57 +306,110 @@ The recovery journal (`<app_root>/merge_journal.json`) records the exact status 
 }
 ```
 
-### 2. State Transition Protocol with Disk Flushing
-Every state transition must be persisted and synchronously flushed to disk (`std::fs::File::sync_all()` on Unix, `FlushFileBuffers` on Windows) **before** the next operation begins:
+### 3. State Transition Protocol with Synchronous Disk Flushing
+Every journal state transition must be persisted and synchronously flushed to non-volatile storage (`std::fs::File::sync_all()` on Unix, `FlushFileBuffers` on Windows) **before** the next operation begins:
 
 ```
 State 0: "staged"
          - Incoming archive unpacked into sandboxed staging directory.
          - Format v2 and SHA-256 archive manifest validated.
          - Live SQLite Online Backup written to `rollback/pre_merge_db.sqlite`.
-         - Journal initialized with all file paths and expected hashes. Flush to disk.
+         - Journal initialized with all file paths, expected hashes, and snapshot path.
+         - Synchronously flush journal to disk.
 
 State 1: "files_staged"
          - Copy files into `<app_root>/documents/` with temporary names (`.incoming_<uuid>`).
          - Verify on disk: each temporary file must exist, match `file_size`, and match `expected_sha256`.
-         - Update journal state to `"files_staged"`. Flush to disk.
+         - Update journal state to `"files_staged"`.
+         - Synchronously flush journal to disk.
 
-State 2: "db_committed"
-         - Re-verify all staged `.incoming` files immediately before commit.
+State 2: "commit_prepared"
+         - Re-verify all staged `.incoming` files immediately before touching the database.
+         - Update journal state to `"commit_prepared"`.
+         - Synchronously flush journal to disk BEFORE initiating the SQLite commit sequence.
+
+State 3: SQLite Transaction Execution & Database Ledger
          - In live SQLite: BEGIN IMMEDIATE TRANSACTION.
-         - Execute inserts, updates, and tombstones.
-         - Execute `PRAGMA foreign_key_check;`.
+         - Execute all entity inserts, updates, and tombstones.
+         - Insert or update the `merge_ledger` row:
+           `INSERT OR REPLACE INTO merge_ledger (merge_id, state, snapshot_path, committed_at) VALUES (?, 'committed', ?, ?);`
+         - Execute `PRAGMA foreign_key_check;` and assert it returns EXACTLY ZERO ROWS.
+           (If any row is returned, foreign key integrity was violated; roll back immediately).
          - COMMIT TRANSACTION.
-         - Update journal state to `"db_committed"`. Flush to disk.
+         (At this exact instant, the database merge and ledger are durable).
 
-State 3: "files_promoted"
-         - Atomically rename `.incoming_<uuid>` files to `final_path`.
-         - Verify each file at `final_path` matches `expected_sha256`.
-         - Update journal state to `"files_promoted"`. Flush to disk.
+State 4: "db_committed"
+         - Update journal state to `"db_committed"`.
+         - Synchronously flush journal to disk.
 
-State 4: "cleaned_up"
+State 5: "files_promoted"
+         - Atomically rename `.incoming_<uuid>` files to their `final_path`.
+         - Verify each file at `final_path` exists and matches `expected_sha256`.
+         - Update journal state to `"files_promoted"`.
+         - Synchronously flush journal to disk.
+
+State 6: "cleaned_up"
          - Remove staging directory and rollback snapshot.
-         - Delete `merge_journal.json`. Flush directory.
+         - Remove `merge_ledger` row or mark archived.
+         - Delete `merge_journal.json`. Synchronously flush directory.
 ```
 
-### 3. Pre-Boot Crash Recovery Hook
-**Recovery must run during the early application boot sequence, before opening the live database connection pool and before serving the webview UI.**
+### 4. Pre-Boot Crash Recovery Hook
+**Recovery must run during the early application boot sequence, strictly before opening the live database connection pool and before serving the webview UI.**
 
-Upon launch, the application checks for `<app_root>/merge_journal.json`:
-- **If journal state is `"staged"` or `"files_staged"` (Crash before DB Commit):**
-  - Database commit never occurred.
-  - Delete all `.incoming_<uuid>` files listed in the journal.
-  - Remove sandbox directory.
-  - Delete `merge_journal.json`.
-  - Live state is completely clean and untouched.
-- **If journal state is `"db_committed"` (Crash during File Promotion):**
-  - Verify every staged or partially promoted file.
-  - **If any required staged file is missing, unreadable, or damaged, or if promotion cannot finish:**
-    - **Restore Database Snapshot:** Overwrite the live database file with `pre_merge_db.sqlite`.
-    - Delete all `.incoming_<uuid>` and partially promoted files.
-    - Remove sandbox and delete journal.
-    - **Never leave committed database records pointing to absent or damaged files.**
-  - **If all files are intact:** Complete the atomic rename of remaining files to `final_path`, verify checksums, remove snapshot, and delete journal.
+Upon application launch, the boot loader checks for the existence of `<app_root>/merge_journal.json`. If present, the recovery engine **first compares the filesystem journal with the database ledger before deleting, promoting, or restoring anything:**
+
+```
+                        [Inspect merge_journal.json]
+                                     │
+                                     ▼
+                    [Query live database: merge_ledger]
+                                     │
+                 ┌───────────────────┴───────────────────┐
+                 ▼                                       ▼
+    [Committed Ledger Found]                 [No Committed Ledger]
+    (state == 'committed')                   (Row absent or uncommitted)
+                 │                                       │
+                 ▼                                       ▼
+  Is journal state == "files_promoted"?       SQLite commit never occurred.
+        ┌────────┴────────┐                   1. Delete all staged `.incoming` files.
+        │                 │                   2. Remove staging directory.
+     (Yes)               (No)                 3. Delete `merge_journal.json`.
+        │                 │                   4. Original database is preserved 100%.
+        ▼                 ▼
+  Verify final files.   Verify staged files.
+  - All valid?          - All valid? Promote files & cleanup.
+    Complete cleanup.   - Any missing/damaged?
+  - Any damaged?          RESTORE SNAPSHOT & delete files.
+    RESTORE SNAPSHOT!
+```
+
+#### Detailed Recovery Branches
+
+1. **Committed Ledger Exists (`merge_ledger.state = 'committed'`):**
+   - The database transaction definitely committed.
+   - **Branch A1: Journal state is `"commit_prepared"`, `"files_staged"`, or `"db_committed"` (Promotion not yet complete):**
+     - Inspect all staged `.incoming_<uuid>` files listed in the journal.
+     - **If any required staged file cannot be verified (missing, unreadable, truncated, or SHA-256 mismatch) or promotion cannot finish:**
+       - **Durable Rollback:** Restore the pre-merge database snapshot from `snapshot_path` (`pre_merge_db.sqlite`) over the live database file.
+       - Delete all staged `.incoming_<uuid>` and partially promoted files.
+       - Remove sandbox and delete `merge_journal.json`.
+       - **Rule: Never leave committed database records pointing to absent or corrupted files.**
+     - **If all staged files verify cleanly:**
+       - Atomically rename each `.incoming_<uuid>` file to its `final_path`.
+       - Verify every promoted file at `final_path` matches `expected_sha256`.
+       - Delete snapshot, clear `merge_ledger` row, and delete `merge_journal.json`.
+   - **Branch A2: Explicit Recovery Path for `"files_promoted"`:**
+     - The journal reached `"files_promoted"`, meaning the rename loop ran before crash.
+     - Verify every final file at `final_path` on disk (existence, size, and SHA-256 hash).
+     - **If verification passes:** Complete cleanup safely (remove sandbox, delete snapshot, delete `merge_ledger` row, delete `merge_journal.json`).
+     - **If verification fails (any final file is missing or corrupted):** Restore the database snapshot (`pre_merge_db.sqlite`) over the live database, delete partially promoted files, remove sandbox, and delete `merge_journal.json`.
+2. **No Committed Ledger Exists (Row absent, or state != `'committed'`):**
+   - The database transaction never committed.
+   - Delete all staged `.incoming_<uuid>` files listed in the journal.
+   - Remove sandbox directory.
+   - Delete `merge_journal.json`.
+   - The live database remains intact with its original pre-merge state.
 
 ---
 
@@ -348,16 +419,17 @@ Upon launch, the application checks for `<app_root>/merge_journal.json`:
 - **The Merge engine strictly requires Format Version 2 or higher.**
 - Format v2 archives include a complete SHA-256 manifest (`manifest.json`), schema version tracking, and atomic SQLite Online Backup snapshots.
 
-### Scope of the SHA-256 Manifest
+### Scope and Limits of the SHA-256 Manifest
 ```
-  ⚠️ INTEGRITY NOTICE: SHA-256 MANIFEST vs. SIGNATURES
+  ⚠️ INTEGRITY NOTICE: SHA-256 MANIFEST vs. AUTHENTICATION
   The SHA-256 manifest in Format v2 detects accidental corruption,
   truncated downloads, storage bit-rot, and mismatched archive contents.
-  It is NOT a cryptographic signature or proof of author identity.
-  It does not prove who created the backup.
+  It detects tampering ONLY when the manifest itself is not also altered.
+  The manifest is NOT authenticated (it carries no digital signature or
+  HMAC) and CANNOT prove archive origin or who created the backup.
 ```
 
-The manifest guarantees internal consistency of the archive bytes, ensuring that damaged or tampered archives are rejected before extraction.
+The manifest guarantees internal consistency between `manifest.json` and the archive entries, ensuring that corrupt or mismatched archives are rejected before extraction. However, because the archive is unsigned, an attacker with write access to the backup could modify both a file and its recorded SHA-256 hash. Format v2 provides integrity checking, not provenance or cryptographic authorization.
 
 ### Format Version 1 Compatibility Preserved for Full Restore Only
 - Existing Format Version 1 archives lack `manifest.json`.
@@ -370,18 +442,21 @@ The manifest guarantees internal consistency of the archive bytes, ensuring that
 
 When the project is ready to implement Backup Merge, it must proceed through these strictly gated phases:
 
-- **Phase 1: Tombstone Schema Migration**
-  - Create and register migration `0010_deletion_tombstones.sql`.
-  - Hook soft-deletion/tombstone recording into existing delete operations, including cascaded child removals.
+- **Phase 1: Tombstone & Ledger Schema Migration**
+  - Create and register migration `0010_merge_ledger_and_tombstones.sql`.
+  - Add the `merge_ledger` table (`merge_id`, `state`, `snapshot_path`, `committed_at`).
+  - Add the `tombstones` table and hook soft-deletion tracking into existing delete operations, including cascaded child removals.
   - Validate with automated migration safety tests.
 - **Phase 2: Headless Merge Engine in Rust**
   - Implement read-only analysis and diff generation in Rust.
   - Implement explicit SQL merge queries (zero `INSERT OR REPLACE`).
+  - Require `PRAGMA foreign_key_check` to return zero rows before transaction commit.
   - Write exhaustive unit tests for every table in the schema inventory.
-- **Phase 3: File Sandbox & Crash-Recovery Journal**
-  - Implement filesystem staging, `.incoming` suffix promotion, and `merge_journal.json` with disk flushes.
-  - Implement early pre-boot recovery hook.
-  - Add test fixtures simulating power failure/abrupt exit during copy, commit, and promotion.
+- **Phase 3: File Sandbox, Disk-Flushed Journal & Crash Recovery**
+  - Implement filesystem staging, `.incoming` suffix promotion, and `merge_journal.json` with synchronous disk flushes.
+  - Implement `commit_prepared` journal state and the database ledger transaction coupling.
+  - Implement the early pre-boot recovery hook comparing filesystem journal against `merge_ledger`.
+  - Add test fixtures simulating power failure/abrupt exit at every state transition.
 - **Phase 4: Conflict Preview UI**
   - Build React conflict preview dialog with side-by-side field diffs and user selection options.
   - Connect UI to the verified Rust merge commands.
