@@ -24,6 +24,8 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
+node scripts/check-release-version.mjs "$VERSION"
+
 CURRENT="$(node -p "require('./package.json').version")"
 
 if [ -n "$(git status --porcelain)" ]; then

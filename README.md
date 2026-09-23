@@ -45,31 +45,34 @@ The real application always uses the desktop database.
 
 ## Getting it to her
 
-She should not have to build anything. Push a version tag and GitHub builds
-both installers and publishes them on the repository's **Releases** page,
-where she downloads one file and opens it.
+She should not have to build anything. The release workflow prepares
+both installers and attaches them to a private GitHub Release **draft**,
+where an owner reviews the exact files before publishing.
 
 **From the browser**, with nothing installed anywhere:
 
 > Actions → **Release** → Run workflow → type the version → Run
 
-It creates the tag, builds both installers, and publishes them. This is the
-whole process; you never need a clone.
+It checks the version against `scripts/release-policy.json`, builds the macOS
+and Windows installers, and creates a private release draft. Follow
+[the release review process](docs/RELEASE_REVIEW_PROCESS.md) to inspect and
+test the exact draft assets before publishing.
 
 **Or from a clone**, if you have one:
 
 ```bash
-scripts/release.sh 0.2.0                       # bumps, checks, commits, tags
-git push origin <branch> && git push origin v0.2.0
+scripts/release.sh <version>                  # validates, bumps, checks, commits, tags
+git push origin <branch> && git push origin v<version>
 ```
 
 The release notes are written for her, not for a developer: which file to
 take, what each system asks the first time, and that updating keeps
 everything she has entered.
 
-For the prepared `0.5.2` release, the version is already bumped. Follow
-[the release preparation note](docs/RELEASE_PREP_0.5.2.md) and complete its
-installed-Mac smoke test before starting the tag-driven workflow.
+Release `v0.5.1` is the current distributable version. Version `0.5.2` was
+withdrawn and is permanently retired (see `scripts/release-policy.json`). Any
+future release will be prepared as `0.5.3` or later after all verification
+gates are satisfied.
 
 The version is not just bookkeeping — the application takes a copy of her
 database whenever it notices the version changed since the last run. So the
@@ -83,10 +86,9 @@ that means a GitHub account added as a collaborator. If she does not have one,
 download the file yourself and send it to her — it is a single file, and it
 runs the same either way.
 
-**Neither installer is code-signed**, so each system asks once whether she
-meant to open it. That is unavoidable without a paid Apple Developer account
-and a Windows code signing certificate; the release notes tell her exactly
-what she will see and what to click.
+**Neither installer is currently code-signed.** That requires a paid Apple Developer
+account and a Windows code-signing identity; installers remain private review drafts
+until verified and tested per the release review process.
 
 ---
 
@@ -134,41 +136,28 @@ Windows  src-tauri/target/release/bundle/nsis/Her Flight Deck_<version>_x64-setu
 
 macOS builds target Apple Silicon (M-series Macs) only.
 
-### Neither installer is code-signed
+### Platform security and code signing
 
-Built and run on the same machine that is fine. An installer downloaded from
-GitHub Actions comes from elsewhere, so the first launch needs:
+Neither installer is currently code-signed. Acquiring an Apple Developer
+identity with notarization and a Windows code-signing certificate is the
+long-term distribution path.
 
-- **macOS** — right-click → Open, or
-  `xattr -dr com.apple.quarantine "/Applications/Her Flight Deck.app"`
-- **Windows** — SmartScreen shows "Windows protected your PC"; choose
-  **More info → Run anyway**
+In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
 
-Signing properly needs a paid Apple Developer account and a Windows code
-signing certificate. For a private personal application it is not worth it.
-
-### "Virus detected" on the downloaded file itself
-
-That is a different warning from SmartScreen above, and shows up earlier —
-in the browser, while the file is still downloading, before Windows ever
-gets to run it. Chrome and Edge score every download by how many other
-people have downloaded that exact file before; a fresh, unsigned `.exe`
-(or the `.zip` GitHub wraps a workflow artifact in) has no history yet, so
-Safe Browsing calls it dangerous outright. It is a reputation check, not a
-scan result — nothing in the file changes between the build that trips it
-and the one after it earns downloads.
-
-- Prefer the **Releases** page over a workflow run's raw artifact. Both are
-  unsigned, but a Release asset is a direct download rather than a
-  browser-zipped Actions artifact, and it ships with a SHA-256 checksum in
-  the release notes to check instead of trusting either warning.
-- If the browser blocks the file outright rather than offering to keep it,
-  open the downloads list, expand the blocked entry, and choose **Keep** (or
-  temporarily switch Chrome's Safe Browsing from "Enhanced" to "Standard"
-  protection if no **Keep** option appears, then switch it back after).
-- Verify the file against the checksum published in that release's notes
-  before opening it, rather than treating the warning itself as evidence
-  either way.
+- **Drafts stay private:** Workflow runs produce private release drafts for
+  owner inspection, not immediate public downloads.
+- **Never bypass platform protections:** If Microsoft Defender, Windows
+  SmartScreen, macOS Gatekeeper, or browser Safe Browsing flags an installer,
+  the draft must remain private and held from distribution. Never instruct
+  users to bypass, disable, or weaken operating system or browser protections
+  (such as running quarantine removal commands or lowering Safe Browsing).
+- **Vendor review for detections:** Any flagged installer must be investigated
+  and submitted for vendor analysis (e.g. Microsoft Security Intelligence
+  developer dispute). If a detection cannot be resolved or signed, the draft
+  must be discarded and a new version prepared.
+- **Checksum verification:** Each draft provides SHA-256 checksums in
+  `SHA256SUMS.txt`. Comparing checksums verifies download transmission
+  integrity, but does not substitute for platform security clearance.
 
 ### It needs a reasonably current system
 

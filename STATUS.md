@@ -1,10 +1,19 @@
 # Her Flight Deck — current project status
 
-_Updated 14 September 2026 · desktop release candidate `0.5.2` · **Windows release on hold, see below**_
+_Updated 23 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
 
-## Release preparation
+## Release status
 
-Version `0.5.2` was published on 14 September and then withdrawn the same day — see "Windows release on hold" below. The latest release fit to distribute remains `v0.5.1`. The version bump preserves `com.herflightdeck.app` so updates continue to use the same app-owned data folder and trigger the pre-migration safety copy. See [the release preparation note](docs/RELEASE_PREP_0.5.2.md) for validation and the one-step tag process. The installed Mac smoke test is still required before tagging; a successful Apple Silicon CI package build alone is not that test. Windows additionally now needs the Defender clearance below before its installer can be republished.
+Version `0.5.2` was prepared on 14 September 2026 and withdrawn the same day following an unresolved Windows Defender detection (`Trojan:Win32/Wacatac.B!ml`). Per repository release policy (`scripts/release-policy.json`) and automated validation checks, version `0.5.2` is **permanently retired and must never be reused, re-tagged, or published**. The latest distributable release remains `v0.5.1`. The next release must be `0.5.3` or later, and no future release should be prepared until both external clearance (Defender review or code signing) and installed-application validation gates on physical hardware are satisfied.
+
+## Release safety & accessibility update (23 September 2026)
+
+Following a comprehensive release safety audit:
+- **Retired version rejection:** Version `0.5.2` is registered as permanently retired in `scripts/release-policy.json`. A dependency-free validator `scripts/check-release-version.mjs` enforces this policy across `.github/workflows/release.yml` and `scripts/release.sh`. Seven automated regression tests in `src/logic/releaseSafety.test.ts` verify that `0.5.2` is rejected, malformed versions are rejected, valid non-retired versions (such as `0.5.3`) are accepted, and both entry points call the validator.
+- **Security bypass instructions removed:** `README.md` and `STATUS.md` no longer instruct users to bypass macOS quarantine via `xattr -dr`, click past SmartScreen, or lower browser Safe Browsing settings. The policy mandates that flagged installers remain private drafts for vendor submission and analysis.
+- **Documentation corrections:** `docs/RELEASE_PREP_0.5.2.md` and `docs/releases/v0.5.2.md` are marked as withdrawn historical records with actionable release/tag commands disabled. `docs/PROJECT_AUDIT_2026-09-14.md` accurately documents the Gemini credential lifecycle (webview input and React state, transmission via Tauri IPC, storage in restricted OS app data, and never returned to the webview).
+- **Pilot Toolkit accessibility repair:** Implemented the full WAI-ARIA tabs specification in `src/pages/PilotToolkit/PilotToolkit.tsx`: stable tab/panel IDs, `role="tabpanel"`, `aria-controls`, `aria-labelledby`, roving `tabIndex`, ArrowLeft/ArrowRight navigation with wrap-around, Home/End keys, and focus synchronization. Six unit tests in `src/pages/PilotToolkit/PilotToolkit.test.ts` verify all ARIA relationships and keyboard behaviors.
+- **Validation evidence:** On Windows x64, `npm ci` passed with 0 vulnerabilities; `npm test` passed 350 tests across 42 test files (2 manual benchmarks skipped); `npm run build` passed with 0 errors; `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, and `cargo test` passed 88 Rust tests (2 intentionally ignored benchmarks).
 
 ## Windows release on hold: Defender flags the installer as Wacatac.B!ml
 
@@ -72,10 +81,12 @@ Complete `.hfdbackup` exports contain the SQLite library and managed documents. 
 The attempted `v0.5.2` Windows installer was withdrawn after Microsoft
 Defender detected it as `Trojan:Win32/Wacatac.B!ml`. It was not executed.
 Microsoft Security Intelligence submission `9656710a-e9d3-4c15-83dc-9b9f3451be8b`
-contains a locally rebuilt `0.5.2` installer and is pending analysis. Do not
-recreate or publish `v0.5.2` while that review is pending. Future workflow
-runs create release drafts with checksums; review the exact draft assets using
-[the release review process](docs/RELEASE_REVIEW_PROCESS.md) before publishing.
+is pending analysis. In accordance with `scripts/release-policy.json`, version
+`0.5.2` is permanently retired and will never be published or reused; the next
+distributable release will be `0.5.3` or later once cleared and code-signed.
+Workflow runs create private release drafts with checksums; review the exact
+draft assets using [the release review process](docs/RELEASE_REVIEW_PROCESS.md)
+before publishing.
 
 Installing a newer version over an existing installation preserves app data and creates an automatic database safety copy before migrations run. A complete backup should still be saved separately before an update or computer transfer.
 
@@ -160,22 +171,17 @@ rollback already works. The extracted chapter is an ordinary Study Library
 item: its own study guide, its own practice test, its page range recorded
 in its notes, the source handbook untouched.
 
-## Known limitation: browser "virus detected" on download
+## Known limitation: browser reputation and unsigned binaries
 
-Neither installer is code-signed, so beyond Windows SmartScreen's "Windows
-protected your PC" prompt at first launch (already covered in the release
-notes and `README.md`), Chrome and Edge can flag the download itself —
-before it is ever run — as a "Virus detected" or "dangerous file" block.
-That is Safe Browsing's file-reputation check, not a scan result: a fresh,
-unsigned `.exe`, or the `.zip` GitHub wraps a workflow-run artifact in, has
-no download history yet, so it is scored as suspicious regardless of its
-contents. `README.md` now documents it separately from the SmartScreen
-prompt, with the same underlying fix in both cases — prefer the Releases
-page over a raw workflow artifact, check the published SHA-256 checksum,
-and use the browser's **Keep** option (or Standard protection) if the
-download is blocked outright. This is a Google/Microsoft reputation system
-reacting to low download counts, not something fixable from the codebase
-without a paid code signing certificate.
+Neither installer is currently code-signed, so fresh unsigned binaries lack
+reputation history and can trigger browser Safe Browsing or Windows
+SmartScreen warnings. Under the release review policy, flagged or blocked
+installers must never be bypassed by instructing users to force-keep files or
+lower security protection settings. Draft installers remain private during
+review, and any detection must be submitted for vendor review or resolved by
+establishing an authenticated code-signing identity. Published SHA-256
+checksums confirm transfer integrity, but do not substitute for platform
+clearance.
 
 ## Still requiring a Mac
 
