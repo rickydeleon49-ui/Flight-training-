@@ -144,6 +144,57 @@ describe("creating PDF parts atomically", () => {
     ).rejects.toThrow("no such column: bogus");
     expect(beginAttempts).toBe(1);
   });
+
+  it("retries past a transient lock when using saveMaterialsAtomically and succeeds", async () => {
+    let attempts = 0;
+    const atomicDb: SqlDatabase = {
+      select: <T>(sql: string, params?: SqlValue[]) => db.select<T>(sql, params),
+      execute: (sql: string, params?: SqlValue[]) => db.execute(sql, params),
+      saveMaterialsAtomically: async (materials) => {
+        attempts += 1;
+        if (attempts === 1) {
+          throw new Error("Could not start saving PDF parts: database is locked");
+        }
+        for (const m of materials) {
+          await db.execute(
+            "INSERT INTO study_materials (id, title, material_type, topic, review_status, priority, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [m.id, m.title, m.materialType, m.topic, m.reviewStatus, m.priority, m.notes, m.createdAt, m.updatedAt],
+          );
+        }
+      },
+    };
+    const documents = createRepositories(atomicDb).documents;
+
+    const saved = await documents.createMany([
+      { id: "atomic-1", title: "Atomic Part 1" },
+      { id: "atomic-2", title: "Atomic Part 2" },
+    ]);
+
+    expect(saved.map((m) => m.id)).toEqual(["atomic-1", "atomic-2"]);
+    expect(attempts).toBe(2);
+    expect(await db.select("SELECT id FROM study_materials WHERE id LIKE 'atomic-%' ORDER BY id")).toEqual([
+      { id: "atomic-1" },
+      { id: "atomic-2" },
+    ]);
+  });
+
+  it("gives up boundedly on saveMaterialsAtomically if the lock never clears", async () => {
+    let attempts = 0;
+    const atomicDb: SqlDatabase = {
+      select: <T>(sql: string, params?: SqlValue[]) => db.select<T>(sql, params),
+      execute: (sql: string, params?: SqlValue[]) => db.execute(sql, params),
+      saveMaterialsAtomically: async () => {
+        attempts += 1;
+        throw new Error("database is locked (code: 5)");
+      },
+    };
+    const documents = createRepositories(atomicDb).documents;
+
+    await expect(
+      documents.createMany([{ id: "part-1", title: "Part 1" }]),
+    ).rejects.toThrow("busy");
+    expect(attempts).toBe(4); // initial + 3 retries
+  });
 });
 
 describe("practice tests", () => {

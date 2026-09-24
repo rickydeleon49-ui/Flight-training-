@@ -970,6 +970,52 @@ mod tests {
         assert_eq!(direct_bytes, windowed_bytes);
     }
 
+    #[test]
+    fn automatic_splitting_on_illustrated_document_produces_valid_consecutive_parts() {
+        let total_pages = 25;
+        let document = illustrated_pdf_with_pages(total_pages);
+        let mut original_bytes = Vec::new();
+        document.clone().save_to(&mut original_bytes).unwrap();
+
+        let mut parts = Vec::new();
+        let mut first = 1;
+
+        // Cap each part at 10 pages to test consecutive multi-part splitting
+        let max_pages_per_part = 10;
+        while first <= total_pages {
+            let window_high = total_pages.min(first + max_pages_per_part - 1);
+            let window = window_document(&document, first, window_high, total_pages);
+            let (last, bytes) = largest_fitting_last_page(
+                first,
+                window_high,
+                max_pages_per_part,
+                MAX_PDF_BYTES,
+                |candidate| render_window_range(&window, 1, candidate - first + 1),
+            )
+            .unwrap();
+
+            assert!(last >= first);
+            assert!(last <= window_high);
+            assert!(bytes.len() as u64 <= MAX_PDF_BYTES);
+            parts.push((first, last, bytes));
+
+            first = last + 1;
+        }
+
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[0].0, 1);
+        assert_eq!(parts[0].1, 10);
+        assert_eq!(parts[1].0, 11);
+        assert_eq!(parts[1].1, 20);
+        assert_eq!(parts[2].0, 21);
+        assert_eq!(parts[2].1, 25);
+
+        // Verify original document is untouched
+        let mut current_bytes = Vec::new();
+        document.clone().save_to(&mut current_bytes).unwrap();
+        assert_eq!(original_bytes, current_bytes);
+    }
+
     /// Not a strict timing assertion — CI hardware varies — but the ratio
     /// between "reload and re-clone the whole remaining book for every
     /// binary-search candidate" (what this module did before) and "clone a

@@ -72,6 +72,7 @@ export function MaterialFormDialog({
   const [tagText, setTagText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [cleanupFailedPath, setCleanupFailedPath] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const ownedPaths = useRef(new Set<string>());
@@ -81,6 +82,7 @@ export function MaterialFormDialog({
     if (!open) return;
     setError(null);
     setFileError(null);
+    setCleanupFailedPath(null);
     ownedPaths.current.clear();
     if (material) {
       setDraft({ ...material });
@@ -119,8 +121,34 @@ export function MaterialFormDialog({
     }
   };
 
+  const retryFormerCleanup = async () => {
+    if (!cleanupFailedPath || saving) return;
+    setSaving(true);
+    setFileError(null);
+    try {
+      const failures = await cleanupDocuments([cleanupFailedPath]);
+      if (failures.length === 0) {
+        setCleanupFailedPath(null);
+        setFileError(null);
+        onClose();
+      } else {
+        setFileError(
+          "The previous file could not be removed from app storage. You can retry removing it or close.",
+        );
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const discardAndClose = async () => {
     if (importing || saving) return;
+    if (cleanupFailedPath) {
+      setCleanupFailedPath(null);
+      setFileError(null);
+      onClose();
+      return;
+    }
     const failures = await cleanupDocuments([...ownedPaths.current]);
     if (failures.length > 0) {
       setFileError("An unused file could not be removed from app storage. Try Cancel again.");
@@ -132,12 +160,18 @@ export function MaterialFormDialog({
 
   const submit = async () => {
     if (submitting.current || importing) return;
+    if (cleanupFailedPath) {
+      await retryFormerCleanup();
+      return;
+    }
     if (!draft.title.trim()) {
       setError("Give this a title you will recognise later.");
       return;
     }
     submitting.current = true;
     setSaving(true);
+    setError(null);
+    setFileError(null);
     try {
       const unused = [...ownedPaths.current].filter((path) => path !== draft.filePath);
       const failures = await cleanupDocuments(unused);
@@ -155,7 +189,30 @@ export function MaterialFormDialog({
           .map((tag) => tag.trim())
           .filter(Boolean),
       });
-      if (saved) ownedPaths.current.clear();
+      if (!saved) {
+        setError("That material could not be saved. Your choices are still here to retry.");
+        return;
+      }
+      if (material?.filePath && material.filePath !== draft.filePath) {
+        let formerFailures = await cleanupDocuments([material.filePath]);
+        if (formerFailures.length > 0) {
+          for (let attempt = 0; attempt < 2; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            formerFailures = await cleanupDocuments([material.filePath]);
+            if (formerFailures.length === 0) break;
+          }
+        }
+        if (formerFailures.length > 0) {
+          setCleanupFailedPath(material.filePath);
+          setFileError(
+            "Your changes were saved, but the previous file could not be removed from app storage. You can retry removing it or close.",
+          );
+          ownedPaths.current.clear();
+          return;
+        }
+      }
+      ownedPaths.current.clear();
+      onClose();
     } catch {
       setError("That material could not be saved. Your choices are still here to retry.");
     } finally {
@@ -172,12 +229,25 @@ export function MaterialFormDialog({
       title={material ? "Edit material" : "Add to your library"}
       description="Give it a place in your training, not just a filename."
       footer={
-        <>
-          <Button onClick={() => void discardAndClose()} disabled={importing || saving}>Cancel</Button>
-          <Button variant="primary" onClick={() => void submit()} disabled={importing || saving}>
-            {saving ? "Saving…" : material ? "Save changes" : "Add material"}
-          </Button>
-        </>
+        cleanupFailedPath ? (
+          <>
+            <Button onClick={() => void discardAndClose()} disabled={saving}>
+              Close
+            </Button>
+            <Button variant="primary" onClick={() => void retryFormerCleanup()} disabled={saving}>
+              {saving ? "Removing…" : "Retry removing old file"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button onClick={() => void discardAndClose()} disabled={importing || saving}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={() => void submit()} disabled={importing || saving}>
+              {saving ? "Saving…" : material ? "Save changes" : "Add material"}
+            </Button>
+          </>
+        )
       }
     >
       <div className="stack stack--5">
