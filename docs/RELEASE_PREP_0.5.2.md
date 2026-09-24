@@ -3,7 +3,7 @@
 > [!WARNING]
 > **WITHDRAWN AND RETIRED RELEASE:** Version `0.5.2` was prepared, briefly tagged on 14 September 2026, and immediately withdrawn following an unresolved Microsoft Defender detection (`Trojan:Win32/Wacatac.B!ml`) on the Windows installer.
 > Per repository engineering rules and `scripts/release-policy.json`, version `0.5.2` is **permanently retired and must never be reused, re-tagged, rebuilt, or published**.
-> The next release will be `0.5.3` or later, prepared only after all vendor disputes, code signing, and platform verification gates are resolved.
+> The next release will be `0.5.3` or later, prepared only after the Windows hold is resolved (by authoritative Microsoft clearance of the exact installer or trusted code signing) and physical installed-application validation on Windows and Apple Silicon hardware is satisfied. Paid code signing remains the long-term path, but is not mandatory if Microsoft clears the exact binary.
 > Actionable tag and publishing commands in this document have been permanently disabled. This file is retained solely for historical audit evidence.
 
 ---
@@ -33,7 +33,7 @@ Use an Apple Silicon Mac running macOS 12 or newer and a copy of non-sensitive t
 4. Manually split a page range with and without a title. Check invalid range and oversized-output messages, the safety copy, and failure cleanup.
 5. With a test Gemini key and public PDF, create a study guide, flashcards, and practice test. Check busy/429 messaging if it occurs. Confirm the key is absent from logs and backups. Settings still accepts the key in a webview password field; the stricter native-entry limitation remains documented in `MAC_AUDIT_2026-09-12.md`.
 6. During ordinary edits or splitting, save a complete `.hfdbackup` to Downloads. Verify the file exists, passes the app's inspect check, and restores records, PDFs, and practice tests to a separate disposable dataset. Confirm a failed replacement does not destroy a prior valid backup.
-7. Check update-over-existing-data, Finder and open/save panels, first-launch instructions, and the unchanged app-owned data path. Repeat the relevant document and backup checks on Windows if an installed Windows test machine is available.
+7. Check update-over-existing-data, Finder and open/save panels, first-launch instructions, and the unchanged app-owned data path. Physical Windows and Apple Silicon installed-app validation remains mandatory before distribution: perform the corresponding installation, launch, document, and backup checks on physical Windows hardware.
 
 ---
 

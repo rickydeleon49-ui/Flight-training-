@@ -5,8 +5,8 @@
 #   scripts/release.sh 0.2.0
 #
 # Bumps the version everywhere it is recorded, runs the checks, commits and
-# tags. Pushing the tag is what builds the installers and publishes them, so
-# that step is left to you — the command is printed at the end.
+# tags. Pushing the tag builds installers and prepares a private release draft
+# for owner review, so that step is left to you — the command is printed at the end.
 #
 # The version matters beyond bookkeeping: the application backs her database
 # up when it notices the version has changed since the last run. A release
@@ -92,7 +92,7 @@ git tag -a "v$VERSION" -m "Her Flight Deck $VERSION"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 echo "Committed and tagged v$VERSION."
 echo
-echo "Push it to build and publish the installers:"
+echo "Push it to build installers and prepare a private release draft for owner review:"
 echo
 echo "    git push origin $BRANCH && git push origin v$VERSION"
 echo

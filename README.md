@@ -71,8 +71,11 @@ everything she has entered.
 
 Release `v0.5.1` is the current distributable version. Version `0.5.2` was
 withdrawn and is permanently retired (see `scripts/release-policy.json`). Any
-future release will be prepared as `0.5.3` or later after all verification
-gates are satisfied.
+future release will be prepared as `0.5.3` or later once the Windows hold is
+resolved (via authoritative Microsoft clearance of the exact installer or
+trusted code signing) and mandatory physical installed-application validation on
+both Windows and Apple Silicon hardware is satisfied. Paid code signing is the
+long-term path, but is not mandatory if Microsoft clears the exact binary.
 
 The version is not just bookkeeping — the application takes a copy of her
 database whenever it notices the version changed since the last run. So the
@@ -88,7 +91,10 @@ runs the same either way.
 
 **Neither installer is currently code-signed.** That requires a paid Apple Developer
 account and a Windows code-signing identity; installers remain private review drafts
-until verified and tested per the release review process.
+until verified and tested per the release review process. The Windows hold may be
+resolved either by authoritative Microsoft clearance of the exact installer or by
+trusted code signing, alongside mandatory physical installed-app validation on
+Windows and Apple Silicon hardware.
 
 ---
 
@@ -140,7 +146,9 @@ macOS builds target Apple Silicon (M-series Macs) only.
 
 Neither installer is currently code-signed. Acquiring an Apple Developer
 identity with notarization and a Windows code-signing certificate is the
-long-term distribution path.
+long-term distribution path, but paid signing is not mandatory if Microsoft
+authoritatively clears the exact binary. Physical installed-app validation on
+both Windows and Apple Silicon hardware remains mandatory before distribution.
 
 In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
 
@@ -151,10 +159,12 @@ In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
   the draft must remain private and held from distribution. Never instruct
   users to bypass, disable, or weaken operating system or browser protections
   (such as running quarantine removal commands or lowering Safe Browsing).
-- **Vendor review for detections:** Any flagged installer must be investigated
-  and submitted for vendor analysis (e.g. Microsoft Security Intelligence
-  developer dispute). If a detection cannot be resolved or signed, the draft
-  must be discarded and a new version prepared.
+- **Windows hold resolution:** The Windows hold may be resolved by authoritative
+  Microsoft clearance of the exact installer (e.g. Microsoft Security Intelligence
+  developer dispute) or by trusted code signing. If a detection cannot be cleared
+  or signed, the draft must be discarded and a new version prepared.
+- **Mandatory physical hardware testing:** Installers must be verified on physical
+  Windows and Apple Silicon hardware before distribution.
 - **Checksum verification:** Each draft provides SHA-256 checksums in
   `SHA256SUMS.txt`. Comparing checksums verifies download transmission
   integrity, but does not substitute for platform security clearance.

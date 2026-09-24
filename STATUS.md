@@ -4,7 +4,7 @@ _Updated 23 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` perman
 
 ## Release status
 
-Version `0.5.2` was prepared on 14 September 2026 and withdrawn the same day following an unresolved Windows Defender detection (`Trojan:Win32/Wacatac.B!ml`). Per repository release policy (`scripts/release-policy.json`) and automated validation checks, version `0.5.2` is **permanently retired and must never be reused, re-tagged, or published**. The latest distributable release remains `v0.5.1`. The next release must be `0.5.3` or later, and no future release should be prepared until both external clearance (Defender review or code signing) and installed-application validation gates on physical hardware are satisfied.
+Version `0.5.2` was prepared on 14 September 2026 and withdrawn the same day following an unresolved Windows Defender detection (`Trojan:Win32/Wacatac.B!ml`). Per repository release policy (`scripts/release-policy.json`) and automated validation checks, version `0.5.2` is **permanently retired and must never be reused, re-tagged, or published**. The latest distributable release remains `v0.5.1`. The next release must be `0.5.3` or later, and no future release should be prepared until the Windows hold is resolved (by authoritative Microsoft clearance of the exact installer or trusted code signing) and physical installed-application validation on Windows and Apple Silicon hardware is satisfied. Paid code signing is the long-term path, but is not mandatory if Microsoft clears the exact binary.
 
 ## Release safety & accessibility update (23 September 2026)
 
@@ -34,11 +34,15 @@ stock `tauri-plugin-*` + NSIS bundle, unchanged since earlier releases that
 were never flagged. That pattern is not the same as confirmed-clean, so the
 Windows installer stays unpublished until one of these closes it:
 
-- Microsoft's file-submission review clears the specific binary
+- Microsoft's file-submission review authoritatively clears the specific binary
   (https://www.microsoft.com/wdsi/filesubmission, "Software developer"
   dispute) — the usual path, typically resolved in a few days, or
 - the Windows installer is code-signed, which removes the dominant trigger
   for this class of detection outright.
+
+Paid code signing is the long-term path, but is not mandatory if Microsoft
+clears the exact binary. Physical installed-application validation on both
+Windows and Apple Silicon hardware remains mandatory before distribution.
 
 Per the engineering rules, `v0.5.2`'s tag cannot be reused once it existed —
 a Windows-fit release after this is cleared ships as `0.5.3` or later, built
@@ -83,7 +87,11 @@ Defender detected it as `Trojan:Win32/Wacatac.B!ml`. It was not executed.
 Microsoft Security Intelligence submission `9656710a-e9d3-4c15-83dc-9b9f3451be8b`
 is pending analysis. In accordance with `scripts/release-policy.json`, version
 `0.5.2` is permanently retired and will never be published or reused; the next
-distributable release will be `0.5.3` or later once cleared and code-signed.
+distributable release will be `0.5.3` or later once the Windows hold is resolved
+(via authoritative Microsoft clearance of the exact installer or trusted code signing)
+and physical installed-app validation on Windows and Apple Silicon hardware is completed.
+Paid code signing is the long-term path, but is not mandatory if Microsoft clears
+the exact binary.
 Workflow runs create private release drafts with checksums; review the exact
 draft assets using [the release review process](docs/RELEASE_REVIEW_PROCESS.md)
 before publishing.
@@ -178,10 +186,12 @@ reputation history and can trigger browser Safe Browsing or Windows
 SmartScreen warnings. Under the release review policy, flagged or blocked
 installers must never be bypassed by instructing users to force-keep files or
 lower security protection settings. Draft installers remain private during
-review, and any detection must be submitted for vendor review or resolved by
-establishing an authenticated code-signing identity. Published SHA-256
-checksums confirm transfer integrity, but do not substitute for platform
-clearance.
+review. The Windows hold may be resolved by authoritative Microsoft clearance of
+the exact installer or by trusted code signing (the long-term path, though not
+mandatory if Microsoft clears the exact binary). Physical installed-app validation
+on Windows and Apple Silicon hardware remains mandatory before distribution.
+Published SHA-256 checksums confirm transfer integrity, but do not substitute for
+platform clearance.
 
 ## Still requiring a Mac
 
