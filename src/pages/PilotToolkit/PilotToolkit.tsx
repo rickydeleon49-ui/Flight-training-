@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -72,6 +72,37 @@ export function PilotToolkit() {
   const { data, mutate } = useAppData();
   const [tool, setTool] = useState<Tool>("readiness");
   const [saved, setSaved] = useState(false);
+  const tabRefs = useRef<Partial<Record<Tool, HTMLButtonElement | null>>>({});
+
+  const tabId = (id: Tool) => `toolkit-tab-${id}`;
+  const panelId = (id: Tool) => `toolkit-panel-${id}`;
+
+  const selectTab = (id: Tool) => {
+    setTool(id);
+    tabRefs.current[id]?.focus();
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTool: Tool) => {
+    const currentIndex = TOOLS.findIndex((t) => t.id === currentTool);
+    if (currentIndex === -1) return;
+
+    let nextIndex = -1;
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % TOOLS.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex = (currentIndex - 1 + TOOLS.length) % TOOLS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = TOOLS.length - 1;
+    }
+
+    const nextItem = TOOLS[nextIndex];
+    if (nextItem) {
+      event.preventDefault();
+      selectTab(nextItem.id);
+    }
+  };
 
   const save = async (change: (current: ToolkitState) => ToolkitState) => {
     const result = await mutate(async (repositories) =>
@@ -101,9 +132,16 @@ export function PilotToolkit() {
           <button
             type="button"
             role="tab"
+            id={tabId(item.id)}
+            aria-controls={panelId(item.id)}
             aria-selected={tool === item.id}
+            tabIndex={tool === item.id ? 0 : -1}
             className={`filter-chip${tool === item.id ? " is-active" : ""}`}
-            onClick={() => setTool(item.id)}
+            onClick={() => selectTab(item.id)}
+            onKeyDown={(e) => handleKeyDown(e, item.id)}
+            ref={(el) => {
+              tabRefs.current[item.id] = el;
+            }}
             key={item.id}
           >
             {item.label}
@@ -111,24 +149,32 @@ export function PilotToolkit() {
         ))}
       </div>
 
-      {tool === "readiness" ? (
-        <ReadinessTool state={data.toolkit} save={save} />
-      ) : null}
-      {tool === "report" ? <InstructorReport /> : null}
-      {tool === "records" ? (
-        <RecordsTool state={data.toolkit} save={save} />
-      ) : null}
-      {tool === "costs" ? <CostTool state={data.toolkit} save={save} /> : null}
-      {tool === "safety" ? (
-        <SafetyTool state={data.toolkit} save={save} />
-      ) : null}
-      {tool === "quiz" ? <QuizTool state={data.toolkit} save={save} /> : null}
-      {tool === "reminders" ? (
-        <ReminderTool state={data.toolkit} save={save} />
-      ) : null}
-      {tool === "career" ? (
-        <CareerTool state={data.toolkit} save={save} />
-      ) : null}
+      <div
+        role="tabpanel"
+        id={panelId(tool)}
+        aria-labelledby={tabId(tool)}
+        tabIndex={0}
+        className="toolkit-tabpanel"
+      >
+        {tool === "readiness" ? (
+          <ReadinessTool state={data.toolkit} save={save} />
+        ) : null}
+        {tool === "report" ? <InstructorReport /> : null}
+        {tool === "records" ? (
+          <RecordsTool state={data.toolkit} save={save} />
+        ) : null}
+        {tool === "costs" ? <CostTool state={data.toolkit} save={save} /> : null}
+        {tool === "safety" ? (
+          <SafetyTool state={data.toolkit} save={save} />
+        ) : null}
+        {tool === "quiz" ? <QuizTool state={data.toolkit} save={save} /> : null}
+        {tool === "reminders" ? (
+          <ReminderTool state={data.toolkit} save={save} />
+        ) : null}
+        {tool === "career" ? (
+          <CareerTool state={data.toolkit} save={save} />
+        ) : null}
+      </div>
     </>
   );
 }

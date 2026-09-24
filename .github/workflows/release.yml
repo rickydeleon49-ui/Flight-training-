@@ -69,10 +69,7 @@ jobs:
             VERSION="${GITHUB_REF_NAME#v}"
           fi
 
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::'$VERSION' is not a version like 0.2.0"
-            exit 1
-          fi
+          node scripts/check-release-version.mjs "$VERSION"
 
           PKG=$(node -p "require('./package.json').version")
           LOCK=$(node -p "require('./package-lock.json').version")

@@ -49,7 +49,7 @@ The architecture relies on a strong separation of concerns, heavily utilizing Ru
 
 The integration of the Gemini API (`gemini.rs`) is sandboxed with strict data boundaries:
 
-* **Zero Credential Leakage:** The user's Google AI Studio key is stored in an OS-level app data file with strict user-only permissions via `secrets.rs`. The key is never sent to the frontend webview and is explicitly omitted from portable `.hfdbackup` archives.
+* **Credential Boundaries & Lifecycle:** The user's Google AI Studio key is entered into the Settings webview and temporarily exists in React/browser memory before being sent to Rust through Tauri IPC (`configure_gemini`). The key is stored in an OS-level app data file (`gemini-key`) with user-only permissions via `secrets.rs`. The backend never returns the key to the webview during status calls, it is never stored in SQLite, it is excluded from complete `.hfdbackup` archives, and it is not intentionally logged.
 * **Defensive Networking:** Gemini API calls utilize a bounded exponential backoff with randomized jitter to gracefully handle `429` (Rate Limit) and `503` (Service Unavailable) responses.
 * **Hard Limits:** Google's limits (50 MB or 1,000 pages for PDFs) are enforced locally before any network transmission occurs, saving bandwidth and preventing opaque API errors.
 * **Pinned Models:** Uses `gemini-3.5-flash` with a designated fallback to `gemini-3.5-flash-lite`, deliberately avoiding unpinned `-latest` aliases that can unpredictably change application behavior.

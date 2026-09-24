@@ -1,0 +1,10 @@
+{
+  "$comment": "Release policy and permanently retired versions for Her Flight Deck",
+  "retiredVersions": [
+    {
+      "version": "0.5.2",
+      "retiredAt": "2026-09-14",
+      "reason": "Withdrawn on 14 September 2026 due to an unresolved Windows Defender detection (Trojan:Win32/Wacatac.B!ml). Version 0.5.2 is permanently retired and must never be reused."
+    }
+  ]
+}
