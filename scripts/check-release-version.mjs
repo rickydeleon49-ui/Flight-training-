@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Validates a candidate release version against semantic version rules
  * and the repository's permanently retired versions registry.

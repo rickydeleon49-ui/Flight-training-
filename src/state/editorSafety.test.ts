@@ -285,3 +285,13 @@ it("does not reset the material metadata dialog when autosave refreshes data", a
   expect(screen.getByDisplayValue("Changed title")).toBeTruthy();
   expect(screen.getByRole("dialog", { name: "Edit material" })).toBeTruthy();
 });
+
+it("closes the edit dialog and updates the material upon saving changes", async () => {
+  await open("/study/a");
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  const title = screen.getByDisplayValue("Handbook");
+  fireEvent.change(title, { target: { value: "Updated Handbook Title" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(screen.getByText("Updated Handbook Title")).toBeTruthy();
+});

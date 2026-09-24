@@ -90,3 +90,150 @@ it("keeps an import available for retry and prevents duplicate saves", async () 
   expect(files.cleanup).toHaveBeenCalledWith([]);
   expect(screen.getByText("new.pdf")).toBeTruthy();
 });
+
+it("removes the previous attachment when a replacement file is saved successfully", async () => {
+  files.pick.mockResolvedValue({ relativePath: "replacement.pdf", originalFileName: "replacement.pdf", fileSize: 4096 });
+  const onSave = vi.fn().mockResolvedValue(true);
+  const onClose = vi.fn();
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: makeMaterial({ filePath: "old.pdf", originalFileName: "old.pdf" }),
+    goals: [], events: [], newMaterialId: "mat-1",
+    onClose, onSave,
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  await screen.findByText("replacement.pdf");
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  await waitFor(() => expect(files.cleanup).toHaveBeenCalledWith(["old.pdf"]));
+  await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+});
+
+it("removes the previous attachment when the file is removed and saved successfully", async () => {
+  const onSave = vi.fn().mockResolvedValue(true);
+  const onClose = vi.fn();
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: makeMaterial({ filePath: "old.pdf", originalFileName: "old.pdf" }),
+    goals: [], events: [], newMaterialId: "mat-1",
+    onClose, onSave,
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  await waitFor(() => expect(files.cleanup).toHaveBeenCalledWith(["old.pdf"]));
+  await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+});
+
+it("preserves the previous attachment and displays an error if saving fails", async () => {
+  files.pick.mockResolvedValue({ relativePath: "replacement.pdf", originalFileName: "replacement.pdf", fileSize: 4096 });
+  const onSave = vi.fn().mockResolvedValue(false);
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: makeMaterial({ filePath: "old.pdf", originalFileName: "old.pdf" }),
+    goals: [], events: [], newMaterialId: "mat-1",
+    onClose: vi.fn(), onSave,
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  await screen.findByText("replacement.pdf");
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  await screen.findByText(/That material could not be saved/);
+  // Old file must NOT be deleted
+  expect(files.cleanup).toHaveBeenCalledWith([]);
+});
+
+it("surfaces former attachment cleanup failure, keeps dialog open, and allows bounded retry", async () => {
+  files.pick.mockResolvedValue({ relativePath: "replacement.pdf", originalFileName: "replacement.pdf", fileSize: 4096 });
+  files.cleanup.mockImplementation(async (paths: string[]) => paths.filter((p) => p === "old.pdf"));
+  const onSave = vi.fn().mockResolvedValue(true);
+  const onClose = vi.fn();
+
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: makeMaterial({ filePath: "old.pdf", originalFileName: "old.pdf" }),
+    goals: [], events: [], newMaterialId: "mat-1",
+    onClose, onSave,
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  await screen.findByText("replacement.pdf");
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  // Dialog remains open because former cleanup failed
+  await screen.findByText(/previous file could not be removed from app storage/);
+  expect(onClose).not.toHaveBeenCalled();
+
+  // Retry button appears
+  const retryBtn = screen.getByRole("button", { name: "Retry removing old file" });
+  expect(retryBtn).toBeTruthy();
+
+  // Now simulate successful cleanup on retry
+  files.cleanup.mockResolvedValueOnce([]);
+  fireEvent.click(retryBtn);
+
+  await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+});
+
+it("cleans up intermediate abandoned files on repeated replacement before saving", async () => {
+  files.pick
+    .mockResolvedValueOnce({ relativePath: "first.pdf", originalFileName: "first.pdf", fileSize: 1024 })
+    .mockResolvedValueOnce({ relativePath: "second.pdf", originalFileName: "second.pdf", fileSize: 2048 });
+  const onSave = vi.fn().mockResolvedValue(true);
+  const onClose = vi.fn();
+
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: makeMaterial({ filePath: "original.pdf", originalFileName: "original.pdf" }),
+    goals: [], events: [], newMaterialId: "mat-1",
+    onClose, onSave,
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  // Pick first replacement
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  await screen.findByText("first.pdf");
+
+  // Pick second replacement
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  await screen.findByText("second.pdf");
+
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  // first.pdf was cleaned up before save as unused
+  expect(files.cleanup).toHaveBeenCalledWith(["first.pdf"]);
+  // original.pdf was cleaned up after save
+  expect(files.cleanup).toHaveBeenCalledWith(["original.pdf"]);
+  // second.pdf was saved and never deleted
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
+it("closes dialog on successful creation of a new material", async () => {
+  const onSave = vi.fn().mockResolvedValue(true);
+  const onClose = vi.fn();
+
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: null,
+    goals: [], events: [], newMaterialId: "new-mat",
+    onClose, onSave,
+  }));
+
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "New Handbook" } });
+  fireEvent.click(screen.getByRole("button", { name: "Add material" }));
+
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+});

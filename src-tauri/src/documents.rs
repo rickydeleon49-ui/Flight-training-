@@ -613,4 +613,113 @@ mod tests {
              which is exactly what `data_directory` returns for Settings' \"Open folder\" button"
         );
     }
+
+    /// Capabilities must never grant unbounded or broad filesystem access.
+    /// Every path scope in `opener` permissions must stay strictly pinned to
+    /// `$APPCONFIG` or `$APPCONFIG/documents/**`.
+    #[test]
+    fn capabilities_do_not_grant_broad_filesystem_access() {
+        let raw = include_str!("../capabilities/default.json");
+        let capabilities: serde_json::Value = serde_json::from_str(raw).unwrap();
+        let permissions = capabilities["permissions"].as_array().unwrap();
+
+        const APPROVED_PATH_SCOPES: &[&str] = &["$APPCONFIG", "$APPCONFIG/documents/**"];
+
+        for entry in permissions {
+            if let Some(id) = entry.get("identifier").and_then(|id| id.as_str()) {
+                if id.starts_with("opener:") && entry.get("allow").is_some() {
+                    let allowed_array = entry["allow"].as_array().unwrap();
+                    for rule in allowed_array {
+                        if let Some(path) = rule.get("path").and_then(|p| p.as_str()) {
+                            assert!(
+                                APPROVED_PATH_SCOPES.contains(&path),
+                                "Unapproved path scope {path:?} detected in {id}"
+                            );
+                            assert!(
+                                !path.contains(".."),
+                                "Path traversal '..' detected in {path:?}"
+                            );
+                            assert!(
+                                !path.contains('\\'),
+                                "Alternate separator '\\' detected in {path:?}"
+                            );
+                            assert!(
+                                !path.contains(':') && !path.starts_with('/'),
+                                "Drive or absolute root path detected in {path:?}"
+                            );
+                            assert!(
+                                !path.contains('*') || path.ends_with("/**"),
+                                "Wildcard permitted only as trailing '/**' in {path:?}"
+                            );
+                        } else if let Some(url) = rule.get("url").and_then(|u| u.as_str()) {
+                            assert!(
+                                url.starts_with("https://"),
+                                "Dangerous URL scope {url:?} detected in {id}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn save_split_materials_waits_for_transient_exclusive_lock_and_succeeds() {
+        let root = split_test_root();
+        for id in ["one", "two"] {
+            std::fs::write(root.join(DOCUMENTS_DIR).join(format!("{id}.pdf")), "pdf").unwrap();
+        }
+
+        let locker = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        locker.execute("BEGIN EXCLUSIVE", []).unwrap();
+        let handle = std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(200));
+            locker.execute("COMMIT", []).unwrap();
+        });
+
+        let result =
+            save_split_materials_at(&root, &[split_material("one"), split_material("two")]);
+        assert!(
+            result.is_ok(),
+            "Failed despite transient lock clearing: {result:?}"
+        );
+
+        handle.join().unwrap();
+        let db = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        let count: i64 = db
+            .query_row("SELECT COUNT(*) FROM study_materials", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 2);
+        drop(db);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn save_split_materials_times_out_boundedly_on_permanent_lock() {
+        let root = split_test_root();
+        std::fs::write(root.join(DOCUMENTS_DIR).join("one.pdf"), "pdf").unwrap();
+
+        let locker = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        locker.execute("BEGIN EXCLUSIVE", []).unwrap();
+
+        let started = std::time::Instant::now();
+        let result = save_split_materials_at(&root, &[split_material("one")]);
+        let elapsed = started.elapsed();
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(
+            error.contains("database is locked") || error.contains("busy"),
+            "Expected lock error, got {error}"
+        );
+        // Bounded by busy_timeout (5 seconds), must not hang indefinitely
+        assert!(
+            elapsed >= Duration::from_secs(4) && elapsed < Duration::from_secs(15),
+            "Expected bounded timeout around 5s, took {elapsed:?}"
+        );
+
+        locker.execute("ROLLBACK", []).unwrap();
+        drop(locker);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }

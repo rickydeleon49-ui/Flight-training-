@@ -112,7 +112,6 @@ export function StudyLibrary() {
     const created = await mutate((repos) => repos.documents.create(draft));
     if (created === null) return false;
     setDraftId(newId());
-    setCreating(false);
     return true;
   };
 
