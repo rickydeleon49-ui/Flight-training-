@@ -1,10 +1,24 @@
 # Her Flight Deck — current project status
 
-_Updated 23 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+_Updated 24 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
 
 ## Release status
 
 Version `0.5.2` was prepared on 14 September 2026 and withdrawn the same day following an unresolved Windows Defender detection (`Trojan:Win32/Wacatac.B!ml`). Per repository release policy (`scripts/release-policy.json`) and automated validation checks, version `0.5.2` is **permanently retired and must never be reused, re-tagged, or published**. The latest distributable release remains `v0.5.1`. The next release must be `0.5.3` or later, and no future release should be prepared until the Windows hold is resolved (by authoritative Microsoft clearance of the exact installer or trusted code signing) and physical installed-application validation on Windows and Apple Silicon hardware is satisfied. Paid code signing is the long-term path, but is not mandatory if Microsoft clears the exact binary.
+
+## Pre-release audit update (24 September 2026)
+
+A full pre-release readiness audit was completed following the Study Library file-lifecycle fixes (PR #27) and Gemini workflow hardening (PR #28). See [the comprehensive audit report](docs/PRE_RELEASE_AUDIT_2026-09-24.md) for full architectural reviews, security boundaries, and validation evidence.
+
+- **Dependency audit status:**
+  - `rustls 0.23.43` was upgraded to `0.23.45` via `cargo update -p rustls`. `cargo audit` confirms RUSTSEC-2026-0285 (TLS 1.3 handshake acceptance across encryption level boundaries) no longer appears in the advisory scan. The full test and build matrix provides evidence that no regressions were introduced.
+  - Current `cargo audit` is not fully clean: it exits with one vulnerability finding for `rsa 0.9.10` (RUSTSEC-2023-0071, Marvin timing sidechannel), for which no patched stable release exists upstream.
+  - Shipped-build exposure to `rsa` is absent: both `cargo tree -i rsa` and `cargo tree --target all -i rsa` print no path. The package remains in `Cargo.lock` through optional SQLx/MySQL dependency metadata, but is not present in the resolved dependency graph for the project's current SQLite-only feature set (`tauri-plugin-sql = { features = ["sqlite"] }`).
+  - Informational maintenance warnings in `cargo audit` (not exploitable security vulnerabilities): `ttf-parser 0.25.1` is unmaintained and present through `lopdf` (tracked for future `lopdf` updates); `glib 0.18.5` has an unsoundness advisory in the Linux GTK dependency graph (tracked for Linux development/CI, though Linux is not a release artifact); and `proc-macro-error 1.0.4` and the `unic-* 0.9.0` crates are unmaintained transitive/build dependencies (tracked through upstream Tauri updates).
+- **Workflow & Lifecycle verification:** Confirmed app-owned storage (`DOCUMENTS_DIR`), capability-scoped Open/Reveal (`opener:allow-open-path`), automatic/manual splitting limits and SQLite single-connection transactions (`save_split_materials`), v2 backup SHA-256 integrity inventory, and full component-wide Gemini lock mutual exclusion with stale result rejection.
+- **Accessibility & UX:** Verified practice-test WAI-ARIA roving tabIndex radio group keyboard navigation, focus management, scoring, and retake behavior.
+- **Validation evidence:** On Windows x64: `npm ci` passed (0 vulnerabilities); `npm test` passed 388 tests across 45 test files (2 benchmarks skipped); `npm run build` completed in 2.09s with 0 errors; `cargo fmt --check` passed cleanly; `cargo clippy --all-targets -- -D warnings` passed with 0 warnings; `cargo test` passed 100 tests (2 benchmarks ignored); Windows NSIS installer packaged successfully (`src-tauri/target/release/bundle/nsis/Her Flight Deck_0.5.2_x64-setup.exe`).
+- **Release posture:** The Windows hold remains in effect due to the unresolved detection until authoritative Microsoft clearance of the exact binary or trusted code signing is achieved; Mac builds require physical Apple Silicon hardware smoke testing before distribution. No release or tag was created.
 
 ## Release safety & accessibility update (23 September 2026)
 
@@ -24,15 +38,9 @@ including a direct download from the GitHub Release — reported by hand,
 without the file being run. The release and its tag were withdrawn the same
 day; nothing currently published carries this build.
 
-The `!ml` suffix means this is Defender's machine-learning heuristic, not a
-signature match, and it is a well-documented false-positive pattern for
-unsigned Rust/Tauri NSIS installers specifically — several other Tauri
-projects have hit the identical detection for the identical reason: a
-fresh, unsigned, low-reputation binary. Nothing in the repository's build
-config supports an alternate explanation — no custom installer script, a
-stock `tauri-plugin-*` + NSIS bundle, unchanged since earlier releases that
-were never flagged. That pattern is not the same as confirmed-clean, so the
-Windows installer stays unpublished until one of these closes it:
+The installer was flagged with detection `Trojan:Win32/Wacatac.B!ml`. Under the
+repository release policy, an unresolved security detection is treated as a release
+blocker rather than assumed clean. The Windows installer remains unpublished until one of these closes it:
 
 - Microsoft's file-submission review authoritatively clears the specific binary
   (https://www.microsoft.com/wdsi/filesubmission, "Software developer"
