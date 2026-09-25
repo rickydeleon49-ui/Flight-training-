@@ -124,3 +124,154 @@ export function restoreWarning(backupVersion: string, appVersion: string): strin
   if (!isFromNewerVersion(backupVersion, appVersion)) return null;
   return `This backup was made by version ${backupVersion}, which is newer than the version you are running (${appVersion}). Install the newer version first, then restore — an older app cannot read a newer training record.`;
 }
+
+export interface MaterialTitleRef {
+  title: string;
+  filePath?: string | null;
+}
+
+/**
+ * Resolve a plain display name for a document file path, using material titles
+ * if available, falling back to the filename component.
+ */
+export function resolveDocumentDisplayName(
+  docPath: string,
+  materials?: MaterialTitleRef[],
+): string {
+  const normalized = docPath.replace(/\\/g, "/");
+  if (materials && materials.length > 0) {
+    const match = materials.find((m) => {
+      if (!m.filePath) return false;
+      const mNorm = m.filePath.replace(/\\/g, "/");
+      return (
+        mNorm === normalized ||
+        mNorm.endsWith(`/${normalized}`) ||
+        normalized.endsWith(`/${mNorm}`)
+      );
+    });
+    if (match && match.title.trim()) {
+      return match.title.trim();
+    }
+  }
+  const fileName = normalized.split("/").pop();
+  return fileName || docPath;
+}
+
+/**
+ * Format a plain-language warning about study files that were missing from app storage
+ * during a complete backup.
+ */
+export function formatMissingDocumentsWarning(
+  missingDocuments: string[],
+  materials?: MaterialTitleRef[],
+): string {
+  if (missingDocuments.length === 0) return "";
+  const count = missingDocuments.length;
+  const names = missingDocuments.map(
+    (path) => `"${resolveDocumentDisplayName(path, materials)}"`,
+  );
+  let nameList = "";
+  if (names.length === 1) {
+    nameList = names[0] ?? "";
+  } else if (names.length === 2) {
+    nameList = `${names[0] ?? ""} and ${names[1] ?? ""}`;
+  } else if (names.length === 3) {
+    nameList = `${names[0] ?? ""}, ${names[1] ?? ""}, and ${names[2] ?? ""}`;
+  } else {
+    nameList = `${names.slice(0, 3).join(", ")}, and ${names.length - 3} more`;
+  }
+
+  const filesWord = count === 1 ? "1 study file was" : `${count} study files were`;
+  const includedVerb = count === 1 ? "wasn't included" : "weren't included";
+  const pronoun = count === 1 ? "it" : "them";
+  return `${filesWord} missing from app storage and ${includedVerb}: ${nameList}. You can re-attach ${pronoun} in the Study Library.`;
+}
+
+/**
+ * Format a plain-language notice about storage files unlinked to any material.
+ */
+export function formatUnreferencedDocumentsNotice(
+  unreferencedDocuments: string[],
+): string {
+  if (unreferencedDocuments.length === 0) return "";
+  const count = unreferencedDocuments.length;
+  if (count === 1) {
+    return "1 file in storage isn't linked to any material and was left out.";
+  }
+  return `${count} files in storage aren't linked to any material and were left out.`;
+}
+
+export function formatBackupDocumentWarnings(
+  backup: {
+    missingDocuments?: string[];
+    unreferencedDocuments?: string[];
+  },
+  materials?: MaterialTitleRef[],
+): string[] {
+  const extraParts: string[] = [];
+  if (backup.missingDocuments && backup.missingDocuments.length > 0) {
+    extraParts.push(formatMissingDocumentsWarning(backup.missingDocuments, materials));
+  }
+  if (backup.unreferencedDocuments && backup.unreferencedDocuments.length > 0) {
+    extraParts.push(formatUnreferencedDocumentsNotice(backup.unreferencedDocuments));
+  }
+  return extraParts;
+}
+
+/**
+ * Compose the full message shown after saving a complete backup, incorporating
+ * warnings for missing or unreferenced files if any were detected.
+ */
+export function formatCompleteBackupSuccessNote(
+  backup: {
+    files: number;
+    bytes: number;
+    missingDocuments?: string[];
+    unreferencedDocuments?: string[];
+  },
+  formatBytesFn: (bytes: number) => string,
+  materials?: MaterialTitleRef[],
+): { message: string; hasWarnings: boolean } {
+  const base = `Complete backup saved — ${backup.files} files, ${formatBytesFn(backup.bytes)} protected.`;
+  const extraParts = formatBackupDocumentWarnings(backup, materials);
+
+  if (extraParts.length === 0) {
+    return { message: base, hasWarnings: false };
+  }
+  return {
+    message: `${base} ${extraParts.join(" ")}`,
+    hasWarnings: true,
+  };
+}
+
+/**
+ * Compose the message shown when a backup was saved successfully, but writing
+ * the reminder record failed. Retains any missing-document or unreferenced-file warnings.
+ */
+export function formatCompleteBackupReminderFailureNote(
+  backup: {
+    path: string;
+    missingDocuments?: string[];
+    unreferencedDocuments?: string[];
+  },
+  materials?: MaterialTitleRef[],
+): string {
+  const base = `Complete backup saved at ${backup.path}, but the app could not update its backup reminder. Keep the file somewhere safe.`;
+  const extraParts = formatBackupDocumentWarnings(backup, materials);
+
+  if (extraParts.length === 0) {
+    return base;
+  }
+  return `${base} ${extraParts.join(" ")}`;
+}
+
+/**
+ * Notice included when inspecting or previewing a backup candidate for restore.
+ */
+export function formatRestorePreviewMissingNotice(missingCount: number): string {
+  if (missingCount <= 0) return "";
+  if (missingCount === 1) {
+    return "This backup lists 1 file that was already missing when it was made.";
+  }
+  return `This backup lists ${missingCount} files that were already missing when it was made.`;
+}

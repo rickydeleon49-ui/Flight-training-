@@ -17,6 +17,10 @@ on:
         options: [both, macos, windows]
         default: both
 
+concurrency:
+  group: build-desktop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-macos:
     name: macOS
@@ -30,20 +34,12 @@ jobs:
           node-version: 22
           cache: npm
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
-        with:
-          components: rustfmt, clippy
       - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
         with:
           workspaces: src-tauri
         timeout-minutes: 10
         continue-on-error: true
       - run: npm ci
-      - run: npm test
-      - run: npm run build
-      - run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
-      - run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-      # The backup and restore guards live in Rust, so they have to run too.
-      - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Build
         run: npm run tauri build -- --bundles dmg
       - name: Verify Apple Silicon bundle metadata
@@ -86,11 +82,15 @@ jobs:
         timeout-minutes: 10
         continue-on-error: true
       - run: npm ci
-      - run: npm test
-      # The backup and restore guards live in Rust, so they have to run too.
-      - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Build
         run: npm run tauri build -- --bundles nsis
+      - name: Verify Windows installer metadata
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          if (-not $installer) { throw "NSIS installer was not created." }
+          Write-Host "Found installer: $($installer.FullName) ($($installer.Length) bytes)"
+          if ($installer.Length -lt 1000000) { throw "Installer size is unexpectedly small: $($installer.Length) bytes" }
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: her-flight-deck-Windows

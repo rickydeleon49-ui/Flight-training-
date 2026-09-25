@@ -41,6 +41,7 @@ import {
   formatFileSize,
   openDocument,
   pickAndImportDocument,
+  removeMaterialWithFile,
   revealDocument,
 } from "@/services/documents";
 import {
@@ -1126,15 +1127,12 @@ function MaterialDetailPage({
           deleteWithUndo({
             ids: [material.id],
             label: material.title,
-            // The stored file goes with it, so deleting really deletes.
-            //
-            // The record goes first. Windows refuses to remove a file that is
-            // open in a viewer, and doing the file first meant that deleting a
-            // material she happened to have open failed completely and left
-            // the record behind after the screen had already moved on.
+            // Product decision: Deleting a locked file fails safely so the record
+            // and file never get out of step. The old record-first order could leave
+            // orphaned files or mismatched storage; having the material reappear
+            // after the undo window if the file was locked is an accepted trade-off.
             run: async (repos) => {
-              await repos.documents.remove(material.id);
-              if (material.filePath) await deleteDocument(material.filePath);
+              await removeMaterialWithFile(repos, material);
             },
           });
           navigate("/study");

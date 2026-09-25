@@ -39,7 +39,13 @@ import {
   type BackupInfo,
   type CompleteBackupInfo,
 } from "@/services/backups";
-import { backupHealth, restoreWarning } from "@/logic/dataSafety";
+import {
+  backupHealth,
+  formatCompleteBackupReminderFailureNote,
+  formatCompleteBackupSuccessNote,
+  formatRestorePreviewMissingNotice,
+  restoreWarning,
+} from "@/logic/dataSafety";
 import { trainingDuration } from "@/logic/keyDates";
 import {
   configureGemini,
@@ -223,19 +229,24 @@ export function Settings() {
         version: backup.appVersion,
         path: backup.path,
       };
+      let materials: { id: string; title: string }[] = [];
+      try {
+        materials = await repositories.documents.list().catch(() => []);
+      } catch {
+        // ignore
+      }
       try {
         await repositories.app.recordCompleteBackup(record);
         setLastBackup(record);
-        setBackupNote(
-          `Complete backup saved — ${backup.files} files, ${formatBytes(backup.bytes)} protected.`,
-        );
+        const { message, hasWarnings } = formatCompleteBackupSuccessNote(backup, formatBytes, materials);
+        setBackupProblem(hasWarnings);
+        setBackupNote(message);
       } catch {
         // The archive is already finalized and verified. A failed reminder
-        // write must not tell her that the actual backup failed.
+        // write must not tell her that the actual backup failed, but must
+        // still retain any missing-document or unreferenced-file warnings.
         setBackupProblem(true);
-        setBackupNote(
-          `Complete backup saved at ${backup.path}, but the app could not update its backup reminder. Keep the file somewhere safe.`,
-        );
+        setBackupNote(formatCompleteBackupReminderFailureNote(backup, materials));
       }
     } catch (error) {
       setBackupProblem(true);
@@ -281,6 +292,10 @@ export function Settings() {
         setBackupProblem(true);
         setBackupNote(warning);
         return;
+      }
+      if (candidate.missingDocuments && candidate.missingDocuments.length > 0) {
+        setBackupProblem(true);
+        setBackupNote(formatRestorePreviewMissingNotice(candidate.missingDocuments.length));
       }
       setRestoreCandidate(candidate);
     } catch (error) {
@@ -1024,7 +1039,7 @@ export function Settings() {
         title="Restore this complete backup?"
         message={
           restoreCandidate
-            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.bytes)}). The app will protect the current data, replace it with this backup, and restart.`
+            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.bytes)}). ${restoreCandidate.missingDocuments && restoreCandidate.missingDocuments.length > 0 ? `${formatRestorePreviewMissingNotice(restoreCandidate.missingDocuments.length)} ` : ""}The app will protect the current data, replace it with this backup, and restart.`
             : ""
         }
         confirmLabel="Restore and restart"

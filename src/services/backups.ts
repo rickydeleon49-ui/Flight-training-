@@ -32,6 +32,8 @@ export interface CompleteBackupInfo {
   /** Uncompressed bytes represented by the archive. */
   bytes: number;
   path: string;
+  missingDocuments?: string[];
+  unreferencedDocuments?: string[];
 }
 
 export const backupsAvailable = (): boolean => isTauri();

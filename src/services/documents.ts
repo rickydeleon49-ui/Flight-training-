@@ -80,10 +80,85 @@ export async function revealDocument(relativePath: string): Promise<void> {
   await revealItemInDir(absolute);
 }
 
+export interface StagedDeletion {
+  stagedId: string;
+  originalRelativePath: string;
+  alreadyMissing: boolean;
+}
+
+/** Stage a stored document for deletion into private trash. */
+export async function stageDeleteDocument(
+  relativePath: string,
+): Promise<StagedDeletion | null> {
+  if (!isTauri()) return null;
+  return invoke<StagedDeletion>("stage_delete_document", { relativePath });
+}
+
+/** Roll back a staged deletion by moving the file back from private trash. */
+export async function rollbackDeleteDocument(stagedId: string): Promise<void> {
+  if (!isTauri() || !stagedId) return;
+  await invoke("rollback_delete_document", { stagedId });
+}
+
+/** Commit and permanently purge a staged deletion from private trash. */
+export async function commitDeleteDocument(stagedId: string): Promise<void> {
+  if (!isTauri() || !stagedId) return;
+  await invoke("commit_delete_document", { stagedId });
+}
+
 /** Remove a stored document from private storage. */
 export async function deleteDocument(relativePath: string): Promise<void> {
   if (!isTauri()) return;
   await invoke("delete_document", { relativePath });
+}
+
+export interface DocumentRepositories {
+  documents: {
+    remove: (id: string) => Promise<void>;
+  };
+}
+
+export interface MaterialToDelete {
+  id: string;
+  filePath?: string | null;
+}
+
+/**
+ * Perform recoverable deletion of a study material:
+ * 1. Move managed file to private trash (.trash) first.
+ *    If staging fails (e.g., file locked/open), DB and file remain untouched.
+ * 2. Delete DB record only after staging succeeds.
+ * 3. Roll back staged file if DB delete fails, rethrowing the DB error.
+ * 4. Commit/purge staged file after DB delete succeeds.
+ *
+ * Product decision: If the file is locked (e.g. open in a PDF viewer on Windows),
+ * staging fails safely, keeping both the record and file intact with an actionable
+ * message to close the file. The old record-first order could leave a record and
+ * file out of step; having the material reappear after the undo window if the file
+ * is locked is an accepted trade-off for safety.
+ *
+ * If filePath is absent, delete the DB record without file calls.
+ * If the file was already missing (alreadyMissing: true), delete the DB record without commit.
+ */
+export async function removeMaterialWithFile(
+  repos: DocumentRepositories,
+  material: MaterialToDelete,
+): Promise<void> {
+  let staged: StagedDeletion | null = null;
+  if (material.filePath) {
+    staged = await stageDeleteDocument(material.filePath);
+  }
+  try {
+    await repos.documents.remove(material.id);
+  } catch (dbError) {
+    if (staged?.stagedId) {
+      await rollbackDeleteDocument(staged.stagedId);
+    }
+    throw dbError;
+  }
+  if (staged?.stagedId && !staged.alreadyMissing) {
+    await commitDeleteDocument(staged.stagedId);
+  }
 }
 
 /** Delete every generated file and return the paths that could not be removed. */

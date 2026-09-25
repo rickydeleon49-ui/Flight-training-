@@ -86,6 +86,9 @@
   --status-due-today: #9a6212;
   --status-due-today-fill: #fdf5e9;
   --status-complete: var(--category-complete-ink);
+  /* Failed saves, backups and restores. Same muted red as overdue; the note's
+     text and its alert role carry the meaning, not the colour. */
+  --status-danger: var(--status-overdue);
 
   /* ---- Type ---- */
   /* Both families are bundled with the application; the stacks behind them
