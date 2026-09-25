@@ -347,29 +347,12 @@ async fn verify_key(api_key: &str) -> Result<(), String> {
 
     let status = response.status();
     let detail = response.text().await.unwrap_or_default();
-    if status.as_u16() == 429 {
-        return Err(rate_limit_message());
-    }
-    if is_retryable(status.as_u16()) {
-        return Err(busy_message());
-    }
-    if matches!(status.as_u16(), 400 | 401 | 403) {
-        Err(
-            "Google did not accept that key. Check it in Google AI Studio and try again."
-                .to_string(),
-        )
-    } else if status.as_u16() == 404 {
-        // Her key is fine; this build is asking for a model that is gone.
-        // Blaming the key would send her to fix something that is not broken.
-        Err(format!(
-            "Google has retired the {MODEL} model this version of Her Flight Deck uses. Install the latest version and try again."
-        ))
-    } else {
-        Err(format!(
-            "Gemini returned {status}: {}",
-            compact_error(&detail)
-        ))
-    }
+    Err(describe_refusal(
+        RefusalContext::Verification,
+        status.as_u16(),
+        &detail,
+        MODEL,
+    ))
 }
 
 fn compact_error(raw: &str) -> String {
@@ -455,8 +438,13 @@ async fn prepare_submission(
 ) -> Result<(String, Vec<u8>, &'static str), String> {
     let api_key = stored_key(app)?;
     let path = documents::stored_document_path(app, relative_path)?;
-    let metadata =
-        std::fs::metadata(&path).map_err(|e| format!("Could not read that study file: {e}"))?;
+    let metadata = std::fs::metadata(&path).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            "This study file is missing from app storage. Restore or re-attach the file before generating.".to_string()
+        } else {
+            format!("Could not read that study file: {e}")
+        }
+    })?;
     let file_name = path
         .file_name()
         .and_then(|name| name.to_str())
@@ -467,7 +455,13 @@ async fn prepare_submission(
     if mime == "application/pdf" {
         check_pdf_length(&path).await?;
     }
-    let bytes = std::fs::read(&path).map_err(|e| format!("Could not read that study file: {e}"))?;
+    let bytes = std::fs::read(&path).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            "This study file is missing from app storage. Restore or re-attach the file before generating.".to_string()
+        } else {
+            format!("Could not read that study file: {e}")
+        }
+    })?;
     Ok((api_key, bytes, mime))
 }
 
@@ -733,7 +727,12 @@ async fn generate_with_retries(
             Attempt::Refused { status, body } => {
                 primary_rate_limited |= status == 429;
                 if !is_retryable(status) {
-                    return Err(describe_refusal(status, &body, MODEL));
+                    return Err(describe_refusal(
+                        RefusalContext::Generation,
+                        status,
+                        &body,
+                        MODEL,
+                    ));
                 }
                 if attempt + 1 < MAX_ATTEMPTS {
                     let pause = backoff_delay(attempt, jitter_millis());
@@ -749,7 +748,12 @@ async fn generate_with_retries(
     match generate_once(&http, api_key, FALLBACK_MODEL, body).await? {
         Attempt::Answered(raw) => return Ok((raw, FALLBACK_MODEL)),
         Attempt::Refused { status, body } if !is_retryable(status) => {
-            return Err(describe_refusal(status, &body, FALLBACK_MODEL));
+            return Err(describe_refusal(
+                RefusalContext::Generation,
+                status,
+                &body,
+                FALLBACK_MODEL,
+            ));
         }
         Attempt::Refused { status: 429, .. } => return Err(rate_limit_message()),
         Attempt::Refused { .. } => {}
@@ -794,16 +798,67 @@ fn total_wait_seconds() -> u64 {
     millis.div_ceil(1000)
 }
 
+fn has_invalid_key_reason(raw: &str) -> bool {
+    let Ok(val) = serde_json::from_str::<Value>(raw) else {
+        return false;
+    };
+    if let Some(details) = val.pointer("/error/details").and_then(Value::as_array) {
+        for item in details {
+            if let Some(reason) = item.get("reason").and_then(Value::as_str) {
+                if reason.eq_ignore_ascii_case("API_KEY_INVALID") {
+                    return true;
+                }
+            }
+        }
+    }
+    if let Some(reason) = val.pointer("/error/reason").and_then(Value::as_str) {
+        if reason.eq_ignore_ascii_case("API_KEY_INVALID") {
+            return true;
+        }
+    }
+    if let Some(msg) = val.pointer("/error/message").and_then(Value::as_str) {
+        if msg.contains("API_KEY_INVALID") || msg.contains("API key not valid") {
+            return true;
+        }
+    }
+    false
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RefusalContext {
+    Verification,
+    Generation,
+}
+
 /// Turn a refusal Google will not reconsider into something worth reading.
-fn describe_refusal(status: u16, body: &str, model: &str) -> String {
+fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &str) -> String {
+    if has_invalid_key_reason(body) {
+        return "Google did not accept that key. Check it in Google AI Studio and try again."
+            .to_string();
+    }
     match status {
-        429 => rate_limit_message(),
+        400 => match context {
+            RefusalContext::Verification => {
+                "Google rejected the connection check as invalid. Check your request or try again.".to_string()
+            }
+            RefusalContext::Generation => {
+                "Google rejected the request as invalid. Check the document format or try a different file.".to_string()
+            }
+        },
+        401 => {
+            "Google did not accept the authentication credentials. Check your API key in Google AI Studio and try again.".to_string()
+        }
+        403 => {
+            "Google denied project or API access. Check API key restrictions, API enablement, permissions, or project/billing configuration in Google AI Studio or Google Cloud Console.".to_string()
+        }
         // Google retires a model on a published date. When that day comes this
         // build asks for something that no longer exists, and the honest answer
         // is that the application needs updating, not that her key is wrong.
         404 => format!(
             "Google has retired the {model} model this version of Her Flight Deck uses. Install the latest version and try again."
         ),
+        429 => rate_limit_message(),
+        500..=504 => busy_message(),
         _ => format!("Gemini returned {status}: {}", compact_error(body)),
     }
 }
@@ -826,10 +881,110 @@ mod tests {
 
     #[test]
     fn rate_limit_error_does_not_invent_a_free_tier_or_blame_the_key() {
-        let message = describe_refusal(429, "", MODEL);
+        let message = describe_refusal(RefusalContext::Generation, 429, "", MODEL);
         assert!(message.contains("rate or spending limit"));
         assert!(!message.contains("free Gemini"));
         assert!(!message.contains("key is invalid"));
+    }
+
+    #[test]
+    fn structured_invalid_key_reason_asks_to_check_key() {
+        let body = json!({
+            "error": {
+                "code": 400,
+                "message": "API key not valid. Please pass a valid API key.",
+                "status": "INVALID_ARGUMENT",
+                "details": [
+                    {
+                        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                        "reason": "API_KEY_INVALID",
+                        "domain": "googleapis.com"
+                    }
+                ]
+            }
+        })
+        .to_string();
+        for context in [RefusalContext::Verification, RefusalContext::Generation] {
+            let message = describe_refusal(context, 400, &body, MODEL);
+            assert!(message.contains("Google did not accept that key"));
+            assert!(message.contains("Google AI Studio"));
+        }
+    }
+
+    #[test]
+    fn generic_400_in_verification_rejects_connection_check_without_blaming_key_or_document() {
+        let body = json!({
+            "error": {
+                "code": 400,
+                "message": "Request contains an invalid argument.",
+                "status": "INVALID_ARGUMENT"
+            }
+        })
+        .to_string();
+        let message = describe_refusal(RefusalContext::Verification, 400, &body, MODEL);
+        assert!(message.contains("Google rejected the connection check as invalid"));
+        assert!(!message.to_lowercase().contains("document"));
+        assert!(!message.to_lowercase().contains("key"));
+    }
+
+    #[test]
+    fn generic_400_in_generation_rejects_as_invalid_and_mentions_document() {
+        let body = json!({
+            "error": {
+                "code": 400,
+                "message": "Request contains an invalid argument.",
+                "status": "INVALID_ARGUMENT"
+            }
+        })
+        .to_string();
+        let message = describe_refusal(RefusalContext::Generation, 400, &body, MODEL);
+        assert!(message.contains("Google rejected the request as invalid"));
+        assert!(message.contains("document format"));
+        assert!(!message.to_lowercase().contains("key"));
+    }
+
+    #[test]
+    fn auth_401_reports_authentication_not_accepted() {
+        let message = describe_refusal(RefusalContext::Verification, 401, "{}", MODEL);
+        assert!(message.contains("authentication"));
+        assert!(message.contains("Google AI Studio"));
+    }
+
+    #[test]
+    fn access_denied_403_mentions_restrictions_enablement_permissions_or_billing() {
+        let message = describe_refusal(RefusalContext::Verification, 403, "{}", MODEL);
+        assert!(message.contains("denied project or API access"));
+        assert!(message.contains("restrictions"));
+        assert!(message.contains("enablement"));
+        assert!(message.contains("permissions"));
+        assert!(message.contains("billing"));
+    }
+
+    #[test]
+    fn retired_model_404_mentions_model_retirement_and_update() {
+        let message = describe_refusal(RefusalContext::Generation, 404, "{}", MODEL);
+        assert!(message.contains("retired"));
+        assert!(message.contains(MODEL));
+        assert!(message.contains("latest version"));
+    }
+
+    #[test]
+    fn rate_limit_429_returns_rate_limit_guidance() {
+        let message = describe_refusal(RefusalContext::Generation, 429, "{}", MODEL);
+        assert!(message.contains("rate or spending limit"));
+        assert!(!message.contains("free Gemini"));
+        assert!(!message.contains("key is invalid"));
+    }
+
+    #[test]
+    fn retryable_5xx_returns_transient_busy_message() {
+        for status in [500, 502, 503, 504] {
+            let message = describe_refusal(RefusalContext::Generation, status, "{}", MODEL);
+            assert!(
+                message.contains("Google's servers are busy") || message.contains("at capacity"),
+                "status {status} should indicate transient server capacity"
+            );
+        }
     }
 
     #[test]
