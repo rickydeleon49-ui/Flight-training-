@@ -16,6 +16,16 @@ use crate::storage::app_root;
 
 /// Subdirectory of app data that holds imported study materials.
 const DOCUMENTS_DIR: &str = "documents";
+/// Subdirectory inside documents for staged deletions.
+pub(crate) const TRASH_DIR: &str = ".trash";
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct StagedDeletion {
+    pub staged_id: String,
+    pub original_relative_path: String,
+    pub already_missing: bool,
+}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -51,7 +61,7 @@ pub(crate) fn stored_document_path(
 /// Only a `..` *component* climbs out. Rejecting the two characters wherever
 /// they appeared also refused ordinary names — "Chapter 3 .. Airspace.pdf" was
 /// imported happily and then could never be opened, checked, or deleted again.
-fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
+pub(crate) fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
     if relative_path.is_empty()
         || Path::new(relative_path).is_absolute()
         || relative_path.contains('\\')
@@ -205,17 +215,306 @@ pub fn document_exists(app: AppHandle, relative_path: String) -> Result<bool, St
     Ok(documents_root(&app)?.join(safe).is_file())
 }
 
-/// Remove a stored document. Missing files are treated as already deleted.
-#[tauri::command]
-pub fn delete_document(app: AppHandle, relative_path: String) -> Result<(), String> {
-    let safe = safe_relative_path(&relative_path)?;
-    let path = documents_root(&app)?.join(safe);
+fn trash_root(root: &Path) -> Result<PathBuf, String> {
+    let dir = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Could not create the trash directory: {e}"))?;
+    Ok(dir)
+}
 
-    match std::fs::remove_file(&path) {
-        Ok(()) => Ok(()),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(e) => Err(format!("Could not remove that document: {e}")),
+/// Stage a document for deletion by moving it to the private trash directory.
+/// If the file is locked by another process (e.g. open in a PDF viewer on Windows),
+/// the original file and database remain completely untouched and an error is returned.
+pub fn stage_delete_document_in(
+    root: &Path,
+    relative_path: &str,
+) -> Result<StagedDeletion, String> {
+    let safe = safe_relative_path(relative_path)?;
+    let source = root.join(DOCUMENTS_DIR).join(safe);
+
+    if !source.exists() {
+        return Ok(StagedDeletion {
+            staged_id: String::new(),
+            original_relative_path: safe.to_string(),
+            already_missing: true,
+        });
     }
+
+    let trash = trash_root(root)?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis();
+    let sanitized_name = sanitize_file_name(safe);
+    let staged_id = format!("{now}-{sanitized_name}");
+    let staged_file = trash.join(format!("{staged_id}.data"));
+    let meta_file = trash.join(format!("{staged_id}.meta"));
+
+    let staged_info = StagedDeletion {
+        staged_id: staged_id.clone(),
+        original_relative_path: safe.to_string(),
+        already_missing: false,
+    };
+
+    let meta_json = serde_json::to_string_pretty(&staged_info)
+        .map_err(|e| format!("Could not record staged deletion: {e}"))?;
+    std::fs::write(&meta_file, meta_json)
+        .map_err(|e| format!("Could not prepare staged deletion: {e}"))?;
+
+    if let Err(e) = std::fs::rename(&source, &staged_file) {
+        let _ = std::fs::remove_file(&meta_file);
+        return Err(format!(
+            "Could not delete that document because it is currently open in another app. Please close the file and try again. ({e})"
+        ));
+    }
+
+    Ok(staged_info)
+}
+
+/// Validate that a staged ID is a single safe filename component.
+pub fn validate_staged_id(staged_id: &str) -> Result<&str, String> {
+    if staged_id.is_empty() {
+        return Err("Staged ID cannot be empty.".to_string());
+    }
+    if staged_id.contains('/')
+        || staged_id.contains('\\')
+        || staged_id.contains(':')
+        || staged_id.contains('\0')
+        || staged_id.contains("..")
+    {
+        return Err("Invalid characters in staged ID.".to_string());
+    }
+    let mut components = Path::new(staged_id).components();
+    match (components.next(), components.next()) {
+        (Some(std::path::Component::Normal(comp)), None) => {
+            if comp.to_str() == Some(staged_id) {
+                Ok(staged_id)
+            } else {
+                Err("Invalid staged ID encoding.".to_string())
+            }
+        }
+        _ => Err("Staged ID must be a single safe filename component.".to_string()),
+    }
+}
+
+/// Roll back a staged deletion by moving the file back from private trash.
+pub fn rollback_delete_document_in(root: &Path, staged_id: &str) -> Result<(), String> {
+    if staged_id.is_empty() {
+        return Ok(());
+    }
+    validate_staged_id(staged_id)?;
+    let trash = trash_root(root)?;
+    let staged_file = trash.join(format!("{staged_id}.data"));
+    let meta_file = trash.join(format!("{staged_id}.meta"));
+
+    if meta_file.is_file() {
+        let meta_json = std::fs::read_to_string(&meta_file)
+            .map_err(|e| format!("Could not read staged deletion metadata: {e}"))?;
+        let meta: StagedDeletion = serde_json::from_str(&meta_json)
+            .map_err(|e| format!("Could not parse staged deletion metadata: {e}"))?;
+        let normalized = meta.original_relative_path.replace('\\', "/");
+        let safe_rel = safe_relative_path(&normalized).map_err(|_| {
+            "Invalid original document path in staged deletion metadata.".to_string()
+        })?;
+        if staged_file.is_file() {
+            let target = root.join(DOCUMENTS_DIR).join(safe_rel);
+            if let Some(parent) = target.parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+            std::fs::rename(&staged_file, &target)
+                .map_err(|e| format!("Could not restore document during rollback: {e}"))?;
+        }
+        let _ = std::fs::remove_file(&meta_file);
+    } else if staged_file.is_file() {
+        let _ = std::fs::remove_file(&staged_file);
+    }
+
+    Ok(())
+}
+
+/// Commit and purge a staged deletion from private trash.
+pub fn commit_delete_document_in(root: &Path, staged_id: &str) -> Result<(), String> {
+    if staged_id.is_empty() {
+        return Ok(());
+    }
+    validate_staged_id(staged_id)?;
+    let trash = trash_root(root)?;
+    let staged_file = trash.join(format!("{staged_id}.data"));
+    let meta_file = trash.join(format!("{staged_id}.meta"));
+
+    if staged_file.exists() {
+        let _ = std::fs::remove_file(&staged_file);
+    }
+    if meta_file.exists() {
+        let _ = std::fs::remove_file(&meta_file);
+    }
+    Ok(())
+}
+
+/// Clean up staged deletions across launches.
+/// If an in-flight deletion was interrupted:
+/// - If the SQLite database still references the file, it is restored.
+/// - If the SQLite database no longer references the file, it is permanently purged.
+///
+/// If querying the database fails or the database file is missing, staged
+/// files are left untouched so recovery retries on the next launch.
+pub fn cleanup_staged_deletions_in(root: &Path) -> Result<usize, String> {
+    let trash_dir = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+    if !trash_dir.exists() {
+        return Ok(0);
+    }
+
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        eprintln!("Database file is missing; skipping staged deletion cleanup.");
+        return Ok(0);
+    }
+
+    let referenced_documents = match crate::backup::query_referenced_documents(&db_path) {
+        Ok(docs) => docs,
+        Err(err) => {
+            eprintln!("Could not inspect database for staged deletion cleanup: {err}");
+            return Ok(0);
+        }
+    };
+
+    let entries = match std::fs::read_dir(&trash_dir) {
+        Ok(e) => e,
+        Err(_) => return Ok(0),
+    };
+
+    let mut recovered_or_cleaned = 0;
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) == Some("meta") {
+            if let Ok(meta_json) = std::fs::read_to_string(&path) {
+                if let Ok(meta) = serde_json::from_str::<StagedDeletion>(&meta_json) {
+                    if validate_staged_id(&meta.staged_id).is_err() {
+                        continue;
+                    }
+                    let normalized = meta.original_relative_path.replace('\\', "/");
+                    let safe_rel = match safe_relative_path(&normalized) {
+                        Ok(p) => p,
+                        Err(_) => {
+                            // Skip invalid metas without touching files
+                            continue;
+                        }
+                    };
+                    let data_path = trash_dir.join(format!("{}.data", meta.staged_id));
+                    if referenced_documents.contains(safe_rel) {
+                        let target = root.join(DOCUMENTS_DIR).join(safe_rel);
+                        if let Some(parent) = target.parent() {
+                            let _ = std::fs::create_dir_all(parent);
+                        }
+                        let restored = if data_path.is_file() {
+                            match std::fs::rename(&data_path, &target) {
+                                Ok(()) => true,
+                                Err(err) => {
+                                    eprintln!(
+                                        "Could not restore staged document {safe_rel} from {}: {err}",
+                                        data_path.display()
+                                    );
+                                    false
+                                }
+                            }
+                        } else {
+                            // If .data is already absent and the target exists, it was already restored
+                            target.is_file()
+                        };
+
+                        if restored {
+                            let _ = std::fs::remove_file(&path);
+                            recovered_or_cleaned += 1;
+                        }
+                    } else {
+                        // Not referenced by the database: permanently purge
+                        if data_path.is_file() {
+                            let _ = std::fs::remove_file(&data_path);
+                        }
+                        let _ = std::fs::remove_file(&path);
+                        recovered_or_cleaned += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    if let Ok(entries) = std::fs::read_dir(&trash_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("data") {
+                let stem = path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_default();
+                if validate_staged_id(stem).is_ok() {
+                    let meta_path = trash_dir.join(format!("{stem}.meta"));
+                    if !meta_path.exists() {
+                        let _ = std::fs::remove_file(&path);
+                        recovered_or_cleaned += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(recovered_or_cleaned)
+}
+
+/// Stage a document for deletion by moving it to private trash first.
+#[tauri::command]
+pub async fn stage_delete_document(
+    app: AppHandle,
+    relative_path: String,
+) -> Result<StagedDeletion, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        stage_delete_document_in(&root, &relative_path)
+    })
+    .await
+    .map_err(|e| format!("Could not finish staging document deletion: {e}"))?
+}
+
+/// Rollback a staged deletion by moving the file back from trash.
+#[tauri::command]
+pub async fn rollback_delete_document(app: AppHandle, staged_id: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        rollback_delete_document_in(&root, &staged_id)
+    })
+    .await
+    .map_err(|e| format!("Could not rollback document deletion: {e}"))?
+}
+
+/// Commit and purge a staged deletion from private trash.
+#[tauri::command]
+pub async fn commit_delete_document(app: AppHandle, staged_id: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        commit_delete_document_in(&root, &staged_id)
+    })
+    .await
+    .map_err(|e| format!("Could not purge deleted document: {e}"))?
+}
+
+/// Remove a stored document using recoverable staging.
+#[tauri::command]
+pub async fn delete_document(app: AppHandle, relative_path: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        let staged = stage_delete_document_in(&root, &relative_path)?;
+        commit_delete_document_in(&root, &staged.staged_id)
+    })
+    .await
+    .map_err(|e| format!("Could not finish deleting that document: {e}"))?
+}
+
+/// Clean up staged deletions on startup.
+pub fn cleanup_staged_deletions(app: &AppHandle) -> Result<(), String> {
+    let root = app_root(app)?;
+    cleanup_staged_deletions_in(&root)?;
+    Ok(())
 }
 
 /// A split's metadata is committed on one SQLite connection. Tauri's SQL
@@ -721,5 +1020,383 @@ mod tests {
         locker.execute("ROLLBACK", []).unwrap();
         drop(locker);
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    fn scratch_doc_root(name: &str) -> PathBuf {
+        let dir =
+            std::env::temp_dir().join(format!("hfd-doc-test-{}-{}", name, std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join(DOCUMENTS_DIR)).unwrap();
+        dir
+    }
+
+    #[test]
+    fn staging_moves_file_to_trash_and_creates_metadata() {
+        let root = scratch_doc_root("stage-moves");
+        let doc_path = root.join(DOCUMENTS_DIR).join("sample.pdf");
+        std::fs::write(&doc_path, b"sample pdf content").unwrap();
+
+        let staged = stage_delete_document_in(&root, "sample.pdf").unwrap();
+        assert!(!staged.already_missing);
+        assert!(!staged.staged_id.is_empty());
+        assert_eq!(staged.original_relative_path, "sample.pdf");
+
+        // Original file moved from active documents
+        assert!(!doc_path.exists());
+
+        // File and metadata exist in .trash
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        assert!(trash.join(format!("{}.data", staged.staged_id)).is_file());
+        assert!(trash.join(format!("{}.meta", staged.staged_id)).is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn staging_already_missing_file_succeeds_without_error() {
+        let root = scratch_doc_root("missing-ok");
+        let staged = stage_delete_document_in(&root, "ghost.pdf").unwrap();
+        assert!(staged.already_missing);
+        assert!(staged.staged_id.is_empty());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn rollback_moves_file_back_from_trash_to_documents() {
+        let root = scratch_doc_root("rollback-restores");
+        let doc_path = root.join(DOCUMENTS_DIR).join("restorable.pdf");
+        std::fs::write(&doc_path, b"important notes").unwrap();
+
+        let staged = stage_delete_document_in(&root, "restorable.pdf").unwrap();
+        assert!(!doc_path.exists());
+
+        rollback_delete_document_in(&root, &staged.staged_id).unwrap();
+
+        // File is back in place with identical content
+        assert_eq!(std::fs::read(&doc_path).unwrap(), b"important notes");
+
+        // Staged files cleaned up from trash
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        assert!(!trash.join(format!("{}.data", staged.staged_id)).exists());
+        assert!(!trash.join(format!("{}.meta", staged.staged_id)).exists());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn commit_purges_file_and_metadata_from_trash() {
+        let root = scratch_doc_root("commit-purges");
+        let doc_path = root.join(DOCUMENTS_DIR).join("doomed.pdf");
+        std::fs::write(&doc_path, b"to be purged").unwrap();
+
+        let staged = stage_delete_document_in(&root, "doomed.pdf").unwrap();
+        commit_delete_document_in(&root, &staged.staged_id).unwrap();
+
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        assert!(!trash.join(format!("{}.data", staged.staged_id)).exists());
+        assert!(!trash.join(format!("{}.meta", staged.staged_id)).exists());
+        assert!(!doc_path.exists());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_staged_deletions_recovers_if_db_record_still_exists() {
+        let root = scratch_doc_root("cleanup-recover");
+        let db_path = root.join("her-flight-deck.db");
+        let conn = Connection::open(&db_path).unwrap();
+        conn.execute(
+            "CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT)",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, file_path) VALUES ('mat1', 'retained.pdf')",
+            [],
+        )
+        .unwrap();
+        drop(conn);
+
+        let doc_path = root.join(DOCUMENTS_DIR).join("retained.pdf");
+        std::fs::write(&doc_path, b"retained training material").unwrap();
+
+        let _staged = stage_delete_document_in(&root, "retained.pdf").unwrap();
+        assert!(!doc_path.exists());
+
+        // Simulate crash before DB delete: run startup recovery while DB still has reference
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 1);
+
+        // Document must be restored to active storage!
+        assert!(doc_path.is_file());
+        assert_eq!(
+            std::fs::read(&doc_path).unwrap(),
+            b"retained training material"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_staged_deletions_purges_if_db_record_does_not_exist() {
+        let root = scratch_doc_root("cleanup-purge");
+        let db_path = root.join("her-flight-deck.db");
+        let conn = Connection::open(&db_path).unwrap();
+        conn.execute(
+            "CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT)",
+            [],
+        )
+        .unwrap();
+        // No rows in study_materials
+        drop(conn);
+
+        let doc_path = root.join(DOCUMENTS_DIR).join("orphaned.pdf");
+        std::fs::write(&doc_path, b"abandoned trash").unwrap();
+
+        let staged = stage_delete_document_in(&root, "orphaned.pdf").unwrap();
+
+        // Simulate crash after DB delete: run startup recovery
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 1);
+
+        // File is purged permanently, not restored
+        assert!(!doc_path.exists());
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        assert!(!trash.join(format!("{}.data", staged.staged_id)).exists());
+        assert!(!trash.join(format!("{}.meta", staged.staged_id)).exists());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn staging_locked_file_fails_cleanly_and_leaves_file_and_trash_clean() {
+        let root = scratch_doc_root("locked-file");
+        let doc_path = root.join(DOCUMENTS_DIR).join("locked.pdf");
+        std::fs::write(&doc_path, b"locked in viewer").unwrap();
+
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::OpenOptionsExt;
+            // share_mode(0) denies sharing, exactly as Adobe Acrobat or Word locks open files on Windows
+            let lock_handle = std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .share_mode(0)
+                .open(&doc_path);
+
+            if let Ok(_lock) = lock_handle {
+                let result = stage_delete_document_in(&root, "locked.pdf");
+                assert!(
+                    result.is_err(),
+                    "Expected failure when file is locked on Windows"
+                );
+                let err = result.unwrap_err();
+                assert!(
+                    err.contains("open in another app") || err.contains("close the file"),
+                    "Expected clear retry message, got: {err}"
+                );
+
+                // Original file still intact
+                assert!(doc_path.is_file());
+
+                // No metadata left in trash
+                let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+                if trash.exists() {
+                    let entries: Vec<_> = std::fs::read_dir(&trash)
+                        .unwrap()
+                        .filter_map(|e| e.ok())
+                        .collect();
+                    assert!(
+                        entries.is_empty(),
+                        "Trash should have cleaned up temporary meta"
+                    );
+                }
+            }
+        }
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_leaves_trash_untouched_when_database_is_corrupt() {
+        let root = scratch_doc_root("corrupt-db");
+        let db_path = root.join("her-flight-deck.db");
+        std::fs::write(&db_path, b"not a sqlite database").unwrap();
+
+        // Confirm query_referenced_documents returns Err rather than Ok(empty)
+        assert!(crate::backup::query_referenced_documents(&db_path).is_err());
+
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+        let staged_data = trash.join("staged-1.data");
+        let staged_meta = trash.join("staged-1.meta");
+        std::fs::write(&staged_data, b"important doc").unwrap();
+        let meta = StagedDeletion {
+            staged_id: "staged-1".to_string(),
+            original_relative_path: "important.pdf".to_string(),
+            already_missing: false,
+        };
+        std::fs::write(&staged_meta, serde_json::to_string(&meta).unwrap()).unwrap();
+
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 0);
+
+        // Files in trash are untouched
+        assert!(staged_data.is_file());
+        assert!(staged_meta.is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_leaves_staged_files_intact_when_restore_rename_fails() {
+        let root = scratch_doc_root("rename-fails");
+        let db_path = root.join("her-flight-deck.db");
+        let conn = Connection::open(&db_path).unwrap();
+        conn.execute(
+            "CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT)",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, file_path) VALUES ('mat1', 'problem.pdf')",
+            [],
+        )
+        .unwrap();
+        drop(conn);
+
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+        let staged_data = trash.join("staged-prob.data");
+        let staged_meta = trash.join("staged-prob.meta");
+        std::fs::write(&staged_data, b"important doc content").unwrap();
+        let meta = StagedDeletion {
+            staged_id: "staged-prob".to_string(),
+            original_relative_path: "problem.pdf".to_string(),
+            already_missing: false,
+        };
+        std::fs::write(&staged_meta, serde_json::to_string(&meta).unwrap()).unwrap();
+
+        // Cause rename to fail by creating the restore target as a directory
+        let target_dir = root.join(DOCUMENTS_DIR).join("problem.pdf");
+        std::fs::create_dir_all(&target_dir).unwrap();
+
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 0);
+
+        // Both .data and .meta survive cleanup; second loop never purges .data
+        assert!(staged_data.is_file());
+        assert!(staged_meta.is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn rollback_preserves_files_when_metadata_is_corrupt() {
+        let root = scratch_doc_root("rollback-corrupt-meta");
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+
+        let staged_data = trash.join("corrupt-id.data");
+        let staged_meta = trash.join("corrupt-id.meta");
+        std::fs::write(&staged_data, b"surviving data content").unwrap();
+        std::fs::write(&staged_meta, b"{ not valid json").unwrap();
+
+        let result = rollback_delete_document_in(&root, "corrupt-id");
+        assert!(result.is_err());
+
+        // Both files survive unparseable metadata
+        assert!(staged_data.is_file());
+        assert!(staged_meta.is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_leaves_trash_untouched_when_database_is_missing() {
+        let root = scratch_doc_root("missing-db");
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+        let staged_data = trash.join("staged-1.data");
+        let staged_meta = trash.join("staged-1.meta");
+        std::fs::write(&staged_data, b"important doc").unwrap();
+        let meta = StagedDeletion {
+            staged_id: "staged-1".to_string(),
+            original_relative_path: "important.pdf".to_string(),
+            already_missing: false,
+        };
+        std::fs::write(&staged_meta, serde_json::to_string(&meta).unwrap()).unwrap();
+
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 0);
+
+        // Files in trash are untouched
+        assert!(staged_data.is_file());
+        assert!(staged_meta.is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn traversal_staged_ids_are_rejected_for_rollback_and_commit() {
+        let root = scratch_doc_root("traversal-staged-id");
+
+        assert!(rollback_delete_document_in(&root, "../escaped").is_err());
+        assert!(rollback_delete_document_in(&root, "..\\escaped").is_err());
+        assert!(rollback_delete_document_in(&root, "sub/dir").is_err());
+        assert!(rollback_delete_document_in(&root, "foo:bar").is_err());
+        assert!(rollback_delete_document_in(&root, "foo\0bar").is_err());
+        assert!(rollback_delete_document_in(&root, "").is_ok()); // empty is harmless no-op
+
+        assert!(commit_delete_document_in(&root, "../escaped").is_err());
+        assert!(commit_delete_document_in(&root, "..\\escaped").is_err());
+        assert!(commit_delete_document_in(&root, "sub/dir").is_err());
+        assert!(commit_delete_document_in(&root, "foo:bar").is_err());
+        assert!(commit_delete_document_in(&root, "foo\0bar").is_err());
+        assert!(commit_delete_document_in(&root, "").is_ok()); // empty is harmless no-op
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn meta_with_traversal_original_path_is_not_restored_outside_documents() {
+        let root = scratch_doc_root("meta-traversal");
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+
+        let staged_data = trash.join("escape-id.data");
+        let staged_meta = trash.join("escape-id.meta");
+        std::fs::write(&staged_data, b"malicious content").unwrap();
+
+        let meta = StagedDeletion {
+            staged_id: "escape-id".to_string(),
+            original_relative_path: "../../evil.txt".to_string(),
+            already_missing: false,
+        };
+        std::fs::write(&staged_meta, serde_json::to_string(&meta).unwrap()).unwrap();
+
+        // Rollback refuses to restore traversal and skips/errors
+        let rollback_result = rollback_delete_document_in(&root, "escape-id");
+        assert!(rollback_result.is_err());
+        assert!(!root.join("evil.txt").exists());
+
+        // Cleanup also refuses to restore traversal and skips it without touching
+        let db_path = root.join("her-flight-deck.db");
+        let conn = Connection::open(&db_path).unwrap();
+        conn.execute(
+            "CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT)",
+            [],
+        )
+        .unwrap();
+        drop(conn);
+
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 0);
+        assert!(!root.join("evil.txt").exists());
+        assert!(staged_data.is_file());
+        assert!(staged_meta.is_file());
+
+        let _ = std::fs::remove_dir_all(root);
     }
 }

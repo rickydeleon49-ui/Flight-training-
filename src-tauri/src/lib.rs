@@ -107,6 +107,11 @@ pub fn run() {
             if let Err(error) = backup::backup_if_upgraded(app.handle()) {
                 eprintln!("Could not back up before upgrading: {error}");
             }
+
+            // Clean up any interrupted staged deletions from previous runs.
+            if let Err(error) = documents::cleanup_staged_deletions(app.handle()) {
+                eprintln!("Could not clean up staged deletions: {error}");
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -114,6 +119,9 @@ pub fn run() {
             documents::document_path,
             documents::document_exists,
             documents::delete_document,
+            documents::stage_delete_document,
+            documents::rollback_delete_document,
+            documents::commit_delete_document,
             documents::save_split_materials,
             pdf::inspect_pdf,
             pdf::split_pdf,
