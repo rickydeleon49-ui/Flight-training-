@@ -4,8 +4,10 @@ Her Flight Deck `v0.5.1` is published for Windows and Apple silicon Macs. The de
 
 ## Current audit fixes
 
-- Portable backups now use `formatVersion: 2` and include SHA-256, byte count, and path records for the database and every document. Restore verifies the complete inventory. Existing format-version-1 backups remain readable.
-- Complete exports use SQLite's online backup API to create an immutable, consistent snapshot while the live app may still receive writes.
+- Portable backups use `formatVersion: 2` with SHA-256 integrity records for every archived file. Export accommodates pre-existing missing files (recorded in `missing_at_export` and reported in the UI) and excludes unreferenced orphan files (reported in the UI). Referenced documents are treated as pre-existing missing only if absent from both pre-snapshot and post-snapshot disk scans; any referenced file present before the snapshot and gone after triggers a transient retry, as does a referenced file currently staged in `documents/.trash` (a Study Library deletion in progress). Mid-export file mutations or new appearances are likewise detected and retried. After a backup, Settings presents a plain-language summary naming any omitted missing files by material title or filename with advice to re-attach them in the Study Library, and notes any unreferenced files left out; restore previews in Settings and DataRecovery state how many files were already missing when the backup was made. Archive verification and restore enforce completeness: every archive document must be referenced by the database, and every database-referenced document must be present in the archive unless declared in `missing_at_export`.
+- Complete exports use SQLite's online backup API with bounded retries off the UI thread to ensure consistent snapshots even during concurrent document imports, splits, or deletions.
+- Document deletion is recoverable: managed files are moved to private trash (`documents/.trash`) before database records are deleted. Staged deletion IDs and metadata paths are validated against traversal. Locked files abort without touching the database (preserving both file and record by design), database errors roll back staged files, and startup recovery (`cleanup_staged_deletions`) reconciles interrupted deletions only when the database is readable, refusing to purge `.trash` if the database is missing or corrupt.
+- Release workflow (`.github/workflows/release.yml`) runs `cargo test` on Linux CI before packaging and enforces non-cancelling concurrency (`cancel-in-progress: false`).
 - Restore opens the staged database read-only, runs `PRAGMA quick_check`, checks core Her Flight Deck tables, and rejects future schema versions before moving current data.
 - Archive validation rejects extreme compression ratios, overlong paths and path components, Windows alternate-data-stream names, traversal, duplicates, symlinks, unexpected entries, excessive entry counts, and excessive expanded size.
 - Vitest was upgraded past GHSA-82fw-gwwq-j7x9.
@@ -17,16 +19,16 @@ Her Flight Deck `v0.5.1` is published for Windows and Apple silicon Macs. The de
 - Automatic PDF splitting keeps each part within 50 MiB and 1,000 pages, labels its range, creates a separate Study Library item, and cleans up partial work.
 - Restore stages data before activation and preserves the current library in a rollback folder before installing the replacement.
 - Database migrations are additive, checksummed, and shared by desktop and the browser test database.
-- The Gemini key never enters the webview or a portable backup. Desktop stores it in a user-only app-data file because unsigned desktop builds cannot retain stable keychain identity; iOS must use Keychain.
-- GitHub workflows use scoped permissions and commit-pinned actions.
+- Gemini key lifecycle: The key is entered exclusively via a masked password input in Settings, held transiently in React component memory, sent across Tauri IPC once via `configure_gemini`, and omitted from status responses (which return only `has_api_key: bool`). It is never stored in SQLite, log files, or portable backup archives, and is persisted in user-restricted application data via `secrets.rs` (with OS-level access control on desktop; Keychain on iOS).
+- GitHub workflows use scoped permissions and commit-pinned actions. Workflow concurrency cancellation is configured so checks and build-desktop cancel superseded runs, while release runs are never cancelled (`cancel-in-progress: false`).
 
 ## Validation results
 
-- `npm ci` completed from the committed lockfile, all 313 frontend tests passed, and the production TypeScript/Vite build succeeded.
+- `npm ci` completed from the committed lockfile, all 404 frontend tests passed (2 benchmarks skipped), and the production TypeScript/Vite build succeeded.
 - `npm audit` reports zero vulnerabilities after upgrading Vitest to 4.1.11.
-- All 64 Rust tests passed. `cargo fmt --check` and strict Clippy (`-D warnings`) are clean.
+- All 123 Rust tests passed (2 benchmarks ignored). `cargo fmt --check` and strict Clippy (`-D warnings`) are clean.
 - A complete Windows x64 NSIS installer build succeeded with the audited dependency set.
-- `cargo audit` reports RUSTSEC-2023-0071 for `rsa` 0.9.10. That crate belongs to SQLx's optional MySQL driver, is present only in the resolved lockfile, and is absent from `cargo tree` for every build target; this app enables SQLite only. RustSec lists no fixed release. The remaining cargo-audit notices are unmaintained or unsoundness warnings in upstream PDF/Tauri platform dependencies.
+- `cargo audit` configures an ignore in `.cargo/audit.toml` for RUSTSEC-2023-0071 (`rsa` 0.9.10, Marvin timing sidechannel) because that crate belongs to SQLx's optional MySQL driver, is present only in the resolved lockfile, and is absent from `cargo tree` for every build target (this app enables SQLite only). With this targeted ignore in place, `cargo audit` passes cleanly. The remaining cargo-audit notices are unmaintained or unsoundness warnings in upstream PDF/Tauri platform dependencies.
 - Pull-request and post-merge Checks results are recorded by GitHub Actions. Both exact-head runs must be green to close this audit.
 
 ## Remaining platform work

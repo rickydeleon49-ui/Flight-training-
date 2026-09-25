@@ -6,6 +6,36 @@ _Updated 24 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` perman
 
 Version `0.5.2` was prepared on 14 September 2026 and withdrawn the same day following an unresolved Windows Defender detection (`Trojan:Win32/Wacatac.B!ml`). Per repository release policy (`scripts/release-policy.json`) and automated validation checks, version `0.5.2` is **permanently retired and must never be reused, re-tagged, or published**. The latest distributable release remains `v0.5.1`. The next release must be `0.5.3` or later, and no future release should be prepared until the Windows hold is resolved (by authoritative Microsoft clearance of the exact installer or trusted code signing) and physical installed-application validation on Windows and Apple Silicon hardware is satisfied. Paid code signing is the long-term path, but is not mandatory if Microsoft clears the exact binary.
 
+## Release-safety hardening update (24 September 2026)
+
+Following release-safety corrections for data protection, deletion recovery, and workflow efficiency:
+
+- **Complete backup consistency across SQLite and managed documents:**
+  - Format-v2 backup export handles pre-existing database and document inconsistencies cleanly: referenced documents missing from disk are allowed and recorded in `manifest.missing_at_export` (reported in `missing_documents`); unreferenced orphan files on disk are excluded from the archive (preventing backup drift) and reported in `unreferenced_documents`. In the UI, Settings displays a plain-language summary naming any omitted missing files (by material title or file name) and advising she can re-attach them in the Study Library, notes any unreferenced files excluded, and both Settings and DataRecovery restore preview dialogs call out any files that were already missing when the backup was made.
+  - Differentiates pre-existing missing files from mid-export deletions by scanning documents before and after taking the database snapshot: a referenced file is treated as pre-existing missing only if absent from both scans; a referenced file present before the snapshot and gone after triggers a transient retry. Mid-export document mutations or unexpected file appearances are likewise refused with bounded retry (`COMPLETE_BACKUP_RETRIES = 3`, 200 ms interval) executing safely off the UI thread via `spawn_blocking`.
+  - Two-way completeness verification at restore / inspection proves that every archive document is referenced by the database and every database reference exists in the archive (unless declared in `manifest.missing_at_export`).
+  - Atomic `.part` file finalization protects existing valid backups, ensuring the original is restored untouched if an export fails.
+  - Nine deterministic Rust regression tests verify in-flight disappearing documents (pre-collection and mid-collection), in-flight appearing files, in-flight mutation, bounded retry exhaustion, format-v2 completeness enforcement, missing-document export/restore, and orphan exclusion.
+- **Recoverable Study Library deletion:**
+  - Two-phase staged deletion: managed files are moved to private trash (`documents/.trash`) before SQLite database records are deleted.
+  - Traversal defense: `validate_staged_id` rejects path separators, `..`, colons, and NUL bytes on commit/rollback; metadata `original_relative_path` is validated against directory traversal before restoration.
+  - Frontend lifecycle extracted to `removeMaterialWithFile`: staging failure leaves the database record untouched with an actionable retry message; database deletion failure rolls back the staged file; successful database deletion commits/purges trash; materials without files or with already-missing files proceed safely. Undo cancels the pending delete, and only the commit path calls `removeMaterialWithFile`.
+  - Deleting a material whose file is locked (e.g. open in a PDF viewer on Windows) fails safely by design: staging fails, the record and file are kept, and she is prompted to close the file and try again.
+  - Startup recovery hook `cleanup_staged_deletions` reconciles `.trash` with the active database, restoring documents if the database record still exists (crash before DB update) or purging staged files if the record is gone (crash after DB update). If restore rename fails or the database is missing, unreadable, or corrupted, it logs and safely leaves staged files untouched.
+  - Preserves 7-second undo behavior without premature file deletion.
+  - Added unit tests in `documents.rs` and frontend lifecycle tests in `documents.test.ts` verifying all failure and recovery branches.
+- **GitHub Actions release gate & concurrency:**
+  - Release workflow (`.github/workflows/release.yml`) configures `cancel-in-progress: false` grouped by workflow and version/ref so in-progress release builds and packaging jobs are never cancelled by subsequent runs.
+  - Added a full Rust validation gate on Linux CI before packaging: installs required Linux desktop development libraries (`libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `libsoup-3.0-dev`, `libxdo-dev`) and runs `cargo test` as an authoritative pre-packaging gate.
+  - Streamlined `checks.yml` with a lightweight verification path for documentation-only pull requests while strictly preserving the single required check status (`Tests, types, and the data-safety guards`).
+  - Eliminated redundant frontend and Rust test suite executions on macOS and Windows packaging runners in `build-desktop.yml` and `release.yml`, refocusing runner minutes on platform packaging and metadata verification (including Windows NSIS installer verification).
+- **Dependency findings confirmation:**
+  - Confirmed `glib 0.18.5` is absent on Windows/macOS and present solely in the Linux GTK development/CI graph.
+  - Confirmed `rsa 0.9.10` (RUSTSEC-2023-0071) is absent from the resolved dependency graph for all release targets (`cargo tree --target all -i rsa` produces no paths). `.cargo/audit.toml` ignores this finding so `cargo audit` runs cleanly.
+  - Confirmed `ttf-parser 0.25.1` is transitive exclusively through `lopdf`.
+  - Confirmed `keyring` is restricted solely to legacy secret migration in `gemini.rs`. No speculative replacements.
+- **Validation evidence:** On Windows x64: `npm test` passed 404 tests across 45 test files (2 benchmarks skipped); `npm run build` completed with 0 errors; `cargo test` passed 123 tests (2 benchmarks ignored); `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings` passed cleanly with 0 warnings.
+
 ## Pre-release audit update (24 September 2026)
 
 A full pre-release readiness audit was completed following the Study Library file-lifecycle fixes (PR #27) and Gemini workflow hardening (PR #28). See [the comprehensive audit report](docs/PRE_RELEASE_AUDIT_2026-09-24.md) for full architectural reviews, security boundaries, and validation evidence.
@@ -208,18 +238,4 @@ recorded in `docs/MAC_AUDIT_2026-09-12.md`. No Mac readiness claim is made.
 
 ## Known limitation: automatic splitting's remaining bottleneck
 
-The windowing fix removes the *binary-search-candidate* multiplier from the
-expensive step (every part now clones and prunes a bounded ≤1,000-page
-window once, rather than the whole remaining book on every size trial), and
-moves candidate rendering into memory instead of rewriting the destination
-file on disk for every trial. What it does **not** fix: `lopdf`'s own
-`delete_pages` walks the entire live object graph once per page it removes
-(a fresh reachability sweep per deletion, by design — see `pdf.rs`'s
-`window_document` doc comment), so windowing a very long book still costs
-work proportional to *(pages removed) × (pages still live)* for that one
-per-part windowing step. A synthetic 3,000-page, content-free benchmark
-still measured this step as the dominant remaining cost. A complete fix
-would replace lopdf's delete-and-prune approach with building each window
-by copying forward only the objects reachable from its kept pages, rather
-than cloning everything and deleting most of it — a larger, separately
-risky rewrite not attempted in this pass.
+Automatic splitting in `pdf.rs` uses `delete_pages_batch`, which batches page-tree count decrements and removes unwanted page references in a single traversal, eliminating `lopdf::delete_pages`'s quadratic per-page object-graph sweep. Windowing further bounds the working document to ≤1,000 pages per part with in-memory candidate evaluation rather than writing size trials to disk. The remaining cost for very large books is `lopdf`'s clone-and-prune approach (cloning the document tree and deleting excluded objects) rather than constructing each part by copying forward only the objects reachable from its kept pages — a larger, separately risky architecture not attempted in this pass.
