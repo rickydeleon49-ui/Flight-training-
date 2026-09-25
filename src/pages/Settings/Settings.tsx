@@ -51,6 +51,7 @@ import {
   type GeminiStatus,
 } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
+import { isMacOS, isWindowsOS } from "@/lib/platform";
 
 import "./settings.css";
 
@@ -73,7 +74,41 @@ const draftFrom = (profile: Profile): ProfileDraft => ({
   accentColor: profile.accentColor,
 });
 
+function PlatformGuidance({
+  mac,
+  windows,
+  neutral,
+}: {
+  mac: ReactNode;
+  windows?: ReactNode;
+  neutral?: ReactNode;
+}) {
+  if (isMacOS()) {
+    return (
+      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+        <strong>On macOS:</strong> {mac}
+      </p>
+    );
+  }
+  if (isWindowsOS() && windows) {
+    return (
+      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+        <strong>On Windows:</strong> {windows}
+      </p>
+    );
+  }
+  if (neutral) {
+    return (
+      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+        {neutral}
+      </p>
+    );
+  }
+  return null;
+}
+
 function MacNote({ children }: { children: ReactNode }) {
+  if (!isMacOS()) return null;
   return (
     <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
       <strong>On macOS:</strong> {children}
@@ -648,7 +683,11 @@ export function Settings() {
         <Card>
           <CardHeader title="Airline pilot starter pack" eyebrow="Built-in guidance" />
           <CardBody>
-            <MacNote>Restoring starter items changes only this Mac&rsquo;s local library.</MacNote>
+            <PlatformGuidance
+              mac="Restoring starter items changes only this Mac’s local library."
+              windows="Restoring starter items changes only this computer’s local library."
+              neutral="Restoring starter items changes only your local library."
+            />
             <div className="stack stack--4">
               <p className="small muted">
                 Includes a complete career roadmap from training foundations through ATP and
@@ -689,10 +728,32 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
-              <MacNote>
-                Complete backups can be saved to iCloud Drive and include uploaded documents.
-                Finder&rsquo;s Go to Folder opens the Application Support path shown below.
-              </MacNote>
+              <PlatformGuidance
+                mac={
+                  <>
+                    App data lives under the displayed Application Support path, and{" "}
+                    <strong>Open folder</strong> opens that exact folder in Finder. Complete
+                    backups can be saved to Downloads or iCloud Drive, and imported documents
+                    live in app-owned storage and move through complete backups.
+                  </>
+                }
+                windows={
+                  <>
+                    App data lives under the displayed AppData path, and{" "}
+                    <strong>Open folder</strong> opens that exact folder in File Explorer.
+                    Complete backups can be saved to your preferred drive or cloud folder, and
+                    imported documents live in app-owned storage and move through complete
+                    backups.
+                  </>
+                }
+                neutral={
+                  <>
+                    App data lives under the displayed path, and <strong>Open folder</strong> opens
+                    that folder in your file manager. Imported documents live in app-owned storage
+                    and move through complete backups.
+                  </>
+                }
+              />
 
               {backupNote ? (
                 <p
@@ -824,10 +885,30 @@ export function Settings() {
         <Card>
           <CardHeader title="About this application" eyebrow="Scope" />
           <CardBody>
-            <MacNote>
-              This release is unsigned. On first launch, Control-click the app in Finder,
-              choose Open, then confirm Open if macOS asks.
-            </MacNote>
+            <PlatformGuidance
+              mac={
+                <>
+                  This release is unsigned and un-notarized. Her Flight Deck supports macOS 12 or newer.
+                  On first launch, macOS may show an expected warning that the developer cannot be verified:
+                  on macOS 12 Monterey, go to <strong>System Preferences → Security & Privacy</strong>; on macOS 13 and newer,
+                  go to <strong>System Settings → Privacy & Security</strong>, and choose <strong>Open Anyway</strong> (or Control-click the application in Finder and choose Open).
+                  If macOS warns that the application is damaged or blocked as malware, stop; do not attempt to bypass damaged or malware-blocked application warnings.
+                </>
+              }
+              windows={
+                <>
+                  Use only a release obtained from the official release location.
+                  If Defender or SmartScreen blocks or flags the installer, stop.
+                  The build must remain private until Microsoft clears it or it receives trusted signing.
+                  Do not add exclusions, disable protection, or click through the warning.
+                </>
+              }
+              neutral={
+                <>
+                  Use only an official release obtained from the official release location.
+                </>
+              }
+            />
             <p className="small muted">
               Her Flight Deck organizes the training information you put into it. It does not
               replace your flight instructor, your flight school, official aviation
@@ -845,10 +926,11 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
-              <MacNote>
-                Google AI Studio opens in the default browser. The API key stays in this
-                Mac&rsquo;s Application Support folder and is not included in backups.
-              </MacNote>
+              <PlatformGuidance
+                mac="Google AI Studio opens in the default browser. The API key stays in this Mac’s Application Support folder and is not included in backups or SQLite."
+                windows="Google AI Studio opens in the default browser. The API key stays in this computer’s application data folder and is not included in backups or SQLite."
+                neutral="Google AI Studio opens in the default browser. The API key stays in your local application data folder and is not included in backups or SQLite."
+              />
               <p className="small muted">
                 Gemini can turn a selected Study Library document into a study guide and
                 flashcards. Only files you deliberately analyze are sent to Google. Personal
@@ -920,7 +1002,8 @@ export function Settings() {
                 high demand” is Google&rsquo;s capacity, not your key. Her Flight Deck already
                 waits, retries, and tries Flash-Lite before reporting it. If it happens often,
                 enabling billing for the same Google Cloud project moves the key to paid Tier 1,
-                which has higher rate limits. Billing does not guarantee that a model will
+                which has higher rate limits. Billing does not change or upgrade the configured
+                model (<code>gemini-3.5-flash</code>), nor does it guarantee that a model will
                 always have capacity, so you may still need to try again later.
               </p>
 

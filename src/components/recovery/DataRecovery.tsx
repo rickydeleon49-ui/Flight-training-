@@ -28,6 +28,7 @@ import {
   type BackupInfo,
   type CompleteBackupInfo,
 } from "@/services/backups";
+import { isMacOS, isWindowsOS } from "@/lib/platform";
 
 interface DataRecoveryProps {
   /** What went wrong, in the words the database gave us. */
@@ -185,6 +186,21 @@ export function DataRecovery({ error }: DataRecoveryProps) {
                     Copy this whole folder somewhere safe before trying anything else. It
                     contains your database, your uploaded documents, and every safety copy.
                   </p>
+                  {isMacOS() ? (
+                    <p className="tiny dim" style={{ marginTop: "var(--space-2)" }}>
+                      <strong>On macOS:</strong> App data lives in the Application Support folder shown above.{" "}
+                      <strong>Open folder</strong> opens that exact location in Finder.
+                    </p>
+                  ) : isWindowsOS() ? (
+                    <p className="tiny dim" style={{ marginTop: "var(--space-2)" }}>
+                      <strong>On Windows:</strong> App data lives in the folder shown above.{" "}
+                      <strong>Open folder</strong> opens that exact location in File Explorer.
+                    </p>
+                  ) : (
+                    <p className="tiny dim" style={{ marginTop: "var(--space-2)" }}>
+                      <strong>Open folder</strong> opens that exact location in your file manager.
+                    </p>
+                  )}
                 </CardBody>
               </Card>
             ) : null}

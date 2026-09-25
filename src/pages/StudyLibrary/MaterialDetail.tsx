@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -63,12 +63,43 @@ import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import "./studyLibrary.css";
 
-export function MaterialDetail() {
-  const { materialId } = useParams();
-  return <MaterialDetailPage key={materialId} />;
+interface ActiveGeminiOperation {
+  requestId: number;
+  targetMaterialId: string;
+  targetFilePath: string;
+  kind: "study-aid" | "practice-test";
 }
 
-function MaterialDetailPage() {
+export function MaterialDetail() {
+  const { materialId } = useParams();
+  const nextRequestIdRef = useRef(1);
+  const activeGeminiOpRef = useRef<ActiveGeminiOperation | null>(null);
+  const [activeGeminiOp, setActiveGeminiOp] = useState<ActiveGeminiOperation | null>(null);
+
+  return (
+    <MaterialDetailPage
+      key={materialId}
+      activeGeminiOp={activeGeminiOp}
+      activeGeminiOpRef={activeGeminiOpRef}
+      setActiveGeminiOp={setActiveGeminiOp}
+      nextRequestIdRef={nextRequestIdRef}
+    />
+  );
+}
+
+interface MaterialDetailPageProps {
+  activeGeminiOp: ActiveGeminiOperation | null;
+  activeGeminiOpRef: React.MutableRefObject<ActiveGeminiOperation | null>;
+  setActiveGeminiOp: React.Dispatch<React.SetStateAction<ActiveGeminiOperation | null>>;
+  nextRequestIdRef: React.MutableRefObject<number>;
+}
+
+function MaterialDetailPage({
+  activeGeminiOp,
+  activeGeminiOpRef,
+  setActiveGeminiOp,
+  nextRequestIdRef,
+}: MaterialDetailPageProps) {
   const { materialId } = useParams();
   const navigate = useNavigate();
   const { data, mutate, deleteWithUndo } = useAppData();
@@ -85,18 +116,75 @@ function MaterialDetailPage() {
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [generating, setGenerating] = useState(
+    () =>
+      activeGeminiOpRef.current?.targetMaterialId === materialId &&
+      activeGeminiOpRef.current?.kind === "study-aid",
+  );
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState<string | null>(null);
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
-  const [generatingPractice, setGeneratingPractice] = useState(false);
+  const [generatingPractice, setGeneratingPractice] = useState(
+    () =>
+      activeGeminiOpRef.current?.targetMaterialId === materialId &&
+      activeGeminiOpRef.current?.kind === "practice-test",
+  );
   const [practiceGenerationError, setPracticeGenerationError] = useState<string | null>(null);
   const [practiceGenerationProgress, setPracticeGenerationProgress] = useState<string | null>(null);
   const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
 
+  // Component-wide Gemini operation lock across study-aid and practice-test generation:
+  // src/services/gemini.ts listens to a single global gemini-progress event.
+  // We synchronize study-aid and practice-test generation under a shared lock,
+  // acquiring it synchronously before any await, disabling both Create/Regenerate
+  // actions and preventing opening either confirmation flow while either runs.
+  // The lock persists across material navigation in the mounted MaterialDetail root.
+  // Each in-flight generation acquires a unique request ID so an older finishing
+  // request never releases or clears the state of a newer request.
+  const isMountedRef = useRef(true);
+  const studyAidTokenRef = useRef(0);
+  const practiceTestTokenRef = useRef(0);
+  const activeContextRef = useRef({
+    materialId: materialId ?? null,
+    filePath: null as string | null,
+  });
+
   const material = data.materials.find((candidate) => candidate.id === materialId) ?? null;
+
+  activeContextRef.current = {
+    materialId: materialId ?? null,
+    filePath: material?.filePath ?? null,
+  };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    studyAidTokenRef.current += 1;
+    practiceTestTokenRef.current += 1;
+
+    return () => {
+      studyAidTokenRef.current += 1;
+      practiceTestTokenRef.current += 1;
+    };
+  }, [materialId, material?.filePath]);
+
+  useEffect(() => {
+    setGenerating(
+      activeGeminiOp?.targetMaterialId === materialId &&
+        activeGeminiOp?.kind === "study-aid",
+    );
+    setGeneratingPractice(
+      activeGeminiOp?.targetMaterialId === materialId &&
+        activeGeminiOp?.kind === "practice-test",
+    );
+  }, [materialId, activeGeminiOp]);
   const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
@@ -165,6 +253,12 @@ function MaterialDetailPage() {
     .toLowerCase()
     .endsWith(".pdf");
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
+  const isGeneratingAny = Boolean(
+    activeGeminiOp ||
+      activeGeminiOpRef.current ||
+      generating ||
+      generatingPractice,
+  );
 
   const relatedActions = actionsFor(data.actions, "material", material.id);
   const questions = data.questions.filter((question) => question.materialId === material.id);
@@ -235,22 +329,92 @@ function MaterialDetailPage() {
   };
 
   const createStudyAid = async () => {
-    // Re-checked here so the refusal holds even if the button is reached another way.
-    if (!material.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
       return;
     }
+    const targetMaterialId = material.id;
+    const targetFilePath = material.filePath;
+
+    // 1. Synchronously acquire the shared component-wide lock before any await
+    if (activeGeminiOpRef.current !== null) {
+      return;
+    }
+    const requestId = ++nextRequestIdRef.current;
+    const operation: ActiveGeminiOperation = {
+      requestId,
+      targetMaterialId,
+      targetFilePath,
+      kind: "study-aid",
+    };
+    activeGeminiOpRef.current = operation;
+    setActiveGeminiOp(operation);
+    const targetToken = ++studyAidTokenRef.current;
+
     setGenerating(true);
     setGenerationError(null);
     setGenerationProgress(null);
-    // Waiting out a busy model takes several pauses; she should be able to see
-    // that something is still happening.
     let stopWatching = () => {};
+
     try {
-      stopWatching = await watchGeminiProgress(setGenerationProgress);
-      const generated = await generateStudyAid(material.filePath);
+      if (fileMissing) {
+        setGenerationError(
+          "This study file is missing from app storage. Restore or re-attach the file before generating.",
+        );
+        return;
+      }
+      if (canHandleFiles()) {
+        let exists = false;
+        try {
+          exists = await documentExists(targetFilePath);
+        } catch {
+          exists = false;
+        }
+        if (!exists) {
+          setFileMissing(true);
+          setGenerationError(
+            "This study file is missing from app storage. Restore or re-attach the file before generating.",
+          );
+          return;
+        }
+      }
+
+      if (
+        !isMountedRef.current ||
+        studyAidTokenRef.current !== targetToken ||
+        activeContextRef.current.materialId !== targetMaterialId ||
+        activeContextRef.current.filePath !== targetFilePath
+      ) {
+        return;
+      }
+
+      try {
+        stopWatching = await watchGeminiProgress((msg) => {
+          if (
+            isMountedRef.current &&
+            activeContextRef.current.materialId === targetMaterialId
+          ) {
+            setGenerationProgress(msg);
+          }
+        });
+      } catch {
+        // Non-fatal if watcher fails, continue generation
+      }
+
+      const generated = await generateStudyAid(targetFilePath);
+
+      // Stale context guard: ensure token and active material/file context still match
+      if (
+        !isMountedRef.current ||
+        studyAidTokenRef.current !== targetToken ||
+        activeContextRef.current.materialId !== targetMaterialId ||
+        activeContextRef.current.filePath !== targetFilePath
+      ) {
+        return;
+      }
+
       const saved = await mutate((repos) =>
         repos.documents.saveAiStudySet({
-          sourceMaterialId: material.id,
+          sourceMaterialId: targetMaterialId,
           title: generated.title,
           summary: generated.summary,
           sections: generated.sections,
@@ -260,32 +424,126 @@ function MaterialDetailPage() {
         }),
       );
       if (saved === null) return;
-      setCardIndex(0);
-      setCardRevealed(false);
+      if (
+        isMountedRef.current &&
+        activeContextRef.current.materialId === targetMaterialId
+      ) {
+        setCardIndex(0);
+        setCardRevealed(false);
+      }
     } catch (error) {
-      setGenerationError(geminiErrorMessage(error));
+      if (
+        isMountedRef.current &&
+        studyAidTokenRef.current === targetToken &&
+        activeContextRef.current.materialId === targetMaterialId &&
+        activeContextRef.current.filePath === targetFilePath
+      ) {
+        setGenerationError(geminiErrorMessage(error));
+      }
     } finally {
       stopWatching();
-      setGenerationProgress(null);
-      setGenerating(false);
+      // A finishing request only releases the shared lock if it still owns it
+      if (activeGeminiOpRef.current?.requestId === requestId) {
+        activeGeminiOpRef.current = null;
+        setActiveGeminiOp(null);
+      }
+      if (
+        isMountedRef.current &&
+        activeContextRef.current.materialId === targetMaterialId
+      ) {
+        setGenerationProgress(null);
+        setGenerating(false);
+      }
     }
   };
 
   const createPracticeTest = async () => {
-    // Re-checked here so the refusal holds even if the button is reached another way.
-    if (!material.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
       return;
     }
+    const targetMaterialId = material.id;
+    const targetFilePath = material.filePath;
+
+    // 1. Synchronously acquire the shared component-wide lock before any await
+    if (activeGeminiOpRef.current !== null) {
+      return;
+    }
+    const requestId = ++nextRequestIdRef.current;
+    const operation: ActiveGeminiOperation = {
+      requestId,
+      targetMaterialId,
+      targetFilePath,
+      kind: "practice-test",
+    };
+    activeGeminiOpRef.current = operation;
+    setActiveGeminiOp(operation);
+    const targetToken = ++practiceTestTokenRef.current;
+
     setGeneratingPractice(true);
     setPracticeGenerationError(null);
     setPracticeGenerationProgress(null);
     let stopWatching = () => {};
+
     try {
-      stopWatching = await watchGeminiProgress(setPracticeGenerationProgress);
-      const generated = await generatePracticeTest(material.filePath);
+      if (fileMissing) {
+        setPracticeGenerationError(
+          "This study file is missing from app storage. Restore or re-attach the file before generating.",
+        );
+        return;
+      }
+      if (canHandleFiles()) {
+        let exists = false;
+        try {
+          exists = await documentExists(targetFilePath);
+        } catch {
+          exists = false;
+        }
+        if (!exists) {
+          setFileMissing(true);
+          setPracticeGenerationError(
+            "This study file is missing from app storage. Restore or re-attach the file before generating.",
+          );
+          return;
+        }
+      }
+
+      if (
+        !isMountedRef.current ||
+        practiceTestTokenRef.current !== targetToken ||
+        activeContextRef.current.materialId !== targetMaterialId ||
+        activeContextRef.current.filePath !== targetFilePath
+      ) {
+        return;
+      }
+
+      try {
+        stopWatching = await watchGeminiProgress((msg) => {
+          if (
+            isMountedRef.current &&
+            activeContextRef.current.materialId === targetMaterialId
+          ) {
+            setPracticeGenerationProgress(msg);
+          }
+        });
+      } catch {
+        // Non-fatal if watcher fails, continue generation
+      }
+
+      const generated = await generatePracticeTest(targetFilePath);
+
+      // Stale context guard: ensure token and active material/file context still match
+      if (
+        !isMountedRef.current ||
+        practiceTestTokenRef.current !== targetToken ||
+        activeContextRef.current.materialId !== targetMaterialId ||
+        activeContextRef.current.filePath !== targetFilePath
+      ) {
+        return;
+      }
+
       const saved = await mutate((repos) =>
         repos.documents.savePracticeTest({
-          sourceMaterialId: material.id,
+          sourceMaterialId: targetMaterialId,
           title: generated.title,
           questions: generated.questions,
           model: generated.model,
@@ -293,11 +551,28 @@ function MaterialDetailPage() {
       );
       if (saved === null) return;
     } catch (error) {
-      setPracticeGenerationError(geminiErrorMessage(error));
+      if (
+        isMountedRef.current &&
+        practiceTestTokenRef.current === targetToken &&
+        activeContextRef.current.materialId === targetMaterialId &&
+        activeContextRef.current.filePath === targetFilePath
+      ) {
+        setPracticeGenerationError(geminiErrorMessage(error));
+      }
     } finally {
       stopWatching();
-      setPracticeGenerationProgress(null);
-      setGeneratingPractice(false);
+      // A finishing request only releases the shared lock if it still owns it
+      if (activeGeminiOpRef.current?.requestId === requestId) {
+        activeGeminiOpRef.current = null;
+        setActiveGeminiOp(null);
+      }
+      if (
+        isMountedRef.current &&
+        activeContextRef.current.materialId === targetMaterialId
+      ) {
+        setPracticeGenerationProgress(null);
+        setGeneratingPractice(false);
+      }
     }
   };
 
@@ -388,8 +663,10 @@ function MaterialDetailPage() {
                     <Button
                       size="small"
                       variant={studySet ? "secondary" : "primary"}
-                      disabled={generating || fileMissing}
-                      onClick={() => setConfirmingAi(true)}
+                      disabled={isGeneratingAny || fileMissing}
+                      onClick={() => {
+                        if (!isGeneratingAny && !activeGeminiOpRef.current) setConfirmingAi(true);
+                      }}
                     >
                       {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
                     </Button>
@@ -533,8 +810,10 @@ function MaterialDetailPage() {
                   <Button
                     size="small"
                     variant={practiceTest ? "secondary" : "primary"}
-                    disabled={generatingPractice || fileMissing}
-                    onClick={() => setConfirmingPracticeTest(true)}
+                    disabled={isGeneratingAny || fileMissing}
+                    onClick={() => {
+                      if (!isGeneratingAny && !activeGeminiOpRef.current) setConfirmingPracticeTest(true);
+                    }}
                   >
                     {generatingPractice
                       ? "Reading document…"
@@ -810,26 +1089,28 @@ function MaterialDetailPage() {
       />
 
       <ConfirmDialog
-        open={confirmingAi}
+        open={confirmingAi && !isGeneratingAny}
         title="Send this file to Google?"
         message={aiCheck.reason}
         confirmLabel="Send to Gemini"
         destructive={false}
         onConfirm={() => {
           setConfirmingAi(false);
+          if (isGeneratingAny || activeGeminiOpRef.current !== null) return;
           void createStudyAid();
         }}
         onCancel={() => setConfirmingAi(false)}
       />
 
       <ConfirmDialog
-        open={confirmingPracticeTest}
+        open={confirmingPracticeTest && !isGeneratingAny}
         title="Send this file to Google?"
         message={aiCheck.reason}
         confirmLabel="Send to Gemini"
         destructive={false}
         onConfirm={() => {
           setConfirmingPracticeTest(false);
+          if (isGeneratingAny || activeGeminiOpRef.current !== null) return;
           void createPracticeTest();
         }}
         onCancel={() => setConfirmingPracticeTest(false)}
