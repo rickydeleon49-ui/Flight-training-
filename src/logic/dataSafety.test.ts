@@ -4,7 +4,12 @@ import {
   BACKUP_REMINDER_DAYS,
   backupHealth,
   compareVersions,
+  formatCompleteBackupSuccessNote,
+  formatMissingDocumentsWarning,
+  formatRestorePreviewMissingNotice,
+  formatUnreferencedDocumentsNotice,
   isFromNewerVersion,
+  resolveDocumentDisplayName,
   restoreWarning,
 } from "./dataSafety";
 
@@ -116,5 +121,109 @@ describe("backupHealth", () => {
       now,
     });
     expect(health.state).toBe("protected");
+  });
+});
+
+describe("document warning formatting", () => {
+  const materials = [
+    { id: "1", title: "Weather Briefing", filePath: "docs/weather.pdf" },
+    { id: "2", title: "Flight Maneuvers Manual", filePath: "maneuvers.pdf" },
+    { id: "3", title: "Navigation Log", filePath: "nav.pdf" },
+    { id: "4", title: "Checklist", filePath: "checklist.pdf" },
+    { id: "5", title: "Weight and Balance", filePath: "wb.pdf" },
+  ];
+
+  it("resolves document display name by material title or filename fallback", () => {
+    expect(resolveDocumentDisplayName("docs/weather.pdf", materials)).toBe("Weather Briefing");
+    expect(resolveDocumentDisplayName("maneuvers.pdf", materials)).toBe("Flight Maneuvers Manual");
+    expect(resolveDocumentDisplayName("unlinked/notes.pdf", materials)).toBe("notes.pdf");
+    expect(resolveDocumentDisplayName("standalone.pdf")).toBe("standalone.pdf");
+  });
+
+  it("formats 1 missing document warning with correct verb and singular pronoun", () => {
+    const warning = formatMissingDocumentsWarning(["docs/weather.pdf"], materials);
+    expect(warning).toBe(
+      '1 study file was missing from app storage and wasn\'t included: "Weather Briefing". You can re-attach it in the Study Library.',
+    );
+  });
+
+  it("formats 2 missing documents warning with plural verbs and list", () => {
+    const warning = formatMissingDocumentsWarning(
+      ["docs/weather.pdf", "maneuvers.pdf"],
+      materials,
+    );
+    expect(warning).toBe(
+      '2 study files were missing from app storage and weren\'t included: "Weather Briefing" and "Flight Maneuvers Manual". You can re-attach them in the Study Library.',
+    );
+  });
+
+  it("formats 3 missing documents warning with Oxford comma list", () => {
+    const warning = formatMissingDocumentsWarning(
+      ["docs/weather.pdf", "maneuvers.pdf", "nav.pdf"],
+      materials,
+    );
+    expect(warning).toBe(
+      '3 study files were missing from app storage and weren\'t included: "Weather Briefing", "Flight Maneuvers Manual", and "Navigation Log". You can re-attach them in the Study Library.',
+    );
+  });
+
+  it("formats 5 missing documents warning with and N more truncation", () => {
+    const warning = formatMissingDocumentsWarning(
+      ["docs/weather.pdf", "maneuvers.pdf", "nav.pdf", "checklist.pdf", "wb.pdf"],
+      materials,
+    );
+    expect(warning).toBe(
+      '5 study files were missing from app storage and weren\'t included: "Weather Briefing", "Flight Maneuvers Manual", "Navigation Log", and 2 more. You can re-attach them in the Study Library.',
+    );
+  });
+
+  it("formats unreferenced documents notice plainly", () => {
+    expect(formatUnreferencedDocumentsNotice([])).toBe("");
+    expect(formatUnreferencedDocumentsNotice(["orphan.pdf"])).toBe(
+      "1 file in storage isn't linked to any material and was left out.",
+    );
+    expect(formatUnreferencedDocumentsNotice(["orphan1.pdf", "orphan2.pdf"])).toBe(
+      "2 files in storage aren't linked to any material and were left out.",
+    );
+  });
+
+  it("composes complete backup success note with warnings when present", () => {
+    const formatBytes = (b: number) => `${b} B`;
+    const clean = formatCompleteBackupSuccessNote(
+      { files: 5, bytes: 1000 },
+      formatBytes,
+      materials,
+    );
+    expect(clean.hasWarnings).toBe(false);
+    expect(clean.message).toBe("Complete backup saved — 5 files, 1000 B protected.");
+
+    const withWarnings = formatCompleteBackupSuccessNote(
+      {
+        files: 4,
+        bytes: 800,
+        missingDocuments: ["docs/weather.pdf"],
+        unreferencedDocuments: ["orphan.pdf"],
+      },
+      formatBytes,
+      materials,
+    );
+    expect(withWarnings.hasWarnings).toBe(true);
+    expect(withWarnings.message).toContain("Complete backup saved — 4 files, 800 B protected.");
+    expect(withWarnings.message).toContain(
+      '1 study file was missing from app storage and wasn\'t included: "Weather Briefing". You can re-attach it in the Study Library.',
+    );
+    expect(withWarnings.message).toContain(
+      "1 file in storage isn't linked to any material and was left out.",
+    );
+  });
+
+  it("formats restore preview missing notice for inspect and preview dialogs", () => {
+    expect(formatRestorePreviewMissingNotice(0)).toBe("");
+    expect(formatRestorePreviewMissingNotice(1)).toBe(
+      "This backup lists 1 file that was already missing when it was made.",
+    );
+    expect(formatRestorePreviewMissingNotice(3)).toBe(
+      "This backup lists 3 files that were already missing when it was made.",
+    );
   });
 });
