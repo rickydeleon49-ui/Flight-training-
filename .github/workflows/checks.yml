@@ -43,7 +43,7 @@ jobs:
             CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
             echo "Changed files in PR:"
             echo "$CHANGED"
-            NON_DOCS=$(echo "$CHANGED" | grep -v -E '^(\.agents/|\.gemini/|docs/|.*\.md$|LICENSE$|.*\.txt$)' || true)
+            NON_DOCS=$(echo "$CHANGED" | grep -v -E '^(\.agents/|\.gemini/|docs/|.*\.md$|LICENSE(\.txt)?$)' || true)
             if [ -z "$NON_DOCS" ]; then
               echo "Only documentation/markdown changed. Using lightweight verification path."
               echo "run_heavy=false" >> "$GITHUB_OUTPUT"

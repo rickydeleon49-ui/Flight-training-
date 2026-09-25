@@ -48,9 +48,10 @@ audit of what's already implemented and tested:
       above: full desktop test suite re-run on this branch (see
       `docs/ios/CONTINUATION.md` for the exact commands and results).
 - [x] Reviewed against the task brief's testing requirements. Format version
-      2 now provides SHA-256 inventory verification, an online SQLite snapshot,
-      staged `PRAGMA quick_check` and schema validation, stricter path and
-      compression limits, and regression tests. Version 1 restore remains
+      3 now provides SHA-256 inventory verification, an online SQLite snapshot,
+      two-way document completeness, declared missing files, staged
+      `PRAGMA quick_check` and schema validation, stricter path and
+      compression limits, and regression tests. Versions 1 and 2 restore remain
       supported. Merge-only conflict handling remains deferred.
 - [ ] **Attempted and reverted: a dedicated "Replace rollback after an
       injected failure" test.** Tried forcing `apply_pending_restore_in`'s
@@ -80,8 +81,8 @@ audit of what's already implemented and tested:
       exist). This is deferred to whichever milestone actually ships an
       iOS build capable of importing a `.hfdbackup` file (Milestone 3/4),
       not treated as a Milestone 2 checkbox to satisfy prematurely.
-- [x] Per-file SHA-256 inventory (`formatVersion` 2), with explicit
-      backward-compatible version 1 restore.
+- [x] Per-file SHA-256 inventory (`formatVersion` 2 and 3), with explicit
+      backward-compatible version 1 and 2 restore.
 
 ## Milestone 3 — iOS target, native surfaces
 
@@ -122,7 +123,7 @@ this section has been attempted.**
       pre-emptively rewrite working code against an unmeasured risk.
 - [ ] Merge-mode restore — **only if it can be built to the same standard
       as Replace** (transactional, tested rollback, documented conflict
-      rule, content-hash dedup via a `formatVersion` 2 manifest). If not
+      rule, content-hash dedup via a `formatVersion` 2 or 3 manifest). If not
       achievable within scope, Merge stays absent from the UI — never
       exposed half-finished.
 - [ ] iOS compile-check added to CI (no signing required for a

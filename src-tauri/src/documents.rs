@@ -79,6 +79,143 @@ pub(crate) fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
     Ok(relative_path)
 }
 
+/// Move a file from `from` to `to` using an atomic no-replace operation.
+///
+/// On macOS, standard `std::fs::rename` unconditionally overwrites an existing
+/// destination file. To prevent TOCTOU races where a file appears at `to`
+/// between a check and rename, we use Darwin's kernel-level `renamex_np` with
+/// `RENAME_EXCL` (with fallback to POSIX `hard_link` + `remove_file` if unsupported).
+///
+/// On Linux, we use `renameat2` with `RENAME_NOREPLACE` (with fallback to `hard_link`).
+///
+/// On Windows, `std::fs::rename` maps to `MoveFileExW` without `MOVEFILE_REPLACE_EXISTING`,
+/// which atomically fails with `ERROR_ALREADY_EXISTS` (183) if `to` exists.
+#[cfg(target_os = "macos")]
+pub(crate) fn rename_no_replace(from: &Path, to: &Path) -> std::io::Result<()> {
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+
+    extern "C" {
+        fn renamex_np(
+            from: *const std::os::raw::c_char,
+            to: *const std::os::raw::c_char,
+            flags: std::os::raw::c_uint,
+        ) -> std::os::raw::c_int;
+    }
+
+    const RENAME_EXCL: std::os::raw::c_uint = 0x00000004;
+
+    let from_c = CString::new(from.as_os_str().as_bytes())
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
+    let to_c = CString::new(to.as_os_str().as_bytes())
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
+
+    let res = unsafe { renamex_np(from_c.as_ptr(), to_c.as_ptr(), RENAME_EXCL) };
+    if res == 0 {
+        Ok(())
+    } else {
+        let err = std::io::Error::last_os_error();
+        // If renamex_np is unsupported on the underlying filesystem (ENOTSUP = 45),
+        // fallback to hard_link + remove_file.
+        if err.raw_os_error() == Some(45) {
+            std::fs::hard_link(from, to)?;
+            std::fs::remove_file(from)?;
+            Ok(())
+        } else {
+            Err(err)
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub(crate) fn rename_no_replace(from: &Path, to: &Path) -> std::io::Result<()> {
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+
+    extern "C" {
+        fn renameat2(
+            olddirfd: std::os::raw::c_int,
+            oldpath: *const std::os::raw::c_char,
+            newdirfd: std::os::raw::c_int,
+            newpath: *const std::os::raw::c_char,
+            flags: std::os::raw::c_uint,
+        ) -> std::os::raw::c_int;
+    }
+
+    const AT_FDCWD: std::os::raw::c_int = -100;
+    const RENAME_NOREPLACE: std::os::raw::c_uint = 1;
+
+    let from_c = CString::new(from.as_os_str().as_bytes())
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
+    let to_c = CString::new(to.as_os_str().as_bytes())
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
+
+    let res = unsafe {
+        renameat2(
+            AT_FDCWD,
+            from_c.as_ptr(),
+            AT_FDCWD,
+            to_c.as_ptr(),
+            RENAME_NOREPLACE,
+        )
+    };
+    if res == 0 {
+        Ok(())
+    } else {
+        let err = std::io::Error::last_os_error();
+        // If renameat2 is unsupported on the kernel or filesystem (ENOSYS = 38, EINVAL = 22),
+        // fallback to hard_link + remove_file.
+        if err.raw_os_error() == Some(38) || err.raw_os_error() == Some(22) {
+            std::fs::hard_link(from, to)?;
+            std::fs::remove_file(from)?;
+            Ok(())
+        } else {
+            Err(err)
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub(crate) fn rename_no_replace(from: &Path, to: &Path) -> std::io::Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+
+    extern "system" {
+        fn MoveFileExW(
+            lpExistingFileName: *const u16,
+            lpNewFileName: *const u16,
+            dwFlags: u32,
+        ) -> i32;
+    }
+
+    let mut from_wide: Vec<u16> = from.as_os_str().encode_wide().collect();
+    from_wide.push(0);
+    let mut to_wide: Vec<u16> = to.as_os_str().encode_wide().collect();
+    to_wide.push(0);
+
+    // Call MoveFileExW with dwFlags = 0 (omitting MOVEFILE_REPLACE_EXISTING = 0x1).
+    // Win32 MoveFileExW atomically fails with ERROR_ALREADY_EXISTS (183) or
+    // ERROR_FILE_EXISTS (80) if `to` already exists, guaranteeing no-overwrite.
+    let success = unsafe { MoveFileExW(from_wide.as_ptr(), to_wide.as_ptr(), 0) };
+    if success != 0 {
+        Ok(())
+    } else {
+        Err(std::io::Error::last_os_error())
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+pub(crate) fn rename_no_replace(from: &Path, to: &Path) -> std::io::Result<()> {
+    std::fs::hard_link(from, to)?;
+    std::fs::remove_file(from)
+}
+
+pub(crate) fn is_already_exists_error(err: &std::io::Error) -> bool {
+    err.kind() == std::io::ErrorKind::AlreadyExists
+        || err.raw_os_error() == Some(183) // Windows ERROR_ALREADY_EXISTS
+        || err.raw_os_error() == Some(80)  // Windows ERROR_FILE_EXISTS
+        || err.raw_os_error() == Some(17) // Unix EEXIST
+}
+
 /// Keep only characters that are safe on every platform we target.
 ///
 /// Runs of dots collapse to one. A stored name is never meant to be a `..`
@@ -321,8 +458,14 @@ pub fn rollback_delete_document_in(root: &Path, staged_id: &str) -> Result<(), S
             if let Some(parent) = target.parent() {
                 let _ = std::fs::create_dir_all(parent);
             }
-            std::fs::rename(&staged_file, &target)
-                .map_err(|e| format!("Could not restore document during rollback: {e}"))?;
+            if let Err(e) = rename_no_replace(&staged_file, &target) {
+                if is_already_exists_error(&e) || target.exists() {
+                    return Err(format!(
+                        "Could not restore document during rollback: destination file already exists: {safe_rel}"
+                    ));
+                }
+                return Err(format!("Could not restore document during rollback: {e}"));
+            }
         }
         let _ = std::fs::remove_file(&meta_file);
     } else if staged_file.is_file() {
@@ -408,13 +551,20 @@ pub fn cleanup_staged_deletions_in(root: &Path) -> Result<usize, String> {
                             let _ = std::fs::create_dir_all(parent);
                         }
                         let restored = if data_path.is_file() {
-                            match std::fs::rename(&data_path, &target) {
+                            match rename_no_replace(&data_path, &target) {
                                 Ok(()) => true,
                                 Err(err) => {
-                                    eprintln!(
-                                        "Could not restore staged document {safe_rel} from {}: {err}",
-                                        data_path.display()
-                                    );
+                                    if is_already_exists_error(&err) || target.exists() {
+                                        eprintln!(
+                                            "Conflict restoring staged document {safe_rel}: destination file already exists at {}",
+                                            target.display()
+                                        );
+                                    } else {
+                                        eprintln!(
+                                            "Could not restore staged document {safe_rel} from {}: {err}",
+                                            data_path.display()
+                                        );
+                                    }
                                     false
                                 }
                             }
@@ -1396,6 +1546,212 @@ mod tests {
         assert!(!root.join("evil.txt").exists());
         assert!(staged_data.is_file());
         assert!(staged_meta.is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn rollback_refuses_overwrite_and_preserves_staged_copy_when_destination_already_exists() {
+        let root = scratch_doc_root("rollback-dest-exists");
+        let docs = root.join(DOCUMENTS_DIR);
+        std::fs::create_dir_all(&docs).unwrap();
+
+        let doc_path = docs.join("conflict.pdf");
+        std::fs::write(&doc_path, b"original document content").unwrap();
+
+        let staged = stage_delete_document_in(&root, "conflict.pdf").unwrap();
+        assert!(!doc_path.exists());
+
+        // A new file is placed at the destination path before rollback occurs
+        std::fs::write(&doc_path, b"newly created document content").unwrap();
+
+        // Rollback must refuse to overwrite the destination and report the conflict
+        let result = rollback_delete_document_in(&root, &staged.staged_id);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.contains("already exists"),
+            "Error must report destination conflict, got: {err}"
+        );
+
+        // Target file must be untouched
+        assert_eq!(
+            std::fs::read(&doc_path).unwrap(),
+            b"newly created document content"
+        );
+
+        // Staged copy in trash must still be preserved and recoverable
+        let trash = docs.join(TRASH_DIR);
+        assert!(trash.join(format!("{}.data", staged.staged_id)).is_file());
+        assert!(trash.join(format!("{}.meta", staged.staged_id)).is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_leaves_staged_copy_untouched_when_destination_already_exists() {
+        let root = scratch_doc_root("cleanup-dest-exists");
+        let docs = root.join(DOCUMENTS_DIR);
+        std::fs::create_dir_all(&docs).unwrap();
+
+        // Create database referencing conflict.pdf
+        let db_path = root.join("her-flight-deck.db");
+        {
+            let conn = Connection::open(&db_path).unwrap();
+            conn.execute(
+                "CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT)",
+                [],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO study_materials (id, file_path) VALUES ('1', 'conflict.pdf')",
+                [],
+            )
+            .unwrap();
+        }
+
+        let doc_path = docs.join("conflict.pdf");
+        std::fs::write(&doc_path, b"original document content").unwrap();
+
+        let staged = stage_delete_document_in(&root, "conflict.pdf").unwrap();
+        assert!(!doc_path.exists());
+
+        // Place a new file at destination path
+        std::fs::write(&doc_path, b"concurrent file at destination").unwrap();
+
+        // Cleanup across launches must detect conflict, refuse to overwrite, and preserve staged copy
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 0);
+
+        // Destination must retain the concurrent file
+        assert_eq!(
+            std::fs::read(&doc_path).unwrap(),
+            b"concurrent file at destination"
+        );
+
+        // Staged files in trash must remain intact
+        let trash = docs.join(TRASH_DIR);
+        assert!(trash.join(format!("{}.data", staged.staged_id)).is_file());
+        assert!(trash.join(format!("{}.meta", staged.staged_id)).is_file());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_leaves_trash_untouched_when_schema_is_missing_or_invalid() {
+        let root = scratch_doc_root("cleanup-invalid-schema");
+        let docs = root.join(DOCUMENTS_DIR);
+        let trash = docs.join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+
+        // Stage a deletion in trash
+        let staged_data = trash.join("pending-1.data");
+        let staged_meta = trash.join("pending-1.meta");
+        std::fs::write(&staged_data, b"important study notes").unwrap();
+        let meta = StagedDeletion {
+            staged_id: "pending-1".to_string(),
+            original_relative_path: "important.pdf".to_string(),
+            already_missing: false,
+        };
+        std::fs::write(&staged_meta, serde_json::to_string(&meta).unwrap()).unwrap();
+
+        // Case 1: Database exists, but study_materials table is missing completely
+        let db_path = root.join("her-flight-deck.db");
+        {
+            let conn = Connection::open(&db_path).unwrap();
+            conn.execute("CREATE TABLE other_table (id TEXT PRIMARY KEY)", [])
+                .unwrap();
+        }
+
+        let cleaned = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned, 0);
+        // Staged files MUST NOT be purged as orphans!
+        assert!(
+            staged_data.is_file(),
+            "data must not be purged on missing table"
+        );
+        assert!(
+            staged_meta.is_file(),
+            "meta must not be purged on missing table"
+        );
+
+        // Case 2: Table exists, but file_path column is missing
+        {
+            let conn = Connection::open(&db_path).unwrap();
+            conn.execute("DROP TABLE other_table", []).unwrap();
+            conn.execute(
+                "CREATE TABLE study_materials (id TEXT PRIMARY KEY, title TEXT)",
+                [],
+            )
+            .unwrap();
+        }
+
+        let cleaned2 = cleanup_staged_deletions_in(&root).unwrap();
+        assert_eq!(cleaned2, 0);
+        // Staged files MUST still NOT be purged!
+        assert!(
+            staged_data.is_file(),
+            "data must not be purged on missing column"
+        );
+        assert!(
+            staged_meta.is_file(),
+            "meta must not be purged on missing column"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn rename_no_replace_refuses_to_overwrite_existing_destination() {
+        // Platform-specific test limitation:
+        // When executed on Windows or Linux, this test verifies the respective OS no-replace
+        // implementation (MoveFileExW without MOVEFILE_REPLACE_EXISTING on Windows; renameat2
+        // on Linux). Verification of Darwin's kernel-level `renamex_np(..., RENAME_EXCL)`
+        // requires executing on a macOS environment.
+        let root = scratch_doc_root("rename-no-replace-test");
+        let source = root.join("source.txt");
+        let dest = root.join("dest.txt");
+
+        std::fs::write(
+            &source,
+            b"source content that must not overwrite destination",
+        )
+        .unwrap();
+        std::fs::write(&dest, b"pre-existing destination content").unwrap();
+
+        let result = rename_no_replace(&source, &dest);
+        assert!(
+            result.is_err(),
+            "rename_no_replace must fail when destination exists"
+        );
+        let err = result.unwrap_err();
+        assert!(
+            is_already_exists_error(&err) || dest.exists(),
+            "Error must indicate destination collision, got: {err:?}"
+        );
+
+        // Crucial safety invariant: destination content MUST NOT be overwritten
+        assert_eq!(
+            std::fs::read(&dest).unwrap(),
+            b"pre-existing destination content",
+            "Destination content must be preserved untouched"
+        );
+
+        // Source file MUST NOT be deleted or lost
+        assert_eq!(
+            std::fs::read(&source).unwrap(),
+            b"source content that must not overwrite destination",
+            "Source content must be preserved untouched"
+        );
+
+        // When destination does not exist, rename_no_replace succeeds
+        let non_existing = root.join("new_file.txt");
+        assert!(rename_no_replace(&source, &non_existing).is_ok());
+        assert_eq!(
+            std::fs::read(&non_existing).unwrap(),
+            b"source content that must not overwrite destination"
+        );
+        assert!(!source.exists());
 
         let _ = std::fs::remove_dir_all(root);
     }

@@ -4,6 +4,7 @@ import {
   BACKUP_REMINDER_DAYS,
   backupHealth,
   compareVersions,
+  formatCompleteBackupReminderFailureNote,
   formatCompleteBackupSuccessNote,
   formatMissingDocumentsWarning,
   formatRestorePreviewMissingNotice,
@@ -224,6 +225,34 @@ describe("document warning formatting", () => {
     );
     expect(formatRestorePreviewMissingNotice(3)).toBe(
       "This backup lists 3 files that were already missing when it was made.",
+    );
+  });
+
+  it("retains missing-document and unreferenced-file warnings when backup reminder recording fails", () => {
+    const clean = formatCompleteBackupReminderFailureNote(
+      { path: "/backups/flight.hfdbackup" },
+      materials,
+    );
+    expect(clean).toBe(
+      "Complete backup saved at /backups/flight.hfdbackup, but the app could not update its backup reminder. Keep the file somewhere safe.",
+    );
+
+    const withWarnings = formatCompleteBackupReminderFailureNote(
+      {
+        path: "/backups/flight.hfdbackup",
+        missingDocuments: ["docs/weather.pdf"],
+        unreferencedDocuments: ["orphan.pdf"],
+      },
+      materials,
+    );
+    expect(withWarnings).toContain(
+      "Complete backup saved at /backups/flight.hfdbackup, but the app could not update its backup reminder. Keep the file somewhere safe.",
+    );
+    expect(withWarnings).toContain(
+      '1 study file was missing from app storage and wasn\'t included: "Weather Briefing". You can re-attach it in the Study Library.',
+    );
+    expect(withWarnings).toContain(
+      "1 file in storage isn't linked to any material and was left out.",
     );
   });
 });

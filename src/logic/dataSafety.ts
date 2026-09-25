@@ -201,6 +201,23 @@ export function formatUnreferencedDocumentsNotice(
   return `${count} files in storage aren't linked to any material and were left out.`;
 }
 
+export function formatBackupDocumentWarnings(
+  backup: {
+    missingDocuments?: string[];
+    unreferencedDocuments?: string[];
+  },
+  materials?: MaterialTitleRef[],
+): string[] {
+  const extraParts: string[] = [];
+  if (backup.missingDocuments && backup.missingDocuments.length > 0) {
+    extraParts.push(formatMissingDocumentsWarning(backup.missingDocuments, materials));
+  }
+  if (backup.unreferencedDocuments && backup.unreferencedDocuments.length > 0) {
+    extraParts.push(formatUnreferencedDocumentsNotice(backup.unreferencedDocuments));
+  }
+  return extraParts;
+}
+
 /**
  * Compose the full message shown after saving a complete backup, incorporating
  * warnings for missing or unreferenced files if any were detected.
@@ -216,14 +233,7 @@ export function formatCompleteBackupSuccessNote(
   materials?: MaterialTitleRef[],
 ): { message: string; hasWarnings: boolean } {
   const base = `Complete backup saved — ${backup.files} files, ${formatBytesFn(backup.bytes)} protected.`;
-  const extraParts: string[] = [];
-
-  if (backup.missingDocuments && backup.missingDocuments.length > 0) {
-    extraParts.push(formatMissingDocumentsWarning(backup.missingDocuments, materials));
-  }
-  if (backup.unreferencedDocuments && backup.unreferencedDocuments.length > 0) {
-    extraParts.push(formatUnreferencedDocumentsNotice(backup.unreferencedDocuments));
-  }
+  const extraParts = formatBackupDocumentWarnings(backup, materials);
 
   if (extraParts.length === 0) {
     return { message: base, hasWarnings: false };
@@ -232,6 +242,27 @@ export function formatCompleteBackupSuccessNote(
     message: `${base} ${extraParts.join(" ")}`,
     hasWarnings: true,
   };
+}
+
+/**
+ * Compose the message shown when a backup was saved successfully, but writing
+ * the reminder record failed. Retains any missing-document or unreferenced-file warnings.
+ */
+export function formatCompleteBackupReminderFailureNote(
+  backup: {
+    path: string;
+    missingDocuments?: string[];
+    unreferencedDocuments?: string[];
+  },
+  materials?: MaterialTitleRef[],
+): string {
+  const base = `Complete backup saved at ${backup.path}, but the app could not update its backup reminder. Keep the file somewhere safe.`;
+  const extraParts = formatBackupDocumentWarnings(backup, materials);
+
+  if (extraParts.length === 0) {
+    return base;
+  }
+  return `${base} ${extraParts.join(" ")}`;
 }
 
 /**

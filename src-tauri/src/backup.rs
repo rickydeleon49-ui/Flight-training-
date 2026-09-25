@@ -41,7 +41,8 @@ const DOCUMENTS_DIR: &str = "documents";
 const ARCHIVE_MANIFEST: &str = "manifest.json";
 const ARCHIVE_INTEGRITY: &str = "integrity.json";
 const ARCHIVE_FORMAT: &str = "her-flight-deck-complete-backup";
-const ARCHIVE_VERSION: u32 = 2;
+const ARCHIVE_VERSION: u32 = 3;
+const V2_ARCHIVE_VERSION: u32 = 2;
 const LEGACY_ARCHIVE_VERSION: u32 = 1;
 const RESTORE_STAGING_DIR: &str = ".restore-staging";
 const RESTORE_PENDING_DIR: &str = ".restore-pending";
@@ -682,7 +683,7 @@ pub(crate) fn query_referenced_documents(database_path: &Path) -> Result<HashSet
         .map_err(|e| format!("Could not inspect database: {e}"))?;
 
     if !has_table {
-        return Ok(HashSet::new());
+        return Err("The database is missing the study_materials table.".to_string());
     }
 
     let mut stmt = connection
@@ -697,7 +698,9 @@ pub(crate) fn query_referenced_documents(database_path: &Path) -> Result<HashSet
         .any(|col| col == "file_path");
 
     if !has_file_path {
-        return Ok(HashSet::new());
+        return Err(
+            "The database study_materials table is missing the file_path column.".to_string(),
+        );
     }
 
     let mut stmt = connection
@@ -771,33 +774,33 @@ fn scan_active_documents_recursive(
     Ok(())
 }
 
-fn scan_staged_deletion_paths(trash_dir: &Path) -> HashSet<String> {
+fn scan_staged_deletion_paths(trash_dir: &Path) -> Result<HashSet<String>, String> {
     let mut staged = HashSet::new();
     let entries = match std::fs::read_dir(trash_dir) {
         Ok(entries) => entries,
-        Err(_) => return staged,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(staged),
+        Err(e) => return Err(format!("Could not read trash directory: {e}")),
     };
 
-    for entry in entries.flatten() {
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Could not read trash directory entry: {e}"))?;
         let path = entry.path();
         if path.extension().and_then(|s| s.to_str()) == Some("meta") {
-            if let Ok(meta_json) = std::fs::read_to_string(&path) {
-                if let Ok(meta) =
-                    serde_json::from_str::<crate::documents::StagedDeletion>(&meta_json)
-                {
-                    if crate::documents::validate_staged_id(&meta.staged_id).is_err() {
-                        continue;
-                    }
-                    let normalized = meta.original_relative_path.replace('\\', "/");
-                    if let Ok(safe_rel) = crate::documents::safe_relative_path(&normalized) {
-                        staged.insert(safe_rel.to_string());
-                    }
-                }
-            }
+            let meta_json = std::fs::read_to_string(&path)
+                .map_err(|e| format!("Could not read staged deletion metadata in trash: {e}"))?;
+            let meta: crate::documents::StagedDeletion = serde_json::from_str(&meta_json)
+                .map_err(|e| format!("Could not parse staged deletion metadata in trash: {e}"))?;
+            crate::documents::validate_staged_id(&meta.staged_id)
+                .map_err(|e| format!("Invalid staged deletion id in trash: {e}"))?;
+            let normalized = meta.original_relative_path.replace('\\', "/");
+            let safe_rel = crate::documents::safe_relative_path(&normalized).map_err(|e| {
+                format!("Invalid original relative path in staged deletion metadata: {e}")
+            })?;
+            staged.insert(safe_rel.to_string());
         }
     }
 
-    staged
+    Ok(staged)
 }
 
 struct TempFileGuard<'a>(&'a Path);
@@ -807,12 +810,12 @@ impl<'a> Drop for TempFileGuard<'a> {
     }
 }
 
-fn verify_archive_database_document_completeness<R: Read + Seek>(
+fn verify_archive_database_and_documents<R: Read + Seek>(
     root: &Path,
     archive: &mut ZipArchive<R>,
     manifest: &CompleteBackupManifest,
     archive_documents: &HashSet<String>,
-) -> Result<(), String> {
+) -> Result<(Vec<String>, Vec<String>), String> {
     let mut db_entry = archive
         .by_name(DB_FILES[0])
         .map_err(|_| "That backup does not contain a Her Flight Deck database.".to_string())?;
@@ -839,32 +842,68 @@ fn verify_archive_database_document_completeness<R: Read + Seek>(
         .map_err(|e| format!("Could not inspect backup database: {e}"))?;
     drop(temp_file);
 
+    verify_application_database(&temp_db_path)?;
+
     let referenced_documents = query_referenced_documents(&temp_db_path)?;
+    let referenced_set: HashSet<&str> = referenced_documents.iter().map(|s| s.as_str()).collect();
     let missing_declared: HashSet<&str> = manifest
         .missing_at_export
         .iter()
         .map(|s| s.as_str())
         .collect();
 
+    let mut missing_documents = manifest.missing_at_export.clone();
+
     for referenced in &referenced_documents {
-        if !archive_documents.contains(referenced)
-            && !missing_declared.contains(referenced.as_str())
-        {
-            return Err(format!(
-                "The backup database references a document that is missing from the archive: {referenced}"
-            ));
+        if !archive_documents.contains(referenced) {
+            if manifest.format_version >= ARCHIVE_VERSION {
+                // In format version 3 (newly created complete backups), strict two-way completeness
+                // is enforced: every referenced document missing from storage must have been
+                // identified and declared in manifest.missing_at_export. An unexpected omission
+                // fails archive verification.
+                if !missing_declared.contains(referenced.as_str()) {
+                    return Err(format!(
+                        "The backup database references a document that is missing from the archive: {referenced}"
+                    ));
+                }
+            } else {
+                // In format version 2 (older backups created before missing_at_export was tracked),
+                // pre-existing missing files are tolerated so she can restore her library.
+                // We collect any referenced document missing from the archive so restore
+                // previews and warnings disclose it.
+                if !missing_declared.contains(referenced.as_str()) {
+                    missing_documents.push(referenced.clone());
+                }
+            }
         }
     }
 
-    for in_archive in archive_documents {
-        if !referenced_documents.contains(in_archive) {
+    let mut unreferenced_documents = Vec::new();
+    if manifest.format_version >= ARCHIVE_VERSION {
+        let mut unreferenced: Vec<_> = archive_documents
+            .iter()
+            .filter(|doc| !referenced_set.contains(doc.as_str()))
+            .collect();
+        unreferenced.sort();
+        if let Some(first_unreferenced) = unreferenced.first() {
             return Err(format!(
-                "The backup contains an unreferenced document: {in_archive}"
+                "The backup archive contains an unreferenced document: {first_unreferenced}"
             ));
+        }
+    } else {
+        for archived in archive_documents {
+            if !referenced_set.contains(archived.as_str()) {
+                unreferenced_documents.push(archived.clone());
+            }
         }
     }
 
-    Ok(())
+    missing_documents.sort();
+    missing_documents.dedup();
+    unreferenced_documents.sort();
+    unreferenced_documents.dedup();
+
+    Ok((missing_documents, unreferenced_documents))
 }
 
 fn inspect_archive(
@@ -893,13 +932,13 @@ fn inspect_archive(
     if manifest.format != ARCHIVE_FORMAT
         || !matches!(
             manifest.format_version,
-            LEGACY_ARCHIVE_VERSION | ARCHIVE_VERSION
+            LEGACY_ARCHIVE_VERSION | V2_ARCHIVE_VERSION | ARCHIVE_VERSION
         )
     {
         return Err("That backup format is not supported by this version of the app.".to_string());
     }
 
-    let mut expected_integrity = if manifest.format_version == ARCHIVE_VERSION {
+    let mut expected_integrity = if manifest.format_version >= V2_ARCHIVE_VERSION {
         let mut entry = archive
             .by_name(ARCHIVE_INTEGRITY)
             .map_err(|_| "That backup does not contain integrity information.".to_string())?;
@@ -1039,14 +1078,13 @@ fn inspect_archive(
         return Err("That backup does not contain a Her Flight Deck database.".to_string());
     }
 
-    if manifest.format_version == ARCHIVE_VERSION {
-        verify_archive_database_document_completeness(
-            root,
-            &mut archive,
-            &manifest,
-            &archive_documents,
-        )?;
-    }
+    let (missing_documents, unreferenced_documents) = if manifest.format_version
+        >= V2_ARCHIVE_VERSION
+    {
+        verify_archive_database_and_documents(root, &mut archive, &manifest, &archive_documents)?
+    } else {
+        (Vec::new(), Vec::new())
+    };
 
     Ok(CompleteBackupInfo {
         app_version: manifest.app_version,
@@ -1055,8 +1093,8 @@ fn inspect_archive(
         files,
         bytes,
         path: source.to_string_lossy().to_string(),
-        missing_documents: manifest.missing_at_export,
-        unreferenced_documents: Vec::new(),
+        missing_documents,
+        unreferenced_documents,
     })
 }
 
@@ -1319,7 +1357,8 @@ fn write_complete_backup_from_database_with_hook(
 
             let staged_deletions = scan_staged_deletion_paths(
                 &root.join(DOCUMENTS_DIR).join(crate::documents::TRASH_DIR),
-            );
+            )
+            .map_err(BackupExportError::Transient)?;
 
             let mut missing: Vec<String> = Vec::new();
             for doc in &referenced {
@@ -3105,7 +3144,7 @@ mod tests {
     }
 
     #[test]
-    fn format_v2_inspection_proves_database_and_document_completeness() {
+    fn format_v3_inspection_proves_database_and_document_completeness() {
         let root = scratch("completeness-test");
         let elsewhere = scratch("completeness-test-out");
         write_database(&root.join(DB_FILES[0]), "db record");
@@ -3142,7 +3181,7 @@ mod tests {
         zip.finish().unwrap();
 
         // Database references handbook.pdf, but archive contains NO documents.
-        // Format-v2 inspection MUST refuse this archive!
+        // Format-v3 inspection MUST refuse this archive!
         let error = inspect_archive(&root, &archive, "0.5.2").unwrap_err();
         assert!(
             error.contains("missing from the archive"),
@@ -3277,10 +3316,6 @@ mod tests {
             serde_json::to_string(&meta).unwrap(),
         )
         .unwrap();
-
-        // Also add an invalid meta to confirm invalid metas are safely ignored
-        std::fs::write(trash.join("corrupt.meta"), "{ invalid json }").unwrap();
-
         let archive = elsewhere.join("in-progress.hfdbackup");
 
         // 1. Single attempt: a referenced file that exists only as a staged .data+.meta in .trash
@@ -3311,5 +3346,360 @@ mod tests {
 
         std::fs::remove_dir_all(&root).unwrap();
         std::fs::remove_dir_all(&elsewhere).unwrap();
+    }
+
+    #[test]
+    fn export_refuses_referenced_document_when_trash_metadata_is_corrupt_and_retries_transiently() {
+        let root = scratch("corrupt-trash-meta-export");
+        let elsewhere = scratch("corrupt-trash-meta-export-out");
+        let db_path = root.join(DB_FILES[0]);
+        write_database(&db_path, "corrupt trash metadata test");
+
+        // Reference a document in the database that is not in documents/
+        {
+            let conn = Connection::open(&db_path).unwrap();
+            conn.execute(
+                "INSERT INTO study_materials (id, file_path) VALUES ('1', 'staged-doc.pdf')",
+                [],
+            )
+            .unwrap();
+        }
+
+        // Stage file in trash but with corrupt/malformed metadata
+        let trash = root.join(DOCUMENTS_DIR).join(crate::documents::TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+        std::fs::write(trash.join("del-1.data"), "staged document bytes").unwrap();
+        std::fs::write(trash.join("del-1.meta"), "{ malformed json: not valid }").unwrap();
+
+        let archive = elsewhere.join("corrupt-meta.hfdbackup");
+
+        // 1. Single attempt: fails with Transient error when trash cannot be inspected reliably
+        let single_attempt = write_complete_backup_from_database(
+            &root, &archive, "0.5.2", &db_path, false, true, None,
+        );
+        match single_attempt {
+            Err(BackupExportError::Transient(msg)) => {
+                assert!(
+                    msg.contains("staged deletion metadata"),
+                    "Expected transient error indicating metadata problem, got: {msg}"
+                );
+            }
+            other => panic!("Expected Transient error, got: {other:?}"),
+        }
+
+        // 2. Full export with retry: fails safely and boundedly, with no archive finalized
+        let result = create_consistent_complete_backup_with_retry(&root, &archive, "0.5.2");
+        assert!(result.is_err(), "Export must fail across retries");
+        let err = result.unwrap_err();
+        assert!(
+            err.contains("staged deletion metadata"),
+            "Final error must explain metadata inspection failure, got: {err}"
+        );
+        assert!(!archive.exists(), "Archive must not exist on failure");
+
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&elsewhere).unwrap();
+    }
+
+    #[test]
+    fn format_v2_with_unreferenced_document_inspects_and_restores_cleanly() {
+        let root = scratch("v2-unreferenced-restore");
+        let elsewhere = scratch("v2-unreferenced-restore-out");
+        let restore_target = scratch("v2-unreferenced-restore-target");
+        write_database(&root.join(DB_FILES[0]), "valid v2 db");
+        write_document(&root, "handbook.pdf", "handbook contents");
+
+        // Create an unreferenced file on disk
+        let orphan_path = root.join(DOCUMENTS_DIR).join("unreferenced.pdf");
+        std::fs::write(&orphan_path, "old style unreferenced document in v2").unwrap();
+
+        let archive = elsewhere.join("old-v2.hfdbackup");
+
+        // Construct a valid v2 archive containing both handbook.pdf and unreferenced.pdf
+        let db_path = root.join(DB_FILES[0]);
+        let output = File::create(&archive).unwrap();
+        let mut zip = ZipWriter::new(output);
+
+        let manifest = CompleteBackupManifest {
+            format: ARCHIVE_FORMAT.to_string(),
+            format_version: V2_ARCHIVE_VERSION,
+            app_version: "0.5.2".to_string(),
+            created_at: unix_timestamp(),
+            missing_at_export: Vec::new(),
+        };
+        zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
+        zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
+            .unwrap();
+
+        let mut integrity = Vec::new();
+        let saved_db = add_file_to_archive(&mut zip, &db_path, DB_FILES[0]).unwrap();
+        integrity.push(saved_db);
+
+        let saved_doc = add_file_to_archive(
+            &mut zip,
+            &root.join(DOCUMENTS_DIR).join("handbook.pdf"),
+            "documents/handbook.pdf",
+        )
+        .unwrap();
+        integrity.push(saved_doc);
+
+        let saved_orphan =
+            add_file_to_archive(&mut zip, &orphan_path, "documents/unreferenced.pdf").unwrap();
+        integrity.push(saved_orphan);
+
+        zip.start_file(ARCHIVE_INTEGRITY, archive_options())
+            .unwrap();
+        zip.write_all(
+            serde_json::to_string(&CompleteBackupIntegrity {
+                algorithm: "sha256".to_string(),
+                files: integrity,
+            })
+            .unwrap()
+            .as_bytes(),
+        )
+        .unwrap();
+        zip.finish().unwrap();
+
+        // 1. Proves inspection succeeds for valid old-style v2 archive with an unreferenced document
+        let info = inspect_archive(&root, &archive, "0.5.2").unwrap();
+        assert_eq!(info.files, 3); // db + handbook.pdf + unreferenced.pdf
+        assert_eq!(
+            info.unreferenced_documents,
+            vec!["unreferenced.pdf".to_string()]
+        );
+
+        // 2. Proves restore succeeds
+        let staged = stage_complete_restore_in(&restore_target, &archive, "0.5.2").unwrap();
+        assert_eq!(staged.files, 3);
+        apply_pending_restore_in(&restore_target).unwrap();
+
+        assert!(restore_target.join(DB_FILES[0]).is_file());
+        assert!(restore_target
+            .join(DOCUMENTS_DIR)
+            .join("handbook.pdf")
+            .is_file());
+        assert!(restore_target
+            .join(DOCUMENTS_DIR)
+            .join("unreferenced.pdf")
+            .is_file());
+
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&elsewhere).unwrap();
+        std::fs::remove_dir_all(&restore_target).unwrap();
+    }
+
+    #[test]
+    fn format_v3_with_unreferenced_document_fails_inspection() {
+        let root = scratch("v3-unreferenced-inspection");
+        let elsewhere = scratch("v3-unreferenced-inspection-out");
+        write_database(&root.join(DB_FILES[0]), "valid v3 db");
+        write_document(&root, "handbook.pdf", "handbook contents");
+
+        let orphan_path = root.join(DOCUMENTS_DIR).join("unreferenced.pdf");
+        std::fs::write(&orphan_path, "unreferenced document in v3").unwrap();
+
+        let archive = elsewhere.join("v3-with-unreferenced.hfdbackup");
+        let db_path = root.join(DB_FILES[0]);
+        let output = File::create(&archive).unwrap();
+        let mut zip = ZipWriter::new(output);
+
+        let manifest = CompleteBackupManifest {
+            format: ARCHIVE_FORMAT.to_string(),
+            format_version: ARCHIVE_VERSION, // v3
+            app_version: "0.5.2".to_string(),
+            created_at: unix_timestamp(),
+            missing_at_export: Vec::new(),
+        };
+        zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
+        zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
+            .unwrap();
+
+        let mut integrity = Vec::new();
+        let saved_db = add_file_to_archive(&mut zip, &db_path, DB_FILES[0]).unwrap();
+        integrity.push(saved_db);
+
+        let saved_doc = add_file_to_archive(
+            &mut zip,
+            &root.join(DOCUMENTS_DIR).join("handbook.pdf"),
+            "documents/handbook.pdf",
+        )
+        .unwrap();
+        integrity.push(saved_doc);
+
+        let saved_orphan =
+            add_file_to_archive(&mut zip, &orphan_path, "documents/unreferenced.pdf").unwrap();
+        integrity.push(saved_orphan);
+
+        zip.start_file(ARCHIVE_INTEGRITY, archive_options())
+            .unwrap();
+        zip.write_all(
+            serde_json::to_string(&CompleteBackupIntegrity {
+                algorithm: "sha256".to_string(),
+                files: integrity,
+            })
+            .unwrap()
+            .as_bytes(),
+        )
+        .unwrap();
+        zip.finish().unwrap();
+
+        let err = inspect_archive(&root, &archive, "0.5.2").unwrap_err();
+        assert!(
+            err.contains("contains an unreferenced document: unreferenced.pdf"),
+            "Expected unreferenced document error, got: {err}"
+        );
+
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&elsewhere).unwrap();
+    }
+
+    #[test]
+    fn old_style_format_v2_with_missing_referenced_document_inspects_and_restores_with_warning() {
+        let root = scratch("old-v2-missing-doc-root");
+        let elsewhere = scratch("old-v2-missing-doc-out");
+        let restore_target = scratch("old-v2-missing-doc-target");
+        let db_path = root.join(DB_FILES[0]);
+        write_database(&db_path, "old v2 with missing doc");
+
+        let connection = Connection::open(&db_path).unwrap();
+        connection
+            .execute(
+                "INSERT INTO study_materials (id, file_path) VALUES ('mat-1', 'present.pdf')",
+                [],
+            )
+            .unwrap();
+        connection
+            .execute(
+                "INSERT INTO study_materials (id, file_path) VALUES ('mat-2', 'missing.pdf')",
+                [],
+            )
+            .unwrap();
+        drop(connection);
+
+        let present_content = "content of present file";
+        write_document(&root, "present.pdf", present_content);
+
+        // 1. Construct an old-style format-v2 archive:
+        // - formatVersion: 2
+        // - NO missing_at_export field in manifest.json
+        // - Valid integrity.json containing records for the files present in the archive
+        // - Database references missing.pdf which is NOT in the archive
+        let old_v2_archive = elsewhere.join("old-v2-missing.hfdbackup");
+        let output = File::create(&old_v2_archive).unwrap();
+        let mut zip = ZipWriter::new(output);
+
+        let old_manifest_json = r#"{
+  "format": "her-flight-deck-complete-backup",
+  "formatVersion": 2,
+  "appVersion": "0.5.1",
+  "createdAt": 1700000000
+}"#;
+        zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
+        zip.write_all(old_manifest_json.as_bytes()).unwrap();
+
+        let mut integrity = Vec::new();
+        let saved_db = add_file_to_archive(&mut zip, &db_path, DB_FILES[0]).unwrap();
+        integrity.push(saved_db);
+
+        let saved_doc = add_file_to_archive(
+            &mut zip,
+            &root.join(DOCUMENTS_DIR).join("present.pdf"),
+            "documents/present.pdf",
+        )
+        .unwrap();
+        integrity.push(saved_doc);
+
+        zip.start_file(ARCHIVE_INTEGRITY, archive_options())
+            .unwrap();
+        zip.write_all(
+            serde_json::to_string(&CompleteBackupIntegrity {
+                algorithm: "sha256".to_string(),
+                files: integrity,
+            })
+            .unwrap()
+            .as_bytes(),
+        )
+        .unwrap();
+        zip.finish().unwrap();
+
+        // 2. Prove inspection succeeds and discloses the missing reference in restore info
+        let info = inspect_archive(&root, &old_v2_archive, "0.5.2")
+            .expect("old-style v2 archive must inspect successfully");
+        assert_eq!(info.files, 2); // her-flight-deck.db + documents/present.pdf
+        assert_eq!(info.missing_documents, vec!["missing.pdf".to_string()]);
+
+        // 3. Prove restore succeeds and present files retain their exact bytes
+        let staged = stage_complete_restore_in(&restore_target, &old_v2_archive, "0.5.2")
+            .expect("old-style v2 archive must stage successfully");
+        assert_eq!(staged.files, 2);
+        assert_eq!(staged.missing_documents, vec!["missing.pdf".to_string()]);
+
+        apply_pending_restore_in(&restore_target)
+            .expect("old-style v2 archive must apply successfully");
+        assert!(restore_target.join(DB_FILES[0]).is_file());
+        let restored_present = restore_target.join(DOCUMENTS_DIR).join("present.pdf");
+        assert!(restored_present.is_file());
+        let read_back = std::fs::read_to_string(&restored_present).unwrap();
+        assert_eq!(read_back, present_content);
+        assert!(!restore_target
+            .join(DOCUMENTS_DIR)
+            .join("missing.pdf")
+            .exists());
+
+        // 4. Prove a newly created archive (v3) that unexpectedly omits a referenced file fails validation
+        let new_v3_archive = elsewhere.join("new-v3-unexpected-omission.hfdbackup");
+        let output = File::create(&new_v3_archive).unwrap();
+        let mut zip = ZipWriter::new(output);
+
+        let new_manifest = CompleteBackupManifest {
+            format: ARCHIVE_FORMAT.to_string(),
+            format_version: ARCHIVE_VERSION, // 3
+            app_version: "0.5.2".to_string(),
+            created_at: unix_timestamp(),
+            missing_at_export: Vec::new(), // unexpectedly undeclared omission!
+        };
+        zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
+        zip.write_all(serde_json::to_string(&new_manifest).unwrap().as_bytes())
+            .unwrap();
+
+        let mut integrity_v3 = Vec::new();
+        let saved_db_v3 = add_file_to_archive(&mut zip, &db_path, DB_FILES[0]).unwrap();
+        integrity_v3.push(saved_db_v3);
+        let saved_doc_v3 = add_file_to_archive(
+            &mut zip,
+            &root.join(DOCUMENTS_DIR).join("present.pdf"),
+            "documents/present.pdf",
+        )
+        .unwrap();
+        integrity_v3.push(saved_doc_v3);
+
+        zip.start_file(ARCHIVE_INTEGRITY, archive_options())
+            .unwrap();
+        zip.write_all(
+            serde_json::to_string(&CompleteBackupIntegrity {
+                algorithm: "sha256".to_string(),
+                files: integrity_v3,
+            })
+            .unwrap()
+            .as_bytes(),
+        )
+        .unwrap();
+        zip.finish().unwrap();
+
+        let err = inspect_archive(&root, &new_v3_archive, "0.5.2").expect_err(
+            "new archive omitting referenced file without declaration must fail validation",
+        );
+        assert!(
+            err.contains("missing from the archive"),
+            "Expected completeness error, got: {err}"
+        );
+        assert!(
+            err.contains("missing.pdf"),
+            "Expected mention of missing.pdf, got: {err}"
+        );
+
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&elsewhere).unwrap();
+        std::fs::remove_dir_all(&restore_target).unwrap();
     }
 }

@@ -41,6 +41,7 @@ import {
 } from "@/services/backups";
 import {
   backupHealth,
+  formatCompleteBackupReminderFailureNote,
   formatCompleteBackupSuccessNote,
   formatRestorePreviewMissingNotice,
   restoreWarning,
@@ -228,20 +229,24 @@ export function Settings() {
         version: backup.appVersion,
         path: backup.path,
       };
+      let materials: { id: string; title: string }[] = [];
+      try {
+        materials = await repositories.documents.list().catch(() => []);
+      } catch {
+        // ignore
+      }
       try {
         await repositories.app.recordCompleteBackup(record);
         setLastBackup(record);
-        const materials = await repositories.documents.list().catch(() => []);
         const { message, hasWarnings } = formatCompleteBackupSuccessNote(backup, formatBytes, materials);
         setBackupProblem(hasWarnings);
         setBackupNote(message);
       } catch {
         // The archive is already finalized and verified. A failed reminder
-        // write must not tell her that the actual backup failed.
+        // write must not tell her that the actual backup failed, but must
+        // still retain any missing-document or unreferenced-file warnings.
         setBackupProblem(true);
-        setBackupNote(
-          `Complete backup saved at ${backup.path}, but the app could not update its backup reminder. Keep the file somewhere safe.`,
-        );
+        setBackupNote(formatCompleteBackupReminderFailureNote(backup, materials));
       }
     } catch (error) {
       setBackupProblem(true);
