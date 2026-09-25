@@ -21,6 +21,26 @@ export interface ImportedDocument {
   fileSize: number;
 }
 
+export interface MissingMaterialInfo {
+  id: string;
+  title: string;
+  filePath: string;
+  originalFileName: string | null;
+}
+
+export interface UnlinkedFileInfo {
+  relativePath: string;
+  fileName: string;
+  fileSize: number;
+}
+
+export interface LibraryReport {
+  missingMaterials: MissingMaterialInfo[];
+  unlinkedFiles: UnlinkedFileInfo[];
+  totalMaterials: number;
+  totalFiles: number;
+}
+
 export class DesktopOnlyError extends Error {
   constructor() {
     super("Adding a file needs the desktop application.");
@@ -176,4 +196,35 @@ export function formatFileSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Compare database file references with app-owned document storage. */
+export async function checkLibrary(): Promise<LibraryReport> {
+  if (!isTauri()) {
+    return {
+      missingMaterials: [],
+      unlinkedFiles: [],
+      totalMaterials: 0,
+      totalFiles: 0,
+    };
+  }
+  return invoke<LibraryReport>("check_library");
+}
+
+/** Attach a stored, currently unlinked file to a material whose file is missing. */
+export async function reattachUnlinkedFile(materialId: string, relativePath: string): Promise<void> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  await invoke("reattach_unlinked_file", { materialId, relativePath });
+}
+
+/** Make an existing app-owned file visible as a new Study Library material. */
+export async function importUnlinkedFile(relativePath: string): Promise<string> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<string>("import_unlinked_file", { relativePath });
+}
+
+/** Move an app-owned unlinked file to private trash, returning an undo token. */
+export async function trashUnlinkedFile(relativePath: string): Promise<StagedDeletion> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<StagedDeletion>("trash_unlinked_file", { relativePath });
 }

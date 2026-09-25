@@ -5,9 +5,11 @@
 //! keeps personal training material inside app data (never the repository),
 //! and means the library does not break when the original file moves.
 
+use std::collections::HashSet;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use rusqlite::{params, Connection, TransactionBehavior};
+use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tauri::AppHandle;
@@ -25,6 +27,32 @@ pub struct StagedDeletion {
     pub staged_id: String,
     pub original_relative_path: String,
     pub already_missing: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct MissingMaterialInfo {
+    pub id: String,
+    pub title: String,
+    pub file_path: String,
+    pub original_file_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct UnlinkedFileInfo {
+    pub relative_path: String,
+    pub file_name: String,
+    pub file_size: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryReport {
+    pub missing_materials: Vec<MissingMaterialInfo>,
+    pub unlinked_files: Vec<UnlinkedFileInfo>,
+    pub total_materials: usize,
+    pub total_files: usize,
 }
 
 #[derive(Debug, Serialize)]
@@ -77,6 +105,39 @@ pub(crate) fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
         return Err("Invalid document path.".to_string());
     }
     Ok(relative_path)
+}
+
+fn active_managed_file(
+    root: &Path,
+    relative_path: &str,
+) -> Result<(String, PathBuf, std::fs::Metadata), String> {
+    let normalized = relative_path.replace('\\', "/");
+    let safe = safe_relative_path(&normalized)?;
+    if safe
+        .split('/')
+        .any(|part| part.starts_with('.') || part.ends_with('.') || part.ends_with(' '))
+    {
+        return Err("Hidden or ambiguous document paths cannot be repaired here.".to_string());
+    }
+    let docs_dir = root.join(DOCUMENTS_DIR);
+    let target = docs_dir.join(safe);
+    let canonical_docs = docs_dir
+        .canonicalize()
+        .map_err(|e| format!("Could not verify document storage: {e}"))?;
+    let canonical_parent = target
+        .parent()
+        .ok_or_else(|| "Invalid document path.".to_string())?
+        .canonicalize()
+        .map_err(|e| format!("Could not verify document folder: {e}"))?;
+    if !canonical_parent.starts_with(&canonical_docs) {
+        return Err("Document path leaves app storage.".to_string());
+    }
+    let metadata = std::fs::symlink_metadata(&target)
+        .map_err(|e| format!("Could not read file '{safe}': {e}"))?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err("Only real app-owned files can be used here.".to_string());
+    }
+    Ok((safe.to_string(), target, metadata))
 }
 
 /// Move a file from `from` to `to` using an atomic no-replace operation.
@@ -377,11 +438,17 @@ pub fn stage_delete_document_in(
         });
     }
 
+    if let Ok(meta) = std::fs::symlink_metadata(&source) {
+        if meta.file_type().is_symlink() {
+            return Err("A symbolic link cannot be staged for deletion.".to_string());
+        }
+    }
+
     let trash = trash_root(root)?;
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
-        .as_millis();
+        .as_nanos();
     let sanitized_name = sanitize_file_name(safe);
     let staged_id = format!("{now}-{sanitized_name}");
     let staged_file = trash.join(format!("{staged_id}.data"));
@@ -395,11 +462,23 @@ pub fn stage_delete_document_in(
 
     let meta_json = serde_json::to_string_pretty(&staged_info)
         .map_err(|e| format!("Could not record staged deletion: {e}"))?;
-    std::fs::write(&meta_file, meta_json)
+    let mut meta_handle = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&meta_file)
         .map_err(|e| format!("Could not prepare staged deletion: {e}"))?;
-
-    if let Err(e) = std::fs::rename(&source, &staged_file) {
+    if let Err(error) = meta_handle.write_all(meta_json.as_bytes()) {
+        drop(meta_handle);
         let _ = std::fs::remove_file(&meta_file);
+        return Err(format!("Could not record staged deletion: {error}"));
+    }
+    drop(meta_handle);
+
+    if let Err(e) = rename_no_replace(&source, &staged_file) {
+        let _ = std::fs::remove_file(&meta_file);
+        if is_already_exists_error(&e) || staged_file.exists() {
+            return Err("Could not stage that document because a trash entry with the same name already exists. The original file is unchanged.".to_string());
+        }
         return Err(format!(
             "Could not delete that document because it is currently open in another app. Please close the file and try again. ({e})"
         ));
@@ -468,8 +547,10 @@ pub fn rollback_delete_document_in(root: &Path, staged_id: &str) -> Result<(), S
             }
         }
         let _ = std::fs::remove_file(&meta_file);
-    } else if staged_file.is_file() {
-        let _ = std::fs::remove_file(&staged_file);
+    } else {
+        return Err(format!(
+            "Could not roll back deletion: metadata for staged ID '{staged_id}' was not found."
+        ));
     }
 
     Ok(())
@@ -665,6 +746,440 @@ pub fn cleanup_staged_deletions(app: &AppHandle) -> Result<(), String> {
     let root = app_root(app)?;
     cleanup_staged_deletions_in(&root)?;
     Ok(())
+}
+
+const MAX_SCAN_DEPTH: usize = 16;
+const MAX_SCAN_ENTRIES: usize = 50_000;
+
+fn scan_stored_documents_recursive(
+    current_dir: &Path,
+    relative_prefix: &Path,
+    depth: usize,
+    visited: &mut usize,
+    collected: &mut Vec<UnlinkedFileInfo>,
+) -> Result<(), String> {
+    if depth > MAX_SCAN_DEPTH {
+        return Err("Document directory nesting is too deep.".to_string());
+    }
+    let entries = match std::fs::read_dir(current_dir) {
+        Ok(e) => e,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(err) => return Err(format!("Could not read documents folder: {err}")),
+    };
+    for entry in entries {
+        *visited += 1;
+        if *visited > MAX_SCAN_ENTRIES {
+            return Err("Too many document entries to scan safely.".to_string());
+        }
+        let entry = entry.map_err(|e| format!("Could not read document entry: {e}"))?;
+        let file_name = entry.file_name();
+        let name_str = file_name.to_string_lossy();
+        if name_str.starts_with('.') {
+            continue;
+        }
+        let path = entry.path();
+        let metadata = std::fs::symlink_metadata(&path)
+            .map_err(|e| format!("Could not inspect {}: {e}", path.display()))?;
+        if metadata.file_type().is_symlink() {
+            return Err(format!(
+                "A linked file cannot be included in documents: {}",
+                path.display()
+            ));
+        }
+        let rel_path = relative_prefix.join(&file_name);
+        if metadata.is_dir() {
+            scan_stored_documents_recursive(&path, &rel_path, depth + 1, visited, collected)?;
+        } else if metadata.is_file() {
+            let normalized = rel_path.to_string_lossy().replace('\\', "/");
+            safe_relative_path(&normalized)?;
+            collected.push(UnlinkedFileInfo {
+                relative_path: normalized,
+                file_name: name_str.to_string(),
+                file_size: metadata.len(),
+            });
+        }
+    }
+    Ok(())
+}
+
+pub fn scan_stored_documents(documents_dir: &Path) -> Result<Vec<UnlinkedFileInfo>, String> {
+    let mut files = Vec::new();
+    if !documents_dir.exists() {
+        return Ok(files);
+    }
+    let mut visited = 0;
+    scan_stored_documents_recursive(documents_dir, Path::new(""), 0, &mut visited, &mut files)?;
+    Ok(files)
+}
+
+/// Compare database file references with app-owned storage.
+pub fn check_library_in(root: &Path) -> Result<LibraryReport, String> {
+    let db_path = root.join("her-flight-deck.db");
+    let docs_dir = root.join(DOCUMENTS_DIR);
+
+    let active_files = scan_stored_documents(&docs_dir)?;
+    let total_files = active_files.len();
+    let staged_deletions = crate::backup::scan_staged_deletion_paths(&docs_dir.join(TRASH_DIR))?;
+
+    if !db_path.is_file() {
+        return Err("Database file is missing.".to_string());
+    }
+
+    let connection = Connection::open_with_flags(
+        &db_path,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )
+    .map_err(|e| format!("Could not open database to check library: {e}"))?;
+
+    connection
+        .busy_timeout(Duration::from_millis(2000))
+        .map_err(|e| format!("Could not set database timeout: {e}"))?;
+
+    let table_exists: bool = connection
+        .query_row(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'study_materials'",
+            [],
+            |_| Ok(true),
+        )
+        .map_err(|e| format!("Could not check database schema: {e}"))?;
+
+    if !table_exists {
+        return Err(
+            "Database schema is missing or invalid: study_materials table not found.".to_string(),
+        );
+    }
+
+    let total_materials: usize = connection
+        .query_row("SELECT COUNT(*) FROM study_materials", [], |row| row.get(0))
+        .map_err(|e| format!("Could not count study materials: {e}"))?;
+
+    let mut stmt = connection
+        .prepare(
+            "SELECT id, title, file_path, original_file_name
+             FROM study_materials
+             WHERE file_path IS NOT NULL AND TRIM(file_path) != ''",
+        )
+        .map_err(|e| format!("Could not query study materials: {e}"))?;
+
+    let mut referenced_paths = HashSet::new();
+    let mut missing_materials = Vec::new();
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, Option<String>>(3)?,
+            ))
+        })
+        .map_err(|e| format!("Could not read study materials: {e}"))?;
+
+    for row in rows {
+        let (id, title, raw_path, orig_name) =
+            row.map_err(|e| format!("Could not read material row: {e}"))?;
+        let trimmed = raw_path.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let normalized = trimmed.replace('\\', "/");
+        match safe_relative_path(&normalized) {
+            Ok(safe) => {
+                referenced_paths.insert(safe.to_string());
+                let exists_on_disk = docs_dir.join(safe).is_file();
+                let in_staged_trash = staged_deletions.contains(safe);
+
+                if !exists_on_disk && !in_staged_trash {
+                    missing_materials.push(MissingMaterialInfo {
+                        id,
+                        title,
+                        file_path: safe.to_string(),
+                        original_file_name: orig_name,
+                    });
+                }
+            }
+            Err(_) => {
+                // A path that escapes storage, is absolute, or contains invalid characters
+                // cannot point to a managed file in app storage. Report it as missing so
+                // the user is alerted to the broken reference and can re-attach the file.
+                missing_materials.push(MissingMaterialInfo {
+                    id,
+                    title,
+                    file_path: normalized,
+                    original_file_name: orig_name,
+                });
+            }
+        }
+    }
+
+    let mut unlinked_files = Vec::new();
+    for file in active_files {
+        if !referenced_paths.contains(&file.relative_path)
+            && docs_dir.join(&file.relative_path).is_file()
+        {
+            unlinked_files.push(file);
+        }
+    }
+
+    missing_materials.sort_by_key(|a| a.title.to_lowercase());
+    unlinked_files.sort_by_key(|a| a.file_name.to_lowercase());
+
+    Ok(LibraryReport {
+        missing_materials,
+        unlinked_files,
+        total_materials,
+        total_files,
+    })
+}
+
+/// Check the library: compare database file references with app-owned storage.
+#[tauri::command]
+pub async fn check_library(app: AppHandle) -> Result<LibraryReport, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        check_library_in(&root)
+    })
+    .await
+    .map_err(|e| format!("Could not complete library check: {e}"))?
+}
+
+/// Re-attach an unlinked file to an existing study material without losing its other fields.
+pub fn reattach_unlinked_file_in(
+    root: &Path,
+    material_id: &str,
+    relative_path: &str,
+) -> Result<(), String> {
+    if material_id.trim().is_empty() {
+        return Err("Material ID cannot be empty.".to_string());
+    }
+
+    let docs_dir = root.join(DOCUMENTS_DIR);
+    let (safe_rel, _target_file, metadata) = active_managed_file(root, relative_path)?;
+    let file_size = metadata.len() as i64;
+    let file_name = Path::new(&safe_rel)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(&safe_rel)
+        .to_string();
+
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        return Err("Database file is missing.".to_string());
+    }
+
+    let mut connection = Connection::open(&db_path)
+        .map_err(|e| format!("Could not open database to reattach file: {e}"))?;
+    connection
+        .busy_timeout(Duration::from_millis(2000))
+        .map_err(|e| format!("Could not set database timeout: {e}"))?;
+
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|e| format!("Could not start file re-attachment: {e}"))?;
+    let current_path: Option<Option<String>> = tx
+        .query_row(
+            "SELECT file_path FROM study_materials WHERE id = ?1",
+            params![material_id],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| format!("Could not check study material: {e}"))?;
+    let Some(current_path) = current_path else {
+        return Err(format!("Study material '{material_id}' no longer exists."));
+    };
+    if let Some(old_path) = current_path {
+        let normalized_old = old_path.replace('\\', "/");
+        if let Ok(old_safe) = safe_relative_path(&normalized_old) {
+            if docs_dir.join(old_safe).is_file() {
+                return Err(
+                    "This material already has an available file. No file was replaced."
+                        .to_string(),
+                );
+            }
+        }
+    }
+
+    // Check if another material already references this file path
+    let duplicate_exists: Option<i64> = tx
+        .query_row(
+            "SELECT 1 FROM study_materials WHERE REPLACE(file_path, CHAR(92), '/') = ?1 AND id != ?2",
+            params![safe_rel, material_id],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| format!("Could not check existing file links: {e}"))?;
+    if duplicate_exists.is_some() {
+        return Err(format!(
+            "File '{safe_rel}' is already attached to another study material."
+        ));
+    }
+
+    tx.execute(
+        "UPDATE study_materials
+             SET file_path = ?1, original_file_name = ?2, file_size = ?3,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?4",
+        params![safe_rel, file_name, file_size, material_id],
+    )
+    .map_err(|e| format!("Could not update study material: {e}"))?;
+
+    tx.commit()
+        .map_err(|e| format!("Could not finish file re-attachment: {e}"))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn reattach_unlinked_file(
+    app: AppHandle,
+    material_id: String,
+    relative_path: String,
+) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        reattach_unlinked_file_in(&root, &material_id, &relative_path)
+    })
+    .await
+    .map_err(|e| format!("Could not complete re-attaching file: {e}"))?
+}
+
+/// Import an unlinked file into the library as a new study material.
+pub fn import_unlinked_file_in(root: &Path, relative_path: &str) -> Result<String, String> {
+    let (safe_rel, _target_file, metadata) = active_managed_file(root, relative_path)?;
+    let file_size = metadata.len() as i64;
+    let file_name = Path::new(&safe_rel)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(&safe_rel)
+        .to_string();
+
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        return Err("Database file is missing.".to_string());
+    }
+
+    let mut connection = Connection::open(&db_path)
+        .map_err(|e| format!("Could not open database to import file: {e}"))?;
+    connection
+        .busy_timeout(Duration::from_millis(2000))
+        .map_err(|e| format!("Could not set database timeout: {e}"))?;
+
+    // Check if file is already attached
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|e| format!("Could not start library import: {e}"))?;
+    let duplicate_exists: Option<i64> = tx
+        .query_row(
+            "SELECT 1 FROM study_materials WHERE REPLACE(file_path, CHAR(92), '/') = ?1",
+            params![safe_rel],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| format!("Could not check existing file links: {e}"))?;
+    if duplicate_exists.is_some() {
+        return Err(format!(
+            "File '{safe_rel}' is already attached to a study material."
+        ));
+    }
+
+    let stem = Path::new(&safe_rel)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or(&file_name);
+    let title = if stem.trim().is_empty() {
+        "Untitled Material"
+    } else {
+        stem
+    };
+
+    let now_millis = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let sanitized_stem = sanitize_file_name(title);
+    let id = format!("imported-{now_millis}-{sanitized_stem}");
+
+    tx.execute(
+        "INSERT INTO study_materials (
+                id, title, material_type, topic, review_status, priority,
+                notes, file_path, original_file_name, file_size,
+                created_at, updated_at
+             ) VALUES (
+                ?1, ?2, 'study_guide', 'general', 'needs_review', 'later',
+                '', ?3, ?4, ?5,
+                strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             )",
+        params![id, title, safe_rel, file_name, file_size],
+    )
+    .map_err(|e| format!("Could not create study material: {e}"))?;
+
+    tx.commit()
+        .map_err(|e| format!("Could not finish library import: {e}"))?;
+
+    Ok(id)
+}
+
+#[tauri::command]
+pub async fn import_unlinked_file(app: AppHandle, relative_path: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        import_unlinked_file_in(&root, &relative_path)
+    })
+    .await
+    .map_err(|e| format!("Could not complete importing unlinked file: {e}"))?
+}
+
+/// Move an unlinked file to recoverable private trash.
+pub fn trash_unlinked_file_in(root: &Path, relative_path: &str) -> Result<StagedDeletion, String> {
+    let (safe_rel, _target_file, _metadata) = active_managed_file(root, relative_path)?;
+
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        return Err("Database file is missing.".to_string());
+    }
+    let mut connection = Connection::open(&db_path)
+        .map_err(|e| format!("Could not inspect database before trashing file: {e}"))?;
+    connection
+        .busy_timeout(Duration::from_millis(2000))
+        .map_err(|e| format!("Could not set database timeout: {e}"))?;
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|e| format!("Could not start safe file move: {e}"))?;
+    let is_referenced: Option<i64> = tx
+        .query_row(
+            "SELECT 1 FROM study_materials WHERE REPLACE(file_path, CHAR(92), '/') = ?1",
+            params![safe_rel],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| format!("Could not check existing file links: {e}"))?;
+    if is_referenced.is_some() {
+        return Err(format!(
+            "Cannot move referenced file to trash. It is attached to a study material: {safe_rel}"
+        ));
+    }
+
+    let staged = stage_delete_document_in(root, &safe_rel)?;
+    if let Err(error) = tx.commit() {
+        if !staged.staged_id.is_empty() {
+            rollback_delete_document_in(root, &staged.staged_id)?;
+        }
+        return Err(format!("Could not finish safe file move: {error}"));
+    }
+    Ok(staged)
+}
+
+#[tauri::command]
+pub async fn trash_unlinked_file(
+    app: AppHandle,
+    relative_path: String,
+) -> Result<StagedDeletion, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        trash_unlinked_file_in(&root, &relative_path)
+    })
+    .await
+    .map_err(|e| format!("Could not move unlinked file to trash: {e}"))?
 }
 
 /// A split's metadata is committed on one SQLite connection. Tauri's SQL
@@ -1753,6 +2268,298 @@ mod tests {
         );
         assert!(!source.exists());
 
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn rollback_refuses_when_metadata_missing_and_does_not_delete_data() {
+        let root = split_test_root();
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+
+        let staged_id = "test-staged-orphan";
+        let data_file = trash.join(format!("{staged_id}.data"));
+        std::fs::write(&data_file, b"valuable data").unwrap();
+
+        let res = rollback_delete_document_in(&root, staged_id);
+        assert!(res.is_err(), "rollback must fail if .meta file is missing");
+        assert!(
+            data_file.exists(),
+            "rollback must never delete .data file if .meta is missing"
+        );
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn check_library_reports_healthy_when_all_files_match() {
+        let root = split_test_root();
+        let docs = root.join(DOCUMENTS_DIR);
+        std::fs::write(docs.join("doc1.pdf"), b"content 1").unwrap();
+        std::fs::write(docs.join("doc2.pdf"), b"content 2").unwrap();
+
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size) VALUES ('1', 'Doc 1', 'doc1.pdf', 'doc1.pdf', 9)",
+            [],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size) VALUES ('2', 'Doc 2', 'doc2.pdf', 'doc2.pdf', 9)",
+            [],
+        ).unwrap();
+
+        let report = check_library_in(&root).expect("check_library_in should succeed");
+        assert_eq!(report.total_materials, 2);
+        assert_eq!(report.total_files, 2);
+        assert!(report.missing_materials.is_empty());
+        assert!(report.unlinked_files.is_empty());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn check_library_detects_missing_and_unlinked_files() {
+        let root = split_test_root();
+        let docs = root.join(DOCUMENTS_DIR);
+        // doc2 exists on disk but is NOT in DB -> unlinked
+        std::fs::write(docs.join("doc2.pdf"), b"unlinked content").unwrap();
+
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        // doc1 is in DB but does NOT exist on disk -> missing
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size) VALUES ('1', 'Missing Doc', 'doc1.pdf', 'doc1.pdf', 100)",
+            [],
+        ).unwrap();
+
+        let report = check_library_in(&root).expect("check_library_in should succeed");
+        assert_eq!(report.total_materials, 1);
+        assert_eq!(report.total_files, 1);
+        assert_eq!(report.missing_materials.len(), 1);
+        assert_eq!(report.missing_materials[0].id, "1");
+        assert_eq!(report.missing_materials[0].title, "Missing Doc");
+        assert_eq!(report.missing_materials[0].file_path, "doc1.pdf");
+
+        assert_eq!(report.unlinked_files.len(), 1);
+        assert_eq!(report.unlinked_files[0].relative_path, "doc2.pdf");
+        assert_eq!(report.unlinked_files[0].file_name, "doc2.pdf");
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn check_library_ignores_in_flight_staged_deletion() {
+        let root = split_test_root();
+        let docs = root.join(DOCUMENTS_DIR);
+        let trash = docs.join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+
+        // Staged deletion in .trash for doc1.pdf
+        let staged_id = "12345-doc1";
+        std::fs::write(trash.join(format!("{staged_id}.data")), b"data").unwrap();
+        let meta = StagedDeletion {
+            staged_id: staged_id.to_string(),
+            original_relative_path: "doc1.pdf".to_string(),
+            already_missing: false,
+        };
+        std::fs::write(
+            trash.join(format!("{staged_id}.meta")),
+            serde_json::to_string(&meta).unwrap(),
+        )
+        .unwrap();
+
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size) VALUES ('1', 'In-Flight Doc', 'doc1.pdf', 'doc1.pdf', 100)",
+            [],
+        ).unwrap();
+
+        let report = check_library_in(&root).expect("check_library_in should succeed");
+        // Because doc1.pdf is currently staged for deletion in .trash, it is not reported as missing
+        assert!(report.missing_materials.is_empty());
+        assert!(report.unlinked_files.is_empty());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn check_library_reports_adversarial_and_invalid_paths_as_missing() {
+        let root = split_test_root();
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size) VALUES ('1', 'Traversal', '../../etc/passwd', 'passwd', 100)",
+            [],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size) VALUES ('2', 'Drive Name', 'C:/Windows/win.ini', 'win.ini', 100)",
+            [],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size) VALUES ('3', 'Stream', 'doc.pdf:hidden', 'doc.pdf', 100)",
+            [],
+        ).unwrap();
+
+        let report = check_library_in(&root).expect("check_library_in should succeed");
+        assert_eq!(report.total_materials, 3);
+        assert_eq!(report.missing_materials.len(), 3);
+        assert!(report
+            .missing_materials
+            .iter()
+            .any(|m| m.id == "1" && m.file_path == "../../etc/passwd"));
+        assert!(report
+            .missing_materials
+            .iter()
+            .any(|m| m.id == "2" && m.file_path == "C:/Windows/win.ini"));
+        assert!(report
+            .missing_materials
+            .iter()
+            .any(|m| m.id == "3" && m.file_path == "doc.pdf:hidden"));
+        assert!(report.unlinked_files.is_empty());
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn check_library_does_not_report_deleted_file_as_unlinked() {
+        let root = split_test_root();
+        let docs = root.join(DOCUMENTS_DIR);
+        let ghost_file = docs.join("ghost.pdf");
+        std::fs::write(&ghost_file, b"soon deleted").unwrap();
+
+        let _conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        // Database has no records.
+
+        // Delete ghost_file right before or during check to simulate concurrent deletion
+        std::fs::remove_file(&ghost_file).unwrap();
+
+        let report = check_library_in(&root).expect("check_library_in should succeed");
+        assert!(
+            report.unlinked_files.is_empty(),
+            "Deleted file must not be reported as unlinked"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn library_check_fails_closed_when_database_or_trash_is_unreadable() {
+        let root = split_test_root();
+        std::fs::write(root.join(DOCUMENTS_DIR).join("unlinked.pdf"), b"keep me").unwrap();
+        std::fs::remove_file(root.join("her-flight-deck.db")).unwrap();
+        assert!(check_library_in(&root).is_err());
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        conn.execute("CREATE TABLE study_materials (id TEXT)", [])
+            .unwrap();
+        assert!(check_library_in(&root).is_err());
+        conn.execute("DROP TABLE study_materials", []).unwrap();
+        conn.execute("CREATE TABLE study_materials (id TEXT, title TEXT, file_path TEXT, original_file_name TEXT)", []).unwrap();
+        drop(conn);
+        let trash = root.join(DOCUMENTS_DIR).join(TRASH_DIR);
+        std::fs::create_dir_all(&trash).unwrap();
+        std::fs::write(trash.join("broken.meta"), b"not json").unwrap();
+        assert!(check_library_in(&root).is_err());
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn library_repair_actions_preserve_data_and_recheck_stale_state() {
+        let root = split_test_root();
+        let docs = root.join(DOCUMENTS_DIR);
+        std::fs::write(docs.join("replacement.pdf"), b"replacement").unwrap();
+        std::fs::write(docs.join("orphan.pdf"), b"orphan").unwrap();
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        conn.execute("INSERT INTO study_materials (id, title, notes, file_path) VALUES ('m1', 'Weather', 'important notes', 'missing.pdf')", []).unwrap();
+        drop(conn);
+
+        reattach_unlinked_file_in(&root, "m1", "replacement.pdf").unwrap();
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        let preserved: (String, String, String) = conn
+            .query_row(
+                "SELECT title, notes, file_path FROM study_materials WHERE id = 'm1'",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(
+            preserved,
+            (
+                "Weather".into(),
+                "important notes".into(),
+                "replacement.pdf".into()
+            )
+        );
+        assert!(reattach_unlinked_file_in(&root, "m1", "orphan.pdf").is_err());
+        assert!(trash_unlinked_file_in(&root, "replacement.pdf").is_err());
+
+        let imported_id = import_unlinked_file_in(&root, "orphan.pdf").unwrap();
+        assert!(import_unlinked_file_in(&root, "orphan.pdf").is_err());
+        let defaults: (String, String, String) = conn
+            .query_row(
+                "SELECT material_type, review_status, priority FROM study_materials WHERE id = ?1",
+                [&imported_id],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(
+            defaults,
+            ("study_guide".into(), "needs_review".into(), "later".into())
+        );
+        assert!(trash_unlinked_file_in(&root, "orphan.pdf").is_err());
+        drop(conn);
+        let report = check_library_in(&root).unwrap();
+        assert!(report.missing_materials.is_empty());
+        assert!(report.unlinked_files.is_empty());
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn trash_unlinked_file_can_be_undone_and_rejects_hidden_paths() {
+        let root = split_test_root();
+        let docs = root.join(DOCUMENTS_DIR);
+        std::fs::write(docs.join("orphan.pdf"), b"recoverable").unwrap();
+        let staged = trash_unlinked_file_in(&root, "orphan.pdf").unwrap();
+        assert!(!docs.join("orphan.pdf").exists());
+        assert!(docs
+            .join(TRASH_DIR)
+            .join(format!("{}.data", staged.staged_id))
+            .exists());
+        rollback_delete_document_in(&root, &staged.staged_id).unwrap();
+        assert_eq!(
+            std::fs::read(docs.join("orphan.pdf")).unwrap(),
+            b"recoverable"
+        );
+        assert!(trash_unlinked_file_in(&root, ".trash/forged.data").is_err());
+        assert!(import_unlinked_file_in(&root, "../outside.pdf").is_err());
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn repair_actions_respect_legacy_windows_path_separators() {
+        let root = split_test_root();
+        let docs = root.join(DOCUMENTS_DIR);
+        std::fs::create_dir_all(docs.join("folder")).unwrap();
+        std::fs::write(docs.join("folder").join("legacy.pdf"), b"keep linked").unwrap();
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path) VALUES ('linked', 'Existing', ?1)",
+            ["folder\\legacy.pdf"],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path) VALUES ('missing', 'Missing', 'gone.pdf')",
+            [],
+        )
+        .unwrap();
+        drop(conn);
+
+        let report = check_library_in(&root).unwrap();
+        assert_eq!(report.missing_materials.len(), 1);
+        assert!(report.unlinked_files.is_empty());
+        assert!(reattach_unlinked_file_in(&root, "missing", "folder/legacy.pdf").is_err());
+        assert!(import_unlinked_file_in(&root, "folder/legacy.pdf").is_err());
+        assert!(trash_unlinked_file_in(&root, "folder/legacy.pdf").is_err());
+        assert_eq!(
+            std::fs::read(docs.join("folder").join("legacy.pdf")).unwrap(),
+            b"keep linked"
+        );
         let _ = std::fs::remove_dir_all(root);
     }
 }

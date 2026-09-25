@@ -1,6 +1,12 @@
 # Her Flight Deck — current project status
 
-_Updated 24 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+_Updated 25 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+
+## M1 D0 — Study Library file check (25 September 2026)
+
+Settings now has a **Check library** action that compares Study Library file references with files in app-owned storage. It lists missing files for re-attachment and unlinked files for import as new materials or an explicit move to private trash. Re-attachment retains the existing material and its notes, guide, flashcards, and practice history. Native repair commands recheck the file and database state inside bounded SQLite transactions and refuse to move referenced files to trash. The scan fails visibly on unreadable database or trash metadata rather than presenting an incomplete report as healthy. The scan and repair commands run off the UI thread, and the Settings list renders 50 results at a time.
+
+The private-trash Undo action lasts until app restart. Startup cleanup purges unreferenced staged files by existing design; this is a reversible short undo, not a permanent recycle bin. The UI says so. A complete backup excludes unlinked files, so any needed file should be imported or re-attached before relying on a new backup. See [the implementation and validation note](docs/M1_D0_LIBRARY_CHECK_2026-09-25.md). Installed-app behavior on Apple Silicon remains unverified, and the release hold is unchanged.
 
 ## Release status
 

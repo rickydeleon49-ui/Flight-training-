@@ -307,5 +307,5 @@ Claude is the default feature implementer; Gemini takes explicitly assigned secu
 ### 16.3 Next actions
 
 1. Codex reviews `fix/m0-release-safety`. It pushes, opens the PR and merges when the review passes.
-2. After the merge, implement D0 (library check), then D1–D2 as written in §15.
+2. D0 (Settings → Check library) is implemented on `feature/m1-d0-library-check` and awaits Codex review/CI. After it merges, continue with D1–D2 as written in §15.
 3. Hold the check-in with her after M1, before M2 starts.

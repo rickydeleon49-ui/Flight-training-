@@ -48,6 +48,19 @@ import {
 } from "@/logic/dataSafety";
 import { trainingDuration } from "@/logic/keyDates";
 import {
+  canHandleFiles,
+  checkLibrary,
+  documentErrorMessage,
+  formatFileSize,
+  importUnlinkedFile,
+  pickAndImportDocument,
+  reattachUnlinkedFile,
+  rollbackDeleteDocument,
+  trashUnlinkedFile,
+  type LibraryReport,
+  type UnlinkedFileInfo,
+} from "@/services/documents";
+import {
   configureGemini,
   disconnectGemini,
   geminiAvailable,
@@ -123,7 +136,7 @@ function MacNote({ children }: { children: ReactNode }) {
 }
 
 export function Settings() {
-  const { data, mutate, repositories } = useAppData();
+  const { data, mutate, refresh, repositories } = useAppData();
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -145,6 +158,121 @@ export function Settings() {
   const [geminiBusy, setGeminiBusy] = useState(false);
   const [geminiNote, setGeminiNote] = useState<string | null>(null);
   const [geminiProblem, setGeminiProblem] = useState(false);
+  const [libraryReport, setLibraryReport] = useState<LibraryReport | null>(null);
+  const [libraryBusy, setLibraryBusy] = useState(false);
+  const [libraryNote, setLibraryNote] = useState<string | null>(null);
+  const [libraryProblem, setLibraryProblem] = useState(false);
+  const [libraryTrashCandidate, setLibraryTrashCandidate] = useState<UnlinkedFileInfo | null>(null);
+  const [libraryTrashUndo, setLibraryTrashUndo] = useState<Array<{ stagedId: string; name: string }>>([]);
+  const [libraryVisible, setLibraryVisible] = useState(50);
+
+  const reloadLibrary = async () => {
+    setLibraryReport(await checkLibrary());
+    setLibraryVisible(50);
+  };
+
+  const runLibraryCheck = async () => {
+    setLibraryBusy(true);
+    setLibraryReport(null);
+    setLibraryNote(null);
+    setLibraryProblem(false);
+    try {
+      await reloadLibrary();
+      setLibraryNote("Library check complete.");
+    } catch (error) {
+      setLibraryProblem(true);
+      setLibraryNote(documentErrorMessage(error, "The library could not be checked."));
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
+
+  const finishLibraryAction = async (message: string) => {
+    setLibraryProblem(false);
+    setLibraryNote(message);
+    try {
+      await refresh();
+      await reloadLibrary();
+    } catch (error) {
+      setLibraryReport(null);
+      setLibraryProblem(true);
+      setLibraryNote(`${message} The library view could not refresh: ${documentErrorMessage(error, "Try Check library again.")}`);
+    }
+  };
+
+  const reattachLibraryMaterial = async (materialId: string) => {
+    setLibraryBusy(true);
+    setLibraryNote(null);
+    let importedPath: string | null = null;
+    try {
+      const imported = await pickAndImportDocument(materialId);
+      if (!imported) return;
+      importedPath = imported.relativePath;
+      await reattachUnlinkedFile(materialId, imported.relativePath);
+      await finishLibraryAction("The replacement file is attached. Existing notes and study data were kept.");
+    } catch (error) {
+      let cleanupWarning = "";
+      if (importedPath) {
+        try {
+          await trashUnlinkedFile(importedPath);
+        } catch {
+          cleanupWarning = " The copied file remains in app storage; run Check library to recover it.";
+        }
+      }
+      setLibraryProblem(true);
+      setLibraryNote(`${documentErrorMessage(error, "The file could not be attached.")}${cleanupWarning}`);
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
+
+  const importLibraryFile = async (relativePath: string) => {
+    setLibraryBusy(true);
+    setLibraryNote(null);
+    try {
+      await importUnlinkedFile(relativePath);
+      await finishLibraryAction("The file is now a Study Library material.");
+    } catch (error) {
+      setLibraryProblem(true);
+      setLibraryNote(documentErrorMessage(error, "The file could not be added to the library."));
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
+
+  const moveLibraryFileToTrash = async () => {
+    const candidate = libraryTrashCandidate;
+    setLibraryTrashCandidate(null);
+    if (!candidate) return;
+    setLibraryBusy(true);
+    setLibraryNote(null);
+    try {
+      const staged = await trashUnlinkedFile(candidate.relativePath);
+      if (staged.stagedId) {
+        setLibraryTrashUndo((items) => [...items, { stagedId: staged.stagedId, name: candidate.fileName }]);
+      }
+      await finishLibraryAction("The unlinked file was moved to private trash. You can undo this until the app restarts.");
+    } catch (error) {
+      setLibraryProblem(true);
+      setLibraryNote(documentErrorMessage(error, "The file could not be moved to trash."));
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
+
+  const undoLibraryTrash = async (stagedId: string) => {
+    setLibraryBusy(true);
+    try {
+      await rollbackDeleteDocument(stagedId);
+      setLibraryTrashUndo((items) => items.filter((item) => item.stagedId !== stagedId));
+      await finishLibraryAction("The file was restored to app storage.");
+    } catch (error) {
+      setLibraryProblem(true);
+      setLibraryNote(documentErrorMessage(error, "The file could not be restored. Its copy remains in private trash."));
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
 
   // Initialize once; background saves elsewhere must not reset this form.
 
@@ -725,6 +853,77 @@ export function Settings() {
         </Card>
 
         <Card>
+          <CardHeader title="Check library" eyebrow="Study Library files" />
+          <CardBody>
+            <div className="stack stack--4">
+              <p className="small muted">
+                Find study materials whose files are missing and stored files that are not linked to a material. Nothing changes until you choose an action.
+              </p>
+              <div>
+                <Button onClick={() => void runLibraryCheck()} disabled={libraryBusy || !canHandleFiles()}>
+                  {libraryBusy ? "Checking library…" : "Check library"}
+                </Button>
+              </div>
+              {!canHandleFiles() ? <p className="tiny dim">Library file checks need the desktop app.</p> : null}
+              {libraryNote ? (
+                <p className="small" role={libraryProblem ? "alert" : "status"}>
+                  {libraryNote}
+                </p>
+              ) : null}
+              {libraryReport ? (
+                <div className="stack stack--4" aria-label="Library check results">
+                  <p className="small" role="status">
+                    Checked {libraryReport.totalMaterials} materials and {libraryReport.totalFiles} stored files. {libraryReport.missingMaterials.length} missing files; {libraryReport.unlinkedFiles.length} unlinked files.
+                  </p>
+                  {libraryReport.missingMaterials.length > 0 ? (
+                    <div className="stack stack--2">
+                      <h3>Materials with missing files</h3>
+                      <ul className="stack stack--2">
+                        {libraryReport.missingMaterials.slice(0, libraryVisible).map((item) => (
+                          <li key={item.id} className="row row--between row--wrap">
+                            <span className="small wrap-anywhere"><strong>{item.title}</strong> — {item.originalFileName || item.filePath}</span>
+                            <Button size="small" disabled={libraryBusy} onClick={() => void reattachLibraryMaterial(item.id)}>Re-attach file</Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {libraryReport.unlinkedFiles.length > 0 ? (
+                    <div className="stack stack--2">
+                      <h3>Stored files without a material</h3>
+                      <ul className="stack stack--2">
+                        {libraryReport.unlinkedFiles.slice(0, libraryVisible).map((file) => (
+                          <li key={file.relativePath} className="row row--between row--wrap">
+                            <span className="small wrap-anywhere"><strong>{file.fileName}</strong> ({formatFileSize(file.fileSize)})</span>
+                            <span className="row row--wrap">
+                              <Button size="small" disabled={libraryBusy} onClick={() => void importLibraryFile(file.relativePath)}>Add to library</Button>
+                              <Button size="small" variant="danger" disabled={libraryBusy} onClick={() => setLibraryTrashCandidate(file)}>Move to trash</Button>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {(libraryReport.missingMaterials.length > libraryVisible || libraryReport.unlinkedFiles.length > libraryVisible) ? (
+                    <Button size="small" disabled={libraryBusy} onClick={() => setLibraryVisible((count) => count + 50)}>Show more results</Button>
+                  ) : null}
+                </div>
+              ) : null}
+              {libraryTrashUndo.length > 0 ? (
+                <div className="stack stack--2" aria-label="Files recently moved to trash">
+                  {libraryTrashUndo.map((item) => (
+                    <div key={item.stagedId} className="row row--wrap">
+                      <span className="small">{item.name} is in private trash.</span>
+                      <Button size="small" disabled={libraryBusy} onClick={() => void undoLibraryTrash(item.stagedId)}>Undo move</Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
           <CardHeader
             title="Your data"
             eyebrow="Complete backup and restore"
@@ -1033,6 +1232,16 @@ export function Settings() {
           </CardBody>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={libraryTrashCandidate !== null}
+        title="Move this unlinked file to trash?"
+        message={libraryTrashCandidate ? `${libraryTrashCandidate.fileName} will leave active app storage. You can undo the move until the app restarts.` : ""}
+        confirmLabel="Move to trash"
+        destructive
+        onConfirm={() => void moveLibraryFileToTrash()}
+        onCancel={() => setLibraryTrashCandidate(null)}
+      />
 
       <ConfirmDialog
         open={restoreCandidate !== null}

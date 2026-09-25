@@ -22,16 +22,20 @@ vi.mock("@tauri-apps/plugin-opener", () => ({
 
 import {
   cleanupDocuments,
+  checkLibrary,
   commitDeleteDocument,
   deleteDocument,
   DesktopOnlyError,
   documentErrorMessage,
   documentExists,
+  importUnlinkedFile,
   openDocument,
   removeMaterialWithFile,
   revealDocument,
+  reattachUnlinkedFile,
   rollbackDeleteDocument,
   stageDeleteDocument,
+  trashUnlinkedFile,
 } from "./documents";
 
 beforeEach(() => {
@@ -39,6 +43,44 @@ beforeEach(() => {
   mocks.invoke.mockReset();
   mocks.openPath.mockReset();
   mocks.revealItemInDir.mockReset();
+});
+
+describe("library repair desktop commands", () => {
+  it("runs only in the desktop shell with the exact selected identifiers", async () => {
+    await expect(reattachUnlinkedFile("material-1", "replacement.pdf")).rejects.toThrow(DesktopOnlyError);
+    await expect(importUnlinkedFile("orphan.pdf")).rejects.toThrow(DesktopOnlyError);
+    await expect(trashUnlinkedFile("orphan.pdf")).rejects.toThrow(DesktopOnlyError);
+    expect(mocks.invoke).not.toHaveBeenCalled();
+
+    mocks.isTauri.mockReturnValue(true);
+    mocks.invoke.mockResolvedValueOnce(undefined).mockResolvedValueOnce("imported-1").mockResolvedValueOnce({
+      stagedId: "staged-1",
+      originalRelativePath: "orphan.pdf",
+      alreadyMissing: false,
+    });
+    await reattachUnlinkedFile("material-1", "replacement.pdf");
+    expect(await importUnlinkedFile("orphan.pdf")).toBe("imported-1");
+    expect(await trashUnlinkedFile("orphan.pdf")).toMatchObject({ stagedId: "staged-1" });
+    expect(mocks.invoke).toHaveBeenNthCalledWith(1, "reattach_unlinked_file", {
+      materialId: "material-1",
+      relativePath: "replacement.pdf",
+    });
+    expect(mocks.invoke).toHaveBeenNthCalledWith(2, "import_unlinked_file", { relativePath: "orphan.pdf" });
+    expect(mocks.invoke).toHaveBeenNthCalledWith(3, "trash_unlinked_file", { relativePath: "orphan.pdf" });
+  });
+
+  it("passes the native library report through unchanged", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    const report = {
+      missingMaterials: [{ id: "m1", title: "Weather", filePath: "missing.pdf", originalFileName: "missing.pdf" }],
+      unlinkedFiles: [{ relativePath: "orphan.pdf", fileName: "orphan.pdf", fileSize: 42 }],
+      totalMaterials: 1,
+      totalFiles: 1,
+    };
+    mocks.invoke.mockResolvedValueOnce(report);
+    await expect(checkLibrary()).resolves.toEqual(report);
+    expect(mocks.invoke).toHaveBeenCalledWith("check_library");
+  });
 });
 
 describe("document desktop errors", () => {

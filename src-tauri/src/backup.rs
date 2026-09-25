@@ -774,7 +774,7 @@ fn scan_active_documents_recursive(
     Ok(())
 }
 
-fn scan_staged_deletion_paths(trash_dir: &Path) -> Result<HashSet<String>, String> {
+pub(crate) fn scan_staged_deletion_paths(trash_dir: &Path) -> Result<HashSet<String>, String> {
     let mut staged = HashSet::new();
     let entries = match std::fs::read_dir(trash_dir) {
         Ok(entries) => entries,
