@@ -119,15 +119,15 @@ Initial recommendations are deterministic and offline. User-pinned work and due 
 
 ### Small implementation issues
 
-| ID | Change and location | Acceptance criteria / required evidence |
-| --- | --- | --- |
-| D1 | Characterize existing behavior in `logic/dashboard`, `actions`, `preparation`, and journal/question repositories | Fixtures prove existing debrief-created actions/questions are retained; identify missing links before adding code |
-| D2 | Add pure recommendation selector in `src/logic` | Same inputs/date yield same ordering; 0/3/20 candidates, time budgets, overdue tasks and unknown estimates tested; reasons include valid source IDs |
-| D3 | Extend Flight Deck UI | 3–5 suggestions, available-minutes control, Start, Why this, Skip today, Move to tomorrow; keyboard usable; remaining tasks reachable |
-| D4 | Persist per-day decisions and accepted links | Idempotent acceptance; skip today is not permanent dismissal; local-date behavior and restart recovery tested; defer shows whether it changes the source action's due date |
-| D5 | Add quick debrief mode to existing journal flow | Save a short debrief, reopen full editor, no loss of existing fields; deliberate user edits to actions/questions before save |
-| D6 | Connect improvement → action → material → instructor question | Repeated acceptance creates one action/question; links survive restart; deletion shows source unavailable without deleting unrelated history; native transaction for multi-record writes |
-| D7 | End-to-end acceptance and documentation | Existing dataset migration, offline flow, backup/restore and Windows/Mac smoke checklist; provide 90-second workflow demo and exact validation evidence |
+| ID | Change and location | Acceptance criteria / required evidence | Status |
+| --- | --- | --- | --- |
+| D1 | Characterize existing behavior in `logic/dashboard`, `actions`, `preparation`, and journal/question repositories | Fixtures prove existing debrief-created actions/questions are retained; identify missing links before adding code | Implemented; awaiting independent review/merge (`src/logic/debriefCharacterization.test.ts`) |
+| D2 | Add pure recommendation selector in `src/logic` | Same inputs/date yield same ordering; 0/3/20 candidates, time budgets, overdue tasks and unknown estimates tested; reasons include valid source IDs | Implemented; awaiting independent review/merge (`src/logic/recommendations.ts`, `src/logic/recommendations.test.ts`) |
+| D3 | Extend Flight Deck UI | 3–5 suggestions, available-minutes control, Start, Why this, Skip today, Move to tomorrow; keyboard usable; remaining tasks reachable | Pending |
+| D4 | Persist per-day decisions and accepted links | Idempotent acceptance; skip today is not permanent dismissal; local-date behavior and restart recovery tested; defer shows whether it changes the source action's due date | Pending |
+| D5 | Add quick debrief mode to existing journal flow | Save a short debrief, reopen full editor, no loss of existing fields; deliberate user edits to actions/questions before save | Pending |
+| D6 | Connect improvement → action → material → instructor question | Repeated acceptance creates one action/question; links survive restart; deletion shows source unavailable without deleting unrelated history; native transaction for multi-record writes | Pending |
+| D7 | End-to-end acceptance and documentation | Existing dataset migration, offline flow, backup/restore and Windows/Mac smoke checklist; provide 90-second workflow demo and exact validation evidence | Pending |
 
 D1 → D2 → D3/D4 → D5/D6 → D7. Implement sequentially unless independent work is explicitly assigned.
 
@@ -306,6 +306,7 @@ Claude is the default feature implementer; Gemini takes explicitly assigned secu
 
 ### 16.3 Next actions
 
-1. Codex reviews `fix/m0-release-safety`. It pushes, opens the PR and merges when the review passes.
-2. D0 (Settings → Check library) is implemented on `feature/m1-d0-library-check` and awaits Codex review/CI. After it merges, continue with D1–D2 as written in §15.
-3. Hold the check-in with her after M1, before M2 starts.
+1. M0 release-safety fixes merged through PR #30 (`bdad35d`).
+2. D0 (Settings → Check library) merged through PR #31 at `193d3e1`.
+3. D1–D2 (debrief characterization and pure recommendation selector) are implemented on `feature/m1-d1-d2-recommendations` and awaiting independent review/merge.
+4. Hold the check-in with her after M1, before M2 starts.
