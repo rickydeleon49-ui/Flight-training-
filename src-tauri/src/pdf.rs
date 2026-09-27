@@ -1062,4 +1062,157 @@ mod tests {
 
         let _ = std::fs::remove_file(std::env::temp_dir().join("hfd-old-way-bench.pdf"));
     }
+
+    /// The body of `split_pdf_automatically` without the Tauri handle: open,
+    /// then per part window, find the largest fitting range, write. Returns
+    /// the part ranges and byte sizes.
+    fn automatic_split_core(source: &Path, out: &Path) -> Vec<(u32, u32, u64)> {
+        let document = open_pdf(source).unwrap();
+        let total = u32::try_from(document.get_pages().len()).unwrap();
+        let mut parts = Vec::new();
+        let mut first = 1;
+        let mut number = 1;
+        while first <= total {
+            let window_high = total.min(first.saturating_add(MAX_PAGES - 1));
+            let window = window_document(&document, first, window_high, total);
+            let (last, bytes) = largest_fitting_last_page(
+                first,
+                window_high,
+                MAX_PAGES,
+                MAX_PDF_BYTES,
+                |candidate| render_window_range(&window, 1, candidate - first + 1),
+            )
+            .unwrap();
+            std::fs::write(out.join(format!("part-{number}.pdf")), &bytes).unwrap();
+            parts.push((first, last, bytes.len() as u64));
+            first = last + 1;
+            number += 1;
+        }
+        parts
+    }
+
+    /// Manual measurement of automatic and manual splitting, long and
+    /// image-heavy. Run in release mode:
+    ///   cargo test --release --manifest-path src-tauri/Cargo.toml split_benchmark -- --ignored --nocapture
+    #[test]
+    #[ignore = "manual performance measurement; slow by design"]
+    fn split_benchmark_long_and_image_heavy() {
+        use std::time::Instant;
+        const REPEATS: usize = 3;
+        let dir = scratch().join("split-bench");
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let fixtures = [
+            ("long-3000-pages", {
+                let path = dir.join("long.pdf");
+                pdf_with_pages(3_000).save(&path).unwrap();
+                path
+            }),
+            ("image-heavy-1200-pages", {
+                let path = dir.join("images.pdf");
+                illustrated_pdf_with_pages(1_200).save(&path).unwrap();
+                path
+            }),
+        ];
+
+        for (name, source) in &fixtures {
+            let source_bytes = std::fs::metadata(source).unwrap().len();
+            let mut automatic = Vec::new();
+            let mut manual = Vec::new();
+            let mut parts = Vec::new();
+            for _ in 0..REPEATS {
+                let out = dir.join(format!("{name}-out"));
+                let _ = std::fs::remove_dir_all(&out);
+                std::fs::create_dir_all(&out).unwrap();
+
+                let started = Instant::now();
+                parts = automatic_split_core(source, &out);
+                automatic.push(started.elapsed().as_secs_f64() * 1000.0);
+
+                let started = Instant::now();
+                write_page_range(source, &out.join("manual.pdf"), 101, 600).unwrap();
+                manual.push(started.elapsed().as_secs_f64() * 1000.0);
+            }
+            automatic.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            manual.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            // The original is never modified.
+            assert_eq!(std::fs::metadata(source).unwrap().len(), source_bytes);
+            for (_, _, bytes) in &parts {
+                assert!(*bytes <= MAX_PDF_BYTES);
+            }
+            println!(
+                "BENCH {name}: source {source_bytes} bytes; parts {parts:?}; \
+                 automatic ms median {:.0} (min {:.0}, max {:.0}); \
+                 manual 101-600 ms median {:.0} (min {:.0}, max {:.0}); n={REPEATS}",
+                automatic[1], automatic[0], automatic[2], manual[1], manual[0], manual[2]
+            );
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Local preparation before a Gemini request, without any network call:
+    /// the page-count check `gemini::prepare_submission` runs, reading the
+    /// file, Base64-encoding it, and serializing a request body of the same
+    /// shape. Run in release mode:
+    ///   cargo test --release --manifest-path src-tauri/Cargo.toml gemini_local_preparation_benchmark -- --ignored --nocapture
+    #[test]
+    #[ignore = "manual performance measurement; slow by design"]
+    fn gemini_local_preparation_benchmark() {
+        use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+        use std::time::Instant;
+        const REPEATS: usize = 3;
+        let dir = scratch().join("gemini-prep-bench");
+        std::fs::create_dir_all(&dir).unwrap();
+        let fixtures = [
+            ("text-900-pages", {
+                let path = dir.join("text.pdf");
+                pdf_with_pages(900).save(&path).unwrap();
+                path
+            }),
+            ("image-1000-pages-near-50MiB", {
+                let path = dir.join("images.pdf");
+                illustrated_pdf_with_pages(1_000).save(&path).unwrap();
+                path
+            }),
+        ];
+        for (name, path) in &fixtures {
+            let (mut count, mut read, mut encode, mut body) =
+                (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+            let mut sizes = (0usize, 0usize, 0usize);
+            for _ in 0..REPEATS {
+                let started = Instant::now();
+                let pages = page_count(path).unwrap();
+                count.push(started.elapsed().as_secs_f64() * 1000.0);
+                assert!(pages <= MAX_PAGES);
+
+                let started = Instant::now();
+                let bytes = std::fs::read(path).unwrap();
+                read.push(started.elapsed().as_secs_f64() * 1000.0);
+
+                let started = Instant::now();
+                let encoded = BASE64.encode(&bytes);
+                encode.push(started.elapsed().as_secs_f64() * 1000.0);
+
+                let started = Instant::now();
+                let value = serde_json::json!({
+                    "contents": [{"role": "user", "parts": [
+                        {"text": "prompt"},
+                        {"inline_data": {"mime_type": "application/pdf", "data": encoded}}
+                    ]}]
+                });
+                let serialized = serde_json::to_vec(&value).unwrap();
+                body.push(started.elapsed().as_secs_f64() * 1000.0);
+                sizes = (bytes.len(), serialized.len(), pages as usize);
+            }
+            for samples in [&mut count, &mut read, &mut encode, &mut body] {
+                samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            }
+            println!(
+                "BENCH gemini-prep {name}: {} bytes, {} pages, body {} bytes; median ms: \
+                 page count {:.0}, read {:.0}, base64 {:.0}, json body {:.0}; n={REPEATS}",
+                sizes.0, sizes.2, sizes.1, count[1], read[1], encode[1], body[1]
+            );
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

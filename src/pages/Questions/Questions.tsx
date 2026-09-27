@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -21,8 +21,11 @@ import {
   QUESTION_STATUS_OPTIONS,
   TOPIC_LABELS,
   TOPIC_OPTIONS,
+  type JournalEntry,
   type Question,
   type QuestionStatus,
+  type ScheduleEvent,
+  type StudyMaterial,
   type Topic,
 } from "@/domain/types";
 import { formatShortDate, todayIso } from "@/lib/dates";
@@ -44,6 +47,19 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
 
 const FILTER_VALUES = FILTERS.map((filter) => filter.value);
 
+/**
+ * Rows mounted at once. Every question stays reachable through "Show more";
+ * the status filters and counts always cover the whole list. Rendering all
+ * rows was the slowest measured screen with a long question history
+ * (docs/PERFORMANCE_POLISH_2026-09-27.md).
+ */
+export const QUESTION_PAGE_SIZE = 100;
+
+interface AnswerDraft {
+  text: string;
+  revision: number;
+}
+
 export function Questions() {
   const { data, mutate, deleteWithUndo } = useAppData();
   const today = todayIso();
@@ -64,6 +80,107 @@ export function Questions() {
         ? data.questions
         : data.questions.filter((question) => question.status === filter),
     [data.questions, filter],
+  );
+
+  // Every real filter change starts again from one page. (Deriving the limit
+  // from a remembered filter kept an old expansion when switching back.)
+  const [visibleLimit, setVisibleLimit] = useState(QUESTION_PAGE_SIZE);
+  const chooseFilter = (next: Filter) => {
+    if (next === filter) return;
+    setFilter(next);
+    setVisibleLimit(QUESTION_PAGE_SIZE);
+  };
+
+  // Unsaved answers, by question id. They live here rather than in each row,
+  // so a row leaving the visible page (a new question, a filter change,
+  // paging) does not lose what she typed. Nothing here is saved on its own:
+  // only "Save answer" writes, and only for that question. A draft whose
+  // question no longer exists has no row, so it cannot write anywhere.
+  // Each draft carries a monotonically increasing revision counter so that
+  // an in-flight save completion only clears the exact draft revision it
+  // submitted; newer edits or newly opened sessions are preserved.
+  const [answerDrafts, setAnswerDrafts] = useState<ReadonlyMap<string, AnswerDraft>>(() => new Map());
+  const [savingQuestionIds, setSavingQuestionIds] = useState<ReadonlySet<string>>(() => new Set());
+  const savingQuestionIdsRef = useRef<Set<string>>(new Set());
+  const nextDraftRevisionRef = useRef(1);
+
+  const setAnswerDraft = (id: string, text: string | null) =>
+    setAnswerDrafts((current) => {
+      const next = new Map(current);
+      if (text === null) {
+        next.delete(id);
+      } else {
+        next.set(id, {
+          text,
+          revision: nextDraftRevisionRef.current++,
+        });
+      }
+      return next;
+    });
+
+  const clearAnswerDraftRevision = (id: string, revision: number) => {
+    setAnswerDrafts((current) => {
+      const existing = current.get(id);
+      if (!existing || existing.revision !== revision) {
+        return current;
+      }
+      const next = new Map(current);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const handleSaveAnswer = async (question: Question) => {
+    // Synchronous guard prevents duplicate submissions from rapid clicks within the same React render/batch.
+    if (savingQuestionIdsRef.current.has(question.id)) return;
+    savingQuestionIdsRef.current.add(question.id);
+
+    const draft = answerDrafts.get(question.id);
+    const answer = draft !== undefined ? draft.text : question.answer;
+    const submittedRevision = draft?.revision;
+
+    setSavingQuestionIds((current) => {
+      const next = new Set(current);
+      next.add(question.id);
+      return next;
+    });
+
+    try {
+      const result = await mutate((repos) =>
+        repos.questions.update(question.id, {
+          answer,
+          status: answer.trim() ? "answered" : question.status,
+        }),
+      );
+
+      // A failed save keeps the draft so she can try again.
+      // A successful save clears only the revision that was submitted.
+      // If newer edits were made while the save was in-flight, they survive.
+      if (result !== null && submittedRevision !== undefined) {
+        clearAnswerDraftRevision(question.id, submittedRevision);
+      }
+    } finally {
+      savingQuestionIdsRef.current.delete(question.id);
+      setSavingQuestionIds((current) => {
+        if (!current.has(question.id)) return current;
+        const next = new Set(current);
+        next.delete(question.id);
+        return next;
+      });
+    }
+  };
+
+  // Rows look up their linked material, lesson and debrief by id. Building
+  // these maps once per data change replaces a scan of every material,
+  // lesson and journal entry for each row (measured in
+  // docs/PERFORMANCE_POLISH_2026-09-27.md).
+  const links = useMemo<QuestionLinks>(
+    () => ({
+      materials: new Map(data.materials.map((material) => [material.id, material])),
+      events: new Map(data.events.map((event) => [event.id, event])),
+      journalEntries: new Map(data.journalEntries.map((entry) => [entry.id, entry])),
+    }),
+    [data.materials, data.events, data.journalEntries],
   );
 
   const beforeNextLesson = data.questions.filter(
@@ -140,7 +257,7 @@ export function Questions() {
                     key={option.value}
                     className={`filter-chip${filter === option.value ? " is-active" : ""}`}
                     aria-pressed={filter === option.value}
-                    onClick={() => setFilter(option.value)}
+                    onClick={() => chooseFilter(option.value)}
                   >
                     {option.label}
                   </button>
@@ -162,13 +279,34 @@ export function Questions() {
                   }
                 />
               ) : (
-                visible.map((question) => (
-                  <QuestionRow
-                    key={question.id}
-                    question={question}
-                    onDelete={() => setConfirmingDelete(question)}
-                  />
-                ))
+                <>
+                  {visible.length > QUESTION_PAGE_SIZE ? (
+                    <p className="small muted" style={{ padding: "0 var(--space-5) var(--space-3)" }}>
+                      Showing {Math.min(visibleLimit, visible.length).toLocaleString()} of{" "}
+                      {visible.length.toLocaleString()} questions
+                    </p>
+                  ) : null}
+                  {visible.slice(0, visibleLimit).map((question) => (
+                    <QuestionRow
+                      key={question.id}
+                      question={question}
+                      links={links}
+                      draft={answerDrafts.get(question.id)?.text}
+                      isSaving={savingQuestionIds.has(question.id)}
+                      onDraftChange={(text) => setAnswerDraft(question.id, text)}
+                      onSave={() => handleSaveAnswer(question)}
+                      onCancel={() => setAnswerDraft(question.id, null)}
+                      onDelete={() => setConfirmingDelete(question)}
+                    />
+                  ))}
+                  {visible.length > visibleLimit ? (
+                    <div style={{ padding: "var(--space-4) var(--space-5)" }}>
+                      <Button onClick={() => setVisibleLimit(visibleLimit + QUESTION_PAGE_SIZE)}>
+                        Show {Math.min(QUESTION_PAGE_SIZE, visible.length - visibleLimit)} more questions
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
               )}
             </CardBody>
           </Card>
@@ -223,16 +361,41 @@ export function Questions() {
   );
 }
 
-function QuestionRow({ question, onDelete }: { question: Question; onDelete: () => void }) {
-  const { data, mutate } = useAppData();
-  const [answer, setAnswer] = useState(question.answer);
-  const [editingAnswer, setEditingAnswer] = useState(false);
+interface QuestionLinks {
+  materials: ReadonlyMap<string, StudyMaterial>;
+  events: ReadonlyMap<string, ScheduleEvent>;
+  journalEntries: ReadonlyMap<string, JournalEntry>;
+}
 
-  const material = data.materials.find((candidate) => candidate.id === question.materialId);
-  const event = data.events.find((candidate) => candidate.id === question.eventId);
-  const journal = question.journalId
-    ? data.journalEntries.find((candidate) => candidate.id === question.journalId)
-    : null;
+function QuestionRow({
+  question,
+  links,
+  draft,
+  isSaving,
+  onDraftChange,
+  onSave,
+  onCancel,
+  onDelete,
+}: {
+  question: Question;
+  links: QuestionLinks;
+  /** The unsaved answer being edited, or undefined when not editing. */
+  draft: string | undefined;
+  /** True when a save for this question is currently in-flight. */
+  isSaving: boolean;
+  /** Set the unsaved answer; null discards it and closes the editor. */
+  onDraftChange: (text: string | null) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onDelete: () => void;
+}) {
+  const { mutate } = useAppData();
+  const editingAnswer = draft !== undefined;
+  const answer = draft ?? question.answer;
+
+  const material = question.materialId ? links.materials.get(question.materialId) : undefined;
+  const event = question.eventId ? links.events.get(question.eventId) : undefined;
+  const journal = question.journalId ? links.journalEntries.get(question.journalId) ?? null : null;
 
   const tone =
     question.status === "answered"
@@ -286,26 +449,25 @@ function QuestionRow({ question, onDelete }: { question: Question; onDelete: () 
               value={answer}
               aria-label="Answer"
               placeholder="What you were told, in your own words."
-              onChange={(e) => setAnswer(e.target.value)}
+              disabled={isSaving}
+              onChange={(e) => onDraftChange(e.target.value)}
             />
             <div className="row">
               <Button
                 size="small"
                 variant="primary"
-                onClick={async () => {
-                  const result = await mutate((repos) =>
-                    repos.questions.update(question.id, {
-                      answer,
-                      status: answer.trim() ? "answered" : question.status,
-                    }),
-                  );
-                  if (result === null) return;
-                  setEditingAnswer(false);
-                }}
+                disabled={isSaving}
+                onClick={onSave}
               >
-                Save answer
+                {isSaving ? "Saving…" : "Save answer"}
               </Button>
-              <Button size="small" variant="ghost" onClick={() => setEditingAnswer(false)}>
+              {/* Cancel discards this question's unsaved answer. Disabled while saving so it cannot be mistaken for an undo of an in-flight write. */}
+              <Button
+                size="small"
+                variant="ghost"
+                disabled={isSaving}
+                onClick={onCancel}
+              >
                 Cancel
               </Button>
             </div>
@@ -318,15 +480,16 @@ function QuestionRow({ question, onDelete }: { question: Question; onDelete: () 
           aria-label={`Status for: ${question.text}`}
           options={QUESTION_STATUS_OPTIONS}
           value={question.status}
+          disabled={isSaving}
           onChange={(value) => mutate((repos) => repos.questions.update(question.id, { status: value }))}
           style={{ width: "auto" }}
         />
         {!editingAnswer ? (
-          <Button size="small" variant="ghost" onClick={() => setEditingAnswer(true)}>
+          <Button size="small" variant="ghost" disabled={isSaving} onClick={() => onDraftChange(question.answer)}>
             {question.answer ? "Edit answer" : "Add answer"}
           </Button>
         ) : null}
-        <IconButton label={`Delete question: ${question.text}`} tone="danger" onClick={onDelete}>
+        <IconButton label={`Delete question: ${question.text}`} tone="danger" disabled={isSaving} onClick={onDelete}>
           <TrashIcon size={16} />
         </IconButton>
       </div>

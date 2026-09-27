@@ -898,4 +898,335 @@ mod tests {
             .unwrap();
         assert_eq!(source.as_deref(), Some("event-1"));
     }
+
+    // ---------------------------------------------------------------- D7
+
+    /// A realistic v9 training record in the v9 column shape (mirrors
+    /// `V9_DATASET` in src/acceptance/m1Upgrade.acceptance.test.ts).
+    const V9_DATASET: &str = r#"
+        INSERT INTO schedule_events (id, title, event_type, date, status, instructor, created_at, updated_at)
+        VALUES ('ev-past', 'Lesson 6 — Stalls', 'flight_lesson', '2026-08-28', 'completed', 'CFI Example', 't', 't'),
+               ('ev-next', 'Lesson 7 — Ground reference', 'flight_lesson', '2026-10-02', 'scheduled', 'CFI Example', 't', 't');
+        INSERT INTO study_materials (id, title, material_type, topic, review_status, file_path, original_file_name, file_size, created_at, updated_at)
+        VALUES ('mat-1', 'Synthetic PHAK Ch. 5', 'reference', 'aerodynamics', 'reviewed', 'mat-1-phak5.pdf', 'phak5.pdf', 4096, 't', 't');
+        INSERT INTO journal_entries (id, event_id, date, title, went_well, was_difficult, instructor_feedback,
+            questions_for_next_time, confidence, aircraft_type, aircraft_id, total_time, dual_received, day_landings, created_at, updated_at)
+        VALUES ('jr-1', 'ev-past', '2026-08-28', 'Stalls', 'Power-off recovery', 'Rudder in power-on',
+            'Lead with rudder', 'What is critical AOA?', 3, 'C172S', 'N0000X', 1.4, 1.4, 3, 't', 't');
+        INSERT INTO journal_materials (journal_id, material_id) VALUES ('jr-1', 'mat-1');
+        INSERT INTO next_actions (id, title, status, priority, due_date, estimated_minutes, related_type, related_id, completed_at, created_at, updated_at)
+        VALUES ('act-done', 'Chair-fly power-on stall', 'completed', 'important', '2026-08-30', 20, 'journal', 'jr-1', '2026-08-30T09:00:00.000Z', 't', 't'),
+               ('act-open', 'Read about load factor', 'open', 'next_up', NULL, 15, 'material', 'mat-1', NULL, 't', 't');
+        INSERT INTO questions (id, text, topic, event_id, material_id, journal_id, status, answer, answered_at, created_at, updated_at)
+        VALUES ('q-answered', 'What is critical AOA?', 'aerodynamics', 'ev-past', 'mat-1', 'jr-1', 'answered', 'About 16 degrees', '2026-08-29T10:00:00.000Z', 't', 't');
+        INSERT INTO app_metadata (key, value) VALUES ('daily_plan_session', '{"version":1,"date":"2026-09-20","timeBudget":30,"suggestedIds":["action:act-open"],"decisions":{},"updatedAt":"t"}');
+    "#;
+
+    #[test]
+    fn upgrading_a_v9_dataset_keeps_everything_and_enables_d6() {
+        let dir = TestDir::new();
+        let conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        let (shipped, new): (Vec<_>, Vec<_>) = crate::migrations()
+            .into_iter()
+            .partition(|m| m.version <= 9);
+        assert_eq!(new.len(), 1, "D7 adds no migration beyond 10");
+        for migration in &shipped {
+            conn.execute_batch(migration.sql).unwrap();
+        }
+        conn.execute_batch(V9_DATASET).unwrap();
+
+        let v9 = |conn: &Connection| {
+            json!({
+                "journal": rows(conn, "SELECT id, event_id, date, title, went_well, was_difficult, instructor_feedback, questions_for_next_time, confidence, aircraft_type, aircraft_id, total_time, dual_received, day_landings FROM journal_entries ORDER BY id"),
+                "links": rows(conn, "SELECT journal_id, material_id FROM journal_materials ORDER BY 1, 2"),
+                "actions": rows(conn, "SELECT id, title, status, priority, due_date, estimated_minutes, related_type, related_id, completed_at FROM next_actions ORDER BY id"),
+                "questions": rows(conn, "SELECT id, text, topic, event_id, material_id, journal_id, status, answer, answered_at FROM questions ORDER BY id"),
+                "metadata": rows(conn, "SELECT key, value FROM app_metadata ORDER BY key"),
+            })
+        };
+        let before = v9(&conn);
+
+        for migration in &new {
+            conn.execute_batch(migration.sql).unwrap();
+        }
+        assert_eq!(v9(&conn), before);
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM next_actions WHERE material_id IS NOT NULL OR source_material_id IS NOT NULL"),
+            0
+        );
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM questions WHERE source_journal_id IS NOT NULL OR source_material_id IS NOT NULL OR source_event_id IS NOT NULL"),
+            0
+        );
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM debrief_operations"), 0);
+
+        // D6 behaviour on the upgraded file.
+        conn.execute("DELETE FROM study_materials WHERE id = 'mat-1'", [])
+            .unwrap();
+        let (material, source, answer): (Option<String>, Option<String>, String) = conn
+            .query_row(
+                "SELECT material_id, source_material_id, answer FROM questions WHERE id = 'q-answered'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(
+            (material, source.as_deref(), answer.as_str()),
+            (None, Some("mat-1"), "About 16 degrees")
+        );
+        let op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-after-upgrade",
+            "targetId": "jr-2",
+            "journal": { "date": "2026-10-02", "title": "Ground reference", "eventId": "ev-next" },
+            "action": { "id": "act-new", "title": "Practice S-turns", "materialId": null },
+            "withdrawActionId": null,
+            "question": { "id": "q-new", "text": "Wind correction in S-turns?", "eventId": "ev-next", "materialId": null },
+            "withdrawQuestionId": null
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op).unwrap();
+        save_debrief_operation_at(dir.path(), &op).unwrap();
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM debrief_operations"), 1);
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM next_actions WHERE id = 'act-new'"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn complete_backup_keeps_the_pdf_plan_progress_provenance_and_ledger_and_retries_safely_after_restore(
+    ) {
+        let root = TestDir::new();
+        let elsewhere = TestDir::new();
+        let restore_target = TestDir::new();
+        let conn = setup_db(root.path());
+        seed(&conn);
+
+        // A managed study PDF (synthetic bytes) referenced by the material.
+        let pdf = b"%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [] /Count 0 >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n";
+        std::fs::create_dir_all(root.path().join("documents")).unwrap();
+        std::fs::write(
+            root.path()
+                .join("documents")
+                .join("material-1-handbook.pdf"),
+            pdf,
+        )
+        .unwrap();
+        conn.execute(
+            "UPDATE study_materials SET file_path = 'material-1-handbook.pdf', original_file_name = 'handbook.pdf', file_size = ?1 WHERE id = 'material-1'",
+            params![pdf.len() as i64],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('daily_plan_session', '{\"version\":1,\"date\":\"2026-09-27\",\"timeBudget\":20,\"suggestedIds\":[\"action:action-1\"],\"decisions\":{},\"updatedAt\":\"t\"}')",
+            [],
+        )
+        .unwrap();
+
+        // Accepted debrief, later progress, and a deleted lesson (provenance).
+        save_debrief_operation_at(root.path(), &fixture("01-create")).unwrap();
+        for sql in PROGRESS_SQL {
+            conn.execute(sql, []).unwrap();
+        }
+        conn.execute("DELETE FROM schedule_events WHERE id = 'event-1'", [])
+            .unwrap();
+        let before = snapshot(&conn);
+        let plan_before: String = conn
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'daily_plan_session'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        drop(conn);
+
+        let version = env!("CARGO_PKG_VERSION");
+        let archive = elsewhere.path().join("acceptance.hfdbackup");
+        let info = crate::backup::create_consistent_complete_backup_with_retry(
+            root.path(),
+            &archive,
+            version,
+        )
+        .unwrap();
+        assert!(info.missing_documents.is_empty());
+        crate::backup::inspect_archive(root.path(), &archive, version).unwrap();
+        crate::backup::stage_complete_restore_in(restore_target.path(), &archive, version).unwrap();
+        crate::backup::apply_pending_restore_in(restore_target.path()).unwrap();
+
+        // Restored file contents and database relationships.
+        assert_eq!(
+            std::fs::read(
+                restore_target
+                    .path()
+                    .join("documents")
+                    .join("material-1-handbook.pdf")
+            )
+            .unwrap(),
+            pdf.to_vec()
+        );
+        let restored = Connection::open(restore_target.path().join("her-flight-deck.db")).unwrap();
+        assert_eq!(snapshot(&restored), before);
+        let plan_after: String = restored
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'daily_plan_session'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(plan_after, plan_before);
+
+        // The ledger came back too: retrying the original acceptance against
+        // the restored data changes nothing.
+        save_debrief_operation_at(restore_target.path(), &fixture("01-create")).unwrap();
+        assert_eq!(snapshot(&restored), before);
+    }
+
+    /// The production part of a Rust source file for the limited source check
+    /// below: line endings normalized (`\r\n` to `\n`), then everything before
+    /// the file's `#[cfg(test)]` + `mod tests` block. A `#[cfg(test)]` helper
+    /// or a comment mentioning it elsewhere does not end production code.
+    fn production_source(source: &str) -> String {
+        let normalized = source.replace("\r\n", "\n");
+        match normalized.find("\n#[cfg(test)]\nmod tests") {
+            Some(boundary) => normalized[..boundary].to_string(),
+            None => normalized,
+        }
+    }
+
+    fn references_reqwest(source: &str) -> bool {
+        production_source(source).contains(&["req", "west"].concat())
+    }
+
+    /// Limited source check, not proof of offline behaviour: the production
+    /// code of each explicitly listed module does not refer to `reqwest`
+    /// directly, and `gemini.rs` still does. It only catches a direct
+    /// `reqwest` reference being added to a listed module. It cannot show that
+    /// those code paths never use the network through another library, a
+    /// transitive call, or the operating system; native offline behaviour
+    /// needs a run with networking disabled.
+    #[test]
+    fn listed_modules_do_not_reference_reqwest_directly_outside_gemini() {
+        let modules = [
+            ("backup.rs", include_str!("backup.rs")),
+            ("debrief.rs", include_str!("debrief.rs")),
+            ("documents.rs", include_str!("documents.rs")),
+            ("pdf.rs", include_str!("pdf.rs")),
+            ("storage.rs", include_str!("storage.rs")),
+            ("platform.rs", include_str!("platform.rs")),
+            ("secrets.rs", include_str!("secrets.rs")),
+            ("lib.rs", include_str!("lib.rs")),
+            ("main.rs", include_str!("main.rs")),
+        ];
+        for (name, source) in modules {
+            assert!(
+                !references_reqwest(source),
+                "{name} must not reference reqwest directly"
+            );
+        }
+        assert!(references_reqwest(include_str!("gemini.rs")));
+    }
+
+    #[test]
+    fn the_reqwest_source_check_treats_lf_and_crlf_alike() {
+        let prohibited = ["use req", "west::Client;"].concat();
+        let lf_clean = "// #[cfg(test)] is mentioned here\nfn app() {}\n\n#[cfg(test)]\nfn helper() {}\n\n#[cfg(test)]\nmod tests {\n    // test code may mention anything\n}\n"
+            .replace("anything", &["req", "west"].concat());
+        let lf_prohibited =
+            format!("fn app() {{}}\n{prohibited}\n\n#[cfg(test)]\nmod tests {{}}\n");
+        let lf_after_helper = format!(
+            "fn app() {{}}\n#[cfg(test)]\nfn helper() {{}}\n{prohibited}\n#[cfg(test)]\nmod tests {{}}\n"
+        );
+        for lf in [&lf_clean, &lf_prohibited, &lf_after_helper] {
+            let crlf = lf.replace('\n', "\r\n");
+            assert_eq!(production_source(lf), production_source(&crlf));
+            assert_eq!(references_reqwest(lf), references_reqwest(&crlf));
+        }
+        // Test code is excluded; production code, even after a test-only
+        // helper or a comment mentioning #[cfg(test)], is still checked.
+        assert!(!references_reqwest(&lf_clean));
+        assert!(!references_reqwest(&lf_clean.replace('\n', "\r\n")));
+        assert!(references_reqwest(&lf_prohibited));
+        assert!(references_reqwest(&lf_prohibited.replace('\n', "\r\n")));
+        assert!(references_reqwest(&lf_after_helper));
+        assert!(references_reqwest(&lf_after_helper.replace('\n', "\r\n")));
+    }
+
+    /// Manual timing of a complete backup of a large synthetic library:
+    /// 5,000 material records, 300 of them with managed PDF-like files of
+    /// 200 KB (about 59 MB of documents). Run in release mode:
+    ///   cargo test --release --manifest-path src-tauri/Cargo.toml complete_backup_benchmark -- --ignored --nocapture
+    #[test]
+    #[ignore = "manual performance measurement; slow by design"]
+    fn complete_backup_benchmark_large_library() {
+        use std::time::Instant;
+        const REPEATS: usize = 3;
+        let root = TestDir::new();
+        let conn = setup_db(root.path());
+        std::fs::create_dir_all(root.path().join("documents")).unwrap();
+        let mut body = b"%PDF-1.4\n".to_vec();
+        body.resize(200 * 1024, b'x');
+        conn.execute_batch("BEGIN").unwrap();
+        for i in 0..5_000 {
+            let file = if i < 300 {
+                let name = format!("m-{i}.pdf");
+                std::fs::write(root.path().join("documents").join(&name), &body).unwrap();
+                Some(name)
+            } else {
+                None
+            };
+            conn.execute(
+                "INSERT INTO study_materials (id, title, material_type, topic, file_path, created_at, updated_at) VALUES (?1, ?2, 'reference', 'general', ?3, 't', 't')",
+                params![format!("m-{i}"), format!("Synthetic material {i}"), file],
+            )
+            .unwrap();
+        }
+        conn.execute_batch("COMMIT").unwrap();
+        drop(conn);
+
+        let version = env!("CARGO_PKG_VERSION");
+        let (mut export, mut inspect, mut restore) = (Vec::new(), Vec::new(), Vec::new());
+        let mut archive_bytes = 0;
+        for run in 0..REPEATS {
+            let out = TestDir::new();
+            let target = TestDir::new();
+            let archive = out.path().join(format!("bench-{run}.hfdbackup"));
+
+            let started = Instant::now();
+            crate::backup::create_consistent_complete_backup_with_retry(
+                root.path(),
+                &archive,
+                version,
+            )
+            .unwrap();
+            export.push(started.elapsed().as_secs_f64() * 1000.0);
+            archive_bytes = std::fs::metadata(&archive).unwrap().len();
+
+            let started = Instant::now();
+            crate::backup::inspect_archive(root.path(), &archive, version).unwrap();
+            inspect.push(started.elapsed().as_secs_f64() * 1000.0);
+
+            let started = Instant::now();
+            crate::backup::stage_complete_restore_in(target.path(), &archive, version).unwrap();
+            let staged = started.elapsed().as_secs_f64() * 1000.0;
+            crate::backup::apply_pending_restore_in(target.path()).unwrap();
+            restore.push(started.elapsed().as_secs_f64() * 1000.0);
+            println!(
+                "BENCH run {run}: stage {staged:.0} ms, apply {:.0} ms",
+                restore[run] - staged
+            );
+        }
+        for samples in [&mut export, &mut inspect, &mut restore] {
+            samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        }
+        println!(
+            "BENCH complete backup, 5000 records + 300 x 200 KB files; archive {archive_bytes} bytes; \
+             export ms median {:.0} (min {:.0}, max {:.0}); inspect ms median {:.0} (min {:.0}, max {:.0}); \
+             stage+apply restore ms median {:.0} (min {:.0}, max {:.0}); n={REPEATS}",
+            export[1], export[0], export[2], inspect[1], inspect[0], inspect[2], restore[1], restore[0], restore[2]
+        );
+    }
 }

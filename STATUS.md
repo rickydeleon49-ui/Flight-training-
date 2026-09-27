@@ -1,6 +1,68 @@
 # Her Flight Deck — current project status
 
-_Updated 26 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+_Updated 27 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+
+## Performance and usability polish (27 September 2026)
+
+Measured on the same branch as D6/D7 before the final Codex review, with synthetic data in three realistic tiers:
+- **Questions** now opens quickly with a long history. It mounts 100 rows at a time with "Show more", and filters still cover every question.
+  - Large tier (800 questions): 531 → 63 ms in the jsdom benchmark.
+  - Chromium browser-mode check: 595 → 62 ms, with the DOM reduced from about 15,000 to about 2,000 nodes.
+- **Complete-backup restore:** staging now hashes each file while writing it, instead of reopening it afterwards. The same size and SHA-256 checks and `sync_all` apply. Restoring 5,000 records and 300 files went from 6,856 ms to 1,142 ms (release build, this Windows machine).
+- **Compact windows (≤ 900 px):** no longer scroll sideways. A screen-reader-only nav label had widened the page from 470 to 824 px.
+- **Review corrections to the Questions paging and answer-save race:**
+  - Unsaved answers are kept by question id, so a new question, a filter change or paging no longer loses what she typed. Nothing is autosaved.
+  - Every real filter change resets to 100 rows; switching Everything → Answered → Everything had returned 200.
+  - Answer-save race resolved with per-question save ownership: drafts carry a monotonic revision counter so completing an in-flight save clears only the revision it submitted; newer edits or newly opened editing sessions survive.
+  - Synchronous in-flight guard (`savingQuestionIdsRef`) blocks duplicate submissions from rapid clicks within a single React render batch; conflicting controls disable during save (Save shows "Saving…", Cancel, TextArea, status Select, and Delete).
+  - Pending ownership is tracked at page level (`savingQuestionIds`), surviving filter changes and pagination unmount/remount cycles.
+  - Cancel is disabled during an in-flight save, honestly reflecting that an in-flight database write cannot be aborted mid-flight. Failed saves preserve the draft for retry and release the guard.
+  - All 14 tests in `Questions.drafts.test.ts` pass, including controlled-promise batch regression tests. Full suite: 59 files passed, 3 skipped; 550 passed, 3 skipped. Build entry is unchanged at 381.14 kB (118.56 kB gzip).
+  - Rendering stays bounded (1,930 nodes). The large-tier benchmark reads 77 ms against 63 ms before; that is one ~15 ms polling step of the method, and still about 7× faster than the original 531 ms.
+- **Mac tracker:** [the Mac parity tracker](docs/MAC_PARITY_CHECKLIST.md) now lists these changes against MAC-08, MAC-17, MAC-20, MAC-21, MAC-22 (Questions delayed-save smoke test) and PERF-MAC-01…05. All Mac behaviour and Mac speedups remain UNVERIFIED.
+
+Measured and left alone (no verified bottleneck): PDF splitting, Gemini local preparation, Study Library search and sort, Flight Deck.
+
+The D7 source check (`listed_modules_do_not_reference_reqwest_directly_outside_gemini`) now normalizes CRLF correctly, with LF/CRLF fixture tests. That is a separate correction, not performance work.
+
+Not measured: PDF import timing, first navigation with lazy route loading, packaged-app startup, WebView paint, native memory and Gemini network/model latency. Windows installed-app and Apple Silicon checks are unverified. No migration, version or release change. See [the performance note](docs/PERFORMANCE_POLISH_2026-09-27.md).
+
+## M1 D7 — Acceptance of the Daily Flight Plan and debrief workflow (27 September 2026)
+
+By explicit user direction, D7 is being added to the same branch as D6 (`feature/m1-d6-debrief-links`). D6 is reviewed and committed as `d6e2ec3` and intentionally not merged; merging waits for the user's authorization.
+
+D7 adds acceptance evidence and changes no product code or migration:
+- **Whole workflow (UI integration, synthetic data):**
+  - plan budget, Why this, Skip and Start;
+  - quick debrief with an action linked to a material and an edited question carried to a lesson;
+  - the action on the material page and the question in lesson preparation;
+  - the flight log intact in the full editor;
+  - action completed and question answered through the UI;
+  - the original operation retried with nothing undone;
+  - restart by reopening the database file;
+  - linked sources deleted, with honest "unavailable" labels;
+  - cancel and failed-save behaviour.
+- **Upgrade:** a realistic v9 dataset upgraded to migration 10, with nothing lost, nothing invented, migrations run once, and fresh install still working. Tested in TypeScript and against the registered Rust migration list.
+- **Complete backup:** the real native pipeline, including a managed PDF, the daily plan, progress, provenance and the ledger; retrying after restore changes nothing.
+- **Offline evidence (frontend only):** the tested workflow made zero `fetch` or `XMLHttpRequest` calls.
+- **Native offline behaviour: UNVERIFIED.** It has not been exercised with networking disabled or blocked. The structural test `listed_modules_do_not_reference_reqwest_directly_outside_gemini` only confirms that the production code of the listed Rust modules doesn't reference `reqwest` directly (and `gemini.rs` does). It can't show that those paths never use the network another way.
+
+No product defects were found.
+
+**Independent review (Codex), separate from the implementation results:**
+- `npx vitest run src/acceptance/`: 2 files, 4 tests passed.
+- `cargo test --manifest-path src-tauri/Cargo.toml debrief`: 15 passed.
+- `git diff --check`: clean.
+- Local NSIS artifact SHA-256 matches the documented checksum. This is not malware clearance or installation evidence, and that retired-`0.5.2` artifact must not be distributed.
+
+No product-code blocker was found. See [the D7 acceptance note](docs/M1_D7_ACCEPTANCE_2026-09-27.md).
+
+**Not verified:**
+- **Windows desktop smoke:** the app was not launched, because this machine holds a real Her Flight Deck profile and no isolated profile could be verified.
+- **Apple Silicon installed app:** no Mac available.
+- **Live offline run of the desktop app:** not performed.
+
+The Windows release hold and the retired `0.5.2` policy are unchanged.
 
 ## M1 D6 — Connect improvement → action → study material → instructor question (26–27 September 2026)
 
@@ -18,7 +80,7 @@ Implementation checks (Windows x64, not independent review):
 - `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean;
 - `cargo test`: 153 passed, 2 ignored.
 
-Status: Implemented on `feature/m1-d6-debrief-links` (base `0ad0a57`), with review findings corrected; independent review passed; awaiting CI and merge. No installed-app verification has been performed on Windows or a Mac. See [the D6 note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md).
+Status: Reviewed and committed as `d6e2ec3` on `feature/m1-d6-debrief-links`; intentionally unmerged while D7 is added to the same branch. No installed-app verification has been performed on Windows or a Mac. See [the D6 note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md).
 
 ## M1 D5 — Quick debrief mode in existing journal flow (26 September 2026)
 
@@ -309,3 +371,7 @@ recorded in `docs/MAC_AUDIT_2026-09-12.md`. No Mac readiness claim is made.
 ## Known limitation: automatic splitting's remaining bottleneck
 
 Automatic splitting in `pdf.rs` uses `delete_pages_batch`, which batches page-tree count decrements and removes unwanted page references in a single traversal, eliminating `lopdf::delete_pages`'s quadratic per-page object-graph sweep. Windowing further bounds the working document to ≤1,000 pages per part with in-memory candidate evaluation rather than writing size trials to disk. The remaining cost for very large books is `lopdf`'s clone-and-prune approach (cloning the document tree and deleting excluded objects) rather than constructing each part by copying forward only the objects reachable from its kept pages — a larger, separately risky architecture not attempted in this pass.
+
+## Living macOS parity tracker
+
+Track Mac implementation follow-ups, feature parity, installed-app checks, and performance evidence in [MAC_PARITY_CHECKLIST.md](docs/MAC_PARITY_CHECKLIST.md). Update it when shared or Windows work affects Mac behavior. Unverified Mac checks remain open; shared tests and package builds do not establish installed-app readiness.
