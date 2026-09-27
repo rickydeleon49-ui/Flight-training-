@@ -58,6 +58,7 @@ export function useDraftRecovery<T>(
   return {
     recovered,
     forget: () => {
+      skipMirror.current = true;
       clearDraft(key);
       setRecovered(false);
     },

@@ -417,16 +417,27 @@ export function EventDetail() {
                 ) : null}
 
                 {journalEntry ? (
-                  <Link className="button button--secondary button--block" to="/journal">
+                  <Link
+                    className="button button--secondary button--block"
+                    to={`/journal/${journalEntry.id}`}
+                  >
                     Debrief written — open journal
                   </Link>
                 ) : (
-                  <Link
-                    className="button button--primary button--block"
-                    to={`/journal/new?event=${event.id}`}
-                  >
-                    Write the debrief
-                  </Link>
+                  <div className="stack stack--2">
+                    <Link
+                      className="button button--primary button--block"
+                      to={`/journal/new?event=${event.id}&mode=quick`}
+                    >
+                      Quick debrief
+                    </Link>
+                    <Link
+                      className="button button--secondary button--block"
+                      to={`/journal/new?event=${event.id}`}
+                    >
+                      Full flight log & debrief
+                    </Link>
+                  </div>
                 )}
               </div>
             </CardBody>

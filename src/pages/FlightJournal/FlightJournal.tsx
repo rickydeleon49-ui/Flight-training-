@@ -65,9 +65,14 @@ export function FlightJournal() {
         title="Flight Log & Journal"
         subtitle="Flight time, lesson notes, and instructor feedback in one training history."
         action={
-          <Link className="button button--primary" to="/journal/new">
-            <PlusIcon size={16} /> Log a flight
-          </Link>
+          <div className="row">
+            <Link className="button button--secondary" to="/journal/new?mode=quick">
+              Quick debrief
+            </Link>
+            <Link className="button button--primary" to="/journal/new">
+              <PlusIcon size={16} /> Log a flight
+            </Link>
+          </div>
         }
       />
 
@@ -316,12 +321,20 @@ export function FlightJournal() {
                       <span className="small truncate">
                         {event.title} · {formatLongDate(event.date, today)}
                       </span>
-                      <Link
-                        className="button button--secondary button--small"
-                        to={`/journal/new?event=${event.id}`}
-                      >
-                        Write it
-                      </Link>
+                      <div className="row" style={{ gap: "var(--space-2)" }}>
+                        <Link
+                          className="button button--secondary button--small"
+                          to={`/journal/new?event=${event.id}&mode=quick`}
+                        >
+                          Quick debrief
+                        </Link>
+                        <Link
+                          className="button button--ghost button--small"
+                          to={`/journal/new?event=${event.id}`}
+                        >
+                          Full log
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
