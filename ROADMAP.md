@@ -121,10 +121,10 @@ Initial recommendations are deterministic and offline. User-pinned work and due 
 
 | ID | Change and location | Acceptance criteria / required evidence | Status |
 | --- | --- | --- | --- |
-| D1 | Characterize existing behavior in `logic/dashboard`, `actions`, `preparation`, and journal/question repositories | Fixtures prove existing debrief-created actions/questions are retained; identify missing links before adding code | Implemented; awaiting independent review/merge (`src/logic/debriefCharacterization.test.ts`) |
-| D2 | Add pure recommendation selector in `src/logic` | Same inputs/date yield same ordering; 0/3/20 candidates, time budgets, overdue tasks and unknown estimates tested; reasons include valid source IDs | Implemented; awaiting independent review/merge (`src/logic/recommendations.ts`, `src/logic/recommendations.test.ts`) |
-| D3 | Extend Flight Deck UI | 3–5 suggestions, available-minutes control, Start, Why this, Skip today, Move to tomorrow; keyboard usable; remaining tasks reachable | Pending |
-| D4 | Persist per-day decisions and accepted links | Idempotent acceptance; skip today is not permanent dismissal; local-date behavior and restart recovery tested; defer shows whether it changes the source action's due date | Pending |
+| D1 | Characterize existing behavior in `logic/dashboard`, `actions`, `preparation`, and journal/question repositories | Fixtures prove existing debrief-created actions/questions are retained; identify missing links before adding code | Merged through PR #32 (`e938f84`) (`src/logic/debriefCharacterization.test.ts`) |
+| D2 | Add pure recommendation selector in `src/logic` | Same inputs/date yield same ordering; 0/3/20 candidates, time budgets, overdue tasks and unknown estimates tested; reasons include valid source IDs | Merged through PR #32 (`e938f84`) (`src/logic/recommendations.ts`, `src/logic/recommendations.test.ts`) |
+| D3 | Extend Flight Deck UI | 3–5 suggestions, available-minutes control, Start, Why this, Skip today, Move to tomorrow; keyboard usable; remaining tasks reachable | Independent review passed; awaiting CI and merge (`feature/m1-d3-d4-daily-plan`; [note](docs/M1_D3_D4_DAILY_PLAN_2026-09-26.md)) |
+| D4 | Persist per-day decisions and accepted links | Idempotent acceptance; skip today is not permanent dismissal; local-date behavior and restart recovery tested; defer shows whether it changes the source action's due date | Independent review passed; awaiting CI and merge. Planner-only deferral (due dates unchanged); stored in `app_metadata`, no migration |
 | D5 | Add quick debrief mode to existing journal flow | Save a short debrief, reopen full editor, no loss of existing fields; deliberate user edits to actions/questions before save | Pending |
 | D6 | Connect improvement → action → material → instructor question | Repeated acceptance creates one action/question; links survive restart; deletion shows source unavailable without deleting unrelated history; native transaction for multi-record writes | Pending |
 | D7 | End-to-end acceptance and documentation | Existing dataset migration, offline flow, backup/restore and Windows/Mac smoke checklist; provide 90-second workflow demo and exact validation evidence | Pending |
@@ -308,5 +308,6 @@ Claude is the default feature implementer; Gemini takes explicitly assigned secu
 
 1. M0 release-safety fixes merged through PR #30 (`bdad35d`).
 2. D0 (Settings → Check library) merged through PR #31 at `193d3e1`.
-3. D1–D2 (debrief characterization and pure recommendation selector) are implemented on `feature/m1-d1-d2-recommendations` and awaiting independent review/merge.
-4. Hold the check-in with her after M1, before M2 starts.
+3. D1–D2 (debrief characterization and pure recommendation selector) merged through PR #32 at `e938f84`.
+4. D3–D4 (Daily Flight Plan card and saved daily decisions) are implemented on `feature/m1-d3-d4-daily-plan`, with review corrections verified, and are awaiting CI and merge. D5 does not start until they merge.
+5. Hold the check-in with her after M1, before M2 starts.

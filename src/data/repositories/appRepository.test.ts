@@ -53,6 +53,27 @@ describe("application metadata", () => {
     expect(latest?.version).toBe("0.3.0");
     expect(await db.select("SELECT key FROM app_metadata")).toHaveLength(3);
   });
+
+  it("persists and reads daily plan session state", async () => {
+    expect(await repos.app.getDailyPlanState()).toBeNull();
+
+    const state = {
+      version: 1 as const,
+      date: "2026-09-25",
+      timeBudget: 20,
+      suggestedIds: ["action:a-1", "material:m-1"],
+      decisions: {
+        "action:a-2": { type: "skip" as const, date: "2026-09-25" },
+        "action:a-3": { type: "defer" as const, date: "2026-09-25" },
+      },
+      updatedAt: "2026-09-25T14:00:00.000Z",
+    };
+
+    await repos.app.setDailyPlanState(state);
+    const loaded = await repos.app.getDailyPlanState();
+
+    expect(loaded).toEqual(state);
+  });
 });
 
 describe("everything of hers survives a close and reopen", () => {
@@ -85,6 +106,14 @@ describe("everything of hers survives a close and reopen", () => {
         version: "0.2.0",
         path: "/Volumes/Backup/her-flight-deck.hfdbackup",
       });
+      await before.app.setDailyPlanState({
+        version: 1,
+        date: "2026-09-25",
+        timeBudget: 20,
+        suggestedIds: ["action:a-1"],
+        decisions: { "action:a-2": { type: "defer", date: "2026-09-25" } },
+        updatedAt: "2026-09-25T14:00:00.000Z",
+      });
 
       // Quitting the application.
       first.close();
@@ -111,6 +140,12 @@ describe("everything of hers survives a close and reopen", () => {
       expect(materials[0]?.tags).toEqual(["landings"]);
 
       expect((await after.app.lastCompleteBackup())?.version).toBe("0.2.0");
+
+      const plan = await after.app.getDailyPlanState();
+      expect(plan?.date).toBe("2026-09-25");
+      expect(plan?.timeBudget).toBe(20);
+      expect(plan?.suggestedIds).toEqual(["action:a-1"]);
+      expect(plan?.decisions["action:a-2"]).toEqual({ type: "defer", date: "2026-09-25" });
 
       second.close();
     } finally {

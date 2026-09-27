@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
 import { RescheduleDialog } from "@/components/actions/RescheduleDialog";
+import { DailyPlanCard } from "@/components/dailyPlan/DailyPlanCard";
+import { focusRenderedAction } from "@/components/dailyPlan/startAction";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   AlertIcon,
@@ -62,6 +64,14 @@ export function FlightDeck() {
       }),
     [data],
   );
+
+  // Start on a Flight Deck action: focus its own control where it is shown;
+  // an action this page does not list (e.g. due later) opens in its editor.
+  const startAction = (actionId: string) => {
+    if (focusRenderedAction(actionId)) return;
+    const action = data.actions.find((a) => a.id === actionId && a.status === "open");
+    if (action) setEditing(action);
+  };
 
   const saveAction = async (draft: ActionDraft) => {
     const result = editing
@@ -131,6 +141,8 @@ export function FlightDeck() {
 
       <div className="deck">
         <div className="deck__column">
+          <DailyPlanCard onStartAction={startAction} />
+
           {model.topAction ? (
             <div className="top-action">
               <p className="top-action__label">Most important next</p>
@@ -158,7 +170,7 @@ export function FlightDeck() {
                   This didn&rsquo;t get finished. Choose a realistic new time, or mark it done.
                 </p>
                 {model.needsAttention.map((action) => (
-                  <div className="attention-row" key={action.id}>
+                  <div className="attention-row" key={action.id} id={`attention-${action.id}`}>
                     <div style={{ minWidth: 0 }}>
                       <p className="attention-row__title wrap-anywhere">{action.title}</p>
                       <p className="tiny" style={{ color: "var(--status-overdue)" }}>
@@ -216,15 +228,16 @@ export function FlightDeck() {
                         </p>
                       </header>
                       {group.actions.map((action) => (
-                        <ActionRow
-                          key={action.id}
-                          action={action}
-                          today={model.today}
-                          onToggle={operations.toggle}
-                          onEdit={setEditing}
-                          onReschedule={setRescheduling}
-                          onDelete={operations.remove}
-                        />
+                        <div key={action.id} id={`action-${action.id}`}>
+                          <ActionRow
+                            action={action}
+                            today={model.today}
+                            onToggle={operations.toggle}
+                            onEdit={setEditing}
+                            onReschedule={setRescheduling}
+                            onDelete={operations.remove}
+                          />
+                        </div>
                       ))}
                     </section>
                   ))}

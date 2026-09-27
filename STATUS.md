@@ -1,6 +1,23 @@
 # Her Flight Deck — current project status
 
-_Updated 25 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+_Updated 26 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+
+## M1 D3–D4 — Daily Flight Plan and saved daily decisions (26 September 2026)
+
+Flight Deck now opens with a **Daily Flight Plan** card. She can:
+- choose a 10-, 20- or 30-minute (or untimed) plan;
+- read why each suggestion is there;
+- press **Start**, **Skip today** or **Move to tomorrow** on each item.
+
+Unfinished work stays under "Remaining unfinished work".
+
+How it behaves:
+- **Stable sessions.** The day's session keeps its saved order. New or higher-priority work waits until **Refresh**, a budget change or the next local day. A completed, deleted, skipped or deferred item's slot is the only one refilled.
+- **Skip and defer are planner-only** and never change a due date. Both expire at local midnight, which the card notices while open and after sleep or backgrounding.
+- **Saving.** Decisions are stored in the existing `app_metadata` table (no migration). Each change is computed from the stored plan inside the serialized write queue, so quick clicks can't overwrite each other, and a failed save leaves the previous plan untouched.
+- **Start safety.** Start never lands on a deleted record, and it focuses a Flight Deck action's own control.
+
+Status: Independent review passed, including all 62 focused tests; awaiting the pull-request CI and merge gate. D1–D2 merged through PR #32 at `e938f84`. Installed-app behaviour has not been verified on Windows or a Mac. See [the D3–D4 behaviour and evidence note](docs/M1_D3_D4_DAILY_PLAN_2026-09-26.md).
 
 ## M1 D1–D2 — Daily Flight Plan recommendations and debrief characterization (25 September 2026)
 
@@ -8,7 +25,7 @@ Debrief persistence across normal user edits, SQLite disk reloads, and parent de
 
 The pure recommendation selector has been implemented in `src/logic/recommendations.ts` with tests in `src/logic/recommendations.test.ts` (D2). It enforces strict deterministic priority tiers: 1. User-pinned work -> 2. Due actions (overdue oldest first, then due today) -> 3. Next-lesson prep -> 4. Study -> 5. Open actions. Tie-breaking is deterministic down to title and unique ID. When a time budget (10, 20, 30 min) is requested, tasks with unknown durations are kept visibly unknown without fabricated durations or zero-minute representation and remain reachable in priority order without falsely claiming the entire session fits the budget. When any suggested item has an unknown duration, timed items disclose known allocations explicitly as estimates without claiming guaranteed session fits or remaining time. Deleted/archived debrief parents fall back safely to unlinked action/question explanations to prevent dangling links. The selector is 100% pure (zero database writes, zero silent action acceptance, zero skill proficiency mutations, zero clock dependency).
 
-Status: Implemented; awaiting independent review/merge. Flight Deck UI integration (D3) and per-day decision persistence (D4) are pending. See [the D1–D2 implementation and validation note](docs/M1_D1_D2_RECOMMENDATIONS_2026-09-25.md).
+Status: Merged through PR #32 at `e938f84`. D3–D4 are described above. See [the D1–D2 implementation and validation note](docs/M1_D1_D2_RECOMMENDATIONS_2026-09-25.md).
 
 ## M1 D0 — Study Library file check (25 September 2026)
 

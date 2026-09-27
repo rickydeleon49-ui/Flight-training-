@@ -32,6 +32,7 @@ import type {
 } from "@/domain/types";
 import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
 import { hidePending } from "@/logic/pendingDeletes";
+import type { DailyPlanState } from "@/logic/dailyPlan";
 import type { Id } from "@/domain/types";
 
 /**
@@ -60,6 +61,7 @@ export interface AppData {
   transactions: Transaction[];
   fundGoals: FundGoal[];
   toolkit: ToolkitState;
+  dailyPlan: DailyPlanState | null;
 }
 
 type Status = "loading" | "ready" | "error";
@@ -135,9 +137,10 @@ export const EMPTY_DATA: AppData = {
   transactions: [],
   fundGoals: [],
   toolkit: DEFAULT_TOOLKIT_STATE,
+  dailyPlan: null,
 };
 
-const AppDataContext = createContext<AppDataContextValue | null>(null);
+export const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 async function loadAll(repositories: Repositories): Promise<AppData> {
   const [
@@ -158,6 +161,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     transactions,
     fundGoals,
     toolkit,
+    dailyPlan,
   ] = await Promise.all([
     repositories.profile.get(),
     repositories.milestones.list(),
@@ -176,6 +180,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.finance.list(),
     repositories.finance.listFundGoals(),
     repositories.toolkit.get(),
+    repositories.app.getDailyPlanState(),
   ]);
 
   return {
@@ -196,6 +201,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     transactions,
     fundGoals,
     toolkit,
+    dailyPlan,
   };
 }
 
