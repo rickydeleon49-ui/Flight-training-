@@ -1,4 +1,9 @@
 import type { SqlDatabase } from "../db";
+import {
+  parseDailyPlanState,
+  serializeDailyPlanState,
+  type DailyPlanState,
+} from "@/logic/dailyPlan";
 
 /** When the last complete backup was saved, and what wrote it. */
 export interface LastCompleteBackup {
@@ -13,6 +18,7 @@ export interface LastCompleteBackup {
 const LAST_BACKUP_AT = "last_complete_backup_at";
 const LAST_BACKUP_VERSION = "last_complete_backup_version";
 const LAST_BACKUP_PATH = "last_complete_backup_path";
+const DAILY_PLAN_KEY = "daily_plan_session";
 
 /** Product-level metadata that is not part of her personal training record. */
 export function appRepository(db: SqlDatabase) {
@@ -67,6 +73,17 @@ export function appRepository(db: SqlDatabase) {
         version: (await this.get(LAST_BACKUP_VERSION)) ?? "",
         path: (await this.get(LAST_BACKUP_PATH)) ?? "",
       };
+    },
+
+    /** Get the persisted daily plan session state, or null if none saved. */
+    async getDailyPlanState(): Promise<DailyPlanState | null> {
+      const raw = await this.get(DAILY_PLAN_KEY);
+      return parseDailyPlanState(raw);
+    },
+
+    /** Persist the daily plan session state to app_metadata. */
+    async setDailyPlanState(state: DailyPlanState): Promise<void> {
+      await this.set(DAILY_PLAN_KEY, serializeDailyPlanState(state));
     },
   };
 }
