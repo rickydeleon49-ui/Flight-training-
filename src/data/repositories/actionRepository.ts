@@ -49,7 +49,7 @@ const map = (row: Row): NextAction => ({
   completedAt: toNullableText(row.completed_at),
 });
 
-export type NewAction = Partial<Omit<NextAction, "id" | "createdAt" | "updatedAt">> &
+export type NewAction = Partial<Omit<NextAction, "createdAt" | "updatedAt">> &
   Pick<NextAction, "title">;
 
 /** Next Actions are the shared task concept; nothing else defines its own. */
@@ -62,10 +62,15 @@ export function actionRepository(db: SqlDatabase) {
       return rows.map(map);
     },
 
+    async get(id: Id): Promise<NextAction | null> {
+      const rows = await db.select<Row>("SELECT * FROM next_actions WHERE id = ?", [id]);
+      return rows[0] ? map(rows[0]) : null;
+    },
+
     async create(input: NewAction): Promise<NextAction> {
       const timestamp = nowIso();
       const action: NextAction = {
-        id: newId(),
+        id: input.id ?? newId(),
         title: input.title,
         description: input.description ?? "",
         category: input.category ?? "prepare",

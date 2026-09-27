@@ -30,7 +30,7 @@ const map = (row: Row): Question => ({
   answeredAt: toNullableText(row.answered_at),
 });
 
-export type NewQuestion = Partial<Omit<Question, "id" | "createdAt" | "updatedAt">> &
+export type NewQuestion = Partial<Omit<Question, "createdAt" | "updatedAt">> &
   Pick<Question, "text">;
 
 export function questionRepository(db: SqlDatabase) {
@@ -40,10 +40,15 @@ export function questionRepository(db: SqlDatabase) {
       return rows.map(map);
     },
 
+    async get(id: Id): Promise<Question | null> {
+      const rows = await db.select<Row>("SELECT * FROM questions WHERE id = ?", [id]);
+      return rows[0] ? map(rows[0]) : null;
+    },
+
     async create(input: NewQuestion): Promise<Question> {
       const timestamp = nowIso();
       const question: Question = {
-        id: newId(),
+        id: input.id ?? newId(),
         text: input.text,
         topic: input.topic ?? "general",
         eventId: input.eventId ?? null,

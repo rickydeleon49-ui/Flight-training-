@@ -89,8 +89,14 @@ export function JournalEntryDetail() {
             <Link className="button button--ghost" to="/journal">
               Back
             </Link>
+            <Link
+              className="button button--secondary"
+              to={`/journal/${entry.id}/edit?mode=quick`}
+            >
+              Quick debrief
+            </Link>
             <Link className="button button--secondary" to={`/journal/${entry.id}/edit`}>
-              Edit
+              Edit full log
             </Link>
             <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
               Delete

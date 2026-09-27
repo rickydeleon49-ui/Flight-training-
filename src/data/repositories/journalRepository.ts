@@ -48,7 +48,7 @@ const map = (row: Row, materialIds: Id[]): JournalEntry => ({
   materialIds,
 });
 
-export type NewJournalEntry = Partial<Omit<JournalEntry, "id" | "createdAt" | "updatedAt">> &
+export type NewJournalEntry = Partial<Omit<JournalEntry, "createdAt" | "updatedAt">> &
   Pick<JournalEntry, "date">;
 
 export function journalRepository(db: SqlDatabase) {
@@ -74,10 +74,21 @@ export function journalRepository(db: SqlDatabase) {
       return rows.map((row) => map(row, materials.get(row.id) ?? []));
     },
 
+    async get(id: Id): Promise<JournalEntry | null> {
+      const rows = await db.select<Row>("SELECT * FROM journal_entries WHERE id = ?", [id]);
+      const row = rows[0];
+      if (!row) return null;
+      const materials = await db.select<{ material_id: string }>(
+        "SELECT material_id FROM journal_materials WHERE journal_id = ?",
+        [id],
+      );
+      return map(row, materials.map((m) => m.material_id));
+    },
+
     async create(input: NewJournalEntry): Promise<JournalEntry> {
       const timestamp = nowIso();
       const entry: JournalEntry = {
-        id: newId(),
+        id: input.id ?? newId(),
         eventId: input.eventId ?? null,
         date: input.date,
         title: input.title ?? "",
