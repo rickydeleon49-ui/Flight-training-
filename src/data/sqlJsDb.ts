@@ -74,6 +74,28 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
       db.run(sql, params as never);
       save(db);
     },
+    async saveDebriefAtomically(operation: import("./db").DebriefSaveOperation): Promise<void> {
+      const { executeDebriefSave } = await import("./debriefTransaction");
+      await executeDebriefSave(
+        (sql) => {
+          db.run(sql);
+        },
+        (sql, params) => {
+          db.run(sql, params as never);
+        },
+        (sql, params) => {
+          const stmt = db.prepare(sql);
+          try {
+            stmt.bind(params as never);
+            return stmt.step();
+          } finally {
+            stmt.free();
+          }
+        },
+        operation,
+      );
+      save(db);
+    },
     async persist() {
       save(db);
     },

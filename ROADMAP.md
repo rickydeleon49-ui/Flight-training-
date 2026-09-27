@@ -125,8 +125,8 @@ Initial recommendations are deterministic and offline. User-pinned work and due 
 | D2 | Add pure recommendation selector in `src/logic` | Same inputs/date yield same ordering; 0/3/20 candidates, time budgets, overdue tasks and unknown estimates tested; reasons include valid source IDs | Merged through PR #32 (`e938f84`) (`src/logic/recommendations.ts`, `src/logic/recommendations.test.ts`) |
 | D3 | Extend Flight Deck UI | 3–5 suggestions, available-minutes control, Start, Why this, Skip today, Move to tomorrow; keyboard usable; remaining tasks reachable | Merged through PR #33 (`4e2651c`) (`src/components/dailyPlan/`, `src/logic/dailyPlan.ts`, [note](docs/M1_D3_D4_DAILY_PLAN_2026-09-26.md)) |
 | D4 | Persist per-day decisions and accepted links | Idempotent acceptance; skip today is not permanent dismissal; local-date behavior and restart recovery tested; defer shows whether it changes the source action's due date | Merged through PR #33 (`4e2651c`). Planner-only deferral (due dates unchanged); stored in `app_metadata`, no migration |
-| D5 | Add quick debrief mode to existing journal flow | Save a short debrief, reopen full editor, no loss of existing fields; deliberate user edits to actions/questions before save | Independent review passed; awaiting CI and merge (`feature/m1-d5-quick-debrief`; [note](docs/M1_D5_QUICK_DEBRIEF_2026-09-26.md)) |
-| D6 | Connect improvement → action → material → instructor question | Repeated acceptance creates one action/question; links survive restart; deletion shows source unavailable without deleting unrelated history; native transaction for multi-record writes | Pending |
+| D5 | Add quick debrief mode to existing journal flow | Save a short debrief, reopen full editor, no loss of existing fields; deliberate user edits to actions/questions before save | Merged through PR #34 (`0ad0a578eca73e43dc48438bd4ed3278053433bc`) ([note](docs/M1_D5_QUICK_DEBRIEF_2026-09-26.md)) |
+| D6 | Connect improvement → action → material → instructor question | Repeated acceptance creates one action/question; links survive restart; deletion shows source unavailable without deleting unrelated history; native transaction for multi-record writes | Implemented with review corrections; independent review passed; awaiting CI and merge (`feature/m1-d6-debrief-links`; [note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md)) |
 | D7 | End-to-end acceptance and documentation | Existing dataset migration, offline flow, backup/restore and Windows/Mac smoke checklist; provide 90-second workflow demo and exact validation evidence | Pending |
 
 D1 → D2 → D3/D4 → D5/D6 → D7. Implement sequentially unless independent work is explicitly assigned.
@@ -309,5 +309,5 @@ Claude is the default feature implementer; Gemini takes explicitly assigned secu
 1. M0 release-safety fixes merged through PR #30 (`bdad35d`).
 2. D0 (Settings → Check library) merged through PR #31 at `193d3e1`.
 3. D1–D2 (debrief characterization and pure recommendation selector) merged through PR #32 at `e938f84`.
-4. D3–D4 merged through PR #33 at 4e2651c. D5 independent review passed; awaiting CI and merge. D6 remains pending.
+4. D3–D4 merged through PR #33 at 4e2651c. D5 merged through PR #34 at `0ad0a57`. D6 is implemented on `feature/m1-d6-debrief-links`, with the first review's findings corrected, and is independent review passed; awaiting CI and merge. D7 does not start until D6 merges.
 5. Hold the check-in with her after M1, before M2 starts.

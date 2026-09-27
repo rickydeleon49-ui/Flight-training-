@@ -906,7 +906,7 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
     Ok((missing_documents, unreferenced_documents))
 }
 
-fn inspect_archive(
+pub(crate) fn inspect_archive(
     root: &Path,
     source: &Path,
     current_app_version: &str,
@@ -1701,7 +1701,7 @@ pub async fn stage_complete_restore(
 }
 
 /// Unpack and check an archive into staging, against a plain directory.
-fn stage_complete_restore_in(
+pub(crate) fn stage_complete_restore_in(
     root: &Path,
     source: &Path,
     current_app_version: &str,
@@ -1906,7 +1906,7 @@ pub fn apply_pending_restore(app: &AppHandle) -> Result<(), String> {
 }
 
 /// Install whatever was staged, against a plain directory.
-fn apply_pending_restore_in(root: &Path) -> Result<(), String> {
+pub(crate) fn apply_pending_restore_in(root: &Path) -> Result<(), String> {
     apply_pending_restore_in_with(root, || Ok(()))
 }
 

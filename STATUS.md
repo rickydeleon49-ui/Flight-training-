@@ -2,6 +2,24 @@
 
 _Updated 26 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
 
+## M1 D6 — Connect improvement → action → study material → instructor question (26–27 September 2026)
+
+The debrief form can turn "What was difficult?" or "Instructor feedback" into an action she edits and accepts. It can link that action to a Study Library material. It can also save the debrief question with a material and carry it to an upcoming lesson, where it appears in lesson preparation. Nothing is accepted without her ticking the box.
+
+After the first independent review:
+- **One save contract.** The form, TypeScript, the Tauri adapter, Rust (which rejects unknown fields) and the browser transaction all use the same shape. Fixtures captured from the real form are replayed by both implementations, and both must produce the same rows.
+- **Retries are safe.** A retry of an operation that already committed changes nothing, so it can't undo a completed action or an answered question. A deliberate edit writes only the action title and material, and the question text and links.
+- **Deletion is honest.** Deleting a material, lesson or debrief keeps the action and question, and remembers the deleted source (migration 0010, unshipped), so the UI can say "Source … unavailable" instead of acting as if it was never linked.
+- **Evidence.** The real complete-backup round trip is tested in Rust. A driver without atomic support can no longer report a successful save.
+
+Implementation checks (Windows x64, not independent review):
+- `npm test`: 528 passed, 2 skipped;
+- `npm run build`: clean;
+- `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean;
+- `cargo test`: 153 passed, 2 ignored.
+
+Status: Implemented on `feature/m1-d6-debrief-links` (base `0ad0a57`), with review findings corrected; independent review passed; awaiting CI and merge. No installed-app verification has been performed on Windows or a Mac. See [the D6 note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md).
+
 ## M1 D5 — Quick debrief mode in existing journal flow (26 September 2026)
 
 Added a clearly labeled **Quick debrief** mode to the existing Flight Journal flow:
@@ -17,7 +35,7 @@ Added a clearly labeled **Quick debrief** mode to the existing Flight Journal fl
 - **Duplicate submission prevention & safe retry:** Buttons and controls disable during save, showing "Saving…" and ignoring rapid clicks. Save errors preserve entered draft text and display an error alert.
 - **Persistence & cancellation:** Cancellation leaves SQLite completely unmodified (0 writes). Data persists across database close and restart with complete foreign key and relational integrity. No database migrations required (uses existing schema).
 
-Status: Independent review passed: 68 focused tests and an additional after-question-commit interruption probe passed. Implementer validation: All 52 test files passed (508 tests passed, 2 benchmarks skipped), including 21 focused integration and regression tests in `src/pages/FlightJournal/quickDebrief.test.ts`. `npm run build` completed with 0 errors. Physical installed-app verification on Mac hardware has not been performed in this session. Awaiting pull-request CI and merge gate (`feature/m1-d5-quick-debrief`). See [the D5 implementation note](docs/M1_D5_QUICK_DEBRIEF_2026-09-26.md).
+Status: Merged through PR #34 (`0ad0a578eca73e43dc48438bd4ed3278053433bc`). All 52 test files passed (508 tests passed, 2 benchmarks skipped), including 21 focused integration and regression tests in `src/pages/FlightJournal/quickDebrief.test.ts`. `npm run build` completed with 0 errors. Physical installed-app verification on Mac hardware has not been performed. See [the D5 implementation note](docs/M1_D5_QUICK_DEBRIEF_2026-09-26.md).
 
 ## M1 D3–D4 — Daily Flight Plan and saved daily decisions (26 September 2026)
 

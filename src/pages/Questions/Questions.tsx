@@ -230,6 +230,9 @@ function QuestionRow({ question, onDelete }: { question: Question; onDelete: () 
 
   const material = data.materials.find((candidate) => candidate.id === question.materialId);
   const event = data.events.find((candidate) => candidate.id === question.eventId);
+  const journal = question.journalId
+    ? data.journalEntries.find((candidate) => candidate.id === question.journalId)
+    : null;
 
   const tone =
     question.status === "answered"
@@ -249,11 +252,26 @@ function QuestionRow({ question, onDelete }: { question: Question; onDelete: () 
             <Link className="tiny" to={`/study/${material.id}`}>
               {material.title}
             </Link>
+          ) : question.materialId || question.sourceMaterialId ? (
+            <span className="tiny muted">Source material unavailable</span>
           ) : null}
           {event ? (
             <Link className="tiny" to={`/schedule/${event.id}`}>
               {event.title}
             </Link>
+          ) : question.eventId || question.sourceEventId ? (
+            <span className="tiny muted">Source lesson unavailable</span>
+          ) : null}
+          {question.journalId ? (
+            journal ? (
+              <Link className="tiny" to={`/journal/${journal.id}`}>
+                {journal.title || "Debrief"}
+              </Link>
+            ) : (
+              <span className="tiny muted">Source entry unavailable</span>
+            )
+          ) : question.sourceJournalId ? (
+            <span className="tiny muted">Source entry unavailable</span>
           ) : null}
         </div>
 

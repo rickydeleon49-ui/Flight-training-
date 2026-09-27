@@ -129,15 +129,26 @@ export function JournalEntryDetail() {
               <CardHeader title="What came out of this" />
               <CardBody flush>
                 <div style={{ paddingBottom: "var(--space-3)" }}>
-                  {actions.map((action) => (
-                    <ActionRow
-                      key={action.id}
-                      action={action}
-                      today={today}
-                      onToggle={operations.toggle}
-                      onDelete={operations.remove}
-                    />
-                  ))}
+                  {actions.map((action) => {
+                    const material = action.materialId
+                      ? data.materials.find((m) => m.id === action.materialId)
+                      : null;
+                    const context = material
+                      ? `Material: ${material.title}`
+                      : action.materialId || action.sourceMaterialId
+                        ? "Material: Source material unavailable"
+                        : undefined;
+                    return (
+                      <ActionRow
+                        key={action.id}
+                        action={action}
+                        today={today}
+                        context={context}
+                        onToggle={operations.toggle}
+                        onDelete={operations.remove}
+                      />
+                    );
+                  })}
                 </div>
               </CardBody>
             </Card>
@@ -196,6 +207,27 @@ export function JournalEntryDetail() {
                     </dd>
                   </>
                 ) : null}
+                {entry.materialIds && entry.materialIds.length > 0 ? (
+                  <>
+                    <dt>Study materials</dt>
+                    <dd>
+                      <div className="stack stack--1">
+                        {entry.materialIds.map((matId) => {
+                          const mat = data.materials.find((m) => m.id === matId);
+                          return mat ? (
+                            <Link key={mat.id} to={`/study/${mat.id}`}>
+                              {mat.title}
+                            </Link>
+                          ) : (
+                            <span key={matId} className="tiny muted">
+                              Source material unavailable
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </dd>
+                  </>
+                ) : null}
               </dl>
               {entry.confidence != null ? (
                 <p className="tiny dim" style={{ marginTop: "var(--space-4)" }}>
@@ -210,14 +242,40 @@ export function JournalEntryDetail() {
               <CardHeader title="Questions saved" />
               <CardBody>
                 <div className="stack stack--2">
-                  {questions.map((question) => (
-                    <div className="row row--between" key={question.id}>
-                      <span className="small wrap-anywhere">{question.text}</span>
-                      <Link className="tiny" to="/questions">
-                        Open
-                      </Link>
-                    </div>
-                  ))}
+                  {questions.map((question) => {
+                    const material = question.materialId
+                      ? data.materials.find((m) => m.id === question.materialId)
+                      : null;
+                    const qLesson = question.eventId
+                      ? data.events.find((e) => e.id === question.eventId)
+                      : null;
+                    return (
+                      <div className="row row--between" key={question.id}>
+                        <div className="stack stack--1">
+                          <span className="small wrap-anywhere">{question.text}</span>
+                          {(() => {
+                            const parts: string[] = [];
+                            if (material) {
+                              parts.push(`Material: ${material.title}`);
+                            } else if (question.materialId || question.sourceMaterialId) {
+                              parts.push("Material: Source material unavailable");
+                            }
+                            if (qLesson) {
+                              parts.push(`Lesson: ${qLesson.title}`);
+                            } else if (question.eventId || question.sourceEventId) {
+                              parts.push("Lesson: Source lesson unavailable");
+                            }
+                            return parts.length > 0 ? (
+                              <span className="tiny muted">{parts.join(" · ")}</span>
+                            ) : null;
+                          })()}
+                        </div>
+                        <Link className="tiny" to="/questions">
+                          Open
+                        </Link>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardBody>
             </Card>

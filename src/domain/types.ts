@@ -78,6 +78,13 @@ export interface NextAction {
   estimatedMinutes: number | null;
   relatedType: RelatedType | null;
   relatedId: Id | null;
+  materialId: Id | null;
+  /**
+   * The study material this action was linked to before that material was
+   * deleted. Written by a database trigger when a deletion removes the link, so
+   * the UI can tell "never linked" from "linked material was deleted".
+   */
+  sourceMaterialId?: Id | null;
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
   completedAt: IsoDateTime | null;
@@ -415,6 +422,10 @@ export interface Question {
   eventId: Id | null;
   materialId: Id | null;
   journalId: Id | null;
+  /** Provenance kept by database triggers when a linked record is deleted (see NextAction). */
+  sourceJournalId?: Id | null;
+  sourceMaterialId?: Id | null;
+  sourceEventId?: Id | null;
   status: QuestionStatus;
   answer: string;
   createdAt: IsoDateTime;

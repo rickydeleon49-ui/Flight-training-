@@ -7,5 +7,6 @@
   "0006_pilot_toolkit.sql": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1",
   "0007_ai_study.sql": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358",
   "0008_notes.sql": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761",
-  "0009_practice_tests.sql": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec"
+  "0009_practice_tests.sql": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
+  "0010_debrief_links.sql": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971"
 }

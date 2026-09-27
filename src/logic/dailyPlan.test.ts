@@ -35,6 +35,7 @@ function mockAction(overrides: Partial<NextAction> = {}): NextAction {
     estimatedMinutes: 10,
     relatedType: null,
     relatedId: null,
+    materialId: null,
     completedAt: null,
     createdAt: "2026-09-20T12:00:00.000Z",
     updatedAt: "2026-09-20T12:00:00.000Z",

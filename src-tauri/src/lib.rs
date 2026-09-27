@@ -5,6 +5,7 @@
 //! repository abstractions.
 
 mod backup;
+mod debrief;
 mod documents;
 mod gemini;
 mod pdf;
@@ -19,13 +20,13 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 9;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 10;
 
 /// Schema migrations, applied in order on startup.
 ///
 /// The SQL lives in `migrations/` so the TypeScript fallback database can
 /// load exactly the same statements and the two can never drift apart.
-fn migrations() -> Vec<Migration> {
+pub(crate) fn migrations() -> Vec<Migration> {
     vec![
         Migration {
             version: 1,
@@ -81,6 +82,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0009_practice_tests.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 10,
+            description: "debrief_links",
+            sql: include_str!("../migrations/0010_debrief_links.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -127,6 +134,7 @@ pub fn run() {
             documents::import_unlinked_file,
             documents::trash_unlinked_file,
             documents::save_split_materials,
+            debrief::save_debrief_operation,
             pdf::inspect_pdf,
             pdf::split_pdf,
             pdf::split_pdf_automatically,

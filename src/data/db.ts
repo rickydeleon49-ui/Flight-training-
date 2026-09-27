@@ -16,6 +16,75 @@ export interface SqlDatabase {
   persist?(): Promise<void>;
   /** Desktop-only pinned transaction for a batch of PDF part records. */
   saveMaterialsAtomically?(materials: import("@/domain/types").StudyMaterial[]): Promise<void>;
+  /** Single-connection atomic transaction for debrief multi-record acceptance. */
+  saveDebriefAtomically?(operation: DebriefSaveOperation): Promise<void>;
+}
+
+/**
+ * The one debrief-save contract, shared by the form, this interface, the Tauri
+ * adapter (`invoke("save_debrief_operation", { operation })`), the Rust
+ * `DebriefSaveOperation` (which rejects unknown fields), and the browser/test
+ * transaction in `debriefTransaction.ts`. Checked-in fixtures captured from the
+ * real form (`src-tauri/fixtures/debrief-contract/`) are replayed by both sides.
+ *
+ * Retry versus deliberate edit:
+ * - `operationId` identifies one exact save. The form keeps it while that
+ *   operation's content is unchanged, so a retry after a lost response sends
+ *   the same id. An id that already committed is a complete no-op.
+ * - A new id is a deliberate save. It writes the journal as shown in the form,
+ *   and on an action/question it owns it writes only the debrief-managed
+ *   fields (action title and material; question text, lesson and material).
+ *   Status, completion, answers, priority, category, dates and estimates are
+ *   never written on update.
+ * - `targetId`, `action.id` and `question.id` are pre-assigned by the form.
+ *   Existence in the database decides insert versus update; an existing record
+ *   not owned by this journal is refused, never overwritten or deleted.
+ */
+export interface DebriefSaveOperation {
+  operationId: string;
+  targetId: string;
+  journal: {
+    eventId?: string | null;
+    date: string;
+    title: string;
+    aircraftType?: string | null;
+    aircraftId?: string | null;
+    departureAirport?: string | null;
+    arrivalAirport?: string | null;
+    instructorName?: string | null;
+    totalTime?: number | null;
+    dualReceived?: number | null;
+    soloTime?: number | null;
+    picTime?: number | null;
+    crossCountryTime?: number | null;
+    nightTime?: number | null;
+    actualInstrumentTime?: number | null;
+    simulatedInstrumentTime?: number | null;
+    dayLandings?: number | null;
+    nightLandings?: number | null;
+    mission?: string | null;
+    practiced?: string | null;
+    wentWell?: string | null;
+    wasDifficult?: string | null;
+    instructorFeedback?: string | null;
+    questionsForNextTime?: string | null;
+    confidence?: number | null;
+    goalId?: string | null;
+    materialIds?: string[];
+  };
+  action?: {
+    id: string;
+    title: string;
+    materialId?: string | null;
+  } | null;
+  withdrawActionId?: string | null;
+  question?: {
+    id: string;
+    text: string;
+    eventId?: string | null;
+    materialId?: string | null;
+  } | null;
+  withdrawQuestionId?: string | null;
 }
 
 export type SqlValue = string | number | null;

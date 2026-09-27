@@ -91,7 +91,9 @@ export const actionsFor = (
   relatedId: Id,
 ): NextAction[] =>
   actions.filter(
-    (action) => action.relatedType === relatedType && action.relatedId === relatedId,
+    (action) =>
+      (action.relatedType === relatedType && action.relatedId === relatedId) ||
+      (relatedType === "material" && action.materialId === relatedId),
   );
 
 /**

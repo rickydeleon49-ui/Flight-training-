@@ -16,6 +16,7 @@ import {
 import { todayIso } from "@/lib/dates";
 import { writeDraft } from "@/lib/drafts";
 import { newId } from "@/lib/id";
+import type { DebriefSaveOperation } from "@/data/db";
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
 
@@ -51,10 +52,19 @@ interface DebriefDraft {
   goalId: string | null;
   materialIds?: string[];
   nextActionTitle?: string;
+  actionMaterialId?: string | null;
   questionToSave?: string;
   questionEdited?: boolean;
+  questionMaterialId?: string | null;
+  questionEventId?: string | null;
   createdActionId?: string | null;
   createdQuestionId?: string | null;
+  /**
+   * The save operation in flight for this draft: its id and a fingerprint of
+   * its content. A retry of the same content reuses the id (a replay the
+   * database ignores once committed); any change makes a new operation.
+   */
+  pendingOperation?: { id: string; fingerprint: string } | null;
 }
 
 const emptyDraft = (): DebriefDraft => ({
@@ -87,10 +97,14 @@ const emptyDraft = (): DebriefDraft => ({
   goalId: null,
   materialIds: [],
   nextActionTitle: "",
+  actionMaterialId: null,
   questionToSave: "",
   questionEdited: false,
+  questionMaterialId: null,
+  questionEventId: null,
   createdActionId: null,
   createdQuestionId: null,
+  pendingOperation: null,
 });
 
 const optionalNumber = (value: string): number | null =>
@@ -173,8 +187,11 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         goalId: existing.goalId,
         materialIds: existing.materialIds,
         nextActionTitle: "",
+        actionMaterialId: null,
         questionToSave: existing.questionsForNextTime,
         questionEdited: false,
+        questionMaterialId: null,
+        questionEventId: null,
         createdActionId: null,
         createdQuestionId: null,
       };
@@ -227,7 +244,10 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       current.instructorFeedback !== submitted.instructorFeedback ||
       current.questionsForNextTime !== submitted.questionsForNextTime ||
       current.nextActionTitle !== submitted.nextActionTitle ||
+      current.actionMaterialId !== submitted.actionMaterialId ||
       current.questionToSave !== submitted.questionToSave ||
+      current.questionMaterialId !== submitted.questionMaterialId ||
+      current.questionEventId !== submitted.questionEventId ||
       current.title !== submitted.title ||
       current.mission !== submitted.mission ||
       current.practiced !== submitted.practiced ||
@@ -376,11 +396,103 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
     const ownedQuestionId = draft.createdQuestionId ?? createdQuestionIdRef.current;
     const targetQuestionId = wantQuestion ? (ownedQuestionId ?? newId()) : null;
 
-    const durableDraft: DebriefDraft = {
+    const identifiedDraft: DebriefDraft = {
       ...draft,
       id: targetId,
       createdActionId: targetActionId ?? draft.createdActionId ?? null,
       createdQuestionId: targetQuestionId ?? draft.createdQuestionId ?? null,
+    };
+
+    // Preserving untouched hidden fields while honoring intentional edits across mode switches:
+    // startingDraft provides the existing baseline, while draft contains intentional user edits
+    // (numeric, text, relationships, or intentional clearing) from quick and full mode.
+    const {
+      nextActionTitle: _draftActionTitle,
+      actionMaterialId: _draftActionMaterialId,
+      questionToSave: _draftQuestionToSave,
+      questionEdited: _draftQuestionEdited,
+      questionMaterialId: _draftQuestionMaterialId,
+      questionEventId: _draftQuestionEventId,
+      createdActionId: _draftCreatedActionId,
+      createdQuestionId: _draftCreatedQuestionId,
+      pendingOperation: _draftPendingOperation,
+      ...journalFields
+    } = identifiedDraft;
+
+    const payload = {
+      ...startingDraft(),
+      ...journalFields,
+    };
+    delete (payload as Record<string, unknown>).nextActionTitle;
+    delete (payload as Record<string, unknown>).actionMaterialId;
+    delete (payload as Record<string, unknown>).questionToSave;
+    delete (payload as Record<string, unknown>).questionEdited;
+    delete (payload as Record<string, unknown>).questionMaterialId;
+    delete (payload as Record<string, unknown>).questionEventId;
+    delete (payload as Record<string, unknown>).createdActionId;
+    delete (payload as Record<string, unknown>).createdQuestionId;
+    delete (payload as Record<string, unknown>).pendingOperation;
+
+    const body: Omit<DebriefSaveOperation, "operationId"> = {
+      targetId,
+      journal: {
+        eventId: payload.eventId ?? null,
+        date: payload.date,
+        title: payload.title ?? "",
+        aircraftType: payload.aircraftType ?? "",
+        aircraftId: payload.aircraftId ?? "",
+        departureAirport: payload.departureAirport ?? "",
+        arrivalAirport: payload.arrivalAirport ?? "",
+        instructorName: payload.instructorName ?? "",
+        totalTime: payload.totalTime ?? null,
+        dualReceived: payload.dualReceived ?? null,
+        soloTime: payload.soloTime ?? null,
+        picTime: payload.picTime ?? null,
+        crossCountryTime: payload.crossCountryTime ?? null,
+        nightTime: payload.nightTime ?? null,
+        actualInstrumentTime: payload.actualInstrumentTime ?? null,
+        simulatedInstrumentTime: payload.simulatedInstrumentTime ?? null,
+        dayLandings: payload.dayLandings ?? null,
+        nightLandings: payload.nightLandings ?? null,
+        mission: payload.mission ?? "",
+        practiced: payload.practiced ?? "",
+        wentWell: payload.wentWell ?? "",
+        wasDifficult: payload.wasDifficult ?? "",
+        instructorFeedback: payload.instructorFeedback ?? "",
+        questionsForNextTime: payload.questionsForNextTime ?? "",
+        confidence: payload.confidence ?? null,
+        goalId: payload.goalId ?? null,
+        materialIds: payload.materialIds ?? [],
+      },
+      action: wantAction
+        ? {
+            id: targetActionId!,
+            title: actionTitle,
+            materialId: identifiedDraft.actionMaterialId ?? null,
+          }
+        : null,
+      withdrawActionId: actionWithdrawn && ownedActionId ? ownedActionId : null,
+      question: wantQuestion
+        ? {
+            id: targetQuestionId!,
+            text: finalQuestionText,
+            eventId: identifiedDraft.questionEventId ?? null,
+            materialId: identifiedDraft.questionMaterialId ?? null,
+          }
+        : null,
+      withdrawQuestionId: questionWithdrawn && ownedQuestionId ? ownedQuestionId : null,
+    };
+
+    // Retry versus deliberate edit: the same content keeps the same operation
+    // id (the database ignores an id that already committed); anything else is
+    // a new operation.
+    const fingerprint = JSON.stringify(body);
+    const operationId =
+      draft.pendingOperation?.fingerprint === fingerprint ? draft.pendingOperation.id : newId();
+    const operation: DebriefSaveOperation = { operationId, ...body };
+    const durableDraft: DebriefDraft = {
+      ...identifiedDraft,
+      pendingOperation: { id: operationId, fingerprint },
     };
 
     // Ordering and idempotency contract:
@@ -397,100 +509,28 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
     if (targetActionId) createdActionIdRef.current = targetActionId;
     if (targetQuestionId) createdQuestionIdRef.current = targetQuestionId;
 
-    // Preserving untouched hidden fields while honoring intentional edits across mode switches:
-    // startingDraft provides the existing baseline, while draft contains intentional user edits
-    // (numeric, text, relationships, or intentional clearing) from quick and full mode.
-    const {
-      nextActionTitle: _draftActionTitle,
-      questionToSave: _draftQuestionToSave,
-      questionEdited: _draftQuestionEdited,
-      createdActionId: _draftCreatedActionId,
-      createdQuestionId: _draftCreatedQuestionId,
-      ...journalFields
-    } = durableDraft;
-
-    const payload = {
-      ...startingDraft(),
-      ...journalFields,
-    };
-    delete (payload as Record<string, unknown>).nextActionTitle;
-    delete (payload as Record<string, unknown>).questionToSave;
-    delete (payload as Record<string, unknown>).questionEdited;
-    delete (payload as Record<string, unknown>).createdActionId;
-    delete (payload as Record<string, unknown>).createdQuestionId;
-
     try {
       const result = await mutate(async (repos) => {
-        // Step 1: Write journal entry (update if existing, create if new)
-        const existingEntry = await repos.journal.get(targetId);
-        if (existingEntry) {
-          await repos.journal.update(targetId, payload);
-        } else {
-          await repos.journal.create({ ...payload, id: targetId });
-        }
+        await repos.journal.saveAtomically(operation);
         createdEntryIdRef.current = targetId;
 
-        // Step 2: Explicit action ownership
-        // Update/delete only records demonstrably created by this specific draft/save operation.
-        // Never overwrite or delete an independent linked record.
         if (wantAction) {
-          const existingOwnedAction = targetActionId
-            ? await repos.actions.get(targetActionId)
-            : null;
-
-          if (existingOwnedAction) {
-            await repos.actions.update(targetActionId!, {
-              title: actionTitle,
-            });
-          } else {
-            await repos.actions.create({
-              id: targetActionId!,
-              title: actionTitle,
-              category: "prepare",
-              priority: "next_up",
-              relatedType: "journal",
-              relatedId: targetId,
-            });
-          }
           createdActionIdRef.current = targetActionId;
         } else if (actionWithdrawn && ownedActionId) {
-          const existingOwnedAction = await repos.actions.get(ownedActionId);
-          if (existingOwnedAction) {
-            await repos.actions.remove(ownedActionId);
-          }
           createdActionIdRef.current = null;
         }
 
-        // Step 3: Explicit question ownership
-        // Update/delete only records demonstrably created by this specific draft/save operation.
-        // Never overwrite or delete an independent linked record.
         if (wantQuestion) {
-          const existingOwnedQuestion = targetQuestionId
-            ? await repos.questions.get(targetQuestionId)
-            : null;
-
-          if (existingOwnedQuestion) {
-            await repos.questions.update(targetQuestionId!, {
-              text: finalQuestionText,
-            });
-          } else {
-            await repos.questions.create({
-              id: targetQuestionId!,
-              text: finalQuestionText,
-              journalId: targetId,
-              status: "to_ask",
-            });
-          }
           createdQuestionIdRef.current = targetQuestionId;
         } else if (questionWithdrawn && ownedQuestionId) {
-          const existingOwnedQuestion = await repos.questions.get(ownedQuestionId);
-          if (existingOwnedQuestion) {
-            await repos.questions.remove(ownedQuestionId);
-          }
           createdQuestionIdRef.current = null;
         }
 
-        return { targetId, actionId: wantAction ? targetActionId : null, questionId: wantQuestion ? targetQuestionId : null };
+        return {
+          targetId,
+          actionId: wantAction ? targetActionId : null,
+          questionId: wantQuestion ? targetQuestionId : null,
+        };
       });
 
       if (result) {
@@ -1141,29 +1181,88 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
             <CardHeader title="What happens next?" eyebrow="Deliberate next steps" />
             <CardBody>
               <div className="stack stack--4">
-                <Field label="Because of this lesson, what should you do next?">
-                  {({ id }) => (
-                    <TextInput
-                      id={id}
-                      disabled={isSaving}
-                      value={draft.nextActionTitle ?? ""}
-                      placeholder="Review flare timing"
-                      onChange={(e) => handleNextActionTitleChange(e.target.value)}
-                    />
+                <Field
+                  label="Because of this lesson, what should you do next?"
+                  hint="Deliberately review and edit proposed actions before adding them to your Flight Plan."
+                >
+                  {({ id, describedBy }) => (
+                    <div className="stack stack--2">
+                      <TextInput
+                        id={id}
+                        disabled={isSaving}
+                        aria-describedby={describedBy}
+                        value={draft.nextActionTitle ?? ""}
+                        placeholder="Review flare timing"
+                        onChange={(e) => handleNextActionTitleChange(e.target.value)}
+                      />
+                      {((draft.wasDifficult ?? "").trim() || (draft.instructorFeedback ?? "").trim()) &&
+                      !(draft.nextActionTitle ?? "").trim() ? (
+                        <div className="row row--wrap" style={{ gap: "var(--space-2)" }}>
+                          {(draft.wasDifficult ?? "").trim() ? (
+                            <Button
+                              type="button"
+                              size="small"
+                              variant="secondary"
+                              disabled={isSaving}
+                              onClick={() => {
+                                handleNextActionTitleChange((draft.wasDifficult ?? "").trim());
+                              }}
+                            >
+                              Turn “What was difficult” into action
+                            </Button>
+                          ) : null}
+                          {(draft.instructorFeedback ?? "").trim() ? (
+                            <Button
+                              type="button"
+                              size="small"
+                              variant="secondary"
+                              disabled={isSaving}
+                              onClick={() => {
+                                handleNextActionTitleChange((draft.instructorFeedback ?? "").trim());
+                              }}
+                            >
+                              Turn “Instructor feedback” into action
+                            </Button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
                   )}
                 </Field>
 
                 {(draft.nextActionTitle ?? "").trim() ? (
-                  <Checkbox
-                    checked={addToPlan}
-                    disabled={isSaving}
-                    onChange={handleAddToPlanChange}
-                    label={`Add “${(draft.nextActionTitle ?? "").trim()}” to your Flight Plan`}
-                  />
+                  <div className="stack stack--3">
+                    <Checkbox
+                      checked={addToPlan}
+                      disabled={isSaving}
+                      onChange={handleAddToPlanChange}
+                      label={`Add “${(draft.nextActionTitle ?? "").trim()}” to your Flight Plan`}
+                    />
+                    {addToPlan ? (
+                      <Field
+                        label="Related study material"
+                        hint="Optionally connect this action to a Study Library document."
+                      >
+                        {({ id }) => (
+                          <Select
+                            id={id}
+                            disabled={isSaving}
+                            placeholder="Not linked to study material"
+                            options={data.materials.map((m) => ({
+                              value: m.id,
+                              label: m.title,
+                            }))}
+                            value={draft.actionMaterialId ?? ""}
+                            onChange={(val) => update("actionMaterialId", val || null)}
+                          />
+                        )}
+                      </Field>
+                    ) : null}
+                  </div>
                 ) : null}
 
-                {draft.questionsForNextTime.trim() || currentQuestionToSave.trim() ? (
-                  <>
+                {(draft.questionsForNextTime ?? "").trim() || currentQuestionToSave.trim() ? (
+                  <div className="stack stack--3">
                     <Checkbox
                       checked={saveQuestion}
                       disabled={isSaving}
@@ -1171,23 +1270,65 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                       label="Save an instructor question to the Questions list"
                     />
                     {saveQuestion ? (
-                      <Field
-                        label="Question to ask your instructor"
-                        hint="Deliberately review and edit the question before saving to the Questions list."
-                      >
-                        {({ id, describedBy }) => (
-                          <TextArea
-                            id={id}
-                            disabled={isSaving}
-                            aria-describedby={describedBy}
-                            rows={2}
-                            value={currentQuestionToSave}
-                            onChange={(e) => handleQuestionToSaveChange(e.target.value)}
-                          />
-                        )}
-                      </Field>
+                      <div className="stack stack--3">
+                        <Field
+                          label="Question to ask your instructor"
+                          hint="Deliberately review and edit the question before saving to the Questions list."
+                        >
+                          {({ id, describedBy }) => (
+                            <TextArea
+                              id={id}
+                              disabled={isSaving}
+                              aria-describedby={describedBy}
+                              rows={2}
+                              value={currentQuestionToSave}
+                              onChange={(e) => handleQuestionToSaveChange(e.target.value)}
+                            />
+                          )}
+                        </Field>
+
+                        <Field
+                          label="Carry to upcoming lesson"
+                          hint="Ask this question during your next scheduled lesson (optional)."
+                        >
+                          {({ id }) => (
+                            <Select
+                              id={id}
+                              disabled={isSaving}
+                              placeholder="Any upcoming lesson"
+                              options={lessons
+                                .filter((ev) => ev.date >= draft.date)
+                                .map((ev) => ({
+                                  value: ev.id,
+                                  label: `${ev.title} · ${ev.date}`,
+                                }))}
+                              value={draft.questionEventId ?? ""}
+                              onChange={(val) => update("questionEventId", val || null)}
+                            />
+                          )}
+                        </Field>
+
+                        <Field
+                          label="Related study material"
+                          hint="Link relevant Study Library material to this question (optional)."
+                        >
+                          {({ id }) => (
+                            <Select
+                              id={id}
+                              disabled={isSaving}
+                              placeholder="Not linked to study material"
+                              options={data.materials.map((m) => ({
+                                value: m.id,
+                                label: m.title,
+                              }))}
+                              value={draft.questionMaterialId ?? ""}
+                              onChange={(val) => update("questionMaterialId", val || null)}
+                            />
+                          )}
+                        </Field>
+                      </div>
                     ) : null}
-                  </>
+                  </div>
                 ) : null}
               </div>
             </CardBody>

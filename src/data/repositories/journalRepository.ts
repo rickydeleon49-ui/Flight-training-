@@ -184,6 +184,15 @@ export function journalRepository(db: SqlDatabase) {
       }
     },
 
+    async saveAtomically(operation: import("../db").DebriefSaveOperation): Promise<void> {
+      if (typeof db.saveDebriefAtomically !== "function") {
+        throw new Error(
+          "Atomic debrief saves require a database driver with atomic transaction support.",
+        );
+      }
+      await db.saveDebriefAtomically(operation);
+    },
+
     async remove(id: Id): Promise<void> {
       await db.execute("DELETE FROM journal_entries WHERE id = ?", [id]);
     },

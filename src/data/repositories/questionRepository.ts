@@ -13,6 +13,7 @@ import { toEnum, toNullableText, toText, type SqlDatabase } from "../db";
 interface Row {
   id: string; text: unknown; topic: unknown; event_id: unknown; material_id: unknown;
   journal_id: unknown; status: unknown; answer: unknown;
+  source_journal_id?: unknown; source_material_id?: unknown; source_event_id?: unknown;
   created_at: unknown; updated_at: unknown; answered_at: unknown;
 }
 
@@ -23,6 +24,9 @@ const map = (row: Row): Question => ({
   eventId: toNullableText(row.event_id),
   materialId: toNullableText(row.material_id),
   journalId: toNullableText(row.journal_id),
+  sourceJournalId: toNullableText(row.source_journal_id),
+  sourceMaterialId: toNullableText(row.source_material_id),
+  sourceEventId: toNullableText(row.source_event_id),
   status: toEnum<QuestionStatus>(row.status, QUESTION_STATUS_LABELS, "to_ask"),
   answer: toText(row.answer),
   createdAt: toText(row.created_at),
@@ -83,13 +87,21 @@ export function questionRepository(db: SqlDatabase) {
       if (changes.status && changes.status !== previous.status) {
         next.answeredAt = changes.status === "answered" ? nowIso() : null;
       }
+      // A deliberate relink replaces the old provenance: once she chooses a
+      // different (or no) record, "the previous source was deleted" no longer applies.
+      const relinked = (key: "eventId" | "materialId" | "journalId") =>
+        changes[key] !== undefined && changes[key] !== previous[key] ? 1 : 0;
       await db.execute(
         `UPDATE questions SET text = ?, topic = ?, event_id = ?, material_id = ?,
-                journal_id = ?, status = ?, answer = ?, updated_at = ?, answered_at = ?
+                journal_id = ?, status = ?, answer = ?, updated_at = ?, answered_at = ?,
+                source_event_id = CASE WHEN ? = 1 THEN NULL ELSE source_event_id END,
+                source_material_id = CASE WHEN ? = 1 THEN NULL ELSE source_material_id END,
+                source_journal_id = CASE WHEN ? = 1 THEN NULL ELSE source_journal_id END
           WHERE id = ?`,
         [
           next.text, next.topic, next.eventId, next.materialId, next.journalId,
-          next.status, next.answer, next.updatedAt, next.answeredAt, id,
+          next.status, next.answer, next.updatedAt, next.answeredAt,
+          relinked("eventId"), relinked("materialId"), relinked("journalId"), id,
         ],
       );
     },

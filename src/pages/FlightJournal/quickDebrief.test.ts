@@ -776,12 +776,11 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
       expect(screen.getByRole("alert")).toBeTruthy();
     });
 
-    // Verify partial state in SQLite: journal entry and action exist, question does not
+    // Verify atomic transaction rollback in SQLite: zero partial records left
     let entries = await repos.journal.list();
-    expect(entries.length).toBe(1);
+    expect(entries.length).toBe(0);
     let actions = await repos.actions.list();
-    expect(actions.length).toBe(1);
-    expect(actions[0]!.title).toBe("Initial Action");
+    expect(actions.length).toBe(0);
     let questions = await repos.questions.list();
     expect(questions.length).toBe(0);
 
@@ -1244,9 +1243,9 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     expect(capturedDraftA.createdActionId).toBeTruthy();
     expect(capturedDraftA.createdQuestionId).toBeTruthy();
 
-    // In SQLite: journal was committed, but action was not
+    // In SQLite: atomic transaction rolls back, leaving zero partial records
     let entries = await repos.journal.list();
-    expect(entries.length).toBe(1);
+    expect(entries.length).toBe(0);
     let actions = await repos.actions.list();
     expect(actions.length).toBe(0);
 
@@ -1279,7 +1278,7 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
 
     cleanup();
 
-    // Boundary B: Interrupted after action commit (before question commit)
+    // Boundary B: Interrupted during question commit (atomic rollback leaves no partial records)
     let shouldFailQuestion = true;
     let capturedDraftB: any = null;
     testDb.execute = async (sql: string, params: any[] = []) => {
@@ -1310,9 +1309,9 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     expect(capturedDraftB).toBeTruthy();
     expect(capturedDraftB.createdActionId).toBeTruthy();
 
-    // In SQLite: journal and action were committed, but question was not
+    // In SQLite: atomic rollback ensures action was not committed
     actions = await repos.actions.list();
-    expect(actions.some((a) => a.id === capturedDraftB.createdActionId)).toBe(true);
+    expect(actions.some((a) => a.id === capturedDraftB.createdActionId)).toBe(false);
     const actionCountBeforeB = actions.length;
 
     // Reopen form from captured durable draft
@@ -1329,15 +1328,99 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     });
     await waitFor(() => expect(screen.getByTestId("entry-detail")).toBeTruthy());
 
-    // Assert action was updated, NOT duplicated
+    // Assert action was created with durable ID, NOT duplicated
     actions = await repos.actions.list();
-    expect(actions.length).toBe(actionCountBeforeB);
+    expect(actions.length).toBe(actionCountBeforeB + 1);
     const actionB = actions.find((a) => a.id === capturedDraftB.createdActionId);
     expect(actionB).toBeTruthy();
     expect(actionB!.title).toBe("Action Boundary B");
 
     questions = await repos.questions.list();
     expect(questions.some((q) => q.id === capturedDraftB.createdQuestionId)).toBe(true);
+
+    cleanup();
+
+    // Boundary C: Permanent regression for D5's after-question-commit interruption boundary
+    // Simulate process crash after all database commits succeed, but before draft storage is cleared.
+    const capturedDraftC = readDraft("journal.new");
+    if (!capturedDraftC) {
+      // Re-populate localStorage to simulate the unforgotten draft at the commit boundary
+      const draftC = {
+        id: "entry-c-boundary",
+        title: "Boundary C Debrief",
+        date: "2026-09-26",
+        wentWell: "",
+        wasDifficult: "",
+        instructorFeedback: "",
+        questionsForNextTime: "Boundary C question",
+        nextActionTitle: "Boundary C action",
+        createdActionId: "action-c-boundary",
+        createdQuestionId: "question-c-boundary",
+      };
+      writeDraft("journal.new", draftC);
+      // Pre-commit the records into DB as if the transaction committed right before the crash
+      await testDb.saveDebriefAtomically!({
+        targetId: draftC.id,
+        operationId: "op-quickDebrief-1",
+        journal: {
+          eventId: null,
+          date: draftC.date,
+          title: draftC.title,
+          aircraftType: "",
+          aircraftId: "",
+          departureAirport: "",
+          arrivalAirport: "",
+          instructorName: "",
+          totalTime: null,
+          dualReceived: null,
+          soloTime: null,
+          picTime: null,
+          crossCountryTime: null,
+          nightTime: null,
+          actualInstrumentTime: null,
+          simulatedInstrumentTime: null,
+          dayLandings: null,
+          nightLandings: null,
+          mission: "",
+          practiced: "",
+          wentWell: "",
+          wasDifficult: "",
+          instructorFeedback: "",
+          questionsForNextTime: draftC.questionsForNextTime,
+          confidence: null,
+          goalId: null,
+          materialIds: [],
+        },
+        action: { id: draftC.createdActionId, title: draftC.nextActionTitle, materialId: null },
+        withdrawActionId: null,
+        question: { id: draftC.createdQuestionId, text: draftC.questionsForNextTime, eventId: null, materialId: null },
+        withdrawQuestionId: null,
+      });
+
+      const actionsBeforeC = await repos.actions.list();
+      const questionsBeforeC = await repos.questions.list();
+      const entriesBeforeC = await repos.journal.list();
+
+      // Pilot reopens app from the recovered draft and clicks save again
+      await renderJournalForm("/journal/new?mode=quick");
+      expect(screen.getByRole("status")).toBeTruthy();
+
+      fireEvent.click(screen.getByLabelText(/Add “Boundary C action” to your Flight Plan/i));
+      fireEvent.click(screen.getByLabelText(/Save an instructor question to the Questions list/i));
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Save quick debrief" }));
+      });
+      await waitFor(() => expect(screen.getByTestId("entry-detail")).toBeTruthy());
+
+      // Assert exact record identity idempotency (zero duplicates)
+      const actionsAfterC = await repos.actions.list();
+      expect(actionsAfterC.length).toBe(actionsBeforeC.length);
+      const questionsAfterC = await repos.questions.list();
+      expect(questionsAfterC.length).toBe(questionsBeforeC.length);
+      const entriesAfterC = await repos.journal.list();
+      expect(entriesAfterC.length).toBe(entriesBeforeC.length);
+    }
 
     cleanup();
     testDb.execute = originalExecute;
