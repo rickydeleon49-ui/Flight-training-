@@ -2,6 +2,10 @@
 
 _Updated 27 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
 
+## M2 Study Library design (planning only)
+
+[M2_STUDY_LIBRARY_DESIGN_2026-09-27.md](docs/M2_STUDY_LIBRARY_DESIGN_2026-09-27.md) maps current generated-content storage to staged content versions, resumable practice attempts, card reviews and bounded history. No M2 schema or app change has started. The roadmap's check-in with the real user after M1 remains the gate before migration 11; her use of the Daily Flight Plan and quick debrief should set M2 scope. The Windows release hold and Mac installed-app checks are unchanged.
+
 ## Performance and usability polish (27 September 2026)
 
 Measured on the same branch as D6/D7 before the final Codex review, with synthetic data in three realistic tiers:
@@ -29,7 +33,7 @@ Not measured: PDF import timing, first navigation with lazy route loading, packa
 
 ## M1 D7 — Acceptance of the Daily Flight Plan and debrief workflow (27 September 2026)
 
-By explicit user direction, D7 is being added to the same branch as D6 (`feature/m1-d6-debrief-links`). D6 is reviewed and committed as `d6e2ec3` and intentionally not merged; merging waits for the user's authorization.
+D6, D7 acceptance, and the performance polish merged through PR #35 (`1d86d57`). The automated checks passed on exact PR head `a2b8a92`. This is not installed-app or release evidence.
 
 D7 adds acceptance evidence and changes no product code or migration:
 - **Whole workflow (UI integration, synthetic data):**
@@ -80,7 +84,7 @@ Implementation checks (Windows x64, not independent review):
 - `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`: clean;
 - `cargo test`: 153 passed, 2 ignored.
 
-Status: Reviewed and committed as `d6e2ec3` on `feature/m1-d6-debrief-links`; intentionally unmerged while D7 is added to the same branch. No installed-app verification has been performed on Windows or a Mac. See [the D6 note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md).
+Status: Merged through PR #35 (`1d86d57`) alongside D7 acceptance and performance polish. No installed-app verification has been performed on Windows or a Mac. See [the D6 note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md).
 
 ## M1 D5 — Quick debrief mode in existing journal flow (26 September 2026)
 

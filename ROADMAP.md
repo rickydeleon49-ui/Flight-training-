@@ -126,14 +126,16 @@ Initial recommendations are deterministic and offline. User-pinned work and due 
 | D3 | Extend Flight Deck UI | 3–5 suggestions, available-minutes control, Start, Why this, Skip today, Move to tomorrow; keyboard usable; remaining tasks reachable | Merged through PR #33 (`4e2651c`) (`src/components/dailyPlan/`, `src/logic/dailyPlan.ts`, [note](docs/M1_D3_D4_DAILY_PLAN_2026-09-26.md)) |
 | D4 | Persist per-day decisions and accepted links | Idempotent acceptance; skip today is not permanent dismissal; local-date behavior and restart recovery tested; defer shows whether it changes the source action's due date | Merged through PR #33 (`4e2651c`). Planner-only deferral (due dates unchanged); stored in `app_metadata`, no migration |
 | D5 | Add quick debrief mode to existing journal flow | Save a short debrief, reopen full editor, no loss of existing fields; deliberate user edits to actions/questions before save | Merged through PR #34 (`0ad0a578eca73e43dc48438bd4ed3278053433bc`) ([note](docs/M1_D5_QUICK_DEBRIEF_2026-09-26.md)) |
-| D6 | Connect improvement → action → material → instructor question | Repeated acceptance creates one action/question; links survive restart; deletion shows source unavailable without deleting unrelated history; native transaction for multi-record writes | Reviewed and committed as `d6e2ec3` on `feature/m1-d6-debrief-links`; intentionally unmerged ([note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md)) |
-| D7 | End-to-end acceptance and documentation | Existing dataset migration, offline flow, backup/restore and Windows/Mac smoke checklist; provide 90-second workflow demo and exact validation evidence | Acceptance evidence reviewed with the performance polish on the same branch by user direction; awaiting CI and merge. Windows desktop smoke and Apple Silicon installed-app tests unverified ([note](docs/M1_D7_ACCEPTANCE_2026-09-27.md)) |
+| D6 | Connect improvement → action → material → instructor question | Repeated acceptance creates one action/question; links survive restart; deletion shows source unavailable without deleting unrelated history; native transaction for multi-record writes | Merged through PR #35 (`1d86d57`) ([note](docs/M1_D6_DEBRIEF_LINKS_2026-09-26.md)) |
+| D7 | End-to-end acceptance and documentation | Existing dataset migration, offline flow, backup/restore and Windows/Mac smoke checklist; provide 90-second workflow demo and exact validation evidence | Acceptance and performance polish merged through PR #35 (`1d86d57`). Windows desktop smoke and Apple Silicon installed-app tests unverified ([note](docs/M1_D7_ACCEPTANCE_2026-09-27.md)) |
 
 D1 → D2 → D3/D4 → D5/D6 → D7. Implement sequentially unless independent work is explicitly assigned.
 
 Do not add AI feedback parsing or a full skill taxonomy to this milestone. The smallest valuable initial change is D2–D3: make the existing plan explainable and manageable.
 
 ## 7. M2 — Study Library sessions (highest next investment)
+
+Planning detail: [M2 Study Library design](docs/M2_STUDY_LIBRARY_DESIGN_2026-09-27.md). This is not authorization to start migration work before the M1 user check-in.
 
 ### A. Durable content and practice history
 
@@ -309,5 +311,5 @@ Claude is the default feature implementer; Gemini takes explicitly assigned secu
 1. M0 release-safety fixes merged through PR #30 (`bdad35d`).
 2. D0 (Settings → Check library) merged through PR #31 at `193d3e1`.
 3. D1–D2 (debrief characterization and pure recommendation selector) merged through PR #32 at `e938f84`.
-4. D3–D4 merged through PR #33 at 4e2651c. D5 merged through PR #34 at `0ad0a57`. D6 is reviewed and committed as `d6e2ec3` on `feature/m1-d6-debrief-links`, intentionally unmerged. D7 acceptance evidence is being added to the same branch by explicit user direction and awaits independent review. Merging waits for the user's authorization. Windows desktop smoke (on an isolated profile) and Apple Silicon installed-app tests remain open.
+4. D3–D4 merged through PR #33 at 4e2651c. D5 merged through PR #34 at `0ad0a57`. D6/D7 and performance polish merged through PR #35 (`1d86d57`). The M1 user check-in gates M2 implementation. Windows desktop smoke (on an isolated profile) and Apple Silicon installed-app tests remain open.
 5. Hold the check-in with her after M1, before M2 starts.
