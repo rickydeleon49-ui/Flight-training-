@@ -1,0 +1,46 @@
+{
+  "operationId": "operation-1",
+  "targetId": "journal-1",
+  "journal": {
+    "eventId": null,
+    "date": "2026-09-26",
+    "title": "Crosswind practice",
+    "aircraftType": "",
+    "aircraftId": "",
+    "departureAirport": "",
+    "arrivalAirport": "",
+    "instructorName": "",
+    "totalTime": null,
+    "dualReceived": null,
+    "soloTime": null,
+    "picTime": null,
+    "crossCountryTime": null,
+    "nightTime": null,
+    "actualInstrumentTime": null,
+    "simulatedInstrumentTime": null,
+    "dayLandings": null,
+    "nightLandings": null,
+    "mission": "",
+    "practiced": "",
+    "wentWell": "",
+    "wasDifficult": "Drifting left in the flare",
+    "instructorFeedback": "",
+    "questionsForNextTime": "How much aileron in a gust?",
+    "confidence": null,
+    "goalId": null,
+    "materialIds": []
+  },
+  "action": {
+    "id": "action-1",
+    "title": "Drifting left in the flare",
+    "materialId": "material-1"
+  },
+  "withdrawActionId": null,
+  "question": {
+    "id": "question-1",
+    "text": "How much aileron in a gust?",
+    "eventId": "event-1",
+    "materialId": "material-1"
+  },
+  "withdrawQuestionId": null
+}

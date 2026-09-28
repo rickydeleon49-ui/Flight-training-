@@ -32,15 +32,25 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
 
   await applyMigrations((sql) => db.exec(sql), applied);
 
-  return {
+  const testDb: TestDatabase = {
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.prepare(sql).all(...params) as T[];
     },
     async execute(sql: string, params: SqlValue[] = []): Promise<void> {
       db.prepare(sql).run(...params);
     },
+    async saveDebriefAtomically(operation: import("../db").DebriefSaveOperation): Promise<void> {
+      const { executeDebriefSave } = await import("../debriefTransaction");
+      await executeDebriefSave(
+        (sql) => db.exec(sql),
+        (sql, params) => testDb.execute(sql, params),
+        (sql, params) => Boolean(db.prepare(sql).get(...params)),
+        operation,
+      );
+    },
     close() {
       db.close();
     },
   };
+  return testDb;
 }

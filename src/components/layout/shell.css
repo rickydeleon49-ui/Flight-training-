@@ -172,6 +172,9 @@
     flex-direction: row;
     overflow-x: auto;
     padding-bottom: var(--space-1);
+    /* Contain absolutely positioned screen-reader text (e.g. the Questions
+       count) so it scrolls with the links instead of widening the page. */
+    position: relative;
   }
   .nav__link { white-space: nowrap; }
   .sidebar__footer { display: contents; }

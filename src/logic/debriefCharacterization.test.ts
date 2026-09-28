@@ -323,6 +323,7 @@ describe("D1: debrief interactions with dashboard, actions, and preparation", ()
       estimatedMinutes: null,
       relatedType: "journal",
       relatedId: journalEntry.id,
+      materialId: null,
       createdAt: "2026-09-03T18:05:00.000Z",
       updatedAt: "2026-09-03T18:05:00.000Z",
       completedAt: null,

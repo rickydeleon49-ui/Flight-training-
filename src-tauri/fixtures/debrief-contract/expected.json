@@ -1,0 +1,239 @@
+{
+  "afterCreate": {
+    "journal": [
+      {
+        "id": "journal-1",
+        "date": "2026-09-26",
+        "title": "Crosswind practice",
+        "event_id": null,
+        "was_difficult": "Drifting left in the flare",
+        "questions_for_next_time": "How much aileron in a gust?"
+      }
+    ],
+    "journalMaterials": [],
+    "actions": [
+      {
+        "id": "action-1",
+        "title": "Drifting left in the flare",
+        "description": "",
+        "category": "prepare",
+        "priority": "next_up",
+        "status": "open",
+        "due_date": null,
+        "estimated_minutes": null,
+        "related_type": "journal",
+        "related_id": "journal-1",
+        "material_id": "material-1",
+        "source_material_id": null,
+        "completed_at": null
+      }
+    ],
+    "questions": [
+      {
+        "id": "question-1",
+        "text": "How much aileron in a gust?",
+        "topic": "general",
+        "status": "to_ask",
+        "answer": "",
+        "answered_at": null,
+        "event_id": "event-1",
+        "material_id": "material-1",
+        "journal_id": "journal-1",
+        "source_event_id": null,
+        "source_material_id": null,
+        "source_journal_id": null
+      }
+    ],
+    "operations": [
+      {
+        "id": "operation-1",
+        "journal_id": "journal-1"
+      }
+    ]
+  },
+  "afterProgressAndReplay": {
+    "journal": [
+      {
+        "id": "journal-1",
+        "date": "2026-09-26",
+        "title": "Crosswind practice",
+        "event_id": null,
+        "was_difficult": "Drifting left in the flare",
+        "questions_for_next_time": "How much aileron in a gust?"
+      }
+    ],
+    "journalMaterials": [],
+    "actions": [
+      {
+        "id": "action-1",
+        "title": "Drifting left in the flare",
+        "description": "Flew it twice with my instructor",
+        "category": "prepare",
+        "priority": "important",
+        "status": "completed",
+        "due_date": "2026-10-01",
+        "estimated_minutes": 25,
+        "related_type": "journal",
+        "related_id": "journal-1",
+        "material_id": "material-1",
+        "source_material_id": null,
+        "completed_at": "2026-09-27T10:00:00.000Z"
+      }
+    ],
+    "questions": [
+      {
+        "id": "question-1",
+        "text": "How much aileron in a gust?",
+        "topic": "aerodynamics",
+        "status": "answered",
+        "answer": "Hold it into the wind, more as you slow",
+        "answered_at": "2026-09-27T10:05:00.000Z",
+        "event_id": "event-1",
+        "material_id": "material-1",
+        "journal_id": "journal-1",
+        "source_event_id": null,
+        "source_material_id": null,
+        "source_journal_id": null
+      }
+    ],
+    "operations": [
+      {
+        "id": "operation-1",
+        "journal_id": "journal-1"
+      }
+    ]
+  },
+  "afterUpdate": {
+    "journal": [
+      {
+        "id": "journal-1",
+        "date": "2026-09-26",
+        "title": "Crosswind practice",
+        "event_id": null,
+        "was_difficult": "Drifting left in the flare",
+        "questions_for_next_time": "How much aileron in a gust?"
+      }
+    ],
+    "journalMaterials": [],
+    "actions": [
+      {
+        "id": "action-1",
+        "title": "Practice crosswind flare with rudder",
+        "description": "Flew it twice with my instructor",
+        "category": "prepare",
+        "priority": "important",
+        "status": "completed",
+        "due_date": "2026-10-01",
+        "estimated_minutes": 25,
+        "related_type": "journal",
+        "related_id": "journal-1",
+        "material_id": "material-1",
+        "source_material_id": null,
+        "completed_at": "2026-09-27T10:00:00.000Z"
+      }
+    ],
+    "questions": [
+      {
+        "id": "question-1",
+        "text": "How much aileron should I hold in a 15-knot gust?",
+        "topic": "aerodynamics",
+        "status": "answered",
+        "answer": "Hold it into the wind, more as you slow",
+        "answered_at": "2026-09-27T10:05:00.000Z",
+        "event_id": "event-1",
+        "material_id": "material-1",
+        "journal_id": "journal-1",
+        "source_event_id": null,
+        "source_material_id": null,
+        "source_journal_id": null
+      }
+    ],
+    "operations": [
+      {
+        "id": "operation-1",
+        "journal_id": "journal-1"
+      },
+      {
+        "id": "operation-2",
+        "journal_id": "journal-1"
+      }
+    ]
+  },
+  "afterWithdrawAction": {
+    "journal": [
+      {
+        "id": "journal-1",
+        "date": "2026-09-26",
+        "title": "Crosswind practice",
+        "event_id": null,
+        "was_difficult": "Drifting left in the flare",
+        "questions_for_next_time": "How much aileron in a gust?"
+      }
+    ],
+    "journalMaterials": [],
+    "actions": [],
+    "questions": [
+      {
+        "id": "question-1",
+        "text": "How much aileron should I hold in a 15-knot gust?",
+        "topic": "aerodynamics",
+        "status": "answered",
+        "answer": "Hold it into the wind, more as you slow",
+        "answered_at": "2026-09-27T10:05:00.000Z",
+        "event_id": "event-1",
+        "material_id": "material-1",
+        "journal_id": "journal-1",
+        "source_event_id": null,
+        "source_material_id": null,
+        "source_journal_id": null
+      }
+    ],
+    "operations": [
+      {
+        "id": "operation-1",
+        "journal_id": "journal-1"
+      },
+      {
+        "id": "operation-2",
+        "journal_id": "journal-1"
+      },
+      {
+        "id": "operation-3",
+        "journal_id": "journal-1"
+      }
+    ]
+  },
+  "afterWithdrawQuestion": {
+    "journal": [
+      {
+        "id": "journal-1",
+        "date": "2026-09-26",
+        "title": "Crosswind practice",
+        "event_id": null,
+        "was_difficult": "Drifting left in the flare",
+        "questions_for_next_time": "How much aileron in a gust?"
+      }
+    ],
+    "journalMaterials": [],
+    "actions": [],
+    "questions": [],
+    "operations": [
+      {
+        "id": "operation-1",
+        "journal_id": "journal-1"
+      },
+      {
+        "id": "operation-2",
+        "journal_id": "journal-1"
+      },
+      {
+        "id": "operation-3",
+        "journal_id": "journal-1"
+      },
+      {
+        "id": "operation-4",
+        "journal_id": "journal-1"
+      }
+    ]
+  }
+}

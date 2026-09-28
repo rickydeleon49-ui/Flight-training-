@@ -188,8 +188,16 @@ describe("relationships", () => {
     const forGoal = makeAction({ relatedType: "goal", relatedId: "goal-1" });
     const forOther = makeAction({ relatedType: "goal", relatedId: "goal-2" });
     const forMaterial = makeAction({ relatedType: "material", relatedId: "goal-1" });
+    const forDebriefWithMaterial = makeAction({
+      relatedType: "journal",
+      relatedId: "entry-1",
+      materialId: "mat-1",
+    });
     const found = actionsFor([forGoal, forOther, forMaterial], "goal", "goal-1");
     expect(found).toEqual([forGoal]);
+
+    const foundForMat = actionsFor([forDebriefWithMaterial, forGoal], "material", "mat-1");
+    expect(foundForMat).toEqual([forDebriefWithMaterial]);
   });
 });
 

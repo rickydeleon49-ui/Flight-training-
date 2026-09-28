@@ -24,6 +24,8 @@ interface Row {
   estimated_minutes: unknown;
   related_type: unknown;
   related_id: unknown;
+  material_id: unknown;
+  source_material_id?: unknown;
   created_at: unknown;
   updated_at: unknown;
   completed_at: unknown;
@@ -44,6 +46,8 @@ const map = (row: Row): NextAction => ({
     ? toEnum<RelatedType>(row.related_type, RELATED_TYPE_LABELS, "goal")
     : null,
   relatedId: toNullableText(row.related_id),
+  materialId: toNullableText(row.material_id),
+  sourceMaterialId: toNullableText(row.source_material_id),
   createdAt: toText(row.created_at),
   updatedAt: toText(row.updated_at),
   completedAt: toNullableText(row.completed_at),
@@ -80,18 +84,19 @@ export function actionRepository(db: SqlDatabase) {
         estimatedMinutes: input.estimatedMinutes ?? null,
         relatedType: input.relatedType ?? null,
         relatedId: input.relatedId ?? null,
+        materialId: input.materialId ?? null,
         createdAt: timestamp,
         updatedAt: timestamp,
         completedAt: input.completedAt ?? null,
       };
       await db.execute(
         `INSERT INTO next_actions (id, title, description, category, priority, status,
-           due_date, estimated_minutes, related_type, related_id, created_at, updated_at, completed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           due_date, estimated_minutes, related_type, related_id, material_id, created_at, updated_at, completed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           action.id, action.title, action.description, action.category, action.priority,
           action.status, action.dueDate, action.estimatedMinutes, action.relatedType,
-          action.relatedId, action.createdAt, action.updatedAt, action.completedAt,
+          action.relatedId, action.materialId, action.createdAt, action.updatedAt, action.completedAt,
         ],
       );
       return action;
@@ -101,17 +106,22 @@ export function actionRepository(db: SqlDatabase) {
       const rows = await db.select<Row>("SELECT * FROM next_actions WHERE id = ?", [id]);
       const existing = rows[0];
       if (!existing) throw new Error("That action no longer exists.");
-      const next = { ...map(existing), ...changes, updatedAt: nowIso() };
+      const previous = map(existing);
+      const next = { ...previous, ...changes, updatedAt: nowIso() };
+      // Choosing a different (or no) material replaces the deleted-source provenance.
+      const relinked =
+        changes.materialId !== undefined && changes.materialId !== previous.materialId ? 1 : 0;
       await db.execute(
         `UPDATE next_actions
             SET title = ?, description = ?, category = ?, priority = ?, status = ?,
                 due_date = ?, estimated_minutes = ?, related_type = ?, related_id = ?,
-                updated_at = ?, completed_at = ?
+                material_id = ?, updated_at = ?, completed_at = ?,
+                source_material_id = CASE WHEN ? = 1 THEN NULL ELSE source_material_id END
           WHERE id = ?`,
         [
           next.title, next.description, next.category, next.priority, next.status,
           next.dueDate, next.estimatedMinutes, next.relatedType, next.relatedId,
-          next.updatedAt, next.completedAt, id,
+          next.materialId, next.updatedAt, next.completedAt, relinked, id,
         ],
       );
     },

@@ -600,19 +600,29 @@ fn validate_compression_ratio(uncompressed: u64, compressed: u64) -> Result<(), 
     Ok(())
 }
 
-fn sha256_file(path: &Path) -> Result<(u64, String), String> {
-    let mut file = File::open(path)
-        .map_err(|e| format!("Could not verify restored file {}: {e}", path.display()))?;
+/// Copy a restored file's bytes from the archive to disk, hashing exactly the
+/// bytes written. Returns the byte count and SHA-256 of what was written.
+///
+/// Hashing while writing replaces reopening each new file to hash it
+/// afterwards. That reopen is what made staging slow on Windows (about 19 ms
+/// per just-written file, most of a large restore; see
+/// docs/PERFORMANCE_POLISH_2026-09-27.md). The check is the same: the bytes
+/// that went to the file must match the archive's integrity record before the
+/// restore is staged, and the file is still flushed with `sync_all` first.
+fn copy_and_hash(reader: &mut impl Read, output: &mut File) -> Result<(u64, String), String> {
     let mut hasher = Sha256::new();
     let mut bytes = 0u64;
     let mut buffer = [0u8; 64 * 1024];
     loop {
-        let read = file
+        let read = reader
             .read(&mut buffer)
-            .map_err(|e| format!("Could not verify restored file {}: {e}", path.display()))?;
+            .map_err(|e| format!("Could not restore a file: {e}"))?;
         if read == 0 {
             break;
         }
+        output
+            .write_all(&buffer[..read])
+            .map_err(|e| format!("Could not restore a file: {e}"))?;
         hasher.update(&buffer[..read]);
         bytes = bytes
             .checked_add(read as u64)
@@ -906,7 +916,7 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
     Ok((missing_documents, unreferenced_documents))
 }
 
-fn inspect_archive(
+pub(crate) fn inspect_archive(
     root: &Path,
     source: &Path,
     current_app_version: &str,
@@ -1701,7 +1711,7 @@ pub async fn stage_complete_restore(
 }
 
 /// Unpack and check an archive into staging, against a plain directory.
-fn stage_complete_restore_in(
+pub(crate) fn stage_complete_restore_in(
     root: &Path,
     source: &Path,
     current_app_version: &str,
@@ -1787,11 +1797,10 @@ fn stage_complete_restore_in(
             }
             let mut output = File::create(&destination)
                 .map_err(|e| format!("Could not create a restored file: {e}"))?;
-            let restored_bytes = std::io::copy(
+            let (restored_bytes, restored_sha256) = copy_and_hash(
                 &mut entry.take(expected_size.saturating_add(1)),
                 &mut output,
-            )
-            .map_err(|e| format!("Could not restore a file: {e}"))?;
+            )?;
             if restored_bytes != expected_size {
                 return Err("A file in that backup has an invalid size.".to_string());
             }
@@ -1804,9 +1813,8 @@ fn stage_complete_restore_in(
                 let expected = expected
                     .remove(&normalized)
                     .ok_or_else(|| format!("The backup has no integrity record for {raw_name}"))?;
-                let (actual_bytes, actual_sha256) = sha256_file(&destination)?;
-                if actual_bytes != expected.bytes
-                    || !actual_sha256.eq_ignore_ascii_case(&expected.sha256)
+                if restored_bytes != expected.bytes
+                    || !restored_sha256.eq_ignore_ascii_case(&expected.sha256)
                 {
                     return Err(format!(
                         "The backup failed its integrity check for {raw_name}"
@@ -1906,7 +1914,7 @@ pub fn apply_pending_restore(app: &AppHandle) -> Result<(), String> {
 }
 
 /// Install whatever was staged, against a plain directory.
-fn apply_pending_restore_in(root: &Path) -> Result<(), String> {
+pub(crate) fn apply_pending_restore_in(root: &Path) -> Result<(), String> {
     apply_pending_restore_in_with(root, || Ok(()))
 }
 
@@ -2620,6 +2628,28 @@ mod tests {
             write_complete_backup(&root, &root.join("copy.hfdbackup"), "0.2.0").unwrap_err();
         assert!(refusal.contains("outside"), "{refusal}");
 
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn restored_files_are_hashed_from_exactly_the_bytes_written() {
+        let root = scratch("copy-and-hash");
+        let content: Vec<u8> = (0..200_000u32).map(|i| (i % 251) as u8).collect();
+        let destination = root.join("restored.pdf");
+        let mut output = File::create(&destination).unwrap();
+        let (bytes, sha) = copy_and_hash(&mut content.as_slice(), &mut output).unwrap();
+        output.sync_all().unwrap();
+        drop(output);
+
+        assert_eq!(bytes, content.len() as u64);
+        assert_eq!(std::fs::read(&destination).unwrap(), content);
+        assert_eq!(sha, hex::encode(Sha256::digest(&content)));
+
+        let mut changed = content.clone();
+        changed[100_000] ^= 1;
+        let mut other = File::create(root.join("changed.pdf")).unwrap();
+        let (_, changed_sha) = copy_and_hash(&mut changed.as_slice(), &mut other).unwrap();
+        assert_ne!(changed_sha, sha);
         std::fs::remove_dir_all(&root).unwrap();
     }
 
