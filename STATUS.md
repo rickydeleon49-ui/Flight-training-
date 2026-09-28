@@ -1,6 +1,8 @@
 # Her Flight Deck — current project status
 
-_Updated 27 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate v0.5.3 active**_
+_Updated 27 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate source at v0.5.3**_
+
+The five candidate version records are synchronized to `0.5.3`. No `v0.5.3` tag, Mac DMG, or physical Mac smoke-test evidence exists yet.
 
 The [27 September release-readiness check and Mac-only plan](docs/RELEASE_READINESS_2026-09-27.md) records:
 - **Strategy revision:** The unresolved Windows Defender review blocks **Windows distribution only**. We do not wait months for vendor response before delivering a candidate for the Apple Silicon Mac. Windows remains published on `v0.5.1`. Candidate `v0.5.3` is prepared as an explicitly **Mac-only candidate**.
