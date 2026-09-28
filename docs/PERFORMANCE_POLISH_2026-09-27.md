@@ -254,7 +254,8 @@ Codex made no independent performance measurements. Every timing in this note is
 ## 8. Security, data-loss, migration and platform review
 
 - **Migrations:** none added or changed. The debrief ledger and contract are untouched.
-- **Backup:** atomic finalization, rollback, previous-backup preservation and all format and integrity checks are unchanged apart from the restore hashing in §5.2. The API key remains excluded from archives.
+- **Backup:** atomic finalization, rollback, previous-backup preservation and all format and integrity checks are unchanged apart from the restore hashing in §5.2. Complete backups archive only the database and managed documents, and `allowed_archive_path` in `backup.rs` rejects `gemini-key`.
+- **Credentials:** Settings receives the Gemini API key transiently in a webview password field (`type="password"`, React component state) and transmits it to Rust via Tauri IPC (`configure_gemini`), where it is stored directly in restricted OS app data (`secrets.rs`, mode `0600` on Unix; Windows user profile). The key is not returned to the webview by `gemini_status`, is never stored in SQLite, and is excluded from backup archives. Production code contains no log statements that record the key. Neither a native secure-entry dialog nor zero webview exposure is claimed, preserving the documented limitation from `docs/MAC_AUDIT_2026-09-12.md` and MAC-16.
 - **Permissions:** the bundle identifier `com.herflightdeck.app`, app-owned document paths and the opener scopes are unchanged. No new dependency was added.
 - **No profile touched:** nothing ran against the real profile; the browser check used the preview pane's own storage.
 - **No release:** no version change, no installer rebuilt or distributed, no release.
