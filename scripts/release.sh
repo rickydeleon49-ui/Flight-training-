@@ -26,61 +26,65 @@ fi
 
 node scripts/check-release-version.mjs "$VERSION"
 
-CURRENT="$(node -p "require('./package.json').version")"
-
 if [ -n "$(git status --porcelain)" ]; then
   echo "Working tree is not clean. Commit or stash first."
   git status --short
   exit 1
 fi
 
-if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+if git rev-parse --verify "refs/tags/v$VERSION" >/dev/null 2>&1; then
   echo "Tag v$VERSION already exists."
   exit 1
 fi
 
+VERSIONS_JSON="$(node -e '
+  const fs = require("node:fs");
+  const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
+  const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8")).version;
+  const tauri = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8")).version;
+  const cargoMatch = fs.readFileSync("src-tauri/Cargo.toml", "utf8").match(/^version\s*=\s*"([^"]+)"/m);
+  const cargo = cargoMatch ? cargoMatch[1] : "";
+  console.log(JSON.stringify({ pkg, lock, tauri, cargo }));
+')"
+
+PKG_VER="$(node -e "console.log(JSON.parse(process.argv[1]).pkg)" "$VERSIONS_JSON")"
+LOCK_VER="$(node -e "console.log(JSON.parse(process.argv[1]).lock)" "$VERSIONS_JSON")"
+TAURI_VER="$(node -e "console.log(JSON.parse(process.argv[1]).tauri)" "$VERSIONS_JSON")"
+CARGO_VER="$(node -e "console.log(JSON.parse(process.argv[1]).cargo)" "$VERSIONS_JSON")"
+
 BUMP=true
-if [ "$VERSION" = "$CURRENT" ]; then
+if [ "$VERSION" = "$PKG_VER" ] && [ "$VERSION" = "$LOCK_VER" ] && [ "$VERSION" = "$TAURI_VER" ] && [ "$VERSION" = "$CARGO_VER" ]; then
   BUMP=false
-  echo "Repository is already prepared for the unreleased version $VERSION"
+  echo "Repository is already prepared for the unreleased version $VERSION across all version files"
 else
-  echo "Releasing $CURRENT -> $VERSION"
+  echo "Releasing to $VERSION (current: package.json=$PKG_VER, lock=$LOCK_VER, tauri=$TAURI_VER, cargo=$CARGO_VER)"
 fi
 
 if [ "$BUMP" = true ]; then
+  node scripts/bump-version.mjs "$VERSION"
+fi
+
 node -e '
   const fs = require("node:fs");
   const version = process.argv[1];
-
-  for (const file of ["package.json", "src-tauri/tauri.conf.json"]) {
-    const json = JSON.parse(fs.readFileSync(file, "utf8"));
-    json.version = version;
-    fs.writeFileSync(file, JSON.stringify(json, null, 2) + "\n");
+  const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
+  const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8")).version;
+  const tauri = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8")).version;
+  const cargoMatch = fs.readFileSync("src-tauri/Cargo.toml", "utf8").match(/^version\s*=\s*"([^"]+)"/m);
+  const cargo = cargoMatch ? cargoMatch[1] : "";
+  const lockMatch = fs.readFileSync("src-tauri/Cargo.lock", "utf8").match(/\[\[package\]\]\s+name\s*=\s*"her-flight-deck"\s+version\s*=\s*"([^"]+)"/);
+  const cargoLock = lockMatch ? lockMatch[1] : "";
+  if (pkg !== version || lock !== version || tauri !== version || cargo !== version || cargoLock !== version) {
+    console.error(`Version mismatch: expected=${version} package.json=${pkg} lock=${lock} tauri=${tauri} cargo=${cargo} Cargo.lock=${cargoLock}`);
+    process.exit(1);
   }
-
-  // npm ci reads both copies of the package version from the lockfile.
-  const lockFile = "package-lock.json";
-  const lock = JSON.parse(fs.readFileSync(lockFile, "utf8"));
-  lock.version = version;
-  lock.packages[""].version = version;
-  fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2) + "\n");
-
-  // Only the package version, never a dependency that happens to match.
-  const cargo = fs.readFileSync("src-tauri/Cargo.toml", "utf8");
-  fs.writeFileSync(
-    "src-tauri/Cargo.toml",
-    cargo.replace(/^version = ".*"$/m, `version = "${version}"`),
-  );
 ' "$VERSION"
-
-# Cargo.lock records the package version too, and is committed.
-( cd src-tauri && cargo update --workspace --quiet 2>/dev/null || cargo check --quiet >/dev/null 2>&1 || true )
-fi
 
 echo
 echo "Checks"
 npm run typecheck
 npm test
+npm run test:cargo-lock
 
 echo
 if [ "$BUMP" = true ]; then

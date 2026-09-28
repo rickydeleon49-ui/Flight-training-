@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:cargo-lock": "node scripts/test-cargo-lock-sync.mjs",
     "tauri": "tauri"
   },
   "dependencies": {
@@ -37,6 +38,7 @@
     "jsdom": "^30.0.1",
     "typescript": "^5.9.3",
     "vite": "^7.1.9",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "yaml": "^2.9.1"
   }
 }

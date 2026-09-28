@@ -3,14 +3,19 @@
 # Two ways to start it:
 #
 #   From the browser  Actions -> Release -> Run workflow, and type the
-#                     version. Nothing needs to be installed anywhere. The
-#                     tag and an unpublished draft are created for you.
+#                     version. Nothing needs to be installed anywhere.
+#                     By default (create_draft: false), it produces private CI
+#                     artifacts for device testing without creating a tag or draft.
+#                     Selecting create_draft: true creates the immutable tag and
+#                     a private GitHub Release draft.
 #
 #   From a clone      scripts/release.sh 0.2.0, then push the tag.
 #
-# Either way it builds the macOS and Windows installers and attaches them to
-# a private GitHub Release draft. The draft must be reviewed before anybody
-# can download its installers.
+# The workflow builds the target platform installer(s) (default: macos-only
+# while Windows distribution is held on v0.5.1). When create_draft is true,
+# it creates the immutable tag and attaches installers to a private GitHub Release
+# draft. The draft must be reviewed and tested on physical hardware before anybody
+# can publish it.
 name: Release
 
 on:
@@ -19,9 +24,22 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to prepare as a private release draft, e.g. 0.1.0 (must match the version in the repository)"
+        description: "Version to prepare as a private release draft, e.g. 0.5.3 (must match the version in the repository)"
         required: true
         type: string
+      target:
+        description: "Target platform(s) for the release draft (default: macos-only to prevent releasing unapproved Windows installers)"
+        required: false
+        type: choice
+        options:
+          - macos-only
+          - all
+        default: macos-only
+      create_draft:
+        description: "Create immutable tag and reviewable GitHub Release draft (default: false produces private CI artifacts only; set true to create tag and draft)"
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -39,6 +57,9 @@ jobs:
     outputs:
       version: ${{ steps.resolve.outputs.version }}
       tag: ${{ steps.resolve.outputs.tag }}
+      target: ${{ steps.resolve.outputs.target }}
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      create_draft: ${{ steps.resolve.outputs.create_draft }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -54,9 +75,16 @@ jobs:
       # with the tag would skip that copy, so refuse to ship one.
       - name: Work out the version, and check everything agrees
         id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_TARGET: ${{ inputs.target }}
+          INPUT_CREATE_DRAFT: ${{ inputs.create_draft }}
+          REF_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "$GITHUB_REF_NAME" != "main" ]; then
-            echo "::error::Browser releases must be run from the main branch, not $GITHUB_REF_NAME."
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$REF_NAME" != "main" ]; then
+            echo "::error::Browser releases must be run from the main branch, not $REF_NAME."
             exit 1
           fi
 
@@ -66,11 +94,15 @@ jobs:
             exit 1
           fi
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ inputs.version }}"
-            VERSION="${VERSION#v}"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            RAW_VERSION="$INPUT_VERSION"
+            if ! [[ "$RAW_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Input version '$RAW_VERSION' is not a valid semantic version."
+              exit 1
+            fi
+            VERSION="${RAW_VERSION#v}"
           else
-            VERSION="${GITHUB_REF_NAME#v}"
+            VERSION="${REF_NAME#v}"
           fi
 
           node scripts/check-release-version.mjs "$VERSION"
@@ -79,10 +111,20 @@ jobs:
           LOCK=$(node -p "require('./package-lock.json').version")
           CONF=$(node -p "require('./src-tauri/tauri.conf.json').version")
           CARGO=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
-          echo "releasing=$VERSION package.json=$PKG package-lock.json=$LOCK tauri.conf.json=$CONF Cargo.toml=$CARGO"
+          CARGO_LOCK=$(node -e '
+            const fs = require("node:fs");
+            const match = fs.readFileSync("src-tauri/Cargo.lock", "utf8").match(/\[\[package\]\]\s+name\s*=\s*"her-flight-deck"\s+version\s*=\s*"([^"]+)"/);
+            console.log(match ? match[1] : "");
+          ')
+          echo "releasing=$VERSION package.json=$PKG package-lock.json=$LOCK tauri.conf.json=$CONF Cargo.toml=$CARGO Cargo.lock=$CARGO_LOCK"
 
-          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$LOCK" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ]; then
-            echo "::error::The repository is at $PKG but you asked for $VERSION. Bump it first with scripts/release.sh, or release $PKG."
+          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$LOCK" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ] || [ "$VERSION" != "$CARGO_LOCK" ]; then
+            echo "::error::The repository is at $PKG but you asked for $VERSION. Bump it first with node scripts/bump-version.mjs $VERSION, or release $PKG."
+            exit 1
+          fi
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && git rev-parse --verify "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag v$VERSION already exists in the repository. Bump the version first."
             exit 1
           fi
 
@@ -91,10 +133,67 @@ jobs:
             exit 1
           fi
 
+          TARGET="${INPUT_TARGET:-macos-only}"
+          if [ "$TARGET" != "macos-only" ] && [ "$TARGET" != "all" ]; then
+            echo "::error::Target '$TARGET' is not recognized. Allowed targets: macos-only, all."
+            exit 1
+          fi
+
+          CREATE_DRAFT="$INPUT_CREATE_DRAFT"
+          if [ "$EVENT_NAME" = "push" ]; then
+            CREATE_DRAFT="true"
+          elif [ "$CREATE_DRAFT" != "true" ]; then
+            CREATE_DRAFT="false"
+          fi
+
+          BUILD_MATRIX=$(node -e '
+            const fs = require("node:fs");
+            const target = process.argv[1];
+            const policy = JSON.parse(fs.readFileSync("scripts/release-policy.json", "utf8"));
+            const winStatus = policy.platformDistribution?.windows?.status;
+            const winReason = policy.platformDistribution?.windows?.holdReason || "Windows distribution is held";
+
+            if (target === "all" && winStatus !== "active") {
+              console.error(`::error::Windows distribution is not active in scripts/release-policy.json (status: "${winStatus}", reason: "${winReason}"). Selecting target \"all\" is forbidden.`);
+              process.exit(1);
+            }
+
+            if (target === "macos-only") {
+              console.log(JSON.stringify({
+                include: [
+                  {
+                    os: "macos-15",
+                    name: "macOS",
+                    bundles: "dmg",
+                    pattern: "src-tauri/target/release/bundle/dmg/*.dmg"
+                  }
+                ]
+              }));
+            } else {
+              console.log(JSON.stringify({
+                include: [
+                  {
+                    os: "macos-15",
+                    name: "macOS",
+                    bundles: "dmg",
+                    pattern: "src-tauri/target/release/bundle/dmg/*.dmg"
+                  },
+                  {
+                    os: "windows-latest",
+                    name: "Windows",
+                    bundles: "nsis",
+                    pattern: "src-tauri/target/release/bundle/nsis/*-setup.exe"
+                  }
+                ]
+              }));
+            }
+          ' "$TARGET")
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "matrix=$BUILD_MATRIX" >> "$GITHUB_OUTPUT"
+          echo "create_draft=$CREATE_DRAFT" >> "$GITHUB_OUTPUT"
 
       - run: npm test
 
@@ -118,7 +217,10 @@ jobs:
         timeout-minutes: 10
         continue-on-error: true
 
-      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+
+      - name: Cargo lockfile synchronization check
+        run: npm run test:cargo-lock
 
   build:
     permissions:
@@ -128,16 +230,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: macos-15          # Apple Silicon
-            name: macOS
-            bundles: dmg
-            pattern: src-tauri/target/release/bundle/dmg/*.dmg
-          - os: windows-latest
-            name: Windows
-            bundles: nsis
-            pattern: src-tauri/target/release/bundle/nsis/*-setup.exe
+      matrix: ${{ fromJSON(needs.check.outputs.matrix) }}
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -167,6 +260,7 @@ jobs:
       contents: write
     name: Prepare release draft
     needs: [check, build]
+    if: needs.check.outputs.create_draft == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -180,25 +274,69 @@ jobs:
       - name: What we are shipping
         run: ls -lh installers
 
+      - name: Verify artifacts and fail closed
+        run: |
+          if ! ls installers/*.dmg >/dev/null 2>&1; then
+            echo "::error::Expected macOS DMG installer was not produced in installers/!"
+            exit 1
+          fi
+
+          node -e '
+            const fs = require("node:fs");
+            const policy = JSON.parse(fs.readFileSync("scripts/release-policy.json", "utf8"));
+            const winStatus = policy.platformDistribution?.windows?.status;
+            const hasExe = fs.existsSync("installers") && fs.readdirSync("installers").some(f => f.endsWith(".exe"));
+            if (winStatus !== "active" && hasExe) {
+              console.error("::error::Unexpected Windows installer appeared in release artifacts while Windows distribution is not active!");
+              process.exit(1);
+            }
+          '
+
       - name: Write the release notes and checksums
         env:
           VERSION: ${{ needs.check.outputs.version }}
         run: |
+          HAS_MAC=false
+          HAS_WIN=false
+          if ls installers/*.dmg >/dev/null 2>&1; then HAS_MAC=true; fi
+          if ls installers/*.exe >/dev/null 2>&1; then HAS_WIN=true; fi
+
           {
-            echo "## Her Flight Deck $VERSION"
-            echo
-            echo "Download the file for your computer and open it."
-            echo
-            echo "| Computer | File |"
-            echo "| --- | --- |"
-            echo "| Mac with Apple silicon | the \`.dmg\` |"
-            echo "| Windows | the \`.exe\` |"
-            echo
-            echo "### Before publishing this draft"
-            echo
-            echo "Download and test the exact draft installers before publishing."
-            echo "Confirm the Windows file is not detected by Microsoft Defender and"
-            echo "confirm the Mac file installs and opens normally on an Apple silicon Mac."
+            if [ "$HAS_MAC" = true ] && [ "$HAS_WIN" = false ]; then
+              echo "## Her Flight Deck $VERSION (macOS)"
+              echo
+              echo "Download the file for your Mac with Apple silicon and open it."
+              echo
+              echo "| Computer | File |"
+              echo "| --- | --- |"
+              echo "| Mac with Apple silicon | the \`.dmg\` |"
+              echo
+              echo "> **Windows notice:** Windows distribution is held on v0.5.1 pending separate Microsoft Defender security review. Do not download or distribute unreviewed Windows installers."
+              echo
+              echo "### Before publishing this draft"
+              echo
+              echo "Download and test the exact draft installer on an Apple Silicon Mac before publishing."
+              echo "Confirm the Mac file installs and opens normally on an Apple silicon Mac."
+            elif [ "$HAS_MAC" = true ] && [ "$HAS_WIN" = true ]; then
+              echo "## Her Flight Deck $VERSION"
+              echo
+              echo "Download the file for your computer and open it."
+              echo
+              echo "| Computer | File |"
+              echo "| --- | --- |"
+              echo "| Mac with Apple silicon | the \`.dmg\` |"
+              echo "| Windows | the \`.exe\` |"
+              echo
+              echo "### Before publishing this draft"
+              echo
+              echo "Download and test the exact draft installers before publishing."
+              echo "Confirm the Windows file is not detected by Microsoft Defender and"
+              echo "confirm the Mac file installs and opens normally on an Apple silicon Mac."
+            else
+              echo "## Her Flight Deck $VERSION"
+              echo
+              echo "Download the installer for your system."
+            fi
             echo
             echo "Do not publish a release that asks people to disable or bypass platform"
             echo "security protections."
@@ -229,9 +367,13 @@ jobs:
           TAG: ${{ needs.check.outputs.tag }}
           VERSION: ${{ needs.check.outputs.version }}
         run: |
+          TITLE="Her Flight Deck $VERSION"
+          if ls installers/*.dmg >/dev/null 2>&1 && ! ls installers/*.exe >/dev/null 2>&1; then
+            TITLE="Her Flight Deck $VERSION (macOS)"
+          fi
           gh release create "$TAG" \
             --draft \
-            --title "Her Flight Deck $VERSION" \
+            --title "$TITLE" \
             --notes-file notes.md \
             --target "$GITHUB_SHA" \
             installers/*
