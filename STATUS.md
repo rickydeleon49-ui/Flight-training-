@@ -1,6 +1,15 @@
 # Her Flight Deck — current project status
 
-_Updated 27 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows release on hold, see below**_
+_Updated 27 September 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate v0.5.3 active**_
+
+The [27 September release-readiness check and Mac-only plan](docs/RELEASE_READINESS_2026-09-27.md) records:
+- **Strategy revision:** The unresolved Windows Defender review blocks **Windows distribution only**. We do not wait months for vendor response before delivering a candidate for the Apple Silicon Mac. Windows remains published on `v0.5.1`. Candidate `v0.5.3` is prepared as an explicitly **Mac-only candidate**.
+- **Release-path & workflow audit:** Added `scripts/bump-version.mjs` ensuring non-committing 5-file synchronization across `package.json`, `package-lock.json` (both root entries), `tauri.conf.json`, `Cargo.toml`, and `Cargo.lock`; updated `scripts/release.sh` to integrate bump-version and enforce Cargo.lock agreement; resolved CI runner portability blockers by making `npm test` depend solely on declared npm dependencies (`yaml: "^2.9.1"` replacing undeclared PyYAML with unsuppressed error throwing, fixture test executing version edits on disposable copy without Cargo compilation or target cache sharing, explicit verification of visible failure on bad lockfile updates, and a separate `npm run test:cargo-lock` integration check wired into `checks.yml` and `release.yml` strictly after Rust setup); hardened `scripts/test-cargo-lock-sync.mjs` as a read-only check verifying package version prior to any Cargo call and executing `cargo check --locked`, with applicable workflow Cargo commands hardened with `--locked`; eliminated direct interpolation of `workflow_dispatch` inputs inside `run:` shell code across workflows by passing inputs via `env:` with strict pre-execution validation; added structural tests enforcing no direct input interpolation in `run:` blocks; updated `.github/workflows/release.yml` with dynamic matrix resolution from `check` job (eliminating invalid job-level `matrix.name` check), strict target validation, executable Windows hold enforcement rejecting `target: all` unless policy explicitly marks Windows `active`, fail-closed artifact verification in `publish`, and `create_draft` option; verified with 25 tests in `src/logic/releaseSafety.test.ts`.
+- **Policy registry & review process:** Updated `scripts/release-policy.json` and [the release review process](docs/RELEASE_REVIEW_PROCESS.md) to reconcile the Mac-only release pathway: Windows remains held on `v0.5.1` while the Mac candidate has its own independent Apple Silicon installed-device gate. The Exact-Installer Invariant requires physical testing on the exact draft DMG matching `SHA256SUMS.txt` before publication (a pre-test of a CI artifact cannot approve newly built draft bytes). Under the no-retag rule, failed candidates are permanently retired in policy and never retagged.
+- **Windows profile isolation:** Proved that Tauri 2 hardcodes `%APPDATA%\com.herflightdeck.app` without CLI/env overrides. To protect the user's real training data on this machine, installed Windows smoke tests remain explicitly UNVERIFIED locally, with safe procedures documented for an isolated test account (`HFDTestUser`) or VM.
+- **Mac parity tracker:** MAC-18 Settings guidance verified in code across all 8 cards (Application Support, Finder reveal, Downloads/iCloud backups, platform security and credential notes present with all "Open Anyway" / Control-click references removed); code-level checks passed, but installed-app visual and interaction check remains UNVERIFIED.
+- **Study Library reliability:** Staged document deletion (`.trash`), rollback, unlinked file recovery, and 50 MiB / 1,000-page limits verified with 45 Rust `documents` and 21 `pdf` tests.
+- **Release gate & candidate distinction:** *Code-level checks passed* (568 app tests including 25 release safety tests, 158 Rust tests with `--locked`, clean clippy/fmt/types, clean `test:cargo-lock`). However, **no usable Mac candidate DMG has been built or installed yet** (DMG bundling cannot run on Windows). Physical Apple Silicon Mac candidate installation, launch, and smoke testing remain completely **UNVERIFIED**. Creating the immutable tag (`v0.5.3`) and private GitHub Release draft via `create_draft: true` is allowed before physical Mac testing so the tester can install and verify the **exact draft DMG** matching `SHA256SUMS.txt`. However, **publishing that draft remains strictly prohibited** until the exact asset passes the physical Apple Silicon smoke test and checksum verification. If the candidate fails device testing, the no-retag rule applies: the tag is never repointed or reused, and the version is permanently retired.
 
 ## M2 Study Library design (planning only)
 
@@ -136,7 +145,7 @@ The private-trash Undo action lasts until app restart. Startup cleanup purges un
 
 ## Release status
 
-Version `0.5.2` was prepared on 14 September 2026 and withdrawn the same day following an unresolved Windows Defender detection (`Trojan:Win32/Wacatac.B!ml`). Per repository release policy (`scripts/release-policy.json`) and automated validation checks, version `0.5.2` is **permanently retired and must never be reused, re-tagged, or published**. The latest distributable release remains `v0.5.1`. The next release must be `0.5.3` or later, and no future release should be prepared until the Windows hold is resolved (by authoritative Microsoft clearance of the exact installer or trusted code signing) and physical installed-application validation on Windows and Apple Silicon hardware is satisfied. Paid code signing is the long-term path, but is not mandatory if Microsoft clears the exact binary.
+Version `0.5.2` was prepared on 14 September 2026 and withdrawn the same day following an unresolved Windows Defender detection (`Trojan:Win32/Wacatac.B!ml`). Per repository release policy (`scripts/release-policy.json`) and automated validation checks, version `0.5.2` is **permanently retired and must never be reused, re-tagged, or published**. The latest distributable Windows release remains `v0.5.1` (held pending separate Microsoft Defender review). Under the revised release policy, the unresolved Windows Defender review blocks **Windows distribution only**; an independent **Mac-only release pathway** is active for candidate `v0.5.3`. A Mac candidate may be released once its independent Apple Silicon hardware smoke test and draft verification pass per [the release review process](docs/RELEASE_REVIEW_PROCESS.md), without waiting for Microsoft Defender resolution. Windows distribution remains held on `v0.5.1` until authoritative Microsoft clearance of the exact binary or trusted code signing is achieved. Paid code signing is the long-term path, but is not mandatory if Microsoft clears the exact binary.
 
 ## Release-safety hardening update (24 September 2026)
 
@@ -260,15 +269,16 @@ The attempted `v0.5.2` Windows installer was withdrawn after Microsoft
 Defender detected it as `Trojan:Win32/Wacatac.B!ml`. It was not executed.
 Microsoft Security Intelligence submission `9656710a-e9d3-4c15-83dc-9b9f3451be8b`
 is pending analysis. In accordance with `scripts/release-policy.json`, version
-`0.5.2` is permanently retired and will never be published or reused; the next
-distributable release will be `0.5.3` or later once the Windows hold is resolved
-(via authoritative Microsoft clearance of the exact installer or trusted code signing)
-and physical installed-app validation on Windows and Apple Silicon hardware is completed.
-Paid code signing is the long-term path, but is not mandatory if Microsoft clears
-the exact binary.
-Workflow runs create private release drafts with checksums; review the exact
-draft assets using [the release review process](docs/RELEASE_REVIEW_PROCESS.md)
-before publishing.
+`0.5.2` is permanently retired and will never be published or reused. A Mac-only
+candidate may advance at `0.5.3` after the exact draft DMG passes physical Apple
+Silicon validation. Windows distribution remains held on `v0.5.1` until the
+exact future Windows installer receives authoritative Microsoft clearance or
+trusted code signing and passes installed-app testing. Paid Windows signing is
+the long-term path, but is not mandatory if Microsoft clears the exact binary.
+By default, browser workflow runs produce private CI artifacts. Selecting
+`create_draft: true` creates an immutable tag and private release draft with
+checksums; review and test those exact assets using
+[the release review process](docs/RELEASE_REVIEW_PROCESS.md) before publishing.
 
 Installing a newer version over an existing installation preserves app data and creates an automatic database safety copy before migrations run. A complete backup should still be saved separately before an update or computer transfer.
 

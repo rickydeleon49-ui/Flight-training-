@@ -45,18 +45,25 @@ The real application always uses the desktop database.
 
 ## Getting it to her
 
-She should not have to build anything. The release workflow prepares
-both installers and attaches them to a private GitHub Release **draft**,
-where an owner reviews the exact files before publishing.
+She should not have to build anything. The release workflow compiles
+the target platform installer(s) (defaulting to `macos-only` while Windows
+distribution is held on `v0.5.1`). By default, it produces private Actions
+CI artifacts for device smoke testing. When `create_draft: true` is selected,
+it attaches the exact installers to a private GitHub Release **draft** and
+creates the tag, where an owner reviews and tests the exact files before publishing.
 
 **From the browser**, with nothing installed anywhere:
 
-> Actions → **Release** → Run workflow → type the version → Run
+> Actions → **Release** → Run workflow → type the version → choose options → Run
 
-It checks the version against `scripts/release-policy.json`, builds the macOS
-and Windows installers, and creates a private release draft. Follow
-[the release review process](docs/RELEASE_REVIEW_PROCESS.md) to inspect and
-test the exact draft assets before publishing.
+By default (`create_draft: false`), the workflow produces private CI artifacts
+only, without creating a tag or release draft. When preparing an official candidate
+for review, a maintainer selects `create_draft: true` to create the immutable tag
+and private draft. It checks the version against `scripts/release-policy.json`,
+evaluates the target platform (default `macos-only` produces the Apple Silicon Mac DMG;
+Windows distribution is held on `v0.5.1` pending security review), and creates
+the private release draft. Follow [the release review process](docs/RELEASE_REVIEW_PROCESS.md)
+to inspect and test the exact draft assets on physical hardware before publishing.
 
 **Or from a clone**, if you have one:
 
@@ -69,13 +76,15 @@ The release notes are written for her, not for a developer: which file to
 take, what each system asks the first time, and that updating keeps
 everything she has entered.
 
-Release `v0.5.1` is the current distributable version. Version `0.5.2` was
-withdrawn and is permanently retired (see `scripts/release-policy.json`). Any
-future release will be prepared as `0.5.3` or later once the Windows hold is
-resolved (via authoritative Microsoft clearance of the exact installer or
-trusted code signing) and mandatory physical installed-application validation on
-both Windows and Apple Silicon hardware is satisfied. Paid code signing is the
-long-term path, but is not mandatory if Microsoft clears the exact binary.
+Release `v0.5.1` is the current distributable Windows release. Version `0.5.2` was
+withdrawn and is permanently retired (see `scripts/release-policy.json`). The unresolved
+Windows Defender review blocks **Windows distribution only**; candidate `v0.5.3` is
+prepared on an independent **Mac-only release pathway**. A Mac candidate may be released
+once its independent Apple Silicon hardware smoke test and draft verification pass,
+without waiting for Microsoft Defender resolution. Windows distribution remains held on
+`v0.5.1` until authoritative Microsoft clearance of the exact binary or trusted code
+signing is achieved. Paid code signing is the long-term path, but is not mandatory if
+Microsoft clears the exact binary.
 
 The version is not just bookkeeping — the application takes a copy of her
 database whenever it notices the version changed since the last run. So the
@@ -146,14 +155,16 @@ macOS builds target Apple Silicon (M-series Macs) only.
 
 Neither installer is currently code-signed. Acquiring an Apple Developer
 identity with notarization and a Windows code-signing certificate is the
-long-term distribution path, but paid signing is not mandatory if Microsoft
-authoritatively clears the exact binary. Physical installed-app validation on
-both Windows and Apple Silicon hardware remains mandatory before distribution.
+long-term distribution path, but paid Windows signing is not mandatory if Microsoft
+authoritatively clears the exact binary. Physical installed-app validation is
+mandatory for each platform included in a release; the Mac-only candidate
+requires Apple Silicon validation before publication.
 
 In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
 
-- **Drafts stay private:** Workflow runs produce private release drafts for
-  owner inspection, not immediate public downloads.
+- **Drafts stay private:** The default browser run produces a private CI artifact.
+  Selecting `create_draft: true` creates an unpublished release draft for owner
+  inspection, not an immediate public download.
 - **Never bypass platform protections:** If Microsoft Defender, Windows
   SmartScreen, macOS Gatekeeper, or browser Safe Browsing flags an installer,
   the draft must remain private and held from distribution. Never instruct

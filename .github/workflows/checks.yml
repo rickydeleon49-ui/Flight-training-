@@ -37,10 +37,13 @@ jobs:
 
       - name: Detect change scope
         id: filter
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin ${{ github.base_ref }} --depth=1
-            CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            git fetch origin "$BASE_REF" --depth=1
+            CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD")
             echo "Changed files in PR:"
             echo "$CHANGED"
             NON_DOCS=$(echo "$CHANGED" | grep -v -E '^(\.agents/|\.gemini/|docs/|.*\.md$|LICENSE(\.txt)?$)' || true)
@@ -110,7 +113,11 @@ jobs:
 
       - name: Rust lint
         if: steps.filter.outputs.run_heavy != 'false'
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+        run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
       - if: steps.filter.outputs.run_heavy != 'false'
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+
+      - name: Cargo lockfile synchronization check
+        if: steps.filter.outputs.run_heavy != 'false'
+        run: npm run test:cargo-lock

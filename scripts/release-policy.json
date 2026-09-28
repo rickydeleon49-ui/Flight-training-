@@ -6,5 +6,19 @@
       "retiredAt": "2026-09-14",
       "reason": "Withdrawn on 14 September 2026 due to an unresolved Windows Defender detection (Trojan:Win32/Wacatac.B!ml). Version 0.5.2 is permanently retired and must never be reused."
     }
-  ]
+  ],
+  "platformDistribution": {
+    "macos": {
+      "status": "active",
+      "architecture": "aarch64",
+      "bundle": "dmg",
+      "minimumSystemVersion": "12.0",
+      "candidateVersion": "0.5.3"
+    },
+    "windows": {
+      "status": "held",
+      "currentPublishedVersion": "0.5.1",
+      "holdReason": "Windows distribution is held on v0.5.1 pending separate Microsoft Defender security review / trusted signing clearance. Version 0.5.2 is permanently retired. Do not attach or advertise unreviewed Windows installers."
+    }
+  }
 }

@@ -1102,11 +1102,9 @@ export function Settings() {
             <PlatformGuidance
               mac={
                 <>
-                  This release is unsigned and un-notarized. Her Flight Deck supports macOS 12 or newer.
-                  On first launch, macOS may show an expected warning that the developer cannot be verified:
-                  on macOS 12 Monterey, go to <strong>System Preferences → Security & Privacy</strong>; on macOS 13 and newer,
-                  go to <strong>System Settings → Privacy & Security</strong>, and choose <strong>Open Anyway</strong> (or Control-click the application in Finder and choose Open).
-                  If macOS warns that the application is damaged or blocked as malware, stop; do not attempt to bypass damaged or malware-blocked application warnings.
+                  Her Flight Deck supports macOS 12 or newer. Use only an official candidate installer.
+                  If macOS displays a security warning, record the exact message for investigation.
+                  Do not attempt to disable Gatekeeper or bypass platform security protections.
                 </>
               }
               windows={

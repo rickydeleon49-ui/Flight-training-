@@ -6,7 +6,7 @@ _Last updated: 27 September 2026. Target: Apple Silicon Macs, macOS 12 or newer.
 
 Keep the Mac app at the same functional and usability level as Windows as shared development progresses. Use the same product and shared code; add platform-specific implementations only where needed. A Windows fix is a candidate Mac improvement, not proof of Mac behavior.
 
-The repository declares minimum macOS 12.0 and bundle identifier `com.herflightdeck.app`. The historical Mac audit records an Apple Silicon package build on an older commit. That does not validate the current branch, an installed application, or macOS 12 runtime support. Current installed Mac behavior and Mac performance remain **UNVERIFIED**.
+The repository declares minimum macOS 12.0 and bundle identifier `com.herflightdeck.app`. Automated code-level checks passed on Windows, but **no usable Mac candidate DMG has been built or installed yet**. Building an Apple Silicon DMG requires a macOS runner (e.g. GitHub Actions `macos-15`) or physical Apple Silicon Mac hardware. All physical Mac installation, launch, and feature items remain completely **UNVERIFIED**.
 
 D6 is committed at `d6e2ec3` on `feature/m1-d6-debrief-links`. D7 acceptance and subsequent polish merged through PR #35 (`1d86d57`). Installed Mac validation and release approval remain open.
 
@@ -41,7 +41,7 @@ All installed-Mac checks below start UNVERIFIED. Existing shared fixes should be
 | ID | Area and required result | Next work / evidence needed | State |
 | --- | --- | --- | --- |
 | MAC-01 | Apple Silicon DMG installs and launches from Applications | Build exact candidate; verify executable architecture, Info.plist minimum OS and identifier; install on a synthetic profile; retain DMG SHA-256 | UNVERIFIED |
-| MAC-02 | First launch has an understood signing/Gatekeeper path | Inspect signing and notarization status; reproduce any damaged-app warning; document accurate user instructions. Do not disable system protections or assume a damaged warning is harmless | UNVERIFIED |
+| MAC-02 | First launch has an understood signing/Gatekeeper path | Inspect signing and notarization status; record exact macOS dialog text, icon, and buttons; investigate root causes through Developer ID signing and notarization. Never advise 'Open Anyway' or Control-click Open; never disable Gatekeeper or run quarantine clearing commands (`xattr -d`) | UNVERIFIED |
 | MAC-03 | Promised macOS 12+ support works at runtime | Test minimum supported OS and a current macOS on Apple Silicon; record each separately. A newer runner cannot certify macOS 12 | UNVERIFIED |
 | MAC-04 | Imported documents survive removal of the original upload | Import via native panel, rename/move original, restart, open managed copy; check spaces, Unicode and long names; cancel/replacement/failure leave no accidental orphans | UNVERIFIED |
 | MAC-05 | Study Library Open uses the default PDF viewer | Recheck opener capabilities and resolved app-owned path; install and open in default viewer (Preview when default); reproduce prior 'Not allowed to open path' case | UNVERIFIED |
@@ -62,7 +62,7 @@ All installed-Mac checks below start UNVERIFIED. Existing shared fixes should be
 | MAC-15 | Guides, flashcards and practice tests work from managed files | Explicit selected-file submission; prevent duplicate/concurrent generation across navigation; stale results never overwrite another material; accurate busy/429/failure states | UNVERIFIED |
 | MAC-16 | Credentials remain protected | Inspect current storage and entry path; no credential in logs, persisted frontend state, status responses, backups or exports. Historical audit noted transient webview key entry: reassess and document honestly; native secure entry needs a separate decision if strict zero-webview exposure is required | UNVERIFIED |
 | MAC-17 | Native Mac interactions are appropriate | Open/save panel cancel and overwrite behavior; Downloads default; Cmd shortcuts and text editing; focus, trackpad, scrolling, Retina, VoiceOver, reduced motion and compact windows | UNVERIFIED |
-| MAC-18 | Settings explain Mac behavior clearly | Review every setting for applicable Mac notes: paths, Finder, backups, permissions, updates, credentials; omit irrelevant terminal/developer steps for normal users | TODO |
+| MAC-18 | Settings explain Mac behavior clearly | All 8 cards reviewed in source: Application Support paths, Finder reveal, Downloads/iCloud backups, platform security and credential safety notes present (with 'Open Anyway' / Control-click references removed); code-level checks passed; installed-app visual and interaction check pending | UNVERIFIED |
 | MAC-19 | Local workflows work without a network | With networking disabled or independently blocked, run plan, journal, library, splitting and backup/restore; Gemini fails clearly when explicitly requested. A source search for reqwest is not offline proof | UNVERIFIED |
 | MAC-20 | Long operations remain predictable across app lifecycle | Navigation, background/foreground, sleep/wake, quit/relaunch; no false success, duplicate jobs, lost edits or unsafe cancellation | UNVERIFIED |
 | MAC-21 | Other existing sections retain parity | Notes, Questions (including current paging work if accepted), Schedule, goals, finances and toolkit: navigation, edits, validation, persistence and keyboard behavior | UNVERIFIED |
@@ -120,9 +120,10 @@ Copy for each item or grouped run:
 Item IDs:
 Tester / date:
 State (before -> after):
-Commit / PR / clean-or-dirty tree:
-App version / DMG SHA-256:
-Mac model / chip / RAM / macOS:
+Git commit SHA / clean-or-dirty tree:
+Workflow run URL / Run ID:
+Exact draft DMG filename / 64-char SHA-256 (matches SHA256SUMS.txt):
+Mac model / Apple Silicon chip / Unified RAM / macOS version:
 Build mode / toolchain:
 Isolated profile and synthetic fixture details:
 Steps and expected result:
@@ -135,4 +136,6 @@ Remaining limitations / next action / owner:
 
 ## Completion and release gate
 
-Mac parity requires evidence for the shipped feature set on the exact candidate, not merely code shared with Windows. Close Priority 0 blockers; address Priority 1 failures or explicitly defer nonblocking work with reasons; record performance evidence and remaining limits. Verify backup/restore, migration, permissions and credentials before distribution. Windows clearance and platform release holds remain tracked in STATUS.md; this document does not remove them. iOS is a separate target and is not certified by Mac testing.
+Mac parity requires evidence for the shipped feature set on the exact candidate, not merely code shared with Windows. Under the **Exact-Installer Invariant**, physical testing must be performed on the exact draft DMG matching `SHA256SUMS.txt` from the GitHub Release draft; testing a preliminary CI artifact does not authorize releasing newly built draft bytes.
+
+A Mac-only release candidate (`v0.5.3`) proceeds under its own independent Apple Silicon installed-device verification gate, while Windows distribution remains held on `v0.5.1` pending separate Microsoft Defender clearance. Close Priority 0 blockers; address Priority 1 failures or explicitly defer nonblocking work with reasons; record performance evidence and remaining limits. Verify backup/restore, migration, permissions and credentials before distribution. Under the no-retag rule, failed candidates are permanently retired in policy and never retagged. iOS is a separate target and is not certified by Mac testing.
