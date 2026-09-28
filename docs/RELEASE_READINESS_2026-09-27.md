@@ -1,6 +1,6 @@
 # Release-readiness check and Mac-only candidate plan — 27 September 2026
 
-This is a local preflight, release-audit, and Mac-only candidate plan for `main` at `8733d7d` on Windows x64. It is **not** approval to tag or distribute an installer. The latest published version recorded in `STATUS.md` is `v0.5.1`; source version `0.5.2` is permanently retired.
+This release audit began on `main` at `8733d7d` on Windows x64. The candidate source has since been synchronized to `0.5.3`; no `v0.5.3` tag or installer exists yet. This is **not** approval to publish an installer. The latest published version recorded in `STATUS.md` is `v0.5.1`; version `0.5.2` is permanently retired.
 
 **Core release strategy revision:** The unresolved Windows Defender review blocks **Windows distribution only**. We do not wait months for a vendor response before preparing and validating an Apple Silicon Mac candidate. Windows remains on `v0.5.1` pending separate security clearance, while candidate `v0.5.3` proceeds as an explicitly **Mac-only candidate**.
 
@@ -21,16 +21,18 @@ This is a local preflight, release-audit, and Mac-only candidate plan for `main`
 | `cargo clippy --all-targets -- -D warnings` | Passed clean with zero warnings. |
 | `cargo test` | Passed: 158 Rust tests; 5 ignored manual benchmarks; no failures. (45 `documents`, 21 `pdf`, 15 `debrief`, 45 `backup`). |
 | `git diff --check` | Passed; clean working tree formatting. |
-| `node scripts/check-release-version.mjs 0.5.3` | Passed eligibility check. (Source files remain at `0.5.2` pending reviewed candidate preparation step). |
+| `node scripts/check-release-version.mjs 0.5.3` | Passed eligibility check; all five source version records are now `0.5.3`. |
 
-The local checkout reports `main` at `8733d7d`. A remote GitHub comparison was unavailable: GitHub CLI lacked local configuration, and Git over HTTPS lacked cached Windows credentials. Do not treat locally cached `origin/main` as proof that remote is unchanged.
+At the initial audit, the local checkout was `main` at `8733d7d`; remote access was unavailable in that sandbox, so the cached `origin/main` was not treated as proof of remote state. Remote `main` was verified independently before the subsequent candidate version bump.
+
+**Candidate update:** The remote `main` head was subsequently verified before the version bump. GitHub Dependabot alert #1 remains open for `glib` 0.18.5 (`GHSA-wrw7-89jp-8q8g`, medium severity). `cargo tree --target aarch64-apple-darwin -i glib` reports no dependency path, so this Linux GTK dependency is not packaged in the Apple Silicon candidate. The alert still requires a separate Linux dependency review; this platform check does not establish installed-Mac safety.
 
 ---
 
 ## 1. Release-path audit, dynamic matrix, and fail-closed workflow
 
 1. **Candidate version synchronization via `scripts/bump-version.mjs`:**
-   - Source versions are currently `0.5.2` across the repository.
+   - The five source version records were synchronized from `0.5.2` to `0.5.3` for the Mac candidate, without creating a tag.
    - `scripts/bump-version.mjs` synchronizes all five version locations without committing or tagging:
      1. `package.json`
      2. `package-lock.json` (`version` and root package `packages[""].version`)
@@ -61,10 +63,7 @@ The local checkout reports `main` at `8733d7d`. A remote GitHub comparison was u
 Testing one CI run's artifact does not authorize distributing newly built bytes from a subsequent workflow run.
 
 ### Candidate preparation sequence
-Source versions in the repository are currently `0.5.2` (permanently retired). Therefore, a release workflow targeting `0.5.3` will fail at the `check` job until the repository is synchronized:
-1. Run `node scripts/bump-version.mjs 0.5.3`. Do **not** run `scripts/release.sh` for candidate preparation because `release.sh` commits and creates a git tag immediately.
-2. Verify with git diff: `git diff package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock`.
-3. Commit the bump to the branch: `git commit -m "chore: bump version to 0.5.3 for Mac candidate"`.
+The candidate's five source version records have been synchronized to `0.5.3` with `node scripts/bump-version.mjs 0.5.3` and independently reviewed. Commit and merge that bump through the normal PR gate before running the release workflow. Do **not** run `scripts/release.sh` for candidate preparation because it creates a git tag immediately. No `v0.5.3` tag should exist before the reviewed source reaches `main`.
 
 ### Build & verification sequences
 
@@ -218,7 +217,7 @@ Codex's third review identified a portability blocker on clean runners: `checks.
     - `cargo fmt --check`: Clean (0 formatting diffs).
     - `cargo clippy --locked --all-targets -- -D warnings`: Clean (0 warnings).
     - `cargo test --locked`: 158 tests passed, 5 benchmarks ignored.
-    - `npm run test:cargo-lock`: Clean read-only check (her-flight-deck is at 0.5.2 in both Cargo.toml and Cargo.lock).
+    - `npm run test:cargo-lock`: Clean read-only check (her-flight-deck is at `0.5.3` in both Cargo.toml and Cargo.lock).
     - `git diff --check`: Clean (no whitespace issues or merge markers).
   - *Clean CI runner verification:*
     - Workflows ordered so that `npm test` requires only declared npm dependencies and zero Rust/system tools.
@@ -226,4 +225,4 @@ Codex's third review identified a portability blocker on clean runners: `checks.
     - Full toolchain integration verified with `--locked` after setup steps.
   - *Usable Mac candidate:* **DOES NOT EXIST YET** (no DMG has been built or signed; build requires GitHub Actions `macos-15` or Apple Silicon Mac).
   - *Installed Mac verification:* **UNVERIFIED** (no physical device testing has occurred).
-- **Next action:** Submit uncommitted changes to Codex for independent review. Do not commit, push, tag, run release workflows, or publish.
+- **Next action:** Merge the reviewed `0.5.3` source bump after exact-head CI. Then build the Mac candidate through the documented workflow. Keep the draft unpublished until the exact DMG passes physical Apple Silicon testing. Do not create or move a release tag outside the documented immutable-draft sequence.
