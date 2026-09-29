@@ -6,7 +6,7 @@ This release audit began on `main` at `8733d7d` on Windows x64. Candidate source
 
 > [!IMPORTANT]
 > **Code-level checks passed vs. Candidate existence:**
-> Automated TypeScript, Vite, Clippy, and Rust checks passed locally on Windows. GitHub Actions built an Apple Silicon DMG, but **the draft checksum manifest still needs its filename corrected**, and no physical Mac installation, launch, or smoke test has occurred. CI packaging alone does not establish installed-app readiness.
+> Automated TypeScript, Vite, Clippy, and Rust checks passed locally on Windows. GitHub Actions built an Apple Silicon DMG. The private draft's checksum manifest and notes now match its downloadable filename, but no physical Mac installation, launch, or smoke test has occurred. CI packaging alone does not establish installed-app readiness.
 
 ---
 
@@ -209,7 +209,7 @@ Codex's third review identified a portability blocker on clean runners: `checks.
 
 ## 6. Codex review and release gate
 
-- **Current release status:** HOLD pending draft checksum correction and physical Apple Silicon Mac installation and smoke test.
+- **Current release status:** HOLD pending physical Apple Silicon Mac installation and smoke test. The private draft's checksum filename was corrected after PR #39 merged, without replacing the original DMG.
 - **Distinction of states:**
   - *Automated code-level checks (this Windows machine):* **PASSED**
     - `npm test`: 59 test files passed, 573 tests passed (including 30 release safety tests), 3 benchmarks skipped. An earlier local run had two five-second timeouts; both affected test files passed in isolation, and the full suite passed on the next run.
@@ -223,6 +223,6 @@ Codex's third review identified a portability blocker on clean runners: `checks.
     - Workflows ordered so that `npm test` requires only declared npm dependencies and zero Rust/system tools.
     - User input passed via `env:` with zero shell string interpolation.
     - Full toolchain integration verified with `--locked` after setup steps.
-  - *Mac build candidate:* **BUILT, NOT RELEASE-READY**. The private draft contains an Apple Silicon DMG from `macos-15`; its checksum manifest filename needs correction. No installed-app evidence exists.
+  - *Mac build candidate:* **BUILT, NOT RELEASE-READY**. The private draft contains an Apple Silicon DMG from `macos-15`; its corrected checksum manifest names the downloadable asset. No installed-app evidence exists.
   - *Installed Mac verification:* **UNVERIFIED** (no physical device testing has occurred).
-- **Next action:** Correct the existing private draft's checksum manifest and release-note filename without replacing the verified DMG. Then test that exact DMG on physical Apple Silicon hardware. Keep the draft unpublished until the installed-app gate passes; do not create or move a release tag outside the documented sequence.
+- **Next action:** Download the exact private draft DMG and corrected manifest, verify the checksum, then test that DMG on physical Apple Silicon hardware. Keep the draft unpublished until the installed-app gate passes; do not create or move a release tag outside the documented sequence.
