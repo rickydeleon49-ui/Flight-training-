@@ -2,7 +2,7 @@
 
 The release workflow supports two execution modes:
 1. **Private CI Artifacts (`create_draft: false`, default):** Compiles the target installer and uploads it as a private Actions artifact for preliminary testing. It does **not** create a git tag or a GitHub Release draft.
-2. **Reviewable Release Candidate (`create_draft: true`):** A maintainer explicitly selects `create_draft: true` (or pushes a `v*` tag) to create the immutable tag (`v<version>`) and an unpublished GitHub Release draft. Draft installers are strictly for owner review and physical hardware testing, and are not a public release.
+2. **Reviewable Release Candidate (`create_draft: true`):** A maintainer explicitly selects `create_draft: true` to create an unpublished GitHub Release draft targeting that commit with tag name `v<version>`. Note that GitHub associates the draft with the tag name and target commit, but does not push or materialize the Git tag ref (`refs/tags/v<version>`) in the repository until the draft is published. Draft installers are strictly for owner review and physical hardware testing, and are not a public release.
 
 ## Platform Distribution Status and Release Pathways
 
@@ -28,6 +28,7 @@ Before publishing any draft:
 
 1. **Verify Draft Assets and Checksums:**
    - Download the draft installers and `SHA256SUMS.txt` attached to the GitHub Release draft.
+   - Installer filenames are normalized to stable downloadable names without spaces (e.g. `Her.Flight.Deck_0.5.3_aarch64.dmg`) before hashing and uploading, ensuring that the manifest entry matches the exact filename saved to disk.
    - On macOS, verify the checksums using the native command:
      ```bash
      shasum -a 256 -c SHA256SUMS.txt
@@ -62,6 +63,6 @@ Before publishing any draft:
 
 5. **Publication Gate:**
    - Publish the draft **only** after all applicable platform gates for that draft pass.
-   - **No-Retag Rule:** If any check fails on the draft, do **not** overwrite, delete, or repoint the git tag. Discard the draft, mark the version permanently retired in `scripts/release-policy.json` with the failure reason, fix the issue in source code, and advance to the next version (e.g. `0.5.4`).
+   - **No-Retag Rule:** If any check fails on the draft, do **not** publish it or attempt to reuse the candidate tag name. Discard the draft, mark the version permanently retired in `scripts/release-policy.json` with the failure reason, fix the issue in source code, and advance to the next version (e.g. `0.5.4`).
 
 Keep the release draft private until physical device testing is complete and approved. A successful CI build proves the package was built; it does not prove that macOS Gatekeeper or Windows Defender accepts the installed application.

@@ -1,12 +1,12 @@
 # Release-readiness check and Mac-only candidate plan — 27 September 2026
 
-This release audit began on `main` at `8733d7d` on Windows x64. The candidate source has since been synchronized to `0.5.3`; no `v0.5.3` tag or installer exists yet. This is **not** approval to publish an installer. The latest published version recorded in `STATUS.md` is `v0.5.1`; version `0.5.2` is permanently retired.
+This release audit began on `main` at `8733d7d` on Windows x64. Candidate source is now `0.5.3`, and workflow run `36515016063` built a Mac DMG and created a private draft targeting `4146460`. No `refs/tags/v0.5.3` Git ref or physical Mac test exists yet. This is **not** approval to publish an installer. The latest published version recorded in `STATUS.md` is `v0.5.1`; version `0.5.2` is permanently retired.
 
 **Core release strategy revision:** The unresolved Windows Defender review blocks **Windows distribution only**. We do not wait months for a vendor response before preparing and validating an Apple Silicon Mac candidate. Windows remains on `v0.5.1` pending separate security clearance, while candidate `v0.5.3` proceeds as an explicitly **Mac-only candidate**.
 
 > [!IMPORTANT]
 > **Code-level checks passed vs. Candidate existence:**
-> All automated TypeScript, Vite, Clippy, and Rust unit/integration checks have passed locally on Windows. However, **no macOS DMG candidate has been built or installed yet**. Local Windows builds cannot create DMG packages (`npm run tauri build -- --bundles dmg` is unsupported on Windows). An actual usable Mac candidate exists only after a successful Apple Silicon build (via GitHub Actions `macos-15` or an Apple Silicon Mac). Physical Mac installation, launch, and smoke tests remain completely **UNVERIFIED**.
+> Automated TypeScript, Vite, Clippy, and Rust checks passed locally on Windows. GitHub Actions built an Apple Silicon DMG, but **the draft checksum manifest still needs its filename corrected**, and no physical Mac installation, launch, or smoke test has occurred. CI packaging alone does not establish installed-app readiness.
 
 ---
 
@@ -52,7 +52,7 @@ At the initial audit, the local checkout was `main` at `8733d7d`; remote access 
    - Fails closed if an unexpected Windows `.exe` appears while Windows distribution is not active.
    - Formats Mac-only draft release notes, omitting Windows download rows and displaying an explicit notice that Windows is held on `v0.5.1`.
 4. **Automated regression coverage:**
-   - `src/logic/releaseSafety.test.ts` covers 25 tests: retired version rejection, CLI errors, valid candidate acceptance, module API, 5-file repository version consistency (without hardcoded versions), temporary copy `bumpVersions` test verifying both `package-lock.json` entries and `Cargo.lock`, dynamic matrix resolution (`macos-only`, active `all`, rejected held/missing `all`, malformed target), declared YAML parser AST syntax and structural workflow validation (using declared `yaml` npm package, replacing undeclared PyYAML), `create_draft` input schema default and resolution logic isolating draft/tag creation to the `publish` job, fail-closed artifact guards, stale lockfile read-only failure verification, input injection prevention in `run:` blocks, and `--locked` Cargo execution.
+   - `src/logic/releaseSafety.test.ts` covers 30 tests: retired version rejection, CLI errors, valid candidate acceptance, 5-file repository version consistency, version editing on disposable copies, dynamic matrix and Windows hold enforcement, YAML workflow validation, draft gating, stale lockfile detection, input injection prevention, locked Cargo execution, and installer filename/checksum normalization with collision and unexpected-file rejection.
 
 ---
 
@@ -63,7 +63,7 @@ At the initial audit, the local checkout was `main` at `8733d7d`; remote access 
 Testing one CI run's artifact does not authorize distributing newly built bytes from a subsequent workflow run.
 
 ### Candidate preparation sequence
-The candidate's five source version records have been synchronized to `0.5.3` with `node scripts/bump-version.mjs 0.5.3` and independently reviewed. Commit and merge that bump through the normal PR gate before running the release workflow. Do **not** run `scripts/release.sh` for candidate preparation because it creates a git tag immediately. No `v0.5.3` tag should exist before the reviewed source reaches `main`.
+The candidate's five source version records were synchronized to `0.5.3` with `node scripts/bump-version.mjs 0.5.3`, independently reviewed, and merged through PR #38 before workflow run `36515016063`. `scripts/release.sh` was not used because it creates a git tag immediately.
 
 ### Build & verification sequences
 
@@ -72,7 +72,7 @@ The candidate's five source version records have been synchronized to `0.5.3` wi
    - `version`: `0.5.3`
    - `target`: `macos-only` (default)
    - `create_draft`: `true`
-2. The workflow executes `check` and `build` on `macos-15`, builds `her-flight-deck_0.5.3_aarch64.dmg`, verifies artifacts, writes `SHA256SUMS.txt`, creates tag `v0.5.3`, and attaches the DMG to a private GitHub Release draft.
+2. The workflow executes `check` and `build` on `macos-15`, builds the macOS installer, normalizes the filename to `Her.Flight.Deck_0.5.3_aarch64.dmg`, writes `SHA256SUMS.txt`, and attaches the DMG and manifest to a private GitHub Release draft (targeting `$GITHUB_SHA` with tag name `v0.5.3`; the Git tag ref `refs/tags/v0.5.3` is materialized in the repository only upon release publication).
 3. The tester downloads the **exact draft DMG** directly from the private GitHub Release draft and verifies its SHA-256 against `SHA256SUMS.txt` using the macOS-native command:
    ```bash
    shasum -a 256 -c SHA256SUMS.txt
@@ -86,12 +86,12 @@ The candidate's five source version records have been synchronized to `0.5.3` wi
 1. If a maintainer chooses to first run with the default `create_draft: false` as a dry-run CI build to test on a Mac before creating a tag:
    - Maintainers download `installer-macOS` from the workflow run summary to catch packaging or runtime defects early. In this default mode, the workflow produces private CI artifacts only; it does not create a git tag or a GitHub Release draft.
    - **Crucial Rule:** That initial smoke test is strictly a *pre-flight test* of the candidate branch, NOT approval of newly built bytes.
-2. When ready to cut the release, run the workflow with `create_draft: true` to create the immutable tag and reviewable draft.
+2. When ready to cut the release, run the workflow with `create_draft: true` to create the reviewable draft targeting that commit.
 3. Because this subsequent workflow run recompiles the DMG (producing newly built bytes with a distinct checksum), **the tester MUST download the exact newly built draft DMG**, verify its new SHA-256 (via `shasum -a 256 -c SHA256SUMS.txt`), and perform the installed-Mac smoke test on those exact draft bytes before publication can be approved.
 
 ### Explicit reconciliation with no-retag rule
-When `create_draft: true` runs, GitHub creates tag `v0.5.3` pointing to `$GITHUB_SHA` when drafting the release.
-- **Strict no-retag rule:** Under no circumstances may tag `v0.5.3` be force-updated, repointed, or reused if the candidate fails device testing.
+When `create_draft: true` runs, GitHub creates a private draft release targeting `$GITHUB_SHA` with tag name `v0.5.3`. The Git tag ref `refs/tags/v0.5.3` does not exist in the repository while in draft state and is created only upon publication.
+- **Strict no-retag rule:** Under no circumstances may tag name `v0.5.3` be published, force-updated, repointed, or reused if the candidate fails device testing.
 - **Candidate retirement procedure:** If the `0.5.3` candidate fails physical device smoke testing, signing verification, or security review:
   1. The `0.5.3` candidate is formally declared **retired**.
   2. The failure reason and candidate SHA are appended to `retiredVersions` in `scripts/release-policy.json`.
@@ -203,16 +203,16 @@ Codex's third review identified a portability blocker on clean runners: `checks.
      - Deliberately does **not** duplicate `npm run build`, `cargo fmt`, or `cargo clippy` in the `check` job.
      - *`check` job (Linux runner):* `npm ci` → `steps.resolve` (verifies 5-file version agreement, checks tag/release absence, evaluates target and Windows hold, computes dynamic matrix, resolves `create_draft`) → `npm test` → Linux desktop libraries → `rust-toolchain` → `cargo test --locked` → `npm run test:cargo-lock`.
      - *`build` job (matrix on target OS, e.g. `macos-15`):* compiles frontend and native desktop binary via Tauri build (`npm run tauri build -- --bundles <bundle>`), generating installer artifacts (`.dmg`).
-     - *`publish` job:* gated strictly on `needs.check.outputs.create_draft == 'true'`. Runs only when explicitly authorized, verifies artifacts fail-closed, creates immutable tag `v<version>`, writes `SHA256SUMS.txt`, and creates GitHub Release draft.
+     - *`publish` job:* gated strictly on `needs.check.outputs.create_draft == 'true'`. Runs only when explicitly authorized, verifies artifacts fail-closed, normalizes installer filenames to stable downloadable names, writes `SHA256SUMS.txt`, and creates GitHub Release draft targeting that commit with tag name `v<version>`.
 
 ---
 
 ## 6. Codex review and release gate
 
-- **Current release status:** HOLD pending candidate compilation and physical Apple Silicon Mac installation and smoke test.
+- **Current release status:** HOLD pending draft checksum correction and physical Apple Silicon Mac installation and smoke test.
 - **Distinction of states:**
   - *Automated code-level checks (this Windows machine):* **PASSED**
-    - `npm test`: 59 test files passed, 568 tests passed (including 25 release safety tests), 3 benchmarks skipped. (Distinguished from historical run earlier in session of 554 tests / 19 release tests, and intermediate 567 tests / 24 release tests).
+    - `npm test`: 59 test files passed, 573 tests passed (including 30 release safety tests), 3 benchmarks skipped. An earlier local run had two five-second timeouts; both affected test files passed in isolation, and the full suite passed on the next run.
     - `npm run build`: Clean in 1.48s (typecheck + vite bundle).
     - `cargo fmt --check`: Clean (0 formatting diffs).
     - `cargo clippy --locked --all-targets -- -D warnings`: Clean (0 warnings).
@@ -223,6 +223,6 @@ Codex's third review identified a portability blocker on clean runners: `checks.
     - Workflows ordered so that `npm test` requires only declared npm dependencies and zero Rust/system tools.
     - User input passed via `env:` with zero shell string interpolation.
     - Full toolchain integration verified with `--locked` after setup steps.
-  - *Usable Mac candidate:* **DOES NOT EXIST YET** (no DMG has been built or signed; build requires GitHub Actions `macos-15` or Apple Silicon Mac).
+  - *Mac build candidate:* **BUILT, NOT RELEASE-READY**. The private draft contains an Apple Silicon DMG from `macos-15`; its checksum manifest filename needs correction. No installed-app evidence exists.
   - *Installed Mac verification:* **UNVERIFIED** (no physical device testing has occurred).
-- **Next action:** Merge the reviewed `0.5.3` source bump after exact-head CI. Then build the Mac candidate through the documented workflow. Keep the draft unpublished until the exact DMG passes physical Apple Silicon testing. Do not create or move a release tag outside the documented immutable-draft sequence.
+- **Next action:** Correct the existing private draft's checksum manifest and release-note filename without replacing the verified DMG. Then test that exact DMG on physical Apple Silicon hardware. Keep the draft unpublished until the installed-app gate passes; do not create or move a release tag outside the documented sequence.
