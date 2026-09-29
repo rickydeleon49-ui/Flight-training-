@@ -6,15 +6,15 @@
 #                     version. Nothing needs to be installed anywhere.
 #                     By default (create_draft: false), it produces private CI
 #                     artifacts for device testing without creating a tag or draft.
-#                     Selecting create_draft: true creates the immutable tag and
-#                     a private GitHub Release draft.
+#                     Selecting create_draft: true creates a reviewable private
+#                     GitHub Release draft targeting that commit.
 #
 #   From a clone      scripts/release.sh 0.2.0, then push the tag.
 #
 # The workflow builds the target platform installer(s) (default: macos-only
 # while Windows distribution is held on v0.5.1). When create_draft is true,
-# it creates the immutable tag and attaches installers to a private GitHub Release
-# draft. The draft must be reviewed and tested on physical hardware before anybody
+# it creates a private GitHub Release draft targeting that commit and attaches installers.
+# The draft must be reviewed and tested on physical hardware before anybody
 # can publish it.
 name: Release
 
@@ -292,6 +292,12 @@ jobs:
             }
           '
 
+      # GitHub Releases replaces whitespace with periods in uploaded asset names.
+      # Normalizing filenames prior to hashing ensures SHA256SUMS.txt and the
+      # release notes match the exact downloadable files users receive.
+      - name: Assign stable downloadable installer filenames
+        run: node scripts/normalize-installer-filenames.mjs installers
+
       - name: Write the release notes and checksums
         env:
           VERSION: ${{ needs.check.outputs.version }}
@@ -351,14 +357,14 @@ jobs:
             echo "### Checksums"
             echo
             echo '```'
-            ( cd installers && sha256sum * )
+            cat installers/SHA256SUMS.txt
             echo '```'
           } > notes.md
-          ( cd installers && sha256sum * > SHA256SUMS.txt )
           cat notes.md
 
-      # --target creates the tag when it does not exist yet, which is what
-      # makes preparing a release from the browser possible. --draft means
+      # --target specifies the target commit when published, which is what
+      # makes preparing a release draft from the browser possible without
+      # prematurely pushing refs/tags to the repository. --draft means
       # the installers remain private until an owner explicitly publishes it
       # after reviewing the exact files.
       - name: Create a private release draft

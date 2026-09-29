@@ -49,8 +49,8 @@ She should not have to build anything. The release workflow compiles
 the target platform installer(s) (defaulting to `macos-only` while Windows
 distribution is held on `v0.5.1`). By default, it produces private Actions
 CI artifacts for device smoke testing. When `create_draft: true` is selected,
-it attaches the exact installers to a private GitHub Release **draft** and
-creates the tag, where an owner reviews and tests the exact files before publishing.
+it attaches the exact installers to a private GitHub Release **draft**
+targeting that commit, where an owner reviews and tests the exact files before publishing.
 
 **From the browser**, with nothing installed anywhere:
 
@@ -58,8 +58,8 @@ creates the tag, where an owner reviews and tests the exact files before publish
 
 By default (`create_draft: false`), the workflow produces private CI artifacts
 only, without creating a tag or release draft. When preparing an official candidate
-for review, a maintainer selects `create_draft: true` to create the immutable tag
-and private draft. It checks the version against `scripts/release-policy.json`,
+for review, a maintainer selects `create_draft: true` to create the private draft
+targeting that commit with tag name `v<version>`. It checks the version against `scripts/release-policy.json`,
 evaluates the target platform (default `macos-only` produces the Apple Silicon Mac DMG;
 Windows distribution is held on `v0.5.1` pending security review), and creates
 the private release draft. Follow [the release review process](docs/RELEASE_REVIEW_PROCESS.md)

@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -11,6 +12,8 @@ import { validateReleaseVersion } from "../../scripts/check-release-version.mjs"
 import { bumpVersions } from "../../scripts/bump-version.mjs";
 // @ts-expect-error -- scripts/test-cargo-lock-sync.mjs is an untyped ESM script
 import { checkCargoLockSync } from "../../scripts/test-cargo-lock-sync.mjs";
+// @ts-expect-error -- scripts/normalize-installer-filenames.mjs is an untyped ESM script
+import { generateChecksumManifest, normalizeInstallerFilename, prepareReleaseInstallers } from "../../scripts/normalize-installer-filenames.mjs";
 
 const SCRIPT_PATH = resolve(process.cwd(), "scripts/check-release-version.mjs");
 const WORKFLOW_PATH = resolve(process.cwd(), ".github/workflows/release.yml");
@@ -472,5 +475,96 @@ describe("release version policy and validation", () => {
 
     const release = readFileSync(WORKFLOW_PATH, "utf8");
     expect(release).toContain("cargo test --locked");
+  });
+
+  it("reproduces asset filename vs manifest mismatch when filenames have spaces, and verifies normalization fix", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "hfd-manifest-norm-"));
+    try {
+      // 1. Reproduce the bug: build produces DMG with spaces in name (e.g. 'Her Flight Deck_0.5.3_aarch64.dmg')
+      const buildName = "Her Flight Deck_0.5.3_aarch64.dmg";
+      const sampleBytes = Buffer.from("%PDF-1.4 sample dmg bytes for checksum testing");
+      writeFileSync(join(tempDir, buildName), sampleBytes);
+
+      // In the buggy behavior, sha256sum ran directly on the unnormalized file with spaces:
+      const rawManifestLine = generateChecksumManifest(tempDir).trim();
+      expect(rawManifestLine).toContain("Her Flight Deck_0.5.3_aarch64.dmg");
+
+      // But when uploaded to GitHub Releases, GitHub normalizes asset names by replacing spaces with periods:
+      const downloadedName = normalizeInstallerFilename(buildName);
+      expect(downloadedName).toBe("Her.Flight.Deck_0.5.3_aarch64.dmg");
+
+      // A user downloading the GitHub asset receives 'Her.Flight.Deck_0.5.3_aarch64.dmg'.
+      // If they verify against the old raw manifest, it fails because the filenames don't match:
+      expect(rawManifestLine.endsWith(downloadedName)).toBe(false);
+
+      // 2. Now verify the fix: prepareReleaseInstallers normalizes filenames before hashing
+      const { renames, manifest } = prepareReleaseInstallers(tempDir);
+      expect(renames).toEqual([
+        { from: "Her Flight Deck_0.5.3_aarch64.dmg", to: "Her.Flight.Deck_0.5.3_aarch64.dmg" },
+      ]);
+
+      // The file on disk was renamed to the exact downloadable name:
+      expect(readdirSync(tempDir)).toContain("Her.Flight.Deck_0.5.3_aarch64.dmg");
+      expect(readdirSync(tempDir)).not.toContain("Her Flight Deck_0.5.3_aarch64.dmg");
+
+      // The manifest references the exact downloadable name:
+      expect(manifest.trim()).toBe(
+        `${createHash("sha256").update(sampleBytes).digest("hex")}  Her.Flight.Deck_0.5.3_aarch64.dmg`,
+      );
+
+      // The manifest written to disk matches the generated manifest:
+      const diskManifest = readFileSync(join(tempDir, "SHA256SUMS.txt"), "utf8");
+      expect(diskManifest).toBe(manifest);
+
+      // Verifying against the downloaded file succeeds:
+      const [expectedHash, manifestFile] = diskManifest.trim().split(/\s+/);
+      const downloadedBytes = readFileSync(join(tempDir, manifestFile!));
+      const actualHash = createHash("sha256").update(downloadedBytes).digest("hex");
+      expect(actualHash).toBe(expectedHash);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("normalizes Windows installer filenames when spaces are present and preserves normalized names", () => {
+    expect(normalizeInstallerFilename("Her Flight Deck_0.5.3_x64-setup.exe")).toBe(
+      "Her.Flight.Deck_0.5.3_x64-setup.exe",
+    );
+    expect(normalizeInstallerFilename("Her.Flight.Deck_0.5.3_aarch64.dmg")).toBe(
+      "Her.Flight.Deck_0.5.3_aarch64.dmg",
+    );
+    expect(normalizeInstallerFilename("her-flight-deck_0.5.3_aarch64.dmg")).toBe(
+      "her-flight-deck_0.5.3_aarch64.dmg",
+    );
+  });
+
+  it("rejects colliding installer names before changing either file", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "hfd-installer-collision-"));
+    try {
+      writeFileSync(join(tempDir, "Her Flight Deck_0.5.3_aarch64.dmg"), "first");
+      writeFileSync(join(tempDir, "Her.Flight.Deck_0.5.3_aarch64.dmg"), "second");
+      expect(() => prepareReleaseInstallers(tempDir)).toThrow(/collision/);
+      expect(readFileSync(join(tempDir, "Her Flight Deck_0.5.3_aarch64.dmg"), "utf8")).toBe("first");
+      expect(readFileSync(join(tempDir, "Her.Flight.Deck_0.5.3_aarch64.dmg"), "utf8")).toBe("second");
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed when no installer or an unexpected artifact is present", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "hfd-installer-empty-"));
+    try {
+      expect(() => prepareReleaseInstallers(tempDir)).toThrow(/No installers/);
+      writeFileSync(join(tempDir, "unexpected.txt"), "not an installer");
+      expect(() => prepareReleaseInstallers(tempDir)).toThrow(/Unexpected release artifact/);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("ensures .github/workflows/release.yml normalizes filenames before checksum generation and embeds manifest", () => {
+    const workflow = readFileSync(WORKFLOW_PATH, "utf8");
+    expect(workflow).toContain("node scripts/normalize-installer-filenames.mjs installers");
+    expect(workflow).toContain("cat installers/SHA256SUMS.txt");
   });
 });
