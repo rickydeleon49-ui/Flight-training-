@@ -1,6 +1,6 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -14,12 +14,20 @@ import { bumpVersions } from "../../scripts/bump-version.mjs";
 import { checkCargoLockSync } from "../../scripts/test-cargo-lock-sync.mjs";
 // @ts-expect-error -- scripts/normalize-installer-filenames.mjs is an untyped ESM script
 import { generateChecksumManifest, normalizeInstallerFilename, prepareReleaseInstallers } from "../../scripts/normalize-installer-filenames.mjs";
+// @ts-expect-error -- scripts/inspect-backup-credentials.mjs is an untyped ESM script
+import { inspectBackupArchive, readZipEntries } from "../../scripts/inspect-backup-credentials.mjs";
+// @ts-expect-error -- scripts/generate-pdf-fixtures.mjs is an untyped ESM script
+import { buildPdf, generateFixtures, FIXTURE_SPECS } from "../../scripts/generate-pdf-fixtures.mjs";
 
 const SCRIPT_PATH = resolve(process.cwd(), "scripts/check-release-version.mjs");
 const WORKFLOW_PATH = resolve(process.cwd(), ".github/workflows/release.yml");
 const CHECKS_WORKFLOW_PATH = resolve(process.cwd(), ".github/workflows/checks.yml");
 const RELEASE_SH_PATH = resolve(process.cwd(), "scripts/release.sh");
 const POLICY_PATH = resolve(process.cwd(), "scripts/release-policy.json");
+const NORMALIZE_SCRIPT_PATH = resolve(process.cwd(), "scripts/normalize-installer-filenames.mjs");
+const INSPECT_SCRIPT_PATH = resolve(process.cwd(), "scripts/inspect-backup-credentials.mjs");
+const MAC_CHECKLIST_PATH = resolve(process.cwd(), "docs/MAC_PARITY_CHECKLIST.md");
+const GENERATE_FIXTURES_SCRIPT_PATH = resolve(process.cwd(), "scripts/generate-pdf-fixtures.mjs");
 
 function runValidator(arg: string): { status: number; stdout: string; stderr: string } {
   try {
@@ -361,7 +369,8 @@ describe("release version policy and validation", () => {
     expect(input.type).toBe("boolean");
     expect(input.default).toBe(false);
     expect(input.description).toContain("default: false produces private CI artifacts only");
-    expect(input.description).toContain("set true to create tag and draft");
+    expect(input.description).toContain("set true to create draft");
+    expect(input.description).toContain("Git tag is created only upon publication");
   });
 
   it("evaluates create_draft resolution logic and ensures publish job gate defaults to private CI artifact", () => {
@@ -566,5 +575,686 @@ describe("release version policy and validation", () => {
     const workflow = readFileSync(WORKFLOW_PATH, "utf8");
     expect(workflow).toContain("node scripts/normalize-installer-filenames.mjs installers");
     expect(workflow).toContain("cat installers/SHA256SUMS.txt");
+  });
+
+  it("executes CLI invocation of normalize-installer-filenames.mjs to normalize files and generate manifest", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "hfd-installer-cli-"));
+    try {
+      const sampleFile = "Her Flight Deck_0.5.3_aarch64.dmg";
+      const sampleBytes = Buffer.from("%PDF-1.4 sample dmg bytes for CLI invocation testing");
+      writeFileSync(join(tempDir, sampleFile), sampleBytes);
+
+      const stdout = execFileSync(process.execPath, [NORMALIZE_SCRIPT_PATH, tempDir], {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+
+      expect(stdout).toContain(
+        "Normalized installer filename: 'Her Flight Deck_0.5.3_aarch64.dmg' -> 'Her.Flight.Deck_0.5.3_aarch64.dmg'",
+      );
+      expect(stdout).toContain("Generated");
+      expect(stdout).toContain("SHA256SUMS.txt");
+
+      // Verify file was renamed on disk to downloadable name
+      expect(readdirSync(tempDir)).toContain("Her.Flight.Deck_0.5.3_aarch64.dmg");
+      expect(readdirSync(tempDir)).not.toContain("Her Flight Deck_0.5.3_aarch64.dmg");
+      expect(readdirSync(tempDir)).toContain("SHA256SUMS.txt");
+
+      // Verify manifest content on disk
+      const manifest = readFileSync(join(tempDir, "SHA256SUMS.txt"), "utf8");
+      const expectedHash = createHash("sha256").update(sampleBytes).digest("hex");
+      expect(manifest.trim()).toBe(`${expectedHash}  Her.Flight.Deck_0.5.3_aarch64.dmg`);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("exits with failure when CLI invocation encounters a collision or no installers", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "hfd-installer-cli-fail-"));
+    try {
+      // Empty directory fails closed
+      expect(() => {
+        execFileSync(process.execPath, [NORMALIZE_SCRIPT_PATH, tempDir], {
+          encoding: "utf8",
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+      }).toThrow();
+
+      // Colliding directory fails closed
+      writeFileSync(join(tempDir, "Her Flight Deck_0.5.3_aarch64.dmg"), "a");
+      writeFileSync(join(tempDir, "Her.Flight.Deck_0.5.3_aarch64.dmg"), "b");
+      expect(() => {
+        execFileSync(process.execPath, [NORMALIZE_SCRIPT_PATH, tempDir], {
+          encoding: "utf8",
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+      }).toThrow();
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  function computeCrc32(buf: Buffer): number {
+    let crc = 0xffffffff;
+    for (let i = 0; i < buf.length; i++) {
+      crc ^= buf[i]!;
+      for (let j = 0; j < 8; j++) {
+        crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+      }
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  }
+
+  function createTestZip(entries: Record<string, string | Buffer>): Buffer {
+    const localChunks: Buffer[] = [];
+    const centralChunks: Buffer[] = [];
+    let offset = 0;
+
+    for (const [name, content] of Object.entries(entries)) {
+      const nameBuf = Buffer.from(name, "utf8");
+      const dataBuf = Buffer.isBuffer(content) ? content : Buffer.from(content, "utf8");
+      const crc = computeCrc32(dataBuf);
+      const size = dataBuf.length;
+
+      const localHeader = Buffer.alloc(30);
+      localHeader.writeUInt32LE(0x04034b50, 0);
+      localHeader.writeUInt16LE(20, 4);
+      localHeader.writeUInt16LE(0, 6);
+      localHeader.writeUInt16LE(0, 8);
+      localHeader.writeUInt16LE(0, 10);
+      localHeader.writeUInt16LE(0, 12);
+      localHeader.writeUInt32LE(crc, 14);
+      localHeader.writeUInt32LE(size, 18);
+      localHeader.writeUInt32LE(size, 22);
+      localHeader.writeUInt16LE(nameBuf.length, 26);
+      localHeader.writeUInt16LE(0, 28);
+      localChunks.push(localHeader, nameBuf, dataBuf);
+
+      const centralHeader = Buffer.alloc(46);
+      centralHeader.writeUInt32LE(0x02014b50, 0);
+      centralHeader.writeUInt16LE(20, 4);
+      centralHeader.writeUInt16LE(20, 6);
+      centralHeader.writeUInt16LE(0, 8);
+      centralHeader.writeUInt16LE(0, 10);
+      centralHeader.writeUInt16LE(0, 12);
+      centralHeader.writeUInt32LE(crc, 16);
+      centralHeader.writeUInt32LE(size, 20);
+      centralHeader.writeUInt32LE(size, 24);
+      centralHeader.writeUInt16LE(nameBuf.length, 28);
+      centralHeader.writeUInt16LE(0, 30);
+      centralHeader.writeUInt16LE(0, 32);
+      centralHeader.writeUInt16LE(0, 34);
+      centralHeader.writeUInt16LE(0, 36);
+      centralHeader.writeUInt32LE(0, 38);
+      centralHeader.writeUInt32LE(offset, 42);
+      centralChunks.push(centralHeader, nameBuf);
+
+      offset += 30 + nameBuf.length + size;
+    }
+
+    const centralOffset = offset;
+    let centralSize = 0;
+    for (const c of centralChunks) centralSize += c.length;
+
+    const eocd = Buffer.alloc(22);
+    eocd.writeUInt32LE(0x06054b50, 0);
+    eocd.writeUInt16LE(0, 4);
+    eocd.writeUInt16LE(0, 6);
+    eocd.writeUInt16LE(Object.keys(entries).length, 8);
+    eocd.writeUInt16LE(Object.keys(entries).length, 10);
+    eocd.writeUInt32LE(centralSize, 12);
+    eocd.writeUInt32LE(centralOffset, 16);
+    eocd.writeUInt16LE(0, 20);
+
+    return Buffer.concat([...localChunks, ...centralChunks, eocd]);
+  }
+
+  describe("backup archive credential-entry inspection fail-closed safety", () => {
+    function runInspectorCli(target: string): { status: number; stdout: string; stderr: string } {
+      try {
+        const stdout = execFileSync(process.execPath, [INSPECT_SCRIPT_PATH, target], {
+          encoding: "utf8",
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+        return { status: 0, stdout: stdout.trim(), stderr: "" };
+      } catch (err: unknown) {
+        const error = err as { status?: number; stdout?: string; stderr?: string };
+        return {
+          status: error.status ?? 1,
+          stdout: (error.stdout ?? "").toString().trim(),
+          stderr: (error.stderr ?? "").toString().trim(),
+        };
+      }
+    }
+
+    it("passes for a valid secret-free archive via module and CLI without sensitive output", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-pass-"));
+      try {
+        const zipBuf = createTestZip({
+          "manifest.json": JSON.stringify({ version: 3 }),
+          "integrity.json": JSON.stringify({ files: {} }),
+          "her-flight-deck.db": "SQLITE_DB_BYTES_MOCK",
+          "documents/sample.pdf": "PDF_CONTENT_BYTES",
+        });
+        const zipPath = join(tempDir, "backup.hfdbackup");
+        writeFileSync(zipPath, zipBuf);
+
+        // Module check
+        const modRes = inspectBackupArchive(zipPath);
+        expect(modRes.status).toBe(0);
+        expect(modRes.message).toBe("PASS: no credential entry names in archive");
+
+        // CLI check
+        const cliRes = runInspectorCli(zipPath);
+        expect(cliRes.status).toBe(0);
+        expect(cliRes.stdout).toBe("PASS: no credential entry names in archive");
+        expect(cliRes.stderr).toBe("");
+
+        // Non-disclosure verification
+        const output = `${cliRes.stdout}\n${cliRes.stderr}`;
+        expect(output).not.toContain("manifest.json");
+        expect(output).not.toContain("her-flight-deck.db");
+        expect(output).not.toContain("documents/sample.pdf");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("fails closed (status 1) when archive contains gemini-key entry without leaking content", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-key-"));
+      try {
+        const secretContent = "SECRET_API_KEY_AIzaSyDO_NOT_PRINT";
+        const zipBuf = createTestZip({
+          "manifest.json": "{}",
+          "her-flight-deck.db": "db",
+          "gemini-key": secretContent,
+        });
+        const zipPath = join(tempDir, "backup.hfdbackup");
+        writeFileSync(zipPath, zipBuf);
+
+        const modRes = inspectBackupArchive(zipPath);
+        expect(modRes.status).toBe(1);
+        expect(modRes.message).toBe("FAIL: credential entry found in archive");
+
+        const cliRes = runInspectorCli(zipPath);
+        expect(cliRes.status).toBe(1);
+        expect(cliRes.stdout).toBe("");
+        expect(cliRes.stderr).toBe("FAIL: credential entry found in archive");
+
+        // Non-disclosure
+        expect(cliRes.stderr).not.toContain(secretContent);
+        expect(cliRes.stderr).not.toContain("gemini-key");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("fails closed (status 1) when archive contains gemini-key.writing entry", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-writing-"));
+      try {
+        const zipBuf = createTestZip({
+          "manifest.json": "{}",
+          "gemini-key.writing": "half_written_key",
+        });
+        const zipPath = join(tempDir, "backup.hfdbackup");
+        writeFileSync(zipPath, zipBuf);
+
+        const modRes = inspectBackupArchive(zipPath);
+        expect(modRes.status).toBe(1);
+        expect(modRes.message).toBe("FAIL: credential entry found in archive");
+
+        const cliRes = runInspectorCli(zipPath);
+        expect(cliRes.status).toBe(1);
+        expect(cliRes.stderr).toBe("FAIL: credential entry found in archive");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("fails closed (status 1) when archive contains nested path containing credential name", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-nested-"));
+      try {
+        const zipBuf = createTestZip({
+          "manifest.json": "{}",
+          "secrets/gemini-key": "nested_secret",
+        });
+        const zipPath = join(tempDir, "backup.hfdbackup");
+        writeFileSync(zipPath, zipBuf);
+
+        const modRes = inspectBackupArchive(zipPath);
+        expect(modRes.status).toBe(1);
+        expect(modRes.message).toBe("FAIL: credential entry found in archive");
+
+        const cliRes = runInspectorCli(zipPath);
+        expect(cliRes.status).toBe(1);
+        expect(cliRes.stderr).toBe("FAIL: credential entry found in archive");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("reports inspection error (status 2) on missing archive file", () => {
+      const missingPath = resolve(process.cwd(), "nonexistent-backup-target.hfdbackup");
+      const modRes = inspectBackupArchive(missingPath);
+      expect(modRes.status).toBe(2);
+      expect(modRes.message).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+
+      const cliRes = runInspectorCli(missingPath);
+      expect(cliRes.status).toBe(2);
+      expect(cliRes.stdout).toBe("");
+      expect(cliRes.stderr).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+    });
+
+    it("reports inspection error (status 2) on corrupted or truncated ZIP", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-corrupt-"));
+      try {
+        const corruptedPath = join(tempDir, "corrupted.hfdbackup");
+        writeFileSync(corruptedPath, Buffer.from("PK\x03\x04 truncated random non-zip bytes"));
+
+        const modRes = inspectBackupArchive(corruptedPath);
+        expect(modRes.status).toBe(2);
+        expect(modRes.message).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+
+        const cliRes = runInspectorCli(corruptedPath);
+        expect(cliRes.status).toBe(2);
+        expect(cliRes.stderr).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("reports inspection error (status 2) when target is a directory", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-dir-"));
+      try {
+        const modRes = inspectBackupArchive(tempDir);
+        expect(modRes.status).toBe(2);
+        expect(modRes.message).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+
+        const cliRes = runInspectorCli(tempDir);
+        expect(cliRes.status).toBe(2);
+        expect(cliRes.stderr).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("handles archive paths containing spaces correctly", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-spaces-"));
+      try {
+        const zipBuf = createTestZip({
+          "manifest.json": "{}",
+          "her-flight-deck.db": "db",
+        });
+        const zipPath = join(tempDir, "her flight deck backup with spaces.hfdbackup");
+        writeFileSync(zipPath, zipBuf);
+
+        const modRes = inspectBackupArchive(zipPath);
+        expect(modRes.status).toBe(0);
+        expect(modRes.message).toBe("PASS: no credential entry names in archive");
+
+        const cliRes = runInspectorCli(zipPath);
+        expect(cliRes.status).toBe(0);
+        expect(cliRes.stdout).toBe("PASS: no credential entry names in archive");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("reports inspection error (status 2) on count-underreporting tamper reproductions (module and CLI)", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-undercount-"));
+      try {
+        const secretZip = createTestZip({
+          "manifest.json": "{}",
+          "secrets/gemini-key": "synthetic placeholder only",
+        });
+
+        // Underreported count: 2 entries changed to 1
+        const undercountBuf = Buffer.from(secretZip);
+        undercountBuf.writeUInt16LE(1, undercountBuf.length - 22 + 8);
+        undercountBuf.writeUInt16LE(1, undercountBuf.length - 22 + 10);
+        const undercountPath = join(tempDir, "undercount.hfdbackup");
+        writeFileSync(undercountPath, undercountBuf);
+
+        const modUndercount = inspectBackupArchive(undercountPath);
+        expect(modUndercount.status).toBe(2);
+        expect(modUndercount.message).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+
+        const cliUndercount = runInspectorCli(undercountPath);
+        expect(cliUndercount.status).toBe(2);
+        expect(cliUndercount.stderr).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+
+        // Zero count: 2 entries changed to 0
+        const zeroCountBuf = Buffer.from(secretZip);
+        zeroCountBuf.writeUInt16LE(0, zeroCountBuf.length - 22 + 8);
+        zeroCountBuf.writeUInt16LE(0, zeroCountBuf.length - 22 + 10);
+        const zeroCountPath = join(tempDir, "zero-count.hfdbackup");
+        writeFileSync(zeroCountPath, zeroCountBuf);
+
+        const modZero = inspectBackupArchive(zeroCountPath);
+        expect(modZero.status).toBe(2);
+        expect(modZero.message).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+
+        const cliZero = runInspectorCli(zeroCountPath);
+        expect(cliZero.status).toBe(2);
+        expect(cliZero.stderr).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("reports inspection error (status 2) on inconsistent declared directory size, truncated variable fields, malformed EOCD bounds, and unsupported layouts", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-cred-malformed-"));
+      try {
+        const baseZip = createTestZip({
+          "manifest.json": "{}",
+          "her-flight-deck.db": "database",
+        });
+
+        // 1. Inconsistent declared central directory size
+        const tamperedSizeBuf = Buffer.from(baseZip);
+        const origSize = tamperedSizeBuf.readUInt32LE(tamperedSizeBuf.length - 22 + 12);
+        tamperedSizeBuf.writeUInt32LE(origSize - 10, tamperedSizeBuf.length - 22 + 12);
+        const tamperedSizePath = join(tempDir, "tampered-size.hfdbackup");
+        writeFileSync(tamperedSizePath, tamperedSizeBuf);
+
+        expect(inspectBackupArchive(tamperedSizePath).status).toBe(2);
+        expect(runInspectorCli(tamperedSizePath).status).toBe(2);
+
+        // 2. Malformed EOCD bounds (declared comment length exceeds buffer)
+        const tamperedCommentBuf = Buffer.from(baseZip);
+        tamperedCommentBuf.writeUInt16LE(10, tamperedCommentBuf.length - 22 + 20);
+        const tamperedCommentPath = join(tempDir, "tampered-comment.hfdbackup");
+        writeFileSync(tamperedCommentPath, tamperedCommentBuf);
+
+        expect(inspectBackupArchive(tamperedCommentPath).status).toBe(2);
+        expect(runInspectorCli(tamperedCommentPath).status).toBe(2);
+
+        // 3. Multi-disk archive rejection
+        const multiDiskBuf = Buffer.from(baseZip);
+        multiDiskBuf.writeUInt16LE(1, multiDiskBuf.length - 22 + 4);
+        const multiDiskPath = join(tempDir, "multi-disk.hfdbackup");
+        writeFileSync(multiDiskPath, multiDiskBuf);
+
+        expect(inspectBackupArchive(multiDiskPath).status).toBe(2);
+        expect(runInspectorCli(multiDiskPath).status).toBe(2);
+
+        // 4. Archive with valid-looking EOCD and central directory, but local header signature mismatch
+        const tamperedLocalBuf = Buffer.from(baseZip);
+        tamperedLocalBuf.writeUInt32LE(0x00000000, 0);
+        const tamperedLocalPath = join(tempDir, "tampered-local.hfdbackup");
+        writeFileSync(tamperedLocalPath, tamperedLocalBuf);
+
+        expect(inspectBackupArchive(tamperedLocalPath).status).toBe(2);
+        expect(runInspectorCli(tamperedLocalPath).status).toBe(2);
+
+        // 5. Truncated variable field in central directory
+        const tamperedVarBuf = Buffer.from(baseZip);
+        const cdOffset = tamperedVarBuf.readUInt32LE(tamperedVarBuf.length - 22 + 16);
+        tamperedVarBuf.writeUInt16LE(60000, cdOffset + 30);
+        const tamperedVarPath = join(tempDir, "tampered-var.hfdbackup");
+        writeFileSync(tamperedVarPath, tamperedVarBuf);
+
+        expect(inspectBackupArchive(tamperedVarPath).status).toBe(2);
+        expect(runInspectorCli(tamperedVarPath).status).toBe(2);
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("Mac parity checklist documentation integrity", () => {
+    it("ensures fail-closed credential inspection routine is documented with trap and quiet listing", () => {
+      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
+      expect(checklist).toContain("trap 'rm -f \"$TMP_LIST\"' EXIT INT TERM");
+      expect(checklist).toContain("unzip -q -l \"$BACKUP_PATH\"");
+      expect(checklist).toContain("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+      expect(checklist).toContain("FAIL: credential entry found in archive");
+      expect(checklist).toContain("PASS: no credential entry names in archive");
+      expect(checklist).toContain("node scripts/inspect-backup-credentials.mjs");
+    });
+
+    it("references actual Rust backup allowlist regression tests and eliminates non-existent names", () => {
+      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
+      expect(checklist).toContain("an_archive_may_only_contain_her_database_and_documents");
+      expect(checklist).toContain("secrets.rs");
+      expect(checklist).toContain("complete_backup_keeps_the_pdf_plan_progress_provenance_and_ledger_and_retries_safely_after_restore");
+      expect(checklist).not.toContain("allowed_archive_path_only_permits_our_files");
+    });
+
+    it("links full repository audit note and preserves frozen candidate status without claiming bounded RSS", () => {
+      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
+      expect(checklist).toContain("FULL_REPOSITORY_AUDIT_2026-09-29.md");
+      expect(checklist).toContain("v0.5.3 is a recorded frozen private candidate with known source defects");
+      expect(checklist).toContain("v0.5.3 is not currently approvable merely by passing the Mac checklist");
+      expect(checklist).toContain("Do not claim that windowing guarantees a source-independent or strictly bounded total memory footprint");
+      expect(checklist).not.toContain("memory-bounded windowing keeps peak RSS stable");
+    });
+
+    function findBashExecutable(candidates: string[] = [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+      "bash",
+    ]): string | null {
+      return (
+        candidates.find((candidate) => {
+          try {
+            const res = spawnSync(candidate, ["-c", "echo ok"], { encoding: "utf8" });
+            return res.status === 0 && res.stdout.trim() === "ok";
+          } catch {
+            return false;
+          }
+        }) ?? null
+      );
+    }
+
+    it("visibly marks shell execution as skipped when no bash executable is available", (ctx) => {
+      const unavailableBash = findBashExecutable(["nonexistent-bash-executable-404.exe"]);
+      expect(unavailableBash).toBeNull();
+      ctx.skip("Deterministic availability seam: missing bash candidate correctly produces an explicit test skip");
+    });
+
+    it("executes the documented shell routine in a Windows-hosted Git Bash environment verifying status codes, non-disclosure, and cleanup", (ctx) => {
+      const bashPath = findBashExecutable();
+      if (!bashPath) {
+        ctx.skip("Git Bash not found in environment; Windows-hosted shell verification is unavailable");
+        return;
+      }
+
+      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
+      const routineMatch = checklist.match(/`(\(TMP_LIST=.*?exit 0\))`<br>/);
+      expect(routineMatch).toBeTruthy();
+      const routine = routineMatch![1]!.replace(/\\\|/g, "|");
+
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-shell-test-"));
+      const isolatedTmpDir = join(tempDir, "isolated-tmp");
+      mkdirSync(isolatedTmpDir, { recursive: true });
+      const observeFile = join(tempDir, "observe-mktemp.txt");
+
+      try {
+        const cleanZip = createTestZip({
+          "manifest.json": "{}",
+          "her-flight-deck.db": "synthetic database",
+        });
+        const cleanPath = join(tempDir, "clean.hfdbackup");
+        writeFileSync(cleanPath, cleanZip);
+
+        const secretZip = createTestZip({
+          "manifest.json": "{}",
+          "secrets/gemini-key": "secret",
+        });
+        const secretPath = join(tempDir, "secret.hfdbackup");
+        writeFileSync(secretPath, secretZip);
+
+        const spaceZipPath = join(tempDir, "backup with spaces.hfdbackup");
+        writeFileSync(spaceZipPath, cleanZip);
+
+        function execRoutine(archivePath: string, prefix = "", extraEnv: Record<string, string> = {}) {
+          if (existsSync(observeFile)) {
+            rmSync(observeFile, { force: true });
+          }
+          const hookPrefix = `TMPDIR="$(cd "$ISOLATED_TMP_DIR" && pwd)"; export TMPDIR; orig_mktemp() { command mktemp "$@"; }; mktemp() { f=$(orig_mktemp "$@") || return 1; echo "$f" > "$OBSERVE_FILE"; echo "$f"; }; ${prefix}`;
+          return spawnSync(bashPath!, ["-c", `${hookPrefix}BACKUP_PATH="$AUDIT_ARCHIVE"; ${routine}`], {
+            encoding: "utf8",
+            env: {
+              ...process.env,
+              AUDIT_ARCHIVE: archivePath,
+              ISOLATED_TMP_DIR: isolatedTmpDir,
+              OBSERVE_FILE: observeFile,
+              ...extraEnv,
+            },
+          });
+        }
+
+        // 1. Valid clean archive => status 0, generic PASS, no sensitive text, listing cleaned up
+        const resClean = execRoutine(cleanPath);
+        expect(resClean.status).toBe(0);
+        expect(resClean.stdout.trim()).toBe("PASS: no credential entry names in archive");
+        expect(resClean.stderr.trim()).toBe("");
+        const createdClean = readFileSync(observeFile, "utf8").trim();
+        expect(createdClean).toBeTruthy();
+        expect(readdirSync(isolatedTmpDir)).toEqual([]);
+
+        // 2. Valid credential entry => status 1, generic FAIL, listing cleaned up
+        const resSecret = execRoutine(secretPath);
+        expect(resSecret.status).toBe(1);
+        expect(resSecret.stdout.trim()).toBe("");
+        expect(resSecret.stderr.trim()).toBe("FAIL: credential entry found in archive");
+        const createdSecret = readFileSync(observeFile, "utf8").trim();
+        expect(createdSecret).toBeTruthy();
+        expect(readdirSync(isolatedTmpDir)).toEqual([]);
+
+        // 3. Search command error (grep returning 2) => status 2, INSPECTION ERROR, listing cleaned up
+        const resGrepError = execRoutine(cleanPath, "grep() { return 2; }; ");
+        expect(resGrepError.status).toBe(2);
+        expect(resGrepError.stdout.trim()).toBe("");
+        expect(resGrepError.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+        const createdGrepError = readFileSync(observeFile, "utf8").trim();
+        expect(createdGrepError).toBeTruthy();
+        expect(readdirSync(isolatedTmpDir)).toEqual([]);
+
+        // 4. Missing search command (command not found -> 127) => status 2, listing cleaned up
+        const resGrepMissing = execRoutine(cleanPath, "unset -f grep; grep() { return 127; }; ");
+        expect(resGrepMissing.status).toBe(2);
+        expect(resGrepMissing.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+        const createdGrepMissing = readFileSync(observeFile, "utf8").trim();
+        expect(createdGrepMissing).toBeTruthy();
+        expect(readdirSync(isolatedTmpDir)).toEqual([]);
+
+        // 5. Missing / corrupt archive (unzip / listing failure) => status 2, listing cleaned up
+        const resMissing = execRoutine(join(tempDir, "nonexistent.hfdbackup"));
+        expect(resMissing.status).toBe(2);
+        expect(resMissing.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+        const createdMissing = readFileSync(observeFile, "utf8").trim();
+        expect(createdMissing).toBeTruthy();
+        expect(readdirSync(isolatedTmpDir)).toEqual([]);
+
+        // 6. Archive paths containing spaces => status 0, PASS, listing cleaned up
+        const resSpace = execRoutine(spaceZipPath);
+        expect(resSpace.status).toBe(0);
+        expect(resSpace.stdout.trim()).toBe("PASS: no credential entry names in archive");
+        expect(readdirSync(isolatedTmpDir)).toEqual([]);
+
+        // 7. Failing mktemp => status 2, INSPECTION ERROR, no orphaned files
+        const resMktempFail = execRoutine(cleanPath, "mktemp() { return 1; }; ");
+        expect(resMktempFail.status).toBe(2);
+        expect(resMktempFail.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
+        expect(readdirSync(isolatedTmpDir)).toEqual([]);
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("synthetic PDF test fixture generation determinism and specifications", () => {
+    it("generates Fixture A (small checklist, 10 pages) deterministically matching accepted input metrics", () => {
+      const buf1 = buildPdf(10, 0, 0, "Checklist");
+      const buf2 = buildPdf(10, 0, 0, "Checklist");
+
+      expect(buf1.length).toBe(3360);
+      expect(buf2.length).toBe(3360);
+
+      const hash1 = createHash("sha256").update(buf1).digest("hex");
+      const hash2 = createHash("sha256").update(buf2).digest("hex");
+
+      expect(hash1).toBe("f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134");
+      expect(hash2).toBe(hash1);
+
+      // Verify distinct page IDs exist
+      const text = buf1.toString("latin1");
+      expect(text).toContain("Synthetic Checklist - Page 1 of 10 (ID: P0001)");
+      expect(text).toContain("Synthetic Checklist - Page 10 of 10 (ID: P0010)");
+    });
+
+    it("generates Fixture B (long manual, 1,050 pages) deterministically matching accepted input metrics", () => {
+      const buf1 = buildPdf(1050, 0, 0, "Handbook");
+      const buf2 = buildPdf(1050, 0, 0, "Handbook");
+
+      expect(buf1.length).toBe(330934);
+      expect(buf2.length).toBe(330934);
+
+      const hash1 = createHash("sha256").update(buf1).digest("hex");
+      const hash2 = createHash("sha256").update(buf2).digest("hex");
+
+      expect(hash1).toBe("0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1");
+      expect(hash2).toBe(hash1);
+
+      const text = buf1.toString("latin1");
+      expect(text).toContain("Synthetic Handbook - Page 1 of 1050 (ID: P0001)");
+      expect(text).toContain("Synthetic Handbook - Page 1050 of 1050 (ID: P1050)");
+    });
+
+    it("generates Fixture C (illustrated charts, 60 pages) deterministically matching accepted input metrics", () => {
+      const buf1 = buildPdf(60, 600, 500, "Charts");
+      const buf2 = buildPdf(60, 600, 500, "Charts");
+
+      expect(buf1.length).toBe(54032644);
+      expect(buf2.length).toBe(54032644);
+
+      const hash1 = createHash("sha256").update(buf1).digest("hex");
+      const hash2 = createHash("sha256").update(buf2).digest("hex");
+
+      expect(hash1).toBe("b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d");
+      expect(hash2).toBe(hash1);
+
+      // Verify declared image dimensions and stream length: 600 * 500 * 3 = 900,000 bytes
+      const rawText = buf1.toString("latin1");
+      expect(rawText).toContain("/Width 600 /Height 500 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length 900000");
+
+      const text = buf1.toString("latin1");
+      expect(text).toContain("Synthetic Charts - Page 1 of 60 (ID: P0001)");
+      expect(text).toContain("Synthetic Charts - Page 60 of 60 (ID: P0060)");
+    });
+
+    it("verifies generateFixtures produces all three standard fixtures matching FIXTURE_SPECS", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-fixtures-test-"));
+      try {
+        const results = generateFixtures(tempDir);
+        expect(results).toHaveLength(3);
+        for (let i = 0; i < FIXTURE_SPECS.length; i++) {
+          const spec = FIXTURE_SPECS[i];
+          const res = results[i];
+          expect(res.filename).toBe(spec.filename);
+          expect(res.bytes).toBe(spec.expectedBytes);
+          expect(res.sha256).toBe(spec.expectedSha256);
+          expect(existsSync(res.filePath)).toBe(true);
+        }
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("executes generate-pdf-fixtures CLI script producing exact fixture output", () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "hfd-fixtures-cli-"));
+      try {
+        const stdout = execFileSync(process.execPath, [GENERATE_FIXTURES_SCRIPT_PATH, tempDir], {
+          encoding: "utf8",
+        });
+        expect(stdout).toContain("synthetic-small-checklist.pdf: 3360 bytes, SHA-256: f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134");
+        expect(stdout).toContain("synthetic-long-manual.pdf: 330934 bytes, SHA-256: 0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1");
+        expect(stdout).toContain("synthetic-illustrated-charts.pdf: 54032644 bytes, SHA-256: b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
   });
 });

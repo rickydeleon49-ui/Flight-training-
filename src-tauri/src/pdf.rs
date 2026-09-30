@@ -1215,4 +1215,475 @@ mod tests {
         }
         let _ = std::fs::remove_dir_all(&dir);
     }
+
+    use sha2::{Digest, Sha256};
+
+    fn sha256_digest(bytes: &[u8]) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(bytes);
+        format!("{:x}", hasher.finalize())
+    }
+
+    fn generate_synthetic_fixture(
+        num_pages: u32,
+        img_w: u32,
+        img_h: u32,
+        doc_label: &str,
+    ) -> Vec<u8> {
+        let raster_bytes = if img_w > 0 && img_h > 0 {
+            (img_w * img_h * 3) as usize
+        } else {
+            0
+        };
+        let mut chunks: Vec<u8> = Vec::new();
+        let mut offsets: Vec<usize> = vec![0; (num_pages as usize) * 3 + 10];
+
+        macro_rules! write_bytes {
+            ($b:expr) => {
+                chunks.extend_from_slice($b);
+            };
+        }
+
+        write_bytes!(b"%PDF-1.5\n%\xFF\xFF\xFF\xFF\n");
+        offsets[1] = chunks.len();
+        write_bytes!(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+        let mut kids_str = String::new();
+        for i in 0..num_pages {
+            if i > 0 {
+                kids_str.push(' ');
+            }
+            kids_str.push_str(&format!("{} 0 R", 3 + i));
+        }
+        offsets[2] = chunks.len();
+        write_bytes!(format!(
+            "2 0 obj\n<< /Type /Pages /Count {} /Kids [{}] >>\nendobj\n",
+            num_pages, kids_str
+        )
+        .as_bytes());
+
+        let mut next_id = 3 + num_pages;
+        let font_obj_id = next_id;
+        next_id += 1;
+
+        let mut content_obj_ids = Vec::with_capacity(num_pages as usize);
+        for _ in 0..num_pages {
+            content_obj_ids.push(next_id);
+            next_id += 1;
+        }
+
+        let mut image_obj_ids = Vec::with_capacity(num_pages as usize);
+        if raster_bytes > 0 {
+            for _ in 0..num_pages {
+                image_obj_ids.push(next_id);
+                next_id += 1;
+            }
+        }
+
+        for i in 0..num_pages {
+            offsets[(3 + i) as usize] = chunks.len();
+            let res = if raster_bytes > 0 {
+                format!(
+                    "<< /Font << /F1 {} 0 R >> /XObject << /Im0 {} 0 R >> >>",
+                    font_obj_id, image_obj_ids[i as usize]
+                )
+            } else {
+                format!("<< /Font << /F1 {} 0 R >> >>", font_obj_id)
+            };
+            write_bytes!(format!("{} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources {} /Contents {} 0 R >>\nendobj\n", 3 + i, res, content_obj_ids[i as usize]).as_bytes());
+        }
+
+        offsets[font_obj_id as usize] = chunks.len();
+        write_bytes!(format!(
+            "{} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
+            font_obj_id
+        )
+        .as_bytes());
+
+        for i in 0..num_pages {
+            offsets[content_obj_ids[i as usize] as usize] = chunks.len();
+            let page_num = i + 1;
+            let page_id_text = format!(
+                "Synthetic {} - Page {} of {} (ID: P{:04})",
+                doc_label, page_num, num_pages, page_num
+            );
+            let text_stream = if raster_bytes > 0 {
+                format!(
+                    "q 300 0 0 250 50 450 cm /Im0 Do Q\nBT /F1 12 Tf 50 400 Td ({}) Tj ET\n",
+                    page_id_text
+                )
+            } else {
+                format!("BT /F1 12 Tf 50 750 Td ({}) Tj ET\n", page_id_text)
+            };
+            write_bytes!(format!(
+                "{} 0 obj\n<< /Length {} >>\nstream\n{}endstream\nendobj\n",
+                content_obj_ids[i as usize],
+                text_stream.len(),
+                text_stream
+            )
+            .as_bytes());
+        }
+
+        if raster_bytes > 0 {
+            for i in 0..num_pages {
+                offsets[image_obj_ids[i as usize] as usize] = chunks.len();
+                let mut img_buf = vec![0u8; raster_bytes];
+                let mut state: u32 = (i + 1).wrapping_mul(1103515245).wrapping_add(12345);
+                for j in (0..raster_bytes).step_by(4) {
+                    state = state.wrapping_mul(1664525).wrapping_add(1013904223);
+                    let bytes = state.to_le_bytes();
+                    let end = (j + 4).min(raster_bytes);
+                    img_buf[j..end].copy_from_slice(&bytes[..end - j]);
+                }
+                write_bytes!(format!("{} 0 obj\n<< /Type /XObject /Subtype /Image /Width {} /Height {} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length {} >>\nstream\n", image_obj_ids[i as usize], img_w, img_h, raster_bytes).as_bytes());
+                write_bytes!(&img_buf);
+                write_bytes!(b"\nendstream\nendobj\n");
+            }
+        }
+
+        let startxref = chunks.len();
+        let total = next_id - 1;
+        write_bytes!(format!("xref\n0 {}\n0000000000 65535 f \n", total + 1).as_bytes());
+        for i in 1..=total {
+            write_bytes!(format!("{:010} 00000 n \n", offsets[i as usize]).as_bytes());
+        }
+        write_bytes!(format!(
+            "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{}\n%%EOF\n",
+            total + 1,
+            startxref
+        )
+        .as_bytes());
+
+        chunks
+    }
+
+    fn extract_page_id_from_content(content: &lopdf::content::Content) -> Option<u32> {
+        for op in &content.operations {
+            if op.operator == "Tj" {
+                for operand in &op.operands {
+                    if let lopdf::Object::String(bytes, _) = operand {
+                        let text = String::from_utf8_lossy(bytes);
+                        if let Some(idx) = text.find("(ID: P") {
+                            let id_part = &text[idx + 6..];
+                            if let Some(end) = id_part.find(')') {
+                                if let Ok(id) = id_part[..end].parse::<u32>() {
+                                    return Some(id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_page_ids_from_document(path: &Path) -> Result<Vec<u32>, String> {
+        let doc = lopdf::Document::load(path)
+            .map_err(|e| format!("Failed to load PDF at {}: {e}", path.display()))?;
+        let pages = doc.get_pages();
+        let mut page_ids = Vec::with_capacity(pages.len());
+        for (&_page_num, &page_obj_id) in pages.iter() {
+            let content = doc
+                .get_and_decode_page_content(page_obj_id)
+                .map_err(|e| format!("Failed to decode content for page {page_obj_id:?}: {e}"))?;
+            let id = extract_page_id_from_content(&content).ok_or_else(|| {
+                format!(
+                    "No valid page ID found on page {page_obj_id:?} in {}",
+                    path.display()
+                )
+            })?;
+            page_ids.push(id);
+        }
+        Ok(page_ids)
+    }
+
+    fn verify_exact_page_id_sequence(
+        actual_ids: &[u32],
+        start: u32,
+        end: u32,
+    ) -> Result<(), String> {
+        let expected_count = (end - start + 1) as usize;
+        if actual_ids.len() != expected_count {
+            return Err(format!(
+                "Count mismatch: expected {} pages ({start}..={end}), got {}",
+                expected_count,
+                actual_ids.len()
+            ));
+        }
+        for (i, &id) in actual_ids.iter().enumerate() {
+            let expected_id = start + i as u32;
+            if id != expected_id {
+                return Err(format!(
+                    "Sequence mismatch at index {}: expected ID {}, got {}",
+                    i, expected_id, id
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn synthetic_fixture_generation_matches_accepted_specs() {
+        let a = generate_synthetic_fixture(10, 0, 0, "Checklist");
+        assert_eq!(a.len(), 3360);
+        assert_eq!(
+            sha256_digest(&a),
+            "f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134"
+        );
+        let doc_a = lopdf::Document::load_mem(&a).unwrap();
+        let pages_a = doc_a.get_pages();
+        assert_eq!(pages_a.len(), 10);
+        let mut ids_a = Vec::with_capacity(10);
+        for (&_page_num, &page_obj_id) in pages_a.iter() {
+            let content = doc_a.get_and_decode_page_content(page_obj_id).unwrap();
+            ids_a.push(extract_page_id_from_content(&content).unwrap());
+        }
+        verify_exact_page_id_sequence(&ids_a, 1, 10).unwrap();
+
+        let b = generate_synthetic_fixture(1050, 0, 0, "Handbook");
+        assert_eq!(b.len(), 330934);
+        assert_eq!(
+            sha256_digest(&b),
+            "0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1"
+        );
+        let doc_b = lopdf::Document::load_mem(&b).unwrap();
+        assert_eq!(doc_b.get_pages().len(), 1050);
+    }
+
+    #[test]
+    fn automatic_and_manual_splitting_on_1050_page_fixture() {
+        let dir = scratch().join("fixture-b-split");
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let source_path = dir.join("synthetic-long-manual.pdf");
+        let bytes = generate_synthetic_fixture(1050, 0, 0, "Handbook");
+        std::fs::write(&source_path, &bytes).unwrap();
+        let initial_hash = sha256_digest(&std::fs::read(&source_path).unwrap());
+        assert_eq!(
+            initial_hash,
+            "0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1"
+        );
+
+        let out_dir = dir.join("parts");
+        std::fs::create_dir_all(&out_dir).unwrap();
+
+        let parts = automatic_split_core(&source_path, &out_dir);
+        assert_eq!(
+            parts.len(),
+            2,
+            "1,050 pages split at MAX_PAGES (1,000) must produce 2 parts"
+        );
+        assert_eq!(parts[0].0, 1);
+        assert_eq!(parts[0].1, 1000);
+        assert!(parts[0].2 <= MAX_PDF_BYTES);
+        assert_eq!(parts[1].0, 1001);
+        assert_eq!(parts[1].1, 1050);
+        assert!(parts[1].2 <= MAX_PDF_BYTES);
+
+        // Verify child files load cleanly and report expected page counts
+        let part1_path = out_dir.join("part-1.pdf");
+        let part2_path = out_dir.join("part-2.pdf");
+        assert_eq!(page_count(&part1_path).unwrap(), 1000);
+        assert_eq!(page_count(&part2_path).unwrap(), 50);
+
+        // Verify full ordered sequence of IDs for each child part
+        let part1_ids = extract_page_ids_from_document(&part1_path).unwrap();
+        verify_exact_page_id_sequence(&part1_ids, 1, 1000).unwrap();
+        let part2_ids = extract_page_ids_from_document(&part2_path).unwrap();
+        verify_exact_page_id_sequence(&part2_ids, 1001, 1050).unwrap();
+
+        // Verify combined coverage covers all 1..=1050 source pages exactly once
+        let mut combined_ids = part1_ids;
+        combined_ids.extend(part2_ids);
+        verify_exact_page_id_sequence(&combined_ids, 1, 1050).unwrap();
+
+        // Test manual range 101..=300 extracts exactly 200 pages
+        let manual_dest = dir.join("manual-101-300.pdf");
+        let written = write_page_range(&source_path, &manual_dest, 101, 300).unwrap();
+        assert_eq!(written, 200);
+        assert_eq!(page_count(&manual_dest).unwrap(), 200);
+        assert!(std::fs::metadata(&manual_dest).unwrap().len() <= MAX_PDF_BYTES);
+
+        // Verify manual range contains exactly IDs 101..=300 in order, excluding outside pages
+        let manual_ids = extract_page_ids_from_document(&manual_dest).unwrap();
+        verify_exact_page_id_sequence(&manual_ids, 101, 300).unwrap();
+
+        // Source file hash must remain completely identical
+        let final_hash = sha256_digest(&std::fs::read(&source_path).unwrap());
+        assert_eq!(final_hash, initial_hash);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn negative_regression_page_id_coverage_validator_rejects_wrong_repeated_or_reordered_ids() {
+        // Correct count (200), but wrong start offset (1..=200 instead of 101..=300)
+        let wrong_offset: Vec<u32> = (1..=200).collect();
+        let res_offset = verify_exact_page_id_sequence(&wrong_offset, 101, 300);
+        assert!(res_offset.is_err());
+        assert!(res_offset
+            .unwrap_err()
+            .contains("Sequence mismatch at index 0"));
+
+        // Correct count (4), but duplicated / repeated ID ([1, 2, 2, 4])
+        let repeated = vec![1, 2, 2, 4];
+        let res_repeat = verify_exact_page_id_sequence(&repeated, 1, 4);
+        assert!(res_repeat.is_err());
+        assert!(res_repeat
+            .unwrap_err()
+            .contains("Sequence mismatch at index 2"));
+
+        // Correct count (4), but reordered / out-of-order IDs ([1, 3, 2, 4])
+        let reordered = vec![1, 3, 2, 4];
+        let res_reorder = verify_exact_page_id_sequence(&reordered, 1, 4);
+        assert!(res_reorder.is_err());
+        assert!(res_reorder
+            .unwrap_err()
+            .contains("Sequence mismatch at index 1"));
+
+        // Count mismatch
+        let short_seq = vec![1, 2, 3];
+        let res_count = verify_exact_page_id_sequence(&short_seq, 1, 4);
+        assert!(res_count.is_err());
+        assert!(res_count.unwrap_err().contains("Count mismatch"));
+
+        // Test with a synthetic PDF containing deliberately wrong page IDs
+        let dir = scratch().join("fixture-negative-regression");
+        std::fs::create_dir_all(&dir).unwrap();
+        let bad_pdf_path = dir.join("corrupted-page-ids.pdf");
+
+        // Generate a 3-page PDF where page 2 duplicates page 1's ID text
+        let mut chunks = Vec::new();
+        let mut offsets = [0usize; 9];
+        macro_rules! write_bad {
+            ($b:expr) => {
+                chunks.extend_from_slice($b);
+            };
+        }
+        write_bad!(b"%PDF-1.5\n%\xff\xff\xff\xff\n");
+        offsets[1] = chunks.len();
+        write_bad!(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+        offsets[2] = chunks.len();
+        write_bad!(b"2 0 obj\n<< /Type /Pages /Count 3 /Kids [3 0 R 4 0 R 5 0 R] >>\nendobj\n");
+        offsets[3] = chunks.len();
+        write_bad!(b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 6 0 R >> >> /Contents 7 0 R >>\nendobj\n");
+        offsets[4] = chunks.len();
+        write_bad!(b"4 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 6 0 R >> >> /Contents 7 0 R >>\nendobj\n"); // points to page 1's contents!
+        offsets[5] = chunks.len();
+        write_bad!(b"5 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 6 0 R >> >> /Contents 8 0 R >>\nendobj\n");
+        offsets[6] = chunks.len();
+        write_bad!(b"6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
+        offsets[7] = chunks.len();
+        let p1_text = "BT /F1 12 Tf 50 750 Td (Synthetic Bad - Page 1 of 3 (ID: P0001)) Tj ET\n";
+        write_bad!(format!(
+            "7 0 obj\n<< /Length {} >>\nstream\n{}endstream\nendobj\n",
+            p1_text.len(),
+            p1_text
+        )
+        .as_bytes());
+        offsets[8] = chunks.len();
+        let p3_text = "BT /F1 12 Tf 50 750 Td (Synthetic Bad - Page 3 of 3 (ID: P0003)) Tj ET\n";
+        write_bad!(format!(
+            "8 0 obj\n<< /Length {} >>\nstream\n{}endstream\nendobj\n",
+            p3_text.len(),
+            p3_text
+        )
+        .as_bytes());
+        let startxref = chunks.len();
+        write_bad!(b"xref\n0 9\n0000000000 65535 f \n");
+        for offset in &offsets[1..=8] {
+            write_bad!(format!("{:010} 00000 n \n", offset).as_bytes());
+        }
+        write_bad!(format!(
+            "trailer\n<< /Size 9 /Root 1 0 R >>\nstartxref\n{}\n%%EOF\n",
+            startxref
+        )
+        .as_bytes());
+
+        std::fs::write(&bad_pdf_path, &chunks).unwrap();
+        let extracted_ids = extract_page_ids_from_document(&bad_pdf_path).unwrap();
+        // Page 1 has ID 1, Page 2 points to Content 7 so has ID 1, Page 3 has ID 3
+        assert_eq!(extracted_ids, vec![1, 1, 3]);
+        // The validator must reject this even though count is 3
+        assert_eq!(page_count(&bad_pdf_path).unwrap(), 3);
+        let res = verify_exact_page_id_sequence(&extracted_ids, 1, 3);
+        assert!(res.is_err(), "Validator must reject duplicated/wrong IDs");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    #[ignore = "opt-in verification on byte-heavy 54 MiB fixture"]
+    fn opt_in_byte_heavy_charts_fixture_split() {
+        let dir = scratch().join("fixture-c-split");
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let source_path = dir.join("synthetic-illustrated-charts.pdf");
+        let bytes = generate_synthetic_fixture(60, 600, 500, "Charts");
+        assert_eq!(bytes.len(), 54032644);
+        assert_eq!(
+            sha256_digest(&bytes),
+            "b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d"
+        );
+        std::fs::write(&source_path, &bytes).unwrap();
+        let initial_hash = sha256_digest(&std::fs::read(&source_path).unwrap());
+
+        let out_dir = dir.join("parts");
+        std::fs::create_dir_all(&out_dir).unwrap();
+
+        let parts = automatic_split_core(&source_path, &out_dir);
+        assert_eq!(
+            parts.len(),
+            2,
+            "54 MB fixture must split into 2 parts under 50 MiB limit"
+        );
+        for (first, last, size) in &parts {
+            assert!(
+                *size <= MAX_PDF_BYTES,
+                "Each part must obey MAX_PDF_BYTES (50 MiB)"
+            );
+            assert!(
+                last - first < MAX_PAGES,
+                "Each part must obey MAX_PAGES (1,000)"
+            );
+        }
+        assert_eq!(parts[0].0, 1);
+        assert_eq!(parts[0].1, 58);
+        assert_eq!(parts[1].0, 59);
+        assert_eq!(parts[1].1, 60);
+
+        let part1_path = out_dir.join("part-1.pdf");
+        let part2_path = out_dir.join("part-2.pdf");
+        assert_eq!(page_count(&part1_path).unwrap(), 58);
+        assert_eq!(page_count(&part2_path).unwrap(), 2);
+
+        // Verify full ordered sequence of IDs for byte-heavy output parts
+        let part1_ids = extract_page_ids_from_document(&part1_path).unwrap();
+        verify_exact_page_id_sequence(&part1_ids, 1, 58).unwrap();
+        let part2_ids = extract_page_ids_from_document(&part2_path).unwrap();
+        verify_exact_page_id_sequence(&part2_ids, 59, 60).unwrap();
+
+        // Verify combined coverage across all 60 pages
+        let mut combined_ids = part1_ids;
+        combined_ids.extend(part2_ids);
+        verify_exact_page_id_sequence(&combined_ids, 1, 60).unwrap();
+
+        // Manual range 10..=20 extracts exactly 11 pages
+        let manual_dest = dir.join("manual-10-20.pdf");
+        let written = write_page_range(&source_path, &manual_dest, 10, 20).unwrap();
+        assert_eq!(written, 11);
+        assert_eq!(page_count(&manual_dest).unwrap(), 11);
+        assert!(std::fs::metadata(&manual_dest).unwrap().len() <= MAX_PDF_BYTES);
+
+        // Verify manual range contains exactly IDs 10..=20 in order
+        let manual_ids = extract_page_ids_from_document(&manual_dest).unwrap();
+        verify_exact_page_id_sequence(&manual_ids, 10, 20).unwrap();
+
+        // Source file hash untouched
+        let final_hash = sha256_digest(&std::fs::read(&source_path).unwrap());
+        assert_eq!(final_hash, initial_hash);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Normalizes installer filenames to stable, safe downloadable filenames
  * before checksum generation and release upload.
