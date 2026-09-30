@@ -36,7 +36,7 @@ on:
           - all
         default: macos-only
       create_draft:
-        description: "Create immutable tag and reviewable GitHub Release draft (default: false produces private CI artifacts only; set true to create tag and draft)"
+        description: "Create reviewable GitHub Release draft targeting commit (default: false produces private CI artifacts only; set true to create draft; Git tag is created only upon publication)"
         required: false
         type: boolean
         default: false

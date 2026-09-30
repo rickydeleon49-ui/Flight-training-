@@ -1,12 +1,16 @@
 # macOS parity and implementation tracker
 
-_Last updated: 27 September 2026. Target: Apple Silicon Macs, macOS 12 or newer. Living checklist; not a claim of release readiness._
+_Last updated: 29 September 2026 (Mac test kit prepared for 2 October 2026). Target: Apple Silicon Macs, macOS 12 or newer. Living checklist; not a claim of release readiness._
 
 ## Purpose and current position
 
 Keep the Mac app at the same functional and usability level as Windows as shared development progresses. Use the same product and shared code; add platform-specific implementations only where needed. A Windows fix is a candidate Mac improvement, not proof of Mac behavior.
 
-The repository declares minimum macOS 12.0 and bundle identifier `com.herflightdeck.app`. Automated code-level checks passed on Windows, but **no usable Mac candidate DMG has been built or installed yet**. Building an Apple Silicon DMG requires a macOS runner (e.g. GitHub Actions `macos-15`) or physical Apple Silicon Mac hardware. All physical Mac installation, launch, and feature items remain completely **UNVERIFIED**.
+The repository declares minimum macOS 12.0 and bundle identifier `com.herflightdeck.app`. Candidate source is synchronized to `0.5.3`. The private, unpublished v0.5.3 Apple Silicon DMG was built via GitHub Actions `macos-15` (workflow run `36515016063`, target commit `41464607ff85d0a4cf0b837c19b400d8392dfec4`) and its checksum verified against `SHA256SUMS.txt` (`Her.Flight.Deck_0.5.3_aarch64.dmg`, 4,511,142 bytes, SHA-256 `de81be50122275104ca9e6791162a7bac6cd43a672c5580d5fbc509b5d16efec`).
+
+> [!IMPORTANT]
+> **Packaging evidence vs. Mac release readiness:**
+> A successful CI build and verified checksum manifest constitute **packaging evidence only**. No physical Mac installation, launch, or smoke test has been performed. All physical Mac installation, launch, security, feature, and performance items remain completely **UNVERIFIED**. The private draft remains strictly unpublished, and `refs/tags/v0.5.3` does not exist in the Git repository (created only upon draft publication).
 
 D6 is committed at `d6e2ec3` on `feature/m1-d6-debrief-links`. D7 acceptance and subsequent polish merged through PR #35 (`1d86d57`). Installed Mac validation and release approval remain open.
 
@@ -25,6 +29,7 @@ States: **UNVERIFIED** (not demonstrated on Mac), **TODO** (work identified), **
 ## References and precedence
 
 - [Current project status](../STATUS.md)
+- [Independent full audit — 29 September 2026](FULL_REPOSITORY_AUDIT_2026-09-29.md)
 - [M2 Study Library design (planning only)](M2_STUDY_LIBRARY_DESIGN_2026-09-27.md)
 - [Product roadmap](../ROADMAP.md)
 - [Historical macOS audit](MAC_AUDIT_2026-09-12.md)
@@ -98,15 +103,135 @@ Append a row whenever Windows/shared work affects Mac behavior. Replace provisio
 | Compact navigation (≤ 900 px) no longer widens the page; screen-reader label contained in the nav scroll area ([note §5.3](PERFORMANCE_POLISH_2026-09-27.md)) | Chromium browser-mode measurement on Windows (824 → 470 px document width at 470 px); `shell.css.test.ts` is a source guard only | MAC-17 (compact windows, VoiceOver): narrow the window on an installed Mac; check for no sideways page scroll, that the nav scrolls on its own, and that VoiceOver reads the Questions count | Merged in PR #35; Mac UNVERIFIED |
 | Benchmarks added (ignored or gated, run by hand): `src/perf/appResponsiveness.bench.test.ts` (`HFD_BENCH=1`), `pdf::tests::split_benchmark_long_and_image_heavy`, `pdf::tests::gemini_local_preparation_benchmark`, `debrief::tests::complete_backup_benchmark_large_library` | Windows results in the note §4. PDF splitting and Gemini local preparation were not bottlenecks there. | Rerun the same benchmarks on the Mac for PERF-MAC-02, PERF-MAC-03 (MAC-09/MAC-10 splitting), PERF-MAC-04 and PERF-MAC-05 (local preparation only; no live requests without authorization). PDF import timing wasn't measured on either platform. | Merged in PR #35; Mac UNVERIFIED |
 
+## October 2 Mac test kit (non-sensitive synthetic data)
+
+This test kit specifies the exact candidate artifact, isolated profile environment, reproducible non-sensitive synthetic fixtures, and procedural gates for physical testing on an Apple Silicon Mac scheduled for 2 October 2026. All installed-Mac outcomes remain **UNVERIFIED** until physically tested and observed on the target machine.
+
+### 1. Exact candidate artifact & packaging inspection
+
+Under the **Exact-Installer Invariant**, physical testing must be performed on the exact draft DMG matching `SHA256SUMS.txt` from the private GitHub Release draft. Testing a preliminary CI build or a locally rebuilt DMG does not authorize releasing draft bytes: a DMG rebuilt locally from today's `main` is useful for source/build validation and inspecting packaging scripts, but cannot substitute for the draft asset under the exact-installer rule. All physical installation, Gatekeeper checks, smoke testing, and parity measurements must be performed exclusively using the exact downloaded private v0.5.3 draft DMG.
+
+- **Exact draft DMG filename:** `Her.Flight.Deck_0.5.3_aarch64.dmg`
+- **File size:** 4,511,142 bytes (4.3 MiB)
+- **SHA-256 hash:** `de81be50122275104ca9e6791162a7bac6cd43a672c5580d5fbc509b5d16efec`
+- **CI provenance:** Workflow run `36515016063`, targeting commit `41464607ff85d0a4cf0b837c19b400d8392dfec4`
+- **Pre-mount checksum verification (macOS Terminal):**
+  ```bash
+  shasum -a 256 -c SHA256SUMS.txt
+  # or verify single file:
+  shasum -a 256 Her.Flight.Deck_0.5.3_aarch64.dmg
+  ```
+  Expected output: `Her.Flight.Deck_0.5.3_aarch64.dmg: OK`.
+- **Packaging inspection on downloaded candidate / installed app:**
+  The tester must inspect and verify the following on the exact downloaded artifact rather than assuming prior CI claims:
+  - Architecture: Inspect binary architecture (`lipo -archs` or `file`) to confirm native `arm64` (Apple Silicon).
+  - Bundle identifier: Inspect `Info.plist` to confirm `CFBundleIdentifier` is `com.herflightdeck.app`.
+  - Minimum OS version: Inspect `Info.plist` to confirm `LSMinimumSystemVersion` is `12.0`.
+  - Code signing and notarization status: Inspect code signature and assessment using `codesign -dv --verbose=4 /Applications/Her\ Flight\ Deck.app` and `spctl -a -vvv /Applications/Her\ Flight\ Deck.app`.
+
+### 2. Isolated-user setup
+
+- **User account:** Use a dedicated standard macOS user account (e.g. `hfd-test` or `HFDTestUser`) on physical Apple Silicon hardware.
+- **Storage isolation:** Confirm `~/Library/Application Support/com.herflightdeck.app` is clean prior to testing. Tauri's SQLite path and application storage hardcode the standard OS app config directory (`app.path().app_config_dir()`); environment variable overrides do not redirect storage. A dedicated user account prevents accidental pollution or loss of live flight-training data.
+- **Download staging:** Staging directory set to standard `~/Downloads/`.
+
+### 3. Gatekeeper and installation gate (first critical gate)
+
+1. Mount the exact downloaded private v0.5.3 draft DMG (`Her.Flight.Deck_0.5.3_aarch64.dmg`, checksum verified) in Finder. Do not mount or install a locally rebuilt DMG.
+2. Drag `Her Flight Deck.app` to `/Applications`.
+3. Open `/Applications/Her Flight Deck.app` normally from Finder or Spotlight.
+4. **Platform protection rule (Gatekeeper gate):**
+   - The first gate is normal installation and launch.
+   - If macOS Gatekeeper displays an untrusted developer prompt, code signing refusal, or quarantine warning ("cannot be opened because Apple cannot check it for malicious software" or "damaged and cannot be opened"):
+     - **Record the exact dialog:** Window title, full message text, icon, and button labels (e.g., "Cancel", "Move to Trash").
+     - **STOP all dependent tests immediately.**
+     - **Strict prohibition:** Do **NOT** bypass platform protections. Never advise or click "Open Anyway", never use Control-click Open, never disable Gatekeeper (`spctl --master-disable`), and never run quarantine removal commands (`xattr -d com.apple.quarantine`).
+   - If the application launches normally to the first usable screen, record the launch time and proceed.
+
+### 4. Synthetic non-sensitive PDF test fixtures
+
+All fixtures use synthetic, non-confidential flight-training data generated using a reproducible script without external dependencies. Large generated binaries must not be committed to Git. Synthetic image data is a boundary fixture (600×500 RGB raster, 900,000 uncompressed bytes per page), not a realistic scanned handbook; it is designed to safely exceed the 50 MiB threshold for splitting tests without committing large binaries. Independent PDF readers (verified with `pdfjs-dist` / Mozilla PDF.js engine and `pdf-lib`) report the intended page counts (10, 1,050, and 60 pages) and extract text/operator streams from sample pages without syntax or stream parsing errors. Source-level Rust tests in `src-tauri/src/pdf.rs` decode each page's embedded `P0001`-style identifier across all split parts and manual ranges to verify complete ordered sequence coverage and reject corrupted or reordered page IDs (distinguishing asserted content identity from bare page counts). Visual pixel rendering was not performed in this test environment and remains pending verification in macOS Preview / WKWebView on the installed Mac.
+
+#### Fixture generator instructions
+
+Generate the fixtures from the repository root using the shared Node.js generator script into an isolated synthetic output directory (e.g. `/tmp/hfd-fixtures/`):
+
+```bash
+mkdir -p /tmp/hfd-fixtures
+node scripts/generate-pdf-fixtures.mjs /tmp/hfd-fixtures
+```
+
+This single generator script is exercised directly by repository test suites (`src/logic/releaseSafety.test.ts`), eliminating implementation divergence.
+
+#### Generated fixture specifications and pass criteria
+
+| Fixture | Characteristics | Actual Generated Metrics | Pass Criteria (to verify on installed Mac) | Where evidence belongs |
+| --- | --- | --- | --- | --- |
+| **Fixture A: Small PDF** (`synthetic-small-checklist.pdf`) | Single-chapter reference document (text only) | **10 pages**<br>3,360 bytes<br>`f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134` | Native file picker imports without UI freeze; file copied into `~/Library/Application Support/com.herflightdeck.app/documents/`; original file can be renamed or moved without affecting app copy; clicking "Open" launches default PDF viewer (Preview); clicking "Reveal" opens Finder with the document highlighted; cancellation leaves no orphaned files. | `MAC-04` (Import survival), `MAC-05` (Default viewer Open), `MAC-06` (Finder reveal), `PERF-MAC-03` |
+| **Fixture B: Long PDF** (`synthetic-long-manual.pdf`) | Text handbook testing the **1,000-page limit** boundary (well under 50 MiB) | **1,050 pages**<br>330,934 bytes<br>`0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1` | Automatic splitting detects that page count exceeds 1,000 pages; produces 2 child parts providing complete, ordered, non-overlapping coverage of all 1,050 pages. Actual-source Rust extraction measurements on Windows host (candidate Mac build must be verified): Part 1: pages 1–1,000, 315,191 bytes; Part 2: pages 1,001–1,050, 15,901 bytes; each child part is strictly ≤ 1,000 pages and ≤ 50 MiB; manual split (pages 101–300) extracts exactly 200 pages (63,138 bytes); ordered page IDs `P0001`..`P1050` verified in source tests; original source file SHA-256 remains unchanged; separate library records created with per-part study actions. | `MAC-09` (Automatic split), `MAC-10` (Manual split), `PERF-MAC-03` |
+| **Fixture C: Image-Heavy PDF** (`synthetic-illustrated-charts.pdf`) | Illustrated document testing the **50 MiB limit** boundary (well under 1,000 pages; 600×500 RGB raster, 900,000 bytes/page) | **60 pages**<br>54,032,644 bytes (51.53 MiB)<br>`b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d` | Imports and splits without out-of-memory (OOM) crash or UI unresponsiveness; automatic splitting recognizes the >50 MiB total byte size and splits into 2 child parts. Actual-source Rust extraction measurements on Windows host (candidate Mac build must be verified): Part 1: pages 1–58, 51,731,349 bytes / 49.33 MiB; Part 2: pages 59–60, 1,784,008 bytes / 1.70 MiB; each child part strictly adheres to both limits (≤ 50 MiB and ≤ 1,000 pages); complete, non-overlapping page coverage (1–58 and 59–60 cover all 60 pages); manual range (pages 10–20) extracts exactly 11 pages (9,819,106 bytes / 9.36 MiB); ordered page IDs `P0001`..`P0060` verified in source tests; measured peak resident memory (RSS), wall-clock duration, and UI responsiveness recorded under stated 54 MB input size; original source file SHA-256 untouched. | `MAC-09` (Safe splitting), `MAC-11` (Concurrent writes), `PERF-MAC-03` |
+
+### 5. `.hfdbackup` complete round-trip checklist
+
+The portable backup format is a ZIP archive created via `ZipWriter` and read via `ZipArchive` (`src-tauri/src/backup.rs`), referencing `docs/backup-format.md`. It is not a gzip tar archive.
+
+| Step | Action | macOS Verification / Pass Criteria | Where evidence belongs |
+| --- | --- | --- | --- |
+| 1. Baseline Population | Import Fixture A, split Fixture B, create 1 Daily Flight Plan, save 1 quick debrief with an accepted action linked to Fixture A and an edited question carried to a lesson. | Profile contains active database records, linked metadata, and managed document files in `~/Library/Application Support/com.herflightdeck.app/documents/`. | `MAC-04`, `MAC-12`, `MAC-13` |
+| 2. Complete Backup Export | In Settings -> Data management, click "Save complete backup". In the save dialog, select the exact destination path (e.g. save to `~/Downloads/her-flight-deck-backup-....hfdbackup`). | File is written with `.hfdbackup` extension at the chosen destination path. Progress indicator displays bounded archive creation; app remains responsive. | `MAC-07` |
+| 3. ZIP Structural Inspection | In Terminal, set or quote the **exact `.hfdbackup` path selected in the save dialog** (e.g. `BACKUP_PATH="$HOME/Downloads/her-flight-deck-backup-...hfdbackup"`). Run `unzip -t "$BACKUP_PATH"` and `unzip -l "$BACKUP_PATH"` against that one file. Do not use wildcard `~/Downloads/*.hfdbackup`. | `unzip -t` reports `No errors detected in compressed data`. `unzip -l` must confirm the required file entries: `manifest.json`, `integrity.json`, `her-flight-deck.db`, and managed document paths (`documents/<path>`), and allows directory entries (such as `documents/`) if present in the archive. This is a structural archive check only; full data integrity validation is performed by the app. | `MAC-07` |
+| 4. Credential Exclusion Verification | Verify that secret files are excluded from the backup archive without displaying or copying credentials. | In Terminal, run a fail-closed, non-disclosing check of archive entry names for `gemini-key` and `gemini-key.writing` with only pass/fail/error output:<br>`(TMP_LIST="$(mktemp "${TMPDIR:-/tmp}/hfd-zip.XXXXXX" 2>/dev/null)" \|\| { echo "INSPECTION ERROR: archive missing, unreadable, or corrupted" >&2; exit 2; }; trap 'rm -f "$TMP_LIST"' EXIT INT TERM; if ! unzip -q -l "$BACKUP_PATH" > "$TMP_LIST" 2>/dev/null; then echo "INSPECTION ERROR: archive missing, unreadable, or corrupted" >&2; exit 2; fi; grep -q -E '(^\|[ /])gemini-key(\.writing)?([ /]\|$)' "$TMP_LIST"; GREP_STATUS=$?; if [ "$GREP_STATUS" -eq 0 ]; then echo "FAIL: credential entry found in archive" >&2; exit 1; elif [ "$GREP_STATUS" -ne 1 ]; then echo "INSPECTION ERROR: archive missing, unreadable, or corrupted" >&2; exit 2; fi; echo "PASS: no credential entry names in archive"; exit 0)`<br>Alternatively, run the reusable cross-platform tool: `node scripts/inspect-backup-credentials.mjs "$BACKUP_PATH"`.<br>Note: Archive-entry-name inspection alone cannot prove arbitrary database content contains no secret; rely on the fixed backup allowlist (`allowed_archive_path` in `src-tauri/src/backup.rs`, which strictly permits only manifest, integrity data, database/WAL, and `documents/*`) and focused Rust regression coverage (`an_archive_may_only_contain_her_database_and_documents`, `secrets.rs` storage isolation, and `complete_backup_keeps_the_pdf_plan_progress_provenance_and_ledger_and_retries_safely_after_restore`) for that boundary. Do not display, print, copy, or log an actual key or database content. | `MAC-07`, `MAC-16` |
+| 5. App Restore Validation | In a clean secondary test profile, go to Settings -> Data management, click "Restore backup", and select the exact `.hfdbackup` file. | App inspects archive; pre-restore preview modal displays restorable payload file count (`her-flight-deck.db` plus managed documents) and their uncompressed byte sum, as defined by `src-tauri/src/backup.rs` (excluding internal archive metadata `manifest.json`, `integrity.json`, and directory paths). Do not expect this preview count or uncompressed byte total to match the ZIP's raw entry count from `unzip -l` or the archive's compressed file size on disk. Confirming restore extracts files, verifies each file against `integrity.json` SHA-256 hashes while writing, updates the database, and restarts cleanly. | `MAC-08`, `PERF-MAC-04` |
+| 6. Post-Restore Verification | Inspect restored application state. | All Daily Plan items, debrief actions, questions, and Study Library materials are intact. SHA-256 hashes of managed documents in `~/Library/Application Support/com.herflightdeck.app/documents/` match pre-backup hashes. Retrying operations causes no duplicated records. | `MAC-08`, `PERF-MAC-04` |
+| 7. Corrupted Archive Rollback | Attempt restore with an intentionally truncated `.hfdbackup` file. | App detects corrupted archive during staging; aborts restore cleanly; displays clear error message; rolls back to existing profile state with zero data corruption. | `MAC-08` |
+
+## M2 Study Library preparatory review and packaged Mac measurements
+
+### Preparatory review: contract tests and fixture gaps (planning only)
+
+Per `ROADMAP.md` and `docs/M2_STUDY_LIBRARY_DESIGN_2026-09-27.md`, **migration 11 and M2 product UI must not be added before the required 1–2 week check-in with the real user**. The following preparatory contract tests and fixture gaps represent the only allowable pre-implementation work:
+
+1. **Legacy conversion contract fixtures:**
+   - Create deterministic test fixtures representing legacy `ai_study_sets` (migration 7) and `practice_tests` (migration 9) records with unkeyed JSON arrays.
+   - Specify and test deterministic migration/upgrade rules for edge cases: empty question arrays, missing explanation fields, out-of-bounds choice indices, and malformed JSON rows. Ensure malformed rows fail visibly rather than silently erasing user study content.
+2. **Review scheduler pure contract tests:**
+   - Define a pure, versioned scheduling function taking `(priorState, rating: Again|Hard|Good|Easy, schedulerVersion, now)` and returning `nextState`.
+   - Implement unit contract tests covering: initial exposure, consecutive successful reviews, lapse/failure reset, minimum/maximum interval clamping, local midnight transitions, time-zone offsets, and system clock rollback.
+3. **Multi-table transaction and idempotency contracts:**
+   - Define repository contract tests asserting atomic writes across content versions, study items, practice attempts, and review events using pinned desktop transactions.
+   - Verify that rapid duplicate submissions (e.g. double-clicking answer buttons) and network retries do not duplicate attempt or review event records.
+4. **Split lineage metadata contracts:**
+   - Specify and test schema contracts linking child document parts to parent materials (parent ID, first page, last page, source version hash) without altering the existing 50 MiB / 1,000-page stored PDF byte contract.
+5. **Bounded query contracts:**
+   - Specify cursor-based or paged query contracts for study history, review queues, and attempt records to avoid loading large event collections into `AppDataContext`.
+
+### Packaged Mac app measurements needed (no premature code-inspection optimizations)
+
+Do not optimize Study Library search, PDF splitting, or global refresh based solely on code inspection or Windows/jsdom metrics. Specific runtime measurements must be gathered directly on the packaged Apple Silicon Mac application (`Her Flight Deck.app`):
+
+1. **WKWebView search, filter, and sort latency:**
+   - Populate the packaged app with synthetic library tiers (100, 500, and 2,500 materials).
+   - Measure keypress-to-paint latency and interaction-to-next-paint (INP) during text search filtering and column sorting inside macOS WebKit (WKWebView).
+   - Record frame rate drops and DOM node count scaling during fast list scrolling.
+2. **Apple Silicon PDF splitting throughput and memory profile:**
+   - Execute automatic and manual splitting on Fixture B (1,050 pages) and Fixture C (60 pages with raster images) in the packaged release binary.
+   - Measure wall-clock duration and background thread CPU usage on Apple Silicon native ARM64 cores; record responsiveness and throughput without assuming a Mac-specific speedup.
+   - Measure actual peak resident memory (RSS) using macOS Activity Monitor or `vmmap` at stated input sizes. Do not claim that windowing guarantees a source-independent or strictly bounded total memory footprint: `lopdf` loads the entire source document into memory and candidate extraction clones object graphs. Record the empirical peak memory and verify the application remains responsive without paging thrash or OOM crashes.
+3. **Global refresh and state mount costs:**
+   - Measure `AppDataContext` reload latency and component mount duration when adding, splitting, or deleting materials.
+   - Measure whether material updates trigger unnecessary re-renders in unrelated tabs (e.g., Daily Plan or Debrief Journal).
+4. **Native macOS system integration response times:**
+   - Time the system default PDF viewer launch (`open_pdf` using Preview via `opener`) from click to visible window.
+   - Time Finder reveal (`reveal_file`) from click to Finder window activation and file highlight.
+
 ## Mac execution sequence
 
 - [ ] Obtain an Apple Silicon Mac and a separate OS test account or spare machine with synthetic data. Preserve real user data. Do not assume an environment-variable override isolates Tauri's data directory.
 - [ ] Select the reviewed exact commit/candidate and record its version. Do not distribute a retired 0.5.2 build. Keep existing published releases/tags untouched.
 - [ ] Install development prerequisites only on the build machine; document the actual toolchain. End users should follow packaged installation instructions, not development setup.
-- [ ] From the repository root run `npm ci`, `npm test`, `npm run build`.
-- [ ] From `src-tauri` run `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.
-- [ ] Build a candidate DMG from the root with `npm run tauri build -- --bundles dmg`; inspect the actual bundle, architecture and minimum OS. Only build an approved non-retired candidate version; version preparation stays a separate reviewed step.
-- [ ] Install that exact artifact and execute Priority 0, then Priority 1 and performance checks. Record command output and UI results separately.
+- [ ] Source and local build validation: From the repository root run `npm ci`, `npm test`, `npm run build`. From `src-tauri` run `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`. A candidate DMG rebuilt locally with `npm run tauri build -- --bundles dmg` is useful for source and packaging script validation, but cannot substitute for the draft asset under the exact-installer rule.
+- [ ] Candidate draft verification: Download the exact private v0.5.3 draft DMG (`Her.Flight.Deck_0.5.3_aarch64.dmg`) from GitHub Release draft workflow run `36515016063`. Verify its SHA-256 hash matches `de81be50122275104ca9e6791162a7bac6cd43a672c5580d5fbc509b5d16efec` before mounting.
+- [ ] Install and smoke-test only the exact private v0.5.3 draft DMG: Mount the verified draft DMG, drag `Her Flight Deck.app` to `/Applications`, and execute the Gatekeeper check, Priority 0 blockers, Priority 1 items, and performance checks exclusively on this installed draft artifact. Record command output and UI results separately. Do not install or test a locally rebuilt DMG for parity verification.
 - [ ] Test current and minimum supported macOS; list any unavailable OS coverage explicitly.
 - [ ] Reproduce failures, make the smallest safe fix, add focused regression tests and preserve Windows coverage. Run the final matrix once after corrections.
 - [ ] Perform Questions delayed-save smoke test (MAC-22): open answer editor, start save under simulated latency, verify synchronous guard and disabled controls prevent duplicate submissions on rapid clicks within a render batch, verify Cancel cannot be used as a false rollback, verify filter away and back preserves pending state, and verify newer edits survive older completions.
@@ -136,6 +261,8 @@ Remaining limitations / next action / owner:
 
 ## Completion and release gate
 
-Mac parity requires evidence for the shipped feature set on the exact candidate, not merely code shared with Windows. Under the **Exact-Installer Invariant**, physical testing must be performed on the exact draft DMG matching `SHA256SUMS.txt` from the GitHub Release draft; testing a preliminary CI artifact does not authorize releasing newly built draft bytes.
+Mac parity requires evidence for the shipped feature set on the exact candidate, not merely code shared with Windows. Under the **Exact-Installer Invariant**, physical installation, smoke testing, and parity checks must be performed exclusively on the exact private v0.5.3 draft DMG (`Her.Flight.Deck_0.5.3_aarch64.dmg`, SHA-256 `de81be50122275104ca9e6791162a7bac6cd43a672c5580d5fbc509b5d16efec`) matching `SHA256SUMS.txt` from GitHub Release draft workflow run `36515016063`. A DMG rebuilt locally from today's `main` is useful for source and packaging pipeline validation but cannot substitute for the draft asset under the exact-installer rule; testing a newly built artifact does not authorize releasing draft bytes, and testing a preliminary artifact does not authorize releasing newly built bytes.
 
-A Mac-only release candidate (`v0.5.3`) proceeds under its own independent Apple Silicon installed-device verification gate, while Windows distribution remains held on `v0.5.1` pending separate Microsoft Defender clearance. Close Priority 0 blockers; address Priority 1 failures or explicitly defer nonblocking work with reasons; record performance evidence and remaining limits. Verify backup/restore, migration, permissions and credentials before distribution. Under the no-retag rule, failed candidates are permanently retired in policy and never retagged. iOS is a separate target and is not certified by Mac testing.
+As documented in [FULL_REPOSITORY_AUDIT_2026-09-29.md](FULL_REPOSITORY_AUDIT_2026-09-29.md), **v0.5.3 is a recorded frozen private candidate with known source defects** (including failed-restore rollback deleting its database, non-atomic material/tag saves on duplicate tags, lack of early macOS 12 `structuredClone` compatibility, offline-study visibility issues, and unverified native dialogs). **v0.5.3 is not currently approvable merely by passing the Mac checklist.** Its recorded identity, packaging artifacts, and draft checksums are preserved for evaluation and audit integrity. Future release acceptance must use the exact newly reviewed candidate designated after product repairs and an explicit version decision. Do not retire or bump versions, modify published tags or releases, replace draft assets, or override the Windows hold before that formal decision.
+
+A Mac release proceeds under its own independent Apple Silicon installed-device verification gate, while Windows distribution remains held on `v0.5.1` pending separate Microsoft Defender clearance. Close Priority 0 blockers; address Priority 1 failures or explicitly defer nonblocking work with reasons; record performance evidence and remaining limits. Verify backup/restore, migration, permissions and credentials before distribution. Under the no-retag rule, failed candidates are permanently retired in policy and never retagged. iOS is a separate target and is not certified by Mac testing.
