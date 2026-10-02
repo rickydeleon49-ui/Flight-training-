@@ -22,6 +22,8 @@ _Updated 1 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanent
 
 **Platform limits and release status:** A1 shared source/regression acceptance is complete; A2–A6 remain open. Windows distribution hold on v0.5.1 and Mac candidate hold on v0.5.3 remain in effect. Physical Apple Silicon Mac, early macOS 12, installed Windows and live Gemini remain UNVERIFIED. The frozen v0.5.3 DMG cannot certify newly changed source.
 
+[Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): the first Linux check exposed an unused captured row in a Unix-only test. The focused correction adds the intended row-preservation assertion without changing production behavior. Passing exact-head CI remains the merge gate.
+
 ## Independent full audit — 29 September 2026
 
 [The current audit and implementation update](docs/FULL_REPOSITORY_AUDIT_2026-09-29.md) reviews current `main` at `c241c4a` and preserves the four pending release/test-kit files. **Release approval is held:** new independent reproductions found failed-restore rollback deleting its protected database, ordinary material/tag saves partially committing on duplicate tags, and a fresh-start compatibility failure when early macOS 12 lacks `structuredClone`. Native dialogs also assume APIs newer than the declared minimum. Saved local guides and practice tests become hidden when Gemini is disconnected. These findings apply to the existing candidate source, which has unchanged product files.

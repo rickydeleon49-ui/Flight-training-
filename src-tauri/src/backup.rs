@@ -8636,8 +8636,9 @@ mod tests {
             matches!(decision, StartupRestoreDecision::BlockedUnresolved { .. })
                 && external_db_preserved
                 && external_docs_preserved
-                && active_db_preserved,
-            "Linked staging must be refused before following/moving external files: {decision:?}"
+                && active_db_preserved
+                && active_row.as_deref() == Some("original active row"),
+            "Linked staging must be refused before following/moving external files: {decision:?}, active_row={active_row:?}"
         );
     }
 
