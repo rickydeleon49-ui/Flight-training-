@@ -66,6 +66,8 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
   let dbPath: string;
 
   beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-01T12:00:00Z"));
     localStorage.clear();
     tempDir = mkdtempSync(join(tmpdir(), "flight-training-d6-test-"));
     dbPath = join(tempDir, "test.db");
@@ -74,6 +76,7 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     testDb.close();
     try {
       rmSync(tempDir, { recursive: true, force: true });
@@ -88,7 +91,7 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
     // Seed scheduled flight lesson and study material
     const lesson = await repos.schedule.create({
       eventType: "flight_lesson",
-      date: "2026-09-30",
+      date: "2026-10-05",
       title: "Steep Turns & Stalls",
       status: "scheduled",
     });
