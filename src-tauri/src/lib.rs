@@ -104,10 +104,10 @@ pub fn run() {
         )
         .setup(|app| {
             // A user-requested full restore is staged during the previous run
-            // and installed here, before SQLite opens the database.
-            if let Err(error) = backup::apply_pending_restore(app.handle()) {
-                eprintln!("Could not restore the selected backup: {error}");
-            }
+            // and installed here, before SQLite opens the database. Startup
+            // blocks if an ambiguous restore cannot be safely resolved.
+            backup::handle_startup_restore(app.handle())
+                .map_err(Box::<dyn std::error::Error>::from)?;
 
             // Before the frontend opens the database, and therefore before any
             // migration runs, copy it aside if this is a new version's first run.
