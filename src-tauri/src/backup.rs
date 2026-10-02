@@ -8856,62 +8856,108 @@ mod tests {
     // =========================================================================
 
     #[test]
-    fn task5_occurrence_journal_update_failure_preserves_prior_canonical_journal() {
+    fn task5_occurrence_second_journal_write_failure_recovers_with_expected_cleanup() {
         #[cfg(windows)]
         use std::os::windows::fs::OpenOptionsExt;
-        let root = scratch("task5-occurrence-journal");
-        write_database(&root.join(DB_FILES[0]), "original active db");
-        let orig_identity = round3_identity(&root.join(DB_FILES[0]), DB_FILES[0]);
-
-        let pending = root.join(RESTORE_PENDING_DIR);
-        std::fs::create_dir_all(&pending).unwrap();
-        write_database(&pending.join(DB_FILES[0]), "restored db");
-        write_restore_plan(&pending, RestoreKind::Database, "test").unwrap();
-
-        // Hold a lock on pending db so cleanup is retained and canonical journal survives
+        // A Windows deny-delete handle retains pending cleanup. Without that handle,
+        // successful rollback clears the journal on every supported platform.
         #[cfg(windows)]
-        let lock = std::fs::OpenOptions::new()
-            .read(true)
-            .share_mode(1)
-            .open(pending.join(DB_FILES[0]))
-            .unwrap();
+        let cleanup_retained_cases = [false, true];
+        #[cfg(not(windows))]
+        let cleanup_retained_cases = [false];
 
-        // Fail on the 2nd journal write (Protected phase write)
-        let _guard = ScopedFault::set_occurrence(InjectedFault::JournalWrite, 2);
-        let res = apply_pending_restore_in_internal(&root, || Ok(()));
-        assert!(res.is_ok());
-        assert!(
-            ScopedFault::fired_count() >= 1,
-            "Fault occurrence must have fired: fired={}",
-            ScopedFault::fired_count()
-        );
+        for cleanup_retained in cleanup_retained_cases {
+            let root = scratch("task5-occurrence-journal");
+            write_database(&root.join(DB_FILES[0]), "original active db");
+            let orig_identity = round3_identity(&root.join(DB_FILES[0]), DB_FILES[0]);
 
-        // Canonical journal from 1st write (Protecting) survived on disk!
-        assert!(
-            root.join(RESTORE_JOURNAL_FILE).is_file(),
-            "Canonical journal must survive failed 2nd write"
-        );
-        let journal_on_disk = read_journal(&root)
-            .unwrap()
-            .expect("Canonical journal must be valid");
-        assert_eq!(journal_on_disk.phase, RestorePhase::RolledBack);
+            let pending = root.join(RESTORE_PENDING_DIR);
+            std::fs::create_dir_all(&pending).unwrap();
+            write_database(&pending.join(DB_FILES[0]), "restored db");
+            write_restore_plan(&pending, RestoreKind::Database, "test").unwrap();
+            let staged_identity = round3_identity(&pending.join(DB_FILES[0]), DB_FILES[0]);
+            let plan_bytes = std::fs::read(pending.join(RESTORE_PLAN)).unwrap();
 
-        drop(_guard);
-        #[cfg(windows)]
-        drop(lock);
+            #[cfg(windows)]
+            let lock = cleanup_retained.then(|| {
+                std::fs::OpenOptions::new()
+                    .read(true)
+                    .share_mode(1)
+                    .open(pending.join(DB_FILES[0]))
+                    .unwrap()
+            });
 
-        // Repeat startup safely resolves/conserves original dataset
-        let decision = handle_startup_restore_in(&root).unwrap();
-        assert!(matches!(
-            decision,
-            StartupRestoreDecision::RolledBackRecovered { .. }
-                | StartupRestoreDecision::ProceedNormally
-        ));
-        assert_eq!(
-            round3_identity(&root.join(DB_FILES[0]), DB_FILES[0]),
-            orig_identity
-        );
-        std::fs::remove_dir_all(&root).unwrap();
+            // Fail on the 2nd journal write (Protected phase write)
+            let _guard = ScopedFault::set_occurrence(InjectedFault::JournalWrite, 2);
+            let res = apply_pending_restore_in_internal(&root, || Ok(())).unwrap();
+            assert!(
+                matches!(res, RestoreApplicationResult::RefusedUnchanged(ref reason)
+            if reason.contains("JournalWrite")),
+                "Unexpected restore result: {res:?}"
+            );
+            assert_eq!(
+                ScopedFault::fired_count(),
+                1,
+                "Second write fault must fire once"
+            );
+            assert_eq!(
+                round3_identity(&root.join(DB_FILES[0]), DB_FILES[0]),
+                orig_identity,
+                "Original database must be restored before pending cleanup"
+            );
+
+            if cleanup_retained {
+                let journal_on_disk = read_journal(&root)
+                    .unwrap()
+                    .expect("Blocked cleanup must retain a valid rollback journal");
+                assert_eq!(journal_on_disk.phase, RestorePhase::RolledBack);
+                assert_eq!(
+                    round3_identity(&pending.join(DB_FILES[0]), DB_FILES[0]),
+                    staged_identity
+                );
+                assert_eq!(
+                    std::fs::read(pending.join(RESTORE_PLAN)).unwrap(),
+                    plan_bytes
+                );
+            } else {
+                assert!(
+                    read_journal(&root).unwrap().is_none(),
+                    "Completed cleanup must clear the journal"
+                );
+                assert!(
+                    !pending.exists(),
+                    "Completed cleanup must remove owned pending data"
+                );
+            }
+            assert!(find_abandoned_temporary_journal_sibling(&root)
+                .unwrap()
+                .is_none());
+
+            drop(_guard);
+            #[cfg(windows)]
+            drop(lock);
+
+            // Repeat startup safely resolves/conserves original dataset
+            let decision = handle_startup_restore_in(&root).unwrap();
+            if cleanup_retained {
+                assert!(matches!(
+                    decision,
+                    StartupRestoreDecision::RolledBackRecovered { .. }
+                ));
+            } else {
+                assert_eq!(decision, StartupRestoreDecision::ProceedNormally);
+            }
+            assert_eq!(
+                round3_identity(&root.join(DB_FILES[0]), DB_FILES[0]),
+                orig_identity
+            );
+            assert!(read_journal(&root).unwrap().is_none());
+            assert!(!pending.exists());
+            assert!(find_abandoned_temporary_journal_sibling(&root)
+                .unwrap()
+                .is_none());
+            std::fs::remove_dir_all(&root).unwrap();
+        }
     }
 
     #[test]
