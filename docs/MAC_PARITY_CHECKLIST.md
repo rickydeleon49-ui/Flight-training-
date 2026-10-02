@@ -2,6 +2,8 @@
 
 _Last updated: 29 September 2026 (Mac test kit prepared for 2 October 2026). Target: Apple Silicon Macs, macOS 12 or newer. Living checklist; not a claim of release readiness._
 
+**2 October handoff:** the user has a Mac available. Start with the [GitHub Mac handoff](MAC_GITHUB_HANDOFF_2026-10-02.md) and record hardware/OS evidence before changing any UNVERIFIED result. The frozen-candidate kit below remains a separate artifact test; a fresh build of current main cannot be recorded as that candidate.
+
 ## Purpose and current position
 
 Keep the Mac app at the same functional and usability level as Windows as shared development progresses. Use the same product and shared code; add platform-specific implementations only where needed. A Windows fix is a candidate Mac improvement, not proof of Mac behavior.

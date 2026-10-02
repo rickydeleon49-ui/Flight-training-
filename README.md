@@ -12,6 +12,10 @@ training route, and Notes exists for everything that has no home yet.
 The product specification lives in [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) and is
 the source of truth for purpose, philosophy, terminology, and visual direction.
 
+**Starting on the Mac?** Use the [GitHub Mac handoff](docs/MAC_GITHUB_HANDOFF_2026-10-02.md)
+for a fresh checkout, setup, the Mac agent prompt and a smoke-test results template.
+It needs no files from the Windows computer.
+
 ---
 
 ## Running it

@@ -1,6 +1,12 @@
 # Her Flight Deck — current project status
 
-_Updated 1 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
+_Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
+
+## Mac GitHub handoff — 2 October 2026
+
+The user now has a Mac; its chip, macOS version and installed-app results have not yet been recorded. The [self-contained Mac handoff](docs/MAC_GITHUB_HANDOFF_2026-10-02.md), [Mac session prompt](docs/MAC_SESSION_PROMPT.md) and [results template](docs/templates/MAC_SMOKE_RESULTS_TEMPLATE.md) are tracked in Git so the Mac requires no Windows-local attachments, logs or generated files. Use current `main` for source evaluation and record its exact commit. This documentation update does not close any physical-test or release gate.
+
+**A2 remains local and unaccepted:** the [second-review summary](docs/A2_SECOND_REVIEW_2026-10-02.md) records the verified native corrections and two remaining browser/test-driver defects. Do not assume that cloning `main` includes those uncommitted fixes. A3–A6 and all release holds remain open. Preserve the frozen v0.5.3 artifact identity; distinguish a local source evaluation build from that private candidate.
 
 ## Current A1 status — shared source and regression repair accepted (1 October 2026)
 
