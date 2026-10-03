@@ -1,0 +1,5 @@
+Node 22.23.3; TypeScript from the unchanged Mac clone.
+Command: node <checkout>/node_modules/typescript/bin/tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler codex-type-diagnostic.ts
+Exit: 2 (expected diagnostic failure)
+codex-type-diagnostic.ts(4,57): error TS2322: Type '"import"' is not assignable to type '"gemini"'.
+codex-type-diagnostic.ts(5,55): error TS2322: Type '"import"' is not assignable to type '"gemini"'.

@@ -1,0 +1,6 @@
+import type { AiStudySet, PracticeTest } from '/Users/rickymac/code/Flight-training-/src/domain/types';
+type GuidePayload = Omit<AiStudySet, 'sourceMaterialId' | 'generatedAt' | 'updatedAt'>;
+type TestPayload = Omit<PracticeTest, 'sourceMaterialId' | 'generatedAt' | 'updatedAt'>;
+const guideProvider: Pick<GuidePayload, 'provider'> = { provider: 'import' };
+const testProvider: Pick<TestPayload, 'provider'> = { provider: 'import' };
+void guideProvider; void testProvider;
