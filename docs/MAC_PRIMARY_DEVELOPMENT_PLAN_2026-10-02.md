@@ -1,6 +1,6 @@
 # Mac is the primary development and user platform
 
-Current follow-up: the baseline and A3/A4 are merged; [A6 source is accepted](MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md). After required CI/merge and clean Mac synchronization, [Claude reconciles A5 evidence against already-merged tooling fixes](CLAUDE_MAC_A5_EVIDENCE_RECONCILIATION_PROMPT_2026-10-02.md). This document preserves the earlier readiness plan; installed-Mac and release gates remain open.
+Current follow-up: the baseline and A3/A4/A6 are merged; [A5 evidence is accepted](MAC_A5_EVIDENCE_ACCEPTANCE_2026-10-03.md) for publication. After required CI/merge and clean Mac synchronization, [Claude prepares Mac A2 verification](CLAUDE_MAC_A2_VERIFICATION_PREPARATION_PROMPT_2026-10-03.md). Its matching source remains with the Windows owner. Installed-Mac and release gates remain open.
 
 Owner decision, 2 October 2026: the main user will run Her Flight Deck on the Mac. Treat this physical Mac as the primary development, validation and everyday-use target. Keep the shared React/TypeScript/Tauri/SQLite application and preserve Windows compatibility; this decision does not require a separate Mac fork.
 

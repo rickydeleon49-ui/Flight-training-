@@ -1,0 +1,24 @@
+Toolchain: rustc 1.99.0 via scoped PATH; SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk.
+
+1) cargo test --locked --manifest-path src-tauri/Cargo.toml pdf::tests -> exit 0; test result: ok. 20 passed; 0 failed; 5 ignored; 0 measured; 231 filtered out
+   test pdf::tests::a_manual_range_under_the_byte_limit_is_left_alone ... ok
+   test pdf::tests::a_manual_range_over_the_byte_limit_is_refused_and_removed ... ok
+   test pdf::tests::negative_regression_page_id_coverage_validator_rejects_wrong_repeated_or_reordered_ids ... ok
+   test pdf::tests::synthetic_fixture_generation_matches_accepted_specs ... ok
+   test pdf::tests::automatic_and_manual_splitting_on_1050_page_fixture ... ok
+
+2) Opt-in byte-heavy split, test binary run directly under /usr/bin/time -l:
+   <her_flight_deck_lib test binary> --exact pdf::tests::opt_in_byte_heavy_charts_fixture_split --ignored --nocapture -> exit 0
+   test pdf::tests::opt_in_byte_heavy_charts_fixture_split ... ok
+   test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 255 filtered out; finished in 11.57s
+   Asserted by the test: source SHA-256 b5651eb6… unchanged after splitting; 2 parts (1–58, 59–60), each <= 50 MiB and < 1,000 pages; ordered page IDs 1–58, 59–60 and combined 1–60; manual 10–20 = 11 pages with IDs 10–20.
+   11.57 real        11.44 user         0.11 sys
+   573046784  maximum resident set size
+   563381280  peak memory footprint
+   Memory scope: one debug (unoptimized) test process that generates the 54 MB source in memory, writes it, splits it and extracts a range. Not app, release-build or WKWebView memory; not a bound for other inputs. Output windowing limits part ranges, not total RSS (lopdf parses the whole source).
+
+3) Split output sizes on this Mac (temporary keep-outputs diagnostic using the same test helpers; pdf.rs restored and verified by SHA-256 after each run; two runs byte-identical):
+   parts/part-1.pdf run1=cb4f5f864cdc64d5 run2=cb4f5f864cdc64d5 same=yes bytes=52229815
+   parts/part-2.pdf run1=e4259946e733c99d run2=e4259946e733c99d same=yes bytes=1801351
+   manual-10-20.pdf run1=74297ca2bd18dbbb run2=74297ca2bd18dbbb same=yes bytes=9905927
+   Historical tracker values from a Windows host (81f98b2, same pdf.rs and Cargo.lock): part 1 51,731,349 bytes, part 2 1,784,008 bytes. Same page ranges; byte sizes differ. Cause not established from this Mac.

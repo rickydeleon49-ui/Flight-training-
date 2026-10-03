@@ -1,0 +1,18 @@
+Host: macOS 27.0.1 (26A434), Apple M5; base main b5bf8e0 (no source changes).
+
+1) Release-safety suite: npx --no-install vitest run src/logic/releaseSafety.test.ts --reporter=verbose
+   exit 0; Tests  51 passed | 1 skipped (52)
+   Skip: 'visibly marks shell execution as skipped when no bash executable is available' (deterministic skip seam, by design).
+   'executes the documented shell routine in a Windows-hosted Git Bash environment…' PASSED here using macOS /bin/bash (GNU bash, version 3.2.57(1)-release) via the 'bash' PATH fallback; the test name says Windows-hosted, but on this host it exercised the documented routine on macOS bash.
+
+2) Credential inspector CLI matrix (synthetic archives built with /usr/bin/zip; synthetic secret value checked for in output):
+   secret absent            exit 0  PASS: no credential entry names in archive
+   gemini-key present       exit 1  FAIL: credential entry found in archive
+   nested gemini-key.writing exit 1 FAIL: credential entry found in archive
+   missing file             exit 2  INSPECTION ERROR: archive missing, unreadable, or corrupted
+   unreadable (chmod 000, real permission denial as non-root user) exit 2  INSPECTION ERROR
+   truncated ZIP            exit 2  INSPECTION ERROR
+   malformed (text)         exit 2  INSPECTION ERROR
+   directory                exit 2  INSPECTION ERROR
+   no argument              exit 2  INSPECTION ERROR
+   Secret value printed: 0 of 9 cases; entry names printed: none.

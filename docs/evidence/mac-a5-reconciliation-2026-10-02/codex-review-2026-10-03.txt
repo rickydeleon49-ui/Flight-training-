@@ -1,0 +1,13 @@
+Independent Codex A5 evidence review, 3 October 2026.
+Branch: codex/mac-a5-evidence-reconciliation
+Base main: b5bf8e01cfbdf3e02900579450e023c6cf14074a
+Existing independent focused command: npx --no-install vitest run src/logic/releaseSafety.test.ts
+Recorded result: 51 passed; 1 deliberate skip; exit 0; duration 1.90s.
+All four source hashes and five original evidence/script hashes matched.
+Application, scripts, tests, dependencies and native source match the base.
+Claude's native split, memory, archive matrix and PDFKit receipts/raw logs inspected; those measurements not independently repeated.
+Documentation review clarified thumbnail rendering and Windows/Mac manual-output byte-size labels.
+Final focused command after tracker clarifications: npx --no-install vitest run src/logic/releaseSafety.test.ts
+Final exit: 0; 51 passed; 1 deliberate skip; duration 1.97s.
+Final source-scope, relative-link and diff checks passed.
+Installed-app verification remains open.
