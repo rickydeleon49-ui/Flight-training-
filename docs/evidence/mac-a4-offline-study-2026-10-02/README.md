@@ -4,6 +4,7 @@ Sanitized receipts for [the implementation report](../../MAC_A4_OFFLINE_STUDY_IM
 
 | File | Contents | SHA-256 |
 | --- | --- | --- |
+| `codex-focused-review.txt` | Independent Codex review: 21 focused tests pass; all four original report hashes match. | `25e33bd57ddd434b997056fe5bcd21d449af04ff77480adeaba1e70d1071cfd3` |
 | `regressions-and-negative-control.txt` | The 11 A4 regressions: failing run before the fix (9 failed / 1 passed), negative control against the original page (9 failed / 2 passed), and focused runs on the corrected source. | `f7da029d52f25614d15735d3a3684968cd30ede6b283ab07a235445a09c20295` |
 | `local-gate-summary.txt` | Final sequential gate on base `1ae6986` plus the local diff: 666 frontend passed / 4 skipped, build, 246 Rust passed / 6 ignored, all commands exit 0. | `b572c35cc6323be3ce9d6aa91f4f65a48d53f178a7b72208a05828fbf3b68d64` |
 

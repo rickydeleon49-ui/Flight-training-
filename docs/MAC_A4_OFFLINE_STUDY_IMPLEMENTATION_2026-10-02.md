@@ -1,5 +1,7 @@
 # A4 saved study content offline — implementation report, 2 October 2026
 
+**Publication follow-up:** [Codex accepted the A4 source and regressions](MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md) and committed the reviewed implementation as `c77dab9`. The local/uncommitted labels below describe the implementer handoff before acceptance; required exact-head CI and merge govern publication.
+
 Implements audit finding A4 ([audit](FULL_REPOSITORY_AUDIT_2026-09-29.md#a4--p2-saved-local-guides-and-tests-are-hidden-after-disconnecting-gemini)) from [Claude's A4 prompt](CLAUDE_MAC_A4_OFFLINE_STUDY_PROMPT_2026-10-02.md). This is a source-level correction with jsdom/real-SQLite regressions. It is the implementer's report and **not Codex acceptance**. Installed-app offline behavior (MAC-19) remains **UNVERIFIED**.
 
 ## Identity and ownership

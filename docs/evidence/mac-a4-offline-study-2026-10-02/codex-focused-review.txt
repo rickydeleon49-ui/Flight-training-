@@ -1,0 +1,13 @@
+Independent Codex A4 focused source review, 2 October 2026.
+Source commit: c77dab94fc29fc660fdf319caa52b507e6606f88
+Base main: 1ae698669bc17f446cbed5bad20ad56538b2ce6e
+Toolchain: Node 22.23.3; npm 10.9.9; Vitest 4.1.11.
+Command: npx --no-install vitest run src/pages/StudyLibrary/MaterialDetailOffline.test.ts src/pages/StudyLibrary/MaterialDetailGemini.test.ts
+Exit: 0
+Test Files: 2 passed (2)
+Tests: 21 passed (21); 11 new A4 cases and 10 unchanged Gemini workflow guards.
+Duration: 2.49s
+All four SHA-256 entries in Claude's report match current files.
+git diff --check: clean.
+Claude's complete local gate and negative-control receipts inspected; not independently rerun.
+Installed offline WKWebView, VoiceOver and Windows remain unverified.
