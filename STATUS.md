@@ -1,5 +1,7 @@
 # Her Flight Deck — current project status
 
+**Mac A2 preparation review (3 October): corrections required.** [Independent review](docs/MAC_A2_PREPARATION_REVIEW_2026-10-03.md) confirms the engine receipts and handoff hashes but finds three prepared-test observation/assertion defects (PREP-R1–R3). Claude retains its unpublished local package; [the detailed correction assignment](docs/CLAUDE_MAC_A2_PREPARATION_CORRECTION_PROMPT_2026-10-03.md) is the next Mac task. This publication shares the review, not the unaccepted diagnostics. Matching A2 production source and installed-account/signing prerequisites remain open.
+
 _Updated 3 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
 
 ## Shared Windows/Mac handoff — 2 October 2026

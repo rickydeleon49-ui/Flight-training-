@@ -1,0 +1,73 @@
+// Independent review of prepared test oracles, not execution of A2 or its diagnostic suite.
+// Run from a checkout containing the reviewed diagnostics and existing TypeScript dependency.
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
+const root = process.cwd();
+const require = createRequire(`${root}/package.json`);
+const ts = require('typescript');
+const path = 'docs/evidence/mac-a2-preparation-2026-10-03/a2ReviewDiagnostics.mac.test.ts';
+const source = readFileSync(path, 'utf8');
+assert.equal(createHash('sha256').update(source).digest('hex'), '1902070e7136310b74d6bdc6bd53999516c6b88fc85703d5070b13bc0b6d4b4f', 'Historical reproduction requires the original reviewed diagnostic');
+const ast = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+const declaration = ast.statements.find(n => ts.isFunctionDeclaration(n) && n.name?.text === 'fullState');
+assert.ok(declaration);
+const helper = ts.transpileModule(declaration.getText(ast), {compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
+const fullState = new Function(`${helper}; return fullState;`)();
+function open() {
+ const raw = new DatabaseSync(':memory:');
+ raw.exec('CREATE TABLE study_materials(id TEXT PRIMARY KEY, title TEXT); CREATE TABLE tags(id TEXT PRIMARY KEY, name TEXT); CREATE TABLE material_tags(material_id TEXT, tag_id TEXT); CREATE TABLE unrelated(id TEXT)');
+ return raw;
+}
+function adapter(raw) { return { async select(sql) { return raw.prepare(sql).all().map(r => ({...r})); } }; }
+const receipt = {source:path, sourceSha256:createHash('sha256').update(source).digest('hex'), node:process.version, scope:'prepared oracle counterexamples only; no A2 API invoked', cases:[]};
+{
+ const raw = open();
+ let tail = Promise.resolve();
+ const enqueue = fn => { const result = tail.then(fn); tail = result.catch(() => {}); return result; };
+ const db = {select(sql) { return enqueue(() => raw.prepare(sql).all().map(r => ({...r}))); }};
+ // Each select is a separate public operation. The save is one complete queued operation.
+ // Preserve QT-02's save-before-read invocation order. The save has harmless async
+ // preparation before acquiring ownership; all actual queued DB operations remain FIFO.
+ const save = async () => {
+  await Promise.resolve();
+  return enqueue(() => raw.exec("BEGIN; INSERT INTO study_materials VALUES('guide','Synthetic guide'); INSERT INTO tags VALUES('t1','Synthetic tag'); INSERT INTO material_tags VALUES('guide','t1'); COMMIT"));
+ };
+ const saving = save();
+ const reading = fullState(db);
+ const [seen] = await Promise.all([reading, saving]);
+ const whole = seen.materials.length === 1 && seen.links.length === 1;
+ const none = seen.materials.length === 0 && seen.links.length === 0;
+ assert.equal(whole || none, false);
+ const final = await fullState(db);
+ assert.equal(final.materials.length, 1); assert.equal(final.links.length, 1);
+ receipt.cases.push({id:'PREP-R1', result:'QT-02 oracle rejects a correctly serialized read/save schedule', observedMaterials:seen.materials.length, observedLinks:seen.links.length, finalMaterials:final.materials.length, finalLinks:final.links.length});
+ raw.close();
+}
+{
+ const raw = open(); const db = adapter(raw);
+ raw.exec("INSERT INTO study_materials VALUES('guide','Synthetic guide'); INSERT INTO tags VALUES('original-id','Synthetic tag'); INSERT INTO material_tags VALUES('guide','original-id')");
+ const before = await fullState(db);
+ raw.exec("UPDATE tags SET id='changed-id'; UPDATE material_tags SET tag_id='changed-id'; INSERT INTO material_tags VALUES('guide','nonexistent-tag')");
+ const after = await fullState(db);
+ assert.deepEqual(after, before);
+ const rawLinks = raw.prepare('SELECT * FROM material_tags ORDER BY tag_id').all().map(r => ({...r}));
+ assert.equal(rawLinks.length, 2);
+ receipt.cases.push({id:'PREP-R2', result:'fullState equality hides changed tag/link identities and an extra dangling link', visibleLinks:after.links.length, actualLinks:rawLinks.length, actualTagId:raw.prepare('SELECT id FROM tags').get().id});
+ raw.close();
+}
+{
+ const raw = open(); const db = adapter(raw);
+ raw.exec("INSERT INTO study_materials VALUES('existing','Synthetic guide'); INSERT INTO tags VALUES('t1','Synthetic tag'); INSERT INTO tags VALUES('t2','Changed tag'); INSERT INTO material_tags VALUES('existing','t1')");
+ // Synthetic faulty save changes only links, retaining the old title, then reports success.
+ raw.exec("DELETE FROM material_tags; INSERT INTO material_tags VALUES('existing','t2')");
+ const after = await fullState(db);
+ // Exact saved-branch assertion from QT-11; no metadata assertion exists in that branch.
+ assert.deepEqual(after.links, [{id:'existing',tag:'Changed tag'}]);
+ assert.equal(after.materials[0].title, 'Synthetic guide');
+ receipt.cases.push({id:'PREP-R3', result:'QT-11 saved-branch assertion accepts a partial metadata/tag update', requestedTitle:'Changed guide', observedTitle:after.materials[0].title, savedBranchAssertion:'passes'});
+ raw.close();
+}
+console.log(JSON.stringify(receipt, null, 2));

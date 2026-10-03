@@ -1,0 +1,30 @@
+{
+  "source": "docs/evidence/mac-a2-preparation-2026-10-03/a2ReviewDiagnostics.mac.test.ts",
+  "sourceSha256": "1902070e7136310b74d6bdc6bd53999516c6b88fc85703d5070b13bc0b6d4b4f",
+  "node": "v22.23.3",
+  "scope": "prepared oracle counterexamples only; no A2 API invoked",
+  "cases": [
+    {
+      "id": "PREP-R1",
+      "result": "QT-02 oracle rejects a correctly serialized read/save schedule",
+      "observedMaterials": 0,
+      "observedLinks": 1,
+      "finalMaterials": 1,
+      "finalLinks": 1
+    },
+    {
+      "id": "PREP-R2",
+      "result": "fullState equality hides changed tag/link identities and an extra dangling link",
+      "visibleLinks": 1,
+      "actualLinks": 2,
+      "actualTagId": "changed-id"
+    },
+    {
+      "id": "PREP-R3",
+      "result": "QT-11 saved-branch assertion accepts a partial metadata/tag update",
+      "requestedTitle": "Changed guide",
+      "observedTitle": "Synthetic guide",
+      "savedBranchAssertion": "passes"
+    }
+  ]
+}
