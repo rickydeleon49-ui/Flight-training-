@@ -1,0 +1,12 @@
+Reviewed local branch codex/mac-a2-verification-preparation, HEAD 54b82b3b59667b2ff9847c14fd6e44bcb3399e02
+All nine hashes matched Claude's supplied handoff. No application source changed.
+
+1e9f49ff2ced1113cccd12d11fcc44e22b96f869aba0be104681173a0d15d5cc  STATUS.md
+dc23b30bc96ddd91f73cb3e75958ee4b13168eda34dfc55a7ff072bfbb5d01af  docs/PROJECT_HANDOFF.md
+ce4653f006ae9c7b19d7a226c6b978583f4308c3d4c69f83edb10b0b95c83adb  docs/MAC_A2_VERIFICATION_PREPARATION_2026-10-03.md
+7637df1bbbaba3fb80bd82c0b82cc7ed08dd191e6f464a84adb5a695bf107f6e  docs/evidence/mac-a2-preparation-2026-10-03/README.md
+ea2f9557aaf10a77edf90b4216abb3e4c846e4d6d15731421b2992baba65ba20  docs/evidence/mac-a2-preparation-2026-10-03/a2-engine-probe.mjs.txt
+1902070e7136310b74d6bdc6bd53999516c6b88fc85703d5070b13bc0b6d4b4f  docs/evidence/mac-a2-preparation-2026-10-03/a2ReviewDiagnostics.mac.test.ts
+8af2eb249b965191b28235495f0620a9d80e9baef65d7195561dba89ba46f7df  docs/evidence/mac-a2-preparation-2026-10-03/case-sensitive-volume-capability.txt
+2c2f97e7c099524330435fa0d1d74f7be7560d9d65e03869b6d66fefe3db9f14  docs/evidence/mac-a2-preparation-2026-10-03/engine-probe.json
+14f9274383985a0de4103ebb78da384384b2d2d36a882aebc9a194ef34962987  docs/evidence/mac-a2-preparation-2026-10-03/source-availability.txt
