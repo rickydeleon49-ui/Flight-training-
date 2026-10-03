@@ -25,6 +25,7 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 | Open-source reuse | [Research](OPEN_SOURCE_REUSE_RESEARCH_2026-10-01.md), [plan](OPEN_SOURCE_ADOPTION_PLAN_2026-10-01.md), [Mac prompt](OPEN_SOURCE_MAC_HANDOFF.md) | Historical research shared; no new library adopted. Foundation, measurements, license/compatibility and test gates apply. |
 | M2 study sessions / outside-assistant import | [M2 design](M2_STUDY_LIBRARY_DESIGN_2026-09-27.md), [saved-guide feature brief](STUDY_GUIDE_TO_TEST_FEATURE_BRIEF_2026-09-29.md), ROADMAP | Planning/contract preparation only until the real-user check-in and scoped go-ahead. A saved-guide Gemini request differs from offline structured import. |
 | Release | [Review process](RELEASE_REVIEW_PROCESS.md) and [Mac tracker](MAC_PARITY_CHECKLIST.md) | Windows hold on v0.5.1; v0.5.2 retired; frozen v0.5.3 Mac candidate held. No publication or candidate replacement authorized here. |
+| Mac installed readiness / signing (Claude) | Local `codex/mac-installed-readiness-preparation`, base `8b15948`; [runbook](MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md), [preflight](MAC_READINESS_PREFLIGHT.md), [evidence](evidence/mac-installed-readiness-preparation-2026-10-03/README.md) | [Accepted for source integration](MAC_INSTALLED_READINESS_ACCEPTANCE_2026-10-03.md): R1–R4 closed, 85 focused tests passed with 1 deliberate skip. Installed phases 1–8 are UNVERIFIED. Owner actions: a standard test account; confirm private-repository environment eligibility; the signing decision and credentials. |
 
 ## Handoff rules for every task
 
@@ -40,6 +41,10 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 10. Update this index, STATUS and MAC_PARITY_CHECKLIST for relevant shared changes. Distinguish source tests, development/browser tests, DMG packaging, signing assessment and installed-app smoke tests. Neither machine's test results automatically certify the other platform or macOS 12.
 
 ## Continue on the Mac
+
+- After the accepted readiness tool passes CI/merges and this Mac is clean, [Claude prepares the structured study-import contract and executable examples](CLAUDE_STRUCTURED_STUDY_IMPORT_CONTRACT_PROMPT_2026-10-03.md). Production adoption remains gated; installed account/signing and A2 source are still pending.
+
+- Installed-readiness preparation is delivered locally, corrected for the [Codex readiness review](MAC_INSTALLED_READINESS_REVIEW_2026-10-03.md) (R1–R4), and [accepted for source integration](MAC_INSTALLED_READINESS_ACCEPTANCE_2026-10-03.md): the [runbook and signing package](MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md) and the [read-only preflight](MAC_READINESS_PREFLIGHT.md). Next gate: the owner provides a standard test account and makes the signing decision; then run phase 1 on the artifact the owner selects. No installed result exists yet.
 
 - Latest assignment after this publication merges: [Claude prepares the read-only Mac readiness tool and isolated installation/signing runbook](CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md). The [corrected A2 preparation is accepted](MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md); matching A2 source and actual installed-account/signing prerequisites remain open.
 

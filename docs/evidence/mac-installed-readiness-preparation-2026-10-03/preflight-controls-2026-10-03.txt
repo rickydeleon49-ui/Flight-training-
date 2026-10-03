@@ -1,0 +1,31 @@
+Synthetic control results for scripts/mac-readiness-preflight.mjs, 2026-10-03 (Node v22.23.3, Vitest 4.1.11, macOS 27.0.1 host).
+Command: npx --no-install vitest run src/logic/macReadinessPreflight.test.ts src/logic/releaseSafety.test.ts --reporter=verbose   (exit 0)
+These are synthetic controls with an injected command runner and task-owned temporary fixture repositories, except the real bounded-runner and CLI exit-code tests. They are not host or installed evidence.
+
+ ✓ Mac readiness preflight: repository configuration > passes a consistent synthetic configuration while owner prerequisites stay open
+ ✓ Mac readiness preflight: repository configuration > reports missing and malformed configuration without echoing file contents
+ ✓ Mac readiness preflight: repository configuration > fails a version disagreement and a bundle-identity mismatch
+ ✓ Mac readiness preflight: repository configuration > does not treat a dirty working tree as clean source identity
+ ✓ Mac readiness preflight: host and bounded commands > fails an unsupported OS and runs no host or toolchain commands there
+ ✓ Mac readiness preflight: host and bounded commands > reports missing, permission-denied and timed-out commands truthfully as UNVERIFIED
+ ✓ Mac readiness preflight: host and bounded commands > passes every command a timeout and an output cap
+ ✓ Mac readiness preflight: host and bounded commands > the real runner enforces its timeout, output cap and missing-command result
+ ✓ Mac readiness preflight: explicit artifact inspection > observes app metadata and a Developer ID signature while installed checks stay UNVERIFIED
+ ✓ Mac readiness preflight: explicit artifact inspection > fails an ad hoc signature and a bundle metadata mismatch; the signing decision stays an owner action
+ ✓ Mac readiness preflight: explicit artifact inspection > fails a missing artifact path
+ ✓ Mac readiness preflight: explicit artifact inspection > hashes only the supplied file and compares its size and SHA-256; a DMG is never mounted
+ ✓ Mac readiness preflight: privacy and read-only behavior > keeps synthetic secrets, account names and private paths out of JSON and text receipts
+ ✓ Mac readiness preflight: privacy and read-only behavior > default and artifact runs invoke only read-only allowlisted commands; assessment needs --assess
+ ✓ Mac readiness preflight: privacy and read-only behavior > writes nothing unless --receipt names a file, and records safety flags as false
+ ✓ Mac readiness preflight: CLI contract > validates arguments
+ ✓ Mac readiness preflight: CLI contract > documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt
+
+releaseSafety.test.ts (unchanged, related): 51 passed, 1 skipped (deliberate no-bash seam)
+ Test Files  2 passed (2)
+      Tests  68 passed | 1 skipped (69)
+
+Mutation sensitivity (script temporarily mutated, then restored byte-identical; logs outside Git):
+  no-redaction: Tests  1 failed | 16 passed (17)
+  full-authority: Tests  2 failed | 15 passed (17)
+  assess-always: Tests  2 failed | 15 passed (17)
+  smoke-pass: Tests  2 failed | 15 passed (17)

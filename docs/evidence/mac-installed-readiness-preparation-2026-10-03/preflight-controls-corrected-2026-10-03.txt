@@ -1,0 +1,70 @@
+Corrected synthetic control results for scripts/mac-readiness-preflight.mjs, 2026-10-03 (Node v22.23.3, Vitest 4.1.11).
+Command: npx --no-install vitest run src/logic/macReadinessPreflight.test.ts src/logic/releaseSafety.test.ts --reporter=verbose   (exit 0)
+Synthetic controls: injected command runner, isolated synthetic SDK filesystem and task-owned temporary fixtures, except the real bounded-runner and CLI exit-code tests. Not host or installed evidence.
+
+ ✓ Mac readiness preflight: repository configuration > passes a consistent synthetic configuration while owner prerequisites stay open
+ ✓ Mac readiness preflight: repository configuration > reports missing and malformed configuration without echoing file contents
+ ✓ Mac readiness preflight: repository configuration > fails a version disagreement and a bundle-identity mismatch
+ ✓ Mac readiness preflight: repository configuration > does not treat a dirty working tree as clean source identity
+ ✓ Mac readiness preflight: repository configuration > R2: a malformed configured minimum macOS is reported as invalid and never compared
+ ✓ Mac readiness preflight: host and bounded commands > fails an unsupported OS and runs no host or toolchain commands there
+ ✓ Mac readiness preflight: host and bounded commands > reports missing, permission-denied and timed-out commands truthfully as UNVERIFIED
+ ✓ Mac readiness preflight: host and bounded commands > R1: observation commands that exit nonzero never yield PASS from their printed output
+ ✓ Mac readiness preflight: host and bounded commands > passes every command a timeout and an output cap
+ ✓ Mac readiness preflight: host and bounded commands > the real runner enforces its timeout, output cap and missing-command result
+ ✓ Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: only the evidenced SDK 26.5 passes, selected by --sdk or by an inherited SDKROOT
+ ✓ Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: the recorded incompatible SDK 27.0 fails whether selected by --sdk or SDKROOT
+ ✓ Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: another present version without build evidence is UNVERIFIED, not PASS
+ ✓ Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: missing, malformed and unreadable SDK metadata never pass
+ ✓ Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: an absent path and a regular file fail, and synthetic absence never falls through to this Mac's SDK
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a healthy Developer ID app passes only after display and strict deep verification both succeed
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: intact display metadata with a failed strict verification (sealed resource) is FAIL
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a nonzero display command with plausible metadata is UNVERIFIED and contributes no fields
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: missing codesign, and a bounded verification timeout or truncation, stay UNVERIFIED
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a wrong signature identifier on the app is FAIL even with verified integrity
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: ad hoc and unsigned apps remain FAIL
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a healthy signed disk image without an app runtime flag passes as a container; its inner app stays UNVERIFIED
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: an unsigned disk image is FAIL; a container failing verification is FAIL
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > fails a bundle metadata mismatch, and Gatekeeper output is trusted only with a consistent exit code
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: plutil and lipo results count only when they exit 0
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > fails a missing artifact path
+ ✓ Mac readiness preflight: app and disk-image signatures (READINESS-R1) > hashes only the supplied file and compares its size and SHA-256; a DMG is never mounted
+ ✓ Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > R3: unknown certificate holders, authorities and assessment sources become fixed categories in JSON and text
+ ✓ Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > R3: recognized authority and assessment categories remain useful
+ ✓ Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > R3: CLI errors never echo argument values, private paths or raw error messages
+ ✓ Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > default and artifact runs invoke only read-only allowlisted commands; assessment needs --assess
+ ✓ Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > writes nothing unless --receipt names a file, and records safety flags as false
+ ✓ Mac readiness preflight: CLI contract > validates arguments
+ ✓ Mac readiness preflight: CLI contract > documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt
+
+releaseSafety.test.ts (unchanged, related): 51 passed, 1 skipped (deliberate no-bash seam)
+ Test Files  2 passed (2)
+      Tests  85 passed | 1 skipped (86)
+
+Old versus corrected (the same corrected test file in an isolated temporary tree; primary files not modified):
+  reviewed script b9bd50c1...: Tests  23 failed | 11 passed (34)  (exit 1)
+  corrected script copy:      Tests  34 passed (34)  (exit 0)
+  failing on the reviewed script:
+    Mac readiness preflight: repository configuration > fails a version disagreement and a bundle-identity mismatch
+    Mac readiness preflight: repository configuration > R2: a malformed configured minimum macOS is reported as invalid and never compared
+    Mac readiness preflight: host and bounded commands > R1: observation commands that exit nonzero never yield PASS from their printed output
+    Mac readiness preflight: host and bounded commands > the real runner enforces its timeout, output cap and missing-command result
+    Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: only the evidenced SDK 26.5 passes, selected by --sdk or by an inherited SDKROOT
+    Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: the recorded incompatible SDK 27.0 fails whether selected by --sdk or SDKROOT
+    Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: another present version without build evidence is UNVERIFIED, not PASS
+    Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: missing, malformed and unreadable SDK metadata never pass
+    Mac readiness preflight: explicit SDK compatibility (READINESS-R2) > R2: an absent path and a regular file fail, and synthetic absence never falls through to this Mac's SDK
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a healthy Developer ID app passes only after display and strict deep verification both succeed
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: intact display metadata with a failed strict verification (sealed resource) is FAIL
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a nonzero display command with plausible metadata is UNVERIFIED and contributes no fields
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: missing codesign, and a bounded verification timeout or truncation, stay UNVERIFIED
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a wrong signature identifier on the app is FAIL even with verified integrity
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: ad hoc and unsigned apps remain FAIL
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: a healthy signed disk image without an app runtime flag passes as a container; its inner app stays UNVERIFIED
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > R1: an unsigned disk image is FAIL; a container failing verification is FAIL
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > fails a bundle metadata mismatch, and Gatekeeper output is trusted only with a consistent exit code
+    Mac readiness preflight: app and disk-image signatures (READINESS-R1) > hashes only the supplied file and compares its size and SHA-256; a DMG is never mounted
+    Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > R3: unknown certificate holders, authorities and assessment sources become fixed categories in JSON and text
+    Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > R3: recognized authority and assessment categories remain useful
+    Mac readiness preflight: privacy and read-only behavior (READINESS-R3) > R3: CLI errors never echo argument values, private paths or raw error messages
+    Mac readiness preflight: CLI contract > documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt
