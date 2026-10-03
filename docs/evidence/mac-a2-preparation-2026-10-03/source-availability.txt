@@ -1,0 +1,44 @@
+A2 source availability on GitHub (repository rickydeleon49-ui/Flight-training-), recorded from the Mac clone
+/Users/rickymac/code/Flight-training-. Outcome: SOURCE UNAVAILABLE. Dependent A2 execution is BLOCKED.
+
+Check 2 (authoritative for this package): 2026-10-03T16:36Z
+  Commands: git fetch --prune origin; git ls-remote origin; git ls-remote --heads origin;
+            git fetch origin '+refs/pull/*/head:refs/remotes/origin-pr/*' (temporary local refs, deleted after the check);
+            git log --all -- <A2-only paths>; git log --all -S saveMaterialAtomically
+  origin/main: 0a5276b4b2ce8cc1ff3993b2c0541c480c438df2 (PR #52, expanded prompt; differs from 54b82b3 only in
+               docs/CLAUDE_MAC_A2_VERIFICATION_PREPARATION_PROMPT_2026-10-03.md)
+  branch fix/atomic-study-material-saves on origin: 0 refs
+  remote branch names matching atomic|material-save: 0
+  PR head refs on origin: 52 (#1..#52). None adds an A2-only file; highest #52 = codex/claude-detailed-a2-prompt (docs).
+  commits on any fetched ref (all branches + all 52 PR heads) touching src/data/connectionOwner.ts,
+    src/data/materialTransaction.ts or src-tauri/src/documents_save_tests.rs: 0
+  commits whose diff contains saveMaterialAtomically: 3, all documentation:
+    0a5276b / 0314126 (PR #52, prompt) and 7372da6 (review regressions document)
+  GitHub REST API: unauthenticated request returned 404 (private repository); no gh CLI on this Mac. PR state was
+    therefore read from refs/pull/*/head, not from PR metadata. Acceptance status of any unpublished source cannot be
+    observed from here; the newest acceptance record (docs/A2_SECOND_REVIEW_DETAILS_2026-10-02.md) says
+    "corrections required".
+
+Check 1 (earlier in this task): 2026-10-03T16:28Z, same result against main 54b82b3 (51 PR heads).
+
+This observation means the source is not published to GitHub. It does not prove that no unpublished Windows
+source exists; its last recorded identity is uncommitted work on fix/atomic-study-material-saves, base
+533a8f50c2d0de74a75f5542022da3182f376ee9, at the reviewed hashes below (R6/R7 corrections were still required).
+
+Reviewed A2 files (docs/evidence/a2-second-review-2026-10-02/after-review-hash-verification.json) vs current main
+(identical on 54b82b3 and 0a5276b):
+  path                                                    reviewed SHA-256 (prefix)  on main
+  src-tauri/src/documents.rs                              68e157a96ef6…  present, different 1f2d5c2135669ee19b83af3def5e8e0056af4440e6b08e7bbe3c26ece12ee0e9
+  src-tauri/src/documents_save_tests.rs                   43470dddad91…  ABSENT
+  src/data/materialTransaction.ts                         48319066a73d…  ABSENT
+  src/data/connectionOwner.ts                             0b58e1147c7b…  ABSENT
+  src/data/sqlJsDb.ts                                     9c471d5986e5…  present, different 8a9f4ecb4d371d185e60b73342ed4ce829b05ade5412c7d920d7bda5119055fe
+  src/data/testing/nodeSqliteDb.ts                        b093457edb6b…  present, different 4d08f72b0338e68df9ce7aeef6af7b8ee29c1cefe034f2b3df854ab9ee24f56f
+  src/data/repositories/documentRepository.ts             086cfd5cd6e0…  present, different 1f50992d15d7493880195b1f25155b73f00f579c5d09ce8ec0a356f3f1f0ec7d
+  src-tauri/fixtures/material-save-contract/expected.json b9cad1543ef3…  ABSENT
+  src-tauri/fixtures/material-save-contract/steps.json    37ba6fb64f1c…  ABSENT
+  docs/ATOMIC_STUDY_MATERIAL_SAVES_2026-10-02.md          cc9e15866b01…  ABSENT
+
+API check on main: src/data/db.ts declares saveMaterialsAtomically (plural, PDF-part batch) and
+saveDebriefAtomically; it declares neither saveMaterialAtomically nor MaterialSaveOperation. Prerequisite mismatch:
+the five reviewer diagnostics were NOT run.

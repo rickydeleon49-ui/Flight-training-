@@ -1,0 +1,33 @@
+// Task-local Vitest config for the A2 preparation oracle controls and diagnostic listing.
+// 3 October 2026. Copy to $TMPDIR/a2-oracle.config.mjs and run from the checkout root:
+//   npx --no-install vitest run --config "$TMPDIR/a2-oracle.config.mjs" a2ObservationOracle
+//   npx --no-install vitest list --config "$TMPDIR/a2-oracle.config.mjs" a2ReviewDiagnostics
+// No imports, so it loads from any directory. Nothing is copied into src/.
+//
+// The three exact-match aliases resolve the diagnostics' source-relative imports ("./db",
+// "./sqlJsDb", "./testing/nodeSqliteDb") to src/data, where they would resolve if the file
+// were placed there. Every existing importer of those specifiers lives in src/data, so the
+// aliases map those imports to the same files they already use.
+// `list` only collects tests (imports modules, registers names); it never runs a test body, so
+// it does not call the absent A2 API.
+const root = process.cwd();
+const data = `${root}/src/data`;
+
+export default {
+  root,
+  resolve: {
+    alias: [
+      { find: "@", replacement: `${root}/src` },
+      { find: /^\.\/db$/, replacement: `${data}/db.ts` },
+      { find: /^\.\/sqlJsDb$/, replacement: `${data}/sqlJsDb.ts` },
+      { find: /^\.\/testing\/nodeSqliteDb$/, replacement: `${data}/testing/nodeSqliteDb.ts` },
+    ],
+  },
+  test: {
+    environment: "node",
+    include: [
+      "docs/evidence/mac-a2-preparation-2026-10-03/*.check.ts",
+      "docs/evidence/mac-a2-preparation-2026-10-03/*.test.ts",
+    ],
+  },
+};

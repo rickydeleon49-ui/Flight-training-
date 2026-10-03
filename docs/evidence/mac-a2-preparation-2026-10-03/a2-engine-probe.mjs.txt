@@ -1,0 +1,199 @@
+// A2 engine SQL-form probe (Mac preparation, 3 October 2026). Version 2.
+//
+// Uses only the raw engines, never the A2 API (absent from main). Every database is a
+// synthetic in-memory handle that is closed before the next case. Run from the checkout root:
+//   node --no-warnings <copy of this file>.mjs > engine-probe.json
+//
+// Purpose: record which transaction-control and legitimate SQL forms each real engine accepts
+// through the routes the single-connection drivers use, so a corrected A2 guard can be judged
+// against real engine behavior. This is engine evidence, not an A2 test result.
+//   node:sqlite driver: execute = prepare(sql).run(...params); select = prepare(sql).all(...params)
+//   sql.js driver:      execute = db.run(sql, params) (params default [] -> prepare/step path);
+//                       select  = prepare(sql) + bind + step loop.
+//   sql.js db.run(sql) with no params uses exec(), which runs EVERY statement in the string; it
+//   is recorded separately because a corrected driver could call either form.
+import { DatabaseSync } from "node:sqlite";
+import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+
+const root = process.cwd();
+const require = createRequire(`${root}/package.json`);
+const initSqlJs = require("sql.js");
+const out = {
+  probeVersion: 2,
+  node: process.version,
+  sqljsVersion: JSON.parse(readFileSync(`${root}/node_modules/sql.js/package.json`, "utf8")).version,
+};
+
+const CONTROL_FORMS = [
+  "BEGIN",
+  "BEGIN DEFERRED",
+  "BEGIN IMMEDIATE",
+  "BEGIN EXCLUSIVE",
+  "BEGIN TRANSACTION",
+  "begin immediate transaction",
+  "SAVEPOINT s1",
+  "/* synthetic */ BEGIN IMMEDIATE",
+  "-- synthetic\nBEGIN",
+  "/* a */ -- b\n  /* c */\tBEGIN",
+  "\n\t  BEGIN",
+  "SELECT 1; BEGIN",
+  "BEGIN; SELECT 1",
+];
+// Forms that end or alter a transaction someone else (the owner) opened.
+const ENDING_FORMS = [
+  "COMMIT",
+  "END",
+  "END TRANSACTION",
+  "COMMIT TRANSACTION",
+  "ROLLBACK",
+  "/* synthetic */ ROLLBACK",
+  "RELEASE s1",
+  "RELEASE SAVEPOINT s1",
+  "ROLLBACK TO s1",
+  "SELECT 1; COMMIT",
+];
+const LEGITIMATE = [
+  ["commented SELECT", "/* synthetic */ SELECT 1 AS one", []],
+  ["line-commented SELECT", "-- synthetic\nSELECT 1 AS one", []],
+  ["parameterised SELECT", "SELECT ? AS value", ["Synthetic value"]],
+  ["quoted keyword text", "SELECT 'BEGIN; COMMIT; ROLLBACK' AS text", []],
+  ["identifier named begin", 'SELECT 1 AS "begin"', []],
+  ["PRAGMA foreign_keys read", "PRAGMA foreign_keys", []],
+  ["PRAGMA table_info read", "PRAGMA table_info(t)", []],
+  ["CREATE TRIGGER with BEGIN/END body", "CREATE TRIGGER trg AFTER INSERT ON t BEGIN INSERT INTO log (id) VALUES (NEW.id); END", []],
+];
+
+function run(fn) {
+  try {
+    const value = fn();
+    return { accepted: true, error: null, value };
+  } catch (e) {
+    return { accepted: false, error: String(e?.message ?? e).slice(0, 90), value: undefined };
+  }
+}
+
+// ---------------------------------------------------------------- node:sqlite
+function nodeDb() {
+  const db = new DatabaseSync(":memory:");
+  db.exec("CREATE TABLE t (id TEXT); CREATE TABLE log (id TEXT); CREATE TABLE unrelated (id TEXT)");
+  return db;
+}
+const nodeRoutes = {
+  execute: (db, sql, params = []) => db.prepare(sql).run(...params),
+  select: (db, sql, params = []) => db.prepare(sql).all(...params),
+};
+function nodeCase(route, sql, { ownerOpen = false, params = [] } = {}) {
+  const db = nodeDb();
+  if (ownerOpen) db.exec("BEGIN IMMEDIATE; SAVEPOINT s1; INSERT INTO t (id) VALUES ('owner-uncommitted')");
+  const r = run(() => nodeRoutes[route](db, sql, params));
+  const transactionOpenAfter = db.isTransaction;
+  let ownerRowVisible = null;
+  if (ownerOpen) ownerRowVisible = db.prepare("SELECT count(*) AS n FROM t").get().n === 1;
+  db.close();
+  return { route, sql, accepted: r.accepted, error: r.error, transactionOpenAfter, ...(ownerOpen ? { ownerTransactionStillOpen: transactionOpenAfter, ownerRowVisible } : {}) };
+}
+out.nodeSqlite = {
+  sqliteVersion: (() => { const d = new DatabaseSync(":memory:"); const v = d.prepare("select sqlite_version() v").get().v; d.close(); return v; })(),
+  openingForms: [],
+  endingFormsWhileOwnerHoldsTransaction: [],
+  legitimate: [],
+};
+for (const route of ["execute", "select"]) {
+  for (const sql of CONTROL_FORMS) out.nodeSqlite.openingForms.push(nodeCase(route, sql));
+  for (const sql of ENDING_FORMS) out.nodeSqlite.endingFormsWhileOwnerHoldsTransaction.push(nodeCase(route, sql, { ownerOpen: true }));
+  for (const [label, sql, params] of LEGITIMATE) out.nodeSqlite.legitimate.push({ label, ...nodeCase(route, sql, { params }) });
+}
+
+// ---------------------------------------------------------------- sql.js
+const SQL = await initSqlJs({ locateFile: () => `${root}/node_modules/sql.js/dist/sql-wasm.wasm` });
+function sqlDb() {
+  const db = new SQL.Database();
+  db.exec("CREATE TABLE t (id TEXT); CREATE TABLE log (id TEXT); CREATE TABLE unrelated (id TEXT)");
+  return db;
+}
+// sql.js does not expose autocommit state; a probe BEGIN fails only inside a transaction.
+// It runs last, after every other observation, and is rolled back immediately.
+function sqlTransactionOpen(db) {
+  try { db.exec("BEGIN"); db.exec("ROLLBACK"); return false; } catch { return true; }
+}
+const sqlRoutes = {
+  "execute (run with [] params)": (db, sql, params = []) => db.run(sql, params),
+  "execute (run without params -> exec)": (db, sql) => db.run(sql),
+  select: (db, sql, params = []) => {
+    const s = db.prepare(sql);
+    try { s.bind(params); const rows = []; while (s.step()) rows.push(s.getAsObject()); return rows; } finally { s.free(); }
+  },
+};
+function sqlCase(route, sql, { ownerOpen = false, params = [] } = {}) {
+  const db = sqlDb();
+  if (ownerOpen) db.exec("BEGIN IMMEDIATE; SAVEPOINT s1; INSERT INTO t (id) VALUES ('owner-uncommitted')");
+  const r = run(() => sqlRoutes[route](db, sql, params));
+  let ownerRowVisible = null;
+  if (ownerOpen) ownerRowVisible = db.exec("SELECT count(*) FROM t")[0].values[0][0] === 1;
+  const transactionOpenAfter = sqlTransactionOpen(db);
+  db.close();
+  return { route, sql, accepted: r.accepted, error: r.error, transactionOpenAfter, ...(ownerOpen ? { ownerTransactionStillOpen: transactionOpenAfter, ownerRowVisible } : {}) };
+}
+out.sqljs = { openingForms: [], endingFormsWhileOwnerHoldsTransaction: [], legitimate: [] };
+for (const route of Object.keys(sqlRoutes)) {
+  for (const sql of CONTROL_FORMS) out.sqljs.openingForms.push(sqlCase(route, sql));
+  for (const sql of ENDING_FORMS) out.sqljs.endingFormsWhileOwnerHoldsTransaction.push(sqlCase(route, sql, { ownerOpen: true }));
+  for (const [label, sql, params] of LEGITIMATE) {
+    if (route.includes("exec") && params.length) continue; // exec() cannot bind parameters
+    out.sqljs.legitimate.push({ label, ...sqlCase(route, sql, { params }) });
+  }
+}
+
+// export() with an open transaction: does it end the transaction (the R6 sql.js loss mechanism)?
+{
+  const db = new SQL.Database();
+  db.run("CREATE TABLE u (id TEXT)");
+  db.run("BEGIN");
+  db.run("INSERT INTO u VALUES ('acknowledged')");
+  db.export();
+  const rows = db.exec("SELECT id FROM u");
+  out.sqljs.exportEndsOpenTransaction = { rowsAfterExport: rows.length ? rows[0].values.flat() : [] };
+  db.close();
+}
+// The one-shot export fault seam on SQL.Database.prototype.export works after initialization
+// and restores cleanly. (The diagnostics use vi.spyOn(...).mockImplementationOnce; this is the
+// same seam without Vitest.)
+{
+  const original = SQL.Database.prototype.export;
+  let calls = 0;
+  SQL.Database.prototype.export = function () { calls++; if (calls === 1) throw new Error("synthetic export failure"); return original.call(this); };
+  const db = new SQL.Database();
+  db.run("CREATE TABLE seam (id TEXT)");
+  let first = "ok"; try { db.export(); } catch (e) { first = e.message; }
+  const second = db.export().length > 0;
+  SQL.Database.prototype.export = original;
+  out.sqljs.exportFaultSeam = { firstCall: first, secondCallExported: second, restored: SQL.Database.prototype.export === original };
+  db.close();
+}
+// export() resets connection settings? Record PRAGMA foreign_keys before/after export, since
+// the corrected driver must restore it inside the durable-write boundary.
+{
+  const db = new SQL.Database();
+  db.run("PRAGMA foreign_keys = ON");
+  const before = db.exec("PRAGMA foreign_keys")[0].values[0][0];
+  db.export();
+  const after = db.exec("PRAGMA foreign_keys")[0].values[0][0];
+  out.sqljs.foreignKeysAcrossExport = { before, after };
+  db.close();
+}
+
+const summarize = (cases) => ({
+  total: cases.length,
+  accepted: cases.filter((c) => c.accepted).length,
+  leftTransactionOpen: cases.filter((c) => c.transactionOpenAfter && !("ownerTransactionStillOpen" in c)).length,
+});
+out.summary = {
+  nodeSqliteOpening: summarize(out.nodeSqlite.openingForms),
+  nodeSqliteEndingClosedOwner: out.nodeSqlite.endingFormsWhileOwnerHoldsTransaction.filter((c) => c.accepted && (!c.ownerTransactionStillOpen || !c.ownerRowVisible)).length,
+  nodeSqliteLegitimateAccepted: `${out.nodeSqlite.legitimate.filter((c) => c.accepted && !c.transactionOpenAfter).length}/${out.nodeSqlite.legitimate.length}`,
+  sqljsOpening: summarize(out.sqljs.openingForms),
+  sqljsEndingClosedOwner: out.sqljs.endingFormsWhileOwnerHoldsTransaction.filter((c) => c.accepted && (!c.ownerTransactionStillOpen || !c.ownerRowVisible)).length,
+  sqljsLegitimateAccepted: `${out.sqljs.legitimate.filter((c) => c.accepted && !c.transactionOpenAfter).length}/${out.sqljs.legitimate.length}`,
+};
+console.log(JSON.stringify(out, null, 1));
