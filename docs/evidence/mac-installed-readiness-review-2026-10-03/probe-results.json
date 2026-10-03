@@ -1,0 +1,53 @@
+{
+  "reviewedSha256": "b9bd50c1a26a40d0aa052da35a76faae3e35a2c44def494e4610018d3849d8eb",
+  "evidence": "Synthetic observations with injected commands; no macOS command, artifact signing, mounting, installed execution or private profile access",
+  "probes": [
+    {
+      "id": "R1-invalid-seal",
+      "observed": "PASS",
+      "verificationCalls": 0,
+      "expected": "No signature PASS when strict verification would fail",
+      "meetsExpectation": false
+    },
+    {
+      "id": "R1-nonzero-display",
+      "observed": "PASS",
+      "displayExit": 1,
+      "expected": "No PASS from a failed display command",
+      "meetsExpectation": false
+    },
+    {
+      "id": "R1-dmg-without-app-runtime",
+      "observed": "FAIL",
+      "expected": "Do not apply Mach-O hardened-runtime requirement to a signed disk-image container; inner app remains unverified",
+      "meetsExpectation": false
+    },
+    {
+      "id": "R2-known-incompatible-sdk",
+      "observed": "PASS",
+      "version": "27.0",
+      "expected": "No compatible-SDK PASS for the explicitly documented incompatible SDK",
+      "meetsExpectation": false
+    },
+    {
+      "id": "R2-sdk-missing-metadata",
+      "observed": "PASS",
+      "version": "unknown",
+      "expected": "No compatible-SDK PASS when SDK metadata cannot be read",
+      "meetsExpectation": false
+    },
+    {
+      "id": "R3-private-authority",
+      "leaked": true,
+      "expected": "Receipt contains fixed authority categories, never an arbitrary certificate common name",
+      "meetsExpectation": false
+    },
+    {
+      "id": "R3-private-assessment-source",
+      "leaked": true,
+      "expected": "Receipt contains fixed assessment source categories, never arbitrary alphabetic output",
+      "meetsExpectation": false
+    }
+  ],
+  "unmetExpectations": 7
+}

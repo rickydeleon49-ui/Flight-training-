@@ -1,0 +1,345 @@
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+
+// @ts-expect-error -- scripts/mac-readiness-preflight.mjs is an untyped ESM script
+import * as preflight from "../../scripts/mac-readiness-preflight.mjs";
+
+const { runPreflight, formatHuman, parseArgs, main, defaultRunCommand, DEFAULT_SDK, EXIT } = preflight;
+const SCRIPT = resolve(process.cwd(), "scripts/mac-readiness-preflight.mjs");
+
+type Result = { state: string; code?: number; stdout?: string; stderr?: string };
+type Check = { id: string; status: string; summary: string; observed: Record<string, unknown> };
+type Receipt = { checks: Check[]; summary: { counts: Record<string, number>; exitCode: number; readyForInstalledUse: boolean }; artifact: Record<string, unknown> | null; safety: Record<string, unknown> };
+
+const fixtures: string[] = [];
+afterEach(() => {
+  for (const dir of fixtures.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(label: string) {
+  const dir = mkdtempSync(join(tmpdir(), `hfd-preflight-${label}-`));
+  fixtures.push(dir);
+  return dir;
+}
+
+interface RepoSpec {
+  version?: string;
+  tauriVersion?: string;
+  identifier?: string;
+  minOs?: string;
+  omitTauri?: boolean;
+  malformedPackage?: string;
+}
+function writeRepo(spec: RepoSpec = {}) {
+  const dir = tempDir("repo");
+  const v = spec.version ?? "0.5.3";
+  const write = (rel: string, text: string) => {
+    mkdirSync(join(dir, rel, ".."), { recursive: true });
+    writeFileSync(join(dir, rel), text);
+  };
+  write("package.json", spec.malformedPackage ?? JSON.stringify({ name: "her-flight-deck", version: v }));
+  write("package-lock.json", JSON.stringify({ name: "her-flight-deck", version: v }));
+  if (!spec.omitTauri) {
+    write("src-tauri/tauri.conf.json", JSON.stringify({ version: spec.tauriVersion ?? v, identifier: spec.identifier ?? "com.herflightdeck.app", bundle: { macOS: { minimumSystemVersion: spec.minOs ?? "12.0" } } }));
+  }
+  write("src-tauri/Cargo.toml", `[package]\nname = "her-flight-deck"\nversion = "${v}"\n`);
+  write("src-tauri/Cargo.lock", `[[package]]\nname = "her-flight-deck"\nversion = "${v}"\n`);
+  write("scripts/release-policy.json", JSON.stringify({ platformDistribution: { macos: { status: "active", architecture: "aarch64", minimumSystemVersion: "12.0", candidateVersion: "0.5.3" }, windows: { status: "held" } } }));
+  write(".github/workflows/build.yml", "name: synthetic\njobs: {}\n");
+  return dir;
+}
+
+const SYSTEM_PATHS = ["/usr/bin/sw_vers", "/usr/bin/uname", "/usr/sbin/sysctl", "/usr/bin/xcode-select", "/usr/bin/xcrun", "/usr/bin/codesign", "/usr/sbin/spctl", "/usr/bin/stapler", "/usr/bin/plutil", "/usr/bin/lipo", "/usr/bin/hdiutil", "/usr/bin/shasum", "/usr/bin/git"];
+const SDK_SETTINGS = `${DEFAULT_SDK}/SDKSettings.json`;
+
+const ADHOC_CODESIGN = "Executable=/Applications/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20400 size=1 flags=0x20002(adhoc,linker-signed) hashes=1+0 location=embedded\nSignature=adhoc\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\n";
+const DEVELOPER_ID_CODESIGN = "Identifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20500 size=1 flags=0x10000(runtime) hashes=1+7 location=embedded\nAuthority=Developer ID Application: Synthetic Team (ABCDE12345)\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTimestamp=3 Oct 2026 at 10:00:00\nInfo.plist entries=20\nTeamIdentifier=ABCDE12345\nSealed Resources version=2 rules=13 files=3\n";
+
+type Responder = (name: string, args: string[]) => Result | undefined;
+function healthyResponder(extra: Responder = () => undefined, plist: Record<string, string> = {}): Responder {
+  const info = { CFBundleIdentifier: "com.herflightdeck.app", LSMinimumSystemVersion: "12.0", CFBundleShortVersionString: "0.5.3", CFBundleExecutable: "her-flight-deck", ...plist };
+  return (name, args) => {
+    const custom = extra(name, args);
+    if (custom) return custom;
+    const ok = (stdout: string, stderr = "", code = 0): Result => ({ state: "ok", code, stdout, stderr });
+    const a = args.join(" ");
+    if (name === "git" && a.endsWith("rev-parse HEAD")) return ok(`${"a".repeat(40)}\n`);
+    if (name === "git" && a.includes("--abbrev-ref")) return ok("main\n");
+    if (name === "git" && a.includes("status")) return ok("");
+    if (name === "sw_vers") return ok(args[0] === "-productVersion" ? "27.0.1\n" : "26A434\n");
+    if (name === "uname") return ok("arm64\n");
+    if (name === "sysctl") return ok({ "hw.model": "Mac17,3\n", "machdep.cpu.brand_string": "Apple M5\n", "sysctl.proc_translated": "0\n" }[args[1]!] ?? "");
+    if (name === "npm") return ok("10.9.9\n");
+    if (name === "rustc") return ok("rustc 1.99.0 (b940084d7 2026-09-28)\nhost: aarch64-apple-darwin\nrelease: 1.99.0\n");
+    if (name === "cargo") return ok("cargo 1.99.0 (5f94df478 2026-08-27)\n");
+    if (name === "xcrun") return ok("27.0\n");
+    if (name === "xcode-select") return ok("/Library/Developer/CommandLineTools\n");
+    if (name === "plutil") return ok(`${info[args[1] as keyof typeof info] ?? ""}\n`);
+    if (name === "lipo") return ok("arm64\n");
+    if (name === "codesign") return ok("", ADHOC_CODESIGN, 0);
+    if (name === "spctl") return ok("", `${args.at(-1)}: rejected\nsource=no usable signature\n`, 3);
+    if (name === "stapler") return ok("Processing: x\nx does not have a ticket stapled to it.\n", "", 65);
+    return { state: "missing" };
+  };
+}
+
+function deps(options: { responder?: Responder; platform?: string; missingTools?: string[]; homeDir?: string; userName?: string } = {}) {
+  const calls: Array<{ name: string; args: string[]; opts: { timeoutMs: number; maxBytes: number } }> = [];
+  const reads: string[] = [];
+  const responder = options.responder ?? healthyResponder();
+  const systemPaths = new Set(SYSTEM_PATHS.filter((p) => !(options.missingTools ?? []).some((t) => p.endsWith(`/${t}`))));
+  const d = {
+    platform: options.platform ?? "darwin",
+    processArch: "arm64",
+    nodeVersion: "v22.23.3",
+    homeDir: options.homeDir ?? "/Users/private-sentinel",
+    userName: options.userName ?? "private-sentinel",
+    sdkrootEnv: undefined,
+    now: () => "2026-10-03T00:00:00.000Z",
+    runCommand: (file: string, args: string[], opts: { timeoutMs: number; maxBytes: number }) => {
+      const name = file.split("/").pop()!;
+      calls.push({ name, args, opts });
+      return responder(name, args) ?? { state: "missing" };
+    },
+    readText: (path: string) => {
+      reads.push(path);
+      if (path === SDK_SETTINGS) return JSON.stringify({ Version: "26.5", CanonicalName: "macosx26.5" });
+      return readFileSync(path, "utf8");
+    },
+    listDir: (path: string) => readdirSync(path),
+    exists: (path: string) => (SYSTEM_PATHS.includes(path) ? systemPaths.has(path) : path === DEFAULT_SDK || path === SDK_SETTINGS || existsSync(path)),
+    stat: (path: string) => statSync(path),
+    hashFile: (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex"),
+  };
+  return { d, calls, reads };
+}
+
+const byId = (r: Receipt, id: string) => {
+  const c = r.checks.find((x) => x.id === id);
+  if (!c) throw new Error(`no check ${id}`);
+  return c;
+};
+function syntheticApp(name = "Her Flight Deck.app") {
+  const app = join(tempDir("app"), name);
+  mkdirSync(join(app, "Contents/MacOS"), { recursive: true });
+  writeFileSync(join(app, "Contents/Info.plist"), "<plist/>");
+  writeFileSync(join(app, "Contents/MacOS/her-flight-deck"), "synthetic");
+  return app;
+}
+
+describe("Mac readiness preflight: repository configuration", () => {
+  it("passes a consistent synthetic configuration while owner prerequisites stay open", () => {
+    const { d } = deps();
+    const r: Receipt = runPreflight({ repo: writeRepo() }, d);
+    expect(["R-VERSION", "R-IDENTIFIER", "R-MIN-MACOS", "R-POLICY", "R-SOURCE", "H-OS", "H-ARCH", "H-TOOLCHAIN", "H-SDK", "H-TOOLS"].map((id) => byId(r, id).status)).toEqual(Array(10).fill("PASS"));
+    expect(byId(r, "P-TEST-ACCOUNT").status).toBe("USER_ACTION");
+    expect(byId(r, "P-SIGNING").status).toBe("USER_ACTION");
+    expect(byId(r, "R-SIGNING-CONFIG")).toMatchObject({ status: "USER_ACTION", observed: { signingIdentityConfigured: "not set" } });
+    expect(byId(r, "P-INSTALLED-SMOKE")).toMatchObject({ status: "UNVERIFIED", observed: { phases: 8, recorded: 0 } });
+    expect(r.summary).toMatchObject({ exitCode: EXIT.NO_FAIL, readyForInstalledUse: false });
+  });
+
+  it("reports missing and malformed configuration without echoing file contents", () => {
+    const { d } = deps();
+    const r: Receipt = runPreflight({ repo: writeRepo({ omitTauri: true, malformedPackage: "{ not json SECRET_IN_FILE" }) }, d);
+    expect(byId(r, "R-VERSION")).toMatchObject({ status: "FAIL", observed: { versions: { "package.json": "malformed", "src-tauri/tauri.conf.json": "missing" } } });
+    expect(byId(r, "R-IDENTIFIER").status).toBe("FAIL");
+    expect(byId(r, "R-MIN-MACOS").status).toBe("FAIL");
+    expect(JSON.stringify(r)).not.toContain("SECRET_IN_FILE");
+    expect(r.summary.exitCode).toBe(EXIT.HAS_FAIL);
+  });
+
+  it("fails a version disagreement and a bundle-identity mismatch", () => {
+    const { d } = deps();
+    const r: Receipt = runPreflight({ repo: writeRepo({ tauriVersion: "0.5.4", identifier: "com.example.other" }) }, d);
+    expect(byId(r, "R-VERSION").status).toBe("FAIL");
+    expect(byId(r, "R-POLICY").status).toBe("FAIL");
+    expect(byId(r, "R-IDENTIFIER")).toMatchObject({ status: "FAIL", observed: { configured: "com.example.other", expected: "com.herflightdeck.app" } });
+  });
+
+  it("does not treat a dirty working tree as clean source identity", () => {
+    const { d } = deps({ responder: healthyResponder((n, a) => (n === "git" && a.includes("status") ? { state: "ok", code: 0, stdout: " M STATUS.md\n?? new.txt\n" } : undefined)) });
+    const r: Receipt = runPreflight({ repo: writeRepo() }, d);
+    expect(byId(r, "R-SOURCE")).toMatchObject({ status: "UNVERIFIED", observed: { modified: 1, untracked: 1 } });
+    expect(JSON.stringify(r)).not.toContain("STATUS.md");
+  });
+});
+
+describe("Mac readiness preflight: host and bounded commands", () => {
+  it("fails an unsupported OS and runs no host or toolchain commands there", () => {
+    const { d, calls } = deps({ platform: "linux" });
+    const r: Receipt = runPreflight({ repo: writeRepo() }, d);
+    expect(byId(r, "H-OS").status).toBe("FAIL");
+    expect(byId(r, "H-SDK").status).toBe("UNVERIFIED");
+    expect(calls.map((c) => c.name).filter((n) => n !== "git")).toEqual([]);
+  });
+
+  it("reports missing, permission-denied and timed-out commands truthfully as UNVERIFIED", () => {
+    const responder = healthyResponder((n) => ({ rustc: { state: "timeout" }, cargo: { state: "missing" }, npm: { state: "denied" } } as Record<string, Result>)[n]);
+    const { d } = deps({ responder, missingTools: ["spctl"] });
+    const r: Receipt = runPreflight({ repo: writeRepo() }, d);
+    expect(byId(r, "H-TOOLCHAIN")).toMatchObject({ status: "UNVERIFIED", observed: { rustc: "timed out (bounded)", cargo: "command unavailable", npm: "permission denied" } });
+    expect(byId(r, "H-TOOLS")).toMatchObject({ status: "UNVERIFIED", observed: { missing: ["spctl"] } });
+    expect(r.summary.exitCode).toBe(EXIT.NO_FAIL);
+  });
+
+  it("passes every command a timeout and an output cap", () => {
+    const { d, calls } = deps();
+    runPreflight({ repo: writeRepo(), app: syntheticApp(), assess: true }, d);
+    expect(calls.length).toBeGreaterThan(10);
+    for (const c of calls) expect(c.opts).toEqual({ timeoutMs: 10_000, maxBytes: 65_536 });
+  });
+
+  it("the real runner enforces its timeout, output cap and missing-command result", () => {
+    const started = Date.now();
+    expect(defaultRunCommand(process.execPath, ["-e", "setTimeout(() => {}, 5000)"], { timeoutMs: 200 }).state).toBe("timeout");
+    expect(Date.now() - started).toBeLessThan(4000);
+    const big = defaultRunCommand(process.execPath, ["-e", "process.stdout.write('x'.repeat(200000))"], { maxBytes: 1024 });
+    expect(big.state).toBe("truncated");
+    expect(String(big.stdout).length).toBeLessThanOrEqual(1024);
+    expect(defaultRunCommand("/nonexistent/hfd-synthetic-tool", []).state).toBe("missing");
+  });
+});
+
+describe("Mac readiness preflight: explicit artifact inspection", () => {
+  it("observes app metadata and a Developer ID signature while installed checks stay UNVERIFIED", () => {
+    const responder = healthyResponder((n) => (n === "codesign" ? { state: "ok", code: 0, stdout: "", stderr: DEVELOPER_ID_CODESIGN } : undefined));
+    const { d } = deps({ responder });
+    const r: Receipt = runPreflight({ repo: writeRepo(), app: syntheticApp() }, d);
+    expect(byId(r, "A-EXISTS").status).toBe("PASS");
+    expect(byId(r, "A-APP-METADATA")).toMatchObject({ status: "PASS", observed: { bundleIdentifier: "com.herflightdeck.app", minimumSystemVersion: "12.0", version: "0.5.3", executableArchitectures: ["arm64"] } });
+    expect(byId(r, "A-SIGNATURE")).toMatchObject({ status: "PASS", observed: { authorityKinds: ["Developer ID Application", "Developer ID Certification Authority", "Apple Root CA"], hardenedRuntime: true, teamIdentifier: "present" } });
+    expect(byId(r, "A-GATEKEEPER").status).toBe("UNVERIFIED");
+    expect(byId(r, "P-INSTALLED-SMOKE").status).toBe("UNVERIFIED");
+    expect(byId(r, "P-TEST-ACCOUNT").status).toBe("USER_ACTION");
+    expect(r.summary.readyForInstalledUse).toBe(false);
+  });
+
+  it("fails an ad hoc signature and a bundle metadata mismatch; the signing decision stays an owner action", () => {
+    const { d } = deps({ responder: healthyResponder(undefined, { CFBundleIdentifier: "com.example.other" }) });
+    const r: Receipt = runPreflight({ repo: writeRepo(), app: syntheticApp(), assess: true }, d);
+    expect(byId(r, "A-SIGNATURE")).toMatchObject({ status: "FAIL", observed: { signature: "adhoc", teamIdentifier: "not set", hardenedRuntime: false } });
+    expect(byId(r, "A-APP-METADATA").status).toBe("FAIL");
+    expect(byId(r, "A-GATEKEEPER")).toMatchObject({ status: "FAIL", observed: { gatekeeper: "rejected", source: "no usable signature", stapledTicket: "not stapled" } });
+    expect(byId(r, "P-SIGNING").status).toBe("USER_ACTION");
+  });
+
+  it("fails a missing artifact path", () => {
+    const { d } = deps();
+    const r: Receipt = runPreflight({ repo: writeRepo(), artifact: join(tempDir("none"), "absent.dmg") }, d);
+    expect(byId(r, "A-EXISTS").status).toBe("FAIL");
+    expect(r.summary.exitCode).toBe(EXIT.HAS_FAIL);
+  });
+
+  it("hashes only the supplied file and compares its size and SHA-256; a DMG is never mounted", () => {
+    const file = join(tempDir("dmg"), "Synthetic_0.5.3_aarch64.dmg");
+    writeFileSync(file, "synthetic artifact bytes");
+    const sha = createHash("sha256").update("synthetic artifact bytes").digest("hex");
+    const { d, calls } = deps();
+    const wrong: Receipt = runPreflight({ repo: writeRepo(), artifact: file, expectedSha256: "0".repeat(64), expectedSize: "1" }, d);
+    expect(byId(wrong, "A-SHA256")).toMatchObject({ status: "FAIL", observed: { sha256: sha } });
+    expect(byId(wrong, "A-SIZE")).toMatchObject({ status: "FAIL", observed: { bytes: 24, expected: 1 } });
+    const right: Receipt = runPreflight({ repo: writeRepo(), artifact: file, expectedSha256: sha, expectedSize: "24" }, d);
+    expect([byId(right, "A-SHA256").status, byId(right, "A-SIZE").status]).toEqual(["PASS", "PASS"]);
+    expect(right.artifact).toMatchObject({ knownIdentity: "not a recorded identity", pathRecorded: "basename only" });
+    expect(byId(right, "A-APP-METADATA")).toMatchObject({ status: "UNVERIFIED" });
+    expect(calls.some((c) => c.name === "hdiutil")).toBe(false);
+  });
+});
+
+describe("Mac readiness preflight: privacy and read-only behavior", () => {
+  it("keeps synthetic secrets, account names and private paths out of JSON and text receipts", () => {
+    const sentinelCodesign = "Executable=/Users/private-sentinel/Secret Folder/Her.app/Contents/MacOS/x SECRET_SENTINEL\nIdentifier=com.herflightdeck.app\nCodeDirectory v=1 flags=0x10000(runtime)\nAuthority=Developer ID Application: Private Sentinel Person (TEAMSECRET1)\nTimestamp=now\nTeamIdentifier=TEAMSECRET1\n";
+    const responder = healthyResponder((n) => {
+      if (n === "npm") return { state: "ok", code: 0, stdout: "10.9.9\nSECRET_SENTINEL token=abc /Users/private-sentinel/.npmrc\n" };
+      if (n === "codesign") return { state: "ok", code: 0, stdout: "", stderr: sentinelCodesign };
+      if (n === "xcode-select") return { state: "ok", code: 0, stdout: "/Users/private-sentinel/Developer\n" };
+      if (n === "sysctl") return { state: "ok", code: 0, stdout: "SECRET_SENTINEL\n" };
+      if (n === "spctl") return { state: "ok", code: 3, stdout: "", stderr: "/Users/private-sentinel/x: rejected\nsource=SECRET_SENTINEL /Users/private-sentinel\n" };
+      return undefined;
+    });
+    const { d } = deps({ responder });
+    const r: Receipt = runPreflight({ repo: writeRepo(), app: syntheticApp("private-sentinel Her Flight Deck.app"), assess: true }, d);
+    const outputs = [JSON.stringify(r), formatHuman(r)];
+    for (const text of outputs) {
+      for (const sentinel of ["SECRET_SENTINEL", "TEAMSECRET1", "Private Sentinel Person", "private-sentinel", "/Users/", ".npmrc", "Secret Folder"]) {
+        expect(text, sentinel).not.toContain(sentinel);
+      }
+    }
+    expect(byId(r, "H-TOOLCHAIN").observed.npm).toBe("10.9.9");
+    expect(byId(r, "A-SIGNATURE").observed).toMatchObject({ authorityKinds: ["Developer ID Application"], teamIdentifier: "present" });
+  });
+
+  const ALLOWED = [
+    /^git -C .+ (rev-parse HEAD|rev-parse --abbrev-ref HEAD|status --porcelain=v1)$/,
+    /^sw_vers -(productVersion|buildVersion)$/,
+    /^uname -m$/,
+    /^sysctl -n (hw\.model|machdep\.cpu\.brand_string|sysctl\.proc_translated)$/,
+    /^npm --version$/, /^rustc -vV$/, /^cargo --version$/,
+    /^xcrun --show-sdk-version$/, /^xcode-select -p$/,
+    /^plutil -extract (CFBundleIdentifier|LSMinimumSystemVersion|CFBundleShortVersionString|CFBundleExecutable) raw -o - .+Info\.plist$/,
+    /^lipo -archs .+$/,
+    /^codesign -dv --verbose=2 .+$/,
+  ];
+  const ASSESS_ONLY = [/^spctl --assess --type (execute|open)( --context context:primary-signature)? -vv .+$/, /^stapler validate .+$/];
+
+  it("default and artifact runs invoke only read-only allowlisted commands; assessment needs --assess", () => {
+    const repo = writeRepo();
+    const app = syntheticApp();
+    for (const [assess, allowed] of [[false, ALLOWED], [true, [...ALLOWED, ...ASSESS_ONLY]]] as const) {
+      const { d, calls, reads } = deps();
+      runPreflight({ repo, app, assess }, d);
+      for (const c of calls) {
+        const line = `${c.name} ${c.args.join(" ")}`;
+        expect(allowed.some((re) => re.test(line)), line).toBe(true);
+        expect(line).not.toMatch(/hdiutil|attach|\bopen\b(?! --context)|installer|ditto|\bsecurity\b|notarytool|tauri|npm run|cargo build|--sign|\bgh\b|curl|defaults write|launchctl/);
+      }
+      expect(calls.some((c) => c.name === "spctl" || c.name === "stapler")).toBe(assess);
+      for (const path of reads) expect(path.startsWith(repo) || path === SDK_SETTINGS, path).toBe(true);
+      expect(reads.some((p) => p.includes("Application Support") || p.includes("/Library/Containers"))).toBe(false);
+    }
+    const { d, calls } = deps();
+    runPreflight({ repo }, d);
+    expect(calls.some((c) => ["plutil", "lipo", "codesign", "spctl", "stapler"].includes(c.name))).toBe(false);
+  });
+
+  it("writes nothing unless --receipt names a file, and records safety flags as false", () => {
+    const writes: string[] = [];
+    const io = { out: () => undefined, err: () => undefined, writeFile: (p: string) => writes.push(p) };
+    const { d } = deps();
+    const repo = writeRepo();
+    expect(main(["--repo", repo], d, io)).toBe(EXIT.NO_FAIL);
+    expect(writes).toEqual([]);
+    const receiptPath = join(tempDir("out"), "receipt.json");
+    main(["--repo", repo, "--receipt", receiptPath], d, io);
+    expect(writes).toEqual([receiptPath]);
+    const r: Receipt = runPreflight({ repo }, d);
+    expect(r.safety).toEqual({ mounted: false, installed: false, launched: false, built: false, signed: false, notarized: false, keychainOrAccountChanged: false, ciTriggered: false, providerContacted: false, appleOnlineLookupPossible: false, appProfileInspected: false });
+  });
+});
+
+describe("Mac readiness preflight: CLI contract", () => {
+  it("validates arguments", () => {
+    expect(() => parseArgs(["--expected-sha256", "abc", "--artifact", "x"])).toThrow(/64 hex/);
+    expect(() => parseArgs(["--assess"])).toThrow(/needs --artifact or --app/);
+    expect(() => parseArgs(["--artifact", "a", "--app", "b"])).toThrow(/not both/);
+    expect(() => parseArgs(["--expected-size", "12"])).toThrow(/need --artifact/);
+    expect(() => parseArgs(["--bogus"])).toThrow(/unknown option/);
+  });
+
+  it("documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt", () => {
+    const run = (args: string[]) => spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8", timeout: 60_000 });
+    expect(run(["--bogus"]).status).toBe(2);
+    const help = run(["--help"]);
+    expect(help.status).toBe(0);
+    expect(help.stdout).toContain("Exit codes");
+    const mismatch = run(["--repo", writeRepo({ tauriVersion: "9.9.9" }), "--json"]);
+    expect(mismatch.status).toBe(1);
+    const receipt = JSON.parse(mismatch.stdout) as Receipt & { schema: string };
+    expect(receipt.schema).toBe("hfd-mac-readiness-preflight/1");
+    expect(receipt.checks.find((c) => c.id === "R-VERSION")?.status).toBe("FAIL");
+  });
+});

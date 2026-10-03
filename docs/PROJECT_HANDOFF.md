@@ -41,6 +41,8 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 
 ## Continue on the Mac
 
+- Current next task: [Claude corrects READINESS-R1–R4](CLAUDE_MAC_READINESS_CORRECTION_PROMPT_2026-10-03.md) after the [independent readiness review](MAC_INSTALLED_READINESS_REVIEW_2026-10-03.md). Work remains uncommitted in the Mac clone. This publication does not ship the tool or establish installed acceptance. Preserve the dirty branch and finish corrections before Git integration.
+
 - Latest assignment after this publication merges: [Claude prepares the read-only Mac readiness tool and isolated installation/signing runbook](CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md). The [corrected A2 preparation is accepted](MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md); matching A2 source and actual installed-account/signing prerequisites remain open.
 
 - Current outcome: A3/A4/A6 are merged (PRs #48/#49/#50), and [A5 evidence is accepted](MAC_A5_EVIDENCE_ACCEPTANCE_2026-10-03.md) for documentation publication. After required CI/merge and clean Mac synchronization, use [Claude's A2 verification-preparation prompt](CLAUDE_MAC_A2_VERIFICATION_PREPARATION_PROMPT_2026-10-03.md). A2 still needs its Windows owner's matching reviewed source; preparation can proceed while dependent verification waits. The [A2 preparation package](MAC_A2_VERIFICATION_PREPARATION_2026-10-03.md), corrected for PREP-R1 to R3, is [independently accepted for publication](MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md). Mac execution waits for that accepted, published source. Installed-test account/signing gates remain unmet.

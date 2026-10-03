@@ -1,5 +1,7 @@
 # Her Flight Deck — current project status
 
+**Mac readiness preparation reviewed (3 October): corrections required.** The [independent review](docs/MAC_INSTALLED_READINESS_REVIEW_2026-10-03.md) identifies READINESS-R1–R4 in the uncommitted preflight/runbook. [Claude’s next assignment](docs/CLAUDE_MAC_READINESS_CORRECTION_PROMPT_2026-10-03.md) fixes signature integrity, SDK classification, receipt privacy and first-open criteria. The implementation remains local; this publication contains review evidence only. Installed tests, signing and A2 source remain pending.
+
 **Mac A2 preparation accepted (3 October):** [Independent acceptance](docs/MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md) closes PREP-R1–R3 and confirms 36 controls passed. The shared package and Windows-owner handoff are accepted for reviewed publication; A2 production source is still pending. After CI/merge, [Claude prepares a read-only Mac readiness checker and isolated installation/signing runbook](docs/CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md). Installed results and release readiness remain unverified.
 
 _Updated 3 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
