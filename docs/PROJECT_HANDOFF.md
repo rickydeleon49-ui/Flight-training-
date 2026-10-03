@@ -34,6 +34,8 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 
 ## Continue on the Mac
 
+- Current owner-assigned continuation: [Claude Mac baseline prompt](CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md), with [report review and measurement limits](MAC_REPORT_REVIEW_2026-10-02.md). Claude implements the bounded synthetic baseline and candidate recommendation; Codex reviews. No production dependency adoption or M2 migration is assigned by this task.
+
 - Existing task: [Mac session prompt](MAC_SESSION_PROMPT.md), with the report in draft PR #44. Continue missing observed smoke tests safely; do not blindly repeat unchanged successful commands.
 - Future reuse work: [open-source Mac prompt](OPEN_SOURCE_MAC_HANDOFF.md). Start with source/evidence review and measured baselines, not package installation.
 - Pending source correction contract: [A2 R6/R7 prompt](A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md). It cannot run against main until its matching implementation is made available under the review workflow.
