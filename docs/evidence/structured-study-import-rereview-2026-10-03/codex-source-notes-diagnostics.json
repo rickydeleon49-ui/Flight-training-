@@ -1,0 +1,97 @@
+{
+  "summary": {
+    "total": 6,
+    "passed": 4,
+    "failed": 2,
+    "node": "v22.23.3"
+  },
+  "rows": [
+    {
+      "name": "R5: questions plus sourceNotes-only guide never silently discard notes",
+      "expect": "no_silent_loss",
+      "pass": false,
+      "accepted": true,
+      "notesInPreview": true,
+      "notesInPayload": false,
+      "codes": [],
+      "discardedOnSave": {
+        "sourceClaims": [],
+        "sourceRefs": 0,
+        "exportIds": 1,
+        "choiceIds": 2
+      }
+    },
+    {
+      "name": "R5: empty summary and sections plus questions never silently discard notes",
+      "expect": "no_silent_loss",
+      "pass": false,
+      "accepted": true,
+      "notesInPreview": true,
+      "notesInPayload": false,
+      "codes": [],
+      "discardedOnSave": {
+        "sourceClaims": [],
+        "sourceRefs": 0,
+        "exportIds": 1,
+        "choiceIds": 2
+      }
+    },
+    {
+      "name": "Control: cards plus sourceNotes preserve notes",
+      "expect": "preserve",
+      "pass": true,
+      "accepted": true,
+      "notesInPreview": true,
+      "notesInPayload": true,
+      "codes": [],
+      "discardedOnSave": {
+        "sourceClaims": [],
+        "sourceRefs": 0,
+        "exportIds": 1,
+        "choiceIds": 0
+      }
+    },
+    {
+      "name": "Control: substantive guide plus sourceNotes preserve notes",
+      "expect": "preserve",
+      "pass": true,
+      "accepted": true,
+      "notesInPreview": true,
+      "notesInPayload": true,
+      "codes": [],
+      "discardedOnSave": {
+        "sourceClaims": [],
+        "sourceRefs": 0,
+        "exportIds": 0,
+        "choiceIds": 0
+      }
+    },
+    {
+      "name": "Control: blank notes with questions stay valid",
+      "expect": "valid",
+      "pass": true,
+      "accepted": true,
+      "notesInPreview": false,
+      "notesInPayload": false,
+      "codes": [],
+      "discardedOnSave": {
+        "sourceClaims": [],
+        "sourceRefs": 0,
+        "exportIds": 1,
+        "choiceIds": 2
+      }
+    },
+    {
+      "name": "Control: standalone sourceNotes remain an empty packet",
+      "expect": "reject",
+      "pass": true,
+      "accepted": false,
+      "notesInPreview": false,
+      "notesInPayload": false,
+      "codes": [
+        "packet_empty"
+      ],
+      "discardedOnSave": null
+    }
+  ]
+}
