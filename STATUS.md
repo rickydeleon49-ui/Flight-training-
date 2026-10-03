@@ -48,6 +48,20 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
 
+## A6 truthful Gemini retry wording — 2 October 2026 (local, pending Codex review)
+
+[Implementation report](docs/MAC_A6_RETRY_WORDING_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a6-retry-wording-2026-10-02/README.md).
+
+- **Code state:** LOCAL UNCOMMITTED on `codex/mac-gemini-retry-wording-a6` in the Mac clone, base main `db15394` (after PR #49). Codex reviews and publishes; the report is not acceptance.
+- **Correction (`src-tauri/src/gemini.rs` only):**
+  - The final "Google is busy" message no longer claims how long the attempts took. The old "over about 11 seconds" summed nominal pauses only, ignoring request time (up to 300 s per request), jitter and the backup request. The obsolete helper is removed.
+  - A connection check that ends on 429 or 5xx no longer claims a backup model or generation retries. It never uses the backup.
+  - Single-refusal wording is generic. Exhausted generation still says what it tried.
+  - Retry policy, timeouts, backup selection, progress, payloads, models and key handling are unchanged.
+- **Tests:** 4 Rust message-contract regressions. The negative control against the original code gives 3 failed / 1 guard passed.
+- **Local gate (now on macOS 27.0.1 with SDK 26.5):** 666 frontend passed (4 skipped), build passed, 250 Rust passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Foundation checkpoint:** A1, A3 and A4 merged; A2 open with its Windows owner; A5 (Mac fixture and verification kit) open; installed readiness blocked on the test account and signing. **Recommended next scoped task: A5** (not started).
+
 ## A4 saved study content offline — 2 October 2026 (source accepted; exact-head CI merge gate)
 
 [Implementation report](docs/MAC_A4_OFFLINE_STUDY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a4-offline-study-2026-10-02/README.md).

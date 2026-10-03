@@ -1,0 +1,18 @@
+A6 regressions in src-tauri/src/gemini.rs (mod tests): a6_the_exhausted_busy_message_makes_no_elapsed_time_claim, a6_the_exhausted_messages_still_say_what_generation_actually_tried, a6_connection_check_refusals_do_not_claim_a_backup_model_or_retry_count, a6_a_single_refusal_without_retry_context_stays_generic.
+Pure message-contract tests; no network, no sleeps, no live Gemini.
+
+1) Before the fix (tests added to db15394's gemini.rs): cargo test --locked --manifest-path src-tauri/Cargo.toml gemini::tests -> exit 101; 27 passed; 3 failed (the three a6_ claim tests); the 'still say what generation actually tried' guard passed.
+
+2) Reproducible negative control after the fix: db15394 production code + current test module (corrected file restored afterwards and verified by SHA-256):
+   test gemini::tests::a6_the_exhausted_messages_still_say_what_generation_actually_tried ... ok
+   test gemini::tests::a6_the_exhausted_busy_message_makes_no_elapsed_time_claim ... FAILED
+   test gemini::tests::a6_connection_check_refusals_do_not_claim_a_backup_model_or_retry_count ... FAILED
+   test gemini::tests::a6_a_single_refusal_without_retry_context_stays_generic ... FAILED
+   test result: FAILED. 27 passed; 3 failed; 0 ignored; 0 measured; 226 filtered out; finished in 0.00s
+   Old messages observed in the failures:
+     Google's servers are busy. Her Flight Deck tried 4 times over about 11 seconds and then tried the backup Flash-Lite model, and Google was still at capacity. This is Google's side, not your key or your document — the same file usually works a few minutes later.
+     Gemini's rate or spending limit was reached for this project. Her Flight Deck retried briefly and tried its backup model. Check the project's limits and billing in Google AI Studio, or wait and try again.
+     429: Gemini's rate or spending limit was reached for this project. Her Flight Deck retried briefly and tried its backup model. Check the project's limits and billing in Google AI Studio, or wait and try again.
+
+3) Corrected source: cargo test --locked --manifest-path src-tauri/Cargo.toml gemini::tests -> exit 0; 30 passed (26 existing incl. renamed the_busy_message_blames_google_not_the_key, plus 4 a6_).
+   cargo fmt applied once (re-wrapped one test assertion); cargo clippy -D warnings clean.
