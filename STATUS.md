@@ -46,6 +46,20 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
 
+## A4 saved study content offline — 2 October 2026 (local, pending Codex review)
+
+[Implementation report](docs/MAC_A4_OFFLINE_STUDY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a4-offline-study-2026-10-02/README.md).
+
+- **Code state:** LOCAL UNCOMMITTED on `codex/mac-offline-study-a4` in the Mac clone, base main `1ae6986` (after PR #48). Codex reviews and publishes; the report is not acceptance.
+- **Correction:**
+  - Saved guides, flashcards and practice tests now stay readable and usable when Gemini is disconnected, its status is loading or failed, the source file is missing, replaced, unsupported or oversized, or no file is attached.
+  - A single notice explains why creating or regenerating is unavailable, without hiding saved content.
+  - Explicit "Send to Gemini" submission, the generation lock, stale-result ownership and failed-regeneration retention are unchanged. Saved content now also stays visible while regenerating.
+  - Reading, revealing and answering saved content make no Gemini or network calls. Attempts stay transient.
+- **Tests:** 11 regressions in `MaterialDetailOffline.test.ts`. The negative control against the original page gives 9 failed / 2 passed (connected guards).
+- **Local gate:** 666 frontend passed (4 skipped), build passed, 246 Rust passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Still open:** installed offline use (MAC-19), VoiceOver and Windows. A6 retry wording follows separately. No dependency, migration or release change.
+
 ## A3 WebKit compatibility — 2 October 2026 (R1–R4 source accepted; exact-head CI merge gate)
 
 [Implementation report](docs/MAC_A3_COMPATIBILITY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a3-compat-2026-10-02/negative-control-summary.txt).
