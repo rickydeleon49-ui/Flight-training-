@@ -1,0 +1,15 @@
+head=a4339fc720d8eac0f038402687e30233de141436 node=v22.23.3 npm=10.9.9 rustc=rustc 1.99.0 (b940084d7 2026-09-28) sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+npm-ci exit=0 secs=2
+npm-test exit=0 secs=22
+npm-build exit=0 secs=3
+cargo-fmt exit=0 secs=0
+cargo-clippy exit=0 secs=1
+cargo-test exit=0 secs=24
+cargo-lock exit=0 secs=0
+diff-check exit=0 secs=0
+npm-ci: added 165 packages, and audited 166 packages in 1s; found 0 vulnerabilities
+npm-test: Test Files  60 passed | 3 skipped (63); Tests  602 passed | 4 skipped (606)
+npm-build: ✓ built in 688ms
+cargo-clippy: Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.53s
+cargo-test: test result: ok. 246 passed; 0 failed; 6 ignored; 0 measured; 0 filtered out; finished in 22.85s
+cargo-lock: Cargo lockfile synchronization verified: her-flight-deck is at 0.5.3 in both Cargo.toml and Cargo.lock

@@ -4,13 +4,21 @@ _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanent
 
 ## Shared Windows/Mac handoff — 2 October 2026
 
+**Mac baseline accepted:** [Independent R1–R3 acceptance](docs/MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md) confirms eight maintained tests and the production build pass independently. The corrected source and sanitized evidence are committed for required GitHub checks. [Next Claude Mac task: A3 compatibility](docs/CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md) starts from updated main after this publication PR merges. Installed Mac verification and release holds remain open.
+
+**Mac is primary:** the main user will run the app on this Mac. [Owner decision and readiness order](docs/MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) prioritizes source consolidation, A2/compatibility/offline corrections, signing and installed synthetic-profile verification before everyday use. The corrected baseline and prior review history are shared with this publication. [Sanitized source receipts](docs/evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) now accompany the Mac report; Windows-local A2 source remains unavailable on GitHub.
+
+**Completed baseline assignment (R1–R3 accepted):** [The copy-ready continuation prompt](docs/CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md) assigns a bounded Study Library baseline and open-source go/no-go recommendation. [Mac report review](docs/MAC_REPORT_REVIEW_2026-10-02.md) reconciles the observed evidence and identifies benchmark coverage limits. A2 remains with its Windows implementer; no new library, production optimization or M2 migration is assigned by this measurement task.
+
 [PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md) is the common starting point for both machines. Research, plans, correction prompts and sanitized review evidence are tracked in GitHub; future handoffs must be linked there rather than depend on a local drive or chat attachment. The [open-source continuation handoff](docs/OPEN_SOURCE_MAC_HANDOFF.md) includes the historical research, 170-repository evidence snapshot, adoption sequence, test gates and Mac prompt. No new production library was installed or copied.
 
-The [Mac report in draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) is available on GitHub: it reports passing source checks and an Apple Silicon evaluation DMG, with signing assessment and installed-test limitations. It remains a draft; this note does not merge it or mark installed smoke tests passed. A2 remains local and pending the [R6/R7 correction prompt](docs/A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md). All release holds remain unchanged.
+The [Mac report](docs/MAC_SMOKE_RESULTS_2026-10-02.md), originally shared in [draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44), is incorporated with this baseline publication. It records source checks and an Apple Silicon evaluation DMG, with signing assessment and installed-test limitations. PR #44 becomes redundant once this publication merges; installed smoke tests remain unverified. A2 remains local and pending the [R6/R7 correction prompt](docs/A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md). All release holds remain unchanged.
 
 ## Mac GitHub handoff — 2 October 2026
 
-The user now has a Mac; its chip, macOS version and installed-app results have not yet been recorded. The [self-contained Mac handoff](docs/MAC_GITHUB_HANDOFF_2026-10-02.md), [Mac session prompt](docs/MAC_SESSION_PROMPT.md) and [results template](docs/templates/MAC_SMOKE_RESULTS_TEMPLATE.md) are tracked in Git so the Mac requires no Windows-local attachments, logs or generated files. Use current `main` for source evaluation and record its exact commit. This documentation update does not close any physical-test or release gate.
+**Physical Mac source checks (2 October):** [Local evidence](docs/MAC_SMOKE_RESULTS_2026-10-02.md) records a MacBook Air / Apple M5 / 32 GB / macOS 26.6, testing clean main `5e388bf4169c7f968b1581292d6e1a24aa0493da`. Node 22 frontend checks pass (594 tests, 4 skipped); native formatting, strict Clippy, tests (246 passed, 6 ignored), and lock synchronization pass using the installed macOS 26.5 SDK. The default macOS 27 SDK fails with the installed linker; the report retains that finding. Local Apple Silicon evaluation DMG build passed; its packaged app has an ad hoc signature, fails command-line Gatekeeper assessment, and has no stapled ticket. Installed-app testing is blocked pending a dedicated standard test account. This is source evaluation, not frozen-candidate verification or release approval.
+
+The physical Mac hardware, OS, source checks and local evaluation artifact are now recorded above; installed-app results remain pending. The [self-contained Mac handoff](docs/MAC_GITHUB_HANDOFF_2026-10-02.md), [Mac session prompt](docs/MAC_SESSION_PROMPT.md) and [results template](docs/templates/MAC_SMOKE_RESULTS_TEMPLATE.md) are tracked in Git so the Mac requires no Windows-local attachments, logs or generated files. Use current `main` for source evaluation and record its exact commit. This documentation update does not close any physical-test or release gate.
 
 **A2 remains local and unaccepted:** the [second-review summary](docs/A2_SECOND_REVIEW_2026-10-02.md) records the verified native corrections and two remaining browser/test-driver defects. Do not assume that cloning `main` includes those uncommitted fixes. A3–A6 and all release holds remain open. Preserve the frozen v0.5.3 artifact identity; distinguish a local source evaluation build from that private candidate.
 
@@ -35,6 +43,24 @@ The user now has a Mac; its chip, macOS version and installed-app results have n
 **Platform limits and release status:** A1 shared source/regression acceptance is complete; A2–A6 remain open. Windows distribution hold on v0.5.1 and Mac candidate hold on v0.5.3 remain in effect. Physical Apple Silicon Mac, early macOS 12, installed Windows and live Gemini remain UNVERIFIED. The frozen v0.5.3 DMG cannot certify newly changed source.
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
+
+## Mac Study Library baseline — 2 October 2026 (R1–R3 accepted; exact-head CI merge gate)
+
+[Baseline report](docs/MAC_STUDY_LIBRARY_BASELINE_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-study-baseline-2026-10-02/README.md).
+
+- **Code state:** Codex accepted and committed the corrected source on `codex/mac-study-library-baseline`, original base main `a4339fc`, incorporating PR #44's Mac documentation. [Independent acceptance](docs/MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md) distinguishes Codex-run checks from inspected implementer results. Required exact-head GitHub checks gate merge.
+- **Benchmark:** Deterministic synthetic fixture over 100/1,000/5,000 materials plus a 10,000 stress tier. Every measured step is verified against an independent answer key before its sample is kept (R1). Results are per step, with compute for the same view (R3). Expanded displays up to 1,000 cards are measured (R2). The always-on scenario test includes final-state and intermediate-step negative controls.
+- **Results (Node/jsdom on Apple M5, not WKWebView paint):**
+  - Search compute is 0.14–1.54 ms per measured state at 5,000.
+  - Interactions at 100 shown cost about 9–20 ms, independent of library size.
+  - Show more grows with displayed cards: 16 ms at 200, about 97 ms per click at 1,000. A query from a 1,000-card display costs about 35 ms.
+  - Edit plus full refresh: 20 ms at 5,000 and 35 ms at 10,000.
+- **Decision:**
+  - MiniSearch: no-go.
+  - TanStack Virtual: no adoption justified for the initial 100- and 200-card displays.
+  - Expanded displays exceed the proposed Node targets and remain an open, measured question for installed WKWebView evidence and a fair comparison, including a dependency-free alternative. They do not justify adoption on their own.
+- **Local gate on the corrected diff:** 602 frontend tests passed (4 skipped), build passed, 246 Rust tests passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Unchanged:** No production code, package, migration or release state changed. Installed testing has not started.
 
 ## Independent full audit — 29 September 2026
 

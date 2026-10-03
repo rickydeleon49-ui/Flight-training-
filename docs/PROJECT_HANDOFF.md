@@ -6,15 +6,18 @@ Repository: https://github.com/rickydeleon49-ui/Flight-training-. Each machine c
 
 ## Current state and ownership
 
+**Primary platform:** the owner confirmed the main user will use the Mac. Follow [the Mac-first development/readiness plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md). Reviewed source and evidence must be available through GitHub and validated here; preserve Claude's active Mac baseline and the Windows A2 owner. [Sanitized Mac verification receipt](evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) is shared for cross-machine review.
+
 This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exact head before editing; update this table when ownership or acceptance changes.
 
 | Work | Shared source/evidence | State / next action |
 | --- | --- | --- |
 | A1 restore retention/restart safety | Main via [PR #42](https://github.com/rickydeleon49-ui/Flight-training-/pull/42); [acceptance](RESTORE_RETENTION_ACCEPTANCE_2026-10-01.md) | Shared-source repair merged. Preserve its recovery/backup guarantees. |
 | Mac onboarding | Main via [PR #43](https://github.com/rickydeleon49-ui/Flight-training-/pull/43); [Mac guide](MAC_GITHUB_HANDOFF_2026-10-02.md) | GitHub-only setup, fixtures, prompt and report template available. |
-| Physical Mac source evaluation | Mac branch `codex/mac-source-evaluation-report`; [draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) | Reported frontend/native checks and arm64 evaluation DMG passed using a compatible installed SDK. Signing assessment findings recorded; installed smoke tests pending a dedicated test account. Draft is not merged by this handoff. |
+| Physical Mac source evaluation | Mac branch `codex/mac-source-evaluation-report`; [draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) | Source and packaging evidence incorporated with the accepted baseline publication. PR #44 is superseded once that publication merges. Signing findings retained; installed smoke tests pending a dedicated test account and acceptable signing state. |
 | A2 atomic material saves | Windows-local `fix/atomic-study-material-saves`, base `533a8f5`; [review](A2_SECOND_REVIEW_DETAILS_2026-10-02.md), [prompt](A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md), [evidence](evidence/a2-second-review-2026-10-02/README.md) | Implementation is uncommitted and not in GitHub. Existing implementer owns R6/R7; Codex independently reviews. Do not assume the Mac can check out that local source. |
 | A3–A6 audit work | [Full audit](FULL_REPOSITORY_AUDIT_2026-09-29.md) and STATUS | Still open; coordinate one scoped correction at a time. |
+| Mac Study Library baseline (Claude) | Reviewed branch `codex/mac-study-library-baseline`, original base `a4339fc`; [report](MAC_STUDY_LIBRARY_BASELINE_2026-10-02.md), [evidence](evidence/mac-study-baseline-2026-10-02/README.md) | [R1–R3 source/evidence accepted independently](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md), committed for exact-head CI and merge. MiniSearch no-go. No virtualization adoption justified for the initial 100/200-card displays; expanded displays up to 1,000 cards are measured in jsdom and remain an open question needing installed evidence. Installed testing is not started (account and signing prerequisites unmet). |
 | Open-source reuse | [Research](OPEN_SOURCE_REUSE_RESEARCH_2026-10-01.md), [plan](OPEN_SOURCE_ADOPTION_PLAN_2026-10-01.md), [Mac prompt](OPEN_SOURCE_MAC_HANDOFF.md) | Historical research shared; no new library adopted. Foundation, measurements, license/compatibility and test gates apply. |
 | M2 study sessions / outside-assistant import | [M2 design](M2_STUDY_LIBRARY_DESIGN_2026-09-27.md), [saved-guide feature brief](STUDY_GUIDE_TO_TEST_FEATURE_BRIEF_2026-09-29.md), ROADMAP | Planning/contract preparation only until the real-user check-in and scoped go-ahead. A saved-guide Gemini request differs from offline structured import. |
 | Release | [Review process](RELEASE_REVIEW_PROCESS.md) and [Mac tracker](MAC_PARITY_CHECKLIST.md) | Windows hold on v0.5.1; v0.5.2 retired; frozen v0.5.3 Mac candidate held. No publication or candidate replacement authorized here. |
@@ -34,7 +37,11 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 
 ## Continue on the Mac
 
-- Existing task: [Mac session prompt](MAC_SESSION_PROMPT.md), with the report in draft PR #44. Continue missing observed smoke tests safely; do not blindly repeat unchanged successful commands.
+- Current outcome: [corrected baseline accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md); publication must pass exact-head CI and merge. Then use [Claude's A3 compatibility prompt](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md) from clean updated main. A2 remains with its Windows owner; installed-test account/signing gates remain unmet.
+
+- Completed baseline assignment (review and corrected acceptance retained): [Claude Mac baseline prompt](CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md), with [report review and measurement limits](MAC_REPORT_REVIEW_2026-10-02.md). Claude implements the bounded synthetic baseline and candidate recommendation; Codex reviews. No production dependency adoption or M2 migration is assigned by this task.
+
+- Existing task: [Mac session prompt](MAC_SESSION_PROMPT.md), with the source-evaluation report incorporated from PR #44. Continue missing observed smoke tests safely; do not blindly repeat unchanged successful commands.
 - Future reuse work: [open-source Mac prompt](OPEN_SOURCE_MAC_HANDOFF.md). Start with source/evidence review and measured baselines, not package installation.
 - Pending source correction contract: [A2 R6/R7 prompt](A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md). It cannot run against main until its matching implementation is made available under the review workflow.
 
