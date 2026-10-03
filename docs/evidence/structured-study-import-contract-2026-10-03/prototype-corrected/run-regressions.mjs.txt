@@ -1,0 +1,332 @@
+// Permanent R1/R2 regressions from Codex's review of the structured study-import prototype.
+// Usage: node run-regressions.mjs <results.json>
+// Results record test names, pass/fail, error codes and leak counts only. Sentinel and credential-shaped values are
+// assembled here at run time and are never written to results or printed.
+import { writeFileSync } from "node:fs";
+import * as validator from "./src/validator.mjs";
+const { validatePacketBytes } = validator;
+
+const out = process.argv[2];
+const enc = (s) => Buffer.from(s, "utf8");
+const run = (p) => validatePacketBytes(enc(JSON.stringify(p)));
+const base = (extra = {}) => ({ format: "hfd-study-packet", formatVersion: 1, title: "Regression", ...extra });
+const q = (id, extra = {}) => ({
+  id, type: "single-choice", question: "Pick the invented label",
+  choices: [{ id: "a", text: "Zorb" }, { id: "b", text: "Quill" }], correctChoiceId: "b", explanation: "Invented.", ...extra,
+});
+const card = (id, extra = {}) => ({ id, front: "Front", back: "Back", ...extra });
+
+// Ordinary ASCII private text that is also identifier-shaped, plus credential-shaped values built at run time.
+const PRIVATE = ["PrivateNote_Alice42", "Alice.medical.2026", "acct-7741-checking"];
+const CREDENTIAL_SHAPED = [
+  ["sk-", "Q", 30], ["ghp_", "A", 36], ["AKIA", "B", 16], ["AIza", "C", 35], ["xoxb-", "1", 12],
+].map(([prefix, ch, n]) => prefix + ch.repeat(n));
+const SENSITIVE = [...PRIVATE, ...CREDENTIAL_SHAPED];
+// Choice IDs and answer keys are limited to 32 characters, so only sentinels that are valid choice IDs are used there.
+const CHOICE_SAFE = SENSITIVE.filter((v) => /^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$/.test(v));
+
+const ALLOWED_FAILURE_KEYS = new Set(["ok", "stage", "errors", "omittedErrors"]);
+const ALLOWED_ERROR_KEYS = new Set(["code", "path", "message", "limit", "offset", "supported", "index", "firstIndex", "field"]);
+const FIELD_ALLOWLIST = new Set([
+  // contract-owned names (duplicate_key on a known field)
+  "format", "formatVersion", "title", "source", "generator", "createdAt", "note", "guide", "summary", "sections",
+  "heading", "body", "sourceNotes", "flashcards", "id", "front", "back", "sourceRefs", "label", "page", "questions",
+  "type", "question", "choices", "text", "correctChoiceId", "explanation",
+  // fixed directive and legacy-answer allowlists
+  "actions", "commands", "command", "script", "scripts", "exec", "execute", "run", "fetch", "upload", "download",
+  "webhook", "callback", "instructions", "system", "systemPrompt", "onImport", "onLoad", "html", "mdx", "jsx",
+  "apiKey", "token", "credentials", "correctIndex", "answerIndex", "answer", "correct", "correctAnswer",
+  "correctChoice", "answers", "correctChoiceIds",
+]);
+const PATH_RE = /^\$(?:\[\d+\]|\.(?:<field>|[A-Za-z]+))*$/;
+
+function leaks(result, values = SENSITIVE) {
+  const text = JSON.stringify(result);
+  return values.filter((v) => text.includes(v)).length;
+}
+
+/** Whole-failure-object invariant: allowlisted keys, fixed path grammar, allowlisted `field`, no sensitive values. */
+function failureShapeProblems(result) {
+  const problems = [];
+  if (result.ok !== false) problems.push("not a failure");
+  for (const k of Object.keys(result)) if (!ALLOWED_FAILURE_KEYS.has(k)) problems.push(`failure key ${k}`);
+  for (const e of result.errors ?? []) {
+    for (const k of Object.keys(e)) if (!ALLOWED_ERROR_KEYS.has(k)) problems.push(`error key ${k}`);
+    if (typeof e.path !== "string" || !PATH_RE.test(e.path)) problems.push("path grammar");
+    for (const seg of (e.path ?? "").match(/\.[A-Za-z]+/g) ?? []) if (!FIELD_ALLOWLIST.has(seg.slice(1))) problems.push("path segment not contract-owned");
+    if ("field" in e && !FIELD_ALLOWLIST.has(e.field)) problems.push("field not allowlisted");
+    for (const k of ["limit", "offset", "index", "firstIndex"]) if (k in e && !Number.isInteger(e[k])) problems.push(`${k} not integer`);
+    if (typeof e.message !== "string") problems.push("message");
+  }
+  if (leaks(result)) problems.push(`sensitive values echoed: ${leaks(result)}`);
+  return problems;
+}
+
+const rows = [];
+function test(name, fn) {
+  let problems;
+  try { problems = fn() ?? []; } catch (e) { problems = [`threw ${e?.constructor?.name ?? "error"}`]; }
+  rows.push({ name, pass: problems.length === 0, problems });
+}
+const codes = (r) => [...new Set((r.errors ?? []).map((e) => e.code))].sort().join(",");
+const expectCode = (r, code) => (r.ok === false && (r.errors ?? []).some((e) => e.code === code) ? [] : [`expected ${code}, got ${r.ok ? "ok" : codes(r)}`]);
+
+// ---------------------------------------------------------------- R1: diagnostic privacy
+test("R1: unknown ASCII private keys are redacted at top level and nested", () => {
+  const p = [];
+  for (const key of PRIVATE) {
+    for (const packet of [base({ guide: { summary: "x" }, [key]: "v" }), base({ guide: { summary: "x", [key]: "v" } }),
+      base({ questions: [q("q1", { [key]: 1 })] })]) {
+      const r = run(packet);
+      p.push(...expectCode(r, "unknown_field"), ...failureShapeProblems(r));
+      if ((r.errors ?? []).some((e) => e.code === "unknown_field" && "field" in e)) p.push("unknown_field carries field");
+    }
+  }
+  return p;
+});
+test("R1: credential-shaped unknown keys are redacted", () => {
+  const p = [];
+  for (const key of CREDENTIAL_SHAPED) {
+    const r = run(base({ flashcards: [card("c1", { [key]: true })], [key]: "v" }));
+    p.push(...expectCode(r, "unknown_field"), ...failureShapeProblems(r));
+  }
+  return p;
+});
+test("R1: nested scan failures under unknown keys use redacted paths", () => {
+  const p = [];
+  for (const key of SENSITIVE) {
+    const dup = validatePacketBytes(enc(`{"format":"hfd-study-packet","formatVersion":1,"title":"x","${key}":{"title":"a","title":"b"}}`));
+    p.push(...expectCode(dup, "duplicate_key"), ...failureShapeProblems(dup));
+    if (dup.errors?.[0]?.path !== "$.<field>") p.push("duplicate path not redacted");
+    const deep = validatePacketBytes(enc(`{"title":"x","${key}":[[[[[[[[[0]]]]]]]]]}`));
+    p.push(...expectCode(deep, "depth_exceeded"), ...failureShapeProblems(deep));
+    const bad = validatePacketBytes(enc(`{"title":"x","${key}":{"${key}":[1,}}`));
+    p.push(...expectCode(bad, "malformed_json"), ...failureShapeProblems(bad));
+    const ctl = validatePacketBytes(enc(`{"title":"x","${key}":{"n":"a\\u0001b"}}`));
+    p.push(...expectCode(ctl, "invalid_string_character"), ...failureShapeProblems(ctl));
+  }
+  return p;
+});
+test("R1: duplicate unknown keys are reported without their name", () => {
+  const p = [];
+  for (const key of SENSITIVE) {
+    const r = validatePacketBytes(enc(`{"format":"hfd-study-packet","formatVersion":1,"title":"x","${key}":1,"${key}":2}`));
+    p.push(...expectCode(r, "duplicate_key"), ...failureShapeProblems(r));
+    if ("field" in (r.errors?.[0] ?? {})) p.push("field present for unknown duplicate");
+  }
+  return p;
+});
+test("R1: duplicate contract-owned key reports only the fixed field name", () => {
+  const r = validatePacketBytes(enc('{"format":"hfd-study-packet","formatVersion":1,"title":"a","title":"b"}'));
+  const p = [...expectCode(r, "duplicate_key"), ...failureShapeProblems(r)];
+  if (r.errors?.[0]?.field !== "title" || r.errors?.[0]?.path !== "$") p.push("expected field title at $");
+  return p;
+});
+for (const [label, build, codeName, idPath] of [
+  ["question", (id) => base({ questions: [q(id), q("other"), q(id)] }), "duplicate_id", "$.questions[2].id"],
+  ["flashcard", (id) => base({ flashcards: [card(id), card("other"), card(id)] }), "duplicate_id", "$.flashcards[2].id"],
+  ["choice", (id) => base({ questions: [q("q1", { choices: [{ id, text: "A" }, { id: "b", text: "B" }, { id, text: "C" }], correctChoiceId: "b" })] }), "duplicate_choice_id", "$.questions[0].choices[2].id"],
+]) {
+  test(`R1: duplicate ${label} IDs are identified by index and firstIndex only`, () => {
+    const p = [];
+    for (const id of label === "choice" ? CHOICE_SAFE : SENSITIVE) {
+      const r = run(build(id));
+      p.push(...expectCode(r, codeName), ...failureShapeProblems(r));
+      const e = (r.errors ?? []).find((x) => x.code === codeName);
+      if (!e || e.path !== idPath || e.index !== 2 || e.firstIndex !== 0 || "id" in e) p.push("expected path, index 2, firstIndex 0, no id");
+    }
+    return p;
+  });
+}
+test("R1: credential-shaped duplicate question IDs are not echoed beside the credential error", () => {
+  const p = [];
+  for (const id of CREDENTIAL_SHAPED) {
+    const r = run(base({ questions: [q(id), q(id)] }));
+    p.push(...failureShapeProblems(r));
+    if (r.ok) p.push("accepted");
+  }
+  return p;
+});
+test("R1: answer keys and duplicate choice text never echo packet values", () => {
+  const p = [];
+  for (const v of CHOICE_SAFE) {
+    const r1 = run(base({ questions: [q("q1", { correctChoiceId: v })] }));
+    p.push(...expectCode(r1, "answer_key_not_in_choices"), ...failureShapeProblems(r1));
+    const r2 = run(base({ questions: [q("q1", { choices: [{ id: "a", text: v }, { id: "b", text: v }], correctChoiceId: "a" })] }));
+    p.push(...failureShapeProblems(r2));
+    if (r2.ok) p.push("duplicate text accepted");
+  }
+  return p;
+});
+test("R1: directive and legacy-answer fields keep targeted errors from fixed allowlists", () => {
+  const r = run(base({ guide: { summary: "x" }, actions: [1], questions: [{ ...q("q1"), correctIndex: 1 }] }));
+  const p = [...failureShapeProblems(r)];
+  const d = r.errors?.find((e) => e.code === "directive_field_unsupported");
+  const l = r.errors?.find((e) => e.code === "ambiguous_answer_key_field");
+  if (d?.field !== "actions" || d?.path !== "$") p.push("directive error");
+  if (l?.field !== "correctIndex" || l?.path !== "$.questions[0]") p.push("legacy answer error");
+  return p;
+});
+test("R1: benign contract-owned paths are kept exactly", () => {
+  const r = run(base({ guide: { sections: [{ heading: 5, body: "b" }] } }));
+  const p = [...expectCode(r, "wrong_type"), ...failureShapeProblems(r)];
+  if (r.errors?.[0]?.path !== "$.guide.sections[0].heading") p.push(`path ${r.errors?.[0]?.path}`);
+  return p;
+});
+test("R1: failure objects contain only allowlisted properties across stages", () => {
+  const p = [];
+  const cases = [
+    new Uint8Array(0), new Uint8Array([0xff, 0xfe, 0x7b]), enc("{"), enc('{"format":"x"}'),
+    enc(JSON.stringify(base({ formatVersion: 7, guide: { summary: "x" } }))),
+    enc(JSON.stringify(base({ title: 1 }))), enc(JSON.stringify(base())),
+    enc(JSON.stringify(base({ questions: Array.from({ length: 60 }, (_, k) => q(`q${k}`, { correctChoiceId: "z" })) }))),
+  ];
+  for (const bytes of cases) p.push(...failureShapeProblems(validatePacketBytes(bytes)));
+  const version = validatePacketBytes(cases[4]);
+  if ("found" in (version.errors?.[0] ?? {})) p.push("unsupported_version returns the packet's version value");
+  const capped = validatePacketBytes(cases[7]);
+  if (capped.errors?.length !== 50 || capped.omittedErrors !== 10) p.push("error cap");
+  return p;
+});
+test("R1: unexpected internal errors return a fixed code without exception text", () => {
+  const p = [];
+  for (const bad of [null, "not bytes", { length: 3 }]) {
+    let r;
+    try { r = validatePacketBytes(bad); } catch { p.push("threw"); continue; }
+    p.push(...failureShapeProblems(r));
+    if (r.errors?.[0]?.code !== "internal_error") p.push("expected internal_error");
+  }
+  return p;
+});
+
+// ---------------------------------------------------------------- R2: preview data
+const data = (r) => r.preview?.data;
+const SOURCE = { generator: "  Example\ttool  ", createdAt: " 2026-10-03 ", note: "Line one\r\nLine two  " };
+test("R2: preview retains normalized source claims", () => {
+  const r = run(base({ guide: { summary: "x" }, source: SOURCE }));
+  const want = { generator: "Example tool", createdAt: "2026-10-03", note: "Line one\nLine two" };
+  return JSON.stringify(data(r)?.source) === JSON.stringify(want) ? [] : ["source claims"];
+});
+for (const [label, source] of [["generator-only", { generator: "Tool" }], ["createdAt-only", { createdAt: "Invented date" }], ["note-only", { note: "Invented exporter claim" }]]) {
+  test(`R2: ${label} source is flagged as an unverified claim`, () => {
+    const r = run(base({ guide: { summary: "x" }, source }));
+    const p = [];
+    if (!r.ok) return ["rejected"];
+    if (!r.preview.warnings.some((w) => w.code === "source_claim_unverified")) p.push("no warning");
+    if (JSON.stringify(data(r)?.source) !== JSON.stringify(source)) p.push("claim not retained");
+    return p;
+  });
+}
+test("R2: absent or empty source is not a claim", () => {
+  const p = [];
+  for (const source of [undefined, {}, { generator: "   ", note: "\n" }]) {
+    const r = run(base({ guide: { summary: "x" }, ...(source === undefined ? {} : { source }) }));
+    if (!r.ok) { p.push("rejected"); continue; }
+    if (r.preview.warnings.some((w) => w.code === "source_claim_unverified")) p.push("warned without a claim");
+    if (data(r)?.source !== null) p.push("source not null");
+  }
+  return p;
+});
+const REF_PACKET = base({
+  guide: { summary: "Guide" },
+  flashcards: [card("card-alpha-77", { sourceRefs: [{ label: "  Invented\n chart é ", page: 1 }, { label: "Second ref" }] }), card("card-beta-78")],
+  questions: [q("question-gamma-79", { sourceRefs: [{ page: 9 }] }), q("question-delta-80", { sourceRefs: [{ label: "Delta one" }, { label: "Delta two", page: 2 }] })],
+});
+test("R2: references stay associated with their items and order", () => {
+  const r = run(REF_PACKET);
+  if (!r.ok) return ["rejected"];
+  const d = data(r);
+  const got = {
+    cards: d.flashcards.map((c) => [c.index, c.id, c.sourceRefs]),
+    questions: d.questions.map((x) => [x.index, x.id, x.sourceRefs]),
+  };
+  const want = {
+    cards: [[0, "card-alpha-77", [{ label: "Invented chart é", page: 1 }, { label: "Second ref" }]], [1, "card-beta-78", []]],
+    questions: [[0, "question-gamma-79", [{ page: 9 }]], [1, "question-delta-80", [{ label: "Delta one" }, { label: "Delta two", page: 2 }]]],
+  };
+  return JSON.stringify(got) === JSON.stringify(want) ? [] : ["associations"];
+});
+test("R2: preview keeps normalized item content and choice IDs for association", () => {
+  // Block fields drop leading blank lines and trailing whitespace and turn CRLF into LF; single-line fields collapse
+  // whitespace (contract §2.8). First-line indentation in block fields is kept on purpose.
+  const r = run(base({ questions: [q("q1", { question: "\r\nWhich?\r\nSecond line  ", choices: [{ id: "a", text: " Zo  rb " }, { id: "b", text: "Quill" }] })] }));
+  const x = data(r)?.questions?.[0];
+  return x && x.question === "Which?\nSecond line" && JSON.stringify(x.choices) === JSON.stringify([{ id: "a", text: "Zo rb" }, { id: "b", text: "Quill" }]) && x.correctChoiceId === "b" ? [] : ["normalized question"];
+});
+test("R2: preview-only information is absent from persistence output", () => {
+  const r = run({ ...REF_PACKET, source: { generator: "Gen-Claim-55", createdAt: "Date-Claim-56", note: "Note-Claim-57" } });
+  if (!r.ok) return ["rejected"];
+  const stored = JSON.stringify(r.payload);
+  const p = [];
+  for (const v of ["Gen-Claim-55", "Date-Claim-56", "Note-Claim-57", "card-alpha-77", "card-beta-78", "question-gamma-79", "question-delta-80", "Invented chart", "Second ref", "Delta one", "Delta two", "sourceRefs", "correctChoiceId"]) {
+    if (stored.includes(v)) p.push("persistence contains preview-only value");
+  }
+  const pages = [...(r.payload.studySet?.flashcards ?? []), ...(r.payload.practiceTest?.questions ?? [])].map((x) => x.sourcePage);
+  if (pages.some((v) => v !== null)) p.push("sourcePage not null");
+  return p;
+});
+test("R2: discardedOnSave discloses claims, references and export IDs", () => {
+  const r = run({ ...REF_PACKET, source: { createdAt: "x", note: "y" } });
+  const want = { sourceClaims: ["createdAt", "note"], sourceRefs: 5, exportIds: 4, choiceIds: 4 };
+  return JSON.stringify(r.preview?.discardedOnSave) === JSON.stringify(want) ? [] : ["discardedOnSave"];
+});
+test("R2: guide-only, questions-only and cards-only preview data", () => {
+  const p = [];
+  const g = data(run(base({ guide: { summary: "S", sections: [{ heading: " H ", body: "B" }] } })));
+  if (!g || g.guide?.sections?.[0]?.heading !== "H" || g.flashcards.length || g.questions.length) p.push("guide-only");
+  const qo = data(run(base({ questions: [q("q1")] })));
+  if (!qo || qo.guide !== null || qo.questions.length !== 1 || qo.flashcards.length) p.push("questions-only");
+  const co = data(run(base({ flashcards: [card("c1"), card("c2")] })));
+  if (!co || co.guide !== null || co.flashcards.length !== 2 || co.questions.length) p.push("cards-only");
+  return p;
+});
+
+// ---------------------------------------------------------------- R3: DTO, hash and reader/validator boundary
+test("R3: persistence material carries only the packet title", () => {
+  const r = run(base({ guide: { summary: "x" } }));
+  return r.ok && JSON.stringify(r.payload.material) === JSON.stringify({ title: "Regression" }) ? [] : ["material fields"];
+});
+test("R3: canonical persistence JSON ignores key order and preview-only values", () => {
+  const { canonicalPersistenceJson } = validator;
+  if (typeof canonicalPersistenceJson !== "function") return ["canonicalPersistenceJson missing"];
+  const a = run(REF_PACKET);
+  const reordered = JSON.parse(JSON.stringify(REF_PACKET), (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).reverse()) : v));
+  const b = run({ ...reordered, source: { note: "Different claim" } });
+  const c = run({ ...REF_PACKET, flashcards: REF_PACKET.flashcards.map((x, i) => ({ ...x, id: `renamed-${i}`, sourceRefs: [] })) });
+  const d = run({ ...REF_PACKET, questions: [q("question-gamma-79", { correctChoiceId: "a" }), REF_PACKET.questions[1]] });
+  const [ja, jb, jc, jd] = [a, b, c, d].map((r) => canonicalPersistenceJson(r.payload));
+  const p = [];
+  if (ja !== jb || ja !== jc) p.push("canonical JSON changed with key order, claims, IDs or refs");
+  if (ja === jd) p.push("canonical JSON did not change with the answer");
+  for (const v of ["card-alpha-77", "Invented chart", "Different claim"]) if (ja.includes(v) || jb.includes(v)) p.push("preview-only value in canonical JSON");
+  return p;
+});
+test("R3: text entry re-derives the byte limit and refuses an unstripped BOM", () => {
+  const { validatePacketText } = validator;
+  if (typeof validatePacketText !== "function") return ["validatePacketText missing"];
+  const small = JSON.stringify(base({ guide: { summary: "x" } }));
+  const atLimitMinus3 = small + " ".repeat(4 * 1024 * 1024 - 3 - Buffer.byteLength(small));
+  const p = [];
+  if (!validatePacketText(atLimitMinus3).ok) p.push("rejected under limit");
+  const withBom = validatePacketText(atLimitMinus3, { bomRemoved: true });
+  if (!withBom.ok || !withBom.preview.warnings.some((w) => w.code === "utf8_bom_removed")) p.push("BOM at exact limit");
+  const over = validatePacketText(atLimitMinus3 + " ", { bomRemoved: true });
+  if (over.ok || over.errors[0].code !== "file_too_large") p.push("over limit with BOM accepted");
+  const astral = base({ guide: { summary: "\u{1F680}".repeat(1_048_576) } }); // 4 UTF-8 bytes each, 2 UTF-16 units
+  const big = validatePacketText(JSON.stringify(astral));
+  if (big.ok || big.errors[0].code !== "file_too_large") p.push("UTF-8 length not derived from text");
+  const bom = validatePacketText("\uFEFF" + small);
+  if (bom.ok || bom.errors[0].code !== "unsupported_encoding") p.push("leading BOM character accepted");
+  return p;
+});
+
+// ---------------------------------------------------------------- Controls preserved from Codex's diagnostics
+test("Control: trailing LF in a flashcard ID is rejected", () => (run(base({ flashcards: [card("c1\n")] })).ok ? ["accepted"] : []));
+test("Control: trailing LF in a choice ID and answer is rejected", () =>
+  (run(base({ questions: [q("q1", { choices: [{ id: "a\n", text: "A" }, { id: "b", text: "B" }], correctChoiceId: "a\n" })] })).ok ? ["accepted"] : []));
+
+const summary = { total: rows.length, passed: rows.filter((r) => r.pass).length, failed: rows.filter((r) => !r.pass).length, node: process.version };
+writeFileSync(out, JSON.stringify({ summary, rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.name}${r.pass ? "" : "  [" + [...new Set(r.problems)].slice(0, 4).join("; ") + "]"}`);
+console.log(JSON.stringify(summary));
+process.exit(summary.failed ? 1 : 0);

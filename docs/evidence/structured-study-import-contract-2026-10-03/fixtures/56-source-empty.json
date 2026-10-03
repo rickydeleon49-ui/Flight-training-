@@ -1,0 +1,12 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Empty source",
+  "source": {
+    "generator": "  ",
+    "note": ""
+  },
+  "guide": {
+    "summary": "x"
+  }
+}

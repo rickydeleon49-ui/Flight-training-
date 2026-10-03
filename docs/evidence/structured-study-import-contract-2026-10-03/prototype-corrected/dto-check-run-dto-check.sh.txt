@@ -1,0 +1,24 @@
+#!/bin/zsh
+# Typechecks the import DTOs and the actual prototype output against the unchanged domain types, with the
+# repository's own TypeScript and compiler settings. Reads the checkout; writes only inside this scratch folder.
+set -u
+export PATH=/opt/homebrew/opt/node@22/bin:$PATH
+D=${0:A:h}; C=${HFD_CHECKOUT:?set HFD_CHECKOUT to the repository checkout}; P=${HFD_PROTO:?set HFD_PROTO to the prototype folder}
+cd $D
+node gen-examples.mjs $P $C/docs/evidence/structured-study-import-contract-2026-10-03/fixtures || exit 1
+for name in positive negative; do
+  files='"import-dto.ts", "examples.generated.ts"'; [ $name = negative ] && files='"negative-old-omit.ts"'
+  cat > tsconfig.$name.json <<JSON
+{ "compilerOptions": { "target": "ES2022", "lib": ["ES2022"], "module": "ESNext", "moduleResolution": "bundler",
+  "strict": true, "noEmit": true, "skipLibCheck": true, "isolatedModules": true, "noUnusedLocals": true,
+  "noUnusedParameters": true, "noUncheckedIndexedAccess": true, "exactOptionalPropertyTypes": false,
+  "baseUrl": ".", "paths": { "@hfd/types": ["$C/src/domain/types.ts"] } },
+  "files": [$files] }
+JSON
+done
+node $C/node_modules/typescript/bin/tsc -p tsconfig.positive.json > positive.log 2>&1; pos=$?
+node $C/node_modules/typescript/bin/tsc -p tsconfig.negative.json > negative.log 2>&1; neg=$?
+sed -i '' "s|$C|<checkout>|g" positive.log negative.log
+echo "positive (DTOs + actual prototype output) exit=$pos"; cat positive.log
+echo "negative (reviewed Omit types, expected to fail) exit=$neg"; cat negative.log
+[ $pos -eq 0 ] && [ $neg -ne 0 ]

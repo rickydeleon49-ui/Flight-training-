@@ -1,0 +1,9 @@
+import {createElement as h} from "react"; import {renderToStaticMarkup} from "react-dom/server"; import Markdown from "react-markdown";
+import {fromMarkdown} from "mdast-util-from-markdown"; import {toHast} from "mdast-util-to-hast";
+for (const md of ["<script>alert(1)</script> hi","x <b>bold</b> y","<Comp prop={1} />"]) console.log("skipHtml:false", JSON.stringify(md), "=>", JSON.stringify(renderToStaticMarkup(h(Markdown,{skipHtml:false},md))));
+const stage=(md)=>{let s="parse";const t=Date.now();try{const m=fromMarkdown(md);s="toHast";toHast(m);s="render";renderToStaticMarkup(h(Markdown,{},md));return "ok "+(Date.now()-t)+"ms"}catch(e){return "FAIL@"+s+" "+e.constructor.name}};
+for (const n of [500,1000,1500,2000,2500,3000,4000]) console.log("bq",n,stage(">".repeat(n)+" x"));
+for (const n of [500,1000,1500,2000,3000,5000]) console.log("samelineList",n,stage("- ".repeat(n)+"x"));
+for (const n of [100,140]) {const md=Array.from({length:n},(_, k)=>" ".repeat(2*k)+"- x").join("\n"); console.log("indentList",n,md.length,stage(md));}
+for (const n of [1000,5000]) console.log("emphasis",n,stage("*".repeat(n)+"x"+"*".repeat(n)));
+for (const n of [1000,5000]) console.log("links",n,stage("[".repeat(n)+"x"+"](u)".repeat(n)));

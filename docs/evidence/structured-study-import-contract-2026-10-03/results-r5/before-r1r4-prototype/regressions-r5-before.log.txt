@@ -1,0 +1,42 @@
+PASS  R1: unknown ASCII private keys are redacted at top level and nested
+PASS  R1: credential-shaped unknown keys are redacted
+PASS  R1: nested scan failures under unknown keys use redacted paths
+PASS  R1: duplicate unknown keys are reported without their name
+PASS  R1: duplicate contract-owned key reports only the fixed field name
+PASS  R1: duplicate question IDs are identified by index and firstIndex only
+PASS  R1: duplicate flashcard IDs are identified by index and firstIndex only
+PASS  R1: duplicate choice IDs are identified by index and firstIndex only
+PASS  R1: credential-shaped duplicate question IDs are not echoed beside the credential error
+PASS  R1: answer keys and duplicate choice text never echo packet values
+PASS  R1: directive and legacy-answer fields keep targeted errors from fixed allowlists
+PASS  R1: benign contract-owned paths are kept exactly
+PASS  R1: failure objects contain only allowlisted properties across stages
+PASS  R1: unexpected internal errors return a fixed code without exception text
+PASS  R2: preview retains normalized source claims
+PASS  R2: generator-only source is flagged as an unverified claim
+PASS  R2: createdAt-only source is flagged as an unverified claim
+PASS  R2: note-only source is flagged as an unverified claim
+PASS  R2: absent or empty source is not a claim
+PASS  R2: references stay associated with their items and order
+PASS  R2: preview keeps normalized item content and choice IDs for association
+PASS  R2: preview-only information is absent from persistence output
+PASS  R2: discardedOnSave discloses claims, references and export IDs
+PASS  R2: guide-only, questions-only and cards-only preview data
+PASS  R3: persistence material carries only the packet title
+PASS  R3: canonical persistence JSON ignores key order and preview-only values
+PASS  R3: text entry re-derives the byte limit and refuses an unstripped BOM
+FAIL  R5: questions with a sourceNotes-only guide are rejected, not silently dropped  [not a failure; failure key preview; failure key payload; sensitive values echoed: 2]
+FAIL  R5: questions with empty summary and sections plus sourceNotes are rejected  [not a failure; failure key preview; failure key payload; sensitive values echoed: 2]
+FAIL  R5: a summary that normalizes to empty does not make notes persistable  [not a failure; failure key preview; failure key payload; sensitive values echoed: 2]
+FAIL  R5: omitted and empty flashcard and section arrays are treated alike  [not a failure; failure key preview; failure key payload; sensitive values echoed: 2]
+PASS  R5: credential-shaped or private notes are rejected without echo
+PASS  R5: cards with guide sourceNotes preserve the notes
+PASS  R5: a substantive guide with sourceNotes preserves them (summary or sections)
+PASS  R5: combined guide, cards and questions preserve the notes
+PASS  R5: questions with blank sourceNotes remain valid
+PASS  R5: standalone sourceNotes remain an empty packet
+PASS  R5: sourceNotes normalization is preserved into preview and payload
+PASS  R5: canonical persistence content includes saved sourceNotes and changes with them
+PASS  Control: trailing LF in a flashcard ID is rejected
+PASS  Control: trailing LF in a choice ID and answer is rejected
+{"total":41,"passed":37,"failed":4,"node":"v22.23.3"}

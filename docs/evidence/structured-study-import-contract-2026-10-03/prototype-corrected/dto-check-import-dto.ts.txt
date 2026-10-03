@@ -1,0 +1,81 @@
+// Proposed Slice A import DTOs (contract §2.12–2.13). Disposable typecheck only; imports the REAL, unchanged
+// domain types through the "@hfd/types" path alias (mapped at run time to <checkout>/src/domain/types.ts).
+// The stored domain types keep provider "gemini"; widening them belongs to Slice B. These DTOs omit and redefine
+// provider instead, so Slice A is type-correct on its own.
+import type { AiStudySet, PracticeTest, StudyMaterial } from "@hfd/types";
+
+/** Fields the import never supplies: identity and timestamps come from the save; provider is redefined. */
+type StoredOnly = "sourceMaterialId" | "provider" | "generatedAt" | "updatedAt";
+
+export type ImportedStudySetDraft = Omit<AiStudySet, StoredOnly> & { provider: "import"; model: "" };
+export type ImportedPracticeTestDraft = Omit<PracticeTest, StoredOnly> & { provider: "import"; model: "" };
+
+/** Only the title comes from the packet. Every other material field is a fixed default owned by the Slice B
+ *  native save command (IMPORT_MATERIAL_DEFAULTS), so a packet cannot set it. */
+export type ImportedMaterialDraft = Pick<StudyMaterial, "title">;
+
+export type ImportPayload = {
+  material: ImportedMaterialDraft;
+  studySet: ImportedStudySetDraft | null;
+  practiceTest: ImportedPracticeTestDraft | null;
+};
+
+/** The defaults the native save applies; checked against the real StudyMaterial field types. */
+export const IMPORT_MATERIAL_DEFAULTS = {
+  materialType: "study_guide", topic: "general", reviewStatus: "needs_review", priority: "later",
+  goalId: null, eventId: null, notes: "", filePath: null, originalFileName: null, fileSize: null, lastReviewedAt: null, tags: [],
+} satisfies Omit<StudyMaterial, "id" | "title" | "createdAt" | "updatedAt">;
+
+export type PreviewSourceRef = { label?: string; page?: number };
+export type PacketPreviewData = {
+  title: string;
+  source: { generator?: string; createdAt?: string; note?: string } | null;
+  guide: { summary: string; sections: { heading: string; body: string }[]; sourceNotes: string } | null;
+  flashcards: { index: number; id: string; front: string; back: string; sourceRefs: PreviewSourceRef[] }[];
+  questions: {
+    index: number; id: string; question: string; choices: { id: string; text: string }[];
+    correctChoiceId: string; explanation: string; sourceRefs: PreviewSourceRef[];
+  }[];
+};
+export type DiscardedOnSave = { sourceClaims: ("generator" | "createdAt" | "note")[]; sourceRefs: number; exportIds: number; choiceIds: number };
+
+export type PacketWarningCode =
+  | "utf8_bom_removed" | "no_practice_test" | "no_study_guide" | "source_refs_unverified" | "source_claim_unverified"
+  | "bidi_controls_present" | "html_like_text" | "markdown_images_not_shown";
+export type PacketPreview = {
+  title: string;
+  counts: { sections: number; flashcards: number; questions: number; choices: number; sourceRefs: number };
+  createsStudySet: boolean;
+  createsPracticeTest: boolean;
+  warnings: { code: PacketWarningCode; message: string }[];
+  data: PacketPreviewData;
+  discardedOnSave: DiscardedOnSave;
+};
+
+export type ContractField =
+  | "format" | "formatVersion" | "title" | "source" | "generator" | "createdAt" | "note" | "guide" | "summary"
+  | "sections" | "heading" | "body" | "sourceNotes" | "flashcards" | "id" | "front" | "back" | "sourceRefs" | "label"
+  | "page" | "questions" | "type" | "question" | "choices" | "text" | "correctChoiceId" | "explanation";
+export type DirectiveField =
+  | "actions" | "commands" | "command" | "script" | "scripts" | "exec" | "execute" | "run" | "fetch" | "upload"
+  | "download" | "webhook" | "callback" | "instructions" | "system" | "systemPrompt" | "onImport" | "onLoad" | "html"
+  | "mdx" | "jsx" | "apiKey" | "token" | "credentials";
+export type LegacyAnswerField =
+  | "correctIndex" | "answerIndex" | "answer" | "correct" | "correctAnswer" | "correctChoice" | "answers" | "correctChoiceIds";
+
+/** The diagnostic boundary: only fixed codes/messages, contract-owned paths, integers and allowlisted names. */
+export type PacketError = {
+  code: string; // one of the fixed codes in contract §2.12
+  path: string; // "$" followed by ".<ContractField>", ".<field>" (redacted) or "[<integer>]" segments only
+  message: string; // the fixed message for the code
+  limit?: number;
+  offset?: number;
+  index?: number;
+  firstIndex?: number;
+  supported?: [1];
+  field?: ContractField | DirectiveField | LegacyAnswerField;
+};
+
+export type PacketValidationResult =
+  | { ok: true; stage: "preview"; preview: PacketPreview; payload: ImportPayload }
+  | { ok: false; stage: "bytes" | "scan" | "gate" | "schema" | "semantic" | "internal"; errors: PacketError[]; omittedErrors: number };

@@ -1,0 +1,101 @@
+// Renders the guide text of validated packets with the real react-markdown 10.1.0 safe configuration
+// and checks the produced markup. Usage: node run-render.mjs <fixtures-dir> <results.json>
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { validatePacketBytes } from "./src/validator.mjs";
+import { renderGuideMarkdown, renderCurrentPlainText } from "./src/render.mjs";
+
+const [fixturesDir, resultsPath] = process.argv.slice(2);
+const ALLOWED_TAGS = new Set(["p", "h5", "h6", "ul", "ol", "li", "em", "strong", "code", "pre", "blockquote", "hr", "br", "span"]);
+const ALLOWED_ATTRS = new Set(["class", "start"]);
+let fetchCalls = 0;
+globalThis.fetch = () => { fetchCalls++; throw new Error("fetch is not allowed"); };
+
+function inspect(html) {
+  const problems = [];
+  for (const m of html.matchAll(/<\/?([a-zA-Z0-9]+)([^>]*)>/g)) {
+    const tag = m[1].toLowerCase();
+    if (!ALLOWED_TAGS.has(tag)) problems.push(`tag:${tag}`);
+    for (const a of m[2].matchAll(/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=/g)) if (!ALLOWED_ATTRS.has(a[1].toLowerCase())) problems.push(`attr:${a[1]}`);
+    if (/javascript:|vbscript:|data:|file:|asset:|tauri:/i.test(m[2])) problems.push("scheme-in-tag");
+  }
+  return problems;
+}
+
+const rows = [];
+let failures = 0;
+const record = (name, markdown, expect = {}) => {
+  const t0 = performance.now();
+  let out, error = null;
+  try { out = renderGuideMarkdown(markdown); } catch (e) { error = e.constructor.name; }
+  const ms = +(performance.now() - t0).toFixed(1);
+  const problems = error ? [`threw:${error}`] : inspect(out.html);
+  if (!error) {
+    for (const s of expect.textIncludes ?? []) if (!out.html.includes(s)) problems.push(`missing:${s}`);
+    for (const s of expect.textExcludes ?? []) if (out.html.includes(s)) problems.push(`present:${s}`);
+    if (expect.maxMs && ms > expect.maxMs) problems.push(`slow:${ms}ms`);
+  }
+  const pass = problems.length === 0;
+  if (!pass) failures++;
+  rows.push({ name, pass, problems, ms, stats: out?.stats, htmlBytes: out?.html.length ?? 0, html: out && out.html.length <= 1600 ? out.html : undefined,
+    currentRendererHtml: markdown.length <= 600 ? renderCurrentPlainText(markdown) : undefined });
+};
+
+// 1. Hostile fixture: validate first (only validated text is ever rendered), then render each block.
+const hostile = validatePacketBytes(readFileSync(join(fixturesDir, "05-hostile-markdown.json")));
+if (!hostile.ok) throw new Error("hostile fixture must validate");
+const set = hostile.payload.studySet;
+record("05:summary", set.summary, { textIncludes: ["&lt;script&gt;", "Summary after a script tag."] });
+const expectations = {
+  "Raw HTML": { textIncludes: ["&lt;img src=x onerror=alert(1)&gt;", "&lt;b&gt;bold&lt;/b&gt;", "&lt;iframe"] },
+  Links: { textIncludes: ["(https://example.invalid/page)", "(mailto:someone@example.invalid)", "(https://example.invalid/auto)"],
+           textExcludes: ["(javascript:", "(JaVaScRiPt:", "(vbscript:", "(data:", "(file:", "(asset:", "(http://asset.localhost", "(tauri:", "(../", "(/etc", "(//evil"] },
+  Images: { textIncludes: ["[Image not shown: remote]", "[Image not shown: local]", "[Image not shown: data]", "[Image not shown: rel]"], textExcludes: ["pixel.png", "secret.png"] },
+  "MDX and JSX": { textIncludes: ["import fs from", "{fetch(", "&lt;Upload"] },
+  "Instructions as text": { textIncludes: ["Ignore previous instructions", "<code>rm -rf ~</code>"] },
+};
+for (const s of set.sections) record(`05:section:${s.heading}`, s.body, expectations[s.heading] ?? {});
+
+// 2. Nesting. Every case is first validated (all are valid packets within the text limits), then rendered.
+//    Up to the depth guard the text renders with formatting; deeper trees fall back to plain text instead of
+//    overflowing the stack, which the unguarded probe (probe-depth.mjs, probe-inline.mjs) showed.
+const packetWith = (md) => validatePacketBytes(Buffer.from(JSON.stringify({ format: "hfd-study-packet", formatVersion: 1, title: "t", guide: { sections: [{ heading: "h", body: md }] } })));
+const nesting = {
+  "nest:blockquote-16": ["> ".repeat(16) + "x", false],
+  "nest:same-line-list-16": ["- ".repeat(16) + "x", false],
+  "nest:mixed-16": ["> - ".repeat(8) + "x", false],
+  "nest:ordered-16": ["1. ".repeat(16) + "x", false],
+  "nest:indented-list-16": [Array.from({ length: 16 }, (_, k) => " ".repeat(2 * k) + "- x").join("\n"), false],
+  "nest:blockquote-40": ["> ".repeat(40) + "x", false],
+  "nest:blockquote-70 (fixture 51)": [null, true],
+  "nest:blockquote-5000": [">".repeat(5000) + " x", true],
+  "nest:same-line-list-1000": ["- ".repeat(1000) + "x", true],
+  "nest:indented-list-120": [Array.from({ length: 120 }, (_, k) => " ".repeat(2 * k) + "- x").join("\n"), true],
+  "nest:emphasis-run-10000 (body limit)": ["*".repeat(9_999) + "x" + "*".repeat(10_000), true],
+  "nest:emphasis-alternating-3300": [Array.from({ length: 3300 }, () => "*a ").join("") + "z" + Array.from({ length: 3300 }, () => " a*").join(""), true],
+};
+const fixture51 = validatePacketBytes(readFileSync(join(fixturesDir, "51-markdown-deep-nesting.json")));
+for (const [name, [md0, expectFallback]] of Object.entries(nesting)) {
+  const v = md0 === null ? fixture51 : packetWith(md0);
+  if (!v.ok) { failures++; rows.push({ name, pass: false, problems: ["validator rejected: " + v.errors.map((e) => e.code)] }); continue; }
+  const md = v.payload.studySet.sections[0].body;
+  record(name, md, { maxMs: 5000 });
+  const row = rows[rows.length - 1];
+  if (row.stats && row.stats.plainTextFallback !== expectFallback) { row.pass = false; row.problems.push(`fallback=${row.stats.plainTextFallback}`); failures++; }
+}
+const fixture52 = validatePacketBytes(readFileSync(join(fixturesDir, "52-markdown-moderate-nesting.json")));
+record("nest:moderate-16 (fixture 52)", fixture52.payload.studySet.sections[0].body, { textIncludes: ["<blockquote>", "<li>"] });
+
+// 3. Inline content at the 20,000 code-point body limit that does not nest deeply.
+record("limit20000:brackets", "[".repeat(9_000) + "x" + "](u)".repeat(2_000), { maxMs: 5000 });
+record("limit20000:plain", "word ".repeat(4_000), { maxMs: 5000 });
+record("limit20000:html-text", "<b>".repeat(6_666), { maxMs: 5000 });
+record("url:local-hosts-not-displayed", "[a](http://asset.localhost/x) [b](https://tauri.localhost/) [c](http://127.0.0.1:1420/) [d](http://[::1]/) [e](https://user:pw@example.invalid/) [f](https://example.invalid/ok)",
+  { textIncludes: ["(https://example.invalid/ok)"], textExcludes: ["(http://asset", "(https://tauri", "(http://127", "(http://[::1]", "user:pw"] });
+
+const summary = { total: rows.length, passed: rows.filter((r) => r.pass).length, failed: failures, fetchCalls, node: process.version };
+if (fetchCalls) summary.failed++;
+writeFileSync(resultsPath, JSON.stringify({ summary, rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.name}  ${r.ms ?? ""}ms ${r.pass ? "" : r.problems.join("; ")}`);
+console.log(JSON.stringify(summary));
+process.exit(summary.failed ? 1 : 0);

@@ -1,0 +1,35 @@
+// Codex's review diagnostics (docs/evidence/structured-study-import-review-2026-10-03/codex-diagnostics.mjs.txt),
+// adapted only where the documented success shape differs. Codex probed several possible locations
+// (r.packet / r.preview.packet / r.preview.source / r.preview.questions[].sourceRefs). The corrected prototype
+// documents one location, r.preview.data (contract §2.13, PacketPreviewData), so the two R2 retention checks
+// look there; every other assertion, input and expected value is unchanged. The fixture path is passed as an
+// argument and the output file is the second argument. Usage: node run-codex-diagnostics-adapted.mjs <fixtures> <out>
+import { validatePacketBytes } from "./src/validator.mjs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+const [fixtureDir, outPath] = process.argv.slice(2);
+const base = JSON.parse(readFileSync(join(fixtureDir, "02-flashcards-and-test.json"), "utf8"));
+const run = (p) => validatePacketBytes(Buffer.from(JSON.stringify(p)));
+const clone = () => structuredClone(base);
+const rows = [];
+function check(name, expected, actual) { rows.push({ name, expected, actual, pass: JSON.stringify(expected) === JSON.stringify(actual) }); }
+const secret = "sk-" + "Q".repeat(30);
+let p = clone(); p[secret] = "ordinary"; let r = run(p);
+check("R1: unknown identifier-shaped key never echoed", false, JSON.stringify(r.errors).includes(secret));
+p = clone(); p.questions[0].id = secret; p.questions[1].id = secret; r = run(p);
+check("R1: duplicate credential-shaped item id never echoed", false, JSON.stringify(r.errors).includes(secret));
+let text = '{"' + secret + '":{"title":"x", "title":"y"}}'; r = validatePacketBytes(Buffer.from(text));
+check("R1: scan-stage path never echoes unknown identifier", false, JSON.stringify(r.errors).includes(secret));
+r = run(clone());
+check("R2: validated preview retains normalized source claims", true, Boolean(r.preview?.data?.source));
+check("R2: validated preview retains per-item unverified references", true, Boolean(r.preview?.data?.questions?.[0]?.sourceRefs?.length));
+p = clone(); p.source = { note: "Invented exporter claim", createdAt: "Invented date" }; r = run(p);
+check("R2: source note/date without generator are marked unverified", true, r.preview.warnings.some((w) => w.code === "source_claim_unverified"));
+p = clone(); p.flashcards[0].id = "c1\n"; r = run(p);
+check("Control: trailing LF in flashcard id is rejected", false, r.ok);
+p = clone(); p.questions[0].choices[0].id = "a\n"; p.questions[0].correctChoiceId = "a\n"; r = run(p);
+check("Control: trailing LF in choice id and answer is rejected", false, r.ok);
+const summary = { total: rows.length, passed: rows.filter((x) => x.pass).length, failed: rows.filter((x) => !x.pass).length, node: process.version };
+writeFileSync(outPath, JSON.stringify({ summary, rows }, null, 2) + "\n");
+console.log(JSON.stringify(summary));
+process.exit(summary.failed ? 1 : 0);

@@ -1,0 +1,13 @@
+node v22.23.3 npm 10.9.9 2026-10-03T21:02:14Z
+validator exit=0 {"total":95,"passed":95,"failed":0,"node":"v22.23.3"}
+render exit=0 {"total":23,"passed":23,"failed":0,"fetchCalls":0,"node":"v22.23.3"}
+adapter exit=0 {"kind":"fake-adapter observations (not database evidence)","total":13,"passed":13,"node":"v22.23.3"}
+csp-jitless exit=0 {"mode":"jitless","jitless":true,"functionConstructorCalls":0,"accepted":7}
+csp-default exit=0 {"mode":"default","jitless":false,"functionConstructorCalls":9,"accepted":7}
+mutations exit=0 CAUGHT  M11 control characters accepted  exit=1 failed=2  fixture:41-escaped-control-character.json, fixture:42-lone-surrogate.json
+legacy-sim exit=0 }
+api-scan exit=0 Object.hasOwn (15.4) | react-markdown/lib/index.js:377 | Object.hasOwn(node.properties, key)
+probe-depth exit=0 links 5000 ok 17ms
+probe-inline exit=0 link-nest parse ok, mdast depth 4 toHast ok 21 ms
+schema exit=0 }
+schema-divergence exit=0 {"decomposedTitle400CodePoints":false,"composedTitle200CodePoints":true}

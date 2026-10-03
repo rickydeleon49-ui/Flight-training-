@@ -1,0 +1,69 @@
+// Mutation sensitivity: apply one deliberate defect to a scratch copy of the validator, rerun the fixture runner AND
+// the permanent R1/R2 regressions, and record which checks catch it.
+// expect "caught": at least one check must fail. expect "neutralized": a single-layer defect that the other privacy
+// layer is designed to absorb; no check may fail and no sensitive value may appear (demonstrates defense in depth).
+// Usage: node run-mutations.mjs <fixtures> <expected> <results.json>
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, symlinkSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
+const [fixtures, expected, resultsPath] = process.argv.slice(2);
+const here = new URL(".", import.meta.url).pathname;
+const UPSTREAM_ECHO = ['      return err("unknown_field", path); // the unknown name itself is never returned', '      return err("unknown_field", path, { field: key });'];
+const BOUNDARY_FIELD = ['if (typeof e?.field === "string" && FIELD_ALLOWLIST.has(e.field)) out.field = e.field;', 'if (typeof e?.field === "string") out.field = e.field;'];
+const PATH_UPSTREAM = ["else if (CONTRACT_FIELDS.has(part)) out += `.${part}`;", "else if (/^[A-Za-z0-9_.-]{1,64}$/.test(part)) out += `.${part}`;"];
+const PATH_BOUNDARY = ['(CONTRACT_FIELDS.has(name) || name === "<field>" ? m : ".<field>")', "m"];
+const PATH_GRAMMAR = ['path: /^\\$(?:\\[\\d+\\]|\\.(?:<field>|[A-Za-z]+))*$/.test(path) ? path : "$"', "path"];
+const MUTANTS = [
+  ["M1 forbidden property names accepted", "caught", [['if (FORBIDDEN_KEYS.has(key)) fail("forbidden_property_name");', ""]]],
+  ["M2 duplicate keys accepted (last wins)", "caught", [['if (seen.has(key)) fail("duplicate_key", CONTRACT_FIELDS.has(key) ? { field: key } : {});', ""]]],
+  ["M3 id uniqueness case-sensitive", "caught", [["const k = item.id.toLowerCase();", "const k = item.id;"]]],
+  ["M4 answer key case silently repaired", "caught", [['errors.push(err(folded ? "answer_key_case_mismatch" : "answer_key_not_in_choices", `${base}.correctChoiceId`));', 'if (!folded) errors.push(err("answer_key_not_in_choices", `${base}.correctChoiceId`));']]],
+  ["M5 depth limit removed (objects)", "caught", [['if (depth + 1 > LIMITS.depth) fail("depth_exceeded", { limit: LIMITS.depth });\n      i++;\n      const obj', "i++;\n      const obj"]]],
+  ["M6 UTF-16 length instead of code points", "caught", [["const length = codePointLength(value);", "const length = value.length;"]]],
+  ["M7 page claims mapped to sourcePage", "caught", [["flashcards: cards.map((c) => ({ front: c.front, back: c.back, sourcePage: null })),", "flashcards: cards.map((c) => ({ front: c.front, back: c.back, sourcePage: c.sourceRefs?.[0]?.page ?? null })),"]]],
+  ["M8 unknown fields allowed", "caught", [["export const packetSchema = z.strictObject({", "export const packetSchema = z.looseObject({"]]],
+  ["M9 credential check removed", "caught", [['if (CREDENTIAL_PATTERNS.some((re) => re.test(value))) errors.push(err("credential_like_content", p));', ""]]],
+  ["M10 errors echo input into the path (reviewed mutant)", "neutralized", [["function mapIssue(issue) {\n  const path = pathString(issue.path);", "function mapIssue(issue) {\n  const path = pathString(issue.path) + (typeof issue.input === 'string' ? ' ' + issue.input : '');"]]],
+  ["M11 control characters accepted", "caught", [['if (hasInvalidCharacters(out)) fail("invalid_string_character");', ""]]],
+  ["M12 diagnostic echo: unknown field name returned through an unchecked boundary", "caught", [UPSTREAM_ECHO, BOUNDARY_FIELD]],
+  ["M12a boundary field allowlist removed only", "neutralized", [BOUNDARY_FIELD]],
+  ["M12b unknown field name returned upstream only", "neutralized", [UPSTREAM_ECHO]],
+  ["M12c path echo: identifier-shaped keys kept in paths, boundary path checks removed", "caught", [PATH_UPSTREAM, PATH_BOUNDARY, PATH_GRAMMAR]],
+  ["M12d duplicate IDs returned: raw id added and passed by the boundary", "caught", [
+    ['errors.push(err("duplicate_id", `${base}[${index}].id`, { index, firstIndex: seen.get(k) }));', 'errors.push(err("duplicate_id", `${base}[${index}].id`, { index, firstIndex: seen.get(k), id: item.id }));'],
+    ["return out;\n}\n\nfunction failure", "if (e?.id) out.id = e.id;\n  return out;\n}\n\nfunction failure"]]],
+  ["M13 preview provenance dropped", "caught", [["    source,\n    guide: hasGuide", "    source: null,\n    guide: hasGuide"], ["sourceRefs: refsFor(c.sourceRefs) }))", "sourceRefs: [] }))"]]],
+  ["M14 source claim warning only for generator", "caught", [['if (sourceClaims(packet.source)) warnings.add("source_claim_unverified");', 'if (packet.source?.generator) warnings.add("source_claim_unverified");']]],
+  ["M15 export IDs leak into persistence", "caught", [["flashcards: cards.map((c) => ({ front: c.front, back: c.back, sourcePage: null })),", "flashcards: cards.map((c) => ({ id: c.id, front: c.front, back: c.back, sourcePage: null })),"]]],
+];
+const rows = [];
+for (const [name, expect, edits] of MUTANTS) {
+  const dir = mkdtempSync(join(tmpdir(), "hfd-mutant-"));
+  try {
+    cpSync(join(here, "src"), join(dir, "src"), { recursive: true });
+    for (const f of ["run-fixtures.mjs", "run-regressions.mjs"]) cpSync(join(here, f), join(dir, f));
+    symlinkSync(join(here, "node_modules"), join(dir, "node_modules"));
+    const file = join(dir, "src", "validator.mjs");
+    let src = readFileSync(file, "utf8");
+    for (const [from, to] of edits) {
+      if (!src.includes(from)) throw new Error(`mutation anchor missing: ${name}`);
+      src = src.replace(from, to);
+    }
+    writeFileSync(file, src);
+    const a = spawnSync(process.execPath, ["run-fixtures.mjs", fixtures, expected, join(dir, "f.json")], { cwd: dir, encoding: "utf8" });
+    const b = spawnSync(process.execPath, ["run-regressions.mjs", join(dir, "r.json")], { cwd: dir, encoding: "utf8" });
+    const fr = JSON.parse(readFileSync(join(dir, "f.json"), "utf8"));
+    const rr = JSON.parse(readFileSync(join(dir, "r.json"), "utf8"));
+    const caughtBy = [...fr.rows.filter((r) => !r.pass).map((r) => r.name), ...rr.rows.filter((r) => !r.pass).map((r) => r.name)];
+    const caught = caughtBy.length > 0;
+    rows.push({ mutant: name, expect, fixturesExit: a.status, regressionsExit: b.status, caught, asExpected: expect === "caught" ? caught : !caught, caughtBy });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+writeFileSync(resultsPath, JSON.stringify({ rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.asExpected ? "OK " : "BAD"} ${r.caught ? "CAUGHT     " : "NOT CAUGHT "} (${r.expect}) ${r.mutant}  ${r.caughtBy.slice(0, 3).join(" | ")}`);
+const ok = rows.every((r) => r.asExpected);
+console.log(JSON.stringify({ mutants: rows.length, asExpected: rows.filter((r) => r.asExpected).length }));
+process.exit(ok ? 0 : 1);

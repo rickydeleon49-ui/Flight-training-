@@ -1,0 +1,63 @@
+{
+  "scannedFiles": 373,
+  "byLabel": {
+    "structuredClone (Safari 15.4)": 6,
+    "Object.hasOwn (15.4)": 3
+  },
+  "hits": [
+    {
+      "label": "structuredClone (Safari 15.4)",
+      "file": "@ungap/structured-clone/cjs/index.js",
+      "line": 21,
+      "text": "deserialize(serialize(any, options)) : structuredClone(any)"
+    },
+    {
+      "label": "structuredClone (Safari 15.4)",
+      "file": "@ungap/structured-clone/esm/index.js",
+      "line": 20,
+      "text": "deserialize(serialize(any, options)) : structuredClone(any)"
+    },
+    {
+      "label": "structuredClone (Safari 15.4)",
+      "file": "mdast-util-to-hast/lib/footer.js",
+      "line": 235,
+      "text": "...structuredClone(footnoteLabelProperties),"
+    },
+    {
+      "label": "structuredClone (Safari 15.4)",
+      "file": "mdast-util-to-hast/lib/state.js",
+      "line": 263,
+      "text": "const result = structuredClone(shallow)"
+    },
+    {
+      "label": "structuredClone (Safari 15.4)",
+      "file": "mdast-util-to-hast/lib/state.js",
+      "line": 271,
+      "text": "return structuredClone(node)"
+    },
+    {
+      "label": "structuredClone (Safari 15.4)",
+      "file": "mdast-util-to-hast/lib/state.js",
+      "line": 381,
+      "text": "Object.assign(result.properties, structuredClone(hProperties))"
+    },
+    {
+      "label": "Object.hasOwn (15.4)",
+      "file": "react-markdown/lib/index.js",
+      "line": 323,
+      "text": "if (Object.hasOwn(options, deprecation.from)) {"
+    },
+    {
+      "label": "Object.hasOwn (15.4)",
+      "file": "react-markdown/lib/index.js",
+      "line": 376,
+      "text": "Object.hasOwn(urlAttributes, key) &&"
+    },
+    {
+      "label": "Object.hasOwn (15.4)",
+      "file": "react-markdown/lib/index.js",
+      "line": 377,
+      "text": "Object.hasOwn(node.properties, key)"
+    }
+  ]
+}

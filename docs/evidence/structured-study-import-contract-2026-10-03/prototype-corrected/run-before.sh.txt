@@ -1,0 +1,15 @@
+#!/bin/zsh
+# Runs the new permanent regressions and Codex's adapted diagnostics against the frozen REVIEWED prototype.
+# Failures are expected (they reproduce review findings R1-R3); this script records them and exits 0 only if the
+# reviewed prototype fails exactly as expected (non-zero from both suites).
+set -u
+export PATH=/opt/homebrew/opt/node@22/bin:$PATH
+S=${0:A:h}; B=$S/../import-proto-reviewed
+F=${HFD_CHECKOUT:?set HFD_CHECKOUT}/docs/evidence/structured-study-import-contract-2026-10-03/fixtures
+cp $S/run-regressions.mjs $S/run-codex-diagnostics-adapted.mjs $B/
+cd $B; mkdir -p results
+node run-regressions.mjs results/regressions-before.json > results/regressions-before.log 2>&1; a=$?
+node run-codex-diagnostics-adapted.mjs $F results/codex-adapted-before.json > results/codex-adapted-before.log 2>&1; b=$?
+echo "reviewed prototype: regressions exit=$a $(tail -1 results/regressions-before.log)"
+echo "reviewed prototype: codex-adapted exit=$b $(tail -1 results/codex-adapted-before.log)"
+[ $a -ne 0 ] && [ $b -ne 0 ]

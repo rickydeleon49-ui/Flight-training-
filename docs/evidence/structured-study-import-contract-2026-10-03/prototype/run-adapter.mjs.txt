@@ -1,0 +1,201 @@
+// FAKE-ADAPTER OBSERVATIONS ONLY. An in-memory store models the *proposed* single-transaction save so the
+// interaction rules (no writes during preview, cancellation, failed-save conservation, idempotent retry,
+// repeated confirmation, refresh failure, stale replacement) can be exercised. This is not SQLite, not the
+// Tauri SQL plugin, not a native transaction and not evidence that any current repository call is atomic.
+// Usage: node run-adapter.mjs <fixtures-dir> <results.json>
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { validatePacketBytes } from "./src/validator.mjs";
+
+const [dir, resultsPath] = process.argv.slice(2);
+const LOCK_RETRY_DELAYS_MS = [100, 300, 700]; // reused from documentRepository.ts (delays simulated, not slept)
+
+class FakeStore {
+  constructor(seed) {
+    this.state = structuredClone(seed);
+    this.writes = 0;
+    this.saveCalls = 0;
+    this.faults = [];
+  }
+  snapshot() { return structuredClone(this.state); }
+  /** Proposed native operation: insert material + study set + practice test in one transaction, or nothing. */
+  saveStructuredImport(op) {
+    this.saveCalls++;
+    const fault = this.faults.shift();
+    if (fault === "busy") throw Object.assign(new Error("database is locked"), { transient: true });
+    const existing = this.state.materials[op.materialId];
+    if (existing) {
+      // Idempotency: the same operation retried after an unknown outcome is reported as already saved.
+      if (existing.importHash === op.contentHash) return { status: "already_saved" };
+      throw new Error("conflict: material id already used by different content");
+    }
+    if (op.replace) {
+      const target = this.state.materials[op.replace.materialId];
+      if (!target) throw new Error("stale: target deleted");
+      if (fingerprint(this.state, op.replace.materialId) !== op.replace.fingerprint) throw new Error("stale: target changed");
+    }
+    const draft = structuredClone(this.state); // all-or-nothing
+    draft.materials[op.materialId] = { ...op.material, id: op.materialId, importHash: op.contentHash };
+    this.writes++;
+    if (fault === "after-material") throw new Error("injected failure after material insert");
+    if (op.studySet) draft.studySets[op.materialId] = op.studySet;
+    if (fault === "after-study-set") throw new Error("injected failure after study set insert");
+    if (op.practiceTest) draft.tests[op.materialId] = op.practiceTest;
+    if (fault === "commit") throw new Error("injected commit failure");
+    this.state = draft;
+    if (fault === "lost-response") throw Object.assign(new Error("response lost after commit"), { unknownOutcome: true });
+    return { status: "saved" };
+  }
+}
+
+const fingerprint = (state, id) =>
+  createHash("sha256").update(JSON.stringify([state.materials[id], state.studySets[id] ?? null, state.tests[id] ?? null])).digest("hex");
+
+/** Proposed controller: pick -> bounded read -> validate -> preview. It receives no store handle at all,
+ *  so it cannot write; the scenarios below also confirm the store saw no calls. */
+function preview(pick, newId) {
+  const file = pick();
+  if (file === null) return { state: "cancelled-at-picker" };
+  const result = validatePacketBytes(file.bytes);
+  if (!result.ok) return { state: "invalid", errors: result.errors };
+  const contentHash = createHash("sha256").update(JSON.stringify(result.payload)).digest("hex");
+  return { state: "preview", preview: result.preview, op: { materialId: newId(), contentHash, ...result.payload } };
+}
+
+/** Proposed controller: confirm with a synchronous lock, bounded retry on transient lock errors, then refresh. */
+function makeConfirm(store, refresh) {
+  let inFlight = false;
+  return function confirm(op) {
+    if (inFlight) return { state: "ignored-duplicate-click" };
+    inFlight = true;
+    try {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const saved = store.saveStructuredImport(op);
+          try { refresh(); return { state: saved.status, refreshed: true }; }
+          catch { return { state: saved.status, refreshed: false, message: "Saved, but the screen could not refresh." }; }
+        } catch (error) {
+          if (error.transient && attempt < LOCK_RETRY_DELAYS_MS.length) continue;
+          if (error.transient) return { state: "failed", retryable: true, message: "The database was busy." };
+          if (error.unknownOutcome) return { state: "outcome-unknown", retryable: true };
+          return { state: "failed", retryable: !String(error.message).startsWith("conflict"), message: error.message };
+        }
+      }
+    } finally {
+      inFlight = false;
+    }
+  };
+}
+
+const seed = {
+  materials: { m0: { id: "m0", title: "Existing material", filePath: "m0/file.pdf" } },
+  studySets: { m0: { title: "Existing guide", provider: "gemini" } },
+  tests: { m0: { title: "Existing test", questions: [{ question: "Old", options: ["A", "B"], correctIndex: 0 }] } },
+};
+const packet = { bytes: readFileSync(join(dir, "02-flashcards-and-test.json")) };
+const invalid = { bytes: readFileSync(join(dir, "23-answer-not-in-choices.json")) };
+let idCounter = 0;
+const newId = () => `import-${++idCounter}`;
+const rows = [];
+const check = (name, pass, details) => rows.push({ name, pass: Boolean(pass), details });
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+{ // S1 cancel at picker
+  const store = new FakeStore(seed); const before = store.snapshot();
+  const r = preview(() => null, newId);
+  check("S1 cancel at picker: no read result, no write", r.state === "cancelled-at-picker" && store.writes === 0 && eq(store.state, before), r.state);
+}
+{ // S2 cancel after preview
+  const store = new FakeStore(seed); const before = store.snapshot();
+  const r = preview(() => packet, newId);
+  check("S2 preview then cancel: zero writes, prior data unchanged", r.state === "preview" && store.writes === 0 && store.saveCalls === 0 && eq(store.state, before), r.preview.counts);
+}
+{ // S3 invalid packet
+  const store = new FakeStore(seed); const before = store.snapshot();
+  const r = preview(() => invalid, newId);
+  check("S3 invalid packet: rejected before confirmation, zero writes", r.state === "invalid" && store.writes === 0 && eq(store.state, before), r.errors?.map((e) => e.code));
+}
+{ // S4 success
+  const store = new FakeStore(seed);
+  const r = preview(() => packet, newId);
+  const c = makeConfirm(store, () => {})(r.op);
+  const id = r.op.materialId;
+  const ok = c.state === "saved" && store.state.studySets[id].flashcards.length === r.preview.counts.flashcards &&
+    store.state.tests[id].questions.length === r.preview.counts.questions && eq(store.state.materials.m0, seed.materials.m0) &&
+    eq(store.state.studySets.m0, seed.studySets.m0) && eq(store.state.tests.m0, seed.tests.m0);
+  check("S4 confirm: new material with guide and test; unrelated content unchanged; counts equal preview", ok, c);
+}
+for (const fault of ["after-material", "after-study-set", "commit"]) { // S5-S7 failed save then retry
+  const store = new FakeStore(seed); const before = store.snapshot();
+  const r = preview(() => packet, newId);
+  const confirm = makeConfirm(store, () => {});
+  store.faults = [fault];
+  const first = confirm(r.op);
+  const conserved = first.state === "failed" && eq(store.state, before);
+  const second = confirm(r.op);
+  const once = second.state === "saved" && Object.keys(store.state.materials).length === 2;
+  check(`S5 failure ${fault}: prior data conserved; retry saves exactly once`, conserved && once, { first: first.state, second: second.state });
+}
+{ // S8 double click
+  const store = new FakeStore(seed);
+  const r = preview(() => packet, newId);
+  const confirm = makeConfirm(store, () => {});
+  // Re-entrancy: a second click arrives while the first save is running.
+  let nested;
+  const original = store.saveStructuredImport.bind(store);
+  store.saveStructuredImport = (op) => { nested = confirm(op); return original(op); };
+  const first = confirm(r.op);
+  check("S6 repeated confirmation while saving: second click ignored, one save call", first.state === "saved" && nested.state === "ignored-duplicate-click" && store.saveCalls === 1, { first: first.state, nested: nested.state });
+}
+{ // S9 lost response after commit
+  const store = new FakeStore(seed);
+  const r = preview(() => packet, newId);
+  const confirm = makeConfirm(store, () => {});
+  store.faults = ["lost-response"];
+  const first = confirm(r.op);
+  const second = confirm(r.op);
+  check("S7 outcome unknown after commit: retry reports already saved, no duplicate", first.state === "outcome-unknown" && second.state === "already_saved" && Object.keys(store.state.materials).length === 2, { first: first.state, second: second.state });
+}
+{ // S10 refresh failure
+  const store = new FakeStore(seed);
+  const r = preview(() => packet, newId);
+  const c = makeConfirm(store, () => { throw new Error("refresh failed"); })(r.op);
+  check("S8 post-commit refresh failure: reported as saved-but-stale, data kept, no rollback", c.state === "saved" && c.refreshed === false && store.state.materials[r.op.materialId], c);
+}
+{ // S11 transient lock
+  const store = new FakeStore(seed); const before = store.snapshot();
+  const r = preview(() => packet, newId);
+  store.faults = ["busy", "busy"];
+  const c = makeConfirm(store, () => {})(r.op);
+  const store2 = new FakeStore(seed);
+  store2.faults = ["busy", "busy", "busy", "busy"];
+  const c2 = makeConfirm(store2, () => {})(r.op);
+  check("S9 transient lock: bounded retry succeeds after 2; gives up after 4 with data unchanged", c.state === "saved" && store.saveCalls === 3 && c2.state === "failed" && c2.retryable && store2.saveCalls === 4 && eq(store2.state, before), { c: c.state, c2: c2.state, calls: [store.saveCalls, store2.saveCalls] });
+}
+{ // S12 same id, different content
+  const store = new FakeStore(seed);
+  const r = preview(() => packet, newId);
+  makeConfirm(store, () => {})(r.op);
+  const before = store.snapshot();
+  const c = makeConfirm(store, () => {})({ ...r.op, contentHash: "different" });
+  check("S10 operation id reused with different content: conflict, nothing changed", c.state === "failed" && !c.retryable && eq(store.state, before), c.state);
+}
+{ // S13-S14 replacement mode (deferred decision): stale preview detection
+  const store = new FakeStore(seed);
+  const r = preview(() => packet, newId);
+  const fp = fingerprint(store.state, "m0");
+  store.state.studySets.m0 = { ...store.state.studySets.m0, title: "Edited elsewhere" };
+  const before = store.snapshot();
+  const c = makeConfirm(store, () => {})({ ...r.op, replace: { materialId: "m0", fingerprint: fp } });
+  delete store.state.materials.m0;
+  const before2 = store.snapshot();
+  const c2 = makeConfirm(store, () => {})({ ...r.op, materialId: newId(), replace: { materialId: "m0", fingerprint: fp } });
+  check("S11 replacement design probe: changed target aborts; deleted target aborts; nothing written", c.state === "failed" && eq(store.state, before2) && c2.state === "failed" && /changed/.test(c.message) && /deleted/.test(c2.message) && before.materials.m0, { c: c.message, c2: c2.message });
+}
+
+const summary = { kind: "fake-adapter observations (not database evidence)", total: rows.length, passed: rows.filter((r) => r.pass).length, node: process.version };
+writeFileSync(resultsPath, JSON.stringify({ summary, rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.name}`);
+console.log(JSON.stringify(summary));
+process.exit(summary.passed === summary.total ? 0 : 1);

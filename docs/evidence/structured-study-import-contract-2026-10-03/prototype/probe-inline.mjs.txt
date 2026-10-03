@@ -1,0 +1,10 @@
+import {fromMarkdown} from "mdast-util-from-markdown"; import {toHast} from "mdast-util-to-hast";
+const depth=(root)=>{let max=0;const st=[[root,1]];while(st.length){const [n,d]=st.pop();if(d>max)max=d;for(const c of n.children??[])st.push([c,d+1]);}return max;};
+const cases={
+ "emph-run-10000": "*".repeat(9999)+"x"+"*".repeat(10000),
+ "emph-alt-3300": Array.from({length:3300},(_,k)=>"*a ").join("")+"z"+Array.from({length:3300},()=>" a*").join(""),
+ "bq-5000": ">".repeat(5000)+" x",
+ "list-5000": "- ".repeat(5000)+"x",
+ "link-nest": "[".repeat(9000)+"x"+"](u)".repeat(2000),
+};
+for (const [k,md] of Object.entries(cases)){let s="parse";const t=Date.now();try{const m=fromMarkdown(md);s="depth";const d=depth(m);s="toHast";toHast(m);console.log(k,"parse ok, mdast depth",d,"toHast ok",Date.now()-t,"ms")}catch(e){console.log(k,"FAIL@"+s,e.constructor.name,Date.now()-t,"ms")}}

@@ -1,5 +1,27 @@
 # Her Flight Deck — current project status
 
+**Structured study-import preparation independently accepted (3 October):** [Acceptance](docs/STRUCTURED_STUDY_IMPORT_ACCEPTANCE_2026-10-03.md) closes R1–R5 and accepts the complete [contract](docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md), [schema](docs/contracts/hfd-study-packet-v1.schema.json), [implementation handoff](docs/STRUCTURED_STUDY_IMPORT_IMPLEMENTATION_HANDOFF_2026-10-03.md) and [evidence](docs/evidence/structured-study-import-contract-2026-10-03/README.md) for documentation integration after required CI. Codex independently reproduced 106 validator cases, 41 permanent regressions, 8 original diagnostics, 6 source-notes diagnostics, 22 expected mutation outcomes and compiling DTO examples. [The next Claude source-only Slice A prompt](docs/CLAUDE_STRUCTURED_STUDY_IMPORT_SLICE_A_PROMPT_2026-10-03.md) is conditional on the existing gates or an explicit owner exception. No production dependency or application behavior changed.
+
+- **R5:** guide `sourceNotes` that came with only questions were previewed but silently dropped. They now need a guide summary, a section or a flashcard, or the packet is rejected (`source_notes_without_study_set`, no echo). Accepted notes are saved and included in the content hash.
+- **Documentation corrections:**
+  - mutation counts are 16 caught and 3 neutralized (not 15 and 4) for the R1–R4 run
+  - the required CI check is the single Ubuntu job, separate from Mac/Windows packaging and installed evidence
+- **R5 run** (Node; not WKWebView or a database):
+  - validator 106/106
+  - permanent regressions 41/41 (the R1–R4 prototype passes 37/41)
+  - Codex's source-notes diagnostic 6/6 (before: 4/6)
+  - mutants 22/22 as expected: 19 caught, 3 neutralized
+  - schema 46 asserted, 0 failed
+  - DTO typecheck exit 0
+  - fake-adapter scenarios 13/13, labelled as fake
+- **Not done:** no production dependency, application behavior, migration, release identity, credential or user data changed.
+- **Remaining production/release gates:**
+  - **Production Slice A:** waits for the foundation/adoption gates or an explicit documented owner exception. None exists.
+  - **Slice B:** also needs published, accepted A2 and the M2 real-user check-in with scoped approval.
+  - **Integration:** this preparation is accepted; merge waits for the exact-head required Ubuntu check. Future source slices need their own review and checks.
+  - **Release:** installed Mac (including early macOS 12 for optional Markdown), Windows app and signing/account decisions remain unverified.
+- **Owner decisions:** D1–D12 are proposals; D3 still needs an owner decision before B.
+
 **Mac installed-readiness preparation accepted (3 October):** [Independent acceptance](docs/MAC_INSTALLED_READINESS_ACCEPTANCE_2026-10-03.md) closes R1–R4. After CI/merge and clean synchronization, [Claude prepares the structured study-import contract](docs/CLAUDE_STRUCTURED_STUDY_IMPORT_CONTRACT_PROMPT_2026-10-03.md). This task adds a [read-only preflight](docs/MAC_READINESS_PREFLIGHT.md) (`scripts/mac-readiness-preflight.mjs`, no dependency, 34 focused tests) and an [isolated installed-test and signing runbook](docs/MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md).
 
 - **Host receipt today:** macOS 27.0.1, Apple M5, arm64; Node 22 and Rust 1.99; explicit SDK 26.5 present. The result is 9 PASS, 0 FAIL, 3 UNVERIFIED and 3 USER_ACTION, which is not ready.

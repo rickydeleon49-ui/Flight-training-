@@ -1,0 +1,32 @@
+// Schema/fixture consistency. Usage: node check-schema.mjs <schema> <fixtures-dir> <expected-outcomes.json> <results.json>
+// Rule: accepted fixtures must satisfy the schema; gate/schema-stage rejections must fail it; semantic-stage
+// rejections must satisfy it (those rules are not expressible in JSON Schema); scan-stage rejections are
+// recorded without assertion because JSON.parse and the strict scanner intentionally differ there.
+import Ajv2020 from "ajv/dist/2020.js";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+const [schemaPath, dir, expectedPath, out] = process.argv.slice(2);
+const ajv = new Ajv2020({ allErrors: true, strict: true });
+const validate = ajv.compile(JSON.parse(readFileSync(schemaPath, "utf8")));
+const expected = JSON.parse(readFileSync(expectedPath, "utf8")).fixtures;
+const rows = [];
+let failures = 0;
+for (const f of readdirSync(dir).filter((x) => x.endsWith(".json")).sort()) {
+  const exp = expected[f];
+  let parsed, parseOk = true;
+  try { parsed = JSON.parse(readFileSync(join(dir, f), "utf8")); } catch { parseOk = false; }
+  const schemaOk = parseOk && validate(parsed);
+  let want;
+  if (exp.ok) want = true;
+  else if (exp.stage === "gate" || exp.stage === "schema") want = false;
+  else if (exp.stage === "semantic") want = true;
+  else want = null;
+  const pass = want === null || schemaOk === want;
+  if (!pass) failures++;
+  rows.push({ fixture: f, appStage: exp.ok ? "accepted" : exp.stage, jsonParse: parseOk, schemaValid: schemaOk, asserted: want !== null, pass, schemaErrors: schemaOk ? [] : (validate.errors ?? []).slice(0, 3).map((e) => `${e.instancePath || "/"} ${e.keyword}`) });
+}
+const summary = { ajv: "8.20.0", total: rows.length, asserted: rows.filter((r) => r.asserted).length, failed: failures, scanOnlyDifferences: rows.filter((r) => !r.asserted).map((r) => `${r.fixture}: JSON.parse=${r.jsonParse} schemaValid=${r.schemaValid}`) };
+writeFileSync(out, JSON.stringify({ summary, rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.fixture}  app=${r.appStage} schema=${r.schemaValid}${r.asserted ? "" : " (not asserted)"}`);
+console.log(JSON.stringify(summary, null, 1));
+process.exit(failures ? 1 : 0);

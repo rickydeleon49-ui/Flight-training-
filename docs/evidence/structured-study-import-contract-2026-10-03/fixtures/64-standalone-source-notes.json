@@ -1,0 +1,8 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Notes only",
+  "guide": {
+    "sourceNotes": "Synthetic source notes for an invented chart."
+  }
+}

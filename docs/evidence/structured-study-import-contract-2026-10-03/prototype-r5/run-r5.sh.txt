@@ -1,0 +1,25 @@
+#!/bin/zsh
+# Focused R5 run: the checks whose inputs changed. Renderer, depth probes, API scan and legacy simulation are unchanged
+# since the R1-R4 correction and are not rerun. Any failed step makes this script exit 1.
+set -u
+export PATH=/opt/homebrew/opt/node@22/bin:$PATH
+S=${0:A:h}; C=$S/../schema-check; T=$S/../dto-check
+R=${HFD_CHECKOUT:?set HFD_CHECKOUT to the repository checkout}/docs
+F=$R/evidence/structured-study-import-contract-2026-10-03/fixtures
+E=${HFD_EXPECTED:-$R/evidence/structured-study-import-contract-2026-10-03/expected-outcomes.json}  # override only for the self-test
+cd $S; mkdir -p results logs
+failed=()
+run() { local name=$1; shift; "$@" > logs/$name.log 2>&1; local code=$?; echo "$name exit=$code $(tail -1 logs/$name.log | cut -c1-160)"; [ $code -eq 0 ] || failed+=($name); }
+echo "node $(node -v) npm $(npm -v) $(date -u +%FT%TZ)"
+run validator          node run-fixtures.mjs $F $E results/validator-results.json
+run regressions        node run-regressions.mjs results/regressions.json
+run codex-adapted      node run-codex-diagnostics-adapted.mjs $F results/codex-adapted.json
+run codex-source-notes node run-codex-source-notes-adapted.mjs results/codex-source-notes.json
+run adapter            node run-adapter.mjs $F results/adapter-results.json
+run csp-jitless        node run-csp-probe.mjs jitless $F
+run mutations          node run-mutations.mjs $F $E results/mutation-results.json
+run dto-check          env HFD_CHECKOUT=${R:h} HFD_PROTO=$S $T/run-dto-check.sh
+cd $C; mkdir -p results logs
+run schema             node check-schema.mjs $R/contracts/hfd-study-packet-v1.schema.json $F $E results/schema-results.json
+run schema-divergence  node check-divergence.mjs $R/contracts/hfd-study-packet-v1.schema.json
+if [ ${#failed} -eq 0 ]; then echo "OVERALL PASS"; exit 0; else echo "OVERALL FAIL: ${failed[*]}"; exit 1; fi

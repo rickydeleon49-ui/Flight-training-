@@ -1,0 +1,26 @@
+{
+  "kind": "capability simulation in Node, not WebKit",
+  "removed": [
+    "Object.hasOwn",
+    "structuredClone",
+    "Array.prototype.at",
+    "String.prototype.at",
+    "Array.prototype.findLast",
+    "String.prototype.isWellFormed"
+  ],
+  "rows": [
+    {
+      "step": "validate fixture 02 without those APIs",
+      "ok": true
+    },
+    {
+      "step": "render without Object.hasOwn (expected to fail)",
+      "ok": false,
+      "error": "TypeError: Object.hasOwn is not a function"
+    },
+    {
+      "step": "render with a narrow Object.hasOwn shim",
+      "ok": true
+    }
+  ]
+}

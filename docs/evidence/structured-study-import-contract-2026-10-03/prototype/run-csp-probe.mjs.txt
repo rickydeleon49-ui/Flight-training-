@@ -1,0 +1,25 @@
+// Counts `Function` constructor use while Zod validates fixtures. The app CSP has no 'unsafe-eval'.
+// Usage: node run-csp-probe.mjs <jitless|default> <fixtures-dir>
+// Must be run in a fresh process per mode because Zod caches its eval probe.
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+const [mode, dir] = process.argv.slice(2);
+let calls = 0;
+const RealFunction = globalThis.Function;
+globalThis.Function = new Proxy(RealFunction, {
+  construct(target, args) { calls++; return Reflect.construct(target, args); },
+  apply(target, self, args) { calls++; return Reflect.apply(target, self, args); },
+});
+const z = await import("zod");
+if (mode === "default") {
+  // Build the same schema without the jitless setting by importing a copy of the validator that skips z.config.
+  const src = readFileSync(new URL("./src/validator.mjs", import.meta.url), "utf8").replace("z.config({ jitless: true });", "");
+  const tmp = new URL("./src/.validator-default.mjs", import.meta.url);
+  (await import("node:fs")).writeFileSync(tmp, src);
+  var { validatePacketBytes } = await import(tmp.href);
+} else {
+  var { validatePacketBytes } = await import("./src/validator.mjs");
+}
+let accepted = 0;
+for (const f of readdirSync(dir).filter((x) => x.endsWith(".json"))) if (validatePacketBytes(readFileSync(join(dir, f))).ok) accepted++;
+console.log(JSON.stringify({ mode, jitless: z.config().jitless ?? false, functionConstructorCalls: calls, accepted }));

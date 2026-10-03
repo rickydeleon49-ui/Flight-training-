@@ -1,0 +1,58 @@
+{
+  "summary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "node": "v22.23.3"
+  },
+  "rows": [
+    {
+      "name": "R1: unknown identifier-shaped key never echoed",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "R1: duplicate credential-shaped item id never echoed",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "R1: scan-stage path never echoes unknown identifier",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "R2: validated preview retains normalized source claims",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "R2: validated preview retains per-item unverified references",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "R2: source note/date without generator are marked unverified",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "Control: trailing LF in flashcard id is rejected",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "Control: trailing LF in choice id and answer is rejected",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    }
+  ]
+}

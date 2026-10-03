@@ -1,0 +1,7 @@
+// Expected to FAIL: the reviewed handoff's DTOs (Omit without redefining provider) reject provider "import".
+// Mirrors Codex's codex-type-diagnostic.ts against the same unchanged domain types.
+import type { AiStudySet, PracticeTest } from "@hfd/types";
+type GuidePayload = Omit<AiStudySet, "sourceMaterialId" | "generatedAt" | "updatedAt">;
+type TestPayload = Omit<PracticeTest, "sourceMaterialId" | "generatedAt" | "updatedAt">;
+export const guideProvider: Pick<GuidePayload, "provider"> = { provider: "import" };
+export const testProvider: Pick<TestPayload, "provider"> = { provider: "import" };

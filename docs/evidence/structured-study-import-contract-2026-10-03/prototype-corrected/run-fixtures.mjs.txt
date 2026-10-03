@@ -1,0 +1,99 @@
+// Runs the real prototype validator against committed fixtures and generated boundary cases.
+// Usage: node run-fixtures.mjs <fixtures-dir> <expected-outcomes.json> <results.json>
+import { readFileSync, readdirSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
+import { validatePacketBytes, LIMITS } from "./src/validator.mjs";
+import { boundaryCases, SENTINEL } from "./src/boundary-cases.mjs";
+import { readBounded } from "./src/io.mjs";
+
+const [fixturesDir, expectedPath, resultsPath] = process.argv.slice(2);
+const expected = JSON.parse(readFileSync(expectedPath, "utf8")).fixtures;
+const sha = (b) => createHash("sha256").update(b).digest("hex");
+const rows = [];
+let failures = 0;
+
+function compare(name, actual, exp, extra = {}) {
+  const problems = [];
+  if (actual.ok !== exp.ok) problems.push(`ok=${actual.ok}`);
+  if (!exp.ok) {
+    if (exp.stage && actual.stage !== exp.stage) problems.push(`stage=${actual.stage}`);
+    const codes = [...new Set((actual.errors ?? []).map((e) => e.code))].sort();
+    if (JSON.stringify(codes) !== JSON.stringify(exp.codes)) problems.push(`codes=${codes.join(",")}`);
+    if (exp.reported !== undefined && actual.errors.length !== exp.reported) problems.push(`reported=${actual.errors.length}`);
+    if (exp.omitted !== undefined && actual.omittedErrors !== exp.omitted) problems.push(`omitted=${actual.omittedErrors}`);
+  } else if (actual.ok) {
+    const p = actual.preview;
+    if (exp.warnings) {
+      const w = p.warnings.map((x) => x.code).sort();
+      if (JSON.stringify(w) !== JSON.stringify([...exp.warnings].sort())) problems.push(`warnings=${w.join(",")}`);
+    }
+    for (const k of ["createsStudySet", "createsPracticeTest"]) if (k in exp && p[k] !== exp[k]) problems.push(`${k}=${p[k]}`);
+    if (exp.counts && JSON.stringify(p.counts) !== JSON.stringify(exp.counts)) problems.push(`counts=${JSON.stringify(p.counts)}`);
+    if (exp.title && p.title !== exp.title) problems.push("title mismatch");
+    if (exp.correctIndexes) {
+      const got = actual.payload.practiceTest.questions.map((x) => x.correctIndex);
+      if (JSON.stringify(got) !== JSON.stringify(exp.correctIndexes)) problems.push(`correctIndexes=${got}`);
+    }
+    if (exp.noCarriageReturns && JSON.stringify(actual.payload).includes("\\r")) problems.push("carriage return kept");
+    // Review R2: in-memory preview data keeps normalized claims and item-associated references.
+    const data = p.data;
+    if ("previewSource" in exp && JSON.stringify(data ? data.source : "missing") !== JSON.stringify(exp.previewSource)) problems.push("preview source");
+    if (exp.previewRefs) {
+      const got = { cards: (data?.flashcards ?? []).map((c) => [c.id, c.sourceRefs]), questions: (data?.questions ?? []).map((x) => [x.id, x.sourceRefs]) };
+      if (JSON.stringify(got) !== JSON.stringify(exp.previewRefs)) problems.push("preview refs");
+    }
+    if (exp.discardedOnSave && JSON.stringify(p.discardedOnSave) !== JSON.stringify(exp.discardedOnSave)) problems.push("discardedOnSave");
+    for (const v of exp.persistenceExcludes ?? []) if (JSON.stringify(actual.payload).includes(v)) problems.push("preview-only value in persistence payload");
+    // Imported page claims are never mapped to verified page fields.
+    const pages = [...(actual.payload.studySet?.flashcards ?? []), ...(actual.payload.practiceTest?.questions ?? [])].map((x) => x.sourcePage);
+    if (pages.some((v) => v !== null)) problems.push("sourcePage not null");
+  }
+  const serializedErrors = JSON.stringify(actual.errors ?? []);
+  if (serializedErrors.includes(SENTINEL)) problems.push("sentinel echoed in errors");
+  const pass = problems.length === 0;
+  if (!pass) failures++;
+  rows.push({ name, pass, problems, actualOk: actual.ok, stage: actual.stage, codes: [...new Set((actual.errors ?? []).map((e) => e.code))].sort(), warnings: actual.preview?.warnings.map((w) => w.code) ?? [], ...extra });
+}
+
+// 1. Committed fixtures through the bounded reader.
+const files = readdirSync(fixturesDir).filter((f) => f.endsWith(".json")).sort();
+for (const file of files) {
+  if (!(file in expected)) { rows.push({ name: file, pass: false, problems: ["no expectation"] }); failures++; continue; }
+  const read = readBounded(join(fixturesDir, file));
+  const bytes = read.bytes;
+  const t0 = performance.now();
+  const actual = validatePacketBytes(bytes);
+  compare(`fixture:${file}`, actual, expected[file], { sha256: sha(bytes), bytes: bytes.length, ms: +(performance.now() - t0).toFixed(1) });
+}
+for (const name of Object.keys(expected)) if (!files.includes(name)) { rows.push({ name, pass: false, problems: ["missing file"] }); failures++; }
+
+// 2. Generated boundary/encoding/privacy cases.
+for (const c of boundaryCases()) {
+  const t0 = performance.now();
+  const actual = validatePacketBytes(c.bytes);
+  compare(`generated:${c.name}`, actual, c.expected, { sha256: sha(c.bytes), bytes: c.bytes.length, ms: +(performance.now() - t0).toFixed(1), note: c.note });
+}
+
+// 3. Bounded reader on real temporary files: at the limit it reads; above it refuses before reading.
+const dir = mkdtempSync(join(tmpdir(), "hfd-packet-"));
+try {
+  const at = join(dir, "at.json");
+  const over = join(dir, "over.json");
+  writeFileSync(at, Buffer.alloc(LIMITS.fileBytes, 0x20));
+  writeFileSync(over, Buffer.alloc(LIMITS.fileBytes + 1, 0x20));
+  const ra = readBounded(at);
+  const ro = readBounded(over);
+  const pass = ra.ok && ra.bytes.length === LIMITS.fileBytes && !ro.ok && ro.code === "file_too_large" && ro.bytesRead === 0;
+  if (!pass) failures++;
+  rows.push({ name: "reader:metadata-check-before-read", pass, problems: pass ? [] : [JSON.stringify({ ra: ra.ok, ro })] });
+} finally {
+  rmSync(dir, { recursive: true, force: true });
+}
+
+const summary = { total: rows.length, passed: rows.filter((r) => r.pass).length, failed: failures, node: process.version };
+writeFileSync(resultsPath, JSON.stringify({ summary, rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.name}${r.pass ? "" : "  " + r.problems.join("; ")}`);
+console.log(JSON.stringify(summary));
+process.exit(failures ? 1 : 0);

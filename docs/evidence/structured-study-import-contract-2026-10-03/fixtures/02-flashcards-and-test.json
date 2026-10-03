@@ -1,0 +1,85 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Letters and labels",
+  "source": {
+    "generator": "Example assistant (claim)",
+    "createdAt": "2026-10-03T12:00:00Z",
+    "note": "Synthetic packet for contract tests."
+  },
+  "guide": {
+    "summary": "Cards and an explicit structured test."
+  },
+  "flashcards": [
+    {
+      "id": "c1",
+      "front": "Which letter follows A?",
+      "back": "B"
+    },
+    {
+      "id": "c2",
+      "front": "Which letter follows B?",
+      "back": "C",
+      "sourceRefs": [
+        {
+          "label": "Invented chart",
+          "page": 3
+        }
+      ]
+    },
+    {
+      "id": "c3",
+      "front": "Which letter follows C?",
+      "back": "D"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "question": "In the invented alphabet, which label comes after Plinth 1?",
+      "choices": [
+        {
+          "id": "a",
+          "text": "Zorb"
+        },
+        {
+          "id": "b",
+          "text": "Quill"
+        },
+        {
+          "id": "c",
+          "text": "Marrow"
+        }
+      ],
+      "correctChoiceId": "b",
+      "explanation": "In this made-up sequence, Quill always follows Plinth.",
+      "sourceRefs": [
+        {
+          "label": "Invented chart section 2"
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "question": "In the invented alphabet, which label comes after Plinth 2?",
+      "choices": [
+        {
+          "id": "a",
+          "text": "Zorb"
+        },
+        {
+          "id": "b",
+          "text": "Quill"
+        },
+        {
+          "id": "c",
+          "text": "Marrow"
+        }
+      ],
+      "correctChoiceId": "c",
+      "explanation": "In this made-up sequence, Quill always follows Plinth."
+    }
+  ]
+}
