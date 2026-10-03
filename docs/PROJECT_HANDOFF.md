@@ -6,6 +6,8 @@ Repository: https://github.com/rickydeleon49-ui/Flight-training-. Each machine c
 
 ## Current state and ownership
 
+**Primary platform:** the owner confirmed the main user will use the Mac. Follow [the Mac-first development/readiness plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md). Reviewed source and evidence must be available through GitHub and validated here; preserve Claude's active Mac baseline and the Windows A2 owner. [Sanitized Mac verification receipt](evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) is shared for cross-machine review.
+
 This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exact head before editing; update this table when ownership or acceptance changes.
 
 | Work | Shared source/evidence | State / next action |
@@ -34,6 +36,10 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 10. Update this index, STATUS and MAC_PARITY_CHECKLIST for relevant shared changes. Distinguish source tests, development/browser tests, DMG packaging, signing assessment and installed-app smoke tests. Neither machine's test results automatically certify the other platform or macOS 12.
 
 ## Continue on the Mac
+
+- Current review outcome: Claude's local Study Library baseline requires [R1–R3 corrections](MAC_STUDY_LIBRARY_BASELINE_REVIEW_2026-10-02.md); use [the correction prompt](CLAUDE_MAC_BASELINE_CORRECTION_PROMPT_2026-10-02.md) before assigning installed measurement or another feature. The implementation remains local and unaccepted.
+
+- Original baseline assignment (reviewed; corrections above take priority): [Claude Mac baseline prompt](CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md), with [report review and measurement limits](MAC_REPORT_REVIEW_2026-10-02.md). Claude implements the bounded synthetic baseline and candidate recommendation; Codex reviews. No production dependency adoption or M2 migration is assigned by this task.
 
 - Existing task: [Mac session prompt](MAC_SESSION_PROMPT.md), with the report in draft PR #44. Continue missing observed smoke tests safely; do not blindly repeat unchanged successful commands.
 - Future reuse work: [open-source Mac prompt](OPEN_SOURCE_MAC_HANDOFF.md). Start with source/evidence review and measured baselines, not package installation.
