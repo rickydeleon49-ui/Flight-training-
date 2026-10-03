@@ -1,6 +1,8 @@
 # Her Flight Deck — current project status
 
-**Structured study-import preparation independently accepted (3 October):** [Acceptance](docs/STRUCTURED_STUDY_IMPORT_ACCEPTANCE_2026-10-03.md) closes R1–R5 and accepts the complete [contract](docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md), [schema](docs/contracts/hfd-study-packet-v1.schema.json), [implementation handoff](docs/STRUCTURED_STUDY_IMPORT_IMPLEMENTATION_HANDOFF_2026-10-03.md) and [evidence](docs/evidence/structured-study-import-contract-2026-10-03/README.md) for documentation integration after required CI. Codex independently reproduced 106 validator cases, 41 permanent regressions, 8 original diagnostics, 6 source-notes diagnostics, 22 expected mutation outcomes and compiling DTO examples. [The next Claude source-only Slice A prompt](docs/CLAUDE_STRUCTURED_STUDY_IMPORT_SLICE_A_PROMPT_2026-10-03.md) is conditional on the existing gates or an explicit owner exception. No production dependency or application behavior changed.
+**Structured-import Slice A interrupted; Gemini assigned (3 October):** Claude's source remains uncommitted in the primary Mac clone on `codex/structured-study-import-slice-a`, base `696b070`. The [owner exception](docs/STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md) permits only this source slice. [Codex interruption review](docs/STRUCTURED_STUDY_IMPORT_SLICE_A_INTERRUPTION_REVIEW_2026-10-03.md) independently passes 241 focused frontend tests, typecheck and 16 native tests; it identifies a mutation-runner setup defect (SA1). [Gemini continuation](docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_FINISH_PROMPT_2026-10-03.md) finishes the runner, full local checks, notice/build evidence and source handoff. Source integration remains unaccepted; A2/M2, installed/signing and release gates stay open.
+
+**Structured study-import preparation independently accepted (3 October):** [Acceptance](docs/STRUCTURED_STUDY_IMPORT_ACCEPTANCE_2026-10-03.md) closes R1–R5 and accepts the complete [contract](docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md), [schema](docs/contracts/hfd-study-packet-v1.schema.json), [implementation handoff](docs/STRUCTURED_STUDY_IMPORT_IMPLEMENTATION_HANDOFF_2026-10-03.md) and [evidence](docs/evidence/structured-study-import-contract-2026-10-03/README.md) for documentation integration after required CI. Codex independently reproduced 106 validator cases, 41 permanent regressions, 8 original diagnostics, 6 source-notes diagnostics, 22 expected mutation outcomes and compiling DTO examples. [The next Claude source-only Slice A prompt](docs/CLAUDE_STRUCTURED_STUDY_IMPORT_SLICE_A_PROMPT_2026-10-03.md) was conditional on the existing gates or an explicit owner exception. The recorded exception now permits only Slice A; its local source is pending review as described above. This contract-acceptance publication adopted no production dependency or application behavior.
 
 - **R5:** guide `sourceNotes` that came with only questions were previewed but silently dropped. They now need a guide summary, a section or a flashcard, or the packet is rejected (`source_notes_without_study_set`, no echo). Accepted notes are saved and included in the content hash.
 - **Documentation corrections:**
@@ -14,11 +16,11 @@
   - schema 46 asserted, 0 failed
   - DTO typecheck exit 0
   - fake-adapter scenarios 13/13, labelled as fake
-- **Not done:** no production dependency, application behavior, migration, release identity, credential or user data changed.
+- **At contract acceptance:** no production dependency or application behavior changed. The subsequent local Slice A adds only Zod and the bounded validator/reader under the owner exception; source acceptance is pending. No migration, release identity, credential or user data changed.
 - **Remaining production/release gates:**
-  - **Production Slice A:** waits for the foundation/adoption gates or an explicit documented owner exception. None exists.
+  - **Production Slice A:** a [narrow owner exception](docs/STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md) exists; local implementation is incomplete and pending final Codex review. Foundation/adoption requirements still apply beyond its scope.
   - **Slice B:** also needs published, accepted A2 and the M2 real-user check-in with scoped approval.
-  - **Integration:** this preparation is accepted; merge waits for the exact-head required Ubuntu check. Future source slices need their own review and checks.
+  - **Integration:** contract preparation merged through PR #59 after exact-head CI. Slice A source still needs its own final review, complete local gates and required exact-head Ubuntu check.
   - **Release:** installed Mac (including early macOS 12 for optional Markdown), Windows app and signing/account decisions remain unverified.
 - **Owner decisions:** D1–D12 are proposals; D3 still needs an owner decision before B.
 

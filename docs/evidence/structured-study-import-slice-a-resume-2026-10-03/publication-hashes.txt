@@ -1,0 +1,13 @@
+Codex interruption-review publication hashes; excludes this file. Source submission has a separate 81-file receipt.
+
+6c38413531cd4c91ebbde5409cd816fc38cdedb271e8c8227a091cf28ebcade4  STATUS.md
+0faa175f9ddff9b4e5b4fb08b040fcba33ea19bc8807d815ee2dbcb864e6dd2f  docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_FINISH_PROMPT_2026-10-03.md
+15f3ff58853cebeff9bd29d040085cd2835a92520db391aa9aac9b7a088163fc  docs/MAC_PARITY_CHECKLIST.md
+20993c2c927b858b372767f2223bdf575d384d4ee06b3c622bf637d3ee5943de  docs/PROJECT_HANDOFF.md
+051eb56749e7fa254700e047b57b0ab7b1cfab310720a5af6a14d323a07ff14b  docs/STRUCTURED_STUDY_IMPORT_SLICE_A_INTERRUPTION_REVIEW_2026-10-03.md
+38c8cec559dcaaaf7db495967d7ccd826d078e41e04689478c5827d848622824  docs/STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md
+3c2e72960f8e4eea7a5eb3533748cf3d32fd4176b7baea55c25bebb96936eddc  docs/evidence/structured-study-import-slice-a-resume-2026-10-03/README.md
+4c8d7ee47073c9a1de0680aa95a8c39a1c59ee116365aedff79c3f2d3d2aa38d  docs/evidence/structured-study-import-slice-a-resume-2026-10-03/claude-mutation-results.json
+e78ff3191543cbf03fc95f04cd6770478c9ffee1356f14347bcac9d5054c814e  docs/evidence/structured-study-import-slice-a-resume-2026-10-03/claude-run-slice-a-mutations.mjs.txt
+58ff3ef0863c5003655eae07ec3980d1ff202935f20f3552823d272bc3ce430d  docs/evidence/structured-study-import-slice-a-resume-2026-10-03/codex-focused-checks.txt
+4fc0cccc759615021d92837d4d6a00dd725c88e6273ec7b5bca6abe00f101d63  docs/evidence/structured-study-import-slice-a-resume-2026-10-03/starting-hashes.txt

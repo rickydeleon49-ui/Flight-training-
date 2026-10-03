@@ -1,0 +1,18 @@
+Codex interruption review, 2026-10-03. Primary Mac branch codex/structured-study-import-slice-a.
+HEAD/base 696b07021f74104b800bc4a37c9ccb4c437a1abb; 81 submitted file hashes preserved.
+
+Scoped PATH=/opt/homebrew/opt/node@22/bin:/opt/homebrew/opt/rustup/bin:$PATH
+npm test -- src/logic/studyPacket src/services/studyPackets.test.ts
+exit 0; 7 test files passed; 241 tests passed; duration 286ms.
+npm run typecheck
+exit 0.
+
+First native attempt: SDKROOT incorrectly named /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk.
+cargo test --locked --manifest-path src-tauri/Cargo.toml study_packet::tests
+exit 101; linker used CommandLineTools SDK27.0, unknown arm64e.x1 architecture/TAPI errors.
+Corrected scoped SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+same cargo test command: exit 0; 16 passed, 0 failed, 0 ignored, 256 filtered out; 0.18s test duration.
+No source or global SDK change was made.
+
+git diff --check: exit 0 (tracked differences only).
+Mutation source/results were inspected, not rerun by Codex. No full test/build/fmt/clippy/lockfile gate was run in this interruption review.

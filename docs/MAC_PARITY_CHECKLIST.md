@@ -6,6 +6,8 @@ _Last updated: 29 September 2026 (Mac test kit prepared for 2 October 2026). Tar
 
 ## Purpose and current position
 
+**3 October structured-import Slice A interruption:** the [owner exception](STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md) permits only validator/read-only picker source work. Source remains local/uncommitted, with 241 focused frontend tests, typecheck and 16 native tests independently passing. [Codex review](STRUCTURED_STUDY_IMPORT_SLICE_A_INTERRUPTION_REVIEW_2026-10-03.md) identifies SA1 in the mutation runner; [Gemini finishes](GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_FINISH_PROMPT_2026-10-03.md) testing and the handoff. Source integration is pending. No installed, older-macOS, Windows or release item is cleared.
+
 **Owner decision (2 October):** Mac is the primary user platform. [The Mac-first readiness plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) requires actual installed validation after source consolidation and signing; existing UNVERIFIED item states remain unchanged.
 
 **2 October physical source evaluation:** [Observed Mac report](MAC_SMOKE_RESULTS_2026-10-02.md) records Apple M5 / 32 GB / macOS 26.6 and passing frontend/native source checks at main `5e388bf4169c7f968b1581292d6e1a24aa0493da`, with explicit installed SDK 26.5 after a default-SDK linker failure. Local Apple Silicon evaluation DMG build passed; its packaged app has an ad hoc signature, fails command-line Gatekeeper assessment, and has no stapled ticket. Installed smoke tests remain pending a dedicated standard test account. These results do not change the installed-Mac item states or frozen candidate identity below.
