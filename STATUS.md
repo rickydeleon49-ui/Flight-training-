@@ -1,5 +1,7 @@
 # Her Flight Deck — current project status
 
+**Mac A2 preparation accepted (3 October):** [Independent acceptance](docs/MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md) closes PREP-R1–R3 and confirms 36 controls passed. The shared package and Windows-owner handoff are accepted for reviewed publication; A2 production source is still pending. After CI/merge, [Claude prepares a read-only Mac readiness checker and isolated installation/signing runbook](docs/CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md). Installed results and release readiness remain unverified.
+
 _Updated 3 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
 
 ## Shared Windows/Mac handoff — 2 October 2026
