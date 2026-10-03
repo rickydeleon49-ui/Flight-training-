@@ -1,0 +1,42 @@
+Starting Slice A Mutation Runner
+Checkout: /Users/rickymac/code/Flight-training-
+Output JSON: /private/tmp/hfd-slice-a-final-review-2026-10-03/codex-mutations.json
+
+[1/3] Running unmodified scratch control...
+Unmodified control passed: 231 tests, 0 failures, exit 0.
+
+[2/3] Running aggregate failure propagation self-test...
+Running self-test: deliberately expecting M10 to be 'caught' instead of 'neutralized'...
+Self-test PASS: deliberate mismatch was correctly identified as unexpected (actual: neutralized, expected: caught, asExpected: false).
+
+[3/3] Running 22 mutants...
+
+Results Summary:
+--------------------------------------------------------------------------------
+OK  caught       (expect caught)      M1 forbidden property names accepted [failed=2/231, exit=1] -> study-packet fixtures (accepted contract) 34-proto-key.json matches its expected outcome | study-pac
+OK  caught       (expect caught)      M2 duplicate keys accepted (last wins) [failed=5/231, exit=1] -> study-packet fixtures (accepted contract) 17-duplicate-key.json matches its expected outcome | gener
+OK  caught       (expect caught)      M3 id uniqueness case-sensitive [failed=1/231, exit=1] -> study-packet fixtures (accepted contract) 19-duplicate-id-differs-by-case.json matches its expected
+OK  caught       (expect caught)      M4 answer key case silently repaired [failed=1/231, exit=1] -> study-packet fixtures (accepted contract) 24-answer-case-mismatch.json matches its expected outcome
+OK  caught       (expect caught)      M5 depth limit removed (objects) [failed=1/231, exit=1] -> generated boundary, encoding and privacy cases depth-over-limit-9-objects
+OK  caught       (expect caught)      M6 UTF-16 length instead of code points [failed=2/231, exit=1] -> generated boundary, encoding and privacy cases title-199-code-points | generated boundary, encoding
+OK  caught       (expect caught)      M7 page claims mapped to sourcePage [failed=6/231, exit=1] -> study-packet fixtures (accepted contract) 02-flashcards-and-test.json matches its expected outcome |
+OK  caught       (expect caught)      M8 unknown fields allowed [failed=10/231, exit=1] -> Codex review diagnostics (R1/R2) R1: unknown identifier-shaped key never echoed | study-packet fixtu
+OK  caught       (expect caught)      M9 credential check removed [failed=2/231, exit=1] -> generated boundary, encoding and privacy cases credential-google-key-shape | generated boundary, enc
+OK  neutralized  (expect neutralized) M10 errors echo input into the path [failed=0/231, exit=0] -> none
+OK  caught       (expect caught)      M11 control characters accepted [failed=3/231, exit=1] -> study-packet fixtures (accepted contract) 41-escaped-control-character.json matches its expected out
+OK  caught       (expect caught)      M12 diagnostic echo: unknown field name returned through an unchecked boundary [failed=4/231, exit=1] -> Codex review diagnostics (R1/R2) R1: unknown identifier-shaped key never echoed | generated boundary
+OK  neutralized  (expect neutralized) M12a boundary field allowlist removed only [failed=0/231, exit=0] -> none
+OK  neutralized  (expect neutralized) M12b unknown field name returned upstream only [failed=0/231, exit=0] -> none
+OK  caught       (expect caught)      M12c path echo: identifier-shaped keys kept in paths, boundary path checks removed [failed=2/231, exit=1] -> Codex review diagnostics (R1/R2) R1: scan-stage path never echoes unknown identifier | R1: diagnosti
+OK  caught       (expect caught)      M12d duplicate IDs returned: raw id added and passed by the boundary [failed=4/231, exit=1] -> Codex review diagnostics (R1/R2) R1: duplicate credential-shaped item id never echoed | R1: diagnost
+OK  caught       (expect caught)      M13 preview provenance dropped [failed=12/231, exit=1] -> Codex review diagnostics (R1/R2) R2: validated preview retains normalized source claims | study-pack
+OK  caught       (expect caught)      M14 source claim warning only for generator [failed=5/231, exit=1] -> Codex review diagnostics (R1/R2) R2: source note/date without generator are marked unverified | stud
+OK  caught       (expect caught)      M15 export IDs leak into persistence [failed=2/231, exit=1] -> study-packet fixtures (accepted contract) 57-refs-on-multiple-items.json matches its expected outcom
+OK  caught       (expect caught)      M16 R5 guard removed (orphan guide notes silently dropped again) [failed=8/231, exit=1] -> Codex re-review source-notes diagnostics (R5) R5: questions plus sourceNotes-only guide never silent
+OK  caught       (expect caught)      M17 guide source notes dropped from the persistence payload [failed=10/231, exit=1] -> Codex re-review source-notes diagnostics (R5) Control: cards plus sourceNotes preserve notes | Codex
+OK  caught       (expect caught)      M18 notes alone counted as a substantive guide [failed=9/231, exit=1] -> Codex re-review source-notes diagnostics (R5) Control: standalone sourceNotes remain an empty packet
+--------------------------------------------------------------------------------
+
+Summary: {"mutants":22,"asExpected":22,"caught":19,"neutralized":3,"infrastructureErrors":0}
+Wrote results to /private/tmp/hfd-slice-a-final-review-2026-10-03/codex-mutations.json
+SUCCESS: All 22 mutations performed as expected (19 caught, 3 neutralized).
