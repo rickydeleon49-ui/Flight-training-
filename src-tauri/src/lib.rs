@@ -15,6 +15,7 @@ mod pdf;
 mod platform;
 mod secrets;
 mod storage;
+mod study_packet;
 
 use tauri_plugin_sql::{Migration, MigrationKind};
 
@@ -134,6 +135,7 @@ pub fn run() {
             documents::import_unlinked_file,
             documents::trash_unlinked_file,
             documents::save_split_materials,
+            study_packet::pick_study_packet,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,
             pdf::split_pdf,

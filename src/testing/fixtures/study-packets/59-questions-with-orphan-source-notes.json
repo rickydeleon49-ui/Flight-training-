@@ -1,0 +1,27 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Orphan notes",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "question": "Choose the invented label Quill",
+      "choices": [
+        {
+          "id": "a",
+          "text": "Quill"
+        },
+        {
+          "id": "b",
+          "text": "Plinth"
+        }
+      ],
+      "correctChoiceId": "a",
+      "explanation": "Invented."
+    }
+  ],
+  "guide": {
+    "sourceNotes": "Synthetic source notes for an invented chart."
+  }
+}

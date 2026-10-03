@@ -1,0 +1,16 @@
+=== Aggregate Failure Propagation Negative Test ===
+Simulating a mutated test suite where M10 (neutralized) is falsely expected to be caught:
+M10 result: {
+  "mutant": "M10 errors echo input into the path",
+  "expect": "caught",
+  "actual": "neutralized",
+  "exit": 0,
+  "total": 231,
+  "failed": 0,
+  "caught": false,
+  "asExpected": false,
+  "infrastructureError": null,
+  "caughtBy": []
+}
+Overall run passed? false
+SUCCESSFUL PROOF OF FAILURE PROPAGATION: The runner correctly detected the expectation failure and would exit with status 1.

@@ -1,0 +1,11 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Note-only source",
+  "source": {
+    "note": "Invented exporter note."
+  },
+  "guide": {
+    "summary": "x"
+  }
+}

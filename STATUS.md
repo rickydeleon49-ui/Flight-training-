@@ -1,26 +1,13 @@
 # Her Flight Deck — current project status
 
-**Structured study-import preparation independently accepted (3 October):** [Acceptance](docs/STRUCTURED_STUDY_IMPORT_ACCEPTANCE_2026-10-03.md) closes R1–R5 and accepts the complete [contract](docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md), [schema](docs/contracts/hfd-study-packet-v1.schema.json), [implementation handoff](docs/STRUCTURED_STUDY_IMPORT_IMPLEMENTATION_HANDOFF_2026-10-03.md) and [evidence](docs/evidence/structured-study-import-contract-2026-10-03/README.md) for documentation integration after required CI. Codex independently reproduced 106 validator cases, 41 permanent regressions, 8 original diagnostics, 6 source-notes diagnostics, 22 expected mutation outcomes and compiling DTO examples. [The next Claude source-only Slice A prompt](docs/CLAUDE_STRUCTURED_STUDY_IMPORT_SLICE_A_PROMPT_2026-10-03.md) is conditional on the existing gates or an explicit owner exception. No production dependency or application behavior changed.
+**Structured study-import Slice A independently source-accepted (3 October):** [Acceptance](docs/STRUCTURED_STUDY_IMPORT_SLICE_A_ACCEPTANCE_2026-10-03.md) closes SA1/SA2 under the recorded [owner exception](docs/STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md). The Mac source now includes exactly `zod@4.6.5`, pure packet validation/preview and import DTOs, a read-only native picker/wrapper, tests and the Zod notice. Source integration requires the containing PR's exact-head required check and merge; the PR supplies that receipt. There is no import screen or save operation yet.
 
-- **R5:** guide `sourceNotes` that came with only questions were previewed but silently dropped. They now need a guide summary, a section or a flashcard, or the packet is rejected (`source_notes_without_study_set`, no echo). Accepted notes are saved and included in the content hash.
-- **Documentation corrections:**
-  - mutation counts are 16 caught and 3 neutralized (not 15 and 4) for the R1–R4 run
-  - the required CI check is the single Ubuntu job, separate from Mac/Windows packaging and installed evidence
-- **R5 run** (Node; not WKWebView or a database):
-  - validator 106/106
-  - permanent regressions 41/41 (the R1–R4 prototype passes 37/41)
-  - Codex's source-notes diagnostic 6/6 (before: 4/6)
-  - mutants 22/22 as expected: 19 caught, 3 neutralized
-  - schema 46 asserted, 0 failed
-  - DTO typecheck exit 0
-  - fake-adapter scenarios 13/13, labelled as fake
-- **Not done:** no production dependency, application behavior, migration, release identity, credential or user data changed.
-- **Remaining production/release gates:**
-  - **Production Slice A:** waits for the foundation/adoption gates or an explicit documented owner exception. None exists.
-  - **Slice B:** also needs published, accepted A2 and the M2 real-user check-in with scoped approval.
-  - **Integration:** this preparation is accepted; merge waits for the exact-head required Ubuntu check. Future source slices need their own review and checks.
-  - **Release:** installed Mac (including early macOS 12 for optional Markdown), Windows app and signing/account decisions remain unverified.
-- **Owner decisions:** D1–D12 are proposals; D3 still needs an owner decision before B.
+- **Independent review:** 95/95 submitted hashes matched across 96 files. Gemini changed only five expected documents; production/runner/tests/fixtures/manifests/notice bytes stayed unchanged. Three original snapshots are preserved. Codex corrected a broken evidence citation and made the archived report's old links inert. [Corrected implementation report](docs/STRUCTURED_STUDY_IMPORT_SLICE_A_IMPLEMENTATION_2026-10-03.md), [implementation evidence](docs/evidence/structured-study-import-slice-a-2026-10-03/README.md), [acceptance evidence](docs/evidence/structured-study-import-slice-a-acceptance-2026-10-03/README.md).
+- **Codex-measured source checks:** prior 241 focused frontend tests, typecheck and 16 native reader tests; clean mutation control 231/exit 0 and 22 expected outcomes (19 caught, three neutralized, zero infrastructure errors); actual mismatched CLI exit 1. This documentation re-review repeated hashes, source/report comparison, links and whitespace only.
+- **Gemini-reported full local gate:** 941 frontend tests passed/four skipped, build/typecheck passed, 266 Rust tests passed/six ignored, fmt/Clippy/lockfile/whitespace green. Codex did not repeat that unchanged matrix. Required source CI uses the full Ubuntu job.
+- **Open-source adoption:** exact Zod pin and MIT notice included; source and built notices match. The Function-constructor check is a Node simulation with zero calls under jitless; actual WKWebView/CSP and macOS 12 remain UNVERIFIED.
+- **Next assigned preparation:** [Gemini's detailed Slice B decision/API/test package](docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_PROMPT_2026-10-03.md). Preparation is permitted; database/UI implementation awaits published accepted A2, the M2 real-user check-in/scoped approval and D1–D9 decisions, especially D3. The Slice A exception ends with A.
+- **Remaining gates:** Slice B and optional Slice C have not started. Dedicated standard test account, signing decision, installed Mac/Windows evidence and existing release holds remain open. No migration, provider flow, real user data or release identity changed.
 
 **Mac installed-readiness preparation accepted (3 October):** [Independent acceptance](docs/MAC_INSTALLED_READINESS_ACCEPTANCE_2026-10-03.md) closes R1–R4. After CI/merge and clean synchronization, [Claude prepares the structured study-import contract](docs/CLAUDE_STRUCTURED_STUDY_IMPORT_CONTRACT_PROMPT_2026-10-03.md). This task adds a [read-only preflight](docs/MAC_READINESS_PREFLIGHT.md) (`scripts/mac-readiness-preflight.mjs`, no dependency, 34 focused tests) and an [isolated installed-test and signing runbook](docs/MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md).
 

@@ -1,0 +1,360 @@
+{
+  "rows": [
+    {
+      "mutant": "M1 forbidden property names accepted",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 4,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "study-packet fixtures (accepted contract) 34-proto-key.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 35-constructor-key-nested.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M2 duplicate keys accepted (last wins)",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 7,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "study-packet fixtures (accepted contract) 17-duplicate-key.json matches its expected outcome",
+        "generated boundary, encoding and privacy cases sentinel-duplicate-key-unsafe-name",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R1: diagnostic privacy R1: nested scan failures under unknown keys use redacted paths",
+        "R1: diagnostic privacy R1: duplicate unknown keys are reported without their name",
+        "R1: diagnostic privacy R1: duplicate contract-owned key reports only the fixed field name"
+      ]
+    },
+    {
+      "mutant": "M3 id uniqueness case-sensitive",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 3,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "study-packet fixtures (accepted contract) 19-duplicate-id-differs-by-case.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M4 answer key case silently repaired",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 3,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "study-packet fixtures (accepted contract) 24-answer-case-mismatch.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M5 depth limit removed (objects)",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 3,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "generated boundary, encoding and privacy cases depth-over-limit-9-objects",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M6 UTF-16 length instead of code points",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 4,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "generated boundary, encoding and privacy cases title-199-code-points",
+        "generated boundary, encoding and privacy cases title-200-code-points-astral",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M7 page claims mapped to sourcePage",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 8,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "study-packet fixtures (accepted contract) 02-flashcards-and-test.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 57-refs-on-multiple-items.json matches its expected outcome",
+        "generated boundary, encoding and privacy cases page-at-max-1000",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R2: preview data R2: preview-only information is absent from persistence output",
+        "R3: DTO, hash and reader/validator boundary R3: canonical persistence JSON ignores key order and preview-only values",
+        "answer mapping and persistence payload uses provider import, an empty model, null source pages and a title-only material"
+      ]
+    },
+    {
+      "mutant": "M8 unknown fields allowed",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 12,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex review diagnostics (R1/R2) R1: unknown identifier-shaped key never echoed",
+        "study-packet fixtures (accepted contract) 36-directive-fields.json matches its expected outcome",
+        "generated boundary, encoding and privacy cases depth-at-limit-8",
+        "generated boundary, encoding and privacy cases depth-at-limit-8-objects",
+        "generated boundary, encoding and privacy cases object-keys-at-limit-32",
+        "generated boundary, encoding and privacy cases key-length-at-limit-64",
+        "generated boundary, encoding and privacy cases values-at-limit",
+        "generated boundary, encoding and privacy cases sentinel-unknown-field-name"
+      ]
+    },
+    {
+      "mutant": "M9 credential check removed",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 4,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "generated boundary, encoding and privacy cases credential-google-key-shape",
+        "generated boundary, encoding and privacy cases credential-pem-header",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M10 errors echo input into the path",
+      "expect": "neutralized",
+      "exit": 1,
+      "total": 231,
+      "failed": 2,
+      "caught": true,
+      "asExpected": false,
+      "caughtBy": [
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M11 control characters accepted",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 5,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "study-packet fixtures (accepted contract) 41-escaped-control-character.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 42-lone-surrogate.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R1: diagnostic privacy R1: nested scan failures under unknown keys use redacted paths"
+      ]
+    },
+    {
+      "mutant": "M12 diagnostic echo: unknown field name returned through an unchecked boundary",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 6,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex review diagnostics (R1/R2) R1: unknown identifier-shaped key never echoed",
+        "generated boundary, encoding and privacy cases sentinel-unknown-field-name",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R1: diagnostic privacy R1: unknown ASCII private keys are redacted at top level and nested",
+        "R1: diagnostic privacy R1: credential-shaped unknown keys are redacted"
+      ]
+    },
+    {
+      "mutant": "M12a boundary field allowlist removed only",
+      "expect": "neutralized",
+      "exit": 1,
+      "total": 231,
+      "failed": 2,
+      "caught": true,
+      "asExpected": false,
+      "caughtBy": [
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M12b unknown field name returned upstream only",
+      "expect": "neutralized",
+      "exit": 1,
+      "total": 231,
+      "failed": 2,
+      "caught": true,
+      "asExpected": false,
+      "caughtBy": [
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged"
+      ]
+    },
+    {
+      "mutant": "M12c path echo: identifier-shaped keys kept in paths, boundary path checks removed",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 4,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex review diagnostics (R1/R2) R1: scan-stage path never echoes unknown identifier",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R1: diagnostic privacy R1: nested scan failures under unknown keys use redacted paths"
+      ]
+    },
+    {
+      "mutant": "M12d duplicate IDs returned: raw id added and passed by the boundary",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 6,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex review diagnostics (R1/R2) R1: duplicate credential-shaped item id never echoed",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R1: diagnostic privacy R1: duplicate question IDs are identified by index and firstIndex only",
+        "R1: diagnostic privacy R1: duplicate flashcard IDs are identified by index and firstIndex only",
+        "R1: diagnostic privacy R1: credential-shaped duplicate question IDs are not echoed beside the credential error"
+      ]
+    },
+    {
+      "mutant": "M13 preview provenance dropped",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 14,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex review diagnostics (R1/R2) R2: validated preview retains normalized source claims",
+        "study-packet fixtures (accepted contract) 02-flashcards-and-test.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 54-source-note-only.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 55-source-date-only.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 57-refs-on-multiple-items.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R2: preview data R2: preview retains normalized source claims"
+      ]
+    },
+    {
+      "mutant": "M14 source claim warning only for generator",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 7,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex review diagnostics (R1/R2) R2: source note/date without generator are marked unverified",
+        "study-packet fixtures (accepted contract) 54-source-note-only.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 55-source-date-only.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R2: preview data R2: createdAt-only source is flagged as an unverified claim",
+        "R2: preview data R2: note-only source is flagged as an unverified claim"
+      ]
+    },
+    {
+      "mutant": "M15 export IDs leak into persistence",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 4,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "study-packet fixtures (accepted contract) 57-refs-on-multiple-items.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R2: preview data R2: preview-only information is absent from persistence output"
+      ]
+    },
+    {
+      "mutant": "M16 R5 guard removed (orphan guide notes silently dropped again)",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 10,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex re-review source-notes diagnostics (R5) R5: questions plus sourceNotes-only guide never silently discard notes",
+        "Codex re-review source-notes diagnostics (R5) R5: empty summary and sections plus questions never silently discard notes",
+        "study-packet fixtures (accepted contract) 59-questions-with-orphan-source-notes.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 60-empty-guide-orphan-source-notes.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R5: guide source notes need a persistable study set R5: questions with a sourceNotes-only guide are rejected, not silently dropped",
+        "R5: guide source notes need a persistable study set R5: questions with empty summary and sections plus sourceNotes are rejected"
+      ]
+    },
+    {
+      "mutant": "M17 guide source notes dropped from the persistence payload",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 12,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex re-review source-notes diagnostics (R5) Control: cards plus sourceNotes preserve notes",
+        "Codex re-review source-notes diagnostics (R5) Control: substantive guide plus sourceNotes preserve notes",
+        "study-packet fixtures (accepted contract) 61-cards-with-source-notes.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 62-guide-with-source-notes.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R5: guide source notes need a persistable study set R5: cards with guide sourceNotes preserve the notes",
+        "R5: guide source notes need a persistable study set R5: a substantive guide with sourceNotes preserves them (summary or sections)"
+      ]
+    },
+    {
+      "mutant": "M18 notes alone counted as a substantive guide",
+      "expect": "caught",
+      "exit": 1,
+      "total": 231,
+      "failed": 11,
+      "caught": true,
+      "asExpected": true,
+      "caughtBy": [
+        "Codex re-review source-notes diagnostics (R5) Control: standalone sourceNotes remain an empty packet",
+        "study-packet fixtures (accepted contract) 59-questions-with-orphan-source-notes.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 60-empty-guide-orphan-source-notes.json matches its expected outcome",
+        "study-packet fixtures (accepted contract) 64-standalone-source-notes.json matches its expected outcome",
+        "third-party notice for the zod dependency pins exactly zod 4.6.5 as the only new production dependency it covers",
+        "third-party notice for the zod dependency ships the package's own copyright and permission text unchanged",
+        "R5: guide source notes need a persistable study set R5: questions with a sourceNotes-only guide are rejected, not silently dropped",
+        "R5: guide source notes need a persistable study set R5: questions with empty summary and sections plus sourceNotes are rejected"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Invented labels practice",
+  "flashcards": [
+    {
+      "id": "c1",
+      "front": "Which letter follows A?",
+      "back": "B",
+      "sourceRefs": [
+        {
+          "page": 0
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "front": "Which letter follows B?",
+      "back": "C",
+      "sourceRefs": [
+        {
+          "page": 1001
+        }
+      ]
+    }
+  ]
+}

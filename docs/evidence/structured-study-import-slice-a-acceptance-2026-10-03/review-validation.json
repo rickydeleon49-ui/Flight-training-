@@ -1,0 +1,20 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-03",
+  "sourceBase": "696b07021f74104b800bc4a37c9ccb4c437a1abb",
+  "documentationBase": "0e373cb9ef6865f9b793bb1e71b213a291c03ee1",
+  "submittedFiles": 96,
+  "receiptEntries": 95,
+  "receiptSha256": "5ee43fa13a9b8eccae63b909f00a7b1b1716934915f2b619fe6987757be5983e",
+  "mismatches": [],
+  "filesChangedSincePrior92EntryReceipt": [
+    "STATUS.md",
+    "docs/PROJECT_HANDOFF.md",
+    "docs/STRUCTURED_STUDY_IMPORT_SLICE_A_IMPLEMENTATION_2026-10-03.md",
+    "docs/evidence/structured-study-import-slice-a-2026-10-03/README.md",
+    "docs/evidence/structured-study-import-slice-a-2026-10-03/full-verification-receipt.txt"
+  ],
+  "productionRunnerTestsFixturesManifestsNoticeUnchanged": true,
+  "threeHistoricalSnapshotsVerbatim": true,
+  "checksRepeated": "Hashes, diff/source-document comparison, snapshot byte comparison, links and whitespace only; no full matrix repeated."
+}
