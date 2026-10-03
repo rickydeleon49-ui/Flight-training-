@@ -1,0 +1,34 @@
+Independent Mac readiness preparation review, Codex, 2026-10-03.
+Repository: /Users/rickymac/code/Flight-training-
+Branch: codex/mac-installed-readiness-preparation
+Base/HEAD: 8b159485a66804a368dde5f4d7eea596b63bbfcc
+All ten input hashes matched the Claude handoff before review. No input file changed during review.
+
+Independent commands (PATH scoped to Node 22 and rustup):
+npx --no-install vitest run src/logic/macReadinessPreflight.test.ts src/logic/releaseSafety.test.ts --reporter=dot
+  exit 0; 68 passed, 1 deliberate skip; 2 files passed; duration 1.96 seconds.
+npx --no-install tsc --noEmit
+  exit 0.
+node <task-owned scratch>/preflight-review-probes.mjs
+  exit 1 intentionally; 7 unmet expectations reproduced, detailed in probe-results.json.
+  Injected commands only; fixture SDK metadata absence isolated from actual filesystem.
+node scripts/mac-readiness-preflight.mjs --json
+  exit 0; 9 PASS, 0 FAIL, 3 UNVERIFIED, 3 USER_ACTION; readyForInstalledUse false.
+  R-SOURCE: original base, dirty branch, 2 modified paths and 5 untracked groups.
+  Complete JSON contained no /Users/ path.
+
+No unchanged full application/Rust gate, no A5 heavy fixture rerun.
+No real artifact supplied, inspected, mounted, installed, launched or signed.
+No private profile/credential/keychain/account changes. No Windows-owner message.
+
+Reviewed input SHA-256:
+b9bd50c1a26a40d0aa052da35a76faae3e35a2c44def494e4610018d3849d8eb  scripts/mac-readiness-preflight.mjs
+59bee8f9e90f58c00a0bcb8c5d75182df27fb5358c1f964a4aad009d5b28c1a3  src/logic/macReadinessPreflight.test.ts
+16086c75545f7e8bbad0e2c7fc1f67081be608abec617322dd92787d012b97a2  docs/MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md
+27ab6aa4cec9151b45ffe3b82d1d22b5f39842c9e1bb7a091dfacb6f39aa1461  docs/MAC_READINESS_PREFLIGHT.md
+bffdd705c609851e6f998b7fac8645596811029f175ddc9fc8d68489a2adad4e  docs/evidence/mac-installed-readiness-preparation-2026-10-03/README.md
+beaaeadb85123b7eac4f13910f1282b548637464835b296e65e3c3ce4bee928c  docs/evidence/mac-installed-readiness-preparation-2026-10-03/host-preflight-2026-10-03.json
+2e84eda9ab11a859e765dd54e34f30652805195c3c2279a5e452bd47faac1ec6  docs/evidence/mac-installed-readiness-preparation-2026-10-03/host-preflight-2026-10-03.txt
+fcb7d36e4a48ad92ad216d56dea2d2a83e06e6de27d6a09f26e749823fa2ee4e  docs/evidence/mac-installed-readiness-preparation-2026-10-03/preflight-controls-2026-10-03.txt
+e4df6019215fa94a17d6da185470d165b5d567112c9c29a83c70346c35d0b94b  STATUS.md
+dbbce3552cdd0bd57cf3e25c1baa7581bff2257b780c0486bc0b5b0c282de7bf  docs/PROJECT_HANDOFF.md

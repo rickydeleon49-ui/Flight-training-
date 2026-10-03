@@ -373,4 +373,3 @@ All four findings are corrected; the package is [accepted by Codex for source in
 | --- | --- |
 | Reviewed script (`b9bd50c1…`) | **23 failed / 11 passed** of 34, including every R1, R2 and R3 regression |
 | Corrected copy | **34 passed** |
-

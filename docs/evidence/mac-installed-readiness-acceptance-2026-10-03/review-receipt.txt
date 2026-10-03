@@ -44,3 +44,10 @@ c50df93b9b1973e11db691ad65cb9e3723e421b9eca190a821aaf851b415c495  docs/evidence/
 a3f8044193fb6f9d6bf5aae58a9967b1d3f107abd32e600979c34ea0ea7a5b3c  docs/evidence/mac-installed-readiness-preparation-2026-10-03/readiness-correction-receipt-2026-10-03.txt
 dc93296115651c61c6b990d7fbc9975e95eaeebcf204805a9b4277b685bbd520  STATUS.md
 a5496ab4df3fb4c13effb8e8cdec4f0088e5c273070a825da16ff807c9ce61f3  docs/PROJECT_HANDOFF.md
+
+Publication verification:
+  167 local Markdown links resolve after integration with published PR #55.
+  git diff --cached origin/main --check: exit 0; reviewed source/test hashes unchanged.
+  One extra runbook EOF blank line normalized during publication.
+  Historical upstream evidence snapshots remain byte-identical, including their original formatting.
+  Publication annotations mark acceptance and reconcile STATUS/handoff with main.
