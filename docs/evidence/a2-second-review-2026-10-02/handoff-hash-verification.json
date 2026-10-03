@@ -1,0 +1,62 @@
+[
+  {
+    "path": "src-tauri/src/documents.rs",
+    "expected": "68e157a96ef679b8c28c2d46f7fe3a78eda31ce191e3e69a1fb2e57af0afa7d7",
+    "actual": "68e157a96ef679b8c28c2d46f7fe3a78eda31ce191e3e69a1fb2e57af0afa7d7",
+    "matches": true
+  },
+  {
+    "path": "src-tauri/src/documents_save_tests.rs",
+    "expected": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+    "actual": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+    "matches": true
+  },
+  {
+    "path": "src/data/materialTransaction.ts",
+    "expected": "48319066a73db66b78e50d8523c5efaf9b5fe09dedfdc181bc46c03d5bba1f46",
+    "actual": "48319066a73db66b78e50d8523c5efaf9b5fe09dedfdc181bc46c03d5bba1f46",
+    "matches": true
+  },
+  {
+    "path": "src/data/connectionOwner.ts",
+    "expected": "0b58e1147c7b0b87465b9d74c40f4bd217c406c9d978326cd59b63522e0150da",
+    "actual": "0b58e1147c7b0b87465b9d74c40f4bd217c406c9d978326cd59b63522e0150da",
+    "matches": true
+  },
+  {
+    "path": "src/data/sqlJsDb.ts",
+    "expected": "9c471d5986e5a8ee712e91e65b344826ef1ee0330c4a20722eabed5556484fd6",
+    "actual": "9c471d5986e5a8ee712e91e65b344826ef1ee0330c4a20722eabed5556484fd6",
+    "matches": true
+  },
+  {
+    "path": "src/data/testing/nodeSqliteDb.ts",
+    "expected": "b093457edb6b5a7d010a78e2b05191b8164ca9c4da7ac30a763b6c55b4965492",
+    "actual": "b093457edb6b5a7d010a78e2b05191b8164ca9c4da7ac30a763b6c55b4965492",
+    "matches": true
+  },
+  {
+    "path": "src/data/repositories/documentRepository.ts",
+    "expected": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+    "actual": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+    "matches": true
+  },
+  {
+    "path": "src-tauri/fixtures/material-save-contract/expected.json",
+    "expected": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+    "actual": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+    "matches": true
+  },
+  {
+    "path": "src-tauri/fixtures/material-save-contract/steps.json",
+    "expected": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+    "actual": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+    "matches": true
+  },
+  {
+    "path": "docs/ATOMIC_STUDY_MATERIAL_SAVES_2026-10-02.md",
+    "expected": "cc9e15866b017cbb6f48f7b14a52ecde8b826cb663bd9f56cfec9fdb7f54f3fb",
+    "actual": "cc9e15866b017cbb6f48f7b14a52ecde8b826cb663bd9f56cfec9fdb7f54f3fb",
+    "matches": true
+  }
+]

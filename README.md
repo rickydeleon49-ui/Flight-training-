@@ -16,6 +16,9 @@ the source of truth for purpose, philosophy, terminology, and visual direction.
 for a fresh checkout, setup, the Mac agent prompt and a smoke-test results template.
 It needs no files from the Windows computer.
 
+**Working across Windows and Mac?** Read the [shared project handoff](docs/PROJECT_HANDOFF.md)
+for current task ownership, research, review evidence and continuation prompts.
+
 ---
 
 ## Running it

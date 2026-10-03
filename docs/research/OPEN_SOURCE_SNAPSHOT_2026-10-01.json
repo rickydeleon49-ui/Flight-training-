@@ -1,0 +1,2552 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-10-01",
+  "publishedOn": "2026-10-02",
+  "timeZone": "America/Los_Angeles",
+  "status": "Historical research only; no new library adopted or version selected",
+  "qualification": {
+    "minimumStars": 1000,
+    "screenedCount": 170,
+    "scope": "Metadata screening; not a full source/license/security audit of every result"
+  },
+  "queries": [
+    {
+      "query": "stars:>=1000 archived:false pdf",
+      "totalAtSnapshot": 484,
+      "returnedRepositories": [
+        "microsoft/markitdown",
+        "Graphify-Labs/graphify",
+        "justjavac/free-programming-books-zh_CN",
+        "nexu-io/open-design",
+        "Stirling-Tools/Stirling-PDF",
+        "PaddlePaddle/PaddleOCR",
+        "fighting41love/funNLP",
+        "TapXWorld/ChinaTextbook",
+        "opendatalab/MinerU",
+        "binary-husky/gpt_academic",
+        "docling-project/docling",
+        "mozilla/pdf.js",
+        "bojieli/ai-agent-book",
+        "hiroi-sora/Umi-OCR",
+        "paperless-ngx/paperless-ngx",
+        "datalab-to/marker",
+        "hehonghui/awesome-english-ebooks",
+        "PDFMathTranslate/PDFMathTranslate",
+        "ocrmypdf/OCRmyPDF",
+        "virgiliojr94/book-to-skill",
+        "parallax/jsPDF",
+        "koreader/koreader",
+        "opendataloader-project/opendataloader-pdf",
+        "ArchiveBox/ArchiveBox",
+        "posquit0/Awesome-CV",
+        "srbhr/Resume-Matcher",
+        "koodo-reader/koodo-reader",
+        "forthespada/CS-Books",
+        "apify/crawlee",
+        "microsoft/JARVIS",
+        "readest/readest",
+        "Dujltqzv/Some-Many-Books",
+        "firecrawl/anydoc",
+        "dream-num/univer",
+        "allenai/olmocr"
+      ]
+    },
+    {
+      "query": "stars:>=1000 archived:false spaced repetition",
+      "totalAtSnapshot": 6,
+      "returnedRepositories": [
+        "ankitects/anki",
+        "open-spaced-repetition/fsrs4anki",
+        "st3v3nmw/obsidian-spaced-repetition",
+        "olmps/memo",
+        "andymatuschak/orbit",
+        "eudoxia0/hashcards"
+      ]
+    },
+    {
+      "query": "stars:>=1000 archived:false tauri notes",
+      "totalAtSnapshot": 2,
+      "returnedRepositories": [
+        "codexu/note-gen",
+        "codedogQBY/ReadAny"
+      ]
+    },
+    {
+      "query": "stars:>=1000 archived:false search language:TypeScript",
+      "totalAtSnapshot": 94,
+      "returnedRepositories": [
+        "firecrawl/firecrawl",
+        "Egonex-AI/Understand-Anything",
+        "LibreChat-AI/LibreChat",
+        "ComposioHQ/composio",
+        "tobi/qmd",
+        "karakeep-app/karakeep",
+        "dzhng/deep-research",
+        "getmaxun/maxun",
+        "TanStack/router",
+        "crimx/ext-saladict",
+        "zilliztech/claude-context",
+        "hangwin/mcp-chrome",
+        "zaidmukaddam/scira",
+        "triggerdotdev/jsonhero-web",
+        "47ng/nuqs",
+        "nexmoe/VidBee",
+        "oramasearch/orama",
+        "wonderwhy-er/DesktopCommanderMCP",
+        "coaidev/coai",
+        "apify/apify-mcp-server",
+        "miurla/morphic",
+        "rockbenben/ChatGPT-Shortcut",
+        "xushengfeng/eSearch",
+        "iorate/ublacklist",
+        "zu1k/book-searcher",
+        "brightdata/cli",
+        "lucaong/minisearch",
+        "PawanOsman/OpenCursor",
+        "21st-dev/magic-mcp",
+        "KnockOutEZ/wigolo",
+        "algolia/autocomplete",
+        "dsh-market/dsh-market",
+        "exa-labs/exa-mcp-server",
+        "apple/embedding-atlas",
+        "searchkit/searchkit"
+      ]
+    },
+    {
+      "query": "stars:>=1000 archived:false pdf language:Rust",
+      "totalAtSnapshot": 19,
+      "returnedRepositories": [
+        "firecrawl/anydoc",
+        "firecrawl/pdf-inspector",
+        "run-llama/liteparse",
+        "flxzt/rnote",
+        "phiresky/ripgrep-all",
+        "kane50613/takumi",
+        "xerj-org/xerj",
+        "J-F-Liu/lopdf",
+        "itsjunetime/tdf",
+        "rust-skia/rust-skia",
+        "yobix-ai/extractous",
+        "baskerville/plato",
+        "pdf-rs/pdf",
+        "Skardyy/mcat",
+        "mufeedvh/pdfrip",
+        "bugzmanov/bookokrat",
+        "fschutt/printpdf",
+        "yfedoseev/pdf_oxide",
+        "SylphxAI/anymd"
+      ]
+    },
+    {
+      "query": "stars:>=1000 archived:false pdf language:TypeScript",
+      "totalAtSnapshot": 61,
+      "returnedRepositories": [
+        "nexu-io/open-design",
+        "apify/crawlee",
+        "readest/readest",
+        "dream-num/univer",
+        "diegomura/react-pdf",
+        "documenso/documenso",
+        "Zettlr/Zettlr",
+        "crimx/ext-saladict",
+        "getomni-ai/zerox",
+        "windingwind/zotero-pdf-translate",
+        "wojtekmaj/react-pdf",
+        "papermark/papermark",
+        "Hopding/pdf-lib",
+        "PDFCraftTool/pdfcraft",
+        "genspark-ai/genoffice",
+        "OpenCoworkAI/open-codesign",
+        "enricoros/big-AGI",
+        "Hufe921/canvas-editor",
+        "pdfme/pdfme",
+        "embedpdf/embed-pdf-viewer",
+        "mixedbread-ai/mgrep",
+        "run-llama/llama_cloud_services",
+        "ethanwillis/zotero-scihub",
+        "shadcn-labs/pdfcn",
+        "snapotter-hq/SnapOtter",
+        "Xmader/musescore-downloader",
+        "szTheory/exifcleaner",
+        "OnedocLabs/react-print-pdf",
+        "simonbengtsson/jsPDF-AutoTable",
+        "RyotaUshio/obsidian-pdf-plus",
+        "flyfish-dev/file-viewer",
+        "chrisryugj/kordoc",
+        "scambier/obsidian-omnisearch",
+        "microsoft/maker.js",
+        "LingyiChen-AI/JadeAI"
+      ]
+    },
+    {
+      "query": "stars:>=1000 archived:false virtualization",
+      "totalAtSnapshot": 274,
+      "returnedRepositories": [
+        "excalidraw/excalidraw",
+        "bregman-arie/devops-exercises",
+        "dockur/windows",
+        "apple/container",
+        "spacedriveapp/spacedrive",
+        "preactjs/preact",
+        "firecracker-microvm/firecracker",
+        "utmapp/UTM",
+        "waydabber/BetterDisplay",
+        "trycua/cua",
+        "hashicorp/vagrant",
+        "bvaughn/react-virtualized",
+        "yeasy/docker_practice",
+        "kholia/OSX-KVM",
+        "copy/v86",
+        "winboat-org/winboat",
+        "m1k1o/neko",
+        "scottbez1/smartknob",
+        "lima-vm/lima",
+        "dockur/macos",
+        "facebook/hhvm",
+        "aframevr/aframe",
+        "leaningtech/webvm",
+        "quickemu-project/quickemu",
+        "qemu/qemu",
+        "snabbdom/snabbdom",
+        "jetify-com/devbox",
+        "Matt-Esch/virtual-dom",
+        "gravitl/netmaker",
+        "asLody/VirtualApp",
+        "a16z-infra/ai-town",
+        "xdissent/ievms",
+        "canonical/multipass",
+        "bigbluebutton/bigbluebutton",
+        "Project-DARC/DARC"
+      ]
+    },
+    {
+      "query": "stars:>=1000 archived:false flashcard",
+      "totalAtSnapshot": 11,
+      "returnedRepositories": [
+        "donnemartin/system-design-primer",
+        "donnemartin/interactive-coding-challenges",
+        "ankitects/anki",
+        "ankidroid/Anki-Android",
+        "st3v3nmw/obsidian-spaced-repetition",
+        "modocache/MDCSwipeToChoose",
+        "b7leung/MLE-Flashcards",
+        "ObsidianToAnki/Obsidian_to_Anki",
+        "CaviraOSS/PageLM",
+        "anki-geo/ultimate-geography",
+        "reuseman/flashcards-obsidian"
+      ]
+    }
+  ],
+  "screenedRepositories": [
+    {
+      "repo": "21st-dev/magic-mcp",
+      "url": "https://github.com/21st-dev/magic-mcp",
+      "stars": 5959,
+      "license": "ISC",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-09T20:38:22Z",
+      "archived": false
+    },
+    {
+      "repo": "47ng/nuqs",
+      "url": "https://github.com/47ng/nuqs",
+      "stars": 10869,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T02:02:42Z",
+      "archived": false
+    },
+    {
+      "repo": "a16z-infra/ai-town",
+      "url": "https://github.com/a16z-infra/ai-town",
+      "stars": 10575,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-08-26T00:34:11Z",
+      "archived": false
+    },
+    {
+      "repo": "aframevr/aframe",
+      "url": "https://github.com/aframevr/aframe",
+      "stars": 17646,
+      "license": "MIT",
+      "language": "JavaScript",
+      "pushed_at": "2026-07-13T15:27:11Z",
+      "archived": false
+    },
+    {
+      "repo": "algolia/autocomplete",
+      "url": "https://github.com/algolia/autocomplete",
+      "stars": 5265,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-30T07:45:46Z",
+      "archived": false
+    },
+    {
+      "repo": "allenai/olmocr",
+      "url": "https://github.com/allenai/olmocr",
+      "stars": 19687,
+      "license": "Apache-2.0",
+      "language": "Python",
+      "pushed_at": "2026-03-25T17:52:37Z",
+      "archived": false
+    },
+    {
+      "repo": "andymatuschak/orbit",
+      "url": "https://github.com/andymatuschak/orbit",
+      "stars": 1835,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2024-10-14T03:25:14Z",
+      "archived": false
+    },
+    {
+      "repo": "anki-geo/ultimate-geography",
+      "url": "https://github.com/anki-geo/ultimate-geography",
+      "stars": 1175,
+      "license": "NOASSERTION",
+      "language": "Python",
+      "pushed_at": "2026-09-10T16:35:29Z",
+      "archived": false
+    },
+    {
+      "repo": "ankidroid/Anki-Android",
+      "url": "https://github.com/ankidroid/Anki-Android",
+      "stars": 11899,
+      "license": "GPL-3.0",
+      "language": "Kotlin",
+      "pushed_at": "2026-10-02T05:02:56Z",
+      "archived": false
+    },
+    {
+      "repo": "ankitects/anki",
+      "url": "https://github.com/ankitects/anki",
+      "stars": 31698,
+      "license": "NOASSERTION",
+      "language": "Rust",
+      "pushed_at": "2026-10-01T11:55:15Z",
+      "archived": false
+    },
+    {
+      "repo": "apify/apify-mcp-server",
+      "url": "https://github.com/apify/apify-mcp-server",
+      "stars": 9301,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T22:45:41Z",
+      "archived": false
+    },
+    {
+      "repo": "apify/crawlee",
+      "url": "https://github.com/apify/crawlee",
+      "stars": 25970,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T20:52:56Z",
+      "archived": false
+    },
+    {
+      "repo": "apple/container",
+      "url": "https://github.com/apple/container",
+      "stars": 50449,
+      "license": "Apache-2.0",
+      "language": "Swift",
+      "pushed_at": "2026-09-30T23:57:10Z",
+      "archived": false
+    },
+    {
+      "repo": "apple/embedding-atlas",
+      "url": "https://github.com/apple/embedding-atlas",
+      "stars": 4963,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T16:47:47Z",
+      "archived": false
+    },
+    {
+      "repo": "ArchiveBox/ArchiveBox",
+      "url": "https://github.com/ArchiveBox/ArchiveBox",
+      "stars": 28669,
+      "license": "MIT",
+      "language": "Python",
+      "pushed_at": "2026-09-30T22:36:28Z",
+      "archived": false
+    },
+    {
+      "repo": "asLody/VirtualApp",
+      "url": "https://github.com/asLody/VirtualApp",
+      "stars": 11103,
+      "license": null,
+      "language": "Java",
+      "pushed_at": "2026-09-15T07:12:47Z",
+      "archived": false
+    },
+    {
+      "repo": "b7leung/MLE-Flashcards",
+      "url": "https://github.com/b7leung/MLE-Flashcards",
+      "stars": 2515,
+      "license": "GPL-3.0",
+      "language": null,
+      "pushed_at": "2026-04-30T05:33:31Z",
+      "archived": false
+    },
+    {
+      "repo": "baskerville/plato",
+      "url": "https://github.com/baskerville/plato",
+      "stars": 1708,
+      "license": "NOASSERTION",
+      "language": "Rust",
+      "pushed_at": "2026-03-30T09:43:52Z",
+      "archived": false
+    },
+    {
+      "repo": "bigbluebutton/bigbluebutton",
+      "url": "https://github.com/bigbluebutton/bigbluebutton",
+      "stars": 9231,
+      "license": "LGPL-3.0",
+      "language": "JavaScript",
+      "pushed_at": "2026-10-02T03:02:20Z",
+      "archived": false
+    },
+    {
+      "repo": "binary-husky/gpt_academic",
+      "url": "https://github.com/binary-husky/gpt_academic",
+      "stars": 71394,
+      "license": "GPL-3.0",
+      "language": "Python",
+      "pushed_at": "2026-01-25T12:33:10Z",
+      "archived": false
+    },
+    {
+      "repo": "bojieli/ai-agent-book",
+      "url": "https://github.com/bojieli/ai-agent-book",
+      "stars": 52044,
+      "license": "Apache-2.0",
+      "language": "Python",
+      "pushed_at": "2026-09-30T03:03:29Z",
+      "archived": false
+    },
+    {
+      "repo": "bregman-arie/devops-exercises",
+      "url": "https://github.com/bregman-arie/devops-exercises",
+      "stars": 84740,
+      "license": "NOASSERTION",
+      "language": "Python",
+      "pushed_at": "2025-12-27T14:22:30Z",
+      "archived": false
+    },
+    {
+      "repo": "brightdata/cli",
+      "url": "https://github.com/brightdata/cli",
+      "stars": 6277,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T11:42:17Z",
+      "archived": false
+    },
+    {
+      "repo": "bugzmanov/bookokrat",
+      "url": "https://github.com/bugzmanov/bookokrat",
+      "stars": 1175,
+      "license": "AGPL-3.0",
+      "language": "Rust",
+      "pushed_at": "2026-09-06T11:55:37Z",
+      "archived": false
+    },
+    {
+      "repo": "bvaughn/react-virtualized",
+      "url": "https://github.com/bvaughn/react-virtualized",
+      "stars": 27074,
+      "license": "MIT",
+      "language": "JavaScript",
+      "pushed_at": "2025-01-20T21:42:24Z",
+      "archived": false
+    },
+    {
+      "repo": "canonical/multipass",
+      "url": "https://github.com/canonical/multipass",
+      "stars": 9259,
+      "license": "GPL-3.0",
+      "language": "C++",
+      "pushed_at": "2026-10-01T22:14:20Z",
+      "archived": false
+    },
+    {
+      "repo": "CaviraOSS/PageLM",
+      "url": "https://github.com/CaviraOSS/PageLM",
+      "stars": 2025,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-30T18:46:46Z",
+      "archived": false
+    },
+    {
+      "repo": "chrisryugj/kordoc",
+      "url": "https://github.com/chrisryugj/kordoc",
+      "stars": 2326,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T23:38:56Z",
+      "archived": false
+    },
+    {
+      "repo": "coaidev/coai",
+      "url": "https://github.com/coaidev/coai",
+      "stars": 9318,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-03-12T10:00:31Z",
+      "archived": false
+    },
+    {
+      "repo": "codedogQBY/ReadAny",
+      "url": "https://github.com/codedogQBY/ReadAny",
+      "stars": 2695,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-26T10:44:46Z",
+      "archived": false
+    },
+    {
+      "repo": "codexu/note-gen",
+      "url": "https://github.com/codexu/note-gen",
+      "stars": 12867,
+      "license": "GPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-30T12:29:39Z",
+      "archived": false
+    },
+    {
+      "repo": "ComposioHQ/composio",
+      "url": "https://github.com/ComposioHQ/composio",
+      "stars": 30394,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T05:07:11Z",
+      "archived": false
+    },
+    {
+      "repo": "copy/v86",
+      "url": "https://github.com/copy/v86",
+      "stars": 23549,
+      "license": "BSD-2-Clause",
+      "language": "JavaScript",
+      "pushed_at": "2026-10-01T18:15:06Z",
+      "archived": false
+    },
+    {
+      "repo": "crimx/ext-saladict",
+      "url": "https://github.com/crimx/ext-saladict",
+      "stars": 13351,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-25T09:45:22Z",
+      "archived": false
+    },
+    {
+      "repo": "datalab-to/marker",
+      "url": "https://github.com/datalab-to/marker",
+      "stars": 40159,
+      "license": "Apache-2.0",
+      "language": "Python",
+      "pushed_at": "2026-09-13T07:35:22Z",
+      "archived": false
+    },
+    {
+      "repo": "diegomura/react-pdf",
+      "url": "https://github.com/diegomura/react-pdf",
+      "stars": 16816,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-23T10:24:26Z",
+      "archived": false
+    },
+    {
+      "repo": "dockur/macos",
+      "url": "https://github.com/dockur/macos",
+      "stars": 21593,
+      "license": "MIT",
+      "language": "Shell",
+      "pushed_at": "2026-09-28T03:20:47Z",
+      "archived": false
+    },
+    {
+      "repo": "dockur/windows",
+      "url": "https://github.com/dockur/windows",
+      "stars": 53451,
+      "license": "MIT",
+      "language": "Shell",
+      "pushed_at": "2026-09-27T20:00:49Z",
+      "archived": false
+    },
+    {
+      "repo": "docling-project/docling",
+      "url": "https://github.com/docling-project/docling",
+      "stars": 68284,
+      "license": "MIT",
+      "language": "Python",
+      "pushed_at": "2026-10-01T21:16:10Z",
+      "archived": false
+    },
+    {
+      "repo": "documenso/documenso",
+      "url": "https://github.com/documenso/documenso",
+      "stars": 15289,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T04:10:02Z",
+      "archived": false
+    },
+    {
+      "repo": "donnemartin/interactive-coding-challenges",
+      "url": "https://github.com/donnemartin/interactive-coding-challenges",
+      "stars": 31890,
+      "license": "NOASSERTION",
+      "language": "Python",
+      "pushed_at": "2024-05-08T23:07:36Z",
+      "archived": false
+    },
+    {
+      "repo": "donnemartin/system-design-primer",
+      "url": "https://github.com/donnemartin/system-design-primer",
+      "stars": 372851,
+      "license": "NOASSERTION",
+      "language": "Python",
+      "pushed_at": "2026-09-15T01:10:09Z",
+      "archived": false
+    },
+    {
+      "repo": "dream-num/univer",
+      "url": "https://github.com/dream-num/univer",
+      "stars": 22268,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T01:05:00Z",
+      "archived": false
+    },
+    {
+      "repo": "dsh-market/dsh-market",
+      "url": "https://github.com/dsh-market/dsh-market",
+      "stars": 5259,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T16:11:09Z",
+      "archived": false
+    },
+    {
+      "repo": "Dujltqzv/Some-Many-Books",
+      "url": "https://github.com/Dujltqzv/Some-Many-Books",
+      "stars": 24203,
+      "license": null,
+      "language": null,
+      "pushed_at": "2026-06-18T05:36:05Z",
+      "archived": false
+    },
+    {
+      "repo": "dzhng/deep-research",
+      "url": "https://github.com/dzhng/deep-research",
+      "stars": 19746,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-04-11T23:58:25Z",
+      "archived": false
+    },
+    {
+      "repo": "Egonex-AI/Understand-Anything",
+      "url": "https://github.com/Egonex-AI/Understand-Anything",
+      "stars": 84979,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T03:34:42Z",
+      "archived": false
+    },
+    {
+      "repo": "embedpdf/embed-pdf-viewer",
+      "url": "https://github.com/embedpdf/embed-pdf-viewer",
+      "stars": 4523,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T22:50:48Z",
+      "archived": false
+    },
+    {
+      "repo": "enricoros/big-AGI",
+      "url": "https://github.com/enricoros/big-AGI",
+      "stars": 7135,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T05:29:07Z",
+      "archived": false
+    },
+    {
+      "repo": "ethanwillis/zotero-scihub",
+      "url": "https://github.com/ethanwillis/zotero-scihub",
+      "stars": 4110,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-26T11:47:18Z",
+      "archived": false
+    },
+    {
+      "repo": "eudoxia0/hashcards",
+      "url": "https://github.com/eudoxia0/hashcards",
+      "stars": 1168,
+      "license": "Apache-2.0",
+      "language": "Rust",
+      "pushed_at": "2026-10-01T22:36:10Z",
+      "archived": false
+    },
+    {
+      "repo": "exa-labs/exa-mcp-server",
+      "url": "https://github.com/exa-labs/exa-mcp-server",
+      "stars": 5069,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T03:27:09Z",
+      "archived": false
+    },
+    {
+      "repo": "excalidraw/excalidraw",
+      "url": "https://github.com/excalidraw/excalidraw",
+      "stars": 133381,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T15:08:43Z",
+      "archived": false
+    },
+    {
+      "repo": "facebook/hhvm",
+      "url": "https://github.com/facebook/hhvm",
+      "stars": 18664,
+      "license": "NOASSERTION",
+      "language": "C++",
+      "pushed_at": "2026-10-02T03:07:15Z",
+      "archived": false
+    },
+    {
+      "repo": "fighting41love/funNLP",
+      "url": "https://github.com/fighting41love/funNLP",
+      "stars": 83619,
+      "license": null,
+      "language": "Python",
+      "pushed_at": "2024-05-10T07:38:24Z",
+      "archived": false
+    },
+    {
+      "repo": "firecracker-microvm/firecracker",
+      "url": "https://github.com/firecracker-microvm/firecracker",
+      "stars": 37105,
+      "license": "Apache-2.0",
+      "language": "Rust",
+      "pushed_at": "2026-10-01T15:30:10Z",
+      "archived": false
+    },
+    {
+      "repo": "firecrawl/anydoc",
+      "url": "https://github.com/firecrawl/anydoc",
+      "stars": 22379,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-08-28T02:13:16Z",
+      "archived": false
+    },
+    {
+      "repo": "firecrawl/firecrawl",
+      "url": "https://github.com/firecrawl/firecrawl",
+      "stars": 187654,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T00:05:59Z",
+      "archived": false
+    },
+    {
+      "repo": "firecrawl/pdf-inspector",
+      "url": "https://github.com/firecrawl/pdf-inspector",
+      "stars": 19455,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-09-30T23:28:35Z",
+      "archived": false
+    },
+    {
+      "repo": "flxzt/rnote",
+      "url": "https://github.com/flxzt/rnote",
+      "stars": 11722,
+      "license": "GPL-3.0",
+      "language": "Rust",
+      "pushed_at": "2026-09-28T17:46:09Z",
+      "archived": false
+    },
+    {
+      "repo": "flyfish-dev/file-viewer",
+      "url": "https://github.com/flyfish-dev/file-viewer",
+      "stars": 2459,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-27T19:13:53Z",
+      "archived": false
+    },
+    {
+      "repo": "forthespada/CS-Books",
+      "url": "https://github.com/forthespada/CS-Books",
+      "stars": 27390,
+      "license": null,
+      "language": null,
+      "pushed_at": "2025-11-06T12:55:46Z",
+      "archived": false
+    },
+    {
+      "repo": "fschutt/printpdf",
+      "url": "https://github.com/fschutt/printpdf",
+      "stars": 1119,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-10-01T21:22:43Z",
+      "archived": false
+    },
+    {
+      "repo": "genspark-ai/genoffice",
+      "url": "https://github.com/genspark-ai/genoffice",
+      "stars": 8352,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T15:10:39Z",
+      "archived": false
+    },
+    {
+      "repo": "getmaxun/maxun",
+      "url": "https://github.com/getmaxun/maxun",
+      "stars": 17624,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T17:37:36Z",
+      "archived": false
+    },
+    {
+      "repo": "getomni-ai/zerox",
+      "url": "https://github.com/getomni-ai/zerox",
+      "stars": 12261,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2025-05-20T00:39:18Z",
+      "archived": false
+    },
+    {
+      "repo": "Graphify-Labs/graphify",
+      "url": "https://github.com/Graphify-Labs/graphify",
+      "stars": 123136,
+      "license": "Apache-2.0",
+      "language": "Python",
+      "pushed_at": "2026-09-30T19:53:37Z",
+      "archived": false
+    },
+    {
+      "repo": "gravitl/netmaker",
+      "url": "https://github.com/gravitl/netmaker",
+      "stars": 11809,
+      "license": "NOASSERTION",
+      "language": "Go",
+      "pushed_at": "2026-10-02T04:10:56Z",
+      "archived": false
+    },
+    {
+      "repo": "hangwin/mcp-chrome",
+      "url": "https://github.com/hangwin/mcp-chrome",
+      "stars": 12458,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-01-06T13:05:39Z",
+      "archived": false
+    },
+    {
+      "repo": "hashicorp/vagrant",
+      "url": "https://github.com/hashicorp/vagrant",
+      "stars": 27212,
+      "license": "NOASSERTION",
+      "language": "Ruby",
+      "pushed_at": "2026-09-28T07:05:11Z",
+      "archived": false
+    },
+    {
+      "repo": "hehonghui/awesome-english-ebooks",
+      "url": "https://github.com/hehonghui/awesome-english-ebooks",
+      "stars": 37295,
+      "license": null,
+      "language": "CSS",
+      "pushed_at": "2026-10-01T23:28:29Z",
+      "archived": false
+    },
+    {
+      "repo": "hiroi-sora/Umi-OCR",
+      "url": "https://github.com/hiroi-sora/Umi-OCR",
+      "stars": 47571,
+      "license": "MIT",
+      "language": "Python",
+      "pushed_at": "2025-11-20T14:58:13Z",
+      "archived": false
+    },
+    {
+      "repo": "Hopding/pdf-lib",
+      "url": "https://github.com/Hopding/pdf-lib",
+      "stars": 8654,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2024-07-17T12:18:51Z",
+      "archived": false
+    },
+    {
+      "repo": "Hufe921/canvas-editor",
+      "url": "https://github.com/Hufe921/canvas-editor",
+      "stars": 5214,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T09:18:28Z",
+      "archived": false
+    },
+    {
+      "repo": "iorate/ublacklist",
+      "url": "https://github.com/iorate/ublacklist",
+      "stars": 6650,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T22:20:37Z",
+      "archived": false
+    },
+    {
+      "repo": "itsjunetime/tdf",
+      "url": "https://github.com/itsjunetime/tdf",
+      "stars": 1986,
+      "license": "AGPL-3.0",
+      "language": "Rust",
+      "pushed_at": "2026-08-16T02:34:04Z",
+      "archived": false
+    },
+    {
+      "repo": "J-F-Liu/lopdf",
+      "url": "https://github.com/J-F-Liu/lopdf",
+      "stars": 2259,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-09-29T07:50:40Z",
+      "archived": false
+    },
+    {
+      "repo": "jetify-com/devbox",
+      "url": "https://github.com/jetify-com/devbox",
+      "stars": 12384,
+      "license": "Apache-2.0",
+      "language": "Go",
+      "pushed_at": "2026-09-28T22:41:48Z",
+      "archived": false
+    },
+    {
+      "repo": "justjavac/free-programming-books-zh_CN",
+      "url": "https://github.com/justjavac/free-programming-books-zh_CN",
+      "stars": 119200,
+      "license": "GPL-3.0",
+      "language": null,
+      "pushed_at": "2026-07-29T00:39:06Z",
+      "archived": false
+    },
+    {
+      "repo": "kane50613/takumi",
+      "url": "https://github.com/kane50613/takumi",
+      "stars": 3062,
+      "license": "Apache-2.0",
+      "language": "Rust",
+      "pushed_at": "2026-10-01T23:35:00Z",
+      "archived": false
+    },
+    {
+      "repo": "karakeep-app/karakeep",
+      "url": "https://github.com/karakeep-app/karakeep",
+      "stars": 29382,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-29T21:44:10Z",
+      "archived": false
+    },
+    {
+      "repo": "kholia/OSX-KVM",
+      "url": "https://github.com/kholia/OSX-KVM",
+      "stars": 23681,
+      "license": null,
+      "language": "Shell",
+      "pushed_at": "2026-01-26T07:36:59Z",
+      "archived": false
+    },
+    {
+      "repo": "KnockOutEZ/wigolo",
+      "url": "https://github.com/KnockOutEZ/wigolo",
+      "stars": 5435,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T11:35:56Z",
+      "archived": false
+    },
+    {
+      "repo": "koodo-reader/koodo-reader",
+      "url": "https://github.com/koodo-reader/koodo-reader",
+      "stars": 28363,
+      "license": "AGPL-3.0",
+      "language": "JavaScript",
+      "pushed_at": "2026-10-02T03:31:38Z",
+      "archived": false
+    },
+    {
+      "repo": "koreader/koreader",
+      "url": "https://github.com/koreader/koreader",
+      "stars": 30048,
+      "license": "AGPL-3.0",
+      "language": "Lua",
+      "pushed_at": "2026-10-02T04:56:42Z",
+      "archived": false
+    },
+    {
+      "repo": "leaningtech/webvm",
+      "url": "https://github.com/leaningtech/webvm",
+      "stars": 17410,
+      "license": "Apache-2.0",
+      "language": "Svelte",
+      "pushed_at": "2026-09-24T12:46:26Z",
+      "archived": false
+    },
+    {
+      "repo": "LibreChat-AI/LibreChat",
+      "url": "https://github.com/LibreChat-AI/LibreChat",
+      "stars": 45196,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T04:33:42Z",
+      "archived": false
+    },
+    {
+      "repo": "lima-vm/lima",
+      "url": "https://github.com/lima-vm/lima",
+      "stars": 22012,
+      "license": "Apache-2.0",
+      "language": "Go",
+      "pushed_at": "2026-10-02T02:15:58Z",
+      "archived": false
+    },
+    {
+      "repo": "LingyiChen-AI/JadeAI",
+      "url": "https://github.com/LingyiChen-AI/JadeAI",
+      "stars": 1986,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-03T03:32:46Z",
+      "archived": false
+    },
+    {
+      "repo": "lucaong/minisearch",
+      "url": "https://github.com/lucaong/minisearch",
+      "stars": 6151,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2025-09-16T12:43:59Z",
+      "archived": false
+    },
+    {
+      "repo": "m1k1o/neko",
+      "url": "https://github.com/m1k1o/neko",
+      "stars": 22439,
+      "license": "Apache-2.0",
+      "language": "Go",
+      "pushed_at": "2026-09-30T16:29:55Z",
+      "archived": false
+    },
+    {
+      "repo": "Matt-Esch/virtual-dom",
+      "url": "https://github.com/Matt-Esch/virtual-dom",
+      "stars": 11828,
+      "license": "MIT",
+      "language": "JavaScript",
+      "pushed_at": "2023-01-24T11:59:52Z",
+      "archived": false
+    },
+    {
+      "repo": "microsoft/JARVIS",
+      "url": "https://github.com/microsoft/JARVIS",
+      "stars": 25378,
+      "license": "MIT",
+      "language": "Python",
+      "pushed_at": "2025-07-29T13:44:13Z",
+      "archived": false
+    },
+    {
+      "repo": "microsoft/maker.js",
+      "url": "https://github.com/microsoft/maker.js",
+      "stars": 2034,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-29T04:23:20Z",
+      "archived": false
+    },
+    {
+      "repo": "microsoft/markitdown",
+      "url": "https://github.com/microsoft/markitdown",
+      "stars": 187922,
+      "license": "MIT",
+      "language": "Python",
+      "pushed_at": "2026-10-02T04:50:58Z",
+      "archived": false
+    },
+    {
+      "repo": "miurla/morphic",
+      "url": "https://github.com/miurla/morphic",
+      "stars": 9152,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-30T22:04:42Z",
+      "archived": false
+    },
+    {
+      "repo": "mixedbread-ai/mgrep",
+      "url": "https://github.com/mixedbread-ai/mgrep",
+      "stars": 4409,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-04-25T17:26:31Z",
+      "archived": false
+    },
+    {
+      "repo": "modocache/MDCSwipeToChoose",
+      "url": "https://github.com/modocache/MDCSwipeToChoose",
+      "stars": 2537,
+      "license": "MIT",
+      "language": "Objective-C",
+      "pushed_at": "2018-01-29T09:02:14Z",
+      "archived": false
+    },
+    {
+      "repo": "mozilla/pdf.js",
+      "url": "https://github.com/mozilla/pdf.js",
+      "stars": 53973,
+      "license": "Apache-2.0",
+      "language": "JavaScript",
+      "pushed_at": "2026-10-01T15:17:59Z",
+      "archived": false
+    },
+    {
+      "repo": "mufeedvh/pdfrip",
+      "url": "https://github.com/mufeedvh/pdfrip",
+      "stars": 1411,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-03-26T05:23:46Z",
+      "archived": false
+    },
+    {
+      "repo": "nexmoe/VidBee",
+      "url": "https://github.com/nexmoe/VidBee",
+      "stars": 10730,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-30T02:09:27Z",
+      "archived": false
+    },
+    {
+      "repo": "nexu-io/open-design",
+      "url": "https://github.com/nexu-io/open-design",
+      "stars": 99106,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T01:30:35Z",
+      "archived": false
+    },
+    {
+      "repo": "ObsidianToAnki/Obsidian_to_Anki",
+      "url": "https://github.com/ObsidianToAnki/Obsidian_to_Anki",
+      "stars": 2043,
+      "license": "GPL-3.0",
+      "language": "Python",
+      "pushed_at": "2024-06-16T18:01:15Z",
+      "archived": false
+    },
+    {
+      "repo": "ocrmypdf/OCRmyPDF",
+      "url": "https://github.com/ocrmypdf/OCRmyPDF",
+      "stars": 34916,
+      "license": "MPL-2.0",
+      "language": "Python",
+      "pushed_at": "2026-09-29T07:55:13Z",
+      "archived": false
+    },
+    {
+      "repo": "olmps/memo",
+      "url": "https://github.com/olmps/memo",
+      "stars": 1869,
+      "license": "BSD-3-Clause",
+      "language": "Dart",
+      "pushed_at": "2024-07-29T20:16:52Z",
+      "archived": false
+    },
+    {
+      "repo": "OnedocLabs/react-print-pdf",
+      "url": "https://github.com/OnedocLabs/react-print-pdf",
+      "stars": 2562,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2024-09-12T17:37:01Z",
+      "archived": false
+    },
+    {
+      "repo": "open-spaced-repetition/fsrs4anki",
+      "url": "https://github.com/open-spaced-repetition/fsrs4anki",
+      "stars": 4085,
+      "license": "MIT",
+      "language": "Jupyter Notebook",
+      "pushed_at": "2026-08-14T03:34:18Z",
+      "archived": false
+    },
+    {
+      "repo": "OpenCoworkAI/open-codesign",
+      "url": "https://github.com/OpenCoworkAI/open-codesign",
+      "stars": 7990,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-30T09:38:26Z",
+      "archived": false
+    },
+    {
+      "repo": "opendatalab/MinerU",
+      "url": "https://github.com/opendatalab/MinerU",
+      "stars": 80967,
+      "license": "NOASSERTION",
+      "language": "Python",
+      "pushed_at": "2026-09-30T09:13:37Z",
+      "archived": false
+    },
+    {
+      "repo": "opendataloader-project/opendataloader-pdf",
+      "url": "https://github.com/opendataloader-project/opendataloader-pdf",
+      "stars": 29453,
+      "license": "Apache-2.0",
+      "language": "Java",
+      "pushed_at": "2026-10-01T09:37:55Z",
+      "archived": false
+    },
+    {
+      "repo": "oramasearch/orama",
+      "url": "https://github.com/oramasearch/orama",
+      "stars": 10567,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-28T21:13:45Z",
+      "archived": false
+    },
+    {
+      "repo": "PaddlePaddle/PaddleOCR",
+      "url": "https://github.com/PaddlePaddle/PaddleOCR",
+      "stars": 90502,
+      "license": "Apache-2.0",
+      "language": "Python",
+      "pushed_at": "2026-09-16T03:31:50Z",
+      "archived": false
+    },
+    {
+      "repo": "paperless-ngx/paperless-ngx",
+      "url": "https://github.com/paperless-ngx/paperless-ngx",
+      "stars": 46223,
+      "license": "GPL-3.0",
+      "language": "Python",
+      "pushed_at": "2026-10-02T05:22:46Z",
+      "archived": false
+    },
+    {
+      "repo": "papermark/papermark",
+      "url": "https://github.com/papermark/papermark",
+      "stars": 9232,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2026-08-28T15:58:25Z",
+      "archived": false
+    },
+    {
+      "repo": "parallax/jsPDF",
+      "url": "https://github.com/parallax/jsPDF",
+      "stars": 31313,
+      "license": "MIT",
+      "language": "JavaScript",
+      "pushed_at": "2026-09-30T20:48:08Z",
+      "archived": false
+    },
+    {
+      "repo": "PawanOsman/OpenCursor",
+      "url": "https://github.com/PawanOsman/OpenCursor",
+      "stars": 6028,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-25T08:24:32Z",
+      "archived": false
+    },
+    {
+      "repo": "pdf-rs/pdf",
+      "url": "https://github.com/pdf-rs/pdf",
+      "stars": 1705,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-07-18T18:07:54Z",
+      "archived": false
+    },
+    {
+      "repo": "PDFCraftTool/pdfcraft",
+      "url": "https://github.com/PDFCraftTool/pdfcraft",
+      "stars": 8644,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-24T10:01:10Z",
+      "archived": false
+    },
+    {
+      "repo": "PDFMathTranslate/PDFMathTranslate",
+      "url": "https://github.com/PDFMathTranslate/PDFMathTranslate",
+      "stars": 37288,
+      "license": "AGPL-3.0",
+      "language": "Python",
+      "pushed_at": "2026-10-02T01:51:42Z",
+      "archived": false
+    },
+    {
+      "repo": "pdfme/pdfme",
+      "url": "https://github.com/pdfme/pdfme",
+      "stars": 4853,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T15:18:07Z",
+      "archived": false
+    },
+    {
+      "repo": "phiresky/ripgrep-all",
+      "url": "https://github.com/phiresky/ripgrep-all",
+      "stars": 9865,
+      "license": "NOASSERTION",
+      "language": "Rust",
+      "pushed_at": "2026-09-17T11:25:07Z",
+      "archived": false
+    },
+    {
+      "repo": "posquit0/Awesome-CV",
+      "url": "https://github.com/posquit0/Awesome-CV",
+      "stars": 28628,
+      "license": "LPPL-1.3c",
+      "language": "TeX",
+      "pushed_at": "2026-09-14T07:34:00Z",
+      "archived": false
+    },
+    {
+      "repo": "preactjs/preact",
+      "url": "https://github.com/preactjs/preact",
+      "stars": 38900,
+      "license": "MIT",
+      "language": "JavaScript",
+      "pushed_at": "2026-09-30T06:56:21Z",
+      "archived": false
+    },
+    {
+      "repo": "Project-DARC/DARC",
+      "url": "https://github.com/Project-DARC/DARC",
+      "stars": 9153,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "pushed_at": "2024-09-20T17:10:02Z",
+      "archived": false
+    },
+    {
+      "repo": "qemu/qemu",
+      "url": "https://github.com/qemu/qemu",
+      "stars": 13805,
+      "license": "NOASSERTION",
+      "language": "C",
+      "pushed_at": "2026-10-01T17:10:39Z",
+      "archived": false
+    },
+    {
+      "repo": "quickemu-project/quickemu",
+      "url": "https://github.com/quickemu-project/quickemu",
+      "stars": 16377,
+      "license": "MIT",
+      "language": "Shell",
+      "pushed_at": "2026-09-28T13:48:00Z",
+      "archived": false
+    },
+    {
+      "repo": "readest/readest",
+      "url": "https://github.com/readest/readest",
+      "stars": 24783,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T05:19:12Z",
+      "archived": false
+    },
+    {
+      "repo": "reuseman/flashcards-obsidian",
+      "url": "https://github.com/reuseman/flashcards-obsidian",
+      "stars": 1097,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-16T08:38:46Z",
+      "archived": false
+    },
+    {
+      "repo": "rockbenben/ChatGPT-Shortcut",
+      "url": "https://github.com/rockbenben/ChatGPT-Shortcut",
+      "stars": 8797,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-29T04:23:23Z",
+      "archived": false
+    },
+    {
+      "repo": "run-llama/liteparse",
+      "url": "https://github.com/run-llama/liteparse",
+      "stars": 12761,
+      "license": "Apache-2.0",
+      "language": "Rust",
+      "pushed_at": "2026-10-02T03:54:58Z",
+      "archived": false
+    },
+    {
+      "repo": "run-llama/llama_cloud_services",
+      "url": "https://github.com/run-llama/llama_cloud_services",
+      "stars": 4267,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-05-18T19:09:10Z",
+      "archived": false
+    },
+    {
+      "repo": "rust-skia/rust-skia",
+      "url": "https://github.com/rust-skia/rust-skia",
+      "stars": 1815,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-09-30T03:35:37Z",
+      "archived": false
+    },
+    {
+      "repo": "RyotaUshio/obsidian-pdf-plus",
+      "url": "https://github.com/RyotaUshio/obsidian-pdf-plus",
+      "stars": 2483,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2025-08-30T02:10:22Z",
+      "archived": false
+    },
+    {
+      "repo": "scambier/obsidian-omnisearch",
+      "url": "https://github.com/scambier/obsidian-omnisearch",
+      "stars": 2158,
+      "license": "GPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-19T08:50:39Z",
+      "archived": false
+    },
+    {
+      "repo": "scottbez1/smartknob",
+      "url": "https://github.com/scottbez1/smartknob",
+      "stars": 22173,
+      "license": "NOASSERTION",
+      "language": "C++",
+      "pushed_at": "2024-02-19T10:08:59Z",
+      "archived": false
+    },
+    {
+      "repo": "searchkit/searchkit",
+      "url": "https://github.com/searchkit/searchkit",
+      "stars": 4857,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-04-04T07:49:35Z",
+      "archived": false
+    },
+    {
+      "repo": "shadcn-labs/pdfcn",
+      "url": "https://github.com/shadcn-labs/pdfcn",
+      "stars": 2822,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-24T12:40:45Z",
+      "archived": false
+    },
+    {
+      "repo": "simonbengtsson/jsPDF-AutoTable",
+      "url": "https://github.com/simonbengtsson/jsPDF-AutoTable",
+      "stars": 2543,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-06-24T16:28:27Z",
+      "archived": false
+    },
+    {
+      "repo": "Skardyy/mcat",
+      "url": "https://github.com/Skardyy/mcat",
+      "stars": 1425,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-09-14T09:13:16Z",
+      "archived": false
+    },
+    {
+      "repo": "snabbdom/snabbdom",
+      "url": "https://github.com/snabbdom/snabbdom",
+      "stars": 12390,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-06-17T11:11:26Z",
+      "archived": false
+    },
+    {
+      "repo": "snapotter-hq/SnapOtter",
+      "url": "https://github.com/snapotter-hq/SnapOtter",
+      "stars": 2771,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T05:26:11Z",
+      "archived": false
+    },
+    {
+      "repo": "spacedriveapp/spacedrive",
+      "url": "https://github.com/spacedriveapp/spacedrive",
+      "stars": 39063,
+      "license": "NOASSERTION",
+      "language": "Rust",
+      "pushed_at": "2026-07-29T00:31:28Z",
+      "archived": false
+    },
+    {
+      "repo": "srbhr/Resume-Matcher",
+      "url": "https://github.com/srbhr/Resume-Matcher",
+      "stars": 28567,
+      "license": "Apache-2.0",
+      "language": "Python",
+      "pushed_at": "2026-09-29T15:41:46Z",
+      "archived": false
+    },
+    {
+      "repo": "st3v3nmw/obsidian-spaced-repetition",
+      "url": "https://github.com/st3v3nmw/obsidian-spaced-repetition",
+      "stars": 2575,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T07:30:57Z",
+      "archived": false
+    },
+    {
+      "repo": "Stirling-Tools/Stirling-PDF",
+      "url": "https://github.com/Stirling-Tools/Stirling-PDF",
+      "stars": 93409,
+      "license": "NOASSERTION",
+      "language": "Java",
+      "pushed_at": "2026-10-01T21:47:11Z",
+      "archived": false
+    },
+    {
+      "repo": "SylphxAI/anymd",
+      "url": "https://github.com/SylphxAI/anymd",
+      "stars": 1016,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-10-01T22:42:21Z",
+      "archived": false
+    },
+    {
+      "repo": "szTheory/exifcleaner",
+      "url": "https://github.com/szTheory/exifcleaner",
+      "stars": 2716,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-29T02:02:29Z",
+      "archived": false
+    },
+    {
+      "repo": "TanStack/router",
+      "url": "https://github.com/TanStack/router",
+      "stars": 15142,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T18:56:33Z",
+      "archived": false
+    },
+    {
+      "repo": "TapXWorld/ChinaTextbook",
+      "url": "https://github.com/TapXWorld/ChinaTextbook",
+      "stars": 82494,
+      "license": null,
+      "language": "Roff",
+      "pushed_at": "2025-10-18T13:39:24Z",
+      "archived": false
+    },
+    {
+      "repo": "tobi/qmd",
+      "url": "https://github.com/tobi/qmd",
+      "stars": 30146,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T00:41:53Z",
+      "archived": false
+    },
+    {
+      "repo": "triggerdotdev/jsonhero-web",
+      "url": "https://github.com/triggerdotdev/jsonhero-web",
+      "stars": 10879,
+      "license": "Apache-2.0",
+      "language": "TypeScript",
+      "pushed_at": "2025-11-28T13:32:05Z",
+      "archived": false
+    },
+    {
+      "repo": "trycua/cua",
+      "url": "https://github.com/trycua/cua",
+      "stars": 27711,
+      "license": "MIT",
+      "language": "Rust",
+      "pushed_at": "2026-10-02T05:29:30Z",
+      "archived": false
+    },
+    {
+      "repo": "utmapp/UTM",
+      "url": "https://github.com/utmapp/UTM",
+      "stars": 35716,
+      "license": "Apache-2.0",
+      "language": "Swift",
+      "pushed_at": "2026-09-25T01:53:47Z",
+      "archived": false
+    },
+    {
+      "repo": "virgiliojr94/book-to-skill",
+      "url": "https://github.com/virgiliojr94/book-to-skill",
+      "stars": 33274,
+      "license": "MIT",
+      "language": "Python",
+      "pushed_at": "2026-09-29T14:08:33Z",
+      "archived": false
+    },
+    {
+      "repo": "waydabber/BetterDisplay",
+      "url": "https://github.com/waydabber/BetterDisplay",
+      "stars": 33910,
+      "license": null,
+      "language": null,
+      "pushed_at": "2026-09-23T12:13:31Z",
+      "archived": false
+    },
+    {
+      "repo": "winboat-org/winboat",
+      "url": "https://github.com/winboat-org/winboat",
+      "stars": 23061,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-18T09:22:36Z",
+      "archived": false
+    },
+    {
+      "repo": "windingwind/zotero-pdf-translate",
+      "url": "https://github.com/windingwind/zotero-pdf-translate",
+      "stars": 11958,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T14:30:11Z",
+      "archived": false
+    },
+    {
+      "repo": "wojtekmaj/react-pdf",
+      "url": "https://github.com/wojtekmaj/react-pdf",
+      "stars": 11186,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-29T19:37:23Z",
+      "archived": false
+    },
+    {
+      "repo": "wonderwhy-er/DesktopCommanderMCP",
+      "url": "https://github.com/wonderwhy-er/DesktopCommanderMCP",
+      "stars": 9874,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-01T16:47:31Z",
+      "archived": false
+    },
+    {
+      "repo": "xdissent/ievms",
+      "url": "https://github.com/xdissent/ievms",
+      "stars": 9760,
+      "license": null,
+      "language": "Shell",
+      "pushed_at": "2020-02-13T17:02:43Z",
+      "archived": false
+    },
+    {
+      "repo": "xerj-org/xerj",
+      "url": "https://github.com/xerj-org/xerj",
+      "stars": 2575,
+      "license": "Apache-2.0",
+      "language": "Rust",
+      "pushed_at": "2026-10-02T03:40:25Z",
+      "archived": false
+    },
+    {
+      "repo": "Xmader/musescore-downloader",
+      "url": "https://github.com/Xmader/musescore-downloader",
+      "stars": 2764,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2023-02-28T22:48:51Z",
+      "archived": false
+    },
+    {
+      "repo": "xushengfeng/eSearch",
+      "url": "https://github.com/xushengfeng/eSearch",
+      "stars": 7228,
+      "license": "GPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-10-02T04:24:15Z",
+      "archived": false
+    },
+    {
+      "repo": "yeasy/docker_practice",
+      "url": "https://github.com/yeasy/docker_practice",
+      "stars": 26283,
+      "license": null,
+      "language": "Go",
+      "pushed_at": "2026-09-30T18:44:20Z",
+      "archived": false
+    },
+    {
+      "repo": "yfedoseev/pdf_oxide",
+      "url": "https://github.com/yfedoseev/pdf_oxide",
+      "stars": 1059,
+      "license": "Apache-2.0",
+      "language": "Rust",
+      "pushed_at": "2026-09-29T12:44:00Z",
+      "archived": false
+    },
+    {
+      "repo": "yobix-ai/extractous",
+      "url": "https://github.com/yobix-ai/extractous",
+      "stars": 1780,
+      "license": "Apache-2.0",
+      "language": "Rust",
+      "pushed_at": "2024-12-21T10:13:30Z",
+      "archived": false
+    },
+    {
+      "repo": "zaidmukaddam/scira",
+      "url": "https://github.com/zaidmukaddam/scira",
+      "stars": 11902,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-08-12T22:28:59Z",
+      "archived": false
+    },
+    {
+      "repo": "Zettlr/Zettlr",
+      "url": "https://github.com/Zettlr/Zettlr",
+      "stars": 13634,
+      "license": "GPL-3.0",
+      "language": "TypeScript",
+      "pushed_at": "2026-09-29T02:39:51Z",
+      "archived": false
+    },
+    {
+      "repo": "zilliztech/claude-context",
+      "url": "https://github.com/zilliztech/claude-context",
+      "stars": 12584,
+      "license": "MIT",
+      "language": "TypeScript",
+      "pushed_at": "2026-07-14T12:00:38Z",
+      "archived": false
+    },
+    {
+      "repo": "zu1k/book-searcher",
+      "url": "https://github.com/zu1k/book-searcher",
+      "stars": 6302,
+      "license": "BSD-3-Clause",
+      "language": "TypeScript",
+      "pushed_at": "2026-03-06T05:02:18Z",
+      "archived": false
+    }
+  ],
+  "candidateMetadata": [
+    {
+      "repo": "mozilla/pdf.js",
+      "url": "https://github.com/mozilla/pdf.js",
+      "stars": 53973,
+      "license": "Apache-2.0",
+      "language": "JavaScript",
+      "default_branch": "master",
+      "pushed_at": "2026-10-01T15:17:59Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "wojtekmaj/react-pdf",
+      "url": "https://github.com/wojtekmaj/react-pdf",
+      "stars": 11186,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-09-29T19:37:23Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "Hopding/pdf-lib",
+      "url": "https://github.com/Hopding/pdf-lib",
+      "stars": 8654,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "master",
+      "pushed_at": "2024-07-17T12:18:51Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "J-F-Liu/lopdf",
+      "url": "https://github.com/J-F-Liu/lopdf",
+      "stars": 2259,
+      "license": "MIT",
+      "language": "Rust",
+      "default_branch": "main",
+      "pushed_at": "2026-09-29T07:50:40Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "qpdf/qpdf",
+      "url": "https://github.com/qpdf/qpdf",
+      "stars": 5452,
+      "license": "Apache-2.0",
+      "language": "C++",
+      "default_branch": "main",
+      "pushed_at": "2026-09-26T23:55:04Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "TanStack/virtual",
+      "url": "https://github.com/TanStack/virtual",
+      "stars": 7128,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-09-21T21:27:02Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "petyosi/react-virtuoso",
+      "url": "https://github.com/petyosi/react-virtuoso",
+      "stars": 6462,
+      "license": null,
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-10-01T12:25:08Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "bvaughn/react-window",
+      "url": "https://github.com/bvaughn/react-window",
+      "stars": 17208,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-09-27T12:54:49Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "lucaong/minisearch",
+      "url": "https://github.com/lucaong/minisearch",
+      "stars": 6151,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "master",
+      "pushed_at": "2025-09-16T12:43:59Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "nextapps-de/flexsearch",
+      "url": "https://github.com/nextapps-de/flexsearch",
+      "stars": 13804,
+      "license": "Apache-2.0",
+      "language": "JavaScript",
+      "default_branch": "master",
+      "pushed_at": "2026-06-28T18:05:03Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "open-spaced-repetition/fsrs4anki",
+      "url": "https://github.com/open-spaced-repetition/fsrs4anki",
+      "stars": 4085,
+      "license": "MIT",
+      "language": "Jupyter Notebook",
+      "default_branch": "main",
+      "pushed_at": "2026-08-14T03:34:18Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "open-spaced-repetition/ts-fsrs",
+      "url": "https://github.com/open-spaced-repetition/ts-fsrs",
+      "stars": 802,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-10-01T09:30:02Z",
+      "archived": false,
+      "meetsStarThreshold": false
+    },
+    {
+      "repo": "st3v3nmw/obsidian-spaced-repetition",
+      "url": "https://github.com/st3v3nmw/obsidian-spaced-repetition",
+      "stars": 2575,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-10-01T07:30:57Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "remarkjs/react-markdown",
+      "url": "https://github.com/remarkjs/react-markdown",
+      "stars": 15903,
+      "license": "MIT",
+      "language": "JavaScript",
+      "default_branch": "main",
+      "pushed_at": "2026-09-24T10:45:49Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "cure53/DOMPurify",
+      "url": "https://github.com/cure53/DOMPurify",
+      "stars": 17430,
+      "license": "Apache-2.0",
+      "language": "JavaScript",
+      "default_branch": "main",
+      "pushed_at": "2026-09-26T10:09:01Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "colinhacks/zod",
+      "url": "https://github.com/colinhacks/zod",
+      "stars": 44050,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-09-30T23:19:44Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "ueberdosis/tiptap",
+      "url": "https://github.com/ueberdosis/tiptap",
+      "stars": 38615,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-10-01T23:34:25Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "groue/GRDB.swift",
+      "url": "https://github.com/groue/GRDB.swift",
+      "stars": 8672,
+      "license": "MIT",
+      "language": "Swift",
+      "default_branch": "master",
+      "pushed_at": "2026-09-29T11:57:56Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "lfnovo/open-notebook",
+      "url": "https://github.com/lfnovo/open-notebook",
+      "stars": 39710,
+      "license": "MIT",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-10-01T02:05:18Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "CaviraOSS/PageLM",
+      "url": "https://github.com/CaviraOSS/PageLM",
+      "stars": 2025,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-09-30T18:46:46Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "readest/readest",
+      "url": "https://github.com/readest/readest",
+      "stars": 24783,
+      "license": "AGPL-3.0",
+      "language": "TypeScript",
+      "default_branch": "main",
+      "pushed_at": "2026-10-02T05:19:12Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "laurent22/joplin",
+      "url": "https://github.com/laurent22/joplin",
+      "stars": 56556,
+      "license": "NOASSERTION",
+      "language": "TypeScript",
+      "default_branch": "dev",
+      "pushed_at": "2026-10-01T09:32:26Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "embedpdf/embed-pdf-viewer",
+      "url": "https://github.com/embedpdf/embed-pdf-viewer",
+      "stars": 4523,
+      "license": "NOASSERTION",
+      "pushed_at": "2026-10-01T22:50:48Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    },
+    {
+      "repo": "radix-ui/primitives",
+      "url": "https://github.com/radix-ui/primitives",
+      "stars": 19355,
+      "license": "MIT",
+      "pushed_at": "2026-08-08T16:39:51Z",
+      "archived": false,
+      "meetsStarThreshold": true
+    }
+  ],
+  "shortlistVerification": [
+    {
+      "repo": "TanStack/virtual",
+      "stars": 7128,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "lucaong/minisearch",
+      "stars": 6151,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "open-spaced-repetition/fsrs4anki",
+      "stars": 4085,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "st3v3nmw/obsidian-spaced-repetition",
+      "stars": 2575,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "remarkjs/react-markdown",
+      "stars": 15903,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "colinhacks/zod",
+      "stars": 44050,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "radix-ui/primitives",
+      "stars": 19355,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "J-F-Liu/lopdf",
+      "stars": 2259,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "qpdf/qpdf",
+      "stars": 5452,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "embedpdf/embed-pdf-viewer",
+      "stars": 4523,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "nextapps-de/flexsearch",
+      "stars": 13804,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "bvaughn/react-window",
+      "stars": 17208,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "mozilla/pdf.js",
+      "stars": 53973,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "wojtekmaj/react-pdf",
+      "stars": 11186,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "cure53/DOMPurify",
+      "stars": 17430,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "ueberdosis/tiptap",
+      "stars": 38615,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "groue/GRDB.swift",
+      "stars": 8672,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "Hopding/pdf-lib",
+      "stars": 8654,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "lfnovo/open-notebook",
+      "stars": 39710,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "readest/readest",
+      "stars": 24783,
+      "threshold_verified": true,
+      "snapshot_match": true
+    },
+    {
+      "repo": "laurent22/joplin",
+      "stars": 56556,
+      "threshold_verified": true,
+      "snapshot_match": true
+    }
+  ],
+  "licenseEvidence": [
+    {
+      "repo": "TanStack/virtual",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/TanStack/virtual/blob/main/LICENSE"
+    },
+    {
+      "repo": "lucaong/minisearch",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE.txt",
+      "licenseUrl": "https://github.com/lucaong/minisearch/blob/master/LICENSE.txt"
+    },
+    {
+      "repo": "nextapps-de/flexsearch",
+      "checkedSpdx": "Apache-2.0",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/nextapps-de/flexsearch/blob/master/LICENSE"
+    },
+    {
+      "repo": "mozilla/pdf.js",
+      "checkedSpdx": "Apache-2.0",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/mozilla/pdf.js/blob/master/LICENSE"
+    },
+    {
+      "repo": "wojtekmaj/react-pdf",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/wojtekmaj/react-pdf/blob/main/LICENSE"
+    },
+    {
+      "repo": "J-F-Liu/lopdf",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/J-F-Liu/lopdf/blob/main/LICENSE"
+    },
+    {
+      "repo": "qpdf/qpdf",
+      "checkedSpdx": "Apache-2.0",
+      "licensePath": "LICENSE.txt",
+      "licenseUrl": "https://github.com/qpdf/qpdf/blob/main/LICENSE.txt"
+    },
+    {
+      "repo": "open-spaced-repetition/fsrs4anki",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/open-spaced-repetition/fsrs4anki/blob/main/LICENSE"
+    },
+    {
+      "repo": "st3v3nmw/obsidian-spaced-repetition",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/st3v3nmw/obsidian-spaced-repetition/blob/main/LICENSE"
+    },
+    {
+      "repo": "remarkjs/react-markdown",
+      "checkedSpdx": "MIT",
+      "licensePath": "license",
+      "licenseUrl": "https://github.com/remarkjs/react-markdown/blob/main/license"
+    },
+    {
+      "repo": "cure53/DOMPurify",
+      "checkedSpdx": "Apache-2.0",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/cure53/DOMPurify/blob/main/LICENSE"
+    },
+    {
+      "repo": "colinhacks/zod",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/colinhacks/zod/blob/main/LICENSE"
+    },
+    {
+      "repo": "groue/GRDB.swift",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/groue/GRDB.swift/blob/master/LICENSE"
+    },
+    {
+      "repo": "lfnovo/open-notebook",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/lfnovo/open-notebook/blob/main/LICENSE"
+    },
+    {
+      "repo": "petyosi/react-virtuoso",
+      "checkedSpdx": "unresolved",
+      "licensePath": null,
+      "licenseUrl": null
+    },
+    {
+      "repo": "CaviraOSS/PageLM",
+      "checkedSpdx": "NOASSERTION",
+      "licensePath": "LICENSE.md",
+      "licenseUrl": "https://github.com/CaviraOSS/PageLM/blob/main/LICENSE.md"
+    },
+    {
+      "repo": "Stirling-Tools/Stirling-PDF",
+      "checkedSpdx": "NOASSERTION",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/Stirling-Tools/Stirling-PDF/blob/main/LICENSE"
+    },
+    {
+      "repo": "laurent22/joplin",
+      "checkedSpdx": "NOASSERTION",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/laurent22/joplin/blob/dev/LICENSE"
+    },
+    {
+      "repo": "readest/readest",
+      "checkedSpdx": "AGPL-3.0",
+      "licensePath": "LICENSE",
+      "licenseUrl": "https://github.com/readest/readest/blob/main/LICENSE"
+    },
+    {
+      "repo": "bvaughn/react-window",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE.md",
+      "licenseUrl": "https://github.com/bvaughn/react-window/blob/main/LICENSE.md"
+    },
+    {
+      "repo": "Hopding/pdf-lib",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE.md",
+      "licenseUrl": "https://github.com/Hopding/pdf-lib/blob/master/LICENSE.md"
+    },
+    {
+      "repo": "ueberdosis/tiptap",
+      "checkedSpdx": "MIT",
+      "licensePath": "LICENSE.md",
+      "licenseUrl": "https://github.com/ueberdosis/tiptap/blob/main/LICENSE.md"
+    }
+  ],
+  "defaultBranchPeerDependencySnapshots": [
+    {
+      "repo": "TanStack/virtual",
+      "path": "packages/react-virtual/package.json",
+      "url": "https://github.com/TanStack/virtual/blob/main/packages/react-virtual/package.json",
+      "version": "3.14.13",
+      "peerDependencies": {
+        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+        "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+      },
+      "engines": null
+    },
+    {
+      "repo": "remarkjs/react-markdown",
+      "path": "package.json",
+      "url": "https://github.com/remarkjs/react-markdown/blob/main/package.json",
+      "version": "10.1.0",
+      "peerDependencies": {
+        "@types/react": ">=18",
+        "react": ">=18"
+      },
+      "engines": null
+    },
+    {
+      "repo": "wojtekmaj/react-pdf",
+      "path": "packages/react-pdf/package.json",
+      "url": "https://github.com/wojtekmaj/react-pdf/blob/main/packages/react-pdf/package.json",
+      "version": "11.0.0",
+      "peerDependencies": {
+        "@types/react": "^19.0.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+      },
+      "engines": null
+    }
+  ],
+  "originalEvidenceFileHashes": [
+    {
+      "file": "github-reuse-search-2026-10-01.json",
+      "sha256": "dbc724a08f00877e18322db2538d3cba2a29358d0315d376d84da85777e67aae"
+    },
+    {
+      "file": "github-reuse-search-focused-2026-10-01.json",
+      "sha256": "d163439127b1a037efd46ac032f478d2a80fdb7e04889aa7fbe7b836fa2241b9"
+    },
+    {
+      "file": "github-reuse-search-unique-2026-10-01.json",
+      "sha256": "a2f2562cbdba5eea5ba8db7a7b55a8f4dbaa6fb5b778b3a77c0c74498cd43c15"
+    },
+    {
+      "file": "github-reuse-candidates-2026-10-01.json",
+      "sha256": "a01d578efd8579116b3d5b7acd708761ec47446594b97a4251a8ea1b02823029"
+    },
+    {
+      "file": "github-reuse-extra-candidates-2026-10-01.json",
+      "sha256": "2dc7f729fa268e01c70986b545a574ac82e42116e8155656d327a536081923cf"
+    },
+    {
+      "file": "github-reuse-license-evidence-2026-10-01.json",
+      "sha256": "6d682bfea9efa4b38a95aec8b8b2931a8bde361bb3acc38f4ed10c919e731c12"
+    },
+    {
+      "file": "github-reuse-additional-license-evidence-2026-10-01.json",
+      "sha256": "c62d10b49a18d19249f92e7fb50374a24bccb0066384076739eeb6ecdce2e408"
+    },
+    {
+      "file": "github-reuse-react-compatibility-2026-10-01.json",
+      "sha256": "31bf42035a3c9f98c4108427cee1c6ff63a357f516d99cc9c1dc6fb0e7610d5f"
+    },
+    {
+      "file": "github-reuse-shortlist-verification-2026-10-01.json",
+      "sha256": "2153652071e179038a515a73998c2e75d0a2b3bbb3f2f61743a7a5ae33e1c164"
+    }
+  ],
+  "upstreamReadmeLicenseFileHashes": [
+    {
+      "file": "CaviraOSS--PageLM--LICENSE.txt",
+      "sha256": "c834209c5f338013a96e54a212445f47bd128c4300ce556f744d74c09ae70ef9"
+    },
+    {
+      "file": "CaviraOSS--PageLM--README.md",
+      "sha256": "a4d5a3ec57ddceb9aeb247ae1a459b6567a7f65c9f12a458128fcb1e8d8db8b9"
+    },
+    {
+      "file": "Hopding--pdf-lib--LICENSE.txt",
+      "sha256": "f2c9fc00fdb66eb99ac156ba52d734af66d8d309f65753ae809ad34ee2883bcb"
+    },
+    {
+      "file": "J-F-Liu--lopdf--LICENSE.txt",
+      "sha256": "2fb01e6708ea9d53e8b7e74bd82af23bce5256f19f4de93915027a53173c50d8"
+    },
+    {
+      "file": "J-F-Liu--lopdf--README.md",
+      "sha256": "7532cef2998afbcaaf1dd0351ebccd9a028d2b6873cf76260847168a75d7e4aa"
+    },
+    {
+      "file": "Stirling-Tools--Stirling-PDF--LICENSE.txt",
+      "sha256": "0f8255f64436045a3302d6c37b0c9b9e984e172938bbb0445b4613db3c05c8a5"
+    },
+    {
+      "file": "Stirling-Tools--Stirling-PDF--README.md",
+      "sha256": "5d370c4ec2e7b0e940a00eaac883d26780b58c57b973dddc2793afa3468f8bdf"
+    },
+    {
+      "file": "TanStack--virtual--LICENSE.txt",
+      "sha256": "a405ee70c632bb938acb7ac5f210e814409b3760ea9d2329d8ed8ffcfd11a0e7"
+    },
+    {
+      "file": "TanStack--virtual--README.md",
+      "sha256": "24bd3ff93da253313681dbe66adab7b012caca06f03edc516dfd875a1274ff00"
+    },
+    {
+      "file": "bvaughn--react-window--LICENSE.txt",
+      "sha256": "a8f1e0280bf14adcf5d017547db85eb5c3bac0feb1690ca98650874002eaa8ea"
+    },
+    {
+      "file": "colinhacks--zod--LICENSE.txt",
+      "sha256": "3f1189b28e3866e0d979968d466b78f813f76827cfdca1fbb124cc0a5c8841f8"
+    },
+    {
+      "file": "colinhacks--zod--README.md",
+      "sha256": "b5651740a66d68e8c55c4fdea2df8b00448f99a0433008fef99a54f859024039"
+    },
+    {
+      "file": "cure53--DOMPurify--LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "file": "cure53--DOMPurify--README.md",
+      "sha256": "f25683308973b0b6cfaeb07df43dea47f6f8f4340e8b74c3992cc9712b3ce8dc"
+    },
+    {
+      "file": "embedpdf--embed-pdf-viewer--LICENSE.txt",
+      "sha256": "4d3d171a5443d9a42f9ea24301ddc247c3168cc4d87a3d1ecf5bc15a8e291f9e"
+    },
+    {
+      "file": "embedpdf--embed-pdf-viewer--LICENSING.md",
+      "sha256": "503065b986be8ab0f01a03fd8436e906c1d937a5936de54649f7d6b14b5dba3b"
+    },
+    {
+      "file": "embedpdf--embed-pdf-viewer--README.md",
+      "sha256": "d9197f43e9196d77a0f6939b7bb3ba48339a09a221e40915485b87b7ba81a2fc"
+    },
+    {
+      "file": "groue--GRDB.swift--LICENSE.txt",
+      "sha256": "9853f9dce81365fcc1d9b46004633354450164b8d17904e92e80c444545f7e87"
+    },
+    {
+      "file": "groue--GRDB.swift--README.md",
+      "sha256": "edf1f711627c07e48c453ad45530be50f3967be811dd0df314a17893beb3864f"
+    },
+    {
+      "file": "laurent22--joplin--LICENSE.txt",
+      "sha256": "f6b29267fe2c4251ed95cf9c846b47774a970c5960be9eb8a409f21ffd98425e"
+    },
+    {
+      "file": "laurent22--joplin--README.md",
+      "sha256": "b9444e9a16aa4d8b87124a368605847ce9ad368e603e5f6116c34f3121a86f69"
+    },
+    {
+      "file": "lfnovo--open-notebook--LICENSE.txt",
+      "sha256": "5262176eef0dc9e46c8825249000585f115b7ef5fab500bf1f530717bf2ce0b9"
+    },
+    {
+      "file": "lfnovo--open-notebook--README.md",
+      "sha256": "571e3a2fae66b4c4e881fb653f265c0f90c5c006b1750fcab42328718e596a38"
+    },
+    {
+      "file": "lucaong--minisearch--LICENSE.txt",
+      "sha256": "70d37354d6395629fb99edb28cb37a5d356ffa24a48cd02a5def5b83a300a899"
+    },
+    {
+      "file": "lucaong--minisearch--README.md",
+      "sha256": "e1b4c36f42a3a0a35f5ef66c617f3d018409732ea9c3c66e01036e6c85313b27"
+    },
+    {
+      "file": "mozilla--pdf.js--LICENSE.txt",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "file": "mozilla--pdf.js--README.md",
+      "sha256": "32ff2cfd67617845299910cff29ebd0dd191e1d0ab344518c9e840d772d6084c"
+    },
+    {
+      "file": "nextapps-de--flexsearch--LICENSE.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "file": "nextapps-de--flexsearch--README.md",
+      "sha256": "3f5fbd53f496807d79791d91174438b50fbbf6a205426eea6aa9f4dedaaca11a"
+    },
+    {
+      "file": "open-spaced-repetition--fsrs4anki--LICENSE.txt",
+      "sha256": "2ec9e6e61ed82af824583c0f91c6103948ed527b727281bc9f51de46780ee4d7"
+    },
+    {
+      "file": "open-spaced-repetition--fsrs4anki--README.md",
+      "sha256": "25dfa4ee0b6e54b117207ce8c2648ad0b854c063bf74b69d7d384034ec16bc36"
+    },
+    {
+      "file": "petyosi--react-virtuoso--README.md",
+      "sha256": "49519a673d01152caaa392ec683a50a53034ca9ea6e87d17e89263add61722b8"
+    },
+    {
+      "file": "qpdf--qpdf--LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "file": "qpdf--qpdf--README.md",
+      "sha256": "837ca7da5f3f857acb55a03786bdcb20762747eeb943df60c986587b759e10c6"
+    },
+    {
+      "file": "radix-ui--primitives--LICENSE.txt",
+      "sha256": "0e80a2d229d2fd4fc7e8636142ec5d0ff0bc031f14c15b682e2ac01dfd5b5138"
+    },
+    {
+      "file": "radix-ui--primitives--README.md",
+      "sha256": "20cbda0a49f12fb8d23bc41106611cd89d8ff3c6950059b4a3092b58f357656d"
+    },
+    {
+      "file": "readest--readest--LICENSE.txt",
+      "sha256": "57c8ff33c9c0cfc3ef00e650a1cc910d7ee479a8bc509f6c9209a7c2a11399d6"
+    },
+    {
+      "file": "readest--readest--README.md",
+      "sha256": "5412add52feec0b5bba895db07bcadfa9377c87a6e3692156c9aab4c273b47e6"
+    },
+    {
+      "file": "remarkjs--react-markdown--LICENSE.txt",
+      "sha256": "f6196c64e144f9a6fa9154c3a80bc8b89615a9567934b83a8951879f06ba2aef"
+    },
+    {
+      "file": "remarkjs--react-markdown--README.md",
+      "sha256": "e2f4fcd57c9ac4cd26d1a0706ae98cf8233b7e323ddc79bce662ff4d3b7e1d9c"
+    },
+    {
+      "file": "st3v3nmw--obsidian-spaced-repetition--LICENSE.txt",
+      "sha256": "0a84e8f385c6ef6570a4b856db305445f6ab857786ae3ee20f7d2adedb0b713a"
+    },
+    {
+      "file": "st3v3nmw--obsidian-spaced-repetition--README.md",
+      "sha256": "3ffe123e22b5247447c7f3ff3560f1d7e881044db264e59da8bd9a31d7531ce3"
+    },
+    {
+      "file": "ueberdosis--tiptap--LICENSE.txt",
+      "sha256": "c96e5ecb55ac593157ad1d21d1f44a611187f494a0f04c235a1ae692c88d6ba9"
+    },
+    {
+      "file": "wojtekmaj--react-pdf--LICENSE.txt",
+      "sha256": "c205058a880f412b34d1c660ea2889d86876b3a2a3c77cedf5996e674b2e24f7"
+    },
+    {
+      "file": "wojtekmaj--react-pdf--README.md",
+      "sha256": "84cfe255170846f88cb467d5aafa09959f2057e23bd462f1b5ff5c736302adea"
+    }
+  ]
+}

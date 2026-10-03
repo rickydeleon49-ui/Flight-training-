@@ -10,6 +10,8 @@ Reviewed baseline: `a586f91a07529da96fa7856c12be929ab4b29eec` on `main`.
 
 Foundation fixes were being edited during this review. Their implementation and validation are outside this roadmap. Reconcile that work against the final reviewed branch before starting feature development. This roadmap is a separate repository document; it does not alter those fixes.
 
+**Shared continuation (2 October 2026):** both machines start from [the project handoff](docs/PROJECT_HANDOFF.md). The [open-source adoption plan](docs/OPEN_SOURCE_ADOPTION_PLAN_2026-10-01.md) and [Mac continuation prompt](docs/OPEN_SOURCE_MAC_HANDOFF.md) support this roadmap without replacing its foundation and M2 user-check-in gates. Research is not dependency or release approval.
+
 ## 1. Product decision
 
 Build a dependable training companion that answers: **What should I work on before my next lesson, and why?**

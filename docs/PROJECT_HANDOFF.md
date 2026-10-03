@@ -1,0 +1,43 @@
+# Shared project handoff — Windows and Mac
+
+Updated 2 October 2026. **Both machines start here after fetching GitHub.** Task state, plans, review findings, prompts and sanitized evidence must be shared in this repository or a linked PR; do not rely on private chat history or another computer's local files.
+
+Repository: https://github.com/rickydeleon49-ui/Flight-training-. Each machine chooses its own clone location. References to historical `H:`/Windows paths in old notes describe the original review environment, not required paths on the Mac.
+
+## Current state and ownership
+
+This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exact head before editing; update this table when ownership or acceptance changes.
+
+| Work | Shared source/evidence | State / next action |
+| --- | --- | --- |
+| A1 restore retention/restart safety | Main via [PR #42](https://github.com/rickydeleon49-ui/Flight-training-/pull/42); [acceptance](RESTORE_RETENTION_ACCEPTANCE_2026-10-01.md) | Shared-source repair merged. Preserve its recovery/backup guarantees. |
+| Mac onboarding | Main via [PR #43](https://github.com/rickydeleon49-ui/Flight-training-/pull/43); [Mac guide](MAC_GITHUB_HANDOFF_2026-10-02.md) | GitHub-only setup, fixtures, prompt and report template available. |
+| Physical Mac source evaluation | Mac branch `codex/mac-source-evaluation-report`; [draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) | Reported frontend/native checks and arm64 evaluation DMG passed using a compatible installed SDK. Signing assessment findings recorded; installed smoke tests pending a dedicated test account. Draft is not merged by this handoff. |
+| A2 atomic material saves | Windows-local `fix/atomic-study-material-saves`, base `533a8f5`; [review](A2_SECOND_REVIEW_DETAILS_2026-10-02.md), [prompt](A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md), [evidence](evidence/a2-second-review-2026-10-02/README.md) | Implementation is uncommitted and not in GitHub. Existing implementer owns R6/R7; Codex independently reviews. Do not assume the Mac can check out that local source. |
+| A3–A6 audit work | [Full audit](FULL_REPOSITORY_AUDIT_2026-09-29.md) and STATUS | Still open; coordinate one scoped correction at a time. |
+| Open-source reuse | [Research](OPEN_SOURCE_REUSE_RESEARCH_2026-10-01.md), [plan](OPEN_SOURCE_ADOPTION_PLAN_2026-10-01.md), [Mac prompt](OPEN_SOURCE_MAC_HANDOFF.md) | Historical research shared; no new library adopted. Foundation, measurements, license/compatibility and test gates apply. |
+| M2 study sessions / outside-assistant import | [M2 design](M2_STUDY_LIBRARY_DESIGN_2026-09-27.md), [saved-guide feature brief](STUDY_GUIDE_TO_TEST_FEATURE_BRIEF_2026-09-29.md), ROADMAP | Planning/contract preparation only until the real-user check-in and scoped go-ahead. A saved-guide Gemini request differs from offline structured import. |
+| Release | [Review process](RELEASE_REVIEW_PROCESS.md) and [Mac tracker](MAC_PARITY_CHECKLIST.md) | Windows hold on v0.5.1; v0.5.2 retired; frozen v0.5.3 Mac candidate held. No publication or candidate replacement authorized here. |
+
+## Handoff rules for every task
+
+1. Before work, fetch the remote and record repository, branch, base/head SHA, clean/dirty state, owner/role and machine. Inspect ongoing PRs. Never reset, stash, force-push or edit another machine's branch to make it match yours.
+2. Assign one implementer and one Git coordinator at a time. Claude/Gemini roles can switch when the user says so; the handoff must record the active assignment. Mac evidence and Windows source corrections may proceed independently, but avoid simultaneous edits to the same branch/file.
+3. Implement locally, run focused tests for each substantive change, then one complete required local gate after corrections. Leave source uncommitted for independent review under the current workflow. Share the implementation report and next prompt using [the task template](templates/TASK_HANDOFF_TEMPLATE.md).
+4. Codex owns independent review and reviewed commit/push/PR/exact-head-CI/merge unless the user explicitly assigns another coordinator. If Codex usage is unavailable, the user's designated Claude reviewer may take over; record that switch rather than silently self-reviewing. Do not push known failing source just to share or debug it.
+5. A report can be shared on a documentation-only draft PR without including broken source. State whether code is local, on a branch, merged or unavailable. Never claim a handoff is executable on the other computer when its required source exists only locally.
+6. Store important plans, review notes, correction prompts, sanitized logs/receipts and final decisions under docs, linked from STATUS and this index. Use repository-relative paths and exact source/artifact identities. Include failing attempts and conditional skips; do not upload only a favorable run.
+7. Keep API keys/tokens, real databases, private documents, large generated PDFs, installers, node_modules and target out of Git. Share concise sanitized evidence and hashes; keep protected raw evidence local and label any review limitation. Public upstream source should be linked/pinned rather than copied indiscriminately.
+8. Review locally before the one intended push. Use required CI as the final gate, with docs-only checks where appropriate. Do not start duplicate full matrices, duplicate background processes or speculative CI runs. Resolve failures locally, then apply one focused correction if a runner-specific issue remains.
+9. Before merge verify exact PR-head checks, current main, intended diff, migrations/lockfiles/configuration and independent acceptance. After merge confirm merged state, origin/main, a clean synchronized coordinator checkout and safe branch cleanup. Preserve another machine's dirty work; it must deliberately reconcile the new main before its own PR.
+10. Update this index, STATUS and MAC_PARITY_CHECKLIST for relevant shared changes. Distinguish source tests, development/browser tests, DMG packaging, signing assessment and installed-app smoke tests. Neither machine's test results automatically certify the other platform or macOS 12.
+
+## Continue on the Mac
+
+- Existing task: [Mac session prompt](MAC_SESSION_PROMPT.md), with the report in draft PR #44. Continue missing observed smoke tests safely; do not blindly repeat unchanged successful commands.
+- Future reuse work: [open-source Mac prompt](OPEN_SOURCE_MAC_HANDOFF.md). Start with source/evidence review and measured baselines, not package installation.
+- Pending source correction contract: [A2 R6/R7 prompt](A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md). It cannot run against main until its matching implementation is made available under the review workflow.
+
+Research star counts, license observations and peer ranges are October 1 snapshots, not current-version guarantees. Re-check the selected version and source boundary before taking code. Follow ROADMAP and the existing data/security guarantees; this index does not authorize release or new migrations.
+
+[Publication contents and local validation receipt](SHARED_HANDOFF_PUBLICATION_2026-10-02.md).

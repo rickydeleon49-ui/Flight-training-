@@ -2,6 +2,12 @@
 
 _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
 
+## Shared Windows/Mac handoff — 2 October 2026
+
+[PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md) is the common starting point for both machines. Research, plans, correction prompts and sanitized review evidence are tracked in GitHub; future handoffs must be linked there rather than depend on a local drive or chat attachment. The [open-source continuation handoff](docs/OPEN_SOURCE_MAC_HANDOFF.md) includes the historical research, 170-repository evidence snapshot, adoption sequence, test gates and Mac prompt. No new production library was installed or copied.
+
+The [Mac report in draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) is available on GitHub: it reports passing source checks and an Apple Silicon evaluation DMG, with signing assessment and installed-test limitations. It remains a draft; this note does not merge it or mark installed smoke tests passed. A2 remains local and pending the [R6/R7 correction prompt](docs/A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md). All release holds remain unchanged.
+
 ## Mac GitHub handoff — 2 October 2026
 
 The user now has a Mac; its chip, macOS version and installed-app results have not yet been recorded. The [self-contained Mac handoff](docs/MAC_GITHUB_HANDOFF_2026-10-02.md), [Mac session prompt](docs/MAC_SESSION_PROMPT.md) and [results template](docs/templates/MAC_SMOKE_RESULTS_TEMPLATE.md) are tracked in Git so the Mac requires no Windows-local attachments, logs or generated files. Use current `main` for source evaluation and record its exact commit. This documentation update does not close any physical-test or release gate.
