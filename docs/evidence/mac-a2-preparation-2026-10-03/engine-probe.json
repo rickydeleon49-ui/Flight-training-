@@ -1,0 +1,1259 @@
+{
+ "probeVersion": 2,
+ "node": "v22.23.3",
+ "sqljsVersion": "1.14.2",
+ "nodeSqlite": {
+  "sqliteVersion": "3.53.4",
+  "openingForms": [
+   {
+    "route": "execute",
+    "sql": "BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "BEGIN DEFERRED",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "BEGIN EXCLUSIVE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "BEGIN TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "begin immediate transaction",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "/* synthetic */ BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "-- synthetic\nBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "/* a */ -- b\n  /* c */\tBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "\n\t  BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute",
+    "sql": "SELECT 1; BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "route": "execute",
+    "sql": "BEGIN; SELECT 1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN DEFERRED",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN EXCLUSIVE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "begin immediate transaction",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "/* synthetic */ BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "-- synthetic\nBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "/* a */ -- b\n  /* c */\tBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "\n\t  BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "SELECT 1; BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN; SELECT 1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   }
+  ],
+  "endingFormsWhileOwnerHoldsTransaction": [
+   {
+    "route": "execute",
+    "sql": "COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute",
+    "sql": "END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute",
+    "sql": "END TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute",
+    "sql": "COMMIT TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute",
+    "sql": "ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute",
+    "sql": "/* synthetic */ ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute",
+    "sql": "RELEASE s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute",
+    "sql": "RELEASE SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute",
+    "sql": "ROLLBACK TO s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute",
+    "sql": "SELECT 1; COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "END TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "COMMIT TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "select",
+    "sql": "/* synthetic */ ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "select",
+    "sql": "RELEASE s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "RELEASE SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "ROLLBACK TO s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "select",
+    "sql": "SELECT 1; COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   }
+  ],
+  "legitimate": [
+   {
+    "label": "commented SELECT",
+    "route": "execute",
+    "sql": "/* synthetic */ SELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "line-commented SELECT",
+    "route": "execute",
+    "sql": "-- synthetic\nSELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "parameterised SELECT",
+    "route": "execute",
+    "sql": "SELECT ? AS value",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "quoted keyword text",
+    "route": "execute",
+    "sql": "SELECT 'BEGIN; COMMIT; ROLLBACK' AS text",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "identifier named begin",
+    "route": "execute",
+    "sql": "SELECT 1 AS \"begin\"",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA foreign_keys read",
+    "route": "execute",
+    "sql": "PRAGMA foreign_keys",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA table_info read",
+    "route": "execute",
+    "sql": "PRAGMA table_info(t)",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "CREATE TRIGGER with BEGIN/END body",
+    "route": "execute",
+    "sql": "CREATE TRIGGER trg AFTER INSERT ON t BEGIN INSERT INTO log (id) VALUES (NEW.id); END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "commented SELECT",
+    "route": "select",
+    "sql": "/* synthetic */ SELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "line-commented SELECT",
+    "route": "select",
+    "sql": "-- synthetic\nSELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "parameterised SELECT",
+    "route": "select",
+    "sql": "SELECT ? AS value",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "quoted keyword text",
+    "route": "select",
+    "sql": "SELECT 'BEGIN; COMMIT; ROLLBACK' AS text",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "identifier named begin",
+    "route": "select",
+    "sql": "SELECT 1 AS \"begin\"",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA foreign_keys read",
+    "route": "select",
+    "sql": "PRAGMA foreign_keys",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA table_info read",
+    "route": "select",
+    "sql": "PRAGMA table_info(t)",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "CREATE TRIGGER with BEGIN/END body",
+    "route": "select",
+    "sql": "CREATE TRIGGER trg AFTER INSERT ON t BEGIN INSERT INTO log (id) VALUES (NEW.id); END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   }
+  ]
+ },
+ "sqljs": {
+  "openingForms": [
+   {
+    "route": "execute (run with [] params)",
+    "sql": "BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "BEGIN DEFERRED",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "BEGIN EXCLUSIVE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "BEGIN TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "begin immediate transaction",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "/* synthetic */ BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "-- synthetic\nBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "/* a */ -- b\n  /* c */\tBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "\n\t  BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "SELECT 1; BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "BEGIN; SELECT 1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "BEGIN DEFERRED",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "BEGIN EXCLUSIVE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "BEGIN TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "begin immediate transaction",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "/* synthetic */ BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "-- synthetic\nBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "/* a */ -- b\n  /* c */\tBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "\n\t  BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "SELECT 1; BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "BEGIN; SELECT 1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN DEFERRED",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN EXCLUSIVE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "begin immediate transaction",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "/* synthetic */ BEGIN IMMEDIATE",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "-- synthetic\nBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "/* a */ -- b\n  /* c */\tBEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "\n\t  BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   },
+   {
+    "route": "select",
+    "sql": "SELECT 1; BEGIN",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "route": "select",
+    "sql": "BEGIN; SELECT 1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true
+   }
+  ],
+  "endingFormsWhileOwnerHoldsTransaction": [
+   {
+    "route": "execute (run with [] params)",
+    "sql": "COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "END TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "COMMIT TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "/* synthetic */ ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "RELEASE s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "RELEASE SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "ROLLBACK TO s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute (run with [] params)",
+    "sql": "SELECT 1; COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "END TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "COMMIT TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "/* synthetic */ ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "RELEASE s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "RELEASE SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "ROLLBACK TO s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "execute (run without params -> exec)",
+    "sql": "SELECT 1; COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "END TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "COMMIT TRANSACTION",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "select",
+    "sql": "/* synthetic */ ROLLBACK",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false,
+    "ownerTransactionStillOpen": false,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "select",
+    "sql": "RELEASE s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "RELEASE SAVEPOINT s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   },
+   {
+    "route": "select",
+    "sql": "ROLLBACK TO s1",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": false
+   },
+   {
+    "route": "select",
+    "sql": "SELECT 1; COMMIT",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": true,
+    "ownerTransactionStillOpen": true,
+    "ownerRowVisible": true
+   }
+  ],
+  "legitimate": [
+   {
+    "label": "commented SELECT",
+    "route": "execute (run with [] params)",
+    "sql": "/* synthetic */ SELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "line-commented SELECT",
+    "route": "execute (run with [] params)",
+    "sql": "-- synthetic\nSELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "quoted keyword text",
+    "route": "execute (run with [] params)",
+    "sql": "SELECT 'BEGIN; COMMIT; ROLLBACK' AS text",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "identifier named begin",
+    "route": "execute (run with [] params)",
+    "sql": "SELECT 1 AS \"begin\"",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA foreign_keys read",
+    "route": "execute (run with [] params)",
+    "sql": "PRAGMA foreign_keys",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA table_info read",
+    "route": "execute (run with [] params)",
+    "sql": "PRAGMA table_info(t)",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "CREATE TRIGGER with BEGIN/END body",
+    "route": "execute (run with [] params)",
+    "sql": "CREATE TRIGGER trg AFTER INSERT ON t BEGIN INSERT INTO log (id) VALUES (NEW.id); END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "commented SELECT",
+    "route": "execute (run without params -> exec)",
+    "sql": "/* synthetic */ SELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "line-commented SELECT",
+    "route": "execute (run without params -> exec)",
+    "sql": "-- synthetic\nSELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "quoted keyword text",
+    "route": "execute (run without params -> exec)",
+    "sql": "SELECT 'BEGIN; COMMIT; ROLLBACK' AS text",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "identifier named begin",
+    "route": "execute (run without params -> exec)",
+    "sql": "SELECT 1 AS \"begin\"",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA foreign_keys read",
+    "route": "execute (run without params -> exec)",
+    "sql": "PRAGMA foreign_keys",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA table_info read",
+    "route": "execute (run without params -> exec)",
+    "sql": "PRAGMA table_info(t)",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "CREATE TRIGGER with BEGIN/END body",
+    "route": "execute (run without params -> exec)",
+    "sql": "CREATE TRIGGER trg AFTER INSERT ON t BEGIN INSERT INTO log (id) VALUES (NEW.id); END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "commented SELECT",
+    "route": "select",
+    "sql": "/* synthetic */ SELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "line-commented SELECT",
+    "route": "select",
+    "sql": "-- synthetic\nSELECT 1 AS one",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "parameterised SELECT",
+    "route": "select",
+    "sql": "SELECT ? AS value",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "quoted keyword text",
+    "route": "select",
+    "sql": "SELECT 'BEGIN; COMMIT; ROLLBACK' AS text",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "identifier named begin",
+    "route": "select",
+    "sql": "SELECT 1 AS \"begin\"",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA foreign_keys read",
+    "route": "select",
+    "sql": "PRAGMA foreign_keys",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "PRAGMA table_info read",
+    "route": "select",
+    "sql": "PRAGMA table_info(t)",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   },
+   {
+    "label": "CREATE TRIGGER with BEGIN/END body",
+    "route": "select",
+    "sql": "CREATE TRIGGER trg AFTER INSERT ON t BEGIN INSERT INTO log (id) VALUES (NEW.id); END",
+    "accepted": true,
+    "error": null,
+    "transactionOpenAfter": false
+   }
+  ],
+  "exportEndsOpenTransaction": {
+   "rowsAfterExport": []
+  },
+  "exportFaultSeam": {
+   "firstCall": "synthetic export failure",
+   "secondCallExported": true,
+   "restored": true
+  },
+  "foreignKeysAcrossExport": {
+   "before": 1,
+   "after": 0
+  }
+ },
+ "summary": {
+  "nodeSqliteOpening": {
+   "total": 26,
+   "accepted": 26,
+   "leftTransactionOpen": 24
+  },
+  "nodeSqliteEndingClosedOwner": 14,
+  "nodeSqliteLegitimateAccepted": "16/16",
+  "sqljsOpening": {
+   "total": 39,
+   "accepted": 39,
+   "leftTransactionOpen": 37
+  },
+  "sqljsEndingClosedOwner": 22,
+  "sqljsLegitimateAccepted": "22/22"
+ }
+}

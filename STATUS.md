@@ -1,6 +1,6 @@
 # Her Flight Deck — current project status
 
-**Mac A2 preparation review (3 October): corrections required.** [Independent review](docs/MAC_A2_PREPARATION_REVIEW_2026-10-03.md) confirms the engine receipts and handoff hashes but finds three prepared-test observation/assertion defects (PREP-R1–R3). Claude retains its unpublished local package; [the detailed correction assignment](docs/CLAUDE_MAC_A2_PREPARATION_CORRECTION_PROMPT_2026-10-03.md) is the next Mac task. This publication shares the review, not the unaccepted diagnostics. Matching A2 production source and installed-account/signing prerequisites remain open.
+**Mac A2 preparation accepted (3 October):** [Independent acceptance](docs/MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md) closes PREP-R1–R3 and confirms 36 controls passed. The shared package and Windows-owner handoff are accepted for reviewed publication; A2 production source is still pending. After CI/merge, [Claude prepares a read-only Mac readiness checker and isolated installation/signing runbook](docs/CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md). Installed results and release readiness remain unverified.
 
 _Updated 3 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
 
@@ -53,6 +53,38 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 **Platform limits and release status:** A1 shared source/regression acceptance is complete; A2–A6 remain open. Windows distribution hold on v0.5.1 and Mac candidate hold on v0.5.3 remain in effect. Physical Apple Silicon Mac, early macOS 12, installed Windows and live Gemini remain UNVERIFIED. The frozen v0.5.3 DMG cannot certify newly changed source.
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
+
+## A2 Mac verification preparation — 3 October 2026 (accepted for publication)
+
+**Corrected and independently accepted (3 October):** the [review](docs/MAC_A2_PREPARATION_REVIEW_2026-10-03.md) found three prepared-observation defects (PREP-R1 to R3). All three are fixed:
+
+- **PREP-R1:** QT-02 now reads with a single SQL statement. A barrier variant tests a read requested while the save holds ownership; it is conditional on the driver's statement route.
+- **PREP-R2:** snapshots keep the complete stored state: tag ids, raw links, dangling references and the unrelated-table status. A rejected insert now counts as foreign-key enforcement only if the connection is still usable and SQLite raises its foreign-key error.
+- **PREP-R3:** QT-11 checks the complete expected update outcome, and is split into an ordinary-refusal case and a conditional while-held case.
+
+Codex independently confirms 36 task-local oracle controls pass on real engines without any A2 API. Four weakened helper variants are rejected; one equivalent variant passes. The diagnostic collects 181 tests (57 conditional); the reviewed version collected 93. This validates the prepared tests only. A2 is still unavailable and unvalidated. [Correction receipt](docs/evidence/mac-a2-preparation-2026-10-03/correction-receipt-2026-10-03.txt).
+
+[Preparation report](docs/MAC_A2_VERIFICATION_PREPARATION_2026-10-03.md) with [evidence](docs/evidence/mac-a2-preparation-2026-10-03/README.md). The expanded prompt from PR #52 is incorporated. **Preparation is complete; A2 validation has not started.** A2 remains unaccepted and is not on main.
+
+- **Publication state:** [Accepted preparation](docs/MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md) and handoff are prepared for reviewed Git/CI/merge. Application source is unchanged. [Claude's next assignment](docs/CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md) prepares a read-only readiness tool and isolated installation/signing runbook.
+- **Source availability (checked 2026-10-03T16:36Z): unavailable.**
+  - There is no `fix/atomic-study-material-saves` branch.
+  - None of the 52 PR heads, and no branch, touches the A2-only files.
+  - Main lacks `saveMaterialAtomically` and `MaterialSaveOperation`. That is a prerequisite mismatch, so the five reviewer diagnostics were deliberately not run.
+- **Prepared:**
+  - an acceptance matrix with stable IDs across atomic records/tags, attachment/native conservation, queue/transaction ownership, browser durability and installed requirements
+  - the historical 21 + 4 native and 67 frontend Windows results mapped to case IDs
+  - the five diagnostics plus prepared cases, outside test discovery and statically validated only
+  - fault seams, datasets and copy-ready worktree commands
+  - an unsent handoff for the Windows owner
+- **Run on this Mac (not A2):**
+  - The engine probe shows that both real engines accept every transaction-control form through the driver routes, including `SAVEPOINT`, ending forms, and sql.js `exec` multi-statement strings.
+  - Legitimate comments, parameters, quoted keywords, read PRAGMAs and trigger bodies stay safe.
+  - sql.js `export()` drops an open transaction's rows and resets `PRAGMA foreign_keys` to 0.
+  - Main's existing references pass: 53 frontend tests and 44 native `documents::tests`.
+- **Blocked on:**
+  - the Windows owner's corrected source, independently accepted by Codex and published with the requested receipt
+  - installed checks, which still need the dedicated test account and a signing decision
 
 ## A5 fixture and verification-kit evidence reconciliation — 2 October evidence, accepted 3 October 2026
 

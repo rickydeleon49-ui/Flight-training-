@@ -1,0 +1,19 @@
+Case-sensitive volume capability on this Mac, 2026-10-03 (capability check only; no A2 test ran).
+
+Host volumes (diskutil apfs list): Macintosh HD, Data, Preboot, Recovery, VM are all "Case-insensitive" APFS.
+A2 native test documents::save_tests::distinct_case_files_on_a_case_sensitive_volume_are_not_conflated will
+therefore return early here unless its temporary root is placed on a case-sensitive volume. An early return is
+NOT a pass for case-sensitive behavior.
+
+Task-owned case-sensitive volume, created and removed inside the session scratchpad:
+  hdiutil create -size 64m -fs "Case-sensitive APFS" -volname HFDA2CS -type UDIF <scratch>/hfd-a2-cs.dmg
+  hdiutil attach -nobrowse -mountpoint <scratch>/cs-mount <scratch>/hfd-a2-cs.dmg
+    -> /dev/disk5s1, File System Personality: Case-sensitive APFS
+  Case.txt and case.txt created side by side: both listed (distinct files)
+  directory symlink alias -> real created: listed as a symlink
+  hdiutil detach <scratch>/cs-mount -> ejected; image deleted; mount directory removed
+
+Conclusion: a case-sensitive APFS volume can be hosted without changing system settings, so the case-sensitive
+native case can be exercised on this Mac once the matching source exists, IF that test lets its temporary root be
+redirected (for example via TMPDIR, which Rust's std::env::temp_dir honours on macOS). Whether the A2 test uses
+temp_dir is unknown until its source is available; if it does not, that is a seam request for the source owner.

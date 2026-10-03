@@ -1,0 +1,45 @@
+Oracle controls, final run 2026-10-03T17:38Z, Node v22.23.3, Vitest 4.1.11, sql.js 1.14.2, SQLite 3.53.4 (node:sqlite).
+Command: npx --no-install vitest run --config "$TMPDIR/a2-oracle.config.mjs" a2ObservationOracle --reporter=verbose   (exit 0)
+Helper a2DiagnosticObservations.ts sha256 e3b1aa45a52fba6e5388af803b712b913288ed4f0ae49383bee0bc8be9543a0a
+Controls a2ObservationOracle.check.ts sha256 b583cbc0b5a36f90cd35c37d284a7c51a961ba1f0446734e50e33a836af95ed2
+Scope: validation of prepared observations on real engines with the project migrations; no A2 API invoked.
+
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-1] node:sqlite: a read queued before the save acquires ownership is coherent "none"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-2] node:sqlite: a read after the complete save is coherent "complete"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-3] node:sqlite: Codex's schedule (save invoked first, async preparation, FIFO) stays coherent
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-4] node:sqlite: intentionally partial datasets are classified "partial"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-5] node:sqlite: barrier positive control: a read requested while a FIFO owner holds the save is "complete"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-6] node:sqlite: barrier negative control: with no owner the same request enters the transaction ("partial")
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-1] sql.js: a read queued before the save acquires ownership is coherent "none"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-2] sql.js: a read after the complete save is coherent "complete"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-3] sql.js: Codex's schedule (save invoked first, async preparation, FIFO) stays coherent
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-4] sql.js: intentionally partial datasets are classified "partial"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-5] sql.js: barrier positive control: a read requested while a FIFO owner holds the save is "complete"
+ ✓ a2ObservationOracle.check.ts > PREP-R1 oracle: observeMaterial/classifyCreate > [R1-6] sql.js: barrier negative control: with no owner the same request enters the transaction ("partial")
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-1] node:sqlite: the same tag name under a changed tag id is detected
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-2] node:sqlite: changed raw link ids are detected
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-3] node:sqlite: an extra dangling link is detected, counted and kept visible
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-4] node:sqlite: a stray tag after a rejected operation is detected
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-5] node:sqlite: an unchanged full state is accepted, including after a really rejected save
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-6] node:sqlite: the unrelated table is reported absent explicitly, and other read failures propagate
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-7] node:sqlite: foreign-key proof distinguishes enforcement, fail-closed refusal and other errors
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-1] sql.js: the same tag name under a changed tag id is detected
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-2] sql.js: changed raw link ids are detected
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-3] sql.js: an extra dangling link is detected, counted and kept visible
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-4] sql.js: a stray tag after a rejected operation is detected
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-5] sql.js: an unchanged full state is accepted, including after a really rejected save
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-6] sql.js: the unrelated table is reported absent explicitly, and other read failures propagate
+ ✓ a2ObservationOracle.check.ts > PREP-R2 oracle: fullState/sameState/integrityProblems > [R2-7] sql.js: foreign-key proof distinguishes enforcement, fail-closed refusal and other errors
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-1] node:sqlite: the complete expected success is accepted (live and, for sql.js, reopened)
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-2] node:sqlite: changed links with the old title are rejected
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-3] node:sqlite: a changed title with the old links is rejected
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-4] node:sqlite: partial state after a rejected save is rejected; unchanged rejected state is accepted
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-5] node:sqlite: success with a stray tag, a changed untouched column or a lost unrelated row is rejected
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-1] sql.js: the complete expected success is accepted (live and, for sql.js, reopened)
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-2] sql.js: changed links with the old title are rejected
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-3] sql.js: a changed title with the old links is rejected
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-4] sql.js: partial state after a rejected save is rejected; unchanged rejected state is accepted
+ ✓ a2ObservationOracle.check.ts > PREP-R3 oracle: updateOutcomeProblems/sameState > [R3-5] sql.js: success with a stray tag, a changed untouched column or a lost unrelated row is rejected
+ Test Files  1 passed (1)
+      Tests  36 passed (36)
+   Duration  397ms (transform 39ms, setup 0ms, import 51ms, tests 270ms, environment 0ms)

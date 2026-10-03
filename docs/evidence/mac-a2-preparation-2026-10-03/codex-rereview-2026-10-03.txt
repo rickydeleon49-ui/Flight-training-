@@ -1,0 +1,49 @@
+Codex independent re-review, 3 October 2026. Accept corrected preparation only; A2 remains unvalidated.
+Reviewed branch codex/mac-a2-verification-preparation, HEAD 54b82b3b59667b2ff9847c14fd6e44bcb3399e02.
+
+Independent command (Node 22.23.3, existing checkout dependencies):
+  npx --no-install vitest run --config /private/tmp/codex-a2-preparation-rereview-2026-10-03/oracle.config.mjs a2ObservationOracle --reporter=verbose
+  config copied unchanged from oracle-vitest.config.mjs.txt
+Result: exit 0, 36 passed / 0 failed / 0 skipped, 399 ms. No A2 API invoked.
+Independent collection: 181 diagnostic cases, 57 CONDITIONAL SEAM; no bodies executed.
+Original five reviewer bodies compared byte-for-byte to the original diagnostic with SHA-256 1902070e7136310b74d6bdc6bd53999516c6b88fc85703d5070b13bc0b6d4b4f: identical.
+Inspected mutation logs: four weakened variants fail 14/4/2/2 controls; one equivalent variant passes all 36. Not repeated.
+No unchanged full matrix, main-baseline suite, APFS capability image, installer or live provider request was repeated.
+
+Handoff: thirteen of fourteen hashes match. The report supplied as 384c6440ab01aedabea36c48a73269372ee3dcead6e22a726affadd70cfa6467 is actually the stable reviewed 79743cec11062e729f7b7b98111fffb201660a81f94869ec319f2d0a136423d2. Current text inspected. All executable artifacts match.
+
+Reviewed input hashes, before Codex publication annotations and tracker reconciliation:
+35652461616276e15197844d1a114391c55adb6c4baeb37d2c5d551cae681669  STATUS.md
+aaf6b0c0b5d15e1dc42ba84680474934895ce2fa7072924f42a998544da991b4  docs/PROJECT_HANDOFF.md
+79743cec11062e729f7b7b98111fffb201660a81f94869ec319f2d0a136423d2  docs/MAC_A2_VERIFICATION_PREPARATION_2026-10-03.md
+57d62973ae690dffc8ba04f4d62ec152c0403b18b8e746dc307352232cfce8e2  docs/evidence/mac-a2-preparation-2026-10-03/README.md
+ea2f9557aaf10a77edf90b4216abb3e4c846e4d6d15731421b2992baba65ba20  docs/evidence/mac-a2-preparation-2026-10-03/a2-engine-probe.mjs.txt
+e3b1aa45a52fba6e5388af803b712b913288ed4f0ae49383bee0bc8be9543a0a  docs/evidence/mac-a2-preparation-2026-10-03/a2DiagnosticObservations.ts
+b583cbc0b5a36f90cd35c37d284a7c51a961ba1f0446734e50e33a836af95ed2  docs/evidence/mac-a2-preparation-2026-10-03/a2ObservationOracle.check.ts
+994263de0731c1d639b47d04bed7452a76ab9f51d3f948106b96bfd92e43b22c  docs/evidence/mac-a2-preparation-2026-10-03/a2ReviewDiagnostics.mac.test.ts
+8af2eb249b965191b28235495f0620a9d80e9baef65d7195561dba89ba46f7df  docs/evidence/mac-a2-preparation-2026-10-03/case-sensitive-volume-capability.txt
+b2e671afb7a17380ac71d487924e9aac198044c66bcc09873701e3ba5ccc561c  docs/evidence/mac-a2-preparation-2026-10-03/correction-receipt-2026-10-03.txt
+2c2f97e7c099524330435fa0d1d74f7be7560d9d65e03869b6d66fefe3db9f14  docs/evidence/mac-a2-preparation-2026-10-03/engine-probe.json
+9088d02637be7b94e0371086c004d85cb5da5d32667f3fddf8d3621b2e9dc644  docs/evidence/mac-a2-preparation-2026-10-03/oracle-controls-2026-10-03.txt
+a6e20f936182724c808ab2546b351ee95f7adb56bd198d9159ec588af51fe499  docs/evidence/mac-a2-preparation-2026-10-03/oracle-vitest.config.mjs.txt
+14f9274383985a0de4103ebb78da384384b2d2d36a882aebc9a194ef34962987  docs/evidence/mac-a2-preparation-2026-10-03/source-availability.txt
+
+Final publication hashes after annotation/reconciliation (receipt itself excluded):
+d15b805ee3b36f6a1e22221c4947f1628ab09a6461d427ce56382e1515f1eb15  STATUS.md
+99dd70b5ea9d1f9fa21b3ed48a387c68ccfb24081d4ddeb3e6fbdb518349e812  docs/CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md
+46c5e6172a4b3b0ee57aede7cad933f1fe1d35316f7351f174527ecc1de7b443  docs/MAC_A2_PREPARATION_REVIEW_2026-10-03.md
+010de62c1e5d094e313569788dd948fdb4834df549565c0c471b9598312a28e2  docs/MAC_A2_VERIFICATION_PREPARATION_2026-10-03.md
+88685efbdce1b46830609a619966ac04de62a4f1e22be0fad1452084d7afd53c  docs/MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md
+48f725f7e79031d733a8f2ea24d51c8ae4ab0737509503686f4338b3800bb5fd  docs/PROJECT_HANDOFF.md
+57d62973ae690dffc8ba04f4d62ec152c0403b18b8e746dc307352232cfce8e2  docs/evidence/mac-a2-preparation-2026-10-03/README.md
+ea2f9557aaf10a77edf90b4216abb3e4c846e4d6d15731421b2992baba65ba20  docs/evidence/mac-a2-preparation-2026-10-03/a2-engine-probe.mjs.txt
+e3b1aa45a52fba6e5388af803b712b913288ed4f0ae49383bee0bc8be9543a0a  docs/evidence/mac-a2-preparation-2026-10-03/a2DiagnosticObservations.ts
+b583cbc0b5a36f90cd35c37d284a7c51a961ba1f0446734e50e33a836af95ed2  docs/evidence/mac-a2-preparation-2026-10-03/a2ObservationOracle.check.ts
+994263de0731c1d639b47d04bed7452a76ab9f51d3f948106b96bfd92e43b22c  docs/evidence/mac-a2-preparation-2026-10-03/a2ReviewDiagnostics.mac.test.ts
+8af2eb249b965191b28235495f0620a9d80e9baef65d7195561dba89ba46f7df  docs/evidence/mac-a2-preparation-2026-10-03/case-sensitive-volume-capability.txt
+b2e671afb7a17380ac71d487924e9aac198044c66bcc09873701e3ba5ccc561c  docs/evidence/mac-a2-preparation-2026-10-03/correction-receipt-2026-10-03.txt
+2c2f97e7c099524330435fa0d1d74f7be7560d9d65e03869b6d66fefe3db9f14  docs/evidence/mac-a2-preparation-2026-10-03/engine-probe.json
+9088d02637be7b94e0371086c004d85cb5da5d32667f3fddf8d3621b2e9dc644  docs/evidence/mac-a2-preparation-2026-10-03/oracle-controls-2026-10-03.txt
+a6e20f936182724c808ab2546b351ee95f7adb56bd198d9159ec588af51fe499  docs/evidence/mac-a2-preparation-2026-10-03/oracle-vitest.config.mjs.txt
+14f9274383985a0de4103ebb78da384384b2d2d36a882aebc9a194ef34962987  docs/evidence/mac-a2-preparation-2026-10-03/source-availability.txt
+Final relative-link validation: 149 checked, zero broken; fences and whitespace clean.

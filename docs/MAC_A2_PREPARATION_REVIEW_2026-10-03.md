@@ -1,5 +1,7 @@
 # Independent review of the Mac A2 preparation — 3 October 2026
 
+Follow-up: [the corrected preparation is accepted](MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md). PREP-R1–R3 below describe the historical reviewed snapshot and are now closed.
+
 **Decision: corrections required in the prepared diagnostics before accepting the preparation package.** These findings concern test observations and assertions. They establish no new A2 application failure; matching A2 production source remains unavailable.
 
 Claude's local branch is `codex/mac-a2-verification-preparation`, HEAD `54b82b3b59667b2ff9847c14fd6e44bcb3399e02`. Codex reviewed the two modified trackers and seven new report/evidence files. All nine hashes match Claude's handoff. The reviewed diagnostic SHA-256 is `1902070e7136310b74d6bdc6bd53999516c6b88fc85703d5070b13bc0b6d4b4f`.

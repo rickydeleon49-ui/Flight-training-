@@ -1,0 +1,98 @@
+Mac A2 preparation: correction receipt for Codex review PREP-R1 to PREP-R3, 3 October 2026 (17:29Z to 17:40Z).
+Prepared by Claude on the Mac, /Users/rickymac/code/Flight-training-, branch codex/mac-a2-verification-preparation,
+HEAD 54b82b3b59667b2ff9847c14fd6e44bcb3399e02, local and uncommitted. Review: docs/MAC_A2_PREPARATION_REVIEW_2026-10-03.md
+(main 6637d17, PR #53), read via origin/main. Toolchain: Node v22.23.3, Vitest 4.1.11, sql.js 1.14.2, SQLite 3.53.4.
+Scope: prepared observations/assertions only. No A2 source or API exists here; none was invoked. No application
+source, package, lockfile, migration or workflow changed. Earlier receipts in this folder are preserved unchanged.
+
+Pre-edit identity (17:29Z): the nine files matched the handed-off hashes, including the reviewed diagnostic
+1902070e7136310b74d6bdc6bd53999516c6b88fc85703d5070b13bc0b6d4b4f. There were no competing changes.
+
+Issue-to-fix map
+  PREP-R1  QT-02 combined several public reads (fullState) as if they were one snapshot.
+           Fix: observeMaterial() reads every value in ONE SELECT (scalar subqueries); classifyCreate() returns
+           none | complete | partial. [QT-02a] asserts none-or-complete for an unforced schedule. [QT-02b] is a
+           CONDITIONAL SEAM: installStatementBarrier() fires when the save's first material_tags insert reaches the
+           engine inside its open transaction; the read is requested at that event and must be "complete".
+           fullState is documented for settled before/after comparisons only.
+  PREP-R2  fullState kept tag names only and inner-joined links; unrelated-table errors were swallowed.
+           Fix: fullState now returns materials (all columns), tags (all columns incl. id), materialTags (raw
+           material_id/tag_id), resolvedLinks (LEFT JOIN name view, dangling visible as null), integrity (counts and
+           dangling references) and unrelated ({status:"absent"} via sqlite_master, else rows; other errors
+           propagate). sameState/stateDifferences compare everything. integrityProblems flags dangling links.
+           Applied through AR, QT and BD; BD-11 now compares complete live and reopened state.
+           proveForeignKeyEnforcement() needs a usable scratch write, reads PRAGMA foreign_keys, and requires SQLite's
+           "FOREIGN KEY constraint failed". A driver refusing all work is reported "fail-closed", never "enforced".
+           BD-06, BD-10 and BD-11 use it.
+  PREP-R3  QT-11's saved branch checked only the changed link.
+           Fix: updateOutcomeProblems() checks the complete expected result: new title, other columns unchanged
+           except updated_at, intended raw links, other materials' rows and links unchanged, prior tags unchanged
+           (or absent only if unlinked), no stray new tag, no dangling link, unrelated table conserved. Rejection
+           must be sameState(prior). QT-11 is split:
+             [QT-11a] ordinary public ending call, outside any save: state unchanged, then a read, a write and a
+                      complete save still work (13 forms x execute/select x 2 engines)
+             [QT-11b] CONDITIONAL SEAM: the ending call is requested at the barrier event while the save holds
+                      ownership (same 52-case grid)
+           sql.js live and reopened state are compared after work settles.
+
+Commands and results (checkout root, scoped PATH)
+  esbuild parse of the three .ts files                                       exit 0 each (static)
+  tsc -p <scratch>/typecheck/tsconfig.json; the three files beside API shims  exit 0 (static; the shim gives the
+      of the reviewed A2 shape                                               reviewed API shape, not the real one)
+  npx vitest list (repository default config)                                0 matches for any task file
+  vitest list --config $TMPDIR/a2-oracle.config.mjs a2ReviewDiagnostics      exit 0; 181 tests collected (bodies
+                                                                             not run):
+      5 Part 1 reviewer cases, 10 AR, 44 QT-08/09/10, 52 QT-11a, 52 QT-11b, 2 QT-12, 2 QT-02a, 2 QT-02b, 12 BD
+      57 are CONDITIONAL SEAM (52 QT-11b, 2 QT-02b, BD-05, BD-06, BD-11)
+  same listing of the REVIEWED diagnostic (1902070e…)                        93 tests; the handoff's "about 40" was
+                                                                             wrong
+  vitest run --config $TMPDIR/a2-oracle.config.mjs a2ObservationOracle       exit 0; 36 passed / 0 failed /
+                                                                             0 skipped (oracle-controls-2026-10-03.txt)
+      PREP-R1 controls (x2 engines):
+        R1-1  read before ownership -> none
+        R1-2  read after the save -> complete
+        R1-3  Codex's schedule -> none (the historical multi-read aggregate gives materials 0 / links 2)
+        R1-4  five partial datasets -> partial
+        R1-5  barrier with a FIFO owner -> complete
+        R1-6  barrier with no owner -> partial
+      PREP-R2 controls (x2 engines):
+        R2-1  changed tag id under the same name -> detected (the readable view alone stays equal)
+        R2-2  changed raw link -> detected
+        R2-3  dangling link -> detected, counted, visible
+        R2-4  stray tag -> detected
+        R2-5  unchanged state, including after a really rejected save -> accepted
+        R2-6  absent unrelated table is explicit; other read errors propagate
+        R2-7  FK proof: enforced / fail-closed / other error / setting off
+      PREP-R3 controls (x2 engines):
+        R3-1  complete success accepted, live and reopened
+        R3-2  links changed with the old title -> rejected
+        R3-3  title changed with the old links -> rejected
+        R3-4  partial state after a rejection -> rejected; unchanged state -> accepted
+        R3-5  stray tag, changed untouched column or lost unrelated row -> rejected
+  Mutation sensitivity: the same 36 controls run against helper mutants via an alias (scratch only)
+      M1  historical policy (tag names only, no raw links)    14 failed / 22 passed  -> caught
+      M2  classifier ignores linkRows                         36 passed              -> equivalent mutant
+                                                                                        (linkedNames and danglingLinks
+                                                                                        already cover it)
+      M2b classifier ignores every link check                 4 failed               -> caught (R1-4, R1-6)
+      M3  update check ignores the title                      2 failed               -> caught (R3-2)
+      M4  classifier ignores the title                        2 failed               -> caught (R1-4)
+  git diff --check                                                           exit 0
+  relative-link check over the changed documents                             0 broken
+
+Not run, deliberately: the prepared A2 suite (absent API); the main 53-test frontend and 44-test native suites;
+the full matrix; the case-sensitive image probe; the A5 measurements. The historical Codex reproduction
+(../mac-a2-preparation-review-2026-10-03/oracle-review.mjs.txt) is preserved. Its hash check requires the reviewed
+file, so it no longer applies to the corrected diagnostic and is not this correction's success criterion.
+
+Seams still CONDITIONAL / requested from the source owner:
+  - QT-02b and QT-11b need the driver's save statements to reach the engine through DatabaseSync.prototype.prepare/
+    exec or sql.js Database.prototype.prepare/run/exec after its BEGIN. If statements are prepared before BEGIN or
+    sent as one script, request a named "ownership acquired" test event from the owner.
+  - BD-05 (btoa), BD-06 and BD-11 (PRAGMA foreign_keys restoration via run/exec) are unchanged from before.
+
+Raw logs (task-owned, outside Git):
+  /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/logs/
+    oracle-controls-run1.log, oracle-controls-final.log, diagnostics-list.log, reviewed-diagnostics-list.log,
+    typecheck-corrected.log
+  .../scratchpad/mutation/*.log
