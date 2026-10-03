@@ -1,0 +1,21 @@
+A3-R1–R3 modal-stack regressions (src/components/ui/Dialog.fallback.test.ts, describe "fallback modal stack (Codex A3-R1–R3 regressions)").
+showModal/close removed on HTMLDialogElement.prototype; jsdom has no inert/::backdrop.
+
+1) Negative control: the 8 new regressions run against the REVIEWED hook (useModalDialog.ts SHA-256 4ff06f12…af8, unchanged at that point):
+   npx --no-install vitest run src/components/ui/Dialog.fallback.test.ts -> exit 1; Tests 7 failed | 15 passed (22)
+   Failed:
+     A3-R1: hides the previous sibling modal when a third modal opens
+     A3-R1: re-exposes each lower modal as the ones above close, in reverse and out of order
+     A3-R2: gives a new top modal a higher layer after a lower modal closed
+     A3-R2: keeps strict paint order across reopening in every DOM order
+     A3-R3: returns focus to the surviving opener when the lower modal closes first
+     A3-R3: restores into the surviving lower modal, not a closed middle one
+     A3-R3: never focuses a removed prior target; stays in the surviving modal or leaves the page
+   Passed already (kept as a guard): A3-R1: keeps a nested modal's own ancestor dialog reachable while hiding the rest
+
+2) Corrected hook, focused (all five A3 suites):
+   npx --no-install vitest run src/components/ui/Dialog.fallback.test.ts src/components/quickfind/QuickFind.test.ts src/lib/id.test.ts src/logic/toolkitDefaults.test.ts src/state/legacyWebKitStartup.test.ts -> exit 0; 5 files; Tests 45 passed (45)
+   (First corrected run: 21/22 in Dialog.fallback; the reverse/out-of-order test set its "original" aria-hidden after main was already excluded. Test setup fixed to set it before any modal opens; no source change.)
+
+3) Codex's supplied diagnostic, run verbatim as a temporary file (src/components/ui/codexA3.diagnostic.test.ts, extracted from docs/MAC_A3_COMPATIBILITY_REVIEW_REGRESSIONS_2026-10-02.md, then deleted):
+   npx --no-install vitest run src/components/ui/codexA3.diagnostic.test.ts -> exit 0; Tests 3 passed (3)

@@ -1,6 +1,6 @@
 import type { ToolkitState } from "@/domain/types";
 import { nowIso } from "@/lib/dates";
-import { DEFAULT_TOOLKIT_STATE, normalizeToolkitState } from "@/logic/toolkit";
+import { defaultToolkitState, normalizeToolkitState } from "@/logic/toolkit";
 import type { SqlDatabase } from "../db";
 
 export function toolkitRepository(db: SqlDatabase) {
@@ -10,11 +10,11 @@ export function toolkitRepository(db: SqlDatabase) {
         "SELECT state_json FROM pilot_toolkit WHERE id = 'toolkit'",
       );
       const raw = rows[0]?.state_json;
-      if (!raw) return structuredClone(DEFAULT_TOOLKIT_STATE);
+      if (!raw) return defaultToolkitState();
       try {
         return normalizeToolkitState(JSON.parse(raw));
       } catch {
-        return structuredClone(DEFAULT_TOOLKIT_STATE);
+        return defaultToolkitState();
       }
     },
 

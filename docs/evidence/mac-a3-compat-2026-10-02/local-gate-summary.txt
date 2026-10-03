@@ -1,0 +1,17 @@
+head=8b61d8766a4aaf6a12443b9c48445ffe8cc43db7 node=v22.23.3 npm=10.9.9 rustc=rustc 1.99.0 (b940084d7 2026-09-28) sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+npm-ci exit=0 secs=1
+npm-test exit=0 secs=23
+npm-build exit=0 secs=3
+cargo-fmt exit=0 secs=0
+cargo-clippy exit=0 secs=1
+cargo-test exit=0 secs=22
+cargo-lock exit=0 secs=0
+diff-check exit=0 secs=0
+npm-ci: added 165 packages, and audited 166 packages in 1s; found 0 vulnerabilities
+npm-test: Test Files  65 passed | 3 skipped (68); Tests  639 passed | 4 skipped (643)
+npm-build: ✓ built in 658ms; entry index-2xfeiK4f.js 385.51 kB │ gzip: 119.91 kB
+cargo-clippy: Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
+cargo-test: test result: ok. 246 passed; 0 failed; 6 ignored; 0 measured; 0 filtered out; finished in 22.05s
+cargo-lock: Cargo lockfile synchronization verified: her-flight-deck is at 0.5.3 in both Cargo.toml and Cargo.lock
+
+Earlier attempt (same diff except one test-file type annotation): npm-build exit=2 — src/components/quickfind/QuickFind.test.ts(127,20): error TS2339: Property 'value' does not exist on type 'HTMLElement'.; all other steps exit 0 (639 passed / 4 skipped; 246 Rust passed).

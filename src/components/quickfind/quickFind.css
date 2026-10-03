@@ -16,6 +16,12 @@
   background: rgb(23 35 60 / 0.28);
 }
 
+/* Fallback without a modal <dialog> (see useModalDialog): keep it high. */
+.quick-find.modal-fallback[open] {
+  top: 12vh;
+  transform: translateX(-50%);
+}
+
 .quick-find__search {
   display: flex;
   align-items: center;

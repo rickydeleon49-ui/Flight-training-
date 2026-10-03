@@ -43,8 +43,38 @@ export const DEFAULT_TOOLKIT_STATE: ToolkitState = {
   nextCareerStep: "Complete private pilot training with strong fundamentals.",
 };
 
+/**
+ * Deep copy of toolkit data: arrays and plain objects are copied, primitives
+ * kept. Toolkit state is JSON-shaped (it is stored as JSON), so this is all it
+ * needs; it is deliberately not a general structured clone. Anything else (no
+ * such values exist in ToolkitState) is passed through unchanged.
+ *
+ * Used instead of `structuredClone`, which WebKit only added in Safari 15.4
+ * (macOS 12.3) while the app supports macOS 12.0.
+ */
+export function copyToolkitData<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((item) => copyToolkitData(item)) as T;
+  if (value !== null && typeof value === "object") {
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) return value;
+    const copy: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) copy[key] = copyToolkitData(item);
+    return copy as T;
+  }
+  return value;
+}
+
+/** A fresh default toolkit that owns all of its nested objects and arrays. */
+export function defaultToolkitState(): ToolkitState {
+  return copyToolkitData(DEFAULT_TOOLKIT_STATE);
+}
+
+/**
+ * Fill in defaults and repair stored toolkit state. The result shares nothing
+ * with the input or the defaults, so editing it cannot change either.
+ */
 export function normalizeToolkitState(value: unknown): ToolkitState {
-  if (!value || typeof value !== "object") return structuredClone(DEFAULT_TOOLKIT_STATE);
+  if (!value || typeof value !== "object") return defaultToolkitState();
   const input = value as Partial<ToolkitState>;
   const storedItems = Array.isArray(input.readinessItems) ? input.readinessItems : [];
   const mergedItems = DEFAULT_READINESS_ITEMS.map(
@@ -54,7 +84,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     (item) => item?.id && !DEFAULT_READINESS_ITEMS.some((fallback) => fallback.id === item.id),
   );
 
-  return {
+  return copyToolkitData({
     ...DEFAULT_TOOLKIT_STATE,
     ...input,
     version: 1,
@@ -65,7 +95,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     reminderLeadDays: Math.min(90, Math.max(0, Number(input.reminderLeadDays ?? 7))),
     estimatedHourlyCost: Math.max(0, Number(input.estimatedHourlyCost ?? 220_00)),
     additionalTrainingCosts: Math.max(0, Number(input.additionalTrainingCosts ?? 1_500_00)),
-  };
+  });
 }
 
 export function readinessSummary(items: ReadinessItem[]) {

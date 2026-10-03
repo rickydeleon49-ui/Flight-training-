@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
 import { SearchIcon } from "@/components/ui";
+import { useModalDialog } from "@/components/ui/useModalDialog";
 import { todayIso } from "@/lib/dates";
 import { quickFind } from "@/logic/quickFind";
 import { useAppData } from "@/state/AppDataContext";
@@ -27,7 +29,8 @@ function isOpenShortcut(event: KeyboardEvent): boolean {
  * Search everything from anywhere, with ⌘K or Ctrl+K.
  *
  * Built on the native <dialog> like the rest of the app's modals, so focus
- * trapping and Escape are the platform's job rather than ours.
+ * trapping and Escape are the platform's job rather than ours. WebKit before
+ * macOS 12.3 has no modal <dialog>; useModalDialog covers that case.
  */
 export function QuickFind() {
   const { data } = useAppData();
@@ -61,15 +64,10 @@ export function QuickFind() {
     };
   }, []);
 
-  useEffect(() => {
-    const element = dialogRef.current;
-    if (!element) return;
-    if (open && !element.open) {
-      element.showModal();
-      inputRef.current?.focus();
-    }
-    if (!open && element.open) element.close();
-  }, [open]);
+  const modal = useModalDialog(dialogRef, open, {
+    onEscape: () => setOpen(false),
+    initialFocus: () => inputRef.current,
+  });
 
   useEffect(() => {
     const element = dialogRef.current;
@@ -91,66 +89,83 @@ export function QuickFind() {
     navigate(result.to);
   };
 
-  return (
-    <dialog
-      ref={dialogRef}
-      className="quick-find"
-      aria-label="Quick find"
-      onClick={(event) => {
-        if (event.target === dialogRef.current) setOpen(false);
-      }}
-    >
-      <div className="quick-find__search">
-        <SearchIcon size={17} />
-        <input
-          ref={inputRef}
-          className="quick-find__input"
-          type="text"
-          value={query}
-          placeholder="Search everything — materials, lessons, flights, questions"
-          aria-label="Search everything"
-          autoComplete="off"
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowDown") {
-              event.preventDefault();
-              setHighlighted((current) => (current + 1) % Math.max(results.length, 1));
-            } else if (event.key === "ArrowUp") {
-              event.preventDefault();
-              setHighlighted((current) =>
-                (current - 1 + Math.max(results.length, 1)) % Math.max(results.length, 1),
-              );
-            } else if (event.key === "Enter") {
-              event.preventDefault();
-              choose(highlighted);
-            }
-          }}
+  const presentation = (
+    <>
+      {modal.showBackdrop ? (
+        <div
+          className="modal-fallback-backdrop"
+          data-modal-backdrop=""
+          aria-hidden="true"
+          style={{ zIndex: modal.zIndex - 1 }}
+          onClick={() => setOpen(false)}
         />
-        <kbd className="quick-find__hint">esc</kbd>
-      </div>
+      ) : null}
+      <dialog
+        ref={dialogRef}
+        className={`quick-find${modal.fallback ? " modal-fallback" : ""}`}
+        aria-label="Quick find"
+        role={modal.fallback ? "dialog" : undefined}
+        aria-modal={modal.showBackdrop ? true : undefined}
+        tabIndex={modal.fallback ? -1 : undefined}
+        style={modal.fallback ? { zIndex: modal.zIndex } : undefined}
+        onClick={(event) => {
+          if (!modal.fallback && event.target === dialogRef.current) setOpen(false);
+        }}
+      >
+        <div className="quick-find__search">
+          <SearchIcon size={17} />
+          <input
+            ref={inputRef}
+            className="quick-find__input"
+            type="text"
+            value={query}
+            placeholder="Search everything — materials, lessons, flights, questions"
+            aria-label="Search everything"
+            autoComplete="off"
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setHighlighted((current) => (current + 1) % Math.max(results.length, 1));
+              } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setHighlighted((current) =>
+                  (current - 1 + Math.max(results.length, 1)) % Math.max(results.length, 1),
+                );
+              } else if (event.key === "Enter") {
+                event.preventDefault();
+                choose(highlighted);
+              }
+            }}
+          />
+          <kbd className="quick-find__hint">esc</kbd>
+        </div>
 
-      {results.length === 0 ? (
-        <p className="quick-find__empty small muted">
-          Nothing matches &ldquo;{query.trim()}&rdquo; yet.
-        </p>
-      ) : (
-        <ul className="quick-find__results">
-          {results.map((result, index) => (
-            <li key={result.key}>
-              <button
-                type="button"
-                className={`quick-find__result${index === highlighted ? " is-highlighted" : ""}`}
-                onMouseEnter={() => setHighlighted(index)}
-                onClick={() => choose(index)}
-              >
-                <span className="quick-find__label truncate">{result.label}</span>
-                <span className="quick-find__detail truncate">{result.detail}</span>
-                <span className="quick-find__section">{result.section}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </dialog>
+        {results.length === 0 ? (
+          <p className="quick-find__empty small muted">
+            Nothing matches &ldquo;{query.trim()}&rdquo; yet.
+          </p>
+        ) : (
+          <ul className="quick-find__results">
+            {results.map((result, index) => (
+              <li key={result.key}>
+                <button
+                  type="button"
+                  className={`quick-find__result${index === highlighted ? " is-highlighted" : ""}`}
+                  onMouseEnter={() => setHighlighted(index)}
+                  onClick={() => choose(index)}
+                >
+                  <span className="quick-find__label truncate">{result.label}</span>
+                  <span className="quick-find__detail truncate">{result.detail}</span>
+                  <span className="quick-find__section">{result.section}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </dialog>
+    </>
   );
+  // In the fallback the dialog lives at <body> level; see useModalDialog.
+  return modal.portalTarget ? createPortal(presentation, modal.portalTarget) : presentation;
 }

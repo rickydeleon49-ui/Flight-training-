@@ -1,8 +1,10 @@
-import { useEffect, useId, useRef } from "react";
+import { useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 
 import { Button, IconButton } from "./Button";
 import { CloseIcon } from "./Icons";
+import { useModalDialog } from "./useModalDialog";
 
 interface DialogProps {
   open: boolean;
@@ -20,7 +22,8 @@ interface DialogProps {
  *
  * The platform gives us focus trapping, Escape-to-close, initial focus and
  * inertness of the page behind — all things a hand-rolled modal usually gets
- * subtly wrong.
+ * subtly wrong. WebKit before macOS 12.3 has no modal <dialog>; there
+ * useModalDialog supplies the same behavior on the same element.
  */
 export function Dialog({
   open,
@@ -34,45 +37,61 @@ export function Dialog({
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  // Escape and the backdrop only ask; the owner closes by setting `open`.
+  const requestClose = () => {
+    if (dismissible) onClose();
+  };
+  const modal = useModalDialog(ref, open, { onEscape: requestClose });
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    if (open && !element.open) element.showModal();
-    if (!open && element.open) element.close();
-  }, [open]);
-
-  return (
-    <dialog
-      ref={ref}
-      className={`dialog${narrow ? " dialog--narrow" : ""}`}
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        // Keep the native dialog visible until the owner confirms the close.
-        // An async cleanup can fail, in which case the error remains visible.
-        event.preventDefault();
-        if (dismissible) onClose();
-      }}
-      // Clicking the backdrop (the dialog element itself) dismisses.
-      onClick={(event) => {
-        if (dismissible && event.target === ref.current) onClose();
-      }}
-    >
-      <div className="dialog__header">
-        <div>
-          <h2 className="dialog__title" id={titleId}>
-            {title}
-          </h2>
-          {description ? <p className="dialog__description">{description}</p> : null}
+  const presentation = (
+    <>
+      {modal.showBackdrop ? (
+        <div
+          className="modal-fallback-backdrop"
+          data-modal-backdrop=""
+          aria-hidden="true"
+          style={{ zIndex: modal.zIndex - 1 }}
+          onClick={requestClose}
+        />
+      ) : null}
+      <dialog
+        ref={ref}
+        className={`dialog${narrow ? " dialog--narrow" : ""}${modal.fallback ? " modal-fallback" : ""}`}
+        aria-labelledby={titleId}
+        role={modal.fallback ? "dialog" : undefined}
+        aria-modal={modal.showBackdrop ? true : undefined}
+        tabIndex={modal.fallback ? -1 : undefined}
+        style={modal.fallback ? { zIndex: modal.zIndex } : undefined}
+        onCancel={(event) => {
+          // Keep the native dialog visible until the owner confirms the close.
+          // An async cleanup can fail, in which case the error remains visible.
+          event.preventDefault();
+          requestClose();
+        }}
+        // Natively, a backdrop click targets the dialog element itself. In the
+        // fallback the element is the visible box, and the backdrop is separate.
+        onClick={(event) => {
+          if (!modal.fallback && event.target === ref.current) requestClose();
+        }}
+      >
+        <div className="dialog__header">
+          <div>
+            <h2 className="dialog__title" id={titleId}>
+              {title}
+            </h2>
+            {description ? <p className="dialog__description">{description}</p> : null}
+          </div>
+          <IconButton label="Close" onClick={onClose} disabled={!dismissible}>
+            <CloseIcon />
+          </IconButton>
         </div>
-        <IconButton label="Close" onClick={onClose} disabled={!dismissible}>
-          <CloseIcon />
-        </IconButton>
-      </div>
-      <div className="dialog__body">{children}</div>
-      {footer ? <div className="dialog__footer">{footer}</div> : null}
-    </dialog>
+        <div className="dialog__body">{children}</div>
+        {footer ? <div className="dialog__footer">{footer}</div> : null}
+      </dialog>
+    </>
   );
+  // In the fallback the dialog lives at <body> level; see useModalDialog.
+  return modal.portalTarget ? createPortal(presentation, modal.portalTarget) : presentation;
 }
 
 interface ConfirmDialogProps {

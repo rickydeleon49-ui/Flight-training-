@@ -44,6 +44,28 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
 
+## A3 WebKit compatibility — 2 October 2026 (local; A3-R1–R4 corrected, pending Codex re-review)
+
+[Implementation report](docs/MAC_A3_COMPATIBILITY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a3-compat-2026-10-02/negative-control-summary.txt).
+
+- **Code state:** LOCAL UNCOMMITTED on `codex/mac-webkit-compatibility-a3` in the Mac clone, base main `8b61d87`. Codex reviews and publishes; the report is not acceptance.
+- **Corrections:**
+  - **Toolkit:** defaults and normalization no longer need `structuredClone` (Safari 15.4 / macOS 12.3). Every returned toolkit now owns its nested data; previously, normalized readiness items aliased the shared defaults.
+  - **Dialog and Quick Find:** keep the native modal `<dialog>` where `showModal`/`close` exist. Otherwise a shared accessible fallback provides role, `aria-modal`, initial focus, Tab containment, Escape/backdrop as owner requests, focus return, background exclusion and layering.
+  - **New ids:** a version 4 UUID built from `crypto.getRandomValues` when `crypto.randomUUID` is missing (WebKit bug 229240 landed after Safari 15.0); fails clearly without secure randomness.
+- **Codex review A3-R1–R3 (modal stack), corrected locally:**
+  - Exclusion is recomputed from the current top modal, so lower sibling dialogs are hidden.
+  - A new top modal is layered above every surviving one, regardless of DOM order.
+  - Focus restoration follows a validated chain and never lands in a closed, hidden or removed region.
+  - 8 maintained regressions, including Codex's three diagnostics (7 fail on the reviewed hook; Codex's diagnostic file passes verbatim).
+- **Codex re-review A3-R4 (nested lifetime), corrected locally:**
+  - Fallback dialogs now render through a React portal at `<body>` level, so a nested dialog stays visible, viewport-wide and modal when its parent closes first.
+  - Owner-controlled dismissal is unchanged; server rendering stays inline.
+  - 8 regressions, including Codex's diagnostic (5 fail on the reviewed sources).
+- **Tests:** 37 new capability-removal and native-path tests, including fresh provider startup and a real dialog save with all four APIs removed. The negative control against the original source gives 34 failed / 3 passed (the native-path tests).
+- **Local gate on the corrected diff:** 655 frontend passed (4 skipped), build passed, 246 Rust passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Still required:** installed macOS 12.0–12.2 and current-macOS WKWebView/VoiceOver checks. MAC-03 remains UNVERIFIED. No minimum-OS, dependency, migration or release change.
+
 ## Mac Study Library baseline — 2 October 2026 (R1–R3 accepted; exact-head CI merge gate)
 
 [Baseline report](docs/MAC_STUDY_LIBRARY_BASELINE_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-study-baseline-2026-10-02/README.md).
