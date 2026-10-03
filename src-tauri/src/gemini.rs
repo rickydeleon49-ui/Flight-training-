@@ -775,27 +775,41 @@ fn waiting_message(attempt: u32, pause: Duration) -> String {
     )
 }
 
-/// Said after every attempt has been made and Google is still overloaded.
+/// Said after generation has asked the main model every time and then the
+/// backup, and Google is still overloaded.
+///
+/// It names what was tried but not how long it took: the pauses are known, but
+/// each request can also take up to the generation timeout, so any duration
+/// worked out from the pauses alone would understate the real wait.
 fn busy_message() -> String {
     format!(
-        "Google's servers are busy. Her Flight Deck tried {MAX_ATTEMPTS} times over about \
-         {} seconds and then tried the backup Flash-Lite model, and Google was still at capacity. \
-         This is Google's side, not your key or your document — the same file usually works \
-         a few minutes later.",
-        total_wait_seconds(),
+        "Google's servers are busy. Her Flight Deck asked the main model {MAX_ATTEMPTS} times, \
+         pausing between attempts, and then tried the backup Flash-Lite model, and Google was \
+         still at capacity. This is Google's side, not your key or your document — the same file \
+         usually works a few minutes later."
     )
 }
 
+/// Said after generation's retries and backup model ended on a rate limit.
 fn rate_limit_message() -> String {
     "Gemini's rate or spending limit was reached for this project. Her Flight Deck retried briefly and tried its backup model. Check the project's limits and billing in Google AI Studio, or wait and try again.".to_string()
 }
 
-/// Roughly how long the retries took, for the message above.
-fn total_wait_seconds() -> u64 {
-    let millis: u64 = (0..MAX_ATTEMPTS.saturating_sub(1))
-        .map(|attempt| backoff_delay(attempt, 0).as_millis() as u64)
-        .sum();
-    millis.div_ceil(1000)
+/// A rate limit seen without generation's retry history (the connection check,
+/// or a single refusal), so it claims nothing about what else was tried.
+fn rate_limited_now_message(context: RefusalContext) -> String {
+    match context {
+        RefusalContext::Verification => "Gemini's rate or spending limit was reached for this project, so the key could not be checked. Check the project's limits and billing in Google AI Studio, or wait and try again.".to_string(),
+        RefusalContext::Generation => "Gemini's rate or spending limit was reached for this project. Check the project's limits and billing in Google AI Studio, or wait and try again.".to_string(),
+    }
+}
+
+/// Google's capacity was short, seen without generation's retry history.
+fn busy_now_message(context: RefusalContext) -> String {
+    match context {
+        RefusalContext::Verification => "Google's servers are busy, so the key could not be checked right now. This is Google's side, not necessarily your key — try connecting again in a few minutes.".to_string(),
+        RefusalContext::Generation => "Google's servers are busy right now. This is Google's side, not your key or your document — try again in a few minutes.".to_string(),
+    }
 }
 
 fn has_invalid_key_reason(raw: &str) -> bool {
@@ -831,6 +845,10 @@ enum RefusalContext {
 }
 
 /// Turn a refusal Google will not reconsider into something worth reading.
+///
+/// It sees one response, not the retries around it, so its rate-limit and busy
+/// wording claims no attempts or backup model. Generation's own exhausted
+/// outcomes use `busy_message` and `rate_limit_message`, which do.
 fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &str) -> String {
     if has_invalid_key_reason(body) {
         return "Google did not accept that key. Check it in Google AI Studio and try again."
@@ -857,8 +875,8 @@ fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &st
         404 => format!(
             "Google has retired the {model} model this version of Her Flight Deck uses. Install the latest version and try again."
         ),
-        429 => rate_limit_message(),
-        500..=504 => busy_message(),
+        429 => rate_limited_now_message(context),
+        500..=504 => busy_now_message(context),
         _ => format!("Gemini returned {status}: {}", compact_error(body)),
     }
 }
@@ -1011,11 +1029,69 @@ mod tests {
     }
 
     #[test]
-    fn the_busy_message_blames_google_and_says_how_long_it_tried() {
+    fn the_busy_message_blames_google_not_the_key() {
         let message = busy_message();
         assert!(message.contains("busy"));
         assert!(message.contains("not your key"));
-        assert!(total_wait_seconds() >= 1);
+    }
+
+    /// Phrases that claim a retry history: how many requests were made, that the
+    /// backup model was tried, or how long it all took.
+    fn claims_retry_history(message: &str) -> bool {
+        message.contains("tried")
+            || message.contains("retried")
+            || message.contains("backup")
+            || message.contains("Flash-Lite")
+            || message.contains(&format!("{MAX_ATTEMPTS} times"))
+    }
+
+    #[test]
+    fn a6_the_exhausted_busy_message_makes_no_elapsed_time_claim() {
+        // The nominal pauses leave out request time (up to the generation
+        // timeout per request), jitter and the backup request, so any duration
+        // here would understate the real wait.
+        let message = busy_message();
+        assert!(!message.contains("second"), "{message}");
+        assert!(!message.contains("over about"), "{message}");
+        assert!(
+            !message.contains("minute") || message.contains("minutes later"),
+            "{message}"
+        );
+    }
+
+    #[test]
+    fn a6_the_exhausted_messages_still_say_what_generation_actually_tried() {
+        let busy = busy_message();
+        assert!(busy.contains(&format!("{MAX_ATTEMPTS} times")), "{busy}");
+        assert!(busy.contains("backup"), "{busy}");
+        assert!(busy.contains("not your key"), "{busy}");
+        let limited = rate_limit_message();
+        assert!(limited.contains("rate or spending limit"), "{limited}");
+        assert!(limited.contains("backup"), "{limited}");
+    }
+
+    #[test]
+    fn a6_connection_check_refusals_do_not_claim_a_backup_model_or_retry_count() {
+        // Checking a key retries the primary model only and never uses the
+        // backup, so it must not borrow generation's retry history.
+        let limited = describe_refusal(RefusalContext::Verification, 429, "{}", MODEL);
+        assert!(limited.contains("rate or spending limit"), "{limited}");
+        assert!(!claims_retry_history(&limited), "{limited}");
+        for status in [500, 502, 503, 504] {
+            let busy = describe_refusal(RefusalContext::Verification, status, "{}", MODEL);
+            assert!(busy.contains("busy"), "{status}: {busy}");
+            assert!(!claims_retry_history(&busy), "{status}: {busy}");
+            assert!(!busy.contains("second"), "{status}: {busy}");
+        }
+    }
+
+    #[test]
+    fn a6_a_single_refusal_without_retry_context_stays_generic() {
+        // describe_refusal knows only one response, never the retries around it.
+        for status in [429, 500, 503] {
+            let message = describe_refusal(RefusalContext::Generation, status, "{}", MODEL);
+            assert!(!claims_retry_history(&message), "{status}: {message}");
+        }
     }
 
     #[test]

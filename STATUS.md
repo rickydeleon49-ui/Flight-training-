@@ -4,7 +4,9 @@ _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanent
 
 ## Shared Windows/Mac handoff — 2 October 2026
 
-**A4 source accepted:** [Independent acceptance](docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md) confirms all 21 focused tests pass and the source/receipt hashes match. Reviewed Mac source and evidence are committed for required exact-head CI and merge. After merge and clean Mac synchronization, [Claude continues A6 truthful Gemini retry wording](docs/CLAUDE_MAC_A6_RETRY_WORDING_PROMPT_2026-10-02.md). Installed offline use and release holds remain open.
+**A6 source accepted:** [Independent acceptance](docs/MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md) confirms 30 Gemini tests pass and the source hash matches. Reviewed native source and evidence are committed for required exact-head CI/merge. After publication and clean Mac synchronization, [Claude verifies and reconciles A5 evidence](docs/CLAUDE_MAC_A5_EVIDENCE_RECONCILIATION_PROMPT_2026-10-02.md); its source tooling already contains the historical corrections. Installed-platform and release holds remain open.
+
+**A4 merged (PR #49):** [Independent acceptance](docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md), source and evidence are on main `db15394`; required checks passed on reviewed head `c4bed81`. Installed offline use remains open.
 
 **A3 merged (PR #48):** [Independent R1–R4 acceptance](docs/MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md), source and review history are on main `1ae6986`; required checks passed on reviewed head `fc5c391`. Installed Mac/VoiceOver verification remains open.
 
@@ -24,7 +26,7 @@ The [Mac report](docs/MAC_SMOKE_RESULTS_2026-10-02.md), originally shared in [dr
 
 The physical Mac hardware, OS, source checks and local evaluation artifact are now recorded above; installed-app results remain pending. The [self-contained Mac handoff](docs/MAC_GITHUB_HANDOFF_2026-10-02.md), [Mac session prompt](docs/MAC_SESSION_PROMPT.md) and [results template](docs/templates/MAC_SMOKE_RESULTS_TEMPLATE.md) are tracked in Git so the Mac requires no Windows-local attachments, logs or generated files. Use current `main` for source evaluation and record its exact commit. This documentation update does not close any physical-test or release gate.
 
-**A2 remains local and unaccepted:** the [second-review summary](docs/A2_SECOND_REVIEW_2026-10-02.md) records the verified native corrections and two remaining browser/test-driver defects. Do not assume that cloning `main` includes those uncommitted fixes. A3 is source-merged, A4 source-accepted for publication, and A6 remains open; installed-platform and release holds remain open. Preserve the frozen v0.5.3 artifact identity; distinguish a local source evaluation build from that private candidate.
+**A2 remains local and unaccepted:** the [second-review summary](docs/A2_SECOND_REVIEW_2026-10-02.md) records the verified native corrections and two remaining browser/test-driver defects. Do not assume that cloning `main` includes those uncommitted fixes. A3/A4 are source-merged and A6 source-accepted for publication; installed-platform and release holds remain open. Preserve the frozen v0.5.3 artifact identity; distinguish a local source evaluation build from that private candidate.
 
 ## Current A1 status — shared source and regression repair accepted (1 October 2026)
 
@@ -48,11 +50,25 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
 
-## A4 saved study content offline — 2 October 2026 (source accepted; exact-head CI merge gate)
+## A6 truthful Gemini retry wording — 2 October 2026 (source accepted; exact-head CI merge gate)
+
+[Implementation report](docs/MAC_A6_RETRY_WORDING_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a6-retry-wording-2026-10-02/README.md).
+
+- **Code state:** reviewed and committed as `32539bd` on `codex/mac-gemini-retry-wording-a6`, base main `db15394`. [Codex acceptance](docs/MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; required exact-head CI/merge precedes A5 reconciliation.
+- **Correction (`src-tauri/src/gemini.rs` only):**
+  - The final "Google is busy" message no longer claims how long the attempts took. The old "over about 11 seconds" summed nominal pauses only, ignoring request time (up to 300 s per request), jitter and the backup request. The obsolete helper is removed.
+  - A connection check that ends on 429 or 5xx no longer claims a backup model or generation retries. It never uses the backup.
+  - Single-refusal wording is generic. Exhausted generation still says what it tried.
+  - Retry policy, timeouts, backup selection, progress, payloads, models and key handling are unchanged.
+- **Tests:** 4 Rust message-contract regressions. The negative control against the original code gives 3 failed / 1 guard passed.
+- **Local gate (now on macOS 27.0.1 with SDK 26.5):** 666 frontend passed (4 skipped), build passed, 250 Rust passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Foundation checkpoint:** A1/A3/A4 merged; A6 source accepted for publication; A2 remains with its Windows owner. A5 tooling corrections already exist on main; [Claude's next task reconciles remaining current-Mac evidence](docs/CLAUDE_MAC_A5_EVIDENCE_RECONCILIATION_PROMPT_2026-10-02.md), changing only proven gaps. Current `sw_vers` confirms macOS 27.0.1 (26A434); earlier reports recorded 26.6 without an established upgrade history. Installed readiness remains blocked on the test account/signing prerequisites.
+
+## A4 saved study content offline — 2 October 2026 (source merged in PR #49)
 
 [Implementation report](docs/MAC_A4_OFFLINE_STUDY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a4-offline-study-2026-10-02/README.md).
 
-- **Code state:** reviewed and committed as `c77dab9` on `codex/mac-offline-study-a4`, base main `1ae6986`. [Codex acceptance](docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; required exact-head CI and merge precede A6.
+- **Code state:** merged in PR #49 as main `db15394`, after required CI passed on reviewed head `c4bed81`. [Codex acceptance](docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; historical source commit `c77dab9`, base `1ae6986`.
 - **Correction:**
   - Saved guides, flashcards and practice tests now stay readable and usable when Gemini is disconnected, its status is loading or failed, the source file is missing, replaced, unsupported or oversized, or no file is attached.
   - A single notice explains why creating or regenerating is unavailable, without hiding saved content.

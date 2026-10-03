@@ -1,0 +1,13 @@
+Independent Codex A6 focused source review, 2 October 2026.
+Reviewed source commit: 32539bd6be86ac4f6c397f5fc51ca92931facce5
+Base main: db1539408368aa48260228029590ab19a4748f4d
+OS observed with sw_vers: macOS 27.0.1 (26A434).
+SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+Command: cargo test --locked --manifest-path src-tauri/Cargo.toml gemini::tests
+Initial log redirection used a nonexistent directory; the test process did not launch. Corrected to the existing local evidence directory before execution.
+Final exit: 0
+Gemini module result: 30 passed; 0 failed; 0 ignored; 226 filtered out.
+Source SHA-256 matched: 41ba366b27a1aedca2318fd389ba2ae0d99909ab2e051a5c2e75488e4667fa71
+git diff --check: clean.
+Claude's full gate and negative controls inspected, not independently rerun.
+Pure message-contract tests only; no live request or installed app.
