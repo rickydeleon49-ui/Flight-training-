@@ -4,7 +4,9 @@ _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanent
 
 ## Shared Windows/Mac handoff — 2 October 2026
 
-**A3 source accepted:** [Independent R1–R4 acceptance](docs/MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md) confirms all 53 focused tests pass and the final 15 hashes match. Reviewed Mac source, evidence and PR #47 history are combined for required exact-head CI and merge. After merge and clean Mac synchronization, [Claude continues A4 saved study content offline](docs/CLAUDE_MAC_A4_OFFLINE_STUDY_PROMPT_2026-10-02.md). Installed Mac/VoiceOver verification and release holds remain open.
+**A4 source accepted:** [Independent acceptance](docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md) confirms all 21 focused tests pass and the source/receipt hashes match. Reviewed Mac source and evidence are committed for required exact-head CI and merge. After merge and clean Mac synchronization, [Claude continues A6 truthful Gemini retry wording](docs/CLAUDE_MAC_A6_RETRY_WORDING_PROMPT_2026-10-02.md). Installed offline use and release holds remain open.
+
+**A3 merged (PR #48):** [Independent R1–R4 acceptance](docs/MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md), source and review history are on main `1ae6986`; required checks passed on reviewed head `fc5c391`. Installed Mac/VoiceOver verification remains open.
 
 **Mac baseline merged (PR #46):** [Independent baseline R1–R3 acceptance](docs/MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md) and sanitized evidence are on main. The A3 implementation assigned by its subsequent prompt is now accepted as described above. Installed Mac verification and release holds remain open.
 
@@ -22,7 +24,7 @@ The [Mac report](docs/MAC_SMOKE_RESULTS_2026-10-02.md), originally shared in [dr
 
 The physical Mac hardware, OS, source checks and local evaluation artifact are now recorded above; installed-app results remain pending. The [self-contained Mac handoff](docs/MAC_GITHUB_HANDOFF_2026-10-02.md), [Mac session prompt](docs/MAC_SESSION_PROMPT.md) and [results template](docs/templates/MAC_SMOKE_RESULTS_TEMPLATE.md) are tracked in Git so the Mac requires no Windows-local attachments, logs or generated files. Use current `main` for source evaluation and record its exact commit. This documentation update does not close any physical-test or release gate.
 
-**A2 remains local and unaccepted:** the [second-review summary](docs/A2_SECOND_REVIEW_2026-10-02.md) records the verified native corrections and two remaining browser/test-driver defects. Do not assume that cloning `main` includes those uncommitted fixes. A3–A6 and all release holds remain open. Preserve the frozen v0.5.3 artifact identity; distinguish a local source evaluation build from that private candidate.
+**A2 remains local and unaccepted:** the [second-review summary](docs/A2_SECOND_REVIEW_2026-10-02.md) records the verified native corrections and two remaining browser/test-driver defects. Do not assume that cloning `main` includes those uncommitted fixes. A3 is source-merged, A4 source-accepted for publication, and A6 remains open; installed-platform and release holds remain open. Preserve the frozen v0.5.3 artifact identity; distinguish a local source evaluation build from that private candidate.
 
 ## Current A1 status — shared source and regression repair accepted (1 October 2026)
 
@@ -46,11 +48,25 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
 
-## A3 WebKit compatibility — 2 October 2026 (R1–R4 source accepted; exact-head CI merge gate)
+## A4 saved study content offline — 2 October 2026 (source accepted; exact-head CI merge gate)
+
+[Implementation report](docs/MAC_A4_OFFLINE_STUDY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a4-offline-study-2026-10-02/README.md).
+
+- **Code state:** reviewed and committed as `c77dab9` on `codex/mac-offline-study-a4`, base main `1ae6986`. [Codex acceptance](docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; required exact-head CI and merge precede A6.
+- **Correction:**
+  - Saved guides, flashcards and practice tests now stay readable and usable when Gemini is disconnected, its status is loading or failed, the source file is missing, replaced, unsupported or oversized, or no file is attached.
+  - A single notice explains why creating or regenerating is unavailable, without hiding saved content.
+  - Explicit "Send to Gemini" submission, the generation lock, stale-result ownership and failed-regeneration retention are unchanged. Saved content now also stays visible while regenerating.
+  - Reading, revealing and answering saved content make no Gemini or network calls. Attempts stay transient.
+- **Tests:** 11 regressions in `MaterialDetailOffline.test.ts`. The negative control against the original page gives 9 failed / 2 passed (connected guards).
+- **Local gate:** 666 frontend passed (4 skipped), build passed, 246 Rust passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Still open:** installed offline use (MAC-19), VoiceOver and Windows. A6 retry wording follows separately. No dependency, migration or release change.
+
+## A3 WebKit compatibility — 2 October 2026 (R1–R4 source merged in PR #48)
 
 [Implementation report](docs/MAC_A3_COMPATIBILITY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a3-compat-2026-10-02/negative-control-summary.txt).
 
-- **Code state:** reviewed and committed on `codex/mac-webkit-compatibility-a3`, source commit `66e8178`, base main `8b61d87`. [Codex acceptance](docs/MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; required exact-head CI and merge precede the A4 handoff.
+- **Code state:** merged in PR #48 as main `1ae6986`, after passing required CI on reviewed head `fc5c391`. [Codex acceptance](docs/MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; historical source commit `66e8178`, base main `8b61d87`.
 - **Corrections:**
   - **Toolkit:** defaults and normalization no longer need `structuredClone` (Safari 15.4 / macOS 12.3). Every returned toolkit now owns its nested data; previously, normalized readiness items aliased the shared defaults.
   - **Dialog and Quick Find:** keep the native modal `<dialog>` where `showModal`/`close` exist. Otherwise a shared accessible fallback provides role, `aria-modal`, initial focus, Tab containment, Escape/backdrop as owner requests, focus return, background exclusion and layering.

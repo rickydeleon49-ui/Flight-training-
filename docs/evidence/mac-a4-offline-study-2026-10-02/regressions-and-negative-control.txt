@@ -1,0 +1,24 @@
+A4 regressions: src/pages/StudyLibrary/MaterialDetailOffline.test.ts (11 tests; real provider + disposable node:sqlite; synthetic saved guide, 2 flashcards, 2-question practice test; fetch, generateStudyAid and generatePracticeTest spied to prove no submission/network).
+
+1) Before the fix (first run of the new file against 1ae6986's MaterialDetail.tsx, 10 tests at that point): exit 1; 9 failed | 1 passed. Failures: saved guide heading not found (disconnected, pending, error status; unsupported, oversized, no-file sources; during regeneration), missing-PDF regeneration explanation absent, saved practice question absent during regeneration.
+
+2) Negative control after the fix, all 11 tests vs original MaterialDetail.tsx (git HEAD 1ae6986), corrected file restored and verified by SHA-256:
+   npx --no-install vitest run src/pages/StudyLibrary/MaterialDetailOffline.test.ts -> exit 1
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+   Tests  9 failed | 2 passed (11)
+   Failed:
+     × keeps the saved guide, cards and practice test usable with Gemini disconnected
+     × keeps saved content usable while the Gemini status is still loading
+     × keeps saved content usable when the Gemini status check fails
+     × explains a missing PDF and keeps saved content, with regeneration disabled
+     × explains a replaced unsupported source and keeps saved content
+     × explains a replaced oversized source and keeps saved content
+     × keeps saved content when the material no longer has a file attached
+     × keeps the old guide visible during and after a failed regeneration
+     × keeps the old practice test usable during and after a failed regeneration
+   Passed on original too (connected guards): offers regeneration for both saved items only when connected and the file is eligible; keeps another material's saved content usable while a generation runs elsewhere, and a late result changes nothing
+
+3) Corrected source:
+   npx --no-install vitest run src/pages/StudyLibrary/MaterialDetailOffline.test.ts src/pages/StudyLibrary/MaterialDetailGemini.test.ts -> exit 0; 20 passed (before the cross-material test was added)
+   npx --no-install vitest run src/pages/StudyLibrary/ -> exit 0; 5 files passed, 1 skipped (gated bench); Tests 41 passed | 1 skipped
+   One development failure: the cross-material test first expected the late result to be saved to its source; the existing rule (MaterialDetailGemini 'does not save a stale study aid if navigation changes before generation completes') discards it. Test aligned with that rule; no source change.

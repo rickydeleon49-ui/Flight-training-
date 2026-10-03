@@ -117,6 +117,8 @@ function MaterialDetailPage({
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
+  // Only decides whether a new study aid can be requested; saved ones show regardless.
+  const [geminiStatusFailed, setGeminiStatusFailed] = useState(false);
   const [generating, setGenerating] = useState(
     () =>
       activeGeminiOpRef.current?.targetMaterialId === materialId &&
@@ -192,7 +194,15 @@ function MaterialDetailPage({
   );
 
   useEffect(() => {
-    void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
+    void getGeminiStatus()
+      .then((status) => {
+        setGemini(status);
+        setGeminiStatusFailed(false);
+      })
+      .catch(() => {
+        setGemini(null);
+        setGeminiStatusFailed(true);
+      });
   }, []);
 
   const { notes, setNotes, status: notesStatus, recoverable, retry } = useMaterialNotes(
@@ -254,6 +264,25 @@ function MaterialDetailPage({
     .toLowerCase()
     .endsWith(".pdf");
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
+  // Whether Gemini can be offered this file at all; a missing file only disables
+  // the button, so a file that reappears does not need a reload.
+  const canOfferGemini = Boolean(gemini?.configured) && aiCheck.allowed && fileForAi.ready;
+  // Why a new or replacement study aid cannot be requested right now. This
+  // never hides what is already saved: reading a saved guide, flipping cards
+  // and taking a saved practice test need no connection and send nothing.
+  const generationNotice: GenerationNotice | null = !aiCheck.allowed
+    ? { text: aiCheck.reason }
+    : !fileForAi.ready
+      ? { text: fileForAi.reason, split: canSplit }
+      : fileMissing
+        ? { text: "This study file is missing from app storage. Restore or re-attach the file to regenerate or create study aids from it." }
+        : geminiStatusFailed
+          ? { text: "Could not check the Gemini connection, so new study aids cannot be requested right now. Anything already saved stays available." }
+          : gemini === null
+            ? { text: "Checking the Gemini connection…" }
+            : !gemini.configured
+              ? { text: "Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available.", settings: true }
+              : null;
   const isGeneratingAny = Boolean(
     activeGeminiOp ||
       activeGeminiOpRef.current ||
@@ -654,13 +683,13 @@ function MaterialDetailPage({
             </Card>
           ) : null}
 
-          {material.filePath ? (
+          {material.filePath || studySet ? (
             <Card>
               <CardHeader
                 title="Gemini study assistant"
                 eyebrow={studySet ? "Saved on this computer" : "Guide and flashcards"}
                 action={
-                  gemini?.configured && aiCheck.allowed && fileForAi.ready ? (
+                  canOfferGemini ? (
                     <Button
                       size="small"
                       variant={studySet ? "secondary" : "primary"}
@@ -675,36 +704,10 @@ function MaterialDetailPage({
                 }
               />
               <CardBody>
-                {!aiCheck.allowed ? (
-                  <div className="ai-disclaimer" role="note">
-                    <AlertIcon size={16} />
-                    <p className="tiny">{aiCheck.reason}</p>
-                  </div>
-                ) : !fileForAi.ready ? (
-                  <div className="stack stack--3">
-                    <div className="ai-disclaimer" role="note">
-                      <AlertIcon size={16} />
-                      <p className="tiny">{fileForAi.reason}</p>
-                    </div>
-                    {canSplit ? (
-                      <div>
-                        <Button variant="secondary" onClick={() => setSplitting(true)}>
-                          Create study-size parts
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : !gemini?.configured ? (
-                  <div className="stack stack--3">
-                    <p className="small muted">
-                      Connect the free Gemini API in Settings to create a guide and flashcards
-                      from this document.
-                    </p>
-                    <div>
-                      <Link className="button button--secondary" to="/settings">Open Settings</Link>
-                    </div>
-                  </div>
-                ) : generating ? (
+                {generationNotice ? (
+                  <GenerationNoticeView notice={generationNotice} onSplit={() => setSplitting(true)} />
+                ) : null}
+                {generating ? (
                   <div className="ai-working" role="status">
                     <span className="ai-working__dot" aria-hidden="true" />
                     <div>
@@ -715,7 +718,8 @@ function MaterialDetailPage({
                       </p>
                     </div>
                   </div>
-                ) : studySet ? (
+                ) : null}
+                {studySet ? (
                   <div className="stack stack--5">
                     <div className="ai-disclaimer">
                       <AlertIcon size={16} />
@@ -786,12 +790,12 @@ function MaterialDetailPage({
                       </section>
                     ) : null}
                   </div>
-                ) : (
+                ) : canOfferGemini && !fileMissing && !generating ? (
                   <p className="small muted">
                     Gemini will read only this file and create a source-based study guide plus
                     10–20 flashcards. The result will be saved locally with your other data.
                   </p>
-                )}
+                ) : null}
 
                 {generationError ? (
                   <p className="field__error" role="alert" style={{ marginTop: "var(--space-3)" }}>
@@ -802,12 +806,13 @@ function MaterialDetailPage({
             </Card>
           ) : null}
 
-          {material.filePath && gemini?.configured && aiCheck.allowed && fileForAi.ready ? (
+          {practiceTest || (material.filePath && canOfferGemini) ? (
             <Card>
               <CardHeader
                 title="Practice test"
                 eyebrow={practiceTest ? "Saved on this computer" : "Optional, from this document"}
                 action={
+                  canOfferGemini ? (
                   <Button
                     size="small"
                     variant={practiceTest ? "secondary" : "primary"}
@@ -822,9 +827,13 @@ function MaterialDetailPage({
                         ? "Regenerate"
                         : "Create practice test"}
                   </Button>
+                  ) : undefined
                 }
               />
               <CardBody>
+                {generationNotice && practiceTest ? (
+                  <GenerationNoticeView notice={generationNotice} onSplit={() => setSplitting(true)} />
+                ) : null}
                 {generatingPractice ? (
                   <div className="ai-working" role="status">
                     <span className="ai-working__dot" aria-hidden="true" />
@@ -836,7 +845,8 @@ function MaterialDetailPage({
                       </p>
                     </div>
                   </div>
-                ) : practiceTest ? (
+                ) : null}
+                {practiceTest ? (
                   <div className="stack stack--4">
                     <div className="ai-disclaimer">
                       <AlertIcon size={16} />
@@ -847,12 +857,12 @@ function MaterialDetailPage({
                     </div>
                     <PracticeTestPanel practiceTest={practiceTest} key={practiceTest.updatedAt} />
                   </div>
-                ) : (
+                ) : !generatingPractice ? (
                   <p className="small muted">
                     Gemini will read only this file and create a multiple-choice practice test with
                     explanations. The result will be saved locally with your other data.
                   </p>
-                )}
+                ) : null}
 
                 {practiceGenerationError ? (
                   <p className="field__error" role="alert" style={{ marginTop: "var(--space-3)" }}>
@@ -1140,5 +1150,37 @@ function MaterialDetailPage({
         onCancel={() => setConfirmingDelete(false)}
       />
     </>
+  );
+}
+
+/** Why a new or replacement Gemini study aid cannot be requested right now. */
+interface GenerationNotice {
+  text: string;
+  /** Offer splitting a PDF that is too large to send whole. */
+  split?: boolean;
+  /** Link to Settings, where Gemini is connected. */
+  settings?: boolean;
+}
+
+function GenerationNoticeView({ notice, onSplit }: { notice: GenerationNotice; onSplit: () => void }) {
+  return (
+    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+      <div className="ai-disclaimer" role="note">
+        <AlertIcon size={16} />
+        <p className="tiny">{notice.text}</p>
+      </div>
+      {notice.split ? (
+        <div>
+          <Button variant="secondary" onClick={onSplit}>
+            Create study-size parts
+          </Button>
+        </div>
+      ) : null}
+      {notice.settings ? (
+        <div>
+          <Link className="button button--secondary" to="/settings">Open Settings</Link>
+        </div>
+      ) : null}
+    </div>
   );
 }
