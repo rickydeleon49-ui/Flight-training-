@@ -37,6 +37,8 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 
 ## Continue on the Mac
 
+- Current A3 outcome: [three confirmed modal-stack corrections](MAC_A3_COMPATIBILITY_REVIEW_2026-10-02.md). Use [Claude's correction prompt](CLAUDE_MAC_A3_CORRECTION_PROMPT_2026-10-02.md); implementation remains local/uncommitted and is not accepted.
+
 - Current outcome: [corrected baseline accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md); publication must pass exact-head CI and merge. Then use [Claude's A3 compatibility prompt](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md) from clean updated main. A2 remains with its Windows owner; installed-test account/signing gates remain unmet.
 
 - Completed baseline assignment (review and corrected acceptance retained): [Claude Mac baseline prompt](CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md), with [report review and measurement limits](MAC_REPORT_REVIEW_2026-10-02.md). Claude implements the bounded synthetic baseline and candidate recommendation; Codex reviews. No production dependency adoption or M2 migration is assigned by this task.

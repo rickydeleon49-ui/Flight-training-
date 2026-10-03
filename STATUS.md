@@ -4,6 +4,8 @@ _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanent
 
 ## Shared Windows/Mac handoff — 2 October 2026
 
+**A3 review hold:** Claude's local compatibility slice passed all 37 maintained tests independently, but three additional modal-stack regressions failed. [Confirmed review and correction prompt](docs/MAC_A3_COMPATIBILITY_REVIEW_2026-10-02.md) assign fixes to Claude; implementation remains local and unaccepted.
+
 **Mac baseline accepted:** [Independent R1–R3 acceptance](docs/MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md) confirms eight maintained tests and the production build pass independently. The corrected source and sanitized evidence are committed for required GitHub checks. [Next Claude Mac task: A3 compatibility](docs/CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md) starts from updated main after this publication PR merges. Installed Mac verification and release holds remain open.
 
 **Mac is primary:** the main user will run the app on this Mac. [Owner decision and readiness order](docs/MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) prioritizes source consolidation, A2/compatibility/offline corrections, signing and installed synthetic-profile verification before everyday use. The corrected baseline and prior review history are shared with this publication. [Sanitized source receipts](docs/evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) now accompany the Mac report; Windows-local A2 source remains unavailable on GitHub.
