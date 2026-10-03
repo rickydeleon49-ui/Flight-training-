@@ -1,0 +1,53 @@
+Codex independent readiness correction re-review, 2026-10-03.
+Primary checkout /Users/rickymac/code/Flight-training-
+Branch codex/mac-installed-readiness-preparation; reviewed HEAD/base 8b159485a66804a368dde5f4d7eea596b63bbfcc.
+Input inventory: 14 files total; 7 changed from the original 10-file review, 4 newly added, 3 historical receipts unchanged.
+All 11 full hashes in the correction handoff match; all 3 historical receipts match the original review.
+
+Independent verification (Node 22 scoped PATH):
+npx --no-install vitest run src/logic/macReadinessPreflight.test.ts src/logic/releaseSafety.test.ts --reporter=dot
+  exit 0; 85 passed, 1 deliberate skip; 2 files passed; duration 2.26 seconds.
+npx --no-install tsc --noEmit
+  exit 0.
+node <task-owned scratch>/independent-probes.mjs <corrected script>
+  exit 0; all 7 desired expectations met, including a required verification call.
+node <task-owned scratch>/independent-probes.mjs <reviewed snapshot>
+  exit 1 intentionally; all 7 desired expectations unmet.
+  Test runner adjusted for schema-2 check IDs, strict-verification outcomes and synthetic SDK stat.
+  Hash guards pin both exact compared scripts; primary files not mutated.
+node scripts/mac-readiness-preflight.mjs --json
+  exit 0; 9 PASS, 0 FAIL, 3 UNVERIFIED, 3 USER_ACTION; installed readiness false.
+git diff --check
+  exit 0.
+
+Claude-reported comparison (reviewed receipt, not repeated by Codex):
+  same corrected test file against old: 23 failed / 11 passed;
+  corrected isolated copy: 34 passed;
+  some old failures assert renamed fields/check IDs, so 23 is not a count of distinct original defects.
+
+R4 and private-environment signing qualification independently reviewed as documentation.
+No repeated full application/Rust matrix, real artifact assessment, app mounting/install/launch/signing,
+account/profile/keychain changes, live provider use or Windows-owner message.
+
+Input SHA-256 before Codex publication annotations:
+21a4b08e67721b78036e2c018c64b5079287db2a7bbacbe728f203e999ddb6a7  scripts/mac-readiness-preflight.mjs
+90ee4b9d3d810cdddbef6db4facd7c4c8c82ed07a0d083cecb9493b36894a79e  src/logic/macReadinessPreflight.test.ts
+8e443332b735f70a8510dd566536b9e65c8217715c8e897a50e0d7966f902189  docs/MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md
+0641c3c44a9a76c899789ee26f4bd24e45f284c4f22bdb85685bcc122abc1d04  docs/MAC_READINESS_PREFLIGHT.md
+6dedcf26b298baa0311a6755566b3868ddd4a30a9628461b52b010ad9d04546a  docs/evidence/mac-installed-readiness-preparation-2026-10-03/README.md
+beaaeadb85123b7eac4f13910f1282b548637464835b296e65e3c3ce4bee928c  docs/evidence/mac-installed-readiness-preparation-2026-10-03/host-preflight-2026-10-03.json
+2e84eda9ab11a859e765dd54e34f30652805195c3c2279a5e452bd47faac1ec6  docs/evidence/mac-installed-readiness-preparation-2026-10-03/host-preflight-2026-10-03.txt
+fcb7d36e4a48ad92ad216d56dea2d2a83e06e6de27d6a09f26e749823fa2ee4e  docs/evidence/mac-installed-readiness-preparation-2026-10-03/preflight-controls-2026-10-03.txt
+03d5d2b5514268fb949cfea8777c3c44f4573b4986d20944ee69c18fa8c3eb8d  docs/evidence/mac-installed-readiness-preparation-2026-10-03/host-preflight-corrected-2026-10-03.json
+c50df93b9b1973e11db691ad65cb9e3723e421b9eca190a821aaf851b415c495  docs/evidence/mac-installed-readiness-preparation-2026-10-03/host-preflight-corrected-2026-10-03.txt
+4d6cdc7031c295b350028866b7d408e94301f091b390edbd856f446a0d6a683f  docs/evidence/mac-installed-readiness-preparation-2026-10-03/preflight-controls-corrected-2026-10-03.txt
+a3f8044193fb6f9d6bf5aae58a9967b1d3f107abd32e600979c34ea0ea7a5b3c  docs/evidence/mac-installed-readiness-preparation-2026-10-03/readiness-correction-receipt-2026-10-03.txt
+dc93296115651c61c6b990d7fbc9975e95eaeebcf204805a9b4277b685bbd520  STATUS.md
+a5496ab4df3fb4c13effb8e8cdec4f0088e5c273070a825da16ff807c9ce61f3  docs/PROJECT_HANDOFF.md
+
+Publication verification:
+  167 local Markdown links resolve after integration with published PR #55.
+  git diff --cached origin/main --check: exit 0; reviewed source/test hashes unchanged.
+  One extra runbook EOF blank line normalized during publication.
+  Historical upstream evidence snapshots remain byte-identical, including their original formatting.
+  Publication annotations mark acceptance and reconcile STATUS/handoff with main.

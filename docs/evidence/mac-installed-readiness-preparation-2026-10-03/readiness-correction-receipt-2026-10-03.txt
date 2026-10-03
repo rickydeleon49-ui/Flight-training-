@@ -1,0 +1,44 @@
+Mac readiness preparation: correction receipt for Codex review READINESS-R1 to R4, 3 October 2026 (18:32Z to 18:45Z).
+Prepared by Claude on the Mac, /Users/rickymac/code/Flight-training-, branch codex/mac-installed-readiness-preparation,
+HEAD 8b159485a66804a368dde5f4d7eea596b63bbfcc, local and uncommitted. Review: docs/MAC_INSTALLED_READINESS_REVIEW_2026-10-03.md
+(main 79e6788, PR #55), read through origin/main without switching or pulling. Toolchain: Node v22.23.3, Vitest 4.1.11.
+
+Starting state (18:32Z): all ten handed-off files matched the reviewed hashes. There were no competing changes.
+  b9bd50c1a26a40d0aa052da35a76faae3e35a2c44def494e4610018d3849d8eb  scripts/mac-readiness-preflight.mjs
+  59bee8f9e90f58c00a0bcb8c5d75182df27fb5358c1f964a4aad009d5b28c1a3  src/logic/macReadinessPreflight.test.ts
+  (and the other eight, as in ../mac-installed-readiness-review-2026-10-03/review-receipt.txt)
+
+Old versus corrected regression comparison.
+The same corrected test file (sha256 90ee4b9d3d810cdd…) was run in isolated temporary trees under the session scratchpad. Each
+tree held one copy of the script; the primary scripts/ and src/ files were never modified, and their hashes were unchanged
+afterwards.
+  script b9bd50c1… (reviewed)    23 failed / 11 passed of 34, exit 1. The failures include every R1, R2 and R3 regression,
+                                 plus the changed-schema assertions.
+  script 21a4b08e… (corrected)   34 passed, exit 0
+Codex's historical diagnostic (../mac-installed-readiness-review-2026-10-03/preflight-review-probes.mjs.txt), preserved:
+  against the reviewed copy      exit 1, unmetExpectations 7 (reproduces the review)
+  against the corrected script   refused by its hash guard (as designed; it is not the corrected-code gate)
+
+Final focused validation (checkout root, scoped PATH):
+  npx --no-install vitest run src/logic/macReadinessPreflight.test.ts src/logic/releaseSafety.test.ts --reporter=verbose
+      exit 0; 85 passed, 1 skipped (34 preflight; releaseSafety 51 passed and 1 deliberate skip, unchanged)
+  npx --no-install tsc --noEmit      exit 0
+  git diff --check                   exit 0
+  relative-link check                see the handoff
+
+Corrected default host run (actual observation, separate from the synthetic results):
+  node scripts/mac-readiness-preflight.mjs --receipt docs/evidence/mac-installed-readiness-preparation-2026-10-03/host-preflight-corrected-2026-10-03.json
+      exit 0 at 2026-10-03T18:40Z; schema /2; 9 PASS, 0 FAIL, 3 UNVERIFIED, 3 USER_ACTION; readyForInstalledUse false
+      H-SDK PASS: selectedBy default, presence directory, metadata readable, version 26.5 (evidenced); default SDK 27.0
+        reported separately
+      R-SOURCE UNVERIFIED (dirty: 2 modified, 5 untracked at capture)
+      grep for /Users/ and the account name: 0 matches
+  No --artifact, --app or --assess; nothing mounted, installed, launched or signed.
+
+Not run, deliberately: the unchanged full application and Rust matrices; the A5 heavy fixtures; any artifact assessment;
+installation; account, keychain or workflow changes; live Gemini. No Windows-owner message was sent.
+
+Raw logs (task-owned, outside Git):
+  /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/logs/
+    r-tests-run1.log, compare-reviewed.log, compare-corrected.log, historical-probes-reviewed.json, r-focused-final.log,
+    r-tsc.log

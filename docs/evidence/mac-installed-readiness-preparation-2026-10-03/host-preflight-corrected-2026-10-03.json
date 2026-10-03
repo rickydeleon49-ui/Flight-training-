@@ -1,0 +1,224 @@
+{
+  "schema": "hfd-mac-readiness-preflight/2",
+  "generatedAt": "2026-10-03T18:40:11.870Z",
+  "tool": "scripts/mac-readiness-preflight.mjs",
+  "mode": {
+    "artifactInspection": false,
+    "assess": false
+  },
+  "repository": {
+    "package": "her-flight-deck",
+    "version": "0.5.3",
+    "identifier": "com.herflightdeck.app",
+    "minimumSystemVersion": "12.0"
+  },
+  "artifact": null,
+  "checks": [
+    {
+      "id": "R-VERSION",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "all five version sources agree on 0.5.3",
+      "observed": {
+        "versions": {
+          "package.json": "0.5.3",
+          "package-lock.json": "0.5.3",
+          "src-tauri/tauri.conf.json": "0.5.3",
+          "src-tauri/Cargo.toml": "0.5.3",
+          "src-tauri/Cargo.lock": "0.5.3"
+        }
+      }
+    },
+    {
+      "id": "R-IDENTIFIER",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "bundle identifier is com.herflightdeck.app",
+      "observed": {
+        "configured": "com.herflightdeck.app",
+        "expected": "com.herflightdeck.app"
+      }
+    },
+    {
+      "id": "R-MIN-MACOS",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "minimum macOS 12.0 matches the release policy",
+      "observed": {
+        "configured": "12.0",
+        "policy": "12.0"
+      }
+    },
+    {
+      "id": "R-POLICY",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "release policy macOS candidate version and architecture against the repository version",
+      "observed": {
+        "candidateVersion": "0.5.3",
+        "architecture": "aarch64",
+        "windows": "held"
+      }
+    },
+    {
+      "id": "R-SIGNING-CONFIG",
+      "category": "repository",
+      "status": "USER_ACTION",
+      "summary": "signing/notarization configuration recorded; a Developer ID decision and credentials are owner actions. Absent workflow references do not prove secrets are absent.",
+      "observed": {
+        "signingIdentityConfigured": "not set",
+        "hardenedRuntimeConfigured": "default (not set)",
+        "entitlementsConfigured": "not set",
+        "providerShortNameConfigured": "not set",
+        "workflowReferences": {
+          "checked": true,
+          "signingSecretNames": [],
+          "notarizationSecretNames": []
+        }
+      }
+    },
+    {
+      "id": "R-SOURCE",
+      "category": "repository",
+      "status": "UNVERIFIED",
+      "summary": "working tree has uncommitted changes; the tested source is HEAD plus local changes",
+      "observed": {
+        "head": "8b159485a66804a368dde5f4d7eea596b63bbfcc",
+        "branch": "codex/mac-installed-readiness-preparation",
+        "modified": 2,
+        "untracked": 5
+      }
+    },
+    {
+      "id": "H-OS",
+      "category": "host",
+      "status": "PASS",
+      "summary": "macOS 27.0.1 meets the configured minimum 12.0",
+      "observed": {
+        "productVersion": "27.0.1",
+        "buildVersion": "26A434",
+        "configuredMinimum": "12.0",
+        "note": "a current macOS observation never certifies macOS 12"
+      }
+    },
+    {
+      "id": "H-ARCH",
+      "category": "host",
+      "status": "PASS",
+      "summary": "Apple Silicon host with a native (not translated) Node process",
+      "observed": {
+        "machine": "arm64",
+        "nodeProcess": "arm64",
+        "rosettaTranslated": "0",
+        "model": "Mac17,3",
+        "chip": "Apple M5"
+      }
+    },
+    {
+      "id": "H-TOOLCHAIN",
+      "category": "host",
+      "status": "PASS",
+      "summary": "Node, npm, Rust and Cargo identified (project lanes use Node 22 and aarch64-apple-darwin)",
+      "observed": {
+        "node": "v22.23.3",
+        "npm": "10.9.9",
+        "rustc": "1.99.0",
+        "rustHost": "aarch64-apple-darwin",
+        "cargo": "1.99.0"
+      }
+    },
+    {
+      "id": "H-SDK",
+      "category": "host",
+      "status": "PASS",
+      "summary": "explicit SDK 26.5 is the version with recorded native-build evidence",
+      "observed": {
+        "selectedBy": "default",
+        "explicitSdk": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+        "evidencedVersions": [
+          "26.5"
+        ],
+        "knownIncompatibleVersions": [
+          "27.0"
+        ],
+        "defaultSdkVersion": "27.0",
+        "developerDir": "CommandLineTools",
+        "note": "identifying the default SDK is not proof that a native build links; only explicit SDK versions with recorded build evidence pass",
+        "presence": "directory",
+        "metadata": "readable",
+        "explicitSdkVersion": "26.5"
+      }
+    },
+    {
+      "id": "H-TOOLS",
+      "category": "host",
+      "status": "PASS",
+      "summary": "read-only inspection tools present at their system paths",
+      "observed": {
+        "missing": []
+      }
+    },
+    {
+      "id": "P-TEST-ACCOUNT",
+      "category": "owner",
+      "status": "USER_ACTION",
+      "summary": "a dedicated standard synthetic test account and its isolation evidence must be provided and recorded (runbook §3); no flag or command here can establish it",
+      "observed": {}
+    },
+    {
+      "id": "P-SIGNING",
+      "category": "owner",
+      "status": "USER_ACTION",
+      "summary": "Developer ID signing/notarization decision, Apple Developer Program team and credential provisioning are owner actions (runbook §4)",
+      "observed": {}
+    },
+    {
+      "id": "P-INSTALLED-SMOKE",
+      "category": "owner",
+      "status": "UNVERIFIED",
+      "summary": "installed smoke phases 1-8 have no recorded execution; this tool never installs, launches or tests the app",
+      "observed": {
+        "phases": 8,
+        "recorded": 0
+      }
+    },
+    {
+      "id": "P-A2-SOURCE",
+      "category": "owner",
+      "status": "UNVERIFIED",
+      "summary": "A2-dependent installed checks wait for the Windows owner's independently accepted source",
+      "observed": {}
+    }
+  ],
+  "summary": {
+    "counts": {
+      "PASS": 9,
+      "FAIL": 0,
+      "UNVERIFIED": 3,
+      "USER_ACTION": 3
+    },
+    "exitCode": 0,
+    "readyForInstalledUse": false,
+    "notReadyBecause": [
+      "R-SIGNING-CONFIG: USER_ACTION",
+      "R-SOURCE: UNVERIFIED",
+      "P-TEST-ACCOUNT: USER_ACTION",
+      "P-SIGNING: USER_ACTION",
+      "P-INSTALLED-SMOKE: UNVERIFIED",
+      "P-A2-SOURCE: UNVERIFIED"
+    ]
+  },
+  "safety": {
+    "mounted": false,
+    "installed": false,
+    "launched": false,
+    "built": false,
+    "signed": false,
+    "notarized": false,
+    "keychainOrAccountChanged": false,
+    "ciTriggered": false,
+    "providerContacted": false,
+    "appleOnlineLookupPossible": false,
+    "appProfileInspected": false
+  }
+}

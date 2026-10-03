@@ -1,6 +1,6 @@
 # Independent Mac readiness preparation review — 3 October 2026
 
-**Outcome: corrections required; implementation is not accepted for merge.** Claude has implemented new read-only Mac tooling and a runbook, but four findings below prevent acceptance. Codex reviewed actual files, independently reran the focused gate and reproduced seven mismatches. Claude retains implementation ownership. [Detailed correction prompt](CLAUDE_MAC_READINESS_CORRECTION_PROMPT_2026-10-03.md).
+**Historical outcome: corrections required at this first review. R1–R4 are now [closed by independent re-review](MAC_INSTALLED_READINESS_ACCEPTANCE_2026-10-03.md).** The findings and original evidence below are preserved. Claude has implemented new read-only Mac tooling and a runbook, but four findings below prevent acceptance. Codex reviewed actual files, independently reran the focused gate and reproduced seven mismatches. Claude retains implementation ownership. [Detailed correction prompt](CLAUDE_MAC_READINESS_CORRECTION_PROMPT_2026-10-03.md).
 
 ## Scope and source identity
 

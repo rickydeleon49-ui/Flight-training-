@@ -1,6 +1,21 @@
 # Her Flight Deck — current project status
 
-**Mac readiness preparation reviewed (3 October): corrections required.** The [independent review](docs/MAC_INSTALLED_READINESS_REVIEW_2026-10-03.md) identifies READINESS-R1–R4 in the uncommitted preflight/runbook. [Claude’s next assignment](docs/CLAUDE_MAC_READINESS_CORRECTION_PROMPT_2026-10-03.md) fixes signature integrity, SDK classification, receipt privacy and first-open criteria. The implementation remains local; this publication contains review evidence only. Installed tests, signing and A2 source remain pending.
+**Mac installed-readiness preparation accepted (3 October):** [Independent acceptance](docs/MAC_INSTALLED_READINESS_ACCEPTANCE_2026-10-03.md) closes R1–R4. After CI/merge and clean synchronization, [Claude prepares the structured study-import contract](docs/CLAUDE_STRUCTURED_STUDY_IMPORT_CONTRACT_PROMPT_2026-10-03.md). This task adds a [read-only preflight](docs/MAC_READINESS_PREFLIGHT.md) (`scripts/mac-readiness-preflight.mjs`, no dependency, 34 focused tests) and an [isolated installed-test and signing runbook](docs/MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md).
+
+- **Host receipt today:** macOS 27.0.1, Apple M5, arm64; Node 22 and Rust 1.99; explicit SDK 26.5 present. The result is 9 PASS, 0 FAIL, 3 UNVERIFIED and 3 USER_ACTION, which is not ready.
+- **Nothing was run on the app.** No build, install, launch, signing or notarization; installed checklist outcomes are unchanged.
+- **Owner actions still needed:**
+  - a dedicated standard test account
+  - the signing/notarization decision and owner-provisioned credentials in an eligible protected CI environment or the reviewed local/manual alternative
+  - a version and identity decision for any signed candidate, which cannot inherit approval from the frozen v0.5.3 draft
+- **Corrections:**
+  - **R1:** a signature passes only after strict `codesign --verify`. App and disk-image signatures are reported separately, and failed commands never pass.
+  - **R2:** an SDK passes only on its readable evidenced version, 26.5; 27.0 fails.
+  - **R3:** receipts use fixed categories and contain no raw certificate holders, sources or paths.
+  - **R4:** the runbook separates the normal first-open confirmation from Gatekeeper refusals.
+  - **Signing:** private-repository environment reviewers may need a plan the owner has not confirmed, so the recommendation is conditional, with a local/manual alternative.
+- **Results:** 34 tests pass. The reviewed script fails 23 of them, including every new regression. The corrected host receipt is again 9/0/3/3.
+- A2 production source is still pending its Windows owner.
 
 **Mac A2 preparation accepted (3 October):** [Independent acceptance](docs/MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md) closes PREP-R1–R3 and confirms 36 controls passed. The shared package and Windows-owner handoff are accepted for reviewed publication; A2 production source is still pending. After CI/merge, [Claude prepares a read-only Mac readiness checker and isolated installation/signing runbook](docs/CLAUDE_MAC_INSTALLED_READINESS_PREPARATION_PROMPT_2026-10-03.md). Installed results and release readiness remain unverified.
 
