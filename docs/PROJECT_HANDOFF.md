@@ -37,7 +37,7 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 
 ## Continue on the Mac
 
-- Current A3 outcome: [three confirmed modal-stack corrections](MAC_A3_COMPATIBILITY_REVIEW_2026-10-02.md). Use [Claude's correction prompt](CLAUDE_MAC_A3_CORRECTION_PROMPT_2026-10-02.md); implementation remains local/uncommitted and is not accepted.
+- Current A3 outcome: [R1–R3 resolved, one nested parent-first blocker remains](MAC_A3_COMPATIBILITY_REREVIEW_2026-10-02.md). Use [Claude's R4 correction prompt](CLAUDE_MAC_A3_NESTED_DIALOG_CORRECTION_PROMPT_2026-10-02.md); implementation remains local/uncommitted and is not yet accepted.
 
 - Current outcome: [corrected baseline accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md); publication must pass exact-head CI and merge. Then use [Claude's A3 compatibility prompt](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md) from clean updated main. A2 remains with its Windows owner; installed-test account/signing gates remain unmet.
 

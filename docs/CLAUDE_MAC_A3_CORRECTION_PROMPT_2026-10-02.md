@@ -1,5 +1,7 @@
 # Claude correction prompt — A3 modal-stack review
 
+Current follow-up: [R1–R3 resolved; A3-R4 remains](MAC_A3_COMPATIBILITY_REREVIEW_2026-10-02.md). Use [the R4 correction prompt](CLAUDE_MAC_A3_NESTED_DIALOG_CORRECTION_PROMPT_2026-10-02.md); this document retains the earlier review snapshot.
+
 Continue your existing uncommitted A3 work in `/Users/rickymac/code/Flight-training-`, branch `codex/mac-webkit-compatibility-a3`, base `8b61d8766a4aaf6a12443b9c48445ffe8cc43db7`. Preserve it; do not reset, stash, change branches or commit/push. Confirm the reviewed source hashes first and report competing changes. Read `docs/MAC_A3_COMPATIBILITY_REVIEW_2026-10-02.md` and `docs/MAC_A3_COMPATIBILITY_REVIEW_REGRESSIONS_2026-10-02.md` from the separate documentation PR/branch `codex/mac-a3-review` if absent locally. Those documents do not publish your implementation.
 
 Fix only the three confirmed modal-stack defects:

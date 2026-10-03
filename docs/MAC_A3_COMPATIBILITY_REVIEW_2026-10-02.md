@@ -1,5 +1,7 @@
 # Independent A3 compatibility review — 2 October 2026
 
+Current follow-up: [R1–R3 resolved; A3-R4 remains](MAC_A3_COMPATIBILITY_REREVIEW_2026-10-02.md). Use [the R4 correction prompt](CLAUDE_MAC_A3_NESTED_DIALOG_CORRECTION_PROMPT_2026-10-02.md); this document retains the earlier review snapshot.
+
 **Decision: corrections required before source acceptance.** Claude's implementation remains uncommitted on `codex/mac-webkit-compatibility-a3`, base `8b61d8766a4aaf6a12443b9c48445ffe8cc43db7`. This documentation publication does not include or accept that implementation.
 
 Codex reviewed the actual API fallbacks, toolkit/ID changes, tests and implementation receipts. All 15 source hashes match the handoff. The review is bounded to the assigned source compatibility task; no installed WebKit/VoiceOver claim is made.
