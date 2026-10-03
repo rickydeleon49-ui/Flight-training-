@@ -1,8 +1,8 @@
 # Mac Study Library baseline and open-source decision — 2 October 2026
 
-Bounded measurement task from the [Claude Mac continuation prompt](CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md), **revised for Codex's R1–R3 review** ([review](MAC_STUDY_LIBRARY_BASELINE_REVIEW_2026-10-02.md), [correction prompt](CLAUDE_MAC_BASELINE_CORRECTION_PROMPT_2026-10-02.md)). Those documents, the [Mac report](MAC_SMOKE_RESULTS_2026-10-02.md) and the [Mac-first plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) live on draft [PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44); their links resolve once it merges.
+Bounded measurement task from the [Claude Mac continuation prompt](CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md), **revised for Codex's R1–R3 review** ([review](MAC_STUDY_LIBRARY_BASELINE_REVIEW_2026-10-02.md), [correction prompt](CLAUDE_MAC_BASELINE_CORRECTION_PROMPT_2026-10-02.md)). Those documents, the [Mac report](MAC_SMOKE_RESULTS_2026-10-02.md) and the [Mac-first plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) were first shared in draft [PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) and are incorporated with this baseline publication.
 
-Synthetic source-level measurements only. No production component, database driver, package or migration was changed. Installed WKWebView, Tauri IPC, packaged startup and peak app memory remain **UNVERIFIED**. This report is the implementer's own account. **It is not Codex acceptance**; the corrected slice awaits Codex's independent review.
+Synthetic source-level measurements only. No production component, database driver, package or migration was changed. Installed WKWebView, Tauri IPC, packaged startup and peak app memory remain **UNVERIFIED**. This report is the implementer's own account. **It is not itself Codex acceptance**; see [the separate independent acceptance](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md). The implementer-run identity and receipts below remain the historical pre-commit account.
 
 ## Identity and ownership
 
@@ -158,7 +158,7 @@ Each row is one click, timed and verified for its displayed count.
 
 - **Scaling:** Per-click cost grows with the number of cards already displayed and is nearly identical across library sizes. The work follows displayed cards, not library size.
 - **Sawtooth:** The alternating pattern (for example 600 and 800 above 500 and 700) is consistent across repeats and tiers. This is consistent with a periodic cost such as garbage collection landing on alternate clicks, but this run did not attribute it.
-- **Query while expanded:** Only about 7 ms of the 35 ms is React render. The remainder is commit/DOM work removing 900 cards. Compute stays at most 0.2 ms (large) for every click.
+- **Query while expanded:** Only about 7 ms of the 35 ms is measured React render. The event also removes 900 cards; the remainder includes commit, effects and jsdom work, which this run did not profile separately. Compute stays at most 0.2 ms (large) for every click.
 - **Unmeasured:** Displays above 1,000, scrolling, focus, and edits or refreshes while expanded.
 
 ### Opening materials and navigation
@@ -248,14 +248,14 @@ Acceptance targets are **proposed before any prototype**, to be agreed by the ow
 | --- | --- | --- | --- |
 | T1 | Index-free compute median ≤ 4 ms for each measured state | 0.14–1.54 ms per state, including every narrowing prefix and expanded click (stress ≤ 3.39) | Yes |
 | T2 | React render per interaction median ≤ 16 ms | Filter/search/sort at 100 shown: 1.48–13.89 ms. Show more to 200: 16.11 ms (marginally over). **Expanded clicks: up to 78.96 ms at 1,000 cards** | Yes at 100 shown; marginal at 200; **no for expanded clicks from 300 cards** |
-| T3 | Interaction wall median ≤ 25 ms; per-keystroke median ≤ 16 ms | Initial/200: ≤ 20.28 ms; keystrokes 8.58–16.62 ms. **Expanded: up to 97.03 ms per click; 34.59 ms for a query from 1,000 shown** | Initial/200 yes (one keystroke at 16.62 is just above 16); **expanded no** |
+| T3 | Interaction wall median ≤ 25 ms; per-keystroke median ≤ 16 ms | Initial/200: ≤ 20.28 ms; keystrokes 8.58–16.62 ms. **Expanded: up to 97.03 ms per click; 34.59 ms for a query from 1,000 shown** | Wall target met at initial/200; per-keystroke target marginally missed at 16.62; **expanded no** |
 | T4 | Edit plus full refresh median ≤ 50 ms | 20.90 / 19.80 ms (stress 33–35) | Yes (refresh while expanded unmeasured) |
 | T5 | Cold load median ≤ 100 ms | 33.78 ms | Yes |
 | W1 | Installed WKWebView keypress-to-next-paint p75 ≤ 100 ms at 5,000 | — | **UNVERIFIED** |
 | W2 | Installed launch to usable, peak RSS, and expanded-display behavior | — | **UNVERIFIED** |
 
 - **MiniSearch: NO-GO.** In every measured state, existing compute for the same view is 0.14–1.54 ms at large, and 4.0–7.8% of the same step's wall median across the 16 narrowing prefixes. It never exceeds 0.2 ms in the expanded scenarios. Search computation is not where the measured time goes. No index was built or measured, so this report claims no specific saving for a candidate. An index would add build time, memory, invalidation and semantic-equivalence work (normalization, joined-field substring matching).
-- **TanStack Virtual: no adoption justified for the initial 100- and 200-card displays tested.** Those meet T3 and meet or marginally miss T2 (16.11 ms React for the 200-card click), and their cost does not grow with library size. **Expanded displays are different:** in jsdom the per-click cost grows with displayed cards and exceeds the proposed targets from 300 cards (97 ms wall at 1,000), and leaving a 1,000-card display costs about 35 ms. This is a measured rendering cost in a workload a user can reach. **This measurement alone does not justify adoption**, because:
+- **TanStack Virtual: no adoption justified for the initial 100- and 200-card displays tested.** Those meet the interaction-wall target in T3, marginally miss its per-keystroke target for one prefix (16.62 ms), and meet or marginally miss T2 (16.11 ms React for the 200-card click), and their cost does not grow with library size. **Expanded displays are different:** in jsdom the per-click cost grows with displayed cards and exceeds the proposed targets from 300 cards (97 ms wall at 1,000), and leaving a 1,000-card display costs about 35 ms. This is a measured rendering cost in a workload a user can reach. **This measurement alone does not justify adoption**, because:
   1. jsdom is not WKWebView layout/paint, and the installed cost is unknown;
   2. how often real use expands the list is unknown;
   3. the per-click React time suggests already-shown cards are re-rendered on each click, so a smaller dependency-free option (for example memoizing `MaterialCard`) would need to be compared fairly before choosing a library.
@@ -278,4 +278,4 @@ Acceptance targets are **proposed before any prototype**, to be agreed by the ow
 
 ### Next step
 
-Per the correction prompt, **stop for Codex's independent review of this corrected slice**. Do not start installed testing or another roadmap feature until that review completes. The installed-measurement prompt from the first version of this report remains a draft for after that review. It still requires a dedicated test account and an acceptable signing state, and it should now include the expanded-display steps (Show more to 1,000, query while expanded) among the installed measurements.
+Claude stopped for review as requested. [Codex now accepts the corrected source/evidence](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md); required exact-head CI and merge remain the publication gate. [The next Mac assignment is A3 source compatibility](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md), starting from updated main after merge. The installed-measurement prompt from the first version of this report remains a draft for after that review. It still requires a dedicated test account and an acceptable signing state, and it should now include the expanded-display steps (Show more to 1,000, query while expanded) among the installed measurements.

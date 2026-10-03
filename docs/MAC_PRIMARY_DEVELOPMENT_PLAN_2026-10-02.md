@@ -1,5 +1,7 @@
 # Mac is the primary development and user platform
 
+Current follow-up: [R1–R3 baseline corrections accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md). This document preserves the earlier assignment/review snapshot; [the next Claude prompt is A3 compatibility](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md), after the publication PR merges.
+
 Owner decision, 2 October 2026: the main user will run Her Flight Deck on the Mac. Treat this physical Mac as the primary development, validation and everyday-use target. Keep the shared React/TypeScript/Tauri/SQLite application and preserve Windows compatibility; this decision does not require a separate Mac fork.
 
 ## Source and ownership

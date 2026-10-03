@@ -1,5 +1,7 @@
 # Mac report review and Claude continuation — 2 October 2026
 
+Current follow-up: [R1–R3 baseline corrections accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md). This document preserves the earlier assignment/review snapshot; [the next Claude prompt is A3 compatibility](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md), after the publication PR merges.
+
 Reviewed documentation: draft PR #44 at `43a6b27959e9171b3d25f39a86dfcc2fc7e2f52f`, reconciled with main `a4339fc` (merged PR #45). Reported source tests refer to clean source `5e388bf4169c7f968b1581292d6e1a24aa0493da`; updating these documents does not change that historical test identity.
 
 No blocker found in the Mac report's documentation. Test totals, SDK failure/recovery, DMG identity and signing errors match the local evidence inspected by Codex. Required PR #44 check passed at its original head. Current-head checks must pass again after this documentation update.

@@ -1,5 +1,7 @@
 # Claude continuation prompt — Mac Study Library baseline
 
+Current follow-up: [R1–R3 baseline corrections accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md). This document preserves the earlier assignment/review snapshot; [the next Claude prompt is A3 compatibility](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md), after the publication PR merges.
+
 Owner assignment: Claude implements locally on this Mac; Codex independently reviews and coordinates Git. Gemini handles security work only if separately assigned. The owner confirmed the Mac clone as the next task's location on 2 October 2026.
 
 Copy the following prompt into Claude:

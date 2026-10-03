@@ -1,5 +1,7 @@
 # Claude correction prompt — Mac baseline R1–R3
 
+Current follow-up: [R1–R3 baseline corrections accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md). This document preserves the earlier assignment/review snapshot; [the next Claude prompt is A3 compatibility](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md), after the publication PR merges.
+
 Continue the existing uncommitted work in `/Users/rickymac/code/Flight-training-`, branch `codex/mac-study-library-baseline`, base `a4339fc720d8eac0f038402687e30233de141436`. Do not start the installed-measurement task yet. Codex found three confirmed benchmark/evidence defects; this slice is not accepted for commit or merge.
 
 Read `docs/MAC_STUDY_LIBRARY_BASELINE_REVIEW_2026-10-02.md` and `docs/MAC_STUDY_LIBRARY_BASELINE_REVIEW_REGRESSIONS_2026-10-02.md` from documentation PR #44 if not yet available in your checkout. The reviewed baseline source remains in your local working tree. Preserve your dirty source and docs; do not reset, stash, switch branches, reconstruct A2 or overwrite Codex's separate documentation branch. Confirm the four reviewed hashes before editing and report any competing changes.

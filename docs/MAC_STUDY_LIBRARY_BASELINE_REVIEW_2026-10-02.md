@@ -1,5 +1,7 @@
 # Mac Study Library baseline review — 2 October 2026
 
+Current follow-up: [R1–R3 baseline corrections accepted](MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md). This document preserves the earlier assignment/review snapshot; [the next Claude prompt is A3 compatibility](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md), after the publication PR merges.
+
 **Decision: corrections required; baseline implementation is not accepted for commit/PR/merge yet.** This is a benchmark/evidence review. No production application failure or new dependency requirement was established.
 
 Reviewer: Codex. Implementer: Claude, Mac clone. Reviewed branch `codex/mac-study-library-baseline`, base `a4339fc720d8eac0f038402687e30233de141436`, uncommitted. The reviewed source is local to this Mac, not present on main or a GitHub implementation branch. Publishing this review does not publish or accept that source.
