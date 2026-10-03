@@ -1,0 +1,16 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.89s
+     Running unittests src\lib.rs (<source-repository>\src-tauri\target\debug\deps\her_flight_deck_lib-b2b33ab4d37a909d.exe)
+
+running 4 tests
+test documents::a2_review_regressions::a2_review_equivalent_slash_path_cannot_delete_a_referenced_file ... ok
+test documents::a2_review_regressions::a2_review_cleanup_wins_then_a_save_cannot_attach_the_deleted_file ... ok
+test documents::a2_review_regressions::a2_review_windows_case_alias_cannot_delete_a_referenced_file ... ok
+test documents::a2_review_regressions::a2_review_replacing_a_native_tag_persists_the_acknowledged_tag ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 289 filtered out; finished in 0.49s
+
+     Running unittests src\main.rs (<source-repository>\src-tauri\target\debug\deps\her_flight_deck-d6855a88b8e08769.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

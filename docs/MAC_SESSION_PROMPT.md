@@ -4,6 +4,8 @@ Audit and test Her Flight Deck on this Mac, using GitHub as the shared source of
 
 Exact private repository: https://github.com/rickydeleon49-ui/Flight-training-.
 
+First read `docs/PROJECT_HANDOFF.md` and the latest Mac report/PR it links. Source evaluation has already been reported in draft PR #44; inspect that evidence and continue the missing installed-app checks rather than automatically rerunning unchanged passing suites. The shared open-source research and next-task prompt are in `docs/OPEN_SOURCE_MAC_HANDOFF.md`; do not adopt a library before its foundation/testing gates.
+
 Read `STATUS.md`, `docs/MAC_GITHUB_HANDOFF_2026-10-02.md`, `docs/MAC_PARITY_CHECKLIST.md`, `docs/FULL_REPOSITORY_AUDIT_2026-09-29.md`, `docs/RELEASE_REVIEW_PROCESS.md` and `docs/A2_SECOND_REVIEW_2026-10-02.md`. Follow the build/test and artifact distinction in the handoff. Do not claim a pending Windows-local fix is present in main.
 
 Start by locating or cloning the repository, confirming a clean checkout and the exact current main SHA. Record Mac chip, RAM, architecture, macOS version, Node/npm/Rust versions and Apple's developer-tool path. Use Node 22 to match normal CI. Check prerequisites before installing anything. Keep authentication and all API keys out of chat, logs and committed files.

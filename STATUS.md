@@ -2,6 +2,12 @@
 
 _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
 
+## Shared Windows/Mac handoff — 2 October 2026
+
+[PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md) is the common starting point for both machines. Research, plans, correction prompts and sanitized review evidence are tracked in GitHub; future handoffs must be linked there rather than depend on a local drive or chat attachment. The [open-source continuation handoff](docs/OPEN_SOURCE_MAC_HANDOFF.md) includes the historical research, 170-repository evidence snapshot, adoption sequence, test gates and Mac prompt. No new production library was installed or copied.
+
+The [Mac report in draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) is available on GitHub: it reports passing source checks and an Apple Silicon evaluation DMG, with signing assessment and installed-test limitations. It remains a draft; this note does not merge it or mark installed smoke tests passed. A2 remains local and pending the [R6/R7 correction prompt](docs/A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md). All release holds remain unchanged.
+
 ## Mac GitHub handoff — 2 October 2026
 
 **Physical Mac source checks (2 October):** [Local evidence](docs/MAC_SMOKE_RESULTS_2026-10-02.md) records a MacBook Air / Apple M5 / 32 GB / macOS 26.6, testing clean main `5e388bf4169c7f968b1581292d6e1a24aa0493da`. Node 22 frontend checks pass (594 tests, 4 skipped); native formatting, strict Clippy, tests (246 passed, 6 ignored), and lock synchronization pass using the installed macOS 26.5 SDK. The default macOS 27 SDK fails with the installed linker; the report retains that finding. Local Apple Silicon evaluation DMG build passed; its packaged app has an ad hoc signature, fails command-line Gatekeeper assessment, and has no stapled ticket. Installed-app testing is blocked pending a dedicated standard test account. This is source evaluation, not frozen-candidate verification or release approval.

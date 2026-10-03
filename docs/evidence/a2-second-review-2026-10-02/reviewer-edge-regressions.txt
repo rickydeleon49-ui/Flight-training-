@@ -1,0 +1,146 @@
+
+ RUN  v4.1.11 <review-workspace>/outputs/a2-second-review-2026-10-02/snapshot
+
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite commented execute cannot make a later failure erase an acknowledged public write
+{"route":"commented execute","outcome":"rejected","remaining":[]}
+
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite select cannot make a later failure erase an acknowledged public write
+{"route":"select","outcome":"rejected","remaining":[]}
+
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > sql.js select cannot open a transaction that export rolls back after an acknowledged write
+{"route":"sql.js select","remaining":[],"durable":[]}
+
+ × src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite commented execute cannot make a later failure erase an acknowledged public write 16ms
+   → expected [] to deeply equal [ { id: 'acknowledged' } ]
+ × src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite select cannot make a later failure erase an acknowledged public write 8ms
+   → expected [] to deeply equal [ { id: 'acknowledged' } ]
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > create export failure restores the last stored state in memory as well as after reload
+{"mode":"create","previous":[],"live":[{"id":"guide","title":"Synthetic guide"}],"durable":[]}
+
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > update export failure restores the last stored state in memory as well as after reload
+{"mode":"update","previous":[{"id":"guide","title":"Synthetic guide"}],"live":[{"id":"guide","title":"Changed guide"}],"durable":[{"id":"guide","title":"Synthetic guide"}]}
+
+ × src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > sql.js select cannot open a transaction that export rolls back after an acknowledged write 95ms
+   → expected { remaining: [], durable: [] } to deeply equal { …(2) }
+ × src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > create export failure restores the last stored state in memory as well as after reload 34ms
+   → expected { …(2) } to deeply equal { live: [], durable: [] }
+ × src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > update export failure restores the last stored state in memory as well as after reload 34ms
+   → expected { …(2) } to deeply equal { …(2) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite commented execute cannot make a later failure erase an acknowledged public write
+ FAIL  src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite select cannot make a later failure erase an acknowledged public write
+AssertionError: expected [] to deeply equal [ { id: 'acknowledged' } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "id": "acknowledged",
+-   },
+- ]
++ []
+
+ ❯ src/data/a2SecondReview.regression.test.ts:46:27
+     44|         const remaining = await db.select("SELECT id FROM unrelated");
+     45|         console.log(JSON.stringify({ route, outcome, remaining }));
+     46|         expect(remaining).toEqual([{ id: "acknowledged" }]);
+       |                           ^
+     47|       } finally {
+     48|         db.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > sql.js select cannot open a transaction that export rolls back after an acknowledged write
+AssertionError: expected { remaining: [], durable: [] } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "durable": [
+-     {
+-       "id": "acknowledged",
+-     },
+-   ],
+-   "remaining": [
+-     {
+-       "id": "acknowledged",
+-     },
+-   ],
++   "durable": [],
++   "remaining": [],
+  }
+
+ ❯ src/data/a2SecondReview.regression.test.ts:62:36
+     60|     const durable = await reopened.select("SELECT id FROM unrelated");
+     61|     console.log(JSON.stringify({ route: "sql.js select", remaining, du…
+     62|     expect({ remaining, durable }).toEqual({
+       |                                    ^
+     63|       remaining: [{ id: "acknowledged" }], durable: [{ id: "acknowledg…
+     64|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > create export failure restores the last stored state in memory as well as after reload
+AssertionError: expected { …(2) } to deeply equal { live: [], durable: [] }
+
+- Expected
++ Received
+
+  {
+    "durable": [],
+-   "live": [],
++   "live": [
++     {
++       "id": "guide",
++       "title": "Synthetic guide",
++     },
++   ],
+  }
+
+ ❯ src/data/a2SecondReview.regression.test.ts:87:33
+     85|       const durable = await rows(reopened);
+     86|       console.log(JSON.stringify({ mode, previous, live, durable }));
+     87|       expect({ live, durable }).toEqual({ live: previous, durable: pre…
+       |                                 ^
+     88|     },
+     89|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > update export failure restores the last stored state in memory as well as after reload
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+@@ -6,9 +6,9 @@
+      },
+    ],
+    "live": [
+      {
+        "id": "guide",
+-       "title": "Synthetic guide",
++       "title": "Changed guide",
+      },
+    ],
+  }
+
+ ❯ src/data/a2SecondReview.regression.test.ts:87:33
+     85|       const durable = await rows(reopened);
+     86|       console.log(JSON.stringify({ mode, previous, live, durable }));
+     87|       expect({ live, durable }).toEqual({ live: previous, durable: pre…
+       |                                 ^
+     88|     },
+     89|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  00:11:00
+   Duration  525ms (transform 116ms, setup 0ms, import 160ms, tests 187ms, environment 0ms)

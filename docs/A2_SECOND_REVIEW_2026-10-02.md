@@ -2,6 +2,8 @@
 
 Reviewed by Codex on 2 October 2026 against uncommitted Windows work on `fix/atomic-study-material-saves`, based on `533a8f50c2d0de74a75f5542022da3182f376ee9`. **A2 is not accepted, committed or available in main.** This document shares the review outcome without requiring local Windows evidence files.
 
+The [full review](A2_SECOND_REVIEW_DETAILS_2026-10-02.md), [correction prompt](A2_REVIEW_CORRECTION_PROMPT_2026-10-02.md), [five diagnostic cases](A2_SECOND_REVIEW_REGRESSIONS_2026-10-02.md) and [sanitized focused evidence](evidence/a2-second-review-2026-10-02/README.md) are now shared in the repository. This publishes review documents, not the uncommitted implementation.
+
 ## Verified corrections in the local implementation
 
 The original native tag replacement, cleanup alias and cleanup-first attachment failures now pass independently: four original reviewer cases plus 21 native save tests. Sixty-seven focused frontend tests also pass, including driver ownership, quota rejection, the shared save fixture, repository behavior, the real Study Library page and editor refresh safety. Native tests use real migrations and files; the frontend file service remains a mock boundary.
