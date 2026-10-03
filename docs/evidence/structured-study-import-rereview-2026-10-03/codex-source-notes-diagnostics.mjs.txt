@@ -1,0 +1,24 @@
+import {validatePacketBytes} from './src/validator.mjs';
+import {writeFileSync} from 'node:fs';
+const base={format:'hfd-study-packet',formatVersion:1,title:'Invented labels'};
+const note='Synthetic provenance note';
+const question={id:'q1',type:'single-choice',question:'Choose an invented label',choices:[{id:'a',text:'Quill'},{id:'b',text:'Plinth'}],correctChoiceId:'a',explanation:'Invented.'};
+const card={id:'c1',front:'Invented front',back:'Invented back'};
+const cases=[
+ ['R5: questions plus sourceNotes-only guide never silently discard notes',{questions:[question],guide:{sourceNotes:note}},'no_silent_loss'],
+ ['R5: empty summary and sections plus questions never silently discard notes',{questions:[question],guide:{summary:'',sections:[],sourceNotes:note}},'no_silent_loss'],
+ ['Control: cards plus sourceNotes preserve notes',{flashcards:[card],guide:{sourceNotes:note}},'preserve'],
+ ['Control: substantive guide plus sourceNotes preserve notes',{guide:{summary:'Synthetic guide',sourceNotes:note}},'preserve'],
+ ['Control: blank notes with questions stay valid',{questions:[question],guide:{sourceNotes:'   \n'}},'valid'],
+ ['Control: standalone sourceNotes remain an empty packet',{guide:{sourceNotes:note}},'reject'],
+];
+const rows=cases.map(([name,extra,expect])=>{
+ const r=validatePacketBytes(Buffer.from(JSON.stringify({...base,...extra})));
+ const kept=r.ok&&r.payload.studySet?.sourceNotes===note;
+ const pass=expect==='no_silent_loss'?(!r.ok||kept):expect==='preserve'?kept:expect==='valid'?r.ok:!r.ok;
+ return {name,expect,pass,accepted:r.ok,notesInPreview:r.ok&&r.preview.data.guide?.sourceNotes===note,notesInPayload:Boolean(kept),codes:r.errors?.map(x=>x.code)??[],discardedOnSave:r.preview?.discardedOnSave??null};
+});
+const summary={total:rows.length,passed:rows.filter(x=>x.pass).length,failed:rows.filter(x=>!x.pass).length,node:process.version};
+writeFileSync('results/codex-source-notes-diagnostics.json',JSON.stringify({summary,rows},null,2)+'\n');
+console.log(JSON.stringify({summary,rows},null,2));
+process.exit(summary.failed?1:0);

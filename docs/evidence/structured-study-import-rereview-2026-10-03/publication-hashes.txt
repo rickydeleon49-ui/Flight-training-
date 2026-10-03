@@ -1,0 +1,15 @@
+Codex re-review publication hashes, excluding this receipt.
+90f04ae48d60bfd44ee14aa56c0f553ade9e02466b673182482d5ea48c2ca6bd  STATUS.md
+e4abe1ac5d04b8c88f2ea0136564568b09dc00d6f85d2dfb8720169601f37ab1  docs/CLAUDE_STRUCTURED_STUDY_IMPORT_R5_PROMPT_2026-10-03.md
+f30e6c5d3ac8d3bf0fff4d111ce097a4262e7cacb7631b96fb88c4851ac458e6  docs/PROJECT_HANDOFF.md
+42fb8c87709fd82fda15d9ff5d4895dd55a83f40dd5bcc3745428481697ce696  docs/STRUCTURED_STUDY_IMPORT_REREVIEW_2026-10-03.md
+09eb90299bf2903f03382dd887cf278d3d8645c0eff36ef320ca96789c7eca9a  docs/evidence/structured-study-import-rereview-2026-10-03/README.md
+decc7a71bd2b6c349ba6eccfb394a78a4b87fd15b5acf1dd7cc458c25ddbe1b9  docs/evidence/structured-study-import-rereview-2026-10-03/codex-adapted.json
+7ae1508e2be57af6e3afae5003873f6b080aa16f10737ceee8ea05ad19940808  docs/evidence/structured-study-import-rereview-2026-10-03/codex-mutations.json
+64cc0764d883ac023195a45bf440c6bb1898a4c4f7377321113c25f5528a8157  docs/evidence/structured-study-import-rereview-2026-10-03/codex-regressions.json
+a88629570c36fd8ffbcb9640093ee8f8d56835cfa1f77f708f989f932627e7c2  docs/evidence/structured-study-import-rereview-2026-10-03/codex-source-notes-diagnostics.json
+55d123efffe8875eb1a1b02db34550e1d0a94f4fe1ff802234e80fb3ccc7ed8d  docs/evidence/structured-study-import-rereview-2026-10-03/codex-source-notes-diagnostics.mjs.txt
+cfe9ef00ff8a30dd341e5dbb5d6d7085580ab205ecb648ab9dfbbdbf89f0a7b5  docs/evidence/structured-study-import-rereview-2026-10-03/codex-validator.json
+df7ceb94055e8fdb8af83fb4ecfe01a920b59309361de7d931bcb22f85190960  docs/evidence/structured-study-import-rereview-2026-10-03/dto-negative.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/evidence/structured-study-import-rereview-2026-10-03/dto-positive.txt
+ea0b0f79f8264c6fbcd22f73563f37b3a1913b3345886dae1c47e23ca867791d  docs/evidence/structured-study-import-rereview-2026-10-03/reviewed-correction-receipt.txt
