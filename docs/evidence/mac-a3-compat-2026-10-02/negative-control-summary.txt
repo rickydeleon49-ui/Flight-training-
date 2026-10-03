@@ -1,0 +1,49 @@
+Negative control: the 37 new tests run against ORIGINAL production files (git HEAD 8b61d87) for src/lib/id.ts, src/logic/toolkit.ts, src/data/repositories/toolkitRepository.ts, src/components/ui/Dialog.tsx, src/components/quickfind/QuickFind.tsx, src/state/AppDataContext.tsx; corrected files restored afterwards and verified by SHA-256.
+Command: npx --no-install vitest run src/lib/id.test.ts src/logic/toolkitDefaults.test.ts src/components/ui/Dialog.fallback.test.ts src/components/quickfind/QuickFind.test.ts src/state/legacyWebKitStartup.test.ts (exit 1)
+Test Files  5 failed (5)
+Tests  34 failed | 3 passed (37)
+Passing on original (expected — native-path regressions): newId uses crypto.randomUUID; Dialog native showModal/close; Quick Find native showModal.
+Distinct failure messages (count):
+   2 AssertionError: expected '{… to be '{… // Object.is equality
+   1 AssertionError: expected [Function] to throw error matching /Secure random numbers are unavailable/ but got 'crypto.randomUUID is not a function'
+   1 TypeError: copyToolkitData is not a function
+   4 TypeError: crypto.randomUUID is not a function
+   1 TypeError: defaultToolkitState is not a function
+   3 TypeError: element.showModal is not a function
+   3 TypeError: structuredClone is not a function
+   2 TypeError: uuidV4FromBytes is not a function
+Failed tests:
+  × builds a version 4 UUID from crypto.getRandomValues
+  × formats injected random bytes exactly, pinning version and variant bits
+  × refuses to create an id when secure randomness is unavailable, rather than weakening it
+  × gives repository records valid, distinct ids through the fallback
+  × sets the version nibble to 4 and the variant to 10xx without touching other bits
+  × does not modify the caller's bytes and rejects the wrong length
+  × returns independent defaults for fresh install (no row)
+  × returns independent defaults for empty stored text
+  × returns independent defaults for corrupt JSON
+  × returns independent defaults for stored null
+  × returns independent defaults for stored number
+  × returns independent defaults for stored string
+  × normalizes invalid field types to safe values with owned arrays
+  × keeps valid stored values and owns every nested object and array
+  × does not share structure with its input or between normalizations
+  × gives each default factory call its own copy
+  × copies arrays and plain objects deeply and keeps primitives
+  × starts fresh and adds a material without structuredClone, randomUUID or modal dialogs
+  × shows a named modal dialog with a backdrop and focuses inside it
+  × keeps Tab and Shift+Tab inside the dialog
+  × brings focus back when something outside tries to take it
+  × hides the page behind from assistive technology and restores it afterwards
+  × closes on Escape and backdrop through the owner, and returns focus to the opener
+  × ignores clicks on the dialog box itself; only the backdrop dismisses
+  × stays open and modal for a running task (dismissible=false)
+  × stays open and modal when the owner refuses the close during cleanup
+  × leaves nothing behind after repeated opening and closing
+  × cleans up when unmounted while open
+  × behaves the same under StrictMode's repeated effects
+  × gives keys and focus only to the top dialog and restores the lower one intact
+  × does not let a lower dialog closing first restore the background or take focus
+  × opens with Ctrl+K, focuses the search, navigates results and opens the chosen one
+  × closes on Escape and on the backdrop, returning focus each time
+  × keeps Tab inside and reopens cleanly from the sidebar event

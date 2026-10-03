@@ -1,0 +1,22 @@
+A3-R4 nested fallback lifetime regressions (src/components/ui/Dialog.fallback.test.ts, describe "nested fallback dialog lifetime (Codex A3-R4)").
+showModal/close removed on HTMLDialogElement.prototype; jsdom has no inert/::backdrop.
+
+1) Supplied regression added first, against the reviewed sources (useModalDialog.ts 7f7d43c4…, Dialog.tsx f036718b…, QuickFind.tsx 1e3d3b49…):
+   npx --no-install vitest run src/components/ui/Dialog.fallback.test.ts -> exit 1; Tests 1 failed | 22 passed (23)
+   Failed: A3-R4: keeps an open nested modal outside closed ancestors when its parent closes first
+
+2) Negative control for all 8 R4 regressions: the three reviewed files restored temporarily (useModalDialog.ts rebuilt by reverse edit and verified equal to 7f7d43c4…; Dialog.tsx/QuickFind.tsx from the reviewed backup, verified f036718b…/1e3d3b49…); current files restored and verified by SHA-256 afterwards:
+   npx --no-install vitest run src/components/ui/Dialog.fallback.test.ts -t "A3-R4" -> exit 1; Tests 5 failed | 3 passed | 22 skipped (30)
+   Failed on reviewed sources:
+     A3-R4: keeps an open nested modal outside closed ancestors when its parent closes first
+     A3-R4: presents the still-open child and its backdrop at viewport level, above the parent
+     A3-R4: keeps a refusing child visible and modal after its parent closes
+     A3-R4: returns focus to the page opener and clears exclusion when the child finally closes
+     A3-R4: behaves the same under StrictMode
+   Passed on reviewed sources too (kept as guards): sends Escape and backdrop requests only to the open child's owner; cleans up when the whole tree unmounts with the child open; renders inline, without a portal, when rendered on a server
+
+3) Corrected sources:
+   - First run after the portal change: 8 earlier tests failed on DOM-shape assertions (exclusion now applies to the page's body-level region, not <main> itself; the parent of a portalled nested modal is a lower modal and is excluded, as with the native top layer). Assertions adapted to "inside an aria-hidden + inert region", keeping each behavior and original-attribute check.
+   - All five A3 suites: npx --no-install vitest run src/components/ui/Dialog.fallback.test.ts src/components/quickfind/QuickFind.test.ts src/lib/id.test.ts src/logic/toolkitDefaults.test.ts src/state/legacyWebKitStartup.test.ts -> exit 0; Tests 53 passed (53)
+   - Codex's R4 diagnostic run verbatim as a temporary file (extracted from docs/MAC_A3_NESTED_DIALOG_REVIEW_REGRESSION_2026-10-02.md, then deleted) -> exit 0; Tests 1 passed (1)
+   - Server-render compatibility: HFD_BENCH=1 npx --no-install vitest run src/pages/StudyLibrary/StudyLibrary.bench.test.ts (renderToStaticMarkup of a page containing a Dialog) -> exit 0; 1 passed

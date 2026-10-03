@@ -315,6 +315,30 @@
 
 .dialog::backdrop { background: rgba(23, 35, 60, 0.28); }
 
+/* WebKit before macOS 12.3 has no modal <dialog>: there the element is not
+   hidden by default, has no top layer and no ::backdrop. useModalDialog marks
+   it .modal-fallback and renders .modal-fallback-backdrop beside it. */
+dialog:not([open]) { display: none; }
+
+.modal-fallback[open] {
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  overflow: auto;
+  transform: translate(-50%, -50%);
+}
+
+.modal-fallback-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(23, 35, 60, 0.28);
+}
+
 .dialog--narrow { width: min(28rem, calc(100vw - 3rem)); }
 
 .dialog__header {

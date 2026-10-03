@@ -4,7 +4,9 @@ _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanent
 
 ## Shared Windows/Mac handoff — 2 October 2026
 
-**Mac baseline accepted:** [Independent R1–R3 acceptance](docs/MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md) confirms eight maintained tests and the production build pass independently. The corrected source and sanitized evidence are committed for required GitHub checks. [Next Claude Mac task: A3 compatibility](docs/CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md) starts from updated main after this publication PR merges. Installed Mac verification and release holds remain open.
+**A3 source accepted:** [Independent R1–R4 acceptance](docs/MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md) confirms all 53 focused tests pass and the final 15 hashes match. Reviewed Mac source, evidence and PR #47 history are combined for required exact-head CI and merge. After merge and clean Mac synchronization, [Claude continues A4 saved study content offline](docs/CLAUDE_MAC_A4_OFFLINE_STUDY_PROMPT_2026-10-02.md). Installed Mac/VoiceOver verification and release holds remain open.
+
+**Mac baseline merged (PR #46):** [Independent baseline R1–R3 acceptance](docs/MAC_STUDY_LIBRARY_BASELINE_ACCEPTANCE_2026-10-02.md) and sanitized evidence are on main. The A3 implementation assigned by its subsequent prompt is now accepted as described above. Installed Mac verification and release holds remain open.
 
 **Mac is primary:** the main user will run the app on this Mac. [Owner decision and readiness order](docs/MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) prioritizes source consolidation, A2/compatibility/offline corrections, signing and installed synthetic-profile verification before everyday use. The corrected baseline and prior review history are shared with this publication. [Sanitized source receipts](docs/evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) now accompany the Mac report; Windows-local A2 source remains unavailable on GitHub.
 
@@ -43,6 +45,28 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 **Platform limits and release status:** A1 shared source/regression acceptance is complete; A2–A6 remain open. Windows distribution hold on v0.5.1 and Mac candidate hold on v0.5.3 remain in effect. Physical Apple Silicon Mac, early macOS 12, installed Windows and live Gemini remain UNVERIFIED. The frozen v0.5.3 DMG cannot certify newly changed source.
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
+
+## A3 WebKit compatibility — 2 October 2026 (R1–R4 source accepted; exact-head CI merge gate)
+
+[Implementation report](docs/MAC_A3_COMPATIBILITY_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a3-compat-2026-10-02/negative-control-summary.txt).
+
+- **Code state:** reviewed and committed on `codex/mac-webkit-compatibility-a3`, source commit `66e8178`, base main `8b61d87`. [Codex acceptance](docs/MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; required exact-head CI and merge precede the A4 handoff.
+- **Corrections:**
+  - **Toolkit:** defaults and normalization no longer need `structuredClone` (Safari 15.4 / macOS 12.3). Every returned toolkit now owns its nested data; previously, normalized readiness items aliased the shared defaults.
+  - **Dialog and Quick Find:** keep the native modal `<dialog>` where `showModal`/`close` exist. Otherwise a shared accessible fallback provides role, `aria-modal`, initial focus, Tab containment, Escape/backdrop as owner requests, focus return, background exclusion and layering.
+  - **New ids:** a version 4 UUID built from `crypto.getRandomValues` when `crypto.randomUUID` is missing (WebKit bug 229240 landed after Safari 15.0); fails clearly without secure randomness.
+- **Codex review A3-R1–R3 (modal stack), accepted:**
+  - Exclusion is recomputed from the current top modal, so lower sibling dialogs are hidden.
+  - A new top modal is layered above every surviving one, regardless of DOM order.
+  - Focus restoration follows a validated chain and never lands in a closed, hidden or removed region.
+  - 8 maintained regressions, including Codex's three diagnostics (7 fail on the reviewed hook; Codex's diagnostic file passes verbatim).
+- **Codex re-review A3-R4 (nested lifetime), accepted:**
+  - Fallback dialogs now render through a React portal at `<body>` level, so a nested dialog stays visible, viewport-wide and modal when its parent closes first.
+  - Owner-controlled dismissal is unchanged; server rendering stays inline.
+  - 8 regressions, including Codex's diagnostic (5 fail on the reviewed sources).
+- **Tests:** 37 new capability-removal and native-path tests, including fresh provider startup and a real dialog save with all four APIs removed. The negative control against the original source gives 34 failed / 3 passed (the native-path tests).
+- **Local gate on the corrected diff:** 655 frontend passed (4 skipped), build passed, 246 Rust passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Still required:** installed macOS 12.0–12.2 and current-macOS WKWebView/VoiceOver checks. MAC-03 remains UNVERIFIED. No minimum-OS, dependency, migration or release change.
 
 ## Mac Study Library baseline — 2 October 2026 (R1–R3 accepted; exact-head CI merge gate)
 

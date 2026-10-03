@@ -30,7 +30,7 @@ import type {
   Transaction,
   ToolkitState,
 } from "@/domain/types";
-import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
+import { defaultToolkitState } from "@/logic/toolkit";
 import { hidePending } from "@/logic/pendingDeletes";
 import type { DailyPlanState } from "@/logic/dailyPlan";
 import type { Id } from "@/domain/types";
@@ -136,7 +136,7 @@ export const EMPTY_DATA: AppData = {
   notes: [],
   transactions: [],
   fundGoals: [],
-  toolkit: DEFAULT_TOOLKIT_STATE,
+  toolkit: defaultToolkitState(),
   dailyPlan: null,
 };
 

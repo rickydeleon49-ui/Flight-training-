@@ -1,0 +1,13 @@
+Independent Codex final A3 source review, 2 October 2026.
+Source commit: 66e81785a1ea851a7bc687f43672c959173be0c7
+Base main: 8b61d8766a4aaf6a12443b9c48445ffe8cc43db7
+Toolchain: Node 22.23.3; npm 10.9.9; Vitest 4.1.11.
+Command: npx --no-install vitest run src/components/ui/Dialog.fallback.test.ts src/components/quickfind/QuickFind.test.ts src/lib/id.test.ts src/logic/toolkitDefaults.test.ts src/state/legacyWebKitStartup.test.ts
+Exit: 0
+Test Files: 5 passed (5)
+Tests: 53 passed (53)
+Duration: 753ms
+All 15 SHA-256 entries in Claude's final implementation report matched current files.
+git diff --check: clean.
+Full matrix: inspected Claude's final receipts and raw logs; not independently rerun.
+Capability simulation only; installed WKWebView, early macOS 12 and VoiceOver remain unverified.
