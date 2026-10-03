@@ -1,0 +1,73 @@
+// Mutation checks for the production Slice A validator. Each mutant is applied to a scratch copy of the checkout
+// (src/, package.json, tsconfig.json, vite.config.ts, docs fixtures; node_modules symlinked) and the real Vitest
+// studyPacket suite runs there. The primary checkout is never modified.
+// expect "caught": at least one test fails. expect "neutralized": a single-layer privacy defect that the other
+// layer absorbs; every test must still pass. Usage: node run-slice-a-mutations.mjs <checkout> <results.json>
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, symlinkSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
+const [checkout, out] = process.argv.slice(2);
+const P = "src/logic/studyPacket/";
+const UPSTREAM_ECHO = [P + "schema.ts", 'return rawError("unknown_field", path); // the unknown name itself is never returned', 'return rawError("unknown_field", path, { field: key });'];
+const BOUNDARY_FIELD = [P + "diagnostics.ts", 'if (typeof raw?.field === "string" && FIELD_ALLOWLIST.has(raw.field)) {', 'if (typeof raw?.field === "string") {'];
+const MUTANTS = [
+  ["M1 forbidden property names accepted", "caught", [[P + "scan.ts", 'if (FORBIDDEN_KEYS.has(key)) stop("forbidden_property_name");', ""]]],
+  ["M2 duplicate keys accepted (last wins)", "caught", [[P + "scan.ts", 'if (seen.has(key)) stop("duplicate_key", CONTRACT_FIELDS.has(key) ? { field: key } : {});', ""]]],
+  ["M3 id uniqueness case-sensitive", "caught", [[P + "semantic.ts", "const folded = item.id.toLowerCase();", "const folded = item.id;"]]],
+  ["M4 answer key case silently repaired", "caught", [[P + "semantic.ts", 'errors.push(rawError(folded ? "answer_key_case_mismatch" : "answer_key_not_in_choices", `${base}.correctChoiceId`));', 'if (!folded) errors.push(rawError("answer_key_not_in_choices", `${base}.correctChoiceId`));']]],
+  ["M5 depth limit removed (objects)", "caught", [[P + "scan.ts", 'if (depth + 1 > LIMITS.depth) stop("depth_exceeded", { limit: LIMITS.depth });\n      i++;\n      const object', "i++;\n      const object"]]],
+  ["M6 UTF-16 length instead of code points", "caught", [[P + "schema.ts", "const length = codePointLength(value);", "const length = value.length;"]]],
+  ["M7 page claims mapped to sourcePage", "caught", [[P + "payload.ts", "flashcards: cards.map((card) => ({ front: card.front, back: card.back, sourcePage: null })),", "flashcards: cards.map((card) => ({ front: card.front, back: card.back, sourcePage: card.sourceRefs?.[0]?.page ?? null })),"]]],
+  ["M8 unknown fields allowed", "caught", [[P + "schema.ts", "export const packetSchema = z.strictObject({", "export const packetSchema = z.looseObject({"]]],
+  ["M9 credential check removed", "caught", [[P + "semantic.ts", 'if (CREDENTIAL_PATTERNS.some((pattern) => pattern.test(value))) errors.push(rawError("credential_like_content", path));', ""]]],
+  ["M10 errors echo input into the path", "neutralized", [[P + "schema.ts", "  const path = pathFromParts(issue.path);", '  const path = pathFromParts(issue.path) + (typeof issue.input === "string" ? " " + issue.input : "");']]],
+  ["M11 control characters accepted", "caught", [[P + "scan.ts", 'if (hasInvalidCharacters(out)) stop("invalid_string_character");', ""]]],
+  ["M12 diagnostic echo: unknown field name returned through an unchecked boundary", "caught", [UPSTREAM_ECHO, BOUNDARY_FIELD]],
+  ["M12a boundary field allowlist removed only", "neutralized", [BOUNDARY_FIELD]],
+  ["M12b unknown field name returned upstream only", "neutralized", [UPSTREAM_ECHO]],
+  ["M12c path echo: identifier-shaped keys kept in paths, boundary path checks removed", "caught", [
+    [P + "diagnostics.ts", 'else if (typeof part === "string" && CONTRACT_FIELDS.has(part)) out += `.${part}`;', 'else if (typeof part === "string" && /^[A-Za-z0-9_.-]{1,64}$/.test(part)) out += `.${part}`;'],
+    [P + "diagnostics.ts", 'CONTRACT_FIELDS.has(name) || name === "<field>" ? match : ".<field>",', "match,"],
+    [P + "diagnostics.ts", 'path: PATH_GRAMMAR.test(redacted) ? redacted : "$",', "path: redacted,"]]],
+  ["M12d duplicate IDs returned: raw id added and passed by the boundary", "caught", [
+    [P + "semantic.ts", "{ index, firstIndex: first }", "{ index, firstIndex: first, id: item.id }"],
+    [P + "diagnostics.ts", "  return out;\n}\n\n/** A failure result", "  if (raw && \"id\" in raw) out.id = raw.id;\n  return out;\n}\n\n/** A failure result"]]],
+  ["M13 preview provenance dropped", "caught", [
+    [P + "payload.ts", "    source,\n    guide:", "    source: null,\n    guide:"],
+    [P + "payload.ts", "      sourceRefs: previewRefs(card.sourceRefs),", "      sourceRefs: [],"]]],
+  ["M14 source claim warning only for generator", "caught", [[P + "semantic.ts", 'if (sourceClaims(packet.source)) warnings.add("source_claim_unverified");', 'if (packet.source?.generator) warnings.add("source_claim_unverified");']]],
+  ["M15 export IDs leak into persistence", "caught", [[P + "payload.ts", "flashcards: cards.map((card) => ({ front: card.front, back: card.back, sourcePage: null })),", "flashcards: cards.map((card) => ({ id: card.id, front: card.front, back: card.back, sourcePage: null })),"]]],
+  ["M16 R5 guard removed (orphan guide notes silently dropped again)", "caught", [[P + "semantic.ts", '    errors.push(rawError("source_notes_without_study_set", "$.guide.sourceNotes"));', ""]]],
+  ["M17 guide source notes dropped from the persistence payload", "caught", [[P + "payload.ts", '            sourceNotes: packet.guide?.sourceNotes ?? "",\n            provider: "import",', '            sourceNotes: "",\n            provider: "import",']]],
+  ["M18 notes alone counted as a substantive guide", "caught", [[P + "semantic.ts", "return Boolean(packet.guide && (packet.guide.summary || (packet.guide.sections ?? []).length));", "return Boolean(packet.guide && (packet.guide.summary || packet.guide.sourceNotes || (packet.guide.sections ?? []).length));"]]],
+];
+const rows = [];
+for (const [name, expect, edits] of MUTANTS) {
+  const dir = mkdtempSync(join(tmpdir(), "hfd-slice-a-mutant-"));
+  try {
+    for (const item of ["src", "package.json", "tsconfig.json", "vite.config.ts"]) cpSync(join(checkout, item), join(dir, item), { recursive: true });
+    cpSync(join(checkout, "docs/evidence/structured-study-import-contract-2026-10-03"), join(dir, "docs/evidence/structured-study-import-contract-2026-10-03"), { recursive: true });
+    symlinkSync(join(checkout, "node_modules"), join(dir, "node_modules"));
+    for (const [file, from, to] of edits) {
+      const path = join(dir, file);
+      const src = readFileSync(path, "utf8");
+      if (src.split(from).length !== 2) throw new Error(`mutation anchor not unique or missing: ${name} in ${file}`);
+      writeFileSync(path, src.replace(from, to));
+    }
+    const report = join(dir, "report.json");
+    const runResult = spawnSync(join(checkout, "node_modules/.bin/vitest"), ["run", "src/logic/studyPacket", "--reporter=json", `--outputFile=${report}`], { cwd: dir, encoding: "utf8" });
+    if (!existsSync(report)) throw new Error(`no report for ${name}: ${runResult.stderr.slice(0, 300)}`);
+    const json = JSON.parse(readFileSync(report, "utf8"));
+    const failed = json.testResults.flatMap((f) => f.assertionResults.filter((a) => a.status !== "passed").map((a) => a.fullName));
+    const caught = failed.length > 0;
+    rows.push({ mutant: name, expect, exit: runResult.status, total: json.numTotalTests, failed: failed.length, caught, asExpected: expect === "caught" ? caught : !caught, caughtBy: failed.slice(0, 8) });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+writeFileSync(out, JSON.stringify({ rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.asExpected ? "OK " : "BAD"} ${r.caught ? "CAUGHT    " : "NOT CAUGHT"} (${r.expect}) ${r.mutant}  failed=${r.failed}/${r.total}  ${r.caughtBy.slice(0, 2).join(" | ").slice(0, 150)}`);
+const summary = { mutants: rows.length, asExpected: rows.filter((r) => r.asExpected).length, caught: rows.filter((r) => r.caught).length, neutralized: rows.filter((r) => !r.caught).length };
+console.log(JSON.stringify(summary));
+process.exit(rows.every((r) => r.asExpected) ? 0 : 1);
