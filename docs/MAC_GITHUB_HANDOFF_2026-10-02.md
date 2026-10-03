@@ -4,6 +4,8 @@ Prepared 2 October 2026. This handoff is entirely in GitHub. No `H:\` worktree, 
 
 Repository: **https://github.com/rickydeleon49-ui/Flight-training-** (private; use an account with repository access).
 
+**Shared progress update:** use [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) for current ownership and the [open-source Mac continuation handoff](OPEN_SOURCE_MAC_HANDOFF.md). The [Mac source evaluation report in draft PR #44](https://github.com/rickydeleon49-ui/Flight-training-/pull/44) is now available on GitHub; its source checks/build are separate from installed-app smoke tests, which remain pending in that report.
+
 ## What you can start now
 
 Clone the latest `main`, run the Mac-local automated checks, build a local evaluation DMG, and collect actual Apple Silicon/WKWebView/native integration evidence using synthetic data. The [Mac session prompt](MAC_SESSION_PROMPT.md) is ready to give the agent on that computer. Save results using the [template](templates/MAC_SMOKE_RESULTS_TEMPLATE.md).
