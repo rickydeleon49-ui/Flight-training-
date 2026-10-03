@@ -6,6 +6,8 @@ _Last updated: 29 September 2026 (Mac test kit prepared for 2 October 2026). Tar
 
 ## Purpose and current position
 
+**3 October Slice A completion review:** [SA1 is independently closed](STRUCTURED_STUDY_IMPORT_SLICE_A_REVIEW_2026-10-03.md), including a clean control and measured CLI failure propagation. [SA2 documentation correction](GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_REPORT_CORRECTIONS_PROMPT_2026-10-03.md) is required before source acceptance. No installed, older-macOS, Windows or release evidence is cleared.
+
 **3 October structured-import Slice A interruption:** the [owner exception](STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md) permits only validator/read-only picker source work. Source remains local/uncommitted, with 241 focused frontend tests, typecheck and 16 native tests independently passing. [Codex review](STRUCTURED_STUDY_IMPORT_SLICE_A_INTERRUPTION_REVIEW_2026-10-03.md) identifies SA1 in the mutation runner; [Gemini finishes](GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_FINISH_PROMPT_2026-10-03.md) testing and the handoff. Source integration is pending. No installed, older-macOS, Windows or release item is cleared.
 
 **Owner decision (2 October):** Mac is the primary user platform. [The Mac-first readiness plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) requires actual installed validation after source consolidation and signing; existing UNVERIFIED item states remain unchanged.

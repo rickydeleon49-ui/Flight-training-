@@ -42,6 +42,8 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 
 ## Continue on the Mac
 
+- [Gemini corrects the Slice A handoff report](GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_REPORT_CORRECTIONS_PROMPT_2026-10-03.md). [Completion review](STRUCTURED_STUDY_IMPORT_SLICE_A_REVIEW_2026-10-03.md) closes SA1 independently but requires SA2 corrections to limits/API/canonical-content/environment/inventory descriptions. Source remains local/uncommitted and unaccepted. Preserve correct code and existing test results.
+
 - [Gemini finishes the interrupted Slice A](GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_FINISH_PROMPT_2026-10-03.md) in the existing dirty primary Mac branch, preserving Claude's changes. Codex independently passes the focused frontend/type/native checks but identifies SA1 in the mutation runner. Full local gate, build-notice evidence, report and receipt are pending. This documentation publication does not merge the source.
 
 - [Structured study-import preparation is independently accepted](STRUCTURED_STUDY_IMPORT_ACCEPTANCE_2026-10-03.md), closing R1–R5, and merged through PR #59. The original [Claude Slice A assignment](CLAUDE_STRUCTURED_STUDY_IMPORT_SLICE_A_PROMPT_2026-10-03.md) defines the source scope; the narrow owner exception and Gemini continuation above now apply. Source acceptance, A2/M2 and installed account/signing requirements remain pending.

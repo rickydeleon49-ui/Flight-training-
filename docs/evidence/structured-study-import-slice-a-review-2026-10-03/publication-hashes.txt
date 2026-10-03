@@ -1,0 +1,17 @@
+Codex Slice A review publication hashes; excludes this file. Source has a separate reviewed 93-file snapshot.
+
+e119113651f58bcd4ac50b3d04c188512f21ca130877396eafaa42f6334e4ffb  STATUS.md
+4e44630e890f0ac40cc86aa4bf19b4b4a4d1c07102127373eb7bfb448327d3ca  docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_A_REPORT_CORRECTIONS_PROMPT_2026-10-03.md
+33b45b80a028a461efaa3200a48d4ff2d6b92818ebd4d58f1c4d146d28c9b907  docs/MAC_PARITY_CHECKLIST.md
+f3bda3ffed9cc6aab9dee40fcc580bdc6ebf2894e44e2b839c91d9fa07b407d2  docs/PROJECT_HANDOFF.md
+d3a6c7e9c4c48a8fb0d83c1c5efb49627a83524d32d0e206beed86ae4aee0dc1  docs/STRUCTURED_STUDY_IMPORT_SLICE_A_REVIEW_2026-10-03.md
+d5b836ad681916f091fa018c9838abf33131a0bbd1c24d403c89bc65401bef5f  docs/evidence/structured-study-import-slice-a-review-2026-10-03/README.md
+4485203ba2699e7f76c142f4ac77523be655754fb6ac2eaaf5de7561064a8076  docs/evidence/structured-study-import-slice-a-review-2026-10-03/codex-cli-mismatch.json
+fc015d1441e7e607f9453ab5d980745b80cadb54752d433ce767f012a90f0aa2  docs/evidence/structured-study-import-slice-a-review-2026-10-03/codex-cli-mismatch.log.txt
+1ee6d9e9ef3dcec568488417676ca4d281961573448e21f3dece32c48a65252a  docs/evidence/structured-study-import-slice-a-review-2026-10-03/codex-mutations.json
+306180046d487b4eb9515d548b32e3dcb3311c14d306402bb306189be4378d73  docs/evidence/structured-study-import-slice-a-review-2026-10-03/codex-mutations.log.txt
+1e93ec6c2d1ec1d471baeb9f3acdf827c0e407668f58a7625f2d0b8adef37821  docs/evidence/structured-study-import-slice-a-review-2026-10-03/codex-runner-mismatch.mjs.txt
+b573ae2f5e7d9320e1f1f54b05b7d379745e8e27e92b8e79176daf01ffcb431a  docs/evidence/structured-study-import-slice-a-review-2026-10-03/reviewed-all-93-hashes.txt
+ebfc2c7343a43951b396daf0f65280891c7d4ca841a30ba578828829d4642a68  docs/evidence/structured-study-import-slice-a-review-2026-10-03/reviewed-gemini-final-hashes.txt
+dc9fd556b58c2835a0dd66e4003a9350b2a502b850cd10f240ceaabdef5bdcee  docs/evidence/structured-study-import-slice-a-review-2026-10-03/reviewed-gemini-implementation.md.txt
+ca50186341337c60dc4bedb615f703bc6a0f36fdf1715ff7b501b8c6429f815e  docs/evidence/structured-study-import-slice-a-review-2026-10-03/reviewed-gemini-verification-receipt.txt
