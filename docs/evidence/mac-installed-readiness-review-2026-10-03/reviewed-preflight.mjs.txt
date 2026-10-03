@@ -1,0 +1,622 @@
+#!/usr/bin/env node
+/**
+ * Read-only Mac readiness preflight for Her Flight Deck.
+ *
+ * Reports what this checkout configures, what this Mac provides and, only for
+ * an artifact path you pass explicitly, what that artifact is. It never builds,
+ * mounts, installs, launches, signs, notarizes, changes a keychain or account,
+ * triggers CI, or contacts a provider. Optional Gatekeeper/stapler assessment
+ * of a supplied artifact runs only with --assess, because macOS may perform
+ * Apple's online notarization lookup during it.
+ *
+ * A generated report is not a readiness verdict: account isolation, signing
+ * decisions and every installed smoke check remain USER_ACTION or UNVERIFIED
+ * until they are recorded through docs/MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md.
+ *
+ * Usage: node scripts/mac-readiness-preflight.mjs [options]   (see --help)
+ * Reference: docs/MAC_READINESS_PREFLIGHT.md
+ */
+
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { closeSync, existsSync, openSync, readFileSync, readSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { homedir, userInfo } from "node:os";
+import { basename, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+export const SCHEMA = "hfd-mac-readiness-preflight/1";
+export const STATUSES = ["PASS", "FAIL", "UNVERIFIED", "USER_ACTION"];
+export const EXIT = { NO_FAIL: 0, HAS_FAIL: 1, USAGE: 2 };
+export const EXPECTED_IDENTIFIER = "com.herflightdeck.app";
+export const DEFAULT_SDK = "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk";
+export const COMMAND_TIMEOUT_MS = 10_000;
+export const COMMAND_MAX_BYTES = 64 * 1024;
+
+/** Artifact identities already recorded in the repository (never rebuilt or replaced here). */
+export const KNOWN_ARTIFACTS = [
+  {
+    label: "frozen-private-v0.5.3-draft",
+    fileName: "Her.Flight.Deck_0.5.3_aarch64.dmg",
+    bytes: 4_511_142,
+    sha256: "de81be50122275104ca9e6791162a7bac6cd43a672c5580d5fbc509b5d16efec",
+    provenance: "GitHub Release draft, workflow run 36515016063, commit 41464607ff85d0a4cf0b837c19b400d8392dfec4",
+  },
+  {
+    label: "local-source-evaluation-2026-10-02",
+    fileName: "Her Flight Deck_0.5.3_aarch64.dmg",
+    bytes: 4_525_420,
+    sha256: "e50975dce2db564a3623209c8e73f124fbc0c0ebc6010e7df5cf7c435a05eb37",
+    provenance: "local build on the physical Mac from main 5e388bf4169c7f968b1581292d6e1a24aa0493da",
+  },
+];
+
+/** System tools looked up at fixed paths (no PATH search, no execution for presence). */
+const SYSTEM_TOOLS = {
+  sw_vers: "/usr/bin/sw_vers",
+  uname: "/usr/bin/uname",
+  sysctl: "/usr/sbin/sysctl",
+  "xcode-select": "/usr/bin/xcode-select",
+  xcrun: "/usr/bin/xcrun",
+  codesign: "/usr/bin/codesign",
+  spctl: "/usr/sbin/spctl",
+  stapler: "/usr/bin/stapler",
+  plutil: "/usr/bin/plutil",
+  lipo: "/usr/bin/lipo",
+  hdiutil: "/usr/bin/hdiutil",
+  shasum: "/usr/bin/shasum",
+  git: "/usr/bin/git",
+};
+
+/* ----------------------------------------------------------------------------------------- */
+/* Default (real) dependencies. Tests inject replacements; nothing here is a mutable global.  */
+/* ----------------------------------------------------------------------------------------- */
+
+/**
+ * Runs one command with a timeout and an output cap. Raw output is returned to the
+ * caller's parser only; it is never written to a receipt.
+ */
+export function defaultRunCommand(file, args, { timeoutMs = COMMAND_TIMEOUT_MS, maxBytes = COMMAND_MAX_BYTES } = {}) {
+  const env = {};
+  for (const key of ["PATH", "HOME", "RUSTUP_HOME", "CARGO_HOME", "SDKROOT", "TMPDIR"]) {
+    if (process.env[key] !== undefined) env[key] = process.env[key];
+  }
+  env.LANG = "C";
+  env.LC_ALL = "C";
+  const result = spawnSync(file, args, { encoding: "utf8", timeout: timeoutMs, maxBuffer: maxBytes, env, stdio: ["ignore", "pipe", "pipe"] });
+  if (result.error) {
+    const code = result.error.code;
+    if (code === "ENOENT") return { state: "missing" };
+    if (code === "EACCES" || code === "EPERM") return { state: "denied" };
+    if (code === "ETIMEDOUT") return { state: "timeout" };
+    if (code === "ENOBUFS") return { state: "truncated", code: result.status, stdout: (result.stdout ?? "").slice(0, maxBytes), stderr: (result.stderr ?? "").slice(0, maxBytes) };
+    return { state: "error" };
+  }
+  if (result.signal) return { state: "timeout" };
+  return { state: "ok", code: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
+}
+
+function defaultHashFile(path) {
+  const hash = createHash("sha256");
+  const fd = openSync(path, "r");
+  try {
+    const buffer = Buffer.alloc(1024 * 1024);
+    let read;
+    while ((read = readSync(fd, buffer, 0, buffer.length, null)) > 0) hash.update(buffer.subarray(0, read));
+  } finally {
+    closeSync(fd);
+  }
+  return hash.digest("hex");
+}
+
+export function defaultDeps() {
+  return {
+    platform: process.platform,
+    processArch: process.arch,
+    nodeVersion: process.version,
+    homeDir: homedir(),
+    userName: (() => {
+      try {
+        return userInfo().username;
+      } catch {
+        return "";
+      }
+    })(),
+    sdkrootEnv: process.env.SDKROOT,
+    now: () => new Date().toISOString(),
+    runCommand: defaultRunCommand,
+    readText: (path) => readFileSync(path, "utf8"),
+    listDir: (path) => readdirSync(path),
+    exists: (path) => existsSync(path),
+    stat: (path) => statSync(path),
+    hashFile: defaultHashFile,
+  };
+}
+
+/* ----------------------------------------------------------------------------------------- */
+/* Allowlisted parsers: each returns only the matched token, never surrounding output.        */
+/* ----------------------------------------------------------------------------------------- */
+
+const match = (text, re) => {
+  const m = re.exec(text ?? "");
+  return m ? m[1] : null;
+};
+const firstLine = (text) => String(text ?? "").split(/\r?\n/, 1)[0].trim();
+const only = (value, re) => (value !== null && value !== undefined && re.test(value) ? value : null);
+
+export const parse = {
+  semver: (text) => only(firstLine(text), /^\d+\.\d+(\.\d+)?$/),
+  macosVersion: (text) => only(firstLine(text), /^\d+(\.\d+){0,2}$/),
+  macosBuild: (text) => only(firstLine(text), /^[0-9A-Z]{4,10}[a-z]?$/),
+  machineArch: (text) => only(firstLine(text), /^(arm64|x86_64|aarch64)$/),
+  hwModel: (text) => only(firstLine(text), /^[A-Za-z]+\d+,\d+$/),
+  cpuBrand: (text) => only(firstLine(text), /^Apple M\d+( (Pro|Max|Ultra))?$/),
+  translated: (text) => only(firstLine(text), /^[01]$/),
+  developerDir: (text) => only(firstLine(text), /^(\/Library\/Developer\/CommandLineTools|\/Applications\/Xcode[A-Za-z0-9_.-]*\.app\/Contents\/Developer)$/),
+  rustc: (text) => ({ release: match(text, /^release: (\d+\.\d+\.\d+)$/m), host: match(text, /^host: ([a-z0-9_]+-[a-z0-9_]+-[a-z0-9_]+(?:-[a-z0-9_]+)?)$/m) }),
+  cargo: (text) => match(text, /^cargo (\d+\.\d+\.\d+)\b/),
+  gitSha: (text) => only(firstLine(text), /^[0-9a-f]{40}$/),
+  gitBranch: (text) => only(firstLine(text), /^[A-Za-z0-9._/-]{1,100}$/),
+  bundleId: (text) => only(firstLine(text), /^[A-Za-z0-9.-]{1,100}$/),
+  bundleVersion: (text) => only(firstLine(text), /^\d+(\.\d+){0,3}$/),
+  executableName: (text) => only(firstLine(text), /^[A-Za-z0-9 ._-]{1,80}$/),
+  archs: (text) => {
+    const tokens = firstLine(text).split(/\s+/).filter(Boolean);
+    return tokens.length && tokens.every((t) => /^(arm64|arm64e|x86_64|i386)$/.test(t)) ? tokens : null;
+  },
+  /** `codesign -dv --verbose=2` writes to stderr; only these fields are kept. */
+  codesign: (stderr, code) => {
+    const text = String(stderr ?? "");
+    if (/not signed at all/i.test(text)) return { signature: "unsigned" };
+    if (code !== 0 && !/^Identifier=/m.test(text)) return { signature: "unreadable" };
+    const flags = (match(text, /flags=0x[0-9a-f]+\(([a-z0-9-,]*)\)/i) ?? "").split(",").filter((f) => /^[a-z0-9-]{1,24}$/.test(f));
+    const authorities = [...text.matchAll(/^Authority=([^:\n]{1,60})/gm)].map((m) => m[1].trim()).filter((a) => /^[A-Za-z ]{1,60}$/.test(a));
+    const team = match(text, /^TeamIdentifier=(.+)$/m);
+    return {
+      signature: /^Signature=adhoc$/m.test(text) ? "adhoc" : authorities.length ? "certificate" : "unknown",
+      identifier: only(match(text, /^Identifier=(.+)$/m), /^[A-Za-z0-9.-]{1,100}$/),
+      flags,
+      hardenedRuntime: flags.includes("runtime"),
+      teamIdentifier: team === null ? "absent" : team.trim() === "not set" ? "not set" : "present",
+      authorityKinds: authorities,
+      secureTimestamp: /^Timestamp=/m.test(text),
+      sealedResources: /^Sealed Resources=none$/m.test(text) ? "none" : /^Sealed Resources=/m.test(text) ? "present" : "unknown",
+    };
+  },
+  spctl: (stderr) => ({
+    verdict: match(stderr, /: (accepted|rejected)\b/),
+    source: only(match(stderr, /^source=(.+)$/m), /^[A-Za-z ]{1,40}$/),
+  }),
+  stapler: (stdout, code) => (code === 0 && /worked/i.test(stdout ?? "") ? "stapled" : /does not have a ticket/i.test(stdout ?? "") ? "not stapled" : "unknown"),
+  sdkVersion: (text) => only(match(text, /"Version"\s*:\s*"([^"]+)"/), /^\d+(\.\d+){0,2}$/),
+};
+
+function versionAtLeast(version, minimum) {
+  const a = version.split(".").map(Number);
+  const b = minimum.split(".").map(Number);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
+  }
+  return true;
+}
+
+function commandNote(result) {
+  return { missing: "command unavailable", denied: "permission denied", timeout: "timed out (bounded)", error: "could not run", truncated: "output exceeded the cap" }[result.state] ?? `exit ${result.code}`;
+}
+
+/* ----------------------------------------------------------------------------------------- */
+/* The preflight                                                                              */
+/* ----------------------------------------------------------------------------------------- */
+
+/**
+ * @param {object} options repo, artifact, app, expectedSha256, expectedSize, expectedIdentifier, sdk, assess
+ * @param {object} deps    injected environment (see defaultDeps)
+ * @returns {object} receipt following SCHEMA
+ */
+export function runPreflight(options = {}, deps = defaultDeps()) {
+  const checks = [];
+  const add = (id, category, status, summary, observed = {}) => {
+    if (!STATUSES.includes(status)) throw new Error(`invalid status ${status}`);
+    checks.push({ id, category, status, summary, observed });
+  };
+  const run = (tool, args) => {
+    const file = SYSTEM_TOOLS[tool] ?? tool;
+    if (SYSTEM_TOOLS[tool] && !deps.exists(file)) return { state: "missing" };
+    return deps.runCommand(file, args, { timeoutMs: COMMAND_TIMEOUT_MS, maxBytes: COMMAND_MAX_BYTES });
+  };
+  const repo = resolve(options.repo ?? process.cwd());
+  const expectedIdentifier = options.expectedIdentifier ?? EXPECTED_IDENTIFIER;
+
+  /* ---------------- repository configuration ---------------- */
+  const readJson = (rel) => {
+    const path = join(repo, rel);
+    if (!deps.exists(path)) return { error: "missing" };
+    try {
+      return { value: JSON.parse(deps.readText(path)) };
+    } catch {
+      return { error: "malformed" };
+    }
+  };
+  const readTextFile = (rel) => {
+    const path = join(repo, rel);
+    if (!deps.exists(path)) return { error: "missing" };
+    try {
+      return { value: deps.readText(path) };
+    } catch {
+      return { error: "unreadable" };
+    }
+  };
+  const pkg = readJson("package.json");
+  const lock = readJson("package-lock.json");
+  const tauri = readJson("src-tauri/tauri.conf.json");
+  const policy = readJson("scripts/release-policy.json");
+  const cargoToml = readTextFile("src-tauri/Cargo.toml");
+  const cargoLock = readTextFile("src-tauri/Cargo.lock");
+
+  const versions = {
+    "package.json": pkg.value?.version ?? pkg.error,
+    "package-lock.json": lock.value?.version ?? lock.error,
+    "src-tauri/tauri.conf.json": tauri.value?.version ?? tauri.error,
+    "src-tauri/Cargo.toml": cargoToml.value ? match(cargoToml.value, /^version\s*=\s*"([^"]+)"/m) ?? "no version" : cargoToml.error,
+    "src-tauri/Cargo.lock": cargoLock.value
+      ? match(cargoLock.value, /\[\[package\]\]\s+name\s*=\s*"her-flight-deck"\s+version\s*=\s*"([^"]+)"/) ?? "no entry"
+      : cargoLock.error,
+  };
+  for (const [file, value] of Object.entries(versions)) {
+    if (typeof value !== "string" || !/^\d+\.\d+\.\d+$/.test(value)) versions[file] = ["missing", "malformed", "unreadable", "no version", "no entry"].includes(value) ? value : "invalid";
+  }
+  const distinct = new Set(Object.values(versions));
+  const repoVersion = distinct.size === 1 && /^\d+\.\d+\.\d+$/.test([...distinct][0]) ? [...distinct][0] : null;
+  add("R-VERSION", "repository", repoVersion ? "PASS" : "FAIL", repoVersion ? `all five version sources agree on ${repoVersion}` : "version sources are missing, malformed or disagree", { versions });
+
+  const identifier = tauri.value?.identifier;
+  add(
+    "R-IDENTIFIER", "repository",
+    identifier === expectedIdentifier ? "PASS" : "FAIL",
+    identifier === expectedIdentifier ? `bundle identifier is ${expectedIdentifier}` : "bundle identifier differs from the project identity or is missing",
+    { configured: typeof identifier === "string" ? parse.bundleId(identifier) ?? "invalid" : tauri.error ?? "missing", expected: expectedIdentifier },
+  );
+
+  const macPolicy = policy.value?.platformDistribution?.macos;
+  const minOs = tauri.value?.bundle?.macOS?.minimumSystemVersion;
+  add(
+    "R-MIN-MACOS", "repository",
+    typeof minOs === "string" && minOs === macPolicy?.minimumSystemVersion ? "PASS" : "FAIL",
+    typeof minOs === "string" && minOs === macPolicy?.minimumSystemVersion ? `minimum macOS ${minOs} matches the release policy` : "minimum macOS is missing or differs from the release policy",
+    { configured: typeof minOs === "string" ? parse.macosVersion(minOs) ?? "invalid" : "missing", policy: macPolicy?.minimumSystemVersion ?? policy.error ?? "missing" },
+  );
+  add(
+    "R-POLICY", "repository",
+    repoVersion && macPolicy?.candidateVersion === repoVersion && macPolicy?.architecture === "aarch64" ? "PASS" : "FAIL",
+    "release policy macOS candidate version and architecture against the repository version",
+    { candidateVersion: macPolicy?.candidateVersion ?? policy.error ?? "missing", architecture: macPolicy?.architecture ?? "missing", windows: policy.value?.platformDistribution?.windows?.status ?? "missing" },
+  );
+
+  const macBundle = tauri.value?.bundle?.macOS ?? {};
+  let workflowRefs = { checked: false };
+  const workflowDir = join(repo, ".github/workflows");
+  if (deps.exists(workflowDir)) {
+    try {
+      const text = deps.listDir(workflowDir).filter((f) => /\.ya?ml$/.test(f)).map((f) => deps.readText(join(workflowDir, f))).join("\n");
+      workflowRefs = {
+        checked: true,
+        signingSecretNames: ["APPLE_CERTIFICATE", "APPLE_CERTIFICATE_PASSWORD", "APPLE_SIGNING_IDENTITY", "KEYCHAIN_PASSWORD"].filter((n) => text.includes(n)),
+        notarizationSecretNames: ["APPLE_API_ISSUER", "APPLE_API_KEY", "APPLE_API_KEY_PATH", "APPLE_ID", "APPLE_PASSWORD", "APPLE_TEAM_ID"].filter((n) => new RegExp(`\\b${n}\\b`).test(text)),
+      };
+    } catch {
+      workflowRefs = { checked: false, note: "workflows unreadable" };
+    }
+  }
+  add(
+    "R-SIGNING-CONFIG", "repository", "USER_ACTION",
+    "signing/notarization configuration recorded; a Developer ID decision and credentials are owner actions. Absent workflow references do not prove secrets are absent.",
+    {
+      signingIdentityConfigured: typeof macBundle.signingIdentity === "string" ? (macBundle.signingIdentity === "-" ? "ad hoc" : "set") : "not set",
+      hardenedRuntimeConfigured: macBundle.hardenedRuntime === undefined ? "default (not set)" : Boolean(macBundle.hardenedRuntime),
+      entitlementsConfigured: macBundle.entitlements ? "set" : "not set",
+      providerShortNameConfigured: macBundle.providerShortName ? "set" : "not set",
+      workflowReferences: workflowRefs,
+    },
+  );
+
+  const sha = run("git", ["-C", repo, "rev-parse", "HEAD"]);
+  const branch = run("git", ["-C", repo, "rev-parse", "--abbrev-ref", "HEAD"]);
+  const porcelain = run("git", ["-C", repo, "status", "--porcelain=v1"]);
+  if (sha.state === "ok" && sha.code === 0 && porcelain.state === "ok" && porcelain.code === 0) {
+    const lines = porcelain.stdout.split("\n").filter(Boolean);
+    const changes = { modified: lines.filter((l) => !l.startsWith("??")).length, untracked: lines.filter((l) => l.startsWith("??")).length };
+    const clean = lines.length === 0;
+    add("R-SOURCE", "repository", clean ? "PASS" : "UNVERIFIED",
+      clean ? "source is a clean commit" : "working tree has uncommitted changes; the tested source is HEAD plus local changes",
+      { head: parse.gitSha(sha.stdout) ?? "unparsed", branch: branch.state === "ok" ? parse.gitBranch(branch.stdout) ?? "unparsed" : "unknown", ...changes });
+  } else {
+    add("R-SOURCE", "repository", "UNVERIFIED", `source identity unavailable (${commandNote(sha.state === "ok" ? porcelain : sha)})`);
+  }
+
+  /* ---------------- host ---------------- */
+  const isMac = deps.platform === "darwin";
+  if (!isMac) {
+    add("H-OS", "host", "FAIL", "unsupported platform for Mac readiness; host checks skipped", { platform: String(deps.platform).slice(0, 20) });
+  } else {
+    const ver = run("sw_vers", ["-productVersion"]);
+    const build = run("sw_vers", ["-buildVersion"]);
+    const version = ver.state === "ok" ? parse.macosVersion(ver.stdout) : null;
+    const minimum = typeof minOs === "string" ? minOs : "12.0";
+    add("H-OS", "host", version ? (versionAtLeast(version, minimum) ? "PASS" : "FAIL") : "UNVERIFIED",
+      version ? `macOS ${version} ${versionAtLeast(version, minimum) ? "meets" : "is below"} the configured minimum ${minimum}` : `macOS version unavailable (${commandNote(ver)})`,
+      { productVersion: version ?? "unknown", buildVersion: build.state === "ok" ? parse.macosBuild(build.stdout) ?? "unparsed" : "unknown", note: "a current macOS observation never certifies macOS 12" });
+
+    const machine = run("uname", ["-m"]);
+    const model = run("sysctl", ["-n", "hw.model"]);
+    const brand = run("sysctl", ["-n", "machdep.cpu.brand_string"]);
+    const translated = run("sysctl", ["-n", "sysctl.proc_translated"]);
+    const machineArch = machine.state === "ok" ? parse.machineArch(machine.stdout) : null;
+    const isTranslated = translated.state === "ok" ? parse.translated(translated.stdout) : null;
+    add("H-ARCH", "host",
+      machineArch === "arm64" && deps.processArch === "arm64" && isTranslated !== "1" ? "PASS" : machineArch ? "FAIL" : "UNVERIFIED",
+      "Apple Silicon host with a native (not translated) Node process",
+      { machine: machineArch ?? "unknown", nodeProcess: String(deps.processArch).slice(0, 10), rosettaTranslated: isTranslated ?? "unknown", model: model.state === "ok" ? parse.hwModel(model.stdout) ?? "unparsed" : "unknown", chip: brand.state === "ok" ? parse.cpuBrand(brand.stdout) ?? "unparsed" : "unknown" });
+  }
+
+  const npm = isMac ? run("npm", ["--version"]) : { state: "skipped" };
+  const rustc = isMac ? run("rustc", ["-vV"]) : { state: "skipped" };
+  const cargo = isMac ? run("cargo", ["--version"]) : { state: "skipped" };
+  const rust = rustc.state === "ok" ? parse.rustc(rustc.stdout) : { release: null, host: null };
+  const nodeVersion = only(deps.nodeVersion, /^v\d+\.\d+\.\d+$/);
+  const toolchain = {
+    node: nodeVersion ?? "unknown",
+    npm: npm.state === "ok" ? parse.semver(npm.stdout) ?? "unparsed" : npm.state === "skipped" ? "not checked" : commandNote(npm),
+    rustc: rust.release ?? (rustc.state === "ok" ? "unparsed" : rustc.state === "skipped" ? "not checked" : commandNote(rustc)),
+    rustHost: rust.host ?? "unknown",
+    cargo: cargo.state === "ok" ? parse.cargo(cargo.stdout) ?? "unparsed" : cargo.state === "skipped" ? "not checked" : commandNote(cargo),
+  };
+  const toolchainComplete = nodeVersion && /^\d/.test(toolchain.npm) && /^\d/.test(toolchain.rustc) && /^\d/.test(toolchain.cargo);
+  const nodeMajor22 = nodeVersion?.startsWith("v22.");
+  add("H-TOOLCHAIN", "host",
+    toolchainComplete && nodeMajor22 && rust.host === "aarch64-apple-darwin" ? "PASS" : "UNVERIFIED",
+    toolchainComplete ? "Node, npm, Rust and Cargo identified (project lanes use Node 22 and aarch64-apple-darwin)" : "one or more toolchain commands unavailable, timed out or unparsed",
+    toolchain);
+
+  const sdk = options.sdk ?? deps.sdkrootEnv ?? DEFAULT_SDK;
+  const sdkSafe = only(sdk, /^\/(Library|Applications)\/[A-Za-z0-9 ._/-]{1,200}\.sdk$/);
+  if (!isMac) {
+    add("H-SDK", "host", "UNVERIFIED", "SDK check needs macOS");
+  } else if (!sdkSafe) {
+    add("H-SDK", "host", "UNVERIFIED", "SDK path outside the system developer locations; not inspected", { path: "not recorded" });
+  } else {
+    const present = deps.exists(sdk);
+    let sdkVersion = null;
+    if (present && deps.exists(join(sdk, "SDKSettings.json"))) {
+      try {
+        sdkVersion = parse.sdkVersion(deps.readText(join(sdk, "SDKSettings.json")));
+      } catch {
+        sdkVersion = null;
+      }
+    }
+    const defaultSdk = run("xcrun", ["--show-sdk-version"]);
+    const developerDir = run("xcode-select", ["-p"]);
+    add("H-SDK", "host", present ? "PASS" : "FAIL",
+      present ? "explicit compatible SDK present (native builds set SDKROOT to it)" : "explicit SDK not found; report the environment prerequisite, do not change system developer settings",
+      { explicitSdk: sdkSafe, explicitSdkVersion: sdkVersion ?? "unknown", defaultSdkVersion: defaultSdk.state === "ok" ? parse.macosVersion(defaultSdk.stdout) ?? "unparsed" : commandNote(defaultSdk), developerDir: developerDir.state === "ok" ? parse.developerDir(developerDir.stdout) ?? "other location" : commandNote(developerDir), note: "2 Oct 2026: default SDK 27.0 failed Rust linking (TAPI); explicit 26.5 passed" });
+    const missingTools = Object.entries(SYSTEM_TOOLS).filter(([, path]) => !deps.exists(path)).map(([name]) => name);
+    add("H-TOOLS", "host", missingTools.length ? "UNVERIFIED" : "PASS",
+      missingTools.length ? "some read-only inspection tools are unavailable" : "read-only inspection tools present at their system paths",
+      { missing: missingTools });
+  }
+
+  /* ---------------- owner prerequisites (never satisfied by this tool) ---------------- */
+  add("P-TEST-ACCOUNT", "owner", "USER_ACTION",
+    "a dedicated standard synthetic test account and its isolation evidence must be provided and recorded (runbook §3); no flag or command here can establish it");
+  add("P-SIGNING", "owner", "USER_ACTION",
+    "Developer ID signing/notarization decision, Apple Developer Program team and credential provisioning are owner actions (runbook §4)");
+  add("P-INSTALLED-SMOKE", "owner", "UNVERIFIED",
+    "installed smoke phases 1-8 have no recorded execution; this tool never installs, launches or tests the app", { phases: 8, recorded: 0 });
+  add("P-A2-SOURCE", "owner", "UNVERIFIED",
+    "A2-dependent installed checks wait for the Windows owner's independently accepted source");
+
+  /* ---------------- explicit artifact inspection ---------------- */
+  let artifact = null;
+  const target = options.artifact ?? options.app;
+  if (target) {
+    const path = resolve(target);
+    artifact = { kind: options.app ? "app" : "file", name: parse.executableName(basename(path)) ?? "name not recorded", pathRecorded: "basename only" };
+    let st = null;
+    try {
+      st = deps.exists(path) ? deps.stat(path) : null;
+    } catch {
+      st = null;
+    }
+    const kindOk = st && (options.app ? st.isDirectory() : st.isFile());
+    add("A-EXISTS", "artifact", kindOk ? "PASS" : "FAIL",
+      kindOk ? "the supplied artifact path exists" : options.app ? "the supplied --app path is missing or not an app bundle directory" : "the supplied --artifact path is missing or not a regular file");
+    if (kindOk && !options.app) {
+      const bytes = st.size;
+      let sha256 = null;
+      try {
+        sha256 = deps.hashFile(path);
+      } catch {
+        sha256 = null;
+      }
+      artifact.bytes = bytes;
+      artifact.sha256 = sha256 ?? "unreadable";
+      const known = KNOWN_ARTIFACTS.find((k) => k.sha256 === sha256 && k.bytes === bytes);
+      artifact.knownIdentity = known ? known.label : "not a recorded identity";
+      add("A-SIZE", "artifact", options.expectedSize === undefined ? "UNVERIFIED" : Number(options.expectedSize) === bytes ? "PASS" : "FAIL",
+        options.expectedSize === undefined ? "byte size observed; no expected size supplied" : Number(options.expectedSize) === bytes ? "byte size matches the expected size" : "byte size differs from the expected size",
+        { bytes, expected: options.expectedSize === undefined ? "not supplied" : Number(options.expectedSize) });
+      const expectedSha = options.expectedSha256?.toLowerCase();
+      add("A-SHA256", "artifact", !sha256 ? "FAIL" : expectedSha === undefined ? "UNVERIFIED" : expectedSha === sha256 ? "PASS" : "FAIL",
+        !sha256 ? "the artifact could not be read for hashing" : expectedSha === undefined ? "SHA-256 observed; no expected hash supplied" : expectedSha === sha256 ? "SHA-256 matches the expected identity" : "SHA-256 differs from the expected identity",
+        { sha256: sha256 ?? "unreadable", expected: expectedSha ?? "not supplied", knownIdentity: artifact.knownIdentity });
+      if (/\.dmg$/i.test(path)) {
+        add("A-APP-METADATA", "artifact", "UNVERIFIED",
+          "the app inside a DMG is not inspected: this tool never mounts. Use the runbook's read-only mount recipe, then pass --app");
+      }
+    }
+    if (kindOk && isMac) {
+      if (options.app) {
+        const plist = join(path, "Contents/Info.plist");
+        const extract = (key) => {
+          const r = run("plutil", ["-extract", key, "raw", "-o", "-", plist]);
+          return r.state === "ok" && r.code === 0 ? r.stdout : null;
+        };
+        const id = parse.bundleId(extract("CFBundleIdentifier"));
+        const minimum = parse.macosVersion(extract("LSMinimumSystemVersion"));
+        const version = parse.bundleVersion(extract("CFBundleShortVersionString"));
+        const executable = parse.executableName(extract("CFBundleExecutable"));
+        const archs = executable ? run("lipo", ["-archs", join(path, "Contents/MacOS", executable)]) : { state: "error" };
+        const archList = archs.state === "ok" && archs.code === 0 ? parse.archs(archs.stdout) : null;
+        Object.assign(artifact, { bundleIdentifier: id ?? "unread", minimumSystemVersion: minimum ?? "unread", version: version ?? "unread", executableArchitectures: archList ?? "unread" });
+        const metaOk = id === expectedIdentifier && minimum === minOs && version === repoVersion && archList?.includes("arm64");
+        add("A-APP-METADATA", "artifact", !id || !minimum || !version || !archList ? "UNVERIFIED" : metaOk ? "PASS" : "FAIL",
+          metaOk ? "bundle identifier, minimum macOS, version and arm64 executable match the repository" : !id || !minimum || !version || !archList ? "some bundle metadata could not be read" : "bundle metadata differs from the repository configuration",
+          { bundleIdentifier: id ?? "unread", minimumSystemVersion: minimum ?? "unread", version: version ?? "unread", executableArchitectures: archList ?? "unread", expected: { bundleIdentifier: expectedIdentifier, minimumSystemVersion: minOs ?? "missing", version: repoVersion ?? "unknown", architecture: "arm64" } });
+      }
+      const cs = run("codesign", ["-dv", "--verbose=2", path]);
+      const sig = cs.state === "ok" ? parse.codesign(cs.stderr, cs.code) : { signature: commandNote(cs) };
+      artifact.signing = sig;
+      const developerId = sig.signature === "certificate" && sig.authorityKinds?.includes("Developer ID Application") && sig.hardenedRuntime && sig.teamIdentifier === "present" && sig.secureTimestamp;
+      add("A-SIGNATURE", "artifact",
+        cs.state !== "ok" || sig.signature === "unreadable" ? "UNVERIFIED" : developerId ? "PASS" : "FAIL",
+        developerId ? "Developer ID Application signature with hardened runtime, team and secure timestamp" : cs.state !== "ok" ? `signature not inspected (${commandNote(cs)})` : `not distribution-ready signing (${sig.signature})`,
+        sig);
+      if (options.assess) {
+        const spctl = run("spctl", options.app ? ["--assess", "--type", "execute", "-vv", path] : ["--assess", "--type", "open", "--context", "context:primary-signature", "-vv", path]);
+        const assessment = spctl.state === "ok" ? parse.spctl(spctl.stderr) : { verdict: null, source: null };
+        const staple = run("stapler", ["validate", path]);
+        const stapled = staple.state === "ok" ? parse.stapler(staple.stdout, staple.code) : commandNote(staple);
+        artifact.assessment = { gatekeeper: assessment.verdict ?? (spctl.state === "ok" ? "unparsed" : commandNote(spctl)), source: assessment.source ?? "unknown", stapledTicket: stapled };
+        add("A-GATEKEEPER", "artifact",
+          assessment.verdict === "accepted" && stapled === "stapled" ? "PASS" : assessment.verdict ? "FAIL" : "UNVERIFIED",
+          "read-only Gatekeeper assessment and stapled-ticket validation of the supplied artifact (may use Apple's online lookup)",
+          artifact.assessment);
+      } else {
+        add("A-GATEKEEPER", "artifact", "UNVERIFIED", "Gatekeeper/stapler assessment not run (opt in with --assess)");
+      }
+    } else if (kindOk) {
+      add("A-SIGNATURE", "artifact", "UNVERIFIED", "signature inspection needs macOS");
+    }
+  }
+
+  /* ---------------- summary ---------------- */
+  const counts = Object.fromEntries(STATUSES.map((s) => [s, checks.filter((c) => c.status === s).length]));
+  const exitCode = counts.FAIL > 0 ? EXIT.HAS_FAIL : EXIT.NO_FAIL;
+  const receipt = {
+    schema: SCHEMA,
+    generatedAt: deps.now(),
+    tool: "scripts/mac-readiness-preflight.mjs",
+    mode: { artifactInspection: Boolean(target), assess: Boolean(options.assess) },
+    repository: { name: basename(repo), version: repoVersion ?? "unresolved", identifier: parse.bundleId(identifier ?? "") ?? "unresolved", minimumSystemVersion: typeof minOs === "string" ? parse.macosVersion(minOs) ?? "invalid" : "missing" },
+    artifact,
+    checks,
+    summary: {
+      counts,
+      exitCode,
+      readyForInstalledUse: false,
+      notReadyBecause: [
+        ...checks.filter((c) => c.status !== "PASS").map((c) => `${c.id}: ${c.status}`),
+      ],
+    },
+    safety: {
+      mounted: false, installed: false, launched: false, built: false, signed: false, notarized: false,
+      keychainOrAccountChanged: false, ciTriggered: false, providerContacted: false,
+      appleOnlineLookupPossible: Boolean(options.assess && target),
+      appProfileInspected: false,
+    },
+  };
+  return redact(receipt, deps);
+}
+
+/** Last line of defence: no home directory or account name in a public receipt. */
+export function redact(receipt, deps) {
+  let text = JSON.stringify(receipt);
+  const replaceAll = (needle, replacement) => {
+    if (needle && needle.length >= 3) text = text.split(needle).join(replacement);
+  };
+  replaceAll(deps.homeDir, "~");
+  replaceAll(deps.userName, "<user>");
+  return JSON.parse(text);
+}
+
+export function formatHuman(receipt) {
+  const lines = [`Her Flight Deck Mac readiness preflight (${receipt.schema})`, `generated ${receipt.generatedAt}`, ""];
+  for (const c of receipt.checks) lines.push(`[${c.status.padEnd(11)}] ${c.id.padEnd(17)} ${c.summary}`);
+  const { counts } = receipt.summary;
+  lines.push("", `PASS ${counts.PASS} · FAIL ${counts.FAIL} · UNVERIFIED ${counts.UNVERIFIED} · USER_ACTION ${counts.USER_ACTION}`);
+  lines.push("Not a readiness verdict: installed use stays unverified until the runbook's phases are executed and recorded.");
+  return lines.join("\n");
+}
+
+/* ----------------------------------------------------------------------------------------- */
+/* CLI                                                                                        */
+/* ----------------------------------------------------------------------------------------- */
+
+const HELP = `Usage: node scripts/mac-readiness-preflight.mjs [options]
+
+Read-only. Never builds, mounts, installs, launches, signs, notarizes, edits keychains
+or accounts, triggers CI or contacts a provider.
+
+  --repo <dir>                 checkout to inspect (default: current directory)
+  --artifact <file>            hash and inspect this one file (for example a DMG); never mounted
+  --app <dir>                  inspect this already-available .app bundle read-only
+  --expected-sha256 <hex>      expected SHA-256 for --artifact
+  --expected-size <bytes>      expected byte size for --artifact
+  --expected-identifier <id>   bundle identifier to expect (default ${EXPECTED_IDENTIFIER})
+  --sdk <path>                 explicit SDK to check (default $SDKROOT or ${DEFAULT_SDK})
+  --assess                     also run spctl/stapler on the supplied artifact (may use Apple's online lookup)
+  --json                       print the JSON receipt instead of text
+  --receipt <file>             also write the JSON receipt to this new file
+  --help                       show this help
+
+Exit codes: 0 report produced with no FAIL (USER_ACTION/UNVERIFIED may remain: NOT a
+readiness verdict); 1 at least one FAIL; 2 usage or internal error.`;
+
+export function parseArgs(argv) {
+  const options = {};
+  const valueFlags = { "--repo": "repo", "--artifact": "artifact", "--app": "app", "--expected-sha256": "expectedSha256", "--expected-size": "expectedSize", "--expected-identifier": "expectedIdentifier", "--sdk": "sdk", "--receipt": "receipt" };
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === "--help" || arg === "-h") options.help = true;
+    else if (arg === "--json") options.json = true;
+    else if (arg === "--assess") options.assess = true;
+    else if (valueFlags[arg]) {
+      const value = argv[++i];
+      if (value === undefined || value.startsWith("--")) throw new Error(`${arg} needs a value`);
+      options[valueFlags[arg]] = value;
+    } else throw new Error(`unknown option ${arg}`);
+  }
+  if (options.artifact && options.app) throw new Error("use --artifact or --app, not both");
+  if (options.expectedSha256 !== undefined && !/^[0-9a-fA-F]{64}$/.test(options.expectedSha256)) throw new Error("--expected-sha256 must be 64 hex characters");
+  if (options.expectedSize !== undefined && !/^\d+$/.test(options.expectedSize)) throw new Error("--expected-size must be a whole number of bytes");
+  if ((options.expectedSha256 || options.expectedSize) && !options.artifact) throw new Error("--expected-sha256/--expected-size need --artifact");
+  if (options.assess && !options.artifact && !options.app) throw new Error("--assess needs --artifact or --app");
+  return options;
+}
+
+export function main(argv = process.argv.slice(2), deps = defaultDeps(), io = { out: (s) => process.stdout.write(`${s}\n`), err: (s) => process.stderr.write(`${s}\n`), writeFile: (p, s) => writeFileSync(p, s, { flag: "wx" }) }) {
+  let options;
+  try {
+    options = parseArgs(argv);
+  } catch (error) {
+    io.err(`mac-readiness-preflight: ${error.message}\n\n${HELP}`);
+    return EXIT.USAGE;
+  }
+  if (options.help) {
+    io.out(HELP);
+    return EXIT.NO_FAIL;
+  }
+  try {
+    const receipt = runPreflight(options, deps);
+    const json = JSON.stringify(receipt, null, 2);
+    if (options.receipt) io.writeFile(options.receipt, `${json}\n`);
+    io.out(options.json ? json : formatHuman(receipt));
+    return receipt.summary.exitCode;
+  } catch (error) {
+    io.err(`mac-readiness-preflight: internal error (${error?.code ?? "unexpected"})`);
+    return EXIT.USAGE;
+  }
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = main();
+}
+

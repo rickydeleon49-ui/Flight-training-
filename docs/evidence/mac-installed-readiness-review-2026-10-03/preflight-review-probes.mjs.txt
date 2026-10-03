@@ -1,0 +1,76 @@
+import { createHash } from 'node:crypto';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve, basename } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const script = resolve(process.argv[2] ?? 'scripts/mac-readiness-preflight.mjs');
+const expected = 'b9bd50c1a26a40d0aa052da35a76faae3e35a2c44def494e4610018d3849d8eb';
+const actual = createHash('sha256').update(readFileSync(script)).digest('hex');
+if (actual !== expected) throw new Error('reviewed script hash changed; re-audit before using this characterization');
+const { runPreflight, DEFAULT_SDK } = await import(pathToFileURL(script).href);
+const root = mkdtempSync(join(tmpdir(), 'hfd-readiness-review-'));
+const repo = join(root, 'synthetic-repo');
+const app = join(root, 'Synthetic.app');
+const dmg = join(root, 'Synthetic.dmg');
+mkdirSync(repo); mkdirSync(app); writeFileSync(dmg, 'synthetic bytes');
+const signature = 'Identifier=com.herflightdeck.app\nCodeDirectory v=20500 flags=0x10000(runtime)\nAuthority=Developer ID Application: Synthetic Holder (SYNTHETIC)\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTimestamp=now\nTeamIdentifier=SYNTHETIC\nSealed Resources version=2 rules=13 files=3\n';
+const probes = [];
+function observe(id, changes = {}, options = {}) {
+  const calls = [];
+  const files = new Map([
+    ['package.json', JSON.stringify({version:'0.5.3'})],
+    ['package-lock.json', JSON.stringify({version:'0.5.3'})],
+    ['src-tauri/tauri.conf.json', JSON.stringify({version:'0.5.3', identifier:'com.herflightdeck.app', bundle:{macOS:{minimumSystemVersion:'12.0'}}})],
+    ['src-tauri/Cargo.toml', '[package]\nname="her-flight-deck"\nversion="0.5.3"\n'],
+    ['src-tauri/Cargo.lock', '[[package]]\nname="her-flight-deck"\nversion="0.5.3"\n'],
+    ['scripts/release-policy.json', JSON.stringify({platformDistribution:{macos:{candidateVersion:'0.5.3',architecture:'aarch64',minimumSystemVersion:'12.0'},windows:{status:'held'}}})],
+  ]);
+  const ok = (stdout = '', stderr = '', code = 0) => ({state:'ok', code, stdout, stderr});
+  const deps = {
+    platform:'darwin', processArch:'arm64', nodeVersion:'v22.23.3', homeDir:'/Users/test-account', userName:'test-account', sdkrootEnv: changes.sdk,
+    now:()=> '2026-10-03T00:00:00.000Z',
+    exists: p => p.endsWith('/SDKSettings.json') ? !changes.missingSettings : p.startsWith('/usr/') || p === DEFAULT_SDK || p === changes.sdk || files.has(p.slice(repo.length+1)) || existsSync(p),
+    readText: p => p.endsWith('/SDKSettings.json') ? JSON.stringify({Version:changes.sdkVersion ?? '26.5'}) : files.get(p.slice(repo.length+1)),
+    listDir:()=>[], stat:statSync,
+    hashFile:p=>createHash('sha256').update(readFileSync(p)).digest('hex'),
+    runCommand:(file,args)=>{
+      const name = basename(file); calls.push({name,args});
+      if (name==='git') return ok(args.includes('HEAD') && !args.includes('--abbrev-ref') ? 'a'.repeat(40) : args.includes('--abbrev-ref') ? 'main' : '');
+      if (name==='sw_vers') return ok(args[0]==='-productVersion' ? '27.0.1' : '26A434');
+      if (name==='uname') return ok('arm64');
+      if (name==='sysctl') return ok(args[1]==='hw.model' ? 'Mac17,3' : args[1]==='machdep.cpu.brand_string' ? 'Apple M5' : '0');
+      if (name==='npm') return ok('10.9.9');
+      if (name==='rustc') return ok('release: 1.99.0\nhost: aarch64-apple-darwin\n');
+      if (name==='cargo') return ok('cargo 1.99.0');
+      if (name==='xcrun') return ok('27.0');
+      if (name==='xcode-select') return ok('/Library/Developer/CommandLineTools');
+      if (name==='plutil') return ok({CFBundleIdentifier:'com.herflightdeck.app', LSMinimumSystemVersion:'12.0', CFBundleShortVersionString:'0.5.3', CFBundleExecutable:'synthetic'}[args[1]]);
+      if (name==='lipo') return ok('arm64');
+      if (name==='codesign') return args.includes('--verify') ? ok('', 'a sealed resource is missing or invalid', 1) : ok('', changes.signature ?? signature, changes.displayExit ?? 0);
+      if (name==='spctl') return ok('', `Synthetic.app: accepted\nsource=${changes.source ?? 'Notarized Developer ID'}\n`);
+      if (name==='stapler') return ok('The validate action worked!');
+      return {state:'missing'};
+    }
+  };
+  const receipt = runPreflight({repo, ...options}, deps);
+  return {id, receipt, calls, check:key=>receipt.checks.find(c=>c.id===key)};
+}
+try {
+  const invalid = observe('R1-invalid-seal', {}, {app});
+  probes.push({id:invalid.id, observed:invalid.check('A-SIGNATURE').status, verificationCalls:invalid.calls.filter(c=>c.name==='codesign'&&c.args.includes('--verify')).length, expected:'No signature PASS when strict verification would fail', meetsExpectation:invalid.check('A-SIGNATURE').status!=='PASS'});
+  const nonzero = observe('R1-nonzero-display', {displayExit:1}, {app});
+  probes.push({id:nonzero.id, observed:nonzero.check('A-SIGNATURE').status, displayExit:1, expected:'No PASS from a failed display command', meetsExpectation:nonzero.check('A-SIGNATURE').status!=='PASS'});
+  const container = observe('R1-dmg-without-app-runtime', {signature:signature.replace('flags=0x10000(runtime)','flags=0x0(none)').replace('Sealed Resources version=2 rules=13 files=3','Sealed Resources=none')}, {artifact:dmg});
+  probes.push({id:container.id, observed:container.check('A-SIGNATURE').status, expected:'Do not apply Mach-O hardened-runtime requirement to a signed disk-image container; inner app remains unverified', meetsExpectation:container.check('A-SIGNATURE').status!=='FAIL'});
+  const incompatible = observe('R2-known-incompatible-sdk', {sdk:'/Library/Developer/CommandLineTools/SDKs/MacOSX27.0.sdk',sdkVersion:'27.0'});
+  probes.push({id:incompatible.id, observed:incompatible.check('H-SDK').status, version:incompatible.check('H-SDK').observed.explicitSdkVersion, expected:'No compatible-SDK PASS for the explicitly documented incompatible SDK', meetsExpectation:incompatible.check('H-SDK').status!=='PASS'});
+  const unknown = observe('R2-sdk-missing-metadata', {missingSettings:true});
+  probes.push({id:unknown.id, observed:unknown.check('H-SDK').status, version:unknown.check('H-SDK').observed.explicitSdkVersion, expected:'No compatible-SDK PASS when SDK metadata cannot be read', meetsExpectation:unknown.check('H-SDK').status!=='PASS'});
+  const privateAuthority = observe('R3-private-authority', {signature:signature+'Authority=Private Sentinel Person\n'}, {app});
+  probes.push({id:privateAuthority.id, leaked:JSON.stringify(privateAuthority.receipt).includes('Private Sentinel Person'), expected:'Receipt contains fixed authority categories, never an arbitrary certificate common name', meetsExpectation:!JSON.stringify(privateAuthority.receipt).includes('Private Sentinel Person')});
+  const privateSource = observe('R3-private-assessment-source', {source:'Private Sentinel Person'}, {app,assess:true});
+  probes.push({id:privateSource.id, leaked:JSON.stringify(privateSource.receipt).includes('Private Sentinel Person'), expected:'Receipt contains fixed assessment source categories, never arbitrary alphabetic output', meetsExpectation:!JSON.stringify(privateSource.receipt).includes('Private Sentinel Person')});
+  console.log(JSON.stringify({reviewedSha256:actual, evidence:'Synthetic observations with injected commands; no macOS command, artifact signing, mounting, installed execution or private profile access', probes, unmetExpectations:probes.filter(p=>!p.meetsExpectation).length},null,2));
+  process.exitCode = probes.some(p=>!p.meetsExpectation) ? 1 : 0;
+} finally { rmSync(root,{recursive:true,force:true}); }
