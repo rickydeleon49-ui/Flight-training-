@@ -1,0 +1,16 @@
+Independent reader: Apple PDFKit (macOS system framework, separate implementation from lopdf), driven by a scratch Swift script run with swift 6.3.3 and SDK 26.5; nothing installed or bundled.
+Per document: page count, per-page visible 'ID: Pnnnn' text extracted by PDFKit, consecutive check, and a rendered-thumbnail pixel sample inside the image box.
+
+Source fixtures:
+   synthetic-small-checklist.pdf: pages=10 ids=10 first=1 last=10 consecutive=true pagesWithoutId=0 pagesWithNonWhiteImageSample=0
+   synthetic-long-manual.pdf: pages=1050 ids=1050 first=1 last=1050 consecutive=true pagesWithoutId=0 pagesWithNonWhiteImageSample=0
+   synthetic-illustrated-charts.pdf: pages=60 ids=60 first=1 last=60 consecutive=true pagesWithoutId=0 pagesWithNonWhiteImageSample=60
+Split outputs from this Mac:
+   part-1.pdf: pages=58 ids=58 first=1 last=58 consecutive=true pagesWithoutId=0 pagesWithNonWhiteImageSample=58
+   part-2.pdf: pages=2 ids=2 first=59 last=60 consecutive=true pagesWithoutId=0 pagesWithNonWhiteImageSample=2
+   manual-10-20.pdf: pages=11 ids=11 first=10 last=20 consecutive=true pagesWithoutId=0 pagesWithNonWhiteImageSample=11
+Negative control (PDFKit copies of the 11-page manual range with two pages exchanged / one page removed):
+   tampered-swapped.pdf: pages=11 ids=11 first=11 last=20 consecutive=false pagesWithoutId=0 pagesWithNonWhiteImageSample=11
+   tampered-dropped.pdf: pages=10 ids=10 first=10 last=20 consecutive=false pagesWithoutId=0 pagesWithNonWhiteImageSample=10
+
+Note: the tracker's earlier claim of pdfjs-dist / pdf-lib verification was made on Windows; neither package is installed in this checkout and none was installed for this check.

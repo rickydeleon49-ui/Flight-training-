@@ -1,0 +1,7 @@
+Fixture generation: node scripts/generate-pdf-fixtures.mjs <temporary dir> (exit 0) — all three match FIXTURE_SPECS and the tracker exactly; no hash change:
+   synthetic-small-checklist.pdf: 3360 bytes, SHA-256: f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134
+   synthetic-long-manual.pdf: 330934 bytes, SHA-256: 0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1
+   synthetic-illustrated-charts.pdf: 54032644 bytes, SHA-256: b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d
+
+Fixture C content measurement (node zlib deflate level 9, image streams extracted by their /Length 900000 header):
+   image streams=60, distinct SHA-256=60, per-image deflate ratio min/max=1.0003/1.0003 (900281 bytes from 900000), whole file deflate ratio=0.9999; page IDs in content order=60, strictly 1..60=true; control: constant-value 900000-byte buffer deflates to 895 bytes

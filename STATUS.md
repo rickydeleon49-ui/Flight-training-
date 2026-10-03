@@ -1,10 +1,12 @@
 # Her Flight Deck — current project status
 
-_Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
+_Updated 3 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanently retired · **Windows distribution on hold on v0.5.1; Mac candidate draft prepared at v0.5.3, release approval held after independent audit**_
 
 ## Shared Windows/Mac handoff — 2 October 2026
 
-**A6 source accepted:** [Independent acceptance](docs/MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md) confirms 30 Gemini tests pass and the source hash matches. Reviewed native source and evidence are committed for required exact-head CI/merge. After publication and clean Mac synchronization, [Claude verifies and reconciles A5 evidence](docs/CLAUDE_MAC_A5_EVIDENCE_RECONCILIATION_PROMPT_2026-10-02.md); its source tooling already contains the historical corrections. Installed-platform and release holds remain open.
+**A5 evidence accepted (3 October):** [Independent acceptance](docs/MAC_A5_EVIDENCE_ACCEPTANCE_2026-10-03.md) confirms source and receipt hashes, inspected fixture/archive/PDFKit evidence and passing focused checklist checks. Documentation and evidence are prepared for required CI/merge; installed checks remain open. After publication, [Claude prepares Mac A2 verification](docs/CLAUDE_MAC_A2_VERIFICATION_PREPARATION_PROMPT_2026-10-03.md), completing the readiness package while preserving the Windows source owner.
+
+**A6 merged (PR #50):** [Independent acceptance](docs/MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md), native correction and receipts are on main `b5bf8e0`; required CI passed on reviewed head `e25d940`. Live/installed behavior remains unverified.
 
 **A4 merged (PR #49):** [Independent acceptance](docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md), source and evidence are on main `db15394`; required checks passed on reviewed head `c4bed81`. Installed offline use remains open.
 
@@ -50,11 +52,28 @@ The physical Mac hardware, OS, source checks and local evaluation artifact are n
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
 
-## A6 truthful Gemini retry wording — 2 October 2026 (source accepted; exact-head CI merge gate)
+## A5 fixture and verification-kit evidence reconciliation — 2 October evidence, accepted 3 October 2026
+
+[Reconciliation report](docs/MAC_A5_EVIDENCE_RECONCILIATION_2026-10-02.md) with [sanitized receipts](docs/evidence/mac-a5-reconciliation-2026-10-02/README.md).
+
+- **Code state:** ACCEPTED DOCUMENTATION/EVIDENCE on `codex/mac-a5-evidence-reconciliation`, base main `b5bf8e0` (after PR #50). No tooling, test or production change; no A5 requirement failed.
+- **Verified on this Mac (macOS 27.0.1):**
+  - Fixtures regenerate with the recorded hashes.
+  - Fixture C has 60 distinct, deflate-incompressible images and ordered page IDs.
+  - Release-safety suite: 51 passed, 1 deliberate skip.
+  - Credential inspector returns 0 / 1 / 2 across 9 synthetic cases (including a real unreadable file) with no disclosure.
+  - Native PDF tests pass, as does the opt-in 54 MB split (2 parts, ordered IDs, source unchanged; test-process peak RSS ~573 MB in a debug build, not app memory).
+  - Apple PDFKit independently confirms pages, IDs and images of sources and split outputs and detects tampering.
+- **Reconciled:** the tracker now labels the earlier pdfjs-dist / pdf-lib check and Fixture C part sizes as Windows-host results, and adds the Mac's deterministic split sizes (52,229,815 / 1,801,351 bytes against Windows' 51,731,349 / 1,784,008; same pages and limits; cause not established).
+- **Still open:** installed splitting, memory and credential checks; A2 with its Windows owner; account and signing prerequisites.
+
+[Codex acceptance and review limits](docs/MAC_A5_EVIDENCE_ACCEPTANCE_2026-10-03.md). After required CI/merge, use [Claude's A2 verification-preparation prompt](docs/CLAUDE_MAC_A2_VERIFICATION_PREPARATION_PROMPT_2026-10-03.md); A2 dependent tests require its matching shared source.
+
+## A6 truthful Gemini retry wording — 2 October 2026 (source merged in PR #50)
 
 [Implementation report](docs/MAC_A6_RETRY_WORDING_IMPLEMENTATION_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-a6-retry-wording-2026-10-02/README.md).
 
-- **Code state:** reviewed and committed as `32539bd` on `codex/mac-gemini-retry-wording-a6`, base main `db15394`. [Codex acceptance](docs/MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; required exact-head CI/merge precedes A5 reconciliation.
+- **Code state:** merged in PR #50 as main `b5bf8e0`, after required CI passed on reviewed head `e25d940`. [Codex acceptance](docs/MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md) is separate from the implementer report; historical source commit `32539bd`, base `db15394`.
 - **Correction (`src-tauri/src/gemini.rs` only):**
   - The final "Google is busy" message no longer claims how long the attempts took. The old "over about 11 seconds" summed nominal pauses only, ignoring request time (up to 300 s per request), jitter and the backup request. The obsolete helper is removed.
   - A connection check that ends on 429 or 5xx no longer claims a backup model or generation retries. It never uses the backup.
