@@ -1,5 +1,7 @@
 # A6 truthful Gemini retry wording — implementation report, 2 October 2026
 
+**Codex publication follow-up:** [A6 source accepted](MAC_A6_RETRY_WORDING_ACCEPTANCE_2026-10-02.md), reviewed source committed as `32539bd`. Local/uncommitted labels below describe the implementer handoff before acceptance. Review clarified the OS observation and corrected the A5 checkpoint/recommendation: existing source fixes need evidence reconciliation, not blanket reimplementation. Required exact-head CI/merge remains the gate.
+
 Implements audit finding A6 ([audit](FULL_REPOSITORY_AUDIT_2026-09-29.md#a6--p2-geminis-reported-retry-duration-omits-request-time)) from [Claude's A6 prompt](CLAUDE_MAC_A6_RETRY_WORDING_PROMPT_2026-10-02.md). This is a native wording and context correction with pure message-contract tests. It is the implementer's report and **not Codex acceptance**.
 
 ## Identity and ownership
@@ -7,7 +9,7 @@ Implements audit finding A6 ([audit](FULL_REPOSITORY_AUDIT_2026-09-29.md#a6--p2-
 - **Task / date / roles:** A6 retry wording, 2 October 2026. Implementer: Claude (Mac). Independent reviewer and Git coordinator: Codex.
 - **Machine / toolchain:**
   - MacBook Air (Mac17,3), Apple M5, 32 GB.
-  - **macOS 27.0.1 (26A434).** This Mac was updated since the earlier reports, which recorded 26.6.
+  - **macOS 27.0.1 (26A434), confirmed by current `sw_vers`.** Earlier reports recorded 26.6; an upgrade date/history is not established.
   - Node 22.23.3 / npm 10.9.9 and rustc 1.99.0 via scoped `PATH=/opt/homebrew/opt/node@22/bin:/opt/homebrew/opt/rustup/bin:$PATH`.
   - `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`, still present and still sufficient.
 - **Prerequisite:** PR #49 (A4) merged as `db1539408368aa48260228029590ab19a4748f4d`; `docs/MAC_A4_OFFLINE_STUDY_ACCEPTANCE_2026-10-02.md` is present. The previous A4 checkout was clean.
@@ -82,7 +84,7 @@ Plus this report, `docs/evidence/mac-a6-retry-wording-2026-10-02/` (hashes in it
 
 - Message contracts are unit-tested. No live Gemini request, installed app, real network failure or VoiceOver reading was exercised.
 - The progress text (`waiting_message`) still names the next pause, which is accurate. Total operation time is deliberately not reported anywhere.
-- The OS on this Mac changed to macOS 27.0.1. Source tests and the native build pass with explicit SDK 26.5; earlier installed or packaging evidence (DMG, signing assessment) belongs to the earlier OS and was not repeated.
+- The OS now observed on this Mac is macOS 27.0.1, differing from earlier reports' 26.6. Source tests and the native build pass with explicit SDK 26.5; earlier installed or packaging evidence (DMG, signing assessment) belongs to the earlier OS and was not repeated.
 - **Unchanged:** macOS 12 / Windows support, backup v3 and v1/v2 restore, release holds and the frozen v0.5.3 candidate. No installed launch, DMG, signing or account change.
 
 ## Remaining-foundation checkpoint (after A6, if accepted)
@@ -93,10 +95,10 @@ Plus this report, `docs/evidence/mac-a6-retry-wording-2026-10-02/` (hashes in it
 | A2 atomic material saves | **Open**: Windows-local with its owner; unavailable to the Mac until reviewed source is shared |
 | A3 WebKit compatibility | Merged (PR #48); installed macOS 12 and current-macOS checks open (MAC-03) |
 | A4 offline saved study | Merged (PR #49); installed offline check open (MAC-19) |
-| A5 Mac fixture and verification kit | **Open**: incompressible/distinguishable image fixture, page IDs, a fail-closed archive credential check, and honest memory wording |
+| A5 Mac fixture and verification kit | Historical source fixes already exist on main (generator, archive checker, tests, metrics and memory wording). Remaining current-Mac evidence needs [reconciliation](CLAUDE_MAC_A5_EVIDENCE_RECONCILIATION_PROMPT_2026-10-02.md); installed gates stay open. |
 | A6 retry wording | This change, local and pending review |
 | Installed readiness | Blocked on a dedicated test account and an acceptable signing state |
 
-**Recommended next scoped task (not started):** A5. It is Mac-doable and limited to the test kit. Correct `scripts/generate-pdf-fixtures.mjs` to emit deterministic, incompressible, distinguishable image data and visible page IDs. Re-measure and re-hash the fixtures. Replace the `unzip | grep && … || PASS` credential check with a fail-closed check that has distinct found / absent / error outcomes and prints no secrets, with tests for missing, unreadable and malformed archives. Fix the memory wording. It doesn't touch A2's production boundaries, and it makes the later installed smoke evidence trustworthy. Open-source adoption stays conditional (no MiniSearch, virtualization, Zod/react-markdown or EmbedPDF), and M2, import, the embedded reader and iOS remain gated.
+**Recommended next scoped task (not started; corrected in Codex review):** [A5 evidence reconciliation](CLAUDE_MAC_A5_EVIDENCE_RECONCILIATION_PROMPT_2026-10-02.md). Verify the already-merged fixture generator, fail-closed archive checker, tests and tracker against the dated finding. Reuse existing fixture hashes and source receipts, measure only remaining relevant Mac gaps, and change tooling only after a reproduced requirement failure. Preserve A2 ownership and all installed/release/open-source/M2 gates.
 
 Leave uncommitted for Codex review.
