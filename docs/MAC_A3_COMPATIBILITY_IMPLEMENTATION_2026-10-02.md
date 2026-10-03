@@ -1,5 +1,7 @@
 # A3 WebKit compatibility — implementation report, 2 October 2026
 
+**Publication follow-up:** [Codex accepted A3-R1–R4 source and regressions](MAC_A3_COMPATIBILITY_ACCEPTANCE_2026-10-02.md) and committed the reviewed implementation as `66e8178`. The local/uncommitted labels below describe the implementer handoff before that acceptance; required exact-head CI and merge govern publication.
+
 Implements audit finding A3 ([audit](FULL_REPOSITORY_AUDIT_2026-09-29.md#a3--p1-the-declared-macos-120-minimum-exceeds-the-tested-browser-compatibility)) from [Claude's A3 prompt](CLAUDE_MAC_A3_COMPATIBILITY_PROMPT_2026-10-02.md). Source-level correction with capability-removal tests only.
 
 **Revised for Codex's modal-stack review A3-R1–R3** ([review](MAC_A3_COMPATIBILITY_REVIEW_2026-10-02.md), [regressions](MAC_A3_COMPATIBILITY_REVIEW_REGRESSIONS_2026-10-02.md) and [correction prompt](CLAUDE_MAC_A3_CORRECTION_PROMPT_2026-10-02.md), on PR #47 branch `codex/mac-a3-review`); see [the correction section](#codex-review-a3-r1r3-modal-stack-corrections). **Revised again for the re-review's A3-R4** ([re-review](MAC_A3_COMPATIBILITY_REREVIEW_2026-10-02.md), [regression](MAC_A3_NESTED_DIALOG_REVIEW_REGRESSION_2026-10-02.md), [prompt](CLAUDE_MAC_A3_NESTED_DIALOG_CORRECTION_PROMPT_2026-10-02.md)); see [the R4 section](#codex-re-review-a3-r4-nested-fallback-lifetime).

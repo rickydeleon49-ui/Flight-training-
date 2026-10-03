@@ -4,6 +4,7 @@ Sanitized receipts for [the implementation report](../../MAC_A3_COMPATIBILITY_IM
 
 | File | Contents | SHA-256 |
 | --- | --- | --- |
+| `codex-final-focused-r4.txt` | Independent final Codex run: 53 focused tests pass; all 15 source hashes match; source acceptance recorded separately. | `0363566e96009e8e3befc22bd7385f331420e20a760e8727ac941753822db1f6` |
 | `local-gate-summary-r4.txt` | **Final gate after Codex A3-R4 correction**: 655 frontend passed / 4 skipped, build, 246 Rust passed / 6 ignored, all commands exit 0. | `711c91ae36c385bb0cc31c2d63401befdc69a32b0cb15602ab84e6c22b35a33b` |
 | `nested-lifetime-r4.txt` | The 8 R4 nested-lifetime regressions: the supplied one fails on the reviewed sources; negative control 5 failed / 3 passed; 53 focused A3 tests, Codex's diagnostic and the server-rendering bench pass on the corrected source. | `1b7420998d8213d8d3b142b5e2495553997684ef3e9697e7cc6a1ecebd4cf006` |
 | `local-gate-summary-r1r3.txt` | Gate after Codex A3-R1–R3 corrections: 647 frontend passed / 4 skipped, build, 246 Rust passed / 6 ignored, all commands exit 0. | `cbfa677d337221ceced37943d88b6dfc253d3f3bc2c3ef9df5d1712185785bd2` |
