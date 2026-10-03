@@ -1,0 +1,15 @@
+Codex review-publication artifact hashes, excluding this receipt.
+No implementation acceptance is implied.
+521e3848b8210a23b99e8f9ed3a0eaaef92f9df8dbc45cf6ad482e24b64780e2  STATUS.md
+5136570422ab1bda64ca981922017b11e3b5d322027eeed7d24177e334193674  docs/CLAUDE_STRUCTURED_STUDY_IMPORT_CORRECTIONS_PROMPT_2026-10-03.md
+849be1a15db0f83292df7d8845223f1804ddc9fb2ad03ca287702141155f0031  docs/PROJECT_HANDOFF.md
+e4141847cf1a091a164b495cbe87ebbfcc30ae08018764736be7f764626de56e  docs/STRUCTURED_STUDY_IMPORT_REVIEW_2026-10-03.md
+f157db05dae7688a6bf4c3fb0dd6d50e3df24028cc590068846f985bcf212f41  docs/evidence/structured-study-import-review-2026-10-03/README.md
+dd34b4bc4fa1592a2e5f30ef4c9b89c1522b005846811ccbb598c3da8eb89c23  docs/evidence/structured-study-import-review-2026-10-03/codex-diagnostics.json
+9abc4b929925655384214cebd5b37ec4b27922364b66375670c837b383216f20  docs/evidence/structured-study-import-review-2026-10-03/codex-diagnostics.mjs.txt
+61ae09f796044582a64a33058523fdcc102748a86b018deba5ed8a89f809a49d  docs/evidence/structured-study-import-review-2026-10-03/codex-legacy-webkit-sim.json
+cb0cced0b2634578b1047e52e200df7f6a3f856a1e5d0c58f69aab9536bb2c80  docs/evidence/structured-study-import-review-2026-10-03/codex-render-results.json
+ba7bbbed338ffb65b602cc2e747c44eff2b2dfd8484032ac5f7b972e90ae2afc  docs/evidence/structured-study-import-review-2026-10-03/codex-type-diagnostic.ts.txt
+bf11f35bbad3c65efecfc16e6dfab43cdd7d94228e87929890792cb87a46ec08  docs/evidence/structured-study-import-review-2026-10-03/codex-validator-results.json
+b2b8caea744ac6710fe61f3291b3c97c0700de696a336040fdedba9ee0b057f6  docs/evidence/structured-study-import-review-2026-10-03/reviewed-submission-receipt.txt
+0c1a31a605b7ddecdd3093729e50e57e727d8321546bc19d4aca71c63978359f  docs/evidence/structured-study-import-review-2026-10-03/type-diagnostic-result.txt
