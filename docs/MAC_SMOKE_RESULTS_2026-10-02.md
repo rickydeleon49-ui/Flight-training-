@@ -19,6 +19,8 @@ Observed source checks on the physical Mac. Installed-app evidence remains pendi
 
 ## Automated checks
 
+[Selected sanitized verification receipts](evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) are now shared in GitHub for other agents. These are original observed log excerpts, not a new matrix run; protected full logs remain local.
+
 | Command | Exit code / counts | Local log location (not uploaded) |
 | --- | --- | --- |
 | npm ci | 0; 165 packages installed; audit reports 0 vulnerabilities | `.smoke/mac-2026-10-02/npm-ci-network.log` |

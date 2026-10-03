@@ -6,6 +6,8 @@ Repository: https://github.com/rickydeleon49-ui/Flight-training-. Each machine c
 
 ## Current state and ownership
 
+**Primary platform:** the owner confirmed the main user will use the Mac. Follow [the Mac-first development/readiness plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md). Reviewed source and evidence must be available through GitHub and validated here; preserve Claude's active Mac baseline and the Windows A2 owner. [Sanitized Mac verification receipt](evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) is shared for cross-machine review.
+
 This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exact head before editing; update this table when ownership or acceptance changes.
 
 | Work | Shared source/evidence | State / next action |

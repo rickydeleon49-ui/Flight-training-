@@ -6,6 +6,8 @@ _Last updated: 29 September 2026 (Mac test kit prepared for 2 October 2026). Tar
 
 ## Purpose and current position
 
+**Owner decision (2 October):** Mac is the primary user platform. [The Mac-first readiness plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) requires actual installed validation after source consolidation and signing; existing UNVERIFIED item states remain unchanged.
+
 **2 October physical source evaluation:** [Observed Mac report](MAC_SMOKE_RESULTS_2026-10-02.md) records Apple M5 / 32 GB / macOS 26.6 and passing frontend/native source checks at main `5e388bf4169c7f968b1581292d6e1a24aa0493da`, with explicit installed SDK 26.5 after a default-SDK linker failure. Local Apple Silicon evaluation DMG build passed; its packaged app has an ad hoc signature, fails command-line Gatekeeper assessment, and has no stapled ticket. Installed smoke tests remain pending a dedicated standard test account. These results do not change the installed-Mac item states or frozen candidate identity below.
 
 Keep the Mac app at the same functional and usability level as Windows as shared development progresses. Use the same product and shared code; add platform-specific implementations only where needed. A Windows fix is a candidate Mac improvement, not proof of Mac behavior.

@@ -4,6 +4,8 @@ _Updated 2 October 2026 · Latest release: `v0.5.1` · Version `0.5.2` permanent
 
 ## Shared Windows/Mac handoff — 2 October 2026
 
+**Mac is primary:** the main user will run the app on this Mac. [Owner decision and readiness order](docs/MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md) prioritizes source consolidation, A2/compatibility/offline corrections, signing and installed synthetic-profile verification before everyday use. Claude's active baseline is preserved. [Sanitized source receipts](docs/evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) now accompany the Mac report; Windows-local A2 source remains unavailable on GitHub.
+
 **Claude's next Mac task:** [The copy-ready continuation prompt](docs/CLAUDE_MAC_CONTINUATION_PROMPT_2026-10-02.md) assigns a bounded Study Library baseline and open-source go/no-go recommendation. [Mac report review](docs/MAC_REPORT_REVIEW_2026-10-02.md) reconciles the observed evidence and identifies benchmark coverage limits. A2 remains with its Windows implementer; no new library, production optimization or M2 migration is assigned by this measurement task.
 
 [PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md) is the common starting point for both machines. Research, plans, correction prompts and sanitized review evidence are tracked in GitHub; future handoffs must be linked there rather than depend on a local drive or chat attachment. The [open-source continuation handoff](docs/OPEN_SOURCE_MAC_HANDOFF.md) includes the historical research, 170-repository evidence snapshot, adoption sequence, test gates and Mac prompt. No new production library was installed or copied.
