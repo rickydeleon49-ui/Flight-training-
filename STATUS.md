@@ -36,6 +36,24 @@ The user now has a Mac; its chip, macOS version and installed-app results have n
 
 [Exact-head CI follow-up](docs/RESTORE_RETENTION_CI_FOLLOWUP_2026-10-01.md): Linux checks exposed an unused captured row in a Unix-only test, then a cleanup-retention expectation whose blocking handle existed only on Windows. Focused test-only corrections add the intended row assertion and verify successful cleanup on every platform while preserving the Windows locked-file recovery case. Production behavior is unchanged. Passing corrected exact-head CI remains the merge gate.
 
+## Mac Study Library baseline — 2 October 2026 (local, R1–R3 corrected, pending Codex review)
+
+[Baseline report](docs/MAC_STUDY_LIBRARY_BASELINE_2026-10-02.md) with [sanitized evidence](docs/evidence/mac-study-baseline-2026-10-02/README.md).
+
+- **Code state:** LOCAL UNCOMMITTED on `codex/mac-study-library-baseline` in the Mac clone, base main `a4339fc`. Codex reviews and publishes; the report is not Codex acceptance.
+- **Benchmark:** Deterministic synthetic fixture over 100/1,000/5,000 materials plus a 10,000 stress tier. Every measured step is verified against an independent answer key before its sample is kept (R1). Results are per step, with compute for the same view (R3). Expanded displays up to 1,000 cards are measured (R2). The always-on scenario test includes final-state and intermediate-step negative controls.
+- **Results (Node/jsdom on Apple M5, not WKWebView paint):**
+  - Search compute is 0.14–1.54 ms per measured state at 5,000.
+  - Interactions at 100 shown cost about 9–20 ms, independent of library size.
+  - Show more grows with displayed cards: 16 ms at 200, about 97 ms per click at 1,000. A query from a 1,000-card display costs about 35 ms.
+  - Edit plus full refresh: 20 ms at 5,000 and 35 ms at 10,000.
+- **Decision:**
+  - MiniSearch: no-go.
+  - TanStack Virtual: no adoption justified for the initial 100- and 200-card displays.
+  - Expanded displays exceed the proposed Node targets and remain an open, measured question for installed WKWebView evidence and a fair comparison, including a dependency-free alternative. They do not justify adoption on their own.
+- **Local gate on the corrected diff:** 602 frontend tests passed (4 skipped), build passed, 246 Rust tests passed (6 ignored), fmt/clippy/lock/diff checks passed.
+- **Unchanged:** No production code, package, migration or release state changed. Installed testing has not started.
+
 ## Independent full audit — 29 September 2026
 
 [The current audit and implementation update](docs/FULL_REPOSITORY_AUDIT_2026-09-29.md) reviews current `main` at `c241c4a` and preserves the four pending release/test-kit files. **Release approval is held:** new independent reproductions found failed-restore rollback deleting its protected database, ordinary material/tag saves partially committing on duplicate tags, and a fresh-start compatibility failure when early macOS 12 lacks `structuredClone`. Native dialogs also assume APIs newer than the declared minimum. Saved local guides and practice tests become hidden when Gemini is disconnected. These findings apply to the existing candidate source, which has unchanged product files.
