@@ -1,0 +1,11 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Date-only source",
+  "source": {
+    "createdAt": " 2026-10-03 "
+  },
+  "guide": {
+    "summary": "x"
+  }
+}

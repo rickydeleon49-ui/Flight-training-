@@ -1,0 +1,20 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Unicode café — 日本 🚀",
+  "guide": {
+    "sections": [
+      {
+        "heading": "Scripts",
+        "body": "Hebrew אבג, Greek αβγ, emoji 🧭.\r\nCRLF line endings become LF.\r\n\r\nIsolate: ⁧שלום⁩ end."
+      }
+    ]
+  },
+  "flashcards": [
+    {
+      "id": "c1",
+      "front": "Which symbol is α?",
+      "back": "Alpha (α)"
+    }
+  ]
+}

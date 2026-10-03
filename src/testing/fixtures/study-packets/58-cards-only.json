@@ -1,0 +1,17 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Cards only",
+  "flashcards": [
+    {
+      "id": "c1",
+      "front": "Which letter follows A?",
+      "back": "B"
+    },
+    {
+      "id": "c2",
+      "front": "Which letter follows B?",
+      "back": "C"
+    }
+  ]
+}

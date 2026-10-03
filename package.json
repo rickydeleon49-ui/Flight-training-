@@ -25,7 +25,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.4",
-    "sql.js": "^1.13.0"
+    "sql.js": "^1.13.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.9.0",

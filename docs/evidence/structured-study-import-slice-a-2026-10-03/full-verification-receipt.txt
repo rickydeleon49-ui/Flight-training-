@@ -1,0 +1,140 @@
+Full Local Verification Receipt: Structured Study-Import Slice A
+Date: 2026-10-03 (Corrected 3 October 2026 for SA2)
+Host Environment:
+  OS: macOS 27.0.1 (Darwin 27.0.0 arm64, Apple M5)
+  (Note on SA2 correction: The initial receipt incorrectly identified the host OS as macOS 26.5.0,
+  conflating the selected SDK version with the host operating system. The host was measured as
+  macOS 27.0.1 via sw_vers/uname during both the interruption review and completion review.)
+Scoped PATH: /opt/homebrew/opt/node@22/bin:/opt/homebrew/opt/rustup/bin:$PATH
+Toolchain:
+  node: v22.23.3
+  npm: 10.9.9
+  rustc: 1.99.0 (b940084d7 2026-09-28)
+  cargo: 1.99.0 (5f94df478 2026-08-27)
+  SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+
+================================================================================
+1. Focused Verification
+================================================================================
+Command:
+  npm test -- src/logic/studyPacket src/services/studyPackets.test.ts
+Result: Exit 0
+Output:
+  Test Files  7 passed (7)
+  Tests       241 passed (241)
+  Duration    311ms
+
+Command:
+  cargo test --locked --manifest-path src-tauri/Cargo.toml study_packet::tests
+Result: Exit 0
+Output:
+  running 16 tests
+  test study_packet::tests::cancellation_is_an_empty_result ... ok
+  test study_packet::tests::only_one_bom_is_stripped ... ok
+  test study_packet::tests::refuses_an_oversized_observed_length_before_reading_anything ... ok
+  test study_packet::tests::requires_a_regular_file ... ok
+  test study_packet::tests::failures_are_fixed_codes_and_messages_without_contents_or_paths ... ok
+  test study_packet::tests::empty_files_and_a_bom_alone_are_empty ... ok
+  test study_packet::tests::growth_after_the_size_check_is_still_refused_simulated_reader ... ok
+  test study_packet::tests::serializes_camel_case_fields_for_the_webview ... ok
+  test study_packet::tests::reading_writes_nothing_beside_the_selected_file ... ok
+  test study_packet::tests::reads_a_regular_file_and_hashes_its_original_bytes ... ok
+  test study_packet::tests::returns_only_the_file_name_never_the_directory ... ok
+  test study_packet::tests::strips_one_utf8_bom_but_hashes_it ... ok
+  test study_packet::tests::growth_after_the_size_check_is_still_refused_real_file ... ok
+  test study_packet::tests::refuses_invalid_utf8_and_utf16_byte_order_marks ... ok
+  test study_packet::tests::refuses_a_named_pipe_without_blocking ... ok
+  test study_packet::tests::accepts_exactly_the_limit_and_refuses_one_byte_more ... ok
+  test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 256 filtered out
+
+================================================================================
+2. Repaired Mutation Runner and Aggregate Failure Propagation
+================================================================================
+Command:
+  node scripts/run-slice-a-mutations.mjs --self-test . docs/evidence/structured-study-import-slice-a-2026-10-03/mutation-results.json
+Result: Exit 0
+Summary:
+  Unmodified control: passed (231 tests, 0 failures, exit 0)
+  Self-test check: passed (intentional M10 expectation mismatch correctly recognized in scratch)
+  Mutants evaluated: 22
+  Results: 19 caught, 3 neutralized (M10, M12a, M12b), 0 infrastructure errors, 22 as expected
+
+Failure Propagation Evidence Distinction:
+  - The standard `--self-test` command runs a self-test check in an owned temporary directory,
+    verifying mismatch recognition, and then proceeds with the normal 22-mutant suite, exiting 0.
+  - The API-level script (`self-test-failure-propagation.txt`) ran `runMutations()` directly with M10
+    falsely expected as caught, confirming the return value flagged `asExpected: false` and `allPassed: false`.
+  - In the independent Codex review (`docs/STRUCTURED_STUDY_IMPORT_SLICE_A_REVIEW_2026-10-03.md`),
+    Codex executed an actual CLI run of the runner with M10's expected classification inverted from
+    neutralized to caught across all 22 rows: 21 as expected / 1 unexpected, measuring actual process Exit 1
+    (evidence in `docs/evidence/structured-study-import-slice-a-review-2026-10-03/README.md, codex-cli-mismatch.json and codex-cli-mismatch.log.txt`).
+
+================================================================================
+3. Full Local Gate Matrix (Sequential)
+================================================================================
+Gate 3.1: Full Frontend Tests
+Command:
+  npm test
+Result: Exit 0
+Summary:
+  Test Files: 74 passed | 3 skipped (77)
+  Tests:      941 passed | 4 skipped (945)
+
+Gate 3.2: Production Build and Typecheck
+Command:
+  npm run build (tsc --noEmit && vite build)
+Result: Exit 0
+Summary:
+  184 modules transformed, built in 662ms.
+
+Gate 3.3: Rust Formatting Check
+Command:
+  cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+Result: Exit 0
+Summary:
+  Code adheres strictly to rustfmt conventions.
+
+Gate 3.4: Rust Clippy with Warnings Denied
+Command:
+  cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+Result: Exit 0
+Summary:
+  Zero clippy warnings across all targets.
+  (Intermediate note: corrected unneeded literal unwrap in study_packet cancellation test).
+
+Gate 3.5: Full Locked Rust Tests
+Command:
+  cargo test --locked --manifest-path src-tauri/Cargo.toml
+Result: Exit 0
+Summary:
+  test result: ok. 266 passed; 0 failed; 6 ignored; 0 measured; 0 filtered out
+
+Gate 3.6: Cargo Lockfile Synchronization
+Command:
+  npm run test:cargo-lock (node scripts/test-cargo-lock-sync.mjs)
+Result: Exit 0
+Summary:
+  Cargo lockfile synchronization verified: her-flight-deck is at 0.5.3 in both Cargo.toml and Cargo.lock
+
+Gate 3.7: Whitespace and Formatting Checks
+Command:
+  git diff --check
+Result: Exit 0
+Summary:
+  Tracked differences contain zero trailing whitespace or formatting violations.
+  Untracked files verified for clean line endings and trailing whitespace.
+
+================================================================================
+4. Licensing and Distribution Evidence
+================================================================================
+Dependency:
+  zod@4.6.5 (pinned exactly in package.json and package-lock.json)
+  Tarball: https://registry.npmjs.org/zod/-/zod-4.6.5.tgz
+  Integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==
+Notice comparison:
+  public/THIRD_PARTY_NOTICES.txt SHA-256: c497d9ea8d0a8fe60845a208370f698c457b94a0996fe131554955849cd7ba34
+  dist/THIRD_PARTY_NOTICES.txt   SHA-256: c497d9ea8d0a8fe60845a208370f698c457b94a0996fe131554955849cd7ba34
+  Byte-identical: TRUE
+Frontend inclusion:
+  src-tauri/tauri.conf.json configures frontendDist: "../dist". Vite build copies public/ to dist/.
+  Tauri packages dist/ assets directly into the application bundle.

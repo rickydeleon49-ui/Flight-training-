@@ -1,0 +1,15 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Cards with notes",
+  "flashcards": [
+    {
+      "id": "c1",
+      "front": "Which letter follows A?",
+      "back": "B"
+    }
+  ],
+  "guide": {
+    "sourceNotes": "\r\nSynthetic source notes for an invented chart.  "
+  }
+}

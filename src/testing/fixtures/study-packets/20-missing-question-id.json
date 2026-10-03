@@ -1,0 +1,27 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Invented labels practice",
+  "questions": [
+    {
+      "type": "single-choice",
+      "question": "In the invented alphabet, which label comes after Plinth 1?",
+      "choices": [
+        {
+          "id": "a",
+          "text": "Zorb"
+        },
+        {
+          "id": "b",
+          "text": "Quill"
+        },
+        {
+          "id": "c",
+          "text": "Marrow"
+        }
+      ],
+      "correctChoiceId": "b",
+      "explanation": "In this made-up sequence, Quill always follows Plinth."
+    }
+  ]
+}

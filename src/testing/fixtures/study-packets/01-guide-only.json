@@ -1,0 +1,19 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Letter order guide",
+  "guide": {
+    "summary": "A short **synthetic** guide about the order of invented labels.",
+    "sections": [
+      {
+        "heading": "Labels",
+        "body": "- Plinth\n- Quill\n- Marrow\n\nQuill follows Plinth."
+      },
+      {
+        "heading": "Letters",
+        "body": "The letter B follows A.\n\nThis guide has no questions."
+      }
+    ],
+    "sourceNotes": "Synthetic example. No real source."
+  }
+}
