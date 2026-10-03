@@ -1,0 +1,22 @@
+skipHtml:false "<script>alert(1)</script> hi" => "&lt;script&gt;alert(1)&lt;/script&gt; hi"
+skipHtml:false "x <b>bold</b> y" => "<p>x &lt;b&gt;bold&lt;/b&gt; y</p>"
+skipHtml:false "<Comp prop={1} />" => "&lt;Comp prop={1} /&gt;"
+bq 500 ok 12ms
+bq 1000 ok 19ms
+bq 1500 ok 29ms
+bq 2000 FAIL@render RangeError
+bq 2500 FAIL@render RangeError
+bq 3000 ok 84ms
+bq 4000 ok 145ms
+samelineList 500 ok 97ms
+samelineList 1000 FAIL@toHast RangeError
+samelineList 1500 FAIL@toHast RangeError
+samelineList 2000 FAIL@toHast RangeError
+samelineList 3000 FAIL@toHast RangeError
+samelineList 5000 FAIL@toHast RangeError
+indentList 100 10299 ok 41ms
+indentList 140 20019 ok 77ms
+emphasis 1000 ok 54ms
+emphasis 5000 ok 810ms
+links 1000 ok 7ms
+links 5000 ok 17ms

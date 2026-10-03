@@ -1,0 +1,264 @@
+{
+  "summary": {
+    "total": 41,
+    "passed": 37,
+    "failed": 4,
+    "node": "v22.23.3"
+  },
+  "rows": [
+    {
+      "name": "R1: unknown ASCII private keys are redacted at top level and nested",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: credential-shaped unknown keys are redacted",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: nested scan failures under unknown keys use redacted paths",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: duplicate unknown keys are reported without their name",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: duplicate contract-owned key reports only the fixed field name",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: duplicate question IDs are identified by index and firstIndex only",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: duplicate flashcard IDs are identified by index and firstIndex only",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: duplicate choice IDs are identified by index and firstIndex only",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: credential-shaped duplicate question IDs are not echoed beside the credential error",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: answer keys and duplicate choice text never echo packet values",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: directive and legacy-answer fields keep targeted errors from fixed allowlists",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: benign contract-owned paths are kept exactly",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: failure objects contain only allowlisted properties across stages",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: unexpected internal errors return a fixed code without exception text",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: preview retains normalized source claims",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: generator-only source is flagged as an unverified claim",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: createdAt-only source is flagged as an unverified claim",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: note-only source is flagged as an unverified claim",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: absent or empty source is not a claim",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: references stay associated with their items and order",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: preview keeps normalized item content and choice IDs for association",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: preview-only information is absent from persistence output",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: discardedOnSave discloses claims, references and export IDs",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: guide-only, questions-only and cards-only preview data",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R3: persistence material carries only the packet title",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R3: canonical persistence JSON ignores key order and preview-only values",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R3: text entry re-derives the byte limit and refuses an unstripped BOM",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: questions with a sourceNotes-only guide are rejected, not silently dropped",
+      "pass": false,
+      "problems": [
+        "not a failure",
+        "failure key preview",
+        "failure key payload",
+        "sensitive values echoed: 2",
+        "rejected result carries preview or payload",
+        "codes ",
+        "expected source_notes_without_study_set at $.guide.sourceNotes"
+      ]
+    },
+    {
+      "name": "R5: questions with empty summary and sections plus sourceNotes are rejected",
+      "pass": false,
+      "problems": [
+        "not a failure",
+        "failure key preview",
+        "failure key payload",
+        "sensitive values echoed: 2",
+        "rejected result carries preview or payload",
+        "codes ",
+        "expected source_notes_without_study_set at $.guide.sourceNotes"
+      ]
+    },
+    {
+      "name": "R5: a summary that normalizes to empty does not make notes persistable",
+      "pass": false,
+      "problems": [
+        "not a failure",
+        "failure key preview",
+        "failure key payload",
+        "sensitive values echoed: 2",
+        "rejected result carries preview or payload",
+        "codes ",
+        "expected source_notes_without_study_set at $.guide.sourceNotes"
+      ]
+    },
+    {
+      "name": "R5: omitted and empty flashcard and section arrays are treated alike",
+      "pass": false,
+      "problems": [
+        "not a failure",
+        "failure key preview",
+        "failure key payload",
+        "sensitive values echoed: 2",
+        "rejected result carries preview or payload",
+        "codes ",
+        "not a failure",
+        "failure key preview",
+        "failure key payload",
+        "sensitive values echoed: 2",
+        "rejected result carries preview or payload",
+        "codes ",
+        "not a failure",
+        "failure key preview",
+        "failure key payload",
+        "sensitive values echoed: 2",
+        "rejected result carries preview or payload",
+        "codes ",
+        "not a failure",
+        "failure key preview",
+        "failure key payload",
+        "sensitive values echoed: 2",
+        "rejected result carries preview or payload",
+        "codes "
+      ]
+    },
+    {
+      "name": "R5: credential-shaped or private notes are rejected without echo",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: cards with guide sourceNotes preserve the notes",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: a substantive guide with sourceNotes preserves them (summary or sections)",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: combined guide, cards and questions preserve the notes",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: questions with blank sourceNotes remain valid",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: standalone sourceNotes remain an empty packet",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: sourceNotes normalization is preserved into preview and payload",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R5: canonical persistence content includes saved sourceNotes and changes with them",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "Control: trailing LF in a flashcard ID is rejected",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "Control: trailing LF in a choice ID and answer is rejected",
+      "pass": true,
+      "problems": []
+    }
+  ]
+}

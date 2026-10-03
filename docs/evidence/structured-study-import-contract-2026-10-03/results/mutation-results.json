@@ -1,0 +1,115 @@
+{
+  "rows": [
+    {
+      "mutant": "M1 forbidden property names accepted",
+      "exit": 1,
+      "failed": 2,
+      "caught": true,
+      "caughtBy": [
+        "fixture:34-proto-key.json",
+        "fixture:35-constructor-key-nested.json"
+      ]
+    },
+    {
+      "mutant": "M2 duplicate keys accepted (last wins)",
+      "exit": 1,
+      "failed": 2,
+      "caught": true,
+      "caughtBy": [
+        "fixture:17-duplicate-key.json",
+        "generated:sentinel-duplicate-key-unsafe-name"
+      ]
+    },
+    {
+      "mutant": "M3 id uniqueness case-sensitive",
+      "exit": 1,
+      "failed": 1,
+      "caught": true,
+      "caughtBy": [
+        "fixture:19-duplicate-id-differs-by-case.json"
+      ]
+    },
+    {
+      "mutant": "M4 answer key case silently repaired",
+      "exit": 1,
+      "failed": 1,
+      "caught": true,
+      "caughtBy": [
+        "fixture:24-answer-case-mismatch.json"
+      ]
+    },
+    {
+      "mutant": "M5 depth limit removed",
+      "exit": 1,
+      "failed": 1,
+      "caught": true,
+      "caughtBy": [
+        "generated:depth-over-limit-9-objects"
+      ]
+    },
+    {
+      "mutant": "M6 UTF-16 length instead of code points",
+      "exit": 1,
+      "failed": 2,
+      "caught": true,
+      "caughtBy": [
+        "generated:title-199-code-points",
+        "generated:title-200-code-points-astral"
+      ]
+    },
+    {
+      "mutant": "M7 page claims mapped to sourcePage",
+      "exit": 1,
+      "failed": 2,
+      "caught": true,
+      "caughtBy": [
+        "fixture:02-flashcards-and-test.json",
+        "generated:page-at-max-1000"
+      ]
+    },
+    {
+      "mutant": "M8 unknown fields allowed",
+      "exit": 1,
+      "failed": 7,
+      "caught": true,
+      "caughtBy": [
+        "fixture:36-directive-fields.json",
+        "generated:depth-at-limit-8",
+        "generated:depth-at-limit-8-objects",
+        "generated:object-keys-at-limit-32",
+        "generated:key-length-at-limit-64",
+        "generated:values-at-limit",
+        "generated:sentinel-unknown-field-name"
+      ]
+    },
+    {
+      "mutant": "M9 credential check removed",
+      "exit": 1,
+      "failed": 2,
+      "caught": true,
+      "caughtBy": [
+        "generated:credential-google-key-shape",
+        "generated:credential-pem-header"
+      ]
+    },
+    {
+      "mutant": "M10 errors echo input",
+      "exit": 1,
+      "failed": 1,
+      "caught": true,
+      "caughtBy": [
+        "generated:sentinel-wrong-type"
+      ]
+    },
+    {
+      "mutant": "M11 control characters accepted",
+      "exit": 1,
+      "failed": 2,
+      "caught": true,
+      "caughtBy": [
+        "fixture:41-escaped-control-character.json",
+        "fixture:42-lone-surrogate.json"
+      ]
+    }
+  ]
+}

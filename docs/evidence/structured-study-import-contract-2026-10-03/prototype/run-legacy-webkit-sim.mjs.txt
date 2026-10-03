@@ -1,0 +1,25 @@
+// Capability simulation (not WebKit): remove APIs that macOS 12.0-12.2 WebKit lacks, then validate and render.
+// Usage: node run-legacy-webkit-sim.mjs <fixtures-dir> <results.json>
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+const [dir, out] = process.argv.slice(2);
+const removed = [];
+for (const [obj, key, label] of [[Object, "hasOwn", "Object.hasOwn"], [globalThis, "structuredClone", "structuredClone"], [Array.prototype, "at", "Array.prototype.at"], [String.prototype, "at", "String.prototype.at"], [Array.prototype, "findLast", "Array.prototype.findLast"], [String.prototype, "isWellFormed", "String.prototype.isWellFormed"]]) {
+  if (key in obj) { delete obj[key]; removed.push(label); }
+}
+const { validatePacketBytes } = await import("./src/validator.mjs");
+const { renderGuideMarkdown } = await import("./src/render.mjs");
+const rows = [];
+const v = validatePacketBytes(readFileSync(join(dir, "02-flashcards-and-test.json")));
+rows.push({ step: "validate fixture 02 without those APIs", ok: v.ok });
+const md = validatePacketBytes(readFileSync(join(dir, "01-guide-only.json"))).payload?.studySet?.sections[0].body ?? "- a";
+const tryRender = (label) => { try { renderGuideMarkdown(md); rows.push({ step: label, ok: true }); } catch (e) { rows.push({ step: label, ok: false, error: `${e.constructor.name}: ${e.message.slice(0, 80)}` }); } };
+tryRender("render without Object.hasOwn (expected to fail)");
+// A narrow shim with the specified semantics, as a production slice would need before rendering.
+Object.defineProperty(Object, "hasOwn", { value: (o, k) => Object.prototype.hasOwnProperty.call(Object(o), k), configurable: true, writable: true });
+tryRender("render with a narrow Object.hasOwn shim");
+const result = { kind: "capability simulation in Node, not WebKit", removed, rows };
+writeFileSync(out, JSON.stringify(result, null, 2) + "\n");
+console.log(JSON.stringify(result, null, 1));
+const expected = rows[0].ok && !rows[1].ok && rows[2].ok;
+process.exit(expected ? 0 : 1);

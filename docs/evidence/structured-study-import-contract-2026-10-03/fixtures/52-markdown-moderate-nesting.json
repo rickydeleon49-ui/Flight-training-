@@ -1,0 +1,13 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Deep formatting is data",
+  "guide": {
+    "sections": [
+      {
+        "heading": "Moderate nesting",
+        "body": "> > > > > > > > - - - - - - - - sixteen container levels"
+      }
+    ]
+  }
+}

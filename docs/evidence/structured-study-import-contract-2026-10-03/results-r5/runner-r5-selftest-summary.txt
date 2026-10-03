@@ -1,0 +1,12 @@
+node v22.23.3 npm 10.9.9 2026-10-03T22:04:38Z
+validator exit=1 {"total":106,"passed":105,"failed":1,"node":"v22.23.3"}
+regressions exit=0 {"total":41,"passed":41,"failed":0,"node":"v22.23.3"}
+codex-adapted exit=0 {"total":8,"passed":8,"failed":0,"node":"v22.23.3"}
+codex-source-notes exit=0 {"total":6,"passed":6,"failed":0,"node":"v22.23.3"}
+adapter exit=0 {"kind":"fake-adapter observations (not database evidence)","total":13,"passed":13,"node":"v22.23.3"}
+csp-jitless exit=0 {"mode":"jitless","jitless":true,"functionConstructorCalls":0,"accepted":15}
+mutations exit=1 {"mutants":22,"asExpected":19}
+dto-check exit=0 negative-old-omit.ts(7,62): error TS2322: Type '"import"' is not assignable to type '"gemini"'.
+schema exit=0 }
+schema-divergence exit=0 {"decomposedTitle400CodePoints":false,"composedTitle200CodePoints":true}
+OVERALL FAIL: validator mutations

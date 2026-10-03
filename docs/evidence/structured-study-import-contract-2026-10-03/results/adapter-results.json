@@ -1,0 +1,115 @@
+{
+  "summary": {
+    "kind": "fake-adapter observations (not database evidence)",
+    "total": 13,
+    "passed": 13,
+    "node": "v22.23.3"
+  },
+  "rows": [
+    {
+      "name": "S1 cancel at picker: no read result, no write",
+      "pass": true,
+      "details": "cancelled-at-picker"
+    },
+    {
+      "name": "S2 preview then cancel: zero writes, prior data unchanged",
+      "pass": true,
+      "details": {
+        "sections": 0,
+        "flashcards": 3,
+        "questions": 2,
+        "choices": 6,
+        "sourceRefs": 2
+      }
+    },
+    {
+      "name": "S3 invalid packet: rejected before confirmation, zero writes",
+      "pass": true,
+      "details": [
+        "answer_key_not_in_choices"
+      ]
+    },
+    {
+      "name": "S4 confirm: new material with guide and test; unrelated content unchanged; counts equal preview",
+      "pass": true,
+      "details": {
+        "state": "saved",
+        "refreshed": true
+      }
+    },
+    {
+      "name": "S5 failure after-material: prior data conserved; retry saves exactly once",
+      "pass": true,
+      "details": {
+        "first": "failed",
+        "second": "saved"
+      }
+    },
+    {
+      "name": "S5 failure after-study-set: prior data conserved; retry saves exactly once",
+      "pass": true,
+      "details": {
+        "first": "failed",
+        "second": "saved"
+      }
+    },
+    {
+      "name": "S5 failure commit: prior data conserved; retry saves exactly once",
+      "pass": true,
+      "details": {
+        "first": "failed",
+        "second": "saved"
+      }
+    },
+    {
+      "name": "S6 repeated confirmation while saving: second click ignored, one save call",
+      "pass": true,
+      "details": {
+        "first": "saved",
+        "nested": "ignored-duplicate-click"
+      }
+    },
+    {
+      "name": "S7 outcome unknown after commit: retry reports already saved, no duplicate",
+      "pass": true,
+      "details": {
+        "first": "outcome-unknown",
+        "second": "already_saved"
+      }
+    },
+    {
+      "name": "S8 post-commit refresh failure: reported as saved-but-stale, data kept, no rollback",
+      "pass": true,
+      "details": {
+        "state": "saved",
+        "refreshed": false,
+        "message": "Saved, but the screen could not refresh."
+      }
+    },
+    {
+      "name": "S9 transient lock: bounded retry succeeds after 2; gives up after 4 with data unchanged",
+      "pass": true,
+      "details": {
+        "c": "saved",
+        "c2": "failed",
+        "calls": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "name": "S10 operation id reused with different content: conflict, nothing changed",
+      "pass": true,
+      "details": "failed"
+    },
+    {
+      "name": "S11 replacement design probe: changed target aborts; deleted target aborts; nothing written",
+      "pass": true,
+      "details": {
+        "c": "stale: target changed",
+        "c2": "stale: target deleted"
+      }
+    }
+  ]
+}

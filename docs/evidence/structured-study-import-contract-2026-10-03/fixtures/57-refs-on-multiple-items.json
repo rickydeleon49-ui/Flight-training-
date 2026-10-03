@@ -1,0 +1,76 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "References on several items",
+  "flashcards": [
+    {
+      "id": "card-1",
+      "front": "A?",
+      "back": "B",
+      "sourceRefs": [
+        {
+          "label": "  Invented\n chart é ",
+          "page": 4
+        },
+        {
+          "label": "Second card ref"
+        }
+      ]
+    },
+    {
+      "id": "card-2",
+      "front": "C?",
+      "back": "D"
+    }
+  ],
+  "questions": [
+    {
+      "id": "quest-1",
+      "type": "single-choice",
+      "question": "Pick Quill",
+      "choices": [
+        {
+          "id": "a",
+          "text": "Zorb"
+        },
+        {
+          "id": "b",
+          "text": "Quill"
+        }
+      ],
+      "correctChoiceId": "b",
+      "explanation": "Invented.",
+      "sourceRefs": [
+        {
+          "page": 12
+        }
+      ]
+    },
+    {
+      "id": "quest-2",
+      "type": "single-choice",
+      "question": "Pick Zorb",
+      "choices": [
+        {
+          "id": "a",
+          "text": "Zorb"
+        },
+        {
+          "id": "b",
+          "text": "Quill"
+        }
+      ],
+      "correctChoiceId": "a",
+      "explanation": "Invented.",
+      "sourceRefs": [
+        {
+          "label": "Q2 first"
+        },
+        {
+          "label": "Q2 second",
+          "page": 2
+        }
+      ]
+    }
+  ]
+}

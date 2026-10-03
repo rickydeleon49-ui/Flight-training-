@@ -1,0 +1,43 @@
+// Mutation sensitivity: apply one deliberate defect to a scratch copy of the validator, rerun the fixture
+// runner, and record which expectations catch it. Usage: node run-mutations.mjs <fixtures> <expected> <results.json>
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, symlinkSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
+const [fixtures, expected, resultsPath] = process.argv.slice(2);
+const here = new URL(".", import.meta.url).pathname;
+const MUTANTS = {
+  "M1 forbidden property names accepted": ['if (FORBIDDEN_KEYS.has(key)) fail("forbidden_property_name");', ""],
+  "M2 duplicate keys accepted (last wins)": ['if (seen.has(key)) fail("duplicate_key", SAFE_NAME_RE.test(key) ? { field: key } : {});', ""],
+  "M3 id uniqueness case-sensitive": ["const k = item.id.toLowerCase();", "const k = item.id;"],
+  "M4 answer key case silently repaired": ['errors.push(err(folded ? "answer_key_case_mismatch" : "answer_key_not_in_choices", `${base}.correctChoiceId`));', 'if (!folded) errors.push(err("answer_key_not_in_choices", `${base}.correctChoiceId`));'],
+  "M5 depth limit removed": ['if (depth + 1 > LIMITS.depth) fail("depth_exceeded", { limit: LIMITS.depth });\n      i++;\n      const obj', "i++;\n      const obj"],
+  "M6 UTF-16 length instead of code points": ["const length = codePointLength(value);", "const length = value.length;"],
+  "M7 page claims mapped to sourcePage": ["flashcards: cards.map((c) => ({ front: c.front, back: c.back, sourcePage: null })),", "flashcards: cards.map((c) => ({ front: c.front, back: c.back, sourcePage: c.sourceRefs?.[0]?.page ?? null })),"],
+  "M8 unknown fields allowed": ["export const packetSchema = z.strictObject({", "export const packetSchema = z.looseObject({"],
+  "M9 credential check removed": ["if (CREDENTIAL_PATTERNS.some((re) => re.test(value))) errors.push(err(\"credential_like_content\", p));", ""],
+  "M10 errors echo input": ["function mapIssue(issue) {\n  const path = pathString(issue.path);", "function mapIssue(issue) {\n  const path = pathString(issue.path) + (typeof issue.input === 'string' ? ' ' + issue.input : '');"],
+  "M11 control characters accepted": ["if (hasInvalidCharacters(out)) fail(\"invalid_string_character\");", ""],
+};
+const rows = [];
+for (const [name, [from, to]] of Object.entries(MUTANTS)) {
+  const dir = mkdtempSync(join(tmpdir(), "hfd-mutant-"));
+  try {
+    cpSync(join(here, "src"), join(dir, "src"), { recursive: true });
+    cpSync(join(here, "run-fixtures.mjs"), join(dir, "run-fixtures.mjs"));
+    symlinkSync(join(here, "node_modules"), join(dir, "node_modules"));
+    const file = join(dir, "src", "validator.mjs");
+    const src = readFileSync(file, "utf8");
+    if (!src.includes(from)) throw new Error(`mutation anchor missing: ${name}`);
+    writeFileSync(file, src.replace(from, to));
+    const run = spawnSync(process.execPath, ["run-fixtures.mjs", fixtures, expected, join(dir, "r.json")], { cwd: dir, encoding: "utf8" });
+    const result = JSON.parse(readFileSync(join(dir, "r.json"), "utf8"));
+    const caughtBy = result.rows.filter((r) => !r.pass).map((r) => r.name);
+    rows.push({ mutant: name, exit: run.status, failed: result.summary.failed, caught: caughtBy.length > 0, caughtBy });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+writeFileSync(resultsPath, JSON.stringify({ rows }, null, 2) + "\n");
+for (const r of rows) console.log(`${r.caught ? "CAUGHT" : "MISSED"}  ${r.mutant}  exit=${r.exit} failed=${r.failed}  ${r.caughtBy.slice(0, 4).join(", ")}`);
+process.exit(rows.every((r) => r.caught) ? 0 : 1);

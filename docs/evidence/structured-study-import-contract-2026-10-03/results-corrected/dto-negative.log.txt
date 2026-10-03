@@ -1,0 +1,2 @@
+negative-old-omit.ts(6,64): error TS2322: Type '"import"' is not assignable to type '"gemini"'.
+negative-old-omit.ts(7,62): error TS2322: Type '"import"' is not assignable to type '"gemini"'.

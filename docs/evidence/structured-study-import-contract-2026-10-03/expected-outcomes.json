@@ -1,0 +1,584 @@
+{
+  "description": "Expected outcomes for the hand-written synthetic fixtures. Generated boundary/encoding cases declare their own expectations in prototype/boundary-cases.mjs.txt. 'codes' is the exact set of error codes; 'warnings' is the exact set of warning codes. Corrected 3 October for review R2: previewSource, previewRefs ([id, refs] per item in order), discardedOnSave and persistenceExcludes assert the in-memory preview data and its absence from the persistence payload. R5 (3 October): payloadSourceNotes/previewGuideSourceNotes assert guide.sourceNotes is saved exactly when previewed; 'paths' asserts the rejection path; previewGuide asserts a null preview guide.",
+  "contract": "hfd-study-packet/1",
+  "fixtures": {
+    "01-guide-only.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test"
+      ],
+      "counts": {
+        "sections": 2,
+        "flashcards": 0,
+        "questions": 0,
+        "choices": 0,
+        "sourceRefs": 0
+      },
+      "previewSource": null
+    },
+    "02-flashcards-and-test.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": true,
+      "warnings": [
+        "source_claim_unverified",
+        "source_refs_unverified"
+      ],
+      "counts": {
+        "sections": 0,
+        "flashcards": 3,
+        "questions": 2,
+        "choices": 6,
+        "sourceRefs": 2
+      },
+      "correctIndexes": [
+        1,
+        2
+      ],
+      "previewSource": {
+        "generator": "Example assistant (claim)",
+        "createdAt": "2026-10-03T12:00:00Z",
+        "note": "Synthetic packet for contract tests."
+      },
+      "previewRefs": {
+        "cards": [
+          [
+            "c1",
+            []
+          ],
+          [
+            "c2",
+            [
+              {
+                "label": "Invented chart",
+                "page": 3
+              }
+            ]
+          ],
+          [
+            "c3",
+            []
+          ]
+        ],
+        "questions": [
+          [
+            "q1",
+            [
+              {
+                "label": "Invented chart section 2"
+              }
+            ]
+          ],
+          [
+            "q2",
+            []
+          ]
+        ]
+      },
+      "discardedOnSave": {
+        "sourceClaims": [
+          "generator",
+          "createdAt",
+          "note"
+        ],
+        "sourceRefs": 2,
+        "exportIds": 5,
+        "choiceIds": 6
+      }
+    },
+    "03-unicode.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "bidi_controls_present",
+        "no_practice_test"
+      ],
+      "title": "Unicode café — 日本 🚀",
+      "noCarriageReturns": true
+    },
+    "04-questions-only.json": {
+      "ok": true,
+      "createsStudySet": false,
+      "createsPracticeTest": true,
+      "warnings": [
+        "no_study_guide"
+      ],
+      "previewSource": null
+    },
+    "05-hostile-markdown.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "html_like_text",
+        "markdown_images_not_shown",
+        "no_practice_test"
+      ]
+    },
+    "10-unsupported-version-2.json": {
+      "ok": false,
+      "stage": "gate",
+      "codes": [
+        "unsupported_version"
+      ]
+    },
+    "11-unsupported-version-0.json": {
+      "ok": false,
+      "stage": "gate",
+      "codes": [
+        "unsupported_version"
+      ]
+    },
+    "12-version-as-string.json": {
+      "ok": false,
+      "stage": "gate",
+      "codes": [
+        "unsupported_version"
+      ]
+    },
+    "13-format-missing.json": {
+      "ok": false,
+      "stage": "gate",
+      "codes": [
+        "format_missing"
+      ]
+    },
+    "14-unknown-format.json": {
+      "ok": false,
+      "stage": "gate",
+      "codes": [
+        "unsupported_format"
+      ]
+    },
+    "15-malformed-trailing-comma.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "malformed_json"
+      ]
+    },
+    "16-truncated.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "malformed_json"
+      ]
+    },
+    "17-duplicate-key.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "duplicate_key"
+      ]
+    },
+    "18-duplicate-question-id.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "duplicate_id"
+      ]
+    },
+    "19-duplicate-id-differs-by-case.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "duplicate_id"
+      ]
+    },
+    "20-missing-question-id.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "required_missing"
+      ]
+    },
+    "21-missing-flashcard-id.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "required_missing"
+      ]
+    },
+    "22-invalid-id-characters.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "invalid_id"
+      ]
+    },
+    "23-answer-not-in-choices.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "answer_key_not_in_choices"
+      ]
+    },
+    "24-answer-case-mismatch.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "answer_key_case_mismatch"
+      ]
+    },
+    "25-answer-as-index-number.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "answer_key_type"
+      ]
+    },
+    "26-legacy-correct-index.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "ambiguous_answer_key_field",
+        "required_missing"
+      ]
+    },
+    "27-multiple-correct-answers.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "multiple_answers_unsupported"
+      ]
+    },
+    "28-duplicate-choice-text.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "duplicate_choice_text"
+      ]
+    },
+    "29-duplicate-choice-id.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "duplicate_choice_id"
+      ]
+    },
+    "30-unsupported-question-type.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "unsupported_question_type"
+      ]
+    },
+    "31-missing-answer.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "required_missing"
+      ]
+    },
+    "32-single-choice-only.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "too_few_items"
+      ]
+    },
+    "33-null-value.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "null_not_allowed"
+      ]
+    },
+    "34-proto-key.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "forbidden_property_name"
+      ]
+    },
+    "35-constructor-key-nested.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "forbidden_property_name"
+      ]
+    },
+    "36-directive-fields.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "directive_field_unsupported"
+      ]
+    },
+    "38-empty-packet.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "packet_empty"
+      ]
+    },
+    "39-blank-title.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "empty_required"
+      ]
+    },
+    "40-fractional-number.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "unsupported_number"
+      ]
+    },
+    "41-escaped-control-character.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "invalid_string_character"
+      ]
+    },
+    "42-lone-surrogate.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "invalid_string_character"
+      ]
+    },
+    "43-root-array.json": {
+      "ok": false,
+      "stage": "gate",
+      "codes": [
+        "root_not_object"
+      ]
+    },
+    "44-wrong-type.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "wrong_type"
+      ]
+    },
+    "45-page-out-of-range.json": {
+      "ok": false,
+      "stage": "schema",
+      "codes": [
+        "page_out_of_range"
+      ]
+    },
+    "46-empty-source-ref.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "source_ref_empty"
+      ]
+    },
+    "47-trailing-content.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "trailing_content"
+      ]
+    },
+    "51-markdown-deep-nesting.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test"
+      ]
+    },
+    "52-markdown-moderate-nesting.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test"
+      ]
+    },
+    "53-version-1-point-0.json": {
+      "ok": false,
+      "stage": "scan",
+      "codes": [
+        "unsupported_number"
+      ]
+    },
+    "54-source-note-only.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test",
+        "source_claim_unverified"
+      ],
+      "previewSource": {
+        "note": "Invented exporter note."
+      },
+      "discardedOnSave": {
+        "sourceClaims": [
+          "note"
+        ],
+        "sourceRefs": 0,
+        "exportIds": 0,
+        "choiceIds": 0
+      }
+    },
+    "55-source-date-only.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test",
+        "source_claim_unverified"
+      ],
+      "previewSource": {
+        "createdAt": "2026-10-03"
+      }
+    },
+    "56-source-empty.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test"
+      ],
+      "previewSource": null
+    },
+    "57-refs-on-multiple-items.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": true,
+      "warnings": [
+        "source_refs_unverified"
+      ],
+      "previewSource": null,
+      "previewRefs": {
+        "cards": [
+          [
+            "card-1",
+            [
+              {
+                "label": "Invented chart é",
+                "page": 4
+              },
+              {
+                "label": "Second card ref"
+              }
+            ]
+          ],
+          [
+            "card-2",
+            []
+          ]
+        ],
+        "questions": [
+          [
+            "quest-1",
+            [
+              {
+                "page": 12
+              }
+            ]
+          ],
+          [
+            "quest-2",
+            [
+              {
+                "label": "Q2 first"
+              },
+              {
+                "label": "Q2 second",
+                "page": 2
+              }
+            ]
+          ]
+        ]
+      },
+      "discardedOnSave": {
+        "sourceClaims": [],
+        "sourceRefs": 5,
+        "exportIds": 4,
+        "choiceIds": 4
+      },
+      "correctIndexes": [
+        1,
+        0
+      ],
+      "persistenceExcludes": [
+        "card-1",
+        "quest-2",
+        "Invented chart",
+        "Q2 first",
+        "Second card ref"
+      ]
+    },
+    "58-cards-only.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test"
+      ],
+      "previewSource": null,
+      "counts": {
+        "sections": 0,
+        "flashcards": 2,
+        "questions": 0,
+        "choices": 0,
+        "sourceRefs": 0
+      }
+    },
+    "59-questions-with-orphan-source-notes.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "source_notes_without_study_set"
+      ],
+      "paths": [
+        "$.guide.sourceNotes"
+      ]
+    },
+    "60-empty-guide-orphan-source-notes.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "source_notes_without_study_set"
+      ],
+      "paths": [
+        "$.guide.sourceNotes"
+      ]
+    },
+    "61-cards-with-source-notes.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": false,
+      "warnings": [
+        "no_practice_test"
+      ],
+      "payloadSourceNotes": "Synthetic source notes for an invented chart.",
+      "previewGuideSourceNotes": "Synthetic source notes for an invented chart."
+    },
+    "62-guide-with-source-notes.json": {
+      "ok": true,
+      "createsStudySet": true,
+      "createsPracticeTest": true,
+      "warnings": [],
+      "payloadSourceNotes": "Synthetic source notes for an invented chart.",
+      "previewGuideSourceNotes": "Synthetic source notes for an invented chart."
+    },
+    "63-questions-blank-source-notes.json": {
+      "ok": true,
+      "createsStudySet": false,
+      "createsPracticeTest": true,
+      "warnings": [
+        "no_study_guide"
+      ],
+      "previewGuide": null
+    },
+    "64-standalone-source-notes.json": {
+      "ok": false,
+      "stage": "semantic",
+      "codes": [
+        "packet_empty"
+      ]
+    }
+  }
+}

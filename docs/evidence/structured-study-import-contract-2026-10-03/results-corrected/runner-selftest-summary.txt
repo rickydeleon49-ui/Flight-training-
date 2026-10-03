@@ -1,0 +1,15 @@
+node v22.23.3 npm 10.9.9 2026-10-03T21:40:19Z
+validator exit=1 {"total":100,"passed":99,"failed":1,"node":"v22.23.3"}
+regressions exit=0 {"total":29,"passed":29,"failed":0,"node":"v22.23.3"}
+codex-adapted exit=0 {"total":8,"passed":8,"failed":0,"node":"v22.23.3"}
+render exit=0 {"total":23,"passed":23,"failed":0,"fetchCalls":0,"node":"v22.23.3"}
+adapter exit=0 {"kind":"fake-adapter observations (not database evidence)","total":13,"passed":13,"node":"v22.23.3"}
+csp-jitless exit=0 {"mode":"jitless","jitless":true,"functionConstructorCalls":0,"accepted":12}
+csp-default exit=0 {"mode":"default","jitless":false,"functionConstructorCalls":9,"accepted":12}
+mutations exit=1 {"mutants":19,"asExpected":16}
+legacy-sim exit=0 }
+api-scan exit=0 Object.hasOwn (15.4) | react-markdown/lib/index.js:377 | Object.hasOwn(node.properties, key)
+dto-check exit=0 negative-old-omit.ts(7,62): error TS2322: Type '"import"' is not assignable to type '"gemini"'.
+schema exit=0 }
+schema-divergence exit=0 {"decomposedTitle400CodePoints":false,"composedTitle200CodePoints":true}
+OVERALL FAIL: validator mutations

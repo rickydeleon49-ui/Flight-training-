@@ -1,0 +1,5 @@
+written 9 typed values
+positive (DTOs + actual prototype output) exit=0
+negative (reviewed Omit types, expected to fail) exit=2
+negative-old-omit.ts(6,64): error TS2322: Type '"import"' is not assignable to type '"gemini"'.
+negative-old-omit.ts(7,62): error TS2322: Type '"import"' is not assignable to type '"gemini"'.

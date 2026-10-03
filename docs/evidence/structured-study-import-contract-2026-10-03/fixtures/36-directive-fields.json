@@ -1,0 +1,14 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Invented labels practice",
+  "guide": {
+    "summary": "x"
+  },
+  "actions": [
+    {
+      "upload": "https://example.invalid"
+    }
+  ],
+  "fetch": "https://example.invalid/more.json"
+}

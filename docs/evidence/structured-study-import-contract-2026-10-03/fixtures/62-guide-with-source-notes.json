@@ -1,0 +1,33 @@
+{
+  "format": "hfd-study-packet",
+  "formatVersion": 1,
+  "title": "Guide with notes",
+  "guide": {
+    "sections": [
+      {
+        "heading": "Labels",
+        "body": "Quill follows Plinth."
+      }
+    ],
+    "sourceNotes": "Synthetic source notes for an invented chart."
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "question": "Choose the invented label Quill",
+      "choices": [
+        {
+          "id": "a",
+          "text": "Quill"
+        },
+        {
+          "id": "b",
+          "text": "Plinth"
+        }
+      ],
+      "correctChoiceId": "a",
+      "explanation": "Invented."
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rickydeleon49-ui/Flight-training-/docs/contracts/hfd-study-packet-v1.schema.json",
+  "title": "Her Flight Deck structured study packet, format version 1 (proposed)",
+  "description": "Structural description of hfd-study-packet version 1. Normative rules are in docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md. This schema cannot express the byte-level checks (4 MiB, UTF-8, duplicate keys, depth 8, 32 keys per object, whole-number syntax, forbidden property names, control characters), normalization before length checks, case-insensitive identifier uniqueness, answer-key membership, duplicate choices, credential-like content the requirement that a packet contains a guide, flashcards or questions, or the rule that non-empty guide.sourceNotes need a non-empty summary, at least one section or at least one flashcard (source_notes_without_study_set). Length limits are Unicode code points; the application applies them after normalization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "formatVersion",
+    "title"
+  ],
+  "properties": {
+    "format": {
+      "const": "hfd-study-packet"
+    },
+    "formatVersion": {
+      "const": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "\\S"
+    },
+    "source": {
+      "description": "Unverified claims about how the packet was produced. Every non-empty value is shown in the import preview as an unverified claim and is not saved.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "generator": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "guide": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "description": "Markdown text (CommonMark, no HTML, no MDX).",
+          "type": "string",
+          "maxLength": 20000
+        },
+        "sections": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "heading",
+              "body"
+            ],
+            "properties": {
+              "heading": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "\\S"
+              },
+              "body": {
+                "description": "Markdown text (CommonMark, no HTML, no MDX).",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "pattern": "\\S"
+              }
+            }
+          }
+        },
+        "sourceNotes": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Saved with the study set. Non-empty notes require a non-empty guide summary, at least one guide section or at least one flashcard (checked by the application; error source_notes_without_study_set). Notes alone never count as a guide; blank notes are treated as absent."
+        }
+      }
+    },
+    "flashcards": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "front",
+          "back"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "front": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "\\S"
+          },
+          "back": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S"
+          },
+          "sourceRefs": {
+            "$ref": "#/$defs/sourceRefs"
+          }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "question",
+          "choices",
+          "correctChoiceId",
+          "explanation"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "type": {
+            "const": "single-choice"
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S"
+          },
+          "choices": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 6,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "text"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "#/$defs/choiceId"
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                  "pattern": "\\S"
+                }
+              }
+            }
+          },
+          "correctChoiceId": {
+            "description": "Must equal exactly one choices[].id (checked by the application).",
+            "$ref": "#/$defs/choiceId"
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "pattern": "\\S"
+          },
+          "sourceRefs": {
+            "$ref": "#/$defs/sourceRefs"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+    },
+    "choiceId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$"
+    },
+    "sourceRefs": {
+      "description": "Unverified references supplied by the packet. Shown in the import preview with their item; not saved, and never treated as verified citations of a local file.",
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        }
+      }
+    }
+  }
+}

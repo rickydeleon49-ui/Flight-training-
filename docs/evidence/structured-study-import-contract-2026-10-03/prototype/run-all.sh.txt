@@ -1,0 +1,24 @@
+#!/bin/zsh
+# Final prototype run. Scratch only; the repository's manifests, lockfiles and node_modules are not used.
+set -u
+export PATH=/opt/homebrew/opt/node@22/bin:$PATH
+S=${0:A:h}; C=$S/../schema-check
+R=${HFD_CHECKOUT:?set HFD_CHECKOUT to the repository checkout}/docs
+F=$R/evidence/structured-study-import-contract-2026-10-03/fixtures
+E=$R/evidence/structured-study-import-contract-2026-10-03/expected-outcomes.json
+cd $S; mkdir -p results logs
+run() { local name=$1; shift; "$@" > logs/$name.log 2>&1; local code=$?; echo "$name exit=$code $(tail -1 logs/$name.log | cut -c1-160)"; }
+echo "node $(node -v) npm $(npm -v) $(date -u +%FT%TZ)"
+run validator   node run-fixtures.mjs $F $E results/validator-results.json
+run render      node run-render.mjs $F results/render-results.json
+run adapter     node run-adapter.mjs $F results/adapter-results.json
+run csp-jitless node run-csp-probe.mjs jitless $F
+run csp-default node run-csp-probe.mjs default $F; rm -f src/.validator-default.mjs
+run mutations   node run-mutations.mjs $F $E results/mutation-results.json
+run legacy-sim  node run-legacy-webkit-sim.mjs $F results/legacy-webkit-sim.json
+run api-scan    node scan-apis.mjs results/api-scan.json
+run probe-depth node probe-depth.mjs
+run probe-inline node probe-inline.mjs
+cd $C; mkdir -p results logs
+run schema      node check-schema.mjs $R/contracts/hfd-study-packet-v1.schema.json $F $E results/schema-results.json
+run schema-divergence node check-divergence.mjs $R/contracts/hfd-study-packet-v1.schema.json

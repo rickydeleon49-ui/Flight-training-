@@ -1,0 +1,456 @@
+{
+  "summary": {
+    "total": 29,
+    "passed": 7,
+    "failed": 22,
+    "node": "v22.23.3"
+  },
+  "rows": [
+    {
+      "name": "R1: unknown ASCII private keys are redacted at top level and nested",
+      "pass": false,
+      "problems": [
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "unknown_field carries field"
+      ]
+    },
+    {
+      "name": "R1: credential-shaped unknown keys are redacted",
+      "pass": false,
+      "problems": [
+        "field not allowlisted",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field not allowlisted",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field not allowlisted",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field not allowlisted",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field not allowlisted",
+        "field not allowlisted",
+        "sensitive values echoed: 1"
+      ]
+    },
+    {
+      "name": "R1: nested scan failures under unknown keys use redacted paths",
+      "pass": false,
+      "problems": [
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "duplicate path not redacted",
+        "path grammar",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1",
+        "path grammar",
+        "path segment not contract-owned",
+        "path segment not contract-owned",
+        "sensitive values echoed: 1"
+      ]
+    },
+    {
+      "name": "R1: duplicate unknown keys are reported without their name",
+      "pass": false,
+      "problems": [
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate",
+        "field not allowlisted",
+        "sensitive values echoed: 1",
+        "field present for unknown duplicate"
+      ]
+    },
+    {
+      "name": "R1: duplicate contract-owned key reports only the fixed field name",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: duplicate question IDs are identified by index and firstIndex only",
+      "pass": false,
+      "problems": [
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id"
+      ]
+    },
+    {
+      "name": "R1: duplicate flashcard IDs are identified by index and firstIndex only",
+      "pass": false,
+      "problems": [
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id"
+      ]
+    },
+    {
+      "name": "R1: duplicate choice IDs are identified by index and firstIndex only",
+      "pass": false,
+      "problems": [
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id",
+        "error key id",
+        "sensitive values echoed: 1",
+        "expected path, index 2, firstIndex 0, no id"
+      ]
+    },
+    {
+      "name": "R1: credential-shaped duplicate question IDs are not echoed beside the credential error",
+      "pass": false,
+      "problems": [
+        "error key id",
+        "sensitive values echoed: 1",
+        "error key id",
+        "sensitive values echoed: 1",
+        "error key id",
+        "sensitive values echoed: 1",
+        "error key id",
+        "sensitive values echoed: 1",
+        "error key id",
+        "sensitive values echoed: 1"
+      ]
+    },
+    {
+      "name": "R1: answer keys and duplicate choice text never echo packet values",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: directive and legacy-answer fields keep targeted errors from fixed allowlists",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: benign contract-owned paths are kept exactly",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R1: failure objects contain only allowlisted properties across stages",
+      "pass": false,
+      "problems": [
+        "error key found",
+        "unsupported_version returns the packet's version value"
+      ]
+    },
+    {
+      "name": "R1: unexpected internal errors return a fixed code without exception text",
+      "pass": false,
+      "problems": [
+        "threw",
+        "expected internal_error",
+        "expected internal_error"
+      ]
+    },
+    {
+      "name": "R2: preview retains normalized source claims",
+      "pass": false,
+      "problems": [
+        "source claims"
+      ]
+    },
+    {
+      "name": "R2: generator-only source is flagged as an unverified claim",
+      "pass": false,
+      "problems": [
+        "claim not retained"
+      ]
+    },
+    {
+      "name": "R2: createdAt-only source is flagged as an unverified claim",
+      "pass": false,
+      "problems": [
+        "no warning",
+        "claim not retained"
+      ]
+    },
+    {
+      "name": "R2: note-only source is flagged as an unverified claim",
+      "pass": false,
+      "problems": [
+        "no warning",
+        "claim not retained"
+      ]
+    },
+    {
+      "name": "R2: absent or empty source is not a claim",
+      "pass": false,
+      "problems": [
+        "source not null",
+        "source not null",
+        "source not null"
+      ]
+    },
+    {
+      "name": "R2: references stay associated with their items and order",
+      "pass": false,
+      "problems": [
+        "threw TypeError"
+      ]
+    },
+    {
+      "name": "R2: preview keeps normalized item content and choice IDs for association",
+      "pass": false,
+      "problems": [
+        "normalized question"
+      ]
+    },
+    {
+      "name": "R2: preview-only information is absent from persistence output",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "R2: discardedOnSave discloses claims, references and export IDs",
+      "pass": false,
+      "problems": [
+        "discardedOnSave"
+      ]
+    },
+    {
+      "name": "R2: guide-only, questions-only and cards-only preview data",
+      "pass": false,
+      "problems": [
+        "guide-only",
+        "questions-only",
+        "cards-only"
+      ]
+    },
+    {
+      "name": "R3: persistence material carries only the packet title",
+      "pass": false,
+      "problems": [
+        "material fields"
+      ]
+    },
+    {
+      "name": "R3: canonical persistence JSON ignores key order and preview-only values",
+      "pass": false,
+      "problems": [
+        "canonicalPersistenceJson missing"
+      ]
+    },
+    {
+      "name": "R3: text entry re-derives the byte limit and refuses an unstripped BOM",
+      "pass": false,
+      "problems": [
+        "validatePacketText missing"
+      ]
+    },
+    {
+      "name": "Control: trailing LF in a flashcard ID is rejected",
+      "pass": true,
+      "problems": []
+    },
+    {
+      "name": "Control: trailing LF in a choice ID and answer is rejected",
+      "pass": true,
+      "problems": []
+    }
+  ]
+}

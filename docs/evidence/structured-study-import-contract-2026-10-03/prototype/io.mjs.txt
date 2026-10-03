@@ -1,0 +1,24 @@
+// Bounded local read used by the prototype runner. Mirrors the proposed native read: check metadata first,
+// then read at most limit + 1 bytes so a file that grows after the check is still refused. Read-only.
+import { openSync, readSync, closeSync, fstatSync } from "node:fs";
+import { LIMITS } from "./validator.mjs";
+
+export function readBounded(path, limit = LIMITS.fileBytes) {
+  const fd = openSync(path, "r");
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile()) return { ok: false, code: "file_read_failed" };
+    if (stat.size > limit) return { ok: false, code: "file_too_large", bytesRead: 0 };
+    const buffer = Buffer.alloc(limit + 1);
+    let total = 0;
+    for (;;) {
+      const n = readSync(fd, buffer, total, buffer.length - total, null);
+      if (n === 0) break;
+      total += n;
+      if (total > limit) return { ok: false, code: "file_too_large", bytesRead: total };
+    }
+    return { ok: true, bytes: new Uint8Array(buffer.buffer, buffer.byteOffset, total) };
+  } finally {
+    closeSync(fd);
+  }
+}

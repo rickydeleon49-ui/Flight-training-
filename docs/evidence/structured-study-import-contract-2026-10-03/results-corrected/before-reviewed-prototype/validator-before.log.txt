@@ -1,0 +1,101 @@
+FAIL  fixture:01-guide-only.json  preview source
+FAIL  fixture:02-flashcards-and-test.json  preview source; preview refs; discardedOnSave
+PASS  fixture:03-unicode.json
+FAIL  fixture:04-questions-only.json  preview source
+PASS  fixture:05-hostile-markdown.json
+PASS  fixture:10-unsupported-version-2.json
+PASS  fixture:11-unsupported-version-0.json
+PASS  fixture:12-version-as-string.json
+PASS  fixture:13-format-missing.json
+PASS  fixture:14-unknown-format.json
+PASS  fixture:15-malformed-trailing-comma.json
+PASS  fixture:16-truncated.json
+PASS  fixture:17-duplicate-key.json
+PASS  fixture:18-duplicate-question-id.json
+PASS  fixture:19-duplicate-id-differs-by-case.json
+PASS  fixture:20-missing-question-id.json
+PASS  fixture:21-missing-flashcard-id.json
+PASS  fixture:22-invalid-id-characters.json
+PASS  fixture:23-answer-not-in-choices.json
+PASS  fixture:24-answer-case-mismatch.json
+PASS  fixture:25-answer-as-index-number.json
+PASS  fixture:26-legacy-correct-index.json
+PASS  fixture:27-multiple-correct-answers.json
+PASS  fixture:28-duplicate-choice-text.json
+PASS  fixture:29-duplicate-choice-id.json
+PASS  fixture:30-unsupported-question-type.json
+PASS  fixture:31-missing-answer.json
+PASS  fixture:32-single-choice-only.json
+PASS  fixture:33-null-value.json
+PASS  fixture:34-proto-key.json
+PASS  fixture:35-constructor-key-nested.json
+PASS  fixture:36-directive-fields.json
+PASS  fixture:38-empty-packet.json
+PASS  fixture:39-blank-title.json
+PASS  fixture:40-fractional-number.json
+PASS  fixture:41-escaped-control-character.json
+PASS  fixture:42-lone-surrogate.json
+PASS  fixture:43-root-array.json
+PASS  fixture:44-wrong-type.json
+PASS  fixture:45-page-out-of-range.json
+PASS  fixture:46-empty-source-ref.json
+PASS  fixture:47-trailing-content.json
+PASS  fixture:51-markdown-deep-nesting.json
+PASS  fixture:52-markdown-moderate-nesting.json
+PASS  fixture:53-version-1-point-0.json
+FAIL  fixture:54-source-note-only.json  warnings=no_practice_test; preview source; discardedOnSave
+FAIL  fixture:55-source-date-only.json  warnings=no_practice_test; preview source
+FAIL  fixture:56-source-empty.json  preview source
+FAIL  fixture:57-refs-on-multiple-items.json  preview source; preview refs; discardedOnSave
+FAIL  fixture:58-cards-only.json  preview source
+PASS  generated:empty-file
+PASS  generated:utf16le-bom
+PASS  generated:invalid-utf8-sequence
+PASS  generated:overlong-utf8
+PASS  generated:utf8-bom-accepted
+PASS  generated:file-bytes-limit-minus-1
+PASS  generated:file-bytes-at-limit
+PASS  generated:file-bytes-limit-plus-1
+PASS  generated:depth-at-limit-8
+PASS  generated:depth-over-limit-9
+PASS  generated:depth-at-limit-8-objects
+PASS  generated:depth-over-limit-9-objects
+PASS  generated:object-keys-at-limit-32
+PASS  generated:object-keys-over-limit-33
+PASS  generated:key-length-at-limit-64
+PASS  generated:key-length-over-limit-65
+PASS  generated:integer-9-digits
+PASS  generated:integer-10-digits
+PASS  generated:page-at-max-1000
+PASS  generated:values-at-limit
+PASS  generated:values-over-limit
+PASS  generated:title-199-code-points
+PASS  generated:title-200-code-points-astral
+PASS  generated:title-201-code-points
+PASS  generated:title-nfc-200-after-normalization
+PASS  generated:body-20000
+PASS  generated:body-20001
+PASS  generated:choices-6
+PASS  generated:choices-7
+PASS  generated:choices-2
+PASS  generated:questions-200
+PASS  generated:questions-201
+PASS  generated:flashcards-500
+PASS  generated:flashcards-501
+PASS  generated:sections-100
+PASS  generated:sections-101
+PASS  generated:source-refs-5
+PASS  generated:source-refs-6
+PASS  generated:id-64
+PASS  generated:id-65
+PASS  generated:choice-id-32
+PASS  generated:choice-id-33
+PASS  generated:credential-google-key-shape
+PASS  generated:credential-pem-header
+PASS  generated:error-cap-60
+PASS  generated:sentinel-wrong-type
+PASS  generated:sentinel-bad-answer
+PASS  generated:sentinel-unknown-field-name
+PASS  generated:sentinel-duplicate-key-unsafe-name
+PASS  reader:metadata-check-before-read
+{"total":100,"passed":92,"failed":8,"node":"v22.23.3"}

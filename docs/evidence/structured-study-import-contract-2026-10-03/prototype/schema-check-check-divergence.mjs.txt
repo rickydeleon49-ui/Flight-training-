@@ -1,0 +1,7 @@
+// Documents the one intended raw-versus-normalized difference between the schema and the application.
+import Ajv2020 from "ajv/dist/2020.js";
+import { readFileSync } from "node:fs";
+const v = new Ajv2020({ strict: true }).compile(JSON.parse(readFileSync(process.argv[2], "utf8")));
+const decomposed = { format: "hfd-study-packet", formatVersion: 1, title: "é".repeat(200), guide: { summary: "x" } };
+const composed = { ...decomposed, title: "é".repeat(200) };
+console.log(JSON.stringify({ decomposedTitle400CodePoints: v(decomposed), composedTitle200CodePoints: v(composed) }));

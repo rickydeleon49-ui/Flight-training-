@@ -1,0 +1,54 @@
+// Static text scan of candidate runtime JavaScript for APIs that macOS 12.0 WebKit (Safari 15.0/15.1) lacks.
+// Indicative only: a match needs manual review, and no match does not prove compatibility.
+// Usage: node scan-apis.mjs <results.json>
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
+const root = new URL("./node_modules/", import.meta.url).pathname;
+const SKIP_PKG = new Set(["react", "react-dom", "scheduler", "csstype"]); // already shipped by the app
+const PATTERNS = {
+  "structuredClone (Safari 15.4)": /\bstructuredClone\s*\(/,
+  "Object.hasOwn (15.4)": /\bObject\.hasOwn\s*\(/,
+  "Array/String .at() (15.4)": /\.at\(\s*-?\d|\.at\(\s*-/,
+  "findLast/findLastIndex (15.4)": /\.findLast(Index)?\s*\(/,
+  "regex lookbehind (16.4)": /\(\?<[=!]/,
+  "class static block (16.4)": /\bstatic\s*\{/,
+  "isWellFormed/toWellFormed (16.4)": /\b(is|to)WellFormed\s*\(/,
+  "toSorted/toReversed/toSpliced/with (16)": /\.(toSorted|toReversed|toSpliced)\s*\(/,
+  "Object.groupBy/Map.groupBy (17.4)": /\b(Object|Map)\.groupBy\s*\(/,
+  "Array.fromAsync (16.4)": /\bArray\.fromAsync\s*\(/,
+  "RegExp v flag (17)": /\/[dgimsuy]*v[dgimsuy]*\s*[,;)\]]/,
+  "new Function / eval": /\bnew Function\s*\(|\beval\s*\(/,
+};
+function* files(dir) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    const st = statSync(p);
+    if (st.isDirectory()) {
+      if (["src", "locales", "v3", "test", "tests", "__tests__"].includes(name)) continue;
+      yield* files(p);
+    } else if (/\.(m?js)$/.test(name) && !/\.d\.|\.min\./.test(name)) yield p;
+  }
+}
+const pkgs = [];
+for (const name of readdirSync(root)) {
+  if (name.startsWith(".")) continue;
+  if (name.startsWith("@")) { for (const sub of readdirSync(join(root, name))) pkgs.push(`${name}/${sub}`); } else pkgs.push(name);
+}
+const hits = [];
+let scanned = 0;
+for (const pkg of pkgs.sort()) {
+  if (SKIP_PKG.has(pkg) || pkg.startsWith("@types/")) continue;
+  for (const file of files(join(root, pkg))) {
+    if (file.includes("/node_modules/", root.length)) continue;
+    scanned++;
+    const lines = readFileSync(file, "utf8").split("\n");
+    lines.forEach((line, i) => {
+      for (const [label, re] of Object.entries(PATTERNS)) if (re.test(line)) hits.push({ label, file: relative(root, file), line: i + 1, text: line.trim().slice(0, 160) });
+    });
+  }
+}
+const byLabel = {};
+for (const h of hits) byLabel[h.label] = (byLabel[h.label] ?? 0) + 1;
+writeFileSync(process.argv[2], JSON.stringify({ scannedFiles: scanned, byLabel, hits }, null, 2) + "\n");
+console.log(JSON.stringify({ scannedFiles: scanned, byLabel }, null, 1));
+for (const h of hits) console.log(`${h.label} | ${h.file}:${h.line} | ${h.text}`);

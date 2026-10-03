@@ -1,0 +1,30 @@
+FAIL  R1: unknown ASCII private keys are redacted at top level and nested  [field not allowlisted; sensitive values echoed: 1; unknown_field carries field]
+FAIL  R1: credential-shaped unknown keys are redacted  [field not allowlisted; sensitive values echoed: 1]
+FAIL  R1: nested scan failures under unknown keys use redacted paths  [path grammar; path segment not contract-owned; sensitive values echoed: 1; duplicate path not redacted]
+FAIL  R1: duplicate unknown keys are reported without their name  [field not allowlisted; sensitive values echoed: 1; field present for unknown duplicate]
+PASS  R1: duplicate contract-owned key reports only the fixed field name
+FAIL  R1: duplicate question IDs are identified by index and firstIndex only  [error key id; sensitive values echoed: 1; expected path, index 2, firstIndex 0, no id]
+FAIL  R1: duplicate flashcard IDs are identified by index and firstIndex only  [error key id; sensitive values echoed: 1; expected path, index 2, firstIndex 0, no id]
+FAIL  R1: duplicate choice IDs are identified by index and firstIndex only  [error key id; sensitive values echoed: 1; expected path, index 2, firstIndex 0, no id]
+FAIL  R1: credential-shaped duplicate question IDs are not echoed beside the credential error  [error key id; sensitive values echoed: 1]
+PASS  R1: answer keys and duplicate choice text never echo packet values
+PASS  R1: directive and legacy-answer fields keep targeted errors from fixed allowlists
+PASS  R1: benign contract-owned paths are kept exactly
+FAIL  R1: failure objects contain only allowlisted properties across stages  [error key found; unsupported_version returns the packet's version value]
+FAIL  R1: unexpected internal errors return a fixed code without exception text  [threw; expected internal_error]
+FAIL  R2: preview retains normalized source claims  [source claims]
+FAIL  R2: generator-only source is flagged as an unverified claim  [claim not retained]
+FAIL  R2: createdAt-only source is flagged as an unverified claim  [no warning; claim not retained]
+FAIL  R2: note-only source is flagged as an unverified claim  [no warning; claim not retained]
+FAIL  R2: absent or empty source is not a claim  [source not null]
+FAIL  R2: references stay associated with their items and order  [threw TypeError]
+FAIL  R2: preview keeps normalized item content and choice IDs for association  [normalized question]
+PASS  R2: preview-only information is absent from persistence output
+FAIL  R2: discardedOnSave discloses claims, references and export IDs  [discardedOnSave]
+FAIL  R2: guide-only, questions-only and cards-only preview data  [guide-only; questions-only; cards-only]
+FAIL  R3: persistence material carries only the packet title  [material fields]
+FAIL  R3: canonical persistence JSON ignores key order and preview-only values  [canonicalPersistenceJson missing]
+FAIL  R3: text entry re-derives the byte limit and refuses an unstripped BOM  [validatePacketText missing]
+PASS  Control: trailing LF in a flashcard ID is rejected
+PASS  Control: trailing LF in a choice ID and answer is rejected
+{"total":29,"passed":7,"failed":22,"node":"v22.23.3"}

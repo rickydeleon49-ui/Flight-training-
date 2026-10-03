@@ -1,0 +1,117 @@
+Structured study-import contract: validation receipt, 3 October 2026.
+Prepared by Claude on the Mac. Branch codex/structured-study-import-contract, HEAD 8fb3b7fe7f8ae425b41c597549f930e1aadb326a
+(clean main after PR #56 at start; 0 porcelain entries before branching). Local and uncommitted, for Codex review.
+
+Prototype (scratch directory outside the repository; Node v22.23.3, npm 10.9.9):
+  npm install --ignore-scripts --no-audit --no-fund --save-exact zod@4.6.5 react-markdown@10.1.0 react@19.2.8 react-dom@19.2.8
+  npm install --ignore-scripts --no-audit --no-fund --save-exact ajv@8.20.0     (separate schema-check directory, test tooling)
+  HFD_CHECKOUT=<checkout> prototype/run-all.sh     final run 2026-10-03T21:02Z; every step exit 0
+    node v22.23.3 npm 10.9.9 2026-10-03T21:02:14Z
+    validator exit=0 {"total":95,"passed":95,"failed":0,"node":"v22.23.3"}
+    render exit=0 {"total":23,"passed":23,"failed":0,"fetchCalls":0,"node":"v22.23.3"}
+    adapter exit=0 {"kind":"fake-adapter observations (not database evidence)","total":13,"passed":13,"node":"v22.23.3"}
+    csp-jitless exit=0 {"mode":"jitless","jitless":true,"functionConstructorCalls":0,"accepted":7}
+    csp-default exit=0 {"mode":"default","jitless":false,"functionConstructorCalls":9,"accepted":7}
+    mutations exit=0 CAUGHT  M11 control characters accepted  exit=1 failed=2  fixture:41-escaped-control-character.json, fixture:42-lone-surrogate.json
+    legacy-sim exit=0 }
+    api-scan exit=0 Object.hasOwn (15.4) | react-markdown/lib/index.js:377 | Object.hasOwn(node.properties, key)
+    probe-depth exit=0 links 5000 ok 17ms
+    probe-inline exit=0 link-nest parse ok, mdast depth 4 toHast ok 21 ms
+    schema exit=0 }
+    schema-divergence exit=0 {"decomposedTitle400CodePoints":false,"composedTitle200CodePoints":true}
+
+Repository checks (checkout root):
+  git diff --check                                         exit 0
+  git diff --no-index --check /dev/null <each untracked>   no findings
+  git diff --quiet -- package.json package-lock.json src src-tauri    exit 0 (unchanged)
+  relative-link check over the 5 new/edited Markdown files: 154 relative links checked, 0 broken
+Not run, deliberately: the unchanged application/Rust matrices, heavy PDF fixtures, any build, installer, app launch,
+signing, live provider call, real database integration or installed check. No Windows-owner message was sent.
+
+SHA-256 of every new or changed file except this receipt:
+  3e80c72f647b0a7c93d2ea3e967acfa34cde37d96e074d8bf644090dde69fd0b  docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md
+  c96ce3d4e207011fbc869611102d474d66728825091dab21517ae0213545751f  docs/STRUCTURED_STUDY_IMPORT_IMPLEMENTATION_HANDOFF_2026-10-03.md
+  242164acf7fb4ae7266e07a7227818c5176242e033007885945e2e62c43c63a0  docs/contracts/hfd-study-packet-v1.schema.json
+  1c83abccbf985e28ee482d0976048b5f19e727ec9820b97c04394d7402d0eacf  docs/evidence/structured-study-import-contract-2026-10-03/README.md
+  37fd34b5b0264436e846755c6f6bd32d91d1b6b90dd6b012cd272db64979eb4f  docs/evidence/structured-study-import-contract-2026-10-03/expected-outcomes.json
+  82b149af673b9219f8f9ded5ac1a68a2a41d2ab7f737fa4f432996ffd9585b2f  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/01-guide-only.json
+  d5101e8c58c70c21943295bb22ec5c88394c8db81aeec402bd8f7836612e1f99  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/02-flashcards-and-test.json
+  e67ac22175c64b5f0062cd39ab99a6e580f1a2c57adca9218831eeed440373d4  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/03-unicode.json
+  a302c1f6b3d296ddb339a1e80b3d78de3f5623c096afc3ba17ce63fa023fbf81  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/04-questions-only.json
+  5ebe93ca80b3b56665dceb8e59c3ab91f693ab377921a9c88d75d3d3bd5e4da6  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/05-hostile-markdown.json
+  e186fb1d5e10ea6a49ecea4e1137cf4ca72ebf76bf43f3fba532589e3bd3b205  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/10-unsupported-version-2.json
+  6b72953fbbc16f422c93a6a243b167b1cb06ef5801d40101d5b9ca87bc0673fa  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/11-unsupported-version-0.json
+  d1b56c73eb0aa8e254b9a578b92ff4807dc1783589802185af5095a276ac37a1  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/12-version-as-string.json
+  1e97179f6302604bb09410d05df6448992e1cf4790add2737fa7f3e758fdde0e  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/13-format-missing.json
+  2ed579110d8e6e4ba44c2376d9cc20cac979779719868f7f5c7bde2b419fd64d  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/14-unknown-format.json
+  6df54b958d0fffe0dbb5d31d3c25101b2b6cdda8730de778e72de1fb08248621  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/15-malformed-trailing-comma.json
+  11ce6faec5f146cd8023fab1cef4339ac4f2f1c833e39868c62230b9d9073d0c  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/16-truncated.json
+  3c135865f1578faccdafa0d6fdde5e1e34bd3e79674c2894dbfc01fb0cd28031  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/17-duplicate-key.json
+  df9ce12f73a360d3cfa565ccfe45a937ee5a7e3924c78665af3925e8c9fca9d2  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/18-duplicate-question-id.json
+  bc00b50cdb9d826461a52cde6d6b97c2a524795bef3f501baa90efffc98c8570  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/19-duplicate-id-differs-by-case.json
+  113ded7484c15fb92f72c0be1168e587b77bba511547ea3e297124eb3fb57c7d  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/20-missing-question-id.json
+  37db6e40063c12f22fad50f4ca60b69fadbe6e3697fa37ac3987fadcf9822629  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/21-missing-flashcard-id.json
+  a72ff6321d6ddb3907e36d5a0e38bc0237b251dba2dae8683655802f9452919c  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/22-invalid-id-characters.json
+  9ecca57082f4cb17e991daf37f89176711aaec1dd27a249b6dbe162f7296cb17  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/23-answer-not-in-choices.json
+  7df4410488484f9a0832ddef6568d8cd4d12a0e02552c790a543db32997fabaf  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/24-answer-case-mismatch.json
+  b5ab06c84757b5689fc54c1a31a28161aeb2b4ebcfd6177b35736bd9840364da  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/25-answer-as-index-number.json
+  bba1ae16e45e0783f593963c2046853f3f36bd3398a3de8e8f623452f052e6b1  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/26-legacy-correct-index.json
+  b6af426e5d09e15110ec461a64a28bdd37669611aa129fb5ee85f1ba1b36183b  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/27-multiple-correct-answers.json
+  4243af257573a9c700baed477458aaf80649917044805db9e70c65d1d58cd02a  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/28-duplicate-choice-text.json
+  55f2eea324407b1fa8f6fc7305dae906dedad9d39c3dfceb3c46df0906a89b1a  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/29-duplicate-choice-id.json
+  32fdadd7c994f6ae633e1d12e3587f09677e75a7e7e76c23a2a5ea203e8e56ae  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/30-unsupported-question-type.json
+  d20896dd73ee4e99b19a357110c706f15873fd3a8ed0eeed18514d3737cba6ee  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/31-missing-answer.json
+  cf9f9ed6871952d3ac5dd6cab4054c1896e0b76250fb15679b4ac532ecbe9f14  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/32-single-choice-only.json
+  44ad807d5568449b61fcdfd9a4b3aac63d2cc4964cbbb53613d66c4c217468a8  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/33-null-value.json
+  e06acd0860df5fb98650e765eb047d2fe3e77818a2afa825675f2c62f7a33cb4  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/34-proto-key.json
+  7fa529b9c0ebd5f906e7790e91d455fb7bffb5f39cc49da51c67f83d3047e7e7  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/35-constructor-key-nested.json
+  67788ea9790436fed0800a156f32a52220d7b0892d5904cab91db287e7df650b  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/36-directive-fields.json
+  ec663a916ec7eb7bec222e8e1fa7130c90481e442be397577fc4ee7f7f8662c8  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/38-empty-packet.json
+  2bcc77a947613d8e06db2c71ef7cdb00180d4f18083d0353fe7f755cf6f343d4  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/39-blank-title.json
+  6571fb11dcf272fff326d01a5cbc924078398423b819246e5881a1cce8a63cfd  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/40-fractional-number.json
+  38764a54e528db83d8fb7c6f555b8c267f83724e9baca417f04c246c20bb3cb8  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/41-escaped-control-character.json
+  8098c6e3ed6a9250b42fd09ba79074c08ee85f14ab85d38dc64d7c1e30de8ac1  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/42-lone-surrogate.json
+  1137858a3f260c8d46f73de5f649afda6164bef1d0ea520e6bdb9cda2f371535  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/43-root-array.json
+  c621237b2a72a23179edbea999152ef09ecc31434a82186b856159f8a7b2947d  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/44-wrong-type.json
+  071e36c407f2816c1ea356cb5434a52e0db62a606dd75407b9857b740d3120cb  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/45-page-out-of-range.json
+  3e4957f20ee350cd17d5ac9ec17907c77f0709ca3bc8f5315ffb440eca005c26  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/46-empty-source-ref.json
+  ad643d11ff3a8271c138cd17be6f4a5589c817ed972715a31a44cfd0fe2ba2ff  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/47-trailing-content.json
+  da0f0409f04ee4fc3cae7cac92faaffbe102ae3f8f21888f25f15ec7821f1a7d  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/51-markdown-deep-nesting.json
+  c44b4f851c575e29c5f1dd37ad59548e5b44388dd493062c7bdd050888ca5e37  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/52-markdown-moderate-nesting.json
+  5c882b31da7453d25c8ef0cb30a7d9b197f577fcf8eeff246110813a6d1ba421  docs/evidence/structured-study-import-contract-2026-10-03/fixtures/53-version-1-point-0.json
+  626155df38dad0ff407a2c7b58c19bccaf450f48d08d54baca27d62502ebfaea  docs/evidence/structured-study-import-contract-2026-10-03/prototype/boundary-cases.mjs.txt
+  0da8683574eb4f2e089c87d4c7228308f5f161c327f7ef8782d2fef0e97d90c9  docs/evidence/structured-study-import-contract-2026-10-03/prototype/io.mjs.txt
+  78452e083f2828116d53e88c5503ae39e5d50cfd41ad82a9ffca50417ff466f2  docs/evidence/structured-study-import-contract-2026-10-03/prototype/package-lock.json.txt
+  0cf99bc5d16ad72a1c97fc6b7f35a87491b06a750a440052491b684797aa12d8  docs/evidence/structured-study-import-contract-2026-10-03/prototype/package.json.txt
+  82905ff1d7093bfe754b8622787ad9d427739d15ef7d7cba1d4df06a9e70c650  docs/evidence/structured-study-import-contract-2026-10-03/prototype/probe-depth.mjs.txt
+  2b530600fe7074e8e29db8047d9ddd215e7236afc5a9475cf0d538b01663f9f1  docs/evidence/structured-study-import-contract-2026-10-03/prototype/probe-inline.mjs.txt
+  8bf51cb8f674fa0413bf9ff4aa5797b8f04dab470143d3613221e7d6834273f7  docs/evidence/structured-study-import-contract-2026-10-03/prototype/render.mjs.txt
+  09e85fe7148f625fa38d8f80369613c34ed00541181051addf6cd6328fbf9b65  docs/evidence/structured-study-import-contract-2026-10-03/prototype/run-adapter.mjs.txt
+  0d966f79591e3c6f330bda608f0e041490712d284d3f00d33c9c5419b4439a2c  docs/evidence/structured-study-import-contract-2026-10-03/prototype/run-all.sh.txt
+  648aab9712a7401bfe3d2d6a510861f1bd9cd4dbf2a5715b8c5a6ca449f458a1  docs/evidence/structured-study-import-contract-2026-10-03/prototype/run-csp-probe.mjs.txt
+  22f2c03a66a42d825fa71505fc6ffafd5caf03a172b4bd5e737806619e2a5eac  docs/evidence/structured-study-import-contract-2026-10-03/prototype/run-fixtures.mjs.txt
+  0310132f10915baf118c7070986104f42f40ba6bcd9ba572aaabe810fc9b27fc  docs/evidence/structured-study-import-contract-2026-10-03/prototype/run-legacy-webkit-sim.mjs.txt
+  4b5d1af9312109cb534df51dc79fc55ea9487900d59ce1dad92c1b2cb9c5ae1a  docs/evidence/structured-study-import-contract-2026-10-03/prototype/run-mutations.mjs.txt
+  fdc926f5bfc3176ed78e3c318767a3a10a240083fd5fdaefcdd994b0b5ba594b  docs/evidence/structured-study-import-contract-2026-10-03/prototype/run-render.mjs.txt
+  20ccf7fc1ef87e7828afa6fc38e25299a98c25eb36bddcc731c3f7fcd2064066  docs/evidence/structured-study-import-contract-2026-10-03/prototype/scan-apis.mjs.txt
+  036390593c766ec02b8afc0a7fe27878376ff9f1a4a9cf1d2ef343ad4c1f6ece  docs/evidence/structured-study-import-contract-2026-10-03/prototype/schema-check-check-divergence.mjs.txt
+  0fb16eb4cfc8ab1118c6f4d71961b78d4f59f2d757ebeedefc47f191e1058aad  docs/evidence/structured-study-import-contract-2026-10-03/prototype/schema-check-check-schema.mjs.txt
+  6f32a15d0c0b1467e194e0aed2ae79a4a372334db0df0b70524731f711aed28a  docs/evidence/structured-study-import-contract-2026-10-03/prototype/schema-check-package-lock.json.txt
+  438f4c816babd7e550a4e6c68d752120da65d945d72994dba75790eb25d14f0b  docs/evidence/structured-study-import-contract-2026-10-03/prototype/schema-check-package.json.txt
+  5e24e01be3376b35f033d6f2cecf6d269b75699427723e22b1df883f1a20fe99  docs/evidence/structured-study-import-contract-2026-10-03/prototype/validator.mjs.txt
+  6a2bb6ad75b39d129892c56d8fd875614cdd1110bff47beab1b88ef4a140cd5c  docs/evidence/structured-study-import-contract-2026-10-03/results/adapter-results.json
+  574aa91dee986e86e392270e5c6d0e382d6f3d78233bfe5ea280eccd42b44e6b  docs/evidence/structured-study-import-contract-2026-10-03/results/api-scan.json
+  21866400d004ae3fc1a373224451ad84cdfe84856e491ddace35096bb00157ca  docs/evidence/structured-study-import-contract-2026-10-03/results/csp-default.log.txt
+  99bb08a13afb53ab8dd448b31ceb15bc90a68cc016f9f5ef96624f3be92c9973  docs/evidence/structured-study-import-contract-2026-10-03/results/csp-jitless.log.txt
+  e9e068f66df4445274be899dcd2dd2850407fc90d9cc2c873fe64eaaa751cf00  docs/evidence/structured-study-import-contract-2026-10-03/results/dependency-inventory.tsv
+  61ae09f796044582a64a33058523fdcc102748a86b018deba5ed8a89f809a49d  docs/evidence/structured-study-import-contract-2026-10-03/results/legacy-webkit-sim.json
+  9cabecad75de3217cd1214c9075937374711e8763c63cbdb2724da955c8877d3  docs/evidence/structured-study-import-contract-2026-10-03/results/mutation-results.json
+  a02046f5312a8ac071e517845a079cc7392fbd991b2f20e332c372c82cd24fba  docs/evidence/structured-study-import-contract-2026-10-03/results/probe-depth.log.txt
+  3ad2d6f69a033a25f5c582a33d3cef1c5f779a22b243cd490abe1988ef336b13  docs/evidence/structured-study-import-contract-2026-10-03/results/probe-inline.log.txt
+  efa235960f233d530bb49fd1463b8ad19d60e26259539ae274a8cebff7218a3f  docs/evidence/structured-study-import-contract-2026-10-03/results/render-results.json
+  3736554865d93e5466f56daed9c81ffeb8ea8d5916f779f6b0e13d51b2f3f688  docs/evidence/structured-study-import-contract-2026-10-03/results/run-all-summary.txt
+  d24f669c007cfd30bbf21cf617cff5f07ec18155223c3896ddeecd8c1016dc14  docs/evidence/structured-study-import-contract-2026-10-03/results/schema-divergence.json
+  32eba579cb42bbe7fd44ac2089e77852d2127a205da57fcae17f97bfbad03239  docs/evidence/structured-study-import-contract-2026-10-03/results/schema-results.json
+  7ef6cae61b60d69998e7121443f4f83cc21322376091b7f040e293df220dc181  docs/evidence/structured-study-import-contract-2026-10-03/results/validator-results.json
+  7732ae98e601b3f4c5a79149990424ee9322015682e928042ffe9bdfad2ad9ae  STATUS.md
+  caadab3eb8f09c9b60c4de1240b4d59254fd3340c0e79ed969ba9b17d38a4ef6  docs/PROJECT_HANDOFF.md

@@ -1,0 +1,658 @@
+// Disposable prototype of the structured study-packet validator.
+// Contract: docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md (format hfd-study-packet, version 1).
+// Not production code and not an adoption of Zod. Runs only in a scratch directory.
+//
+// Stages:
+//   1. Byte checks before parsing: size, UTF-8, byte-order marks.
+//   2. Strict bounded JSON scan: grammar, depth, keys, duplicates, forbidden names, numbers, string characters.
+//   3. Format/version gate.
+//   4. Zod structural validation with deterministic normalization.
+//   5. Semantic validation: identity, answer keys, choices, credential-like content.
+//   6. Preview model (counts, warnings, normalized payload). No writes happen anywhere in this module.
+import * as z from "zod";
+
+// The application's CSP is `script-src 'self'` without 'unsafe-eval'. Zod 4 otherwise probes `new Function`,
+// which a strict CSP reports as a violation even though Zod catches the failure.
+z.config({ jitless: true });
+
+export const FORMAT = "hfd-study-packet";
+export const FORMAT_VERSION = 1;
+
+export const LIMITS = Object.freeze({
+  fileBytes: 4 * 1024 * 1024, // reused: MAX_TEXT_BYTES (src/logic/aiLimits.ts, src-tauri/src/gemini.rs)
+  depth: 8, // proposed
+  objectKeys: 32, // proposed
+  keyCodePoints: 64, // proposed
+  integerDigits: 9, // proposed
+  values: 250_000, // proposed
+  title: 200,
+  sourceGenerator: 100,
+  sourceCreatedAt: 40,
+  sourceNote: 1_000,
+  summary: 20_000,
+  sections: 100,
+  heading: 200,
+  body: 20_000,
+  sourceNotes: 5_000,
+  flashcards: 500,
+  front: 1_000,
+  back: 2_000,
+  questions: 200,
+  question: 2_000,
+  choicesMin: 2, // reused: at least two options (sanitize_practice_test, PracticeQuestion)
+  choicesMax: 6, // proposed
+  choiceText: 500,
+  explanation: 4_000,
+  sourceRefs: 5,
+  refLabel: 200,
+  pageMin: 1,
+  pageMax: 1_000, // reused: pdf::MAX_PAGES
+  idCodePoints: 64,
+  choiceIdCodePoints: 32,
+  reportedErrors: 50,
+});
+
+const ID_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
+const CHOICE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$/;
+const SAFE_NAME_RE = /^[A-Za-z0-9_.-]{1,64}$/;
+const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const DIRECTIVE_FIELDS = new Set([
+  "actions", "commands", "command", "script", "scripts", "exec", "execute", "run", "fetch", "upload",
+  "download", "webhook", "callback", "instructions", "system", "systemPrompt", "onImport", "onLoad",
+  "html", "mdx", "jsx", "apiKey", "token", "credentials",
+]);
+const LEGACY_ANSWER_FIELDS = new Set([
+  "correctIndex", "answerIndex", "answer", "correct", "correctAnswer", "correctChoice", "answers",
+  "correctChoiceIds",
+]);
+const CREDENTIAL_PATTERNS = [
+  /AIza[0-9A-Za-z_-]{35}/, // Google API key
+  /\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}/, // provider secret key style
+  /\bgh[pousr]_[A-Za-z0-9]{36,}/, // GitHub token
+  /\bxox[abprs]-[A-Za-z0-9-]{10,}/, // Slack token
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/, // PEM private key
+  /\bAKIA[0-9A-Z]{16}\b/, // AWS access key id
+];
+const BIDI_RE = /[‪-‮⁦-⁩]/;
+const HTML_LIKE_RE = /<\/?[A-Za-z!][^>]*>/;
+const MD_IMAGE_RE = /!\[[^\]]*\]\(/;
+
+const MESSAGES = {
+  file_empty: "The file is empty.",
+  file_too_large: "The file is larger than the 4 MiB limit for a study packet.",
+  file_read_failed: "The file could not be read.",
+  unsupported_encoding: "The file is not UTF-8. Export it again as UTF-8 JSON.",
+  invalid_utf8: "The file contains bytes that are not valid UTF-8.",
+  malformed_json: "The file is not valid JSON.",
+  trailing_content: "The file has extra content after the JSON value.",
+  depth_exceeded: "The JSON is nested more deeply than this format allows.",
+  too_many_keys: "An object has more fields than this format allows.",
+  key_too_long: "A field name is longer than this format allows.",
+  duplicate_key: "A field appears twice in the same object.",
+  forbidden_property_name: "A field uses a reserved name that is never accepted.",
+  unsupported_number: "Only whole numbers of up to 9 digits are used in this format.",
+  invalid_string_character: "Text contains a control character or an invalid Unicode sequence.",
+  too_many_values: "The JSON contains more values than this format allows.",
+  root_not_object: "The packet must be a JSON object.",
+  format_missing: "This is not a Her Flight Deck study packet (the format field is missing).",
+  unsupported_format: "This is not a Her Flight Deck study packet (unknown format).",
+  version_missing: "The packet does not say which format version it uses.",
+  unsupported_version: "This packet uses a format version this app does not support.",
+  unknown_field: "This field is not part of format version 1.",
+  directive_field_unsupported: "Packets cannot contain actions, commands, scripts, credentials or fetch/upload instructions.",
+  ambiguous_answer_key_field: "Version 1 identifies the correct answer only by correctChoiceId.",
+  wrong_type: "This value has the wrong type.",
+  null_not_allowed: "Null is not used in this format; leave the field out instead.",
+  required_missing: "A required field is missing.",
+  empty_required: "A required text field is empty.",
+  too_long: "This text is longer than the limit.",
+  too_few_items: "This list has too few items.",
+  too_many_items: "This list has too many items.",
+  invalid_id: "An identifier must be 1–64 letters, digits, '.', '_' or '-', starting with a letter or digit.",
+  unsupported_question_type: "Only single-choice questions are supported.",
+  answer_key_type: "correctChoiceId must be a choice id string, not a number or index.",
+  multiple_answers_unsupported: "Each question must have exactly one correct choice.",
+  page_out_of_range: "A source page must be a whole number from 1 to 1000.",
+  source_ref_empty: "A source reference needs a label or a page.",
+  packet_empty: "The packet has no guide, flashcards or questions.",
+  duplicate_id: "Two items share the same identifier.",
+  duplicate_choice_id: "Two choices in this question share the same identifier.",
+  duplicate_choice_text: "Two choices in this question have the same text.",
+  answer_key_not_in_choices: "correctChoiceId does not match any choice in this question.",
+  answer_key_case_mismatch: "correctChoiceId matches a choice only if letter case is ignored; it is not repaired.",
+  credential_like_content: "This text looks like a password, key or token. Remove it and export again.",
+  invalid_value: "This value is not allowed here.",
+};
+
+export const WARNING_MESSAGES = {
+  utf8_bom_removed: "A UTF-8 byte-order mark at the start of the file was ignored.",
+  no_practice_test: "This packet has no structured questions, so no practice test will be created.",
+  no_study_guide: "This packet has no guide or flashcards, so only a practice test will be created.",
+  source_refs_unverified: "Source references come from the packet and have not been checked against any file. They are shown in this preview but not saved.",
+  source_claim_unverified: "The packet says who or what produced it. That claim has not been verified.",
+  bidi_controls_present: "Some text contains direction-control characters that can change how it looks.",
+  html_like_text: "Some text looks like HTML. It will be shown as text and never run.",
+  markdown_images_not_shown: "Some text references images. Images are never loaded or shown.",
+};
+
+function err(code, path, extra = {}) {
+  return { code, path, message: MESSAGES[code] ?? MESSAGES.invalid_value, ...extra };
+}
+
+class ScanError extends Error {
+  constructor(issue) {
+    super(issue.code);
+    this.issue = issue;
+  }
+}
+
+function pathString(parts) {
+  let out = "$";
+  for (const part of parts) {
+    if (typeof part === "number") out += `[${part}]`;
+    else if (SAFE_NAME_RE.test(part)) out += `.${part}`;
+    else out += ".<field>";
+  }
+  return out;
+}
+
+function codePointLength(s) {
+  let n = 0;
+  for (const _ of s) n++;
+  return n;
+}
+
+// Rejects C0/C1 controls (except tab, LF, CR), DEL and lone surrogates. Written as a loop because
+// String.prototype.isWellFormed and regex lookbehind are unavailable on macOS 12.0 WebKit.
+function hasInvalidCharacters(s) {
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c >= 0xd800 && c <= 0xdbff) {
+      const next = s.charCodeAt(i + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        i++;
+        continue;
+      }
+      return true;
+    }
+    if (c >= 0xdc00 && c <= 0xdfff) return true;
+    if (c === 0x09 || c === 0x0a || c === 0x0d) continue;
+    if (c < 0x20 || (c >= 0x7f && c <= 0x9f)) return true;
+  }
+  return false;
+}
+
+/** Stage 2: strict RFC 8259 scanner with bounds. Builds the value itself; JSON.parse is never used. */
+export function scanJson(text) {
+  let i = 0;
+  let values = 0;
+  const path = [];
+
+  const fail = (code, extra = {}) => {
+    throw new ScanError(err(code, pathString(path), { offset: i, ...extra }));
+  };
+  const ws = () => {
+    while (i < text.length) {
+      const c = text.charCodeAt(i);
+      if (c === 0x20 || c === 0x09 || c === 0x0a || c === 0x0d) i++;
+      else break;
+    }
+  };
+  const countValue = () => {
+    if (++values > LIMITS.values) fail("too_many_values");
+  };
+
+  const parseString = () => {
+    // text[i] === '"'
+    i++;
+    let out = "";
+    let start = i;
+    for (;;) {
+      if (i >= text.length) fail("malformed_json");
+      const c = text.charCodeAt(i);
+      if (c === 0x22) {
+        out += text.slice(start, i);
+        i++;
+        break;
+      }
+      if (c < 0x20) fail("malformed_json"); // raw control characters are not JSON
+      if (c === 0x5c) {
+        out += text.slice(start, i);
+        const e = text[i + 1];
+        const simple = { '"': '"', "\\": "\\", "/": "/", b: "\b", f: "\f", n: "\n", r: "\r", t: "\t" }[e];
+        if (simple !== undefined) {
+          out += simple;
+          i += 2;
+        } else if (e === "u") {
+          const hex = text.slice(i + 2, i + 6);
+          if (!/^[0-9A-Fa-f]{4}$/.test(hex)) fail("malformed_json");
+          out += String.fromCharCode(parseInt(hex, 16));
+          i += 6;
+        } else {
+          fail("malformed_json");
+        }
+        start = i;
+        continue;
+      }
+      i++;
+    }
+    if (hasInvalidCharacters(out)) fail("invalid_string_character");
+    return out;
+  };
+
+  const parseNumber = () => {
+    const m = /^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/.exec(text.slice(i, i + 64));
+    if (!m) fail("malformed_json");
+    if (m[2] || m[3] || m[1].length > LIMITS.integerDigits) fail("unsupported_number");
+    i += m[0].length;
+    return Number(m[0]);
+  };
+
+  const parseValue = (depth) => {
+    ws();
+    if (i >= text.length) fail("malformed_json");
+    countValue();
+    const ch = text[i];
+    if (ch === "{") {
+      if (depth + 1 > LIMITS.depth) fail("depth_exceeded", { limit: LIMITS.depth });
+      i++;
+      const obj = {};
+      const seen = new Set();
+      ws();
+      if (text[i] === "}") {
+        i++;
+        return obj;
+      }
+      for (;;) {
+        ws();
+        if (text[i] !== '"') fail("malformed_json");
+        const key = parseString();
+        if (FORBIDDEN_KEYS.has(key)) fail("forbidden_property_name");
+        if (codePointLength(key) > LIMITS.keyCodePoints) fail("key_too_long", { limit: LIMITS.keyCodePoints });
+        if (seen.has(key)) fail("duplicate_key", SAFE_NAME_RE.test(key) ? { field: key } : {});
+        seen.add(key);
+        if (seen.size > LIMITS.objectKeys) fail("too_many_keys", { limit: LIMITS.objectKeys });
+        ws();
+        if (text[i] !== ":") fail("malformed_json");
+        i++;
+        path.push(key);
+        obj[key] = parseValue(depth + 1);
+        path.pop();
+        ws();
+        if (text[i] === ",") {
+          i++;
+          continue;
+        }
+        if (text[i] === "}") {
+          i++;
+          return obj;
+        }
+        fail("malformed_json");
+      }
+    }
+    if (ch === "[") {
+      if (depth + 1 > LIMITS.depth) fail("depth_exceeded", { limit: LIMITS.depth });
+      i++;
+      const arr = [];
+      ws();
+      if (text[i] === "]") {
+        i++;
+        return arr;
+      }
+      for (;;) {
+        path.push(arr.length);
+        arr.push(parseValue(depth + 1));
+        path.pop();
+        ws();
+        if (text[i] === ",") {
+          i++;
+          continue;
+        }
+        if (text[i] === "]") {
+          i++;
+          return arr;
+        }
+        fail("malformed_json");
+      }
+    }
+    if (ch === '"') return parseString();
+    if (ch === "-" || (ch >= "0" && ch <= "9")) return parseNumber();
+    if (text.startsWith("true", i)) {
+      i += 4;
+      return true;
+    }
+    if (text.startsWith("false", i)) {
+      i += 5;
+      return false;
+    }
+    if (text.startsWith("null", i)) {
+      i += 4;
+      return null;
+    }
+    fail("malformed_json");
+  };
+
+  try {
+    const value = parseValue(0);
+    ws();
+    if (i !== text.length) fail("trailing_content");
+    return { ok: true, value };
+  } catch (e) {
+    if (e instanceof ScanError) return { ok: false, error: e.issue };
+    throw e;
+  }
+}
+
+/** Stage 1: bytes to text. */
+export function decodeBytes(bytes) {
+  if (bytes.length === 0) return { ok: false, error: err("file_empty", "$") };
+  if (bytes.length > LIMITS.fileBytes) return { ok: false, error: err("file_too_large", "$", { limit: LIMITS.fileBytes }) };
+  if ((bytes[0] === 0xfe && bytes[1] === 0xff) || (bytes[0] === 0xff && bytes[1] === 0xfe)) {
+    return { ok: false, error: err("unsupported_encoding", "$") };
+  }
+  const warnings = [];
+  let view = bytes;
+  if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
+    view = bytes.subarray(3);
+    warnings.push("utf8_bom_removed");
+  }
+  let text;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(view);
+  } catch {
+    return { ok: false, error: err("invalid_utf8", "$") };
+  }
+  if (text.length === 0) return { ok: false, error: err("file_empty", "$") };
+  return { ok: true, text, warnings };
+}
+
+// Deterministic normalization (contract §2.7).
+export function normLine(s) {
+  return s.replace(/\r\n?/g, "\n").normalize("NFC").replace(/\s+/g, " ").trim();
+}
+export function normBlock(s) {
+  return s.replace(/\r\n?/g, "\n").normalize("NFC").replace(/^(?:[ \t]*\n)+/, "").replace(/\s+$/, "");
+}
+
+function text(kind, { min = 0, max }) {
+  return z.string().transform((raw, ctx) => {
+    const value = kind === "line" ? normLine(raw) : normBlock(raw);
+    const length = codePointLength(value);
+    if (min > 0 && length === 0) {
+      ctx.issues.push({ code: "custom", input: raw, params: { hfd: "empty_required" } });
+      return z.NEVER;
+    }
+    if (length > max) {
+      ctx.issues.push({ code: "custom", input: raw, params: { hfd: "too_long", limit: max } });
+      return z.NEVER;
+    }
+    return value;
+  });
+}
+
+const id = z.string().regex(ID_RE);
+const choiceId = z.string().regex(CHOICE_ID_RE);
+
+const sourceRef = z.strictObject({
+  label: text("line", { max: LIMITS.refLabel }).optional(),
+  page: z.int().min(LIMITS.pageMin).max(LIMITS.pageMax).optional(),
+});
+
+const sourceRefs = z.array(sourceRef).max(LIMITS.sourceRefs);
+
+const section = z.strictObject({
+  heading: text("line", { min: 1, max: LIMITS.heading }),
+  body: text("block", { min: 1, max: LIMITS.body }),
+});
+
+const guide = z.strictObject({
+  summary: text("block", { max: LIMITS.summary }).optional(),
+  sections: z.array(section).max(LIMITS.sections).optional(),
+  sourceNotes: text("block", { max: LIMITS.sourceNotes }).optional(),
+});
+
+const flashcard = z.strictObject({
+  id,
+  front: text("block", { min: 1, max: LIMITS.front }),
+  back: text("block", { min: 1, max: LIMITS.back }),
+  sourceRefs: sourceRefs.optional(),
+});
+
+const choice = z.strictObject({
+  id: choiceId,
+  text: text("line", { min: 1, max: LIMITS.choiceText }),
+});
+
+const question = z.strictObject({
+  id,
+  type: z.literal("single-choice"),
+  question: text("block", { min: 1, max: LIMITS.question }),
+  choices: z.array(choice).min(LIMITS.choicesMin).max(LIMITS.choicesMax),
+  correctChoiceId: choiceId,
+  explanation: text("block", { min: 1, max: LIMITS.explanation }),
+  sourceRefs: sourceRefs.optional(),
+});
+
+export const packetSchema = z.strictObject({
+  format: z.literal(FORMAT),
+  formatVersion: z.literal(FORMAT_VERSION),
+  title: text("line", { min: 1, max: LIMITS.title }),
+  source: z
+    .strictObject({
+      generator: text("line", { max: LIMITS.sourceGenerator }).optional(),
+      createdAt: text("line", { max: LIMITS.sourceCreatedAt }).optional(),
+      note: text("block", { max: LIMITS.sourceNote }).optional(),
+    })
+    .optional(),
+  guide: guide.optional(),
+  flashcards: z.array(flashcard).max(LIMITS.flashcards).optional(),
+  questions: z.array(question).max(LIMITS.questions).optional(),
+});
+
+function lastKey(path) {
+  for (let k = path.length - 1; k >= 0; k--) if (typeof path[k] === "string") return path[k];
+  return undefined;
+}
+
+/** Map Zod issues to contract error codes. Never copies `input` into the result. */
+function mapIssue(issue) {
+  const path = pathString(issue.path);
+  if (issue.code === "custom" && issue.params?.hfd) {
+    return err(issue.params.hfd, path, issue.params.limit ? { limit: issue.params.limit } : {});
+  }
+  if (issue.code === "unrecognized_keys") {
+    return issue.keys.map((key) => {
+      const field = SAFE_NAME_RE.test(key) ? { field: key } : {};
+      if (DIRECTIVE_FIELDS.has(key)) return err("directive_field_unsupported", path, field);
+      if (LEGACY_ANSWER_FIELDS.has(key)) return err("ambiguous_answer_key_field", path, field);
+      return err("unknown_field", path, field);
+    });
+  }
+  const key = lastKey(issue.path);
+  if (issue.code === "invalid_type") {
+    const input = issue.input;
+    if (input === undefined) return err("required_missing", path);
+    if (key === "correctChoiceId" && typeof input === "number") return err("answer_key_type", path);
+    if (key === "correctChoiceId" && Array.isArray(input)) return err("multiple_answers_unsupported", path);
+    if (input === null) return err("null_not_allowed", path);
+    if (key === "page" && typeof input === "number") return err("page_out_of_range", path);
+    return err("wrong_type", path);
+  }
+  if (issue.code === "invalid_value") {
+    if (key === "type") return err("unsupported_question_type", path);
+    return err("invalid_value", path);
+  }
+  if (issue.code === "invalid_format") return err("invalid_id", path);
+  if (issue.code === "too_big") {
+    if (key === "page") return err("page_out_of_range", path);
+    if (issue.origin === "array") return err("too_many_items", path, { limit: Number(issue.maximum) });
+    return err("too_long", path);
+  }
+  if (issue.code === "too_small") {
+    if (key === "page") return err("page_out_of_range", path);
+    if (issue.origin === "array") return err("too_few_items", path, { limit: Number(issue.minimum) });
+    return err("empty_required", path);
+  }
+  return err("invalid_value", path);
+}
+
+/** Stage 5: identity, answer keys, choices and credential-like content on the normalized value. */
+export function semanticCheck(packet) {
+  const errors = [];
+  const warnings = new Set();
+
+  const hasGuide = Boolean(packet.guide && (packet.guide.summary || (packet.guide.sections ?? []).length));
+  const cards = packet.flashcards ?? [];
+  const questions = packet.questions ?? [];
+  if (!hasGuide && cards.length === 0 && questions.length === 0) errors.push(err("packet_empty", "$"));
+
+  const uniq = (items, base) => {
+    const seen = new Map();
+    items.forEach((item, index) => {
+      const k = item.id.toLowerCase();
+      if (seen.has(k)) errors.push(err("duplicate_id", `${base}[${index}].id`, { id: item.id, firstIndex: seen.get(k) }));
+      else seen.set(k, index);
+    });
+  };
+  uniq(cards, "$.flashcards");
+  uniq(questions, "$.questions");
+
+  questions.forEach((q, qi) => {
+    const base = `$.questions[${qi}]`;
+    const ids = new Map();
+    const texts = new Map();
+    q.choices.forEach((c, ci) => {
+      const k = c.id.toLowerCase();
+      if (ids.has(k)) errors.push(err("duplicate_choice_id", `${base}.choices[${ci}].id`, { id: c.id }));
+      else ids.set(k, c.id);
+      const t = c.text.toLowerCase();
+      if (texts.has(t)) errors.push(err("duplicate_choice_text", `${base}.choices[${ci}].text`, { firstIndex: texts.get(t) }));
+      else texts.set(t, ci);
+    });
+    const exact = q.choices.some((c) => c.id === q.correctChoiceId);
+    if (!exact) {
+      const folded = ids.has(q.correctChoiceId.toLowerCase());
+      errors.push(err(folded ? "answer_key_case_mismatch" : "answer_key_not_in_choices", `${base}.correctChoiceId`));
+    }
+  });
+
+  const refsSeen = [];
+  const checkRefs = (refs, base) => {
+    (refs ?? []).forEach((r, ri) => {
+      if (r.label === undefined && r.page === undefined) errors.push(err("source_ref_empty", `${base}.sourceRefs[${ri}]`));
+      else if (r.label === "" && r.page === undefined) errors.push(err("source_ref_empty", `${base}.sourceRefs[${ri}]`));
+      refsSeen.push(r);
+    });
+  };
+  cards.forEach((c, i) => checkRefs(c.sourceRefs, `$.flashcards[${i}]`));
+  questions.forEach((q, i) => checkRefs(q.sourceRefs, `$.questions[${i}]`));
+  if (refsSeen.length) warnings.add("source_refs_unverified");
+  if (packet.source?.generator) warnings.add("source_claim_unverified");
+
+  // Walk every normalized string with its path.
+  const walk = (value, p) => {
+    if (typeof value === "string") {
+      if (CREDENTIAL_PATTERNS.some((re) => re.test(value))) errors.push(err("credential_like_content", p));
+      if (BIDI_RE.test(value)) warnings.add("bidi_controls_present");
+      if (HTML_LIKE_RE.test(value)) warnings.add("html_like_text");
+      if (MD_IMAGE_RE.test(value)) warnings.add("markdown_images_not_shown");
+    } else if (Array.isArray(value)) {
+      value.forEach((v, k) => walk(v, `${p}[${k}]`));
+    } else if (value && typeof value === "object") {
+      for (const [k, v] of Object.entries(value)) walk(v, `${p}.${k}`);
+    }
+  };
+  walk(packet, "$");
+
+  if (questions.length === 0 && (hasGuide || cards.length)) warnings.add("no_practice_test");
+  if (questions.length > 0 && !hasGuide && cards.length === 0) warnings.add("no_study_guide");
+  return { errors, warnings: [...warnings], hasGuide };
+}
+
+/** Map a validated packet to the current application model (src/domain/types.ts). */
+export function toApplicationPayload(packet, hasGuide) {
+  const cards = packet.flashcards ?? [];
+  const questions = packet.questions ?? [];
+  const studySet =
+    hasGuide || cards.length
+      ? {
+          title: packet.title,
+          summary: packet.guide?.summary ?? "",
+          sections: (packet.guide?.sections ?? []).map((s) => ({ heading: s.heading, body: s.body })),
+          flashcards: cards.map((c) => ({ front: c.front, back: c.back, sourcePage: null })),
+          sourceNotes: packet.guide?.sourceNotes ?? "",
+          provider: "import",
+          model: "",
+        }
+      : null;
+  const practiceTest = questions.length
+    ? {
+        title: packet.title,
+        questions: questions.map((q) => ({
+          question: q.question,
+          options: q.choices.map((c) => c.text),
+          correctIndex: q.choices.findIndex((c) => c.id === q.correctChoiceId),
+          explanation: q.explanation,
+          sourcePage: null,
+        })),
+        provider: "import",
+        model: "",
+      }
+    : null;
+  return {
+    material: { title: packet.title, materialType: "study_guide", filePath: null, notes: "" },
+    studySet,
+    practiceTest,
+  };
+}
+
+function capErrors(errors) {
+  if (errors.length <= LIMITS.reportedErrors) return { errors, omittedErrors: 0 };
+  return { errors: errors.slice(0, LIMITS.reportedErrors), omittedErrors: errors.length - LIMITS.reportedErrors };
+}
+
+/** Whole pipeline from bytes. Pure: no I/O, no writes. */
+export function validatePacketBytes(bytes) {
+  const decoded = decodeBytes(bytes);
+  if (!decoded.ok) return { ok: false, stage: "bytes", errors: [decoded.error], omittedErrors: 0 };
+  const scanned = scanJson(decoded.text);
+  if (!scanned.ok) return { ok: false, stage: "scan", errors: [scanned.error], omittedErrors: 0 };
+  const root = scanned.value;
+  if (!root || typeof root !== "object" || Array.isArray(root)) {
+    return { ok: false, stage: "gate", errors: [err("root_not_object", "$")], omittedErrors: 0 };
+  }
+  if (!("format" in root)) return { ok: false, stage: "gate", errors: [err("format_missing", "$.format")], omittedErrors: 0 };
+  if (root.format !== FORMAT) return { ok: false, stage: "gate", errors: [err("unsupported_format", "$.format")], omittedErrors: 0 };
+  if (!("formatVersion" in root)) return { ok: false, stage: "gate", errors: [err("version_missing", "$.formatVersion")], omittedErrors: 0 };
+  if (root.formatVersion !== FORMAT_VERSION) {
+    const extra = Number.isInteger(root.formatVersion) ? { found: root.formatVersion, supported: [FORMAT_VERSION] } : { supported: [FORMAT_VERSION] };
+    return { ok: false, stage: "gate", errors: [err("unsupported_version", "$.formatVersion", extra)], omittedErrors: 0 };
+  }
+  const parsed = packetSchema.safeParse(root, { reportInput: true });
+  if (!parsed.success) {
+    const errors = parsed.error.issues.flatMap((issue) => mapIssue(issue));
+    return { ok: false, stage: "schema", ...capErrors(errors) };
+  }
+  const semantic = semanticCheck(parsed.data);
+  if (semantic.errors.length) return { ok: false, stage: "semantic", ...capErrors(semantic.errors) };
+  const payload = toApplicationPayload(parsed.data, semantic.hasGuide);
+  const warnings = [...decoded.warnings, ...semantic.warnings];
+  return {
+    ok: true,
+    stage: "preview",
+    preview: {
+      title: parsed.data.title,
+      counts: {
+        sections: parsed.data.guide?.sections?.length ?? 0,
+        flashcards: parsed.data.flashcards?.length ?? 0,
+        questions: parsed.data.questions?.length ?? 0,
+        choices: (parsed.data.questions ?? []).reduce((n, q) => n + q.choices.length, 0),
+        sourceRefs: [...(parsed.data.flashcards ?? []), ...(parsed.data.questions ?? [])].reduce((n, x) => n + (x.sourceRefs?.length ?? 0), 0),
+      },
+      createsStudySet: payload.studySet !== null,
+      createsPracticeTest: payload.practiceTest !== null,
+      warnings: warnings.map((code) => ({ code, message: WARNING_MESSAGES[code] })),
+    },
+    payload,
+  };
+}

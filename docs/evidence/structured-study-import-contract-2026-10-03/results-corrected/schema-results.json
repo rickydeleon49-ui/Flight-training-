@@ -1,0 +1,523 @@
+{
+  "summary": {
+    "ajv": "8.20.0",
+    "total": 50,
+    "asserted": 40,
+    "failed": 0,
+    "scanOnlyDifferences": [
+      "15-malformed-trailing-comma.json: JSON.parse=false schemaValid=false",
+      "16-truncated.json: JSON.parse=false schemaValid=false",
+      "17-duplicate-key.json: JSON.parse=true schemaValid=true",
+      "34-proto-key.json: JSON.parse=true schemaValid=false",
+      "35-constructor-key-nested.json: JSON.parse=true schemaValid=false",
+      "40-fractional-number.json: JSON.parse=true schemaValid=true",
+      "41-escaped-control-character.json: JSON.parse=true schemaValid=true",
+      "42-lone-surrogate.json: JSON.parse=true schemaValid=true",
+      "47-trailing-content.json: JSON.parse=false schemaValid=false",
+      "53-version-1-point-0.json: JSON.parse=true schemaValid=true"
+    ]
+  },
+  "rows": [
+    {
+      "fixture": "01-guide-only.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "02-flashcards-and-test.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "03-unicode.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "04-questions-only.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "05-hostile-markdown.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "10-unsupported-version-2.json",
+      "appStage": "gate",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/formatVersion const"
+      ]
+    },
+    {
+      "fixture": "11-unsupported-version-0.json",
+      "appStage": "gate",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/formatVersion const"
+      ]
+    },
+    {
+      "fixture": "12-version-as-string.json",
+      "appStage": "gate",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/formatVersion const"
+      ]
+    },
+    {
+      "fixture": "13-format-missing.json",
+      "appStage": "gate",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/ required"
+      ]
+    },
+    {
+      "fixture": "14-unknown-format.json",
+      "appStage": "gate",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/format const"
+      ]
+    },
+    {
+      "fixture": "15-malformed-trailing-comma.json",
+      "appStage": "scan",
+      "jsonParse": false,
+      "schemaValid": false,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": [
+        "/format const"
+      ]
+    },
+    {
+      "fixture": "16-truncated.json",
+      "appStage": "scan",
+      "jsonParse": false,
+      "schemaValid": false,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": [
+        "/format const"
+      ]
+    },
+    {
+      "fixture": "17-duplicate-key.json",
+      "appStage": "scan",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "18-duplicate-question-id.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "19-duplicate-id-differs-by-case.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "20-missing-question-id.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0 required"
+      ]
+    },
+    {
+      "fixture": "21-missing-flashcard-id.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/flashcards/0 required"
+      ]
+    },
+    {
+      "fixture": "22-invalid-id-characters.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0/id pattern"
+      ]
+    },
+    {
+      "fixture": "23-answer-not-in-choices.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "24-answer-case-mismatch.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "25-answer-as-index-number.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0/correctChoiceId type"
+      ]
+    },
+    {
+      "fixture": "26-legacy-correct-index.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0 required",
+        "/questions/0 additionalProperties"
+      ]
+    },
+    {
+      "fixture": "27-multiple-correct-answers.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0/correctChoiceId type"
+      ]
+    },
+    {
+      "fixture": "28-duplicate-choice-text.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "29-duplicate-choice-id.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "30-unsupported-question-type.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0/type const"
+      ]
+    },
+    {
+      "fixture": "31-missing-answer.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0 required"
+      ]
+    },
+    {
+      "fixture": "32-single-choice-only.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/questions/0/choices minItems"
+      ]
+    },
+    {
+      "fixture": "33-null-value.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/guide/summary type"
+      ]
+    },
+    {
+      "fixture": "34-proto-key.json",
+      "appStage": "scan",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": [
+        "/ additionalProperties"
+      ]
+    },
+    {
+      "fixture": "35-constructor-key-nested.json",
+      "appStage": "scan",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": [
+        "/flashcards/0 additionalProperties"
+      ]
+    },
+    {
+      "fixture": "36-directive-fields.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/ additionalProperties",
+        "/ additionalProperties"
+      ]
+    },
+    {
+      "fixture": "38-empty-packet.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "39-blank-title.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/title pattern"
+      ]
+    },
+    {
+      "fixture": "40-fractional-number.json",
+      "appStage": "scan",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "41-escaped-control-character.json",
+      "appStage": "scan",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "42-lone-surrogate.json",
+      "appStage": "scan",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "43-root-array.json",
+      "appStage": "gate",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/ type"
+      ]
+    },
+    {
+      "fixture": "44-wrong-type.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/title type"
+      ]
+    },
+    {
+      "fixture": "45-page-out-of-range.json",
+      "appStage": "schema",
+      "jsonParse": true,
+      "schemaValid": false,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": [
+        "/flashcards/0/sourceRefs/0/page minimum",
+        "/flashcards/1/sourceRefs/0/page maximum"
+      ]
+    },
+    {
+      "fixture": "46-empty-source-ref.json",
+      "appStage": "semantic",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "47-trailing-content.json",
+      "appStage": "scan",
+      "jsonParse": false,
+      "schemaValid": false,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "51-markdown-deep-nesting.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "52-markdown-moderate-nesting.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "53-version-1-point-0.json",
+      "appStage": "scan",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": false,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "54-source-note-only.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "55-source-date-only.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "56-source-empty.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "57-refs-on-multiple-items.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    },
+    {
+      "fixture": "58-cards-only.json",
+      "appStage": "accepted",
+      "jsonParse": true,
+      "schemaValid": true,
+      "asserted": true,
+      "pass": true,
+      "schemaErrors": []
+    }
+  ]
+}

@@ -1,0 +1,687 @@
+// Generated from the corrected prototype output. Do not edit.
+import type { ImportPayload, PacketValidationResult } from "./import-dto";
+
+export const guideOnlyPayload: ImportPayload = {
+  "material": {
+    "title": "Letter order guide"
+  },
+  "studySet": {
+    "title": "Letter order guide",
+    "summary": "A short **synthetic** guide about the order of invented labels.",
+    "sections": [
+      {
+        "heading": "Labels",
+        "body": "- Plinth\n- Quill\n- Marrow\n\nQuill follows Plinth."
+      },
+      {
+        "heading": "Letters",
+        "body": "The letter B follows A.\n\nThis guide has no questions."
+      }
+    ],
+    "flashcards": [],
+    "sourceNotes": "Synthetic example. No real source.",
+    "provider": "import",
+    "model": ""
+  },
+  "practiceTest": null
+};
+
+export const guideOnlyResult: PacketValidationResult = {
+  "ok": true,
+  "stage": "preview",
+  "preview": {
+    "title": "Letter order guide",
+    "counts": {
+      "sections": 2,
+      "flashcards": 0,
+      "questions": 0,
+      "choices": 0,
+      "sourceRefs": 0
+    },
+    "createsStudySet": true,
+    "createsPracticeTest": false,
+    "warnings": [
+      {
+        "code": "no_practice_test",
+        "message": "This packet has no structured questions, so no practice test will be created."
+      }
+    ],
+    "data": {
+      "title": "Letter order guide",
+      "source": null,
+      "guide": {
+        "summary": "A short **synthetic** guide about the order of invented labels.",
+        "sections": [
+          {
+            "heading": "Labels",
+            "body": "- Plinth\n- Quill\n- Marrow\n\nQuill follows Plinth."
+          },
+          {
+            "heading": "Letters",
+            "body": "The letter B follows A.\n\nThis guide has no questions."
+          }
+        ],
+        "sourceNotes": "Synthetic example. No real source."
+      },
+      "flashcards": [],
+      "questions": []
+    },
+    "discardedOnSave": {
+      "sourceClaims": [],
+      "sourceRefs": 0,
+      "exportIds": 0,
+      "choiceIds": 0
+    }
+  },
+  "payload": {
+    "material": {
+      "title": "Letter order guide"
+    },
+    "studySet": {
+      "title": "Letter order guide",
+      "summary": "A short **synthetic** guide about the order of invented labels.",
+      "sections": [
+        {
+          "heading": "Labels",
+          "body": "- Plinth\n- Quill\n- Marrow\n\nQuill follows Plinth."
+        },
+        {
+          "heading": "Letters",
+          "body": "The letter B follows A.\n\nThis guide has no questions."
+        }
+      ],
+      "flashcards": [],
+      "sourceNotes": "Synthetic example. No real source.",
+      "provider": "import",
+      "model": ""
+    },
+    "practiceTest": null
+  }
+};
+
+export const testOnlyPayload: ImportPayload = {
+  "material": {
+    "title": "Questions only"
+  },
+  "studySet": null,
+  "practiceTest": {
+    "title": "Questions only",
+    "questions": [
+      {
+        "question": "In the invented alphabet, which label comes after Plinth 1?",
+        "options": [
+          "Zorb",
+          "Quill",
+          "Marrow"
+        ],
+        "correctIndex": 1,
+        "explanation": "In this made-up sequence, Quill always follows Plinth.",
+        "sourcePage": null
+      }
+    ],
+    "provider": "import",
+    "model": ""
+  }
+};
+
+export const testOnlyResult: PacketValidationResult = {
+  "ok": true,
+  "stage": "preview",
+  "preview": {
+    "title": "Questions only",
+    "counts": {
+      "sections": 0,
+      "flashcards": 0,
+      "questions": 1,
+      "choices": 3,
+      "sourceRefs": 0
+    },
+    "createsStudySet": false,
+    "createsPracticeTest": true,
+    "warnings": [
+      {
+        "code": "no_study_guide",
+        "message": "This packet has no guide or flashcards, so only a practice test will be created."
+      }
+    ],
+    "data": {
+      "title": "Questions only",
+      "source": null,
+      "guide": null,
+      "flashcards": [],
+      "questions": [
+        {
+          "index": 0,
+          "id": "q1",
+          "question": "In the invented alphabet, which label comes after Plinth 1?",
+          "choices": [
+            {
+              "id": "a",
+              "text": "Zorb"
+            },
+            {
+              "id": "b",
+              "text": "Quill"
+            },
+            {
+              "id": "c",
+              "text": "Marrow"
+            }
+          ],
+          "correctChoiceId": "b",
+          "explanation": "In this made-up sequence, Quill always follows Plinth.",
+          "sourceRefs": []
+        }
+      ]
+    },
+    "discardedOnSave": {
+      "sourceClaims": [],
+      "sourceRefs": 0,
+      "exportIds": 1,
+      "choiceIds": 3
+    }
+  },
+  "payload": {
+    "material": {
+      "title": "Questions only"
+    },
+    "studySet": null,
+    "practiceTest": {
+      "title": "Questions only",
+      "questions": [
+        {
+          "question": "In the invented alphabet, which label comes after Plinth 1?",
+          "options": [
+            "Zorb",
+            "Quill",
+            "Marrow"
+          ],
+          "correctIndex": 1,
+          "explanation": "In this made-up sequence, Quill always follows Plinth.",
+          "sourcePage": null
+        }
+      ],
+      "provider": "import",
+      "model": ""
+    }
+  }
+};
+
+export const combinedPayload: ImportPayload = {
+  "material": {
+    "title": "Letters and labels"
+  },
+  "studySet": {
+    "title": "Letters and labels",
+    "summary": "Cards and an explicit structured test.",
+    "sections": [],
+    "flashcards": [
+      {
+        "front": "Which letter follows A?",
+        "back": "B",
+        "sourcePage": null
+      },
+      {
+        "front": "Which letter follows B?",
+        "back": "C",
+        "sourcePage": null
+      },
+      {
+        "front": "Which letter follows C?",
+        "back": "D",
+        "sourcePage": null
+      }
+    ],
+    "sourceNotes": "",
+    "provider": "import",
+    "model": ""
+  },
+  "practiceTest": {
+    "title": "Letters and labels",
+    "questions": [
+      {
+        "question": "In the invented alphabet, which label comes after Plinth 1?",
+        "options": [
+          "Zorb",
+          "Quill",
+          "Marrow"
+        ],
+        "correctIndex": 1,
+        "explanation": "In this made-up sequence, Quill always follows Plinth.",
+        "sourcePage": null
+      },
+      {
+        "question": "In the invented alphabet, which label comes after Plinth 2?",
+        "options": [
+          "Zorb",
+          "Quill",
+          "Marrow"
+        ],
+        "correctIndex": 2,
+        "explanation": "In this made-up sequence, Quill always follows Plinth.",
+        "sourcePage": null
+      }
+    ],
+    "provider": "import",
+    "model": ""
+  }
+};
+
+export const combinedResult: PacketValidationResult = {
+  "ok": true,
+  "stage": "preview",
+  "preview": {
+    "title": "Letters and labels",
+    "counts": {
+      "sections": 0,
+      "flashcards": 3,
+      "questions": 2,
+      "choices": 6,
+      "sourceRefs": 2
+    },
+    "createsStudySet": true,
+    "createsPracticeTest": true,
+    "warnings": [
+      {
+        "code": "source_refs_unverified",
+        "message": "Source references come from the packet and have not been checked against any file. They are shown in this preview but not saved."
+      },
+      {
+        "code": "source_claim_unverified",
+        "message": "The packet says who or what produced it. That claim has not been verified."
+      }
+    ],
+    "data": {
+      "title": "Letters and labels",
+      "source": {
+        "generator": "Example assistant (claim)",
+        "createdAt": "2026-10-03T12:00:00Z",
+        "note": "Synthetic packet for contract tests."
+      },
+      "guide": {
+        "summary": "Cards and an explicit structured test.",
+        "sections": [],
+        "sourceNotes": ""
+      },
+      "flashcards": [
+        {
+          "index": 0,
+          "id": "c1",
+          "front": "Which letter follows A?",
+          "back": "B",
+          "sourceRefs": []
+        },
+        {
+          "index": 1,
+          "id": "c2",
+          "front": "Which letter follows B?",
+          "back": "C",
+          "sourceRefs": [
+            {
+              "label": "Invented chart",
+              "page": 3
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "id": "c3",
+          "front": "Which letter follows C?",
+          "back": "D",
+          "sourceRefs": []
+        }
+      ],
+      "questions": [
+        {
+          "index": 0,
+          "id": "q1",
+          "question": "In the invented alphabet, which label comes after Plinth 1?",
+          "choices": [
+            {
+              "id": "a",
+              "text": "Zorb"
+            },
+            {
+              "id": "b",
+              "text": "Quill"
+            },
+            {
+              "id": "c",
+              "text": "Marrow"
+            }
+          ],
+          "correctChoiceId": "b",
+          "explanation": "In this made-up sequence, Quill always follows Plinth.",
+          "sourceRefs": [
+            {
+              "label": "Invented chart section 2"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "id": "q2",
+          "question": "In the invented alphabet, which label comes after Plinth 2?",
+          "choices": [
+            {
+              "id": "a",
+              "text": "Zorb"
+            },
+            {
+              "id": "b",
+              "text": "Quill"
+            },
+            {
+              "id": "c",
+              "text": "Marrow"
+            }
+          ],
+          "correctChoiceId": "c",
+          "explanation": "In this made-up sequence, Quill always follows Plinth.",
+          "sourceRefs": []
+        }
+      ]
+    },
+    "discardedOnSave": {
+      "sourceClaims": [
+        "generator",
+        "createdAt",
+        "note"
+      ],
+      "sourceRefs": 2,
+      "exportIds": 5,
+      "choiceIds": 6
+    }
+  },
+  "payload": {
+    "material": {
+      "title": "Letters and labels"
+    },
+    "studySet": {
+      "title": "Letters and labels",
+      "summary": "Cards and an explicit structured test.",
+      "sections": [],
+      "flashcards": [
+        {
+          "front": "Which letter follows A?",
+          "back": "B",
+          "sourcePage": null
+        },
+        {
+          "front": "Which letter follows B?",
+          "back": "C",
+          "sourcePage": null
+        },
+        {
+          "front": "Which letter follows C?",
+          "back": "D",
+          "sourcePage": null
+        }
+      ],
+      "sourceNotes": "",
+      "provider": "import",
+      "model": ""
+    },
+    "practiceTest": {
+      "title": "Letters and labels",
+      "questions": [
+        {
+          "question": "In the invented alphabet, which label comes after Plinth 1?",
+          "options": [
+            "Zorb",
+            "Quill",
+            "Marrow"
+          ],
+          "correctIndex": 1,
+          "explanation": "In this made-up sequence, Quill always follows Plinth.",
+          "sourcePage": null
+        },
+        {
+          "question": "In the invented alphabet, which label comes after Plinth 2?",
+          "options": [
+            "Zorb",
+            "Quill",
+            "Marrow"
+          ],
+          "correctIndex": 2,
+          "explanation": "In this made-up sequence, Quill always follows Plinth.",
+          "sourcePage": null
+        }
+      ],
+      "provider": "import",
+      "model": ""
+    }
+  }
+};
+
+export const withRefsPayload: ImportPayload = {
+  "material": {
+    "title": "References on several items"
+  },
+  "studySet": {
+    "title": "References on several items",
+    "summary": "",
+    "sections": [],
+    "flashcards": [
+      {
+        "front": "A?",
+        "back": "B",
+        "sourcePage": null
+      },
+      {
+        "front": "C?",
+        "back": "D",
+        "sourcePage": null
+      }
+    ],
+    "sourceNotes": "",
+    "provider": "import",
+    "model": ""
+  },
+  "practiceTest": {
+    "title": "References on several items",
+    "questions": [
+      {
+        "question": "Pick Quill",
+        "options": [
+          "Zorb",
+          "Quill"
+        ],
+        "correctIndex": 1,
+        "explanation": "Invented.",
+        "sourcePage": null
+      },
+      {
+        "question": "Pick Zorb",
+        "options": [
+          "Zorb",
+          "Quill"
+        ],
+        "correctIndex": 0,
+        "explanation": "Invented.",
+        "sourcePage": null
+      }
+    ],
+    "provider": "import",
+    "model": ""
+  }
+};
+
+export const withRefsResult: PacketValidationResult = {
+  "ok": true,
+  "stage": "preview",
+  "preview": {
+    "title": "References on several items",
+    "counts": {
+      "sections": 0,
+      "flashcards": 2,
+      "questions": 2,
+      "choices": 4,
+      "sourceRefs": 5
+    },
+    "createsStudySet": true,
+    "createsPracticeTest": true,
+    "warnings": [
+      {
+        "code": "source_refs_unverified",
+        "message": "Source references come from the packet and have not been checked against any file. They are shown in this preview but not saved."
+      }
+    ],
+    "data": {
+      "title": "References on several items",
+      "source": null,
+      "guide": null,
+      "flashcards": [
+        {
+          "index": 0,
+          "id": "card-1",
+          "front": "A?",
+          "back": "B",
+          "sourceRefs": [
+            {
+              "label": "Invented chart é",
+              "page": 4
+            },
+            {
+              "label": "Second card ref"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "id": "card-2",
+          "front": "C?",
+          "back": "D",
+          "sourceRefs": []
+        }
+      ],
+      "questions": [
+        {
+          "index": 0,
+          "id": "quest-1",
+          "question": "Pick Quill",
+          "choices": [
+            {
+              "id": "a",
+              "text": "Zorb"
+            },
+            {
+              "id": "b",
+              "text": "Quill"
+            }
+          ],
+          "correctChoiceId": "b",
+          "explanation": "Invented.",
+          "sourceRefs": [
+            {
+              "page": 12
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "id": "quest-2",
+          "question": "Pick Zorb",
+          "choices": [
+            {
+              "id": "a",
+              "text": "Zorb"
+            },
+            {
+              "id": "b",
+              "text": "Quill"
+            }
+          ],
+          "correctChoiceId": "a",
+          "explanation": "Invented.",
+          "sourceRefs": [
+            {
+              "label": "Q2 first"
+            },
+            {
+              "label": "Q2 second",
+              "page": 2
+            }
+          ]
+        }
+      ]
+    },
+    "discardedOnSave": {
+      "sourceClaims": [],
+      "sourceRefs": 5,
+      "exportIds": 4,
+      "choiceIds": 4
+    }
+  },
+  "payload": {
+    "material": {
+      "title": "References on several items"
+    },
+    "studySet": {
+      "title": "References on several items",
+      "summary": "",
+      "sections": [],
+      "flashcards": [
+        {
+          "front": "A?",
+          "back": "B",
+          "sourcePage": null
+        },
+        {
+          "front": "C?",
+          "back": "D",
+          "sourcePage": null
+        }
+      ],
+      "sourceNotes": "",
+      "provider": "import",
+      "model": ""
+    },
+    "practiceTest": {
+      "title": "References on several items",
+      "questions": [
+        {
+          "question": "Pick Quill",
+          "options": [
+            "Zorb",
+            "Quill"
+          ],
+          "correctIndex": 1,
+          "explanation": "Invented.",
+          "sourcePage": null
+        },
+        {
+          "question": "Pick Zorb",
+          "options": [
+            "Zorb",
+            "Quill"
+          ],
+          "correctIndex": 0,
+          "explanation": "Invented.",
+          "sourcePage": null
+        }
+      ],
+      "provider": "import",
+      "model": ""
+    }
+  }
+};
+
+export const failureResult: PacketValidationResult = {
+  "ok": false,
+  "stage": "schema",
+  "errors": [
+    {
+      "code": "directive_field_unsupported",
+      "path": "$",
+      "message": "Packets cannot contain actions, commands, scripts, credentials or fetch/upload instructions.",
+      "field": "actions"
+    },
+    {
+      "code": "unknown_field",
+      "path": "$",
+      "message": "This field is not part of format version 1."
+    }
+  ],
+  "omittedErrors": 0
+};
