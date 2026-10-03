@@ -1,0 +1,137 @@
+# Structured study-import Slice A: implementation report, 3 October 2026
+
+**Complete local implementation; verified and ready for Codex independent review.** Gemini was explicitly assigned by the project owner to resume and complete Claude's interrupted source-only Slice A implementation. Codex retains responsibility for independent review, commits, GitHub publication and merge. All changes remain local, uncommitted and unpushed in the Mac checkout.
+
+## 1. Resume state, authorization and scope
+
+- **Checkout:** `/Users/rickymac/code/Flight-training-`
+- **Branch:** `codex/structured-study-import-slice-a`
+- **Base commit:** `696b07021f74104b800bc4a37c9ccb4c437a1abb` (PR #59, accepted contract)
+- **Documentation revision:** `f1099d8f49e79b1a96fe7ba0e611ad42c4cb0c5b` (`origin/main`)
+- **Starting verification:** All 81 submitted files matched the [starting receipt](https://github.com/rickydeleon49-ui/Flight-training-/blob/main/docs/evidence/structured-study-import-slice-a-resume-2026-10-03/starting-hashes.txt) byte-for-byte; receipt SHA-256 `4fc0cccc759615021d92837d4d6a00dd725c88e6273ec7b5bca6abe00f101d63`.
+- **Authorization:** Explicit source-only [owner exception](STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md) granted 3 October 2026. Authorizes adding `zod@4.6.5`, pure TypeScript study-packet validator modules, native read-only picker command, desktop-only service wrapper, third-party notice and tests.
+- **Strictly out of scope (preserved):** No database writes or replacement flow (Slice B); no import UI screen or toolbar wiring; no provider-label or domain type widening; no Markdown rendering dependency or react-markdown (Slice C); no M2 migrations; no changes to Gemini requests, prompts or API keys; no ordinary-file import changes; no backup/restore changes; no installer builds, signing, notarization or distribution.
+
+## 2. Architecture and reference-port preservation
+
+The implementation ports the accepted [contract](STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md) and reference implementation faithfully:
+
+1. **Strict bounded scanner (`src/logic/studyPacket/scan.ts`):**
+   - Implements a manual recursive descent parser without `JSON.parse`.
+   - Prohibits prototype poisoning keys (`__proto__`, `constructor`, `prototype`).
+   - Rejects duplicate object keys at parse time.
+   - Enforces strict contract bounds: max depth 8, max string length 64 KiB, max total byte length 2 MiB, max total elements/properties 10,000.
+   - Prohibits control characters and unescaped line breaks.
+2. **Schema and normalization (`src/logic/studyPacket/schema.ts`):**
+   - Configures `z.config({ jitless: true })` at module top before any schema is constructed.
+   - Prohibits `zod/compile` imports.
+   - Performs Unicode NFC normalization.
+   - Distinguishes single-line fields (spaces collapsed and trimmed) from block fields (LF normalized, trailing whitespace and leading blank lines trimmed, first-line indentation preserved).
+   - Counts Unicode code points after normalization (not UTF-16 code units).
+   - Prohibits unknown fields via strict object schemas.
+   - Prohibits legacy directive fields (`action`, `replaceExisting`, `targetDeck`).
+3. **Semantic validation (`src/logic/studyPacket/semantic.ts`):**
+   - Validates ID syntax (`^[a-z0-9_-]{1,64}$`).
+   - Enforces case-insensitive ID uniqueness across flashcards and questions.
+   - Enforces unique choice texts within each question.
+   - Validates that `correctChoiceId` matches an existing choice ID strictly; case mismatches are rejected and never silently repaired.
+   - Detects and rejects credential-like token patterns (e.g. Google API keys, JWTs).
+4. **Private diagnostics and redaction (`src/logic/studyPacket/diagnostics.ts`):**
+   - Enforces the R1 two-layer privacy defense.
+   - Layer 1 (upstream): Unknown field names and values are never included in error details.
+   - Layer 2 (boundary): Path grammar validation redacts non-contract identifier paths to `.<field>`, and field allowlisting drops unknown field names.
+5. **Separation of preview and persistence (`src/logic/studyPacket/payload.ts`):**
+   - Validated preview DTO retains normalized source claims for UI display.
+   - Persistence DTO strips export-only card/question IDs to prevent cross-deck collision.
+   - Implements the R5 guard: guide `sourceNotes` that arrive without a substantive study set (flashcards, guide summary or guide sections) are rejected (`source_notes_without_study_set`) and never silently discarded.
+   - Serializes canonical persistence JSON with alphabetically sorted keys and standard 2-space indentation.
+
+## 3. Native reader and desktop service wrapper
+
+1. **Native reader (`src-tauri/src/study_packet.rs`):**
+   - Implements `pick_study_packet` Tauri command registered in `src-tauri/src/lib.rs`.
+   - Uses `rfd::AsyncFileDialog` single-file picker restricted to `.json`.
+   - Cancellation returns `Ok(None)`, serializing to `null` for the webview.
+   - Enforces 2 MiB bounded read (`MAX_PACKET_BYTES = 2,097,152`).
+   - Uses pre-read metadata size check and streaming bounded reader (`read_bounded`) reading at most `limit + 1` bytes, ensuring files that grow after the metadata check are refused with `file_too_large`.
+   - Checks file type before opening; directories, named pipes (FIFOs) and non-regular files are refused without blocking.
+   - Computes SHA-256 of original file bytes before BOM stripping.
+   - Enforces strict UTF-8 decoding. Strips at most one UTF-8 byte order mark (`0xEF, 0xBB, 0xBF`); a second BOM remains in text for the validator to reject.
+   - Returns only base `fileName`, never full directory paths.
+   - Emits fixed, generic error codes and messages without echoing paths or file contents.
+2. **Original-byte vs canonical-content SHA-256:**
+   - **Original-byte hash:** Calculated by Rust on exact raw file bytes read from disk. Identifies the external file artifact.
+   - **Canonical-content hash:** Calculated on the normalized, sorted-key persistence JSON. Identifies the substantive study data.
+3. **Desktop service wrapper (`src/services/studyPackets.ts`):**
+   - Wraps Tauri command invocation with platform check (`isDesktop()`).
+   - Converts null cancellation into `cancelled: true` response.
+   - Invokes TypeScript `validatePacketText` on returned packet text.
+   - Returns typed preview and persistence DTOs alongside original file metadata.
+
+## 4. Third-party notices and licensing evidence
+
+1. **Dependency provenance and integrity:**
+   - Production dependency addition is strictly limited to `zod@4.6.5`.
+   - Resolved from `https://registry.npmjs.org/zod/-/zod-4.6.5.tgz`.
+   - Lockfile integrity: `sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==`.
+2. **JIT-less and CSP compliance:**
+   - Configured with `z.config({ jitless: true })` before schemas.
+   - Prohibits `zod/compile`.
+   - Function-constructor counter in `src/logic/studyPacket/jitless.test.ts` confirms 0 calls during validation of all 56 fixtures, with a positive control verifying the counter fires when jitless is disabled.
+3. **Notice file and build inclusion:**
+   - `public/THIRD_PARTY_NOTICES.txt` contains Zod's MIT copyright and permission notice.
+   - Normal build verification proves `dist/THIRD_PARTY_NOTICES.txt` is byte-identical to `public/THIRD_PARTY_NOTICES.txt` (SHA-256: `c497d9ea8d0a8fe60845a208370f698c457b94a0996fe131554955849cd7ba34`).
+   - Tauri distribution path: `src-tauri/tauri.conf.json` defines `"frontendDist": "../dist"`. Vite copies `public/` into `dist/` on build, and Tauri embeds `dist/` directly into the bundled application.
+4. **Pre-existing gap note:**
+   - Earlier production dependencies (e.g. `@tauri-apps/api`, `react`, `react-router-dom`, `sql.js`) are not yet cataloged in `THIRD_PARTY_NOTICES.txt`. This pre-existing gap is preserved as an open roadmap item to prevent out-of-scope license overhauls during Slice A.
+
+## 5. Mutation runner repair (SA1 resolution)
+
+1. **Root cause analysis (defect SA1):**
+   - Claude's scratch runner omitted `package-lock.json` and `public/THIRD_PARTY_NOTICES.txt` when creating scratch test copies.
+   - The selected test suite ran `notices.test.ts`, which requires both omitted files.
+   - Every single mutant row failed those two notice tests, falsely marking neutralized mutants M10, M12a and M12b as caught.
+   - There was no unmodified control run.
+2. **Repaired runner (`scripts/run-slice-a-mutations.mjs`):**
+   - Scratch-copy function includes all required files: `src`, `package.json`, `package-lock.json`, `public`, `tsconfig.json`, `vite.config.ts`, contract fixture evidence, and symlinked `node_modules`.
+   - **Control run:** Executes the scratch copy with zero edits; passes 231/231 tests with 0 failures and exit 0 before any mutation is attempted.
+   - **Infrastructure failure distinction:** Differentiates behavioral catches from infrastructure issues (syntax/module load errors, crashes, missing reports, or unrelated notice test failures).
+   - **Self-test failure propagation:** Includes `--self-test` mode proving that an unexpected outcome (e.g. deliberately expecting M10 to be caught) triggers aggregate failure and non-zero exit.
+3. **Corrected results (22 mutants):**
+   - 19 caught by relevant behavioral assertions (study-packet fixtures, boundary cases, R1/R2/R5 regressions).
+   - 3 neutralized by the two-layer defense architecture (M10, M12a, M12b: 0 failures, exit 0).
+   - 0 infrastructure errors.
+   - 22/22 as expected.
+   - Original failed run and script are preserved in `docs/evidence/structured-study-import-slice-a-2026-10-03/`.
+
+## 6. Local verification matrix outcomes
+
+All checks executed sequentially under scoped PATH `/opt/homebrew/opt/node@22/bin:/opt/homebrew/opt/rustup/bin:$PATH` and `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`:
+
+| Gate | Command | Result | Notes |
+| --- | --- | --- | --- |
+| Focused frontend | `npm test -- src/logic/studyPacket src/services/studyPackets.test.ts` | Exit 0 | 7 files, 241 passed |
+| Focused native | `cargo test --locked --manifest-path src-tauri/Cargo.toml study_packet::tests` | Exit 0 | 16 passed, 256 filtered out |
+| Repaired mutation runner | `node scripts/run-slice-a-mutations.mjs --self-test . <out>` | Exit 0 | Control passed (231 tests), self-test passed, 22/22 mutants as expected (19 caught, 3 neutralized) |
+| Full frontend | `npm test` | Exit 0 | 74 passed, 3 skipped (77 files); 941 passed, 4 skipped (945 tests) |
+| Production build & typecheck | `npm run build` | Exit 0 | `tsc --noEmit && vite build` succeeded, 184 modules |
+| Rust formatting | `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check` | Exit 0 | Clean formatting |
+| Rust Clippy | `cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` | Exit 0 | Zero warnings (corrected unnecessary literal unwrap in test) |
+| Full locked Rust tests | `cargo test --locked --manifest-path src-tauri/Cargo.toml` | Exit 0 | 266 passed; 0 failed; 6 ignored |
+| Cargo lockfile sync | `npm run test:cargo-lock` | Exit 0 | Cargo.lock matches Cargo.toml version 0.5.3 |
+| Whitespace checks | `git diff --check` and untracked file audit | Exit 0 | No trailing whitespace or CRLF |
+
+Intermediate note: Clippy flagged `clippy::unnecessary-literal-unwrap` on `study_packet.rs:463-464` in `cancellation_is_an_empty_result`. Replacing `let cancelled: Result<Option<PickedPacket>, PacketReadFailure> = Ok(None); cancelled.unwrap()` with `let cancelled: Option<PickedPacket> = None;` resolved the lint cleanly while continuing to test `serde_json::to_string(&cancelled) == "null"`.
+
+## 7. Remaining gates
+
+| Gate | Status | Required next action |
+| --- | --- | --- |
+| Codex independent review | Pending | Codex reviews Slice A source, commits and pushes to branch |
+| CI exact-head check | Pending | Single Ubuntu CI job on reviewed commit |
+| Merge Slice A | Pending | Fast-forward or PR merge into main |
+| Foundation gate: A2 published/accepted | Not met | Windows owner publishes and validates atomic material saves |
+| Foundation gate: M2 real-user check-in | Not met | Real-user check-in with owner scoped approval |
+| Slice B (persistence & replace) | Not started | Requires A2 and M2 gates |
+| Slice C (markdown rendering) | Not started | Optional; requires dependency review and macOS 12.0–12.2 checks |
+| Packaging & release holds | Unverified | Installed Mac testing, signing, notarization, release holds remain in effect |
