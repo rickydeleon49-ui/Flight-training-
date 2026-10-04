@@ -1,0 +1,253 @@
+{
+  "$schema": "hfd-mac-release-preparation/1",
+  "generatedAt": "2026-10-04T22:39:00Z",
+  "task": "Mac release preparation for independent review",
+  "status": "accepted preparation evidence and inactive signing proposal; not release-ready",
+  "host": {
+    "os": "macOS 27.0.1 (26A434)",
+    "architecture": "arm64",
+    "chip": "Apple M5",
+    "toolchain": {
+      "node": "v22.23.3",
+      "npm": "10.9.9",
+      "rustc": "1.99.0 (b940084d7 2026-09-28)",
+      "cargo": "1.99.0 (5f94df478 2026-08-27)",
+      "sdk": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+      "sdkVersion": "26.5"
+    }
+  },
+  "source": {
+    "checkout": "/Users/rickymac/code/Flight-training-pr70-integration",
+    "branch": "claude/mac-release-preparation-2026-10-04",
+    "headCommit": "50568143a4c4aef04e54eba88bfb22f0974cafe4",
+    "upstreamMain": "50568143a4c4aef04e54eba88bfb22f0974cafe4",
+    "ancestorCommitA2": "558725158cd93d49f8f9114693f61b08a00ffe2f",
+    "versionConsistency": {
+      "package.json": "0.5.3",
+      "package-lock.json": "0.5.3",
+      "src-tauri/tauri.conf.json": "0.5.3",
+      "src-tauri/Cargo.toml": "0.5.3",
+      "src-tauri/Cargo.lock": "0.5.3"
+    },
+    "bundleIdentifier": "com.herflightdeck.app",
+    "minimumMacOs": "12.0"
+  },
+  "frozenDraftCandidate": {
+    "releaseTag": "v0.5.3",
+    "releaseName": "Her Flight Deck 0.5.3 (macOS)",
+    "isDraft": true,
+    "publishedAt": null,
+    "targetCommitish": "41464607ff85d0a4cf0b837c19b400d8392dfec4",
+    "workflowRunId": 36515016063,
+    "assets": [
+      {
+        "name": "Her.Flight.Deck_0.5.3_aarch64.dmg",
+        "sizeBytes": 4511142,
+        "sha256": "de81be50122275104ca9e6791162a7bac6cd43a672c5580d5fbc509b5d16efec"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "sizeBytes": 100,
+        "sha256": "0485cc9495fd403fb9b099a4e9210ae69dd94b3ff4c0109e8dead0f3ed69dffe"
+      }
+    ],
+    "policyStatus": "Frozen private candidate from commit 4146460; do not replace, republish, delete, retire or retarget"
+  },
+  "distributionPolicy": {
+    "macos": {
+      "status": "active",
+      "architecture": "aarch64",
+      "targetBundle": "dmg",
+      "minimumMacOs": "12.0",
+      "candidateVersion": "0.5.3"
+    },
+    "windows": {
+      "status": "held",
+      "heldVersion": "v0.5.1",
+      "holdReason": "Windows distribution is held on v0.5.1 pending separate Microsoft Defender security review"
+    },
+    "retiredVersions": [
+      "0.5.2"
+    ]
+  },
+  "localBuildEvidence": {
+    "classification": "local build evidence, not the frozen release candidate and not approved for installation/distribution",
+    "command": "npm run tauri build -- --bundles dmg",
+    "exitCode": 0,
+    "builtArtifact": {
+      "path": "src-tauri/target/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg",
+      "basename": "Her Flight Deck_0.5.3_aarch64.dmg",
+      "sizeBytes": 4561979,
+      "sha256": "1ac53e566e85043260dbe74ef9d3b90c91460e412e1d88f534947f91396d64c0"
+    },
+    "mountedAppInspection": {
+      "executable": "her-flight-deck",
+      "architecture": "arm64",
+      "bundleIdentifier": "com.herflightdeck.app",
+      "version": "0.5.3",
+      "minimumMacOs": "12.0",
+      "signatureType": "adhoc,linker-signed",
+      "teamIdentifier": null,
+      "hardenedRuntime": false,
+      "timestamp": null,
+      "strictVerification": "FAIL (code has no resources but signature indicates they must be present, exit 1)",
+      "dmgSignature": "unsigned (exit 1)",
+      "notarizationStapled": "unperformed, not submitted",
+      "gatekeeperAssessment": "unperformed, not run"
+    },
+    "buildLogProvenance": {
+      "raw": {
+        "path": "/tmp/hfd-local-build-2026-10-04.log",
+        "sizeBytes": 16160,
+        "sha256": "898751ccd92b8e31f0784caa12e2e9d01929ffbf20e3b6de9520801f0cad558d"
+      },
+      "publishable": {
+        "path": "docs/evidence/mac-release-preparation-2026-10-04/build-output.txt",
+        "sizeBytes": 16159,
+        "sha256": "4205a131cb041f474f1f45c97c22b009fbe915d5a56bb2472410e93748a7a03a",
+        "transformation": "exactly one terminal newline trimmed from raw output"
+      },
+      "exitReceipt": {
+        "path": "docs/evidence/mac-release-preparation-2026-10-04/build-exit.txt",
+        "sizeBytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "content": "0\n"
+      }
+    },
+    "preflightChecks": {
+      "initialCleanJson": {
+        "timestamp": "2026-10-04T22:34:27.232Z",
+        "state": "clean starting checkout",
+        "counts": {
+          "PASS": 10,
+          "FAIL": 0,
+          "UNVERIFIED": 2,
+          "USER_ACTION": 3
+        },
+        "exitCode": 0
+      },
+      "initialDirtyText": {
+        "timestamp": "2026-10-04T22:38:52.176Z",
+        "state": "dirty checkout after build",
+        "counts": {
+          "PASS": 8,
+          "FAIL": 0,
+          "UNVERIFIED": 4,
+          "USER_ACTION": 3
+        },
+        "exitCode": 0
+      },
+      "dmgPreflight": {
+        "counts": {
+          "PASS": 10,
+          "FAIL": 1,
+          "UNVERIFIED": 8,
+          "USER_ACTION": 3
+        },
+        "exitCode": 1,
+        "failingChecks": [
+          "A-DMG-SIGNATURE"
+        ],
+        "gatekeeperStatus": "UNVERIFIED"
+      },
+      "appPreflight": {
+        "counts": {
+          "PASS": 11,
+          "FAIL": 1,
+          "UNVERIFIED": 4,
+          "USER_ACTION": 3
+        },
+        "exitCode": 1,
+        "failingChecks": [
+          "A-APP-SIGNATURE"
+        ]
+      }
+    }
+  },
+  "remoteEnvironmentAudit": {
+    "repository": "rickydeleon49-ui/Flight-training-",
+    "visibility": "private",
+    "environmentsCount": 0,
+    "configuredEnvironments": [],
+    "secretsCount": 0,
+    "configuredSecretNames": []
+  },
+  "releaseBlockers": [
+    {
+      "id": "BLOCKER-1",
+      "title": "Apple Developer Program Membership",
+      "owner": "Repository Owner",
+      "description": "Owner reports no Apple Developer Program membership ($99/yr). Normal downloadable distribution outside Mac App Store requires Developer ID Application certificate and Apple Notarization.",
+      "status": "OPEN"
+    },
+    {
+      "id": "BLOCKER-2",
+      "title": "Developer ID Application Certificate",
+      "owner": "Account Holder (Owner)",
+      "description": "Developer ID certificate must be generated in Apple Developer portal, exported with private key as .p12, and provisioned securely.",
+      "status": "OPEN"
+    },
+    {
+      "id": "BLOCKER-3",
+      "title": "Apple Notarization & Stapling Credentials",
+      "owner": "Repository Owner",
+      "description": "Notarization authentication credentials (App Store Connect API key or Apple ID with app-specific password) must be provided for notarytool submission.",
+      "status": "OPEN"
+    },
+    {
+      "id": "BLOCKER-4",
+      "title": "Protected Environment and Secrets Configuration",
+      "owner": "Repository Owner",
+      "description": "Configure 'macos-signing' environment conditionally (if GitHub plan allows required reviewers) or document local/manual alternative lane, with signing secret names.",
+      "status": "OPEN"
+    },
+    {
+      "id": "BLOCKER-5",
+      "title": "Release Candidate Version & Source Identity Decision",
+      "owner": "Repository Owner",
+      "description": "Current source (containing accepted A2 and test fixes) requires an explicit version decision from the owner before future version/build actions. The frozen v0.5.3 draft cannot be reused or retargeted.",
+      "status": "OPEN"
+    },
+    {
+      "id": "BLOCKER-6",
+      "title": "Installed Verification",
+      "owner": "Repository Owner",
+      "description": "Owner directed 'review and no testing account ill wait for the release'. Installed verification remains unresolved; no testing account or installed test is assigned to the owner.",
+      "status": "UNRESOLVED"
+    }
+  ],
+  "proposedSigningWorkflowPatch": {
+    "artifactPath": "docs/evidence/mac-release-preparation-2026-10-04/proposed-macos-signing.patch",
+    "workflowPath": "docs/evidence/mac-release-preparation-2026-10-04/proposed-release-workflow.yml",
+    "validationReport": "docs/evidence/mac-release-preparation-2026-10-04/signing-proposal-validation.txt",
+    "status": "Accepted inactive proposal: 41 passing synthetic assertions (32 executable behavior cases, 9 structural checks); activation awaits owner prerequisites",
+    "targetFile": ".github/workflows/release.yml",
+    "features": [
+      "Job-level control boundary (build-macos.if): manual workflow_dispatch on main only before VM provisioning or credentials access",
+      "Secret containment: Apple credentials scoped strictly to build-macos; build-windows is uncredentialed",
+      "Fail-closed ordered keychain capture preserving paths with spaces without invalid multiline GITHUB_ENV writes",
+      "Deterministic task-owned state file ($RUNNER_TEMP/hfd-orig-keychains.txt) and cleanup independent of GITHUB_ENV",
+      "Independent cleanup execution: state-file read/removal failures do not abort credential removal",
+      "Isolated individual credential file removals ($RUNNER_TEMP/AuthKey.p8 and cert.p12)",
+      "Cleanup error reporting and fail-closed exit if any cleanup action encounters an error",
+      "Shell defense-in-depth prerequisites check fails closed before importing keys, building, or uploading",
+      "Executed under GitHub Actions explicit shell options: bash --noprofile --norc -eo pipefail",
+      "Supports both API key (.p8) and Apple ID + app-specific password notarization",
+      "Temporary keychain with random masked password and explicit codesign partition",
+      "Independent strict verification of DMG container and mounted app bundle",
+      "Asserts arm64 architecture, Info.plist metadata, Developer ID authority, approved team, bundle ID, hardened runtime, and secure timestamp separately",
+      "Guaranteed cleanup in if: always() step with error reporting on failure"
+    ]
+  },
+  "coordinatorReview": {
+    "document": "docs/MAC_RELEASE_PREPARATION_ACCEPTANCE_2026-10-04.md",
+    "closedFindings": [
+      "RELPREP-R1",
+      "RELPREP-R2a",
+      "RELPREP-R2b",
+      "RELPREP-R3"
+    ],
+    "activeWorkflowChanged": false,
+    "releasePublished": false
+  }
+}

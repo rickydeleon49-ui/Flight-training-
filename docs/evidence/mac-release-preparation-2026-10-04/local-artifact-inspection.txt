@@ -1,0 +1,81 @@
+# Local Artifact Inspection Receipt — 4 October 2026
+
+Host: macOS 27.0.1 (26A434), Apple M5, arm64
+Toolchain:
+  node: v22.23.3
+  npm: 10.9.9
+  rustc: 1.99.0 (b940084d7 2026-09-28)
+  cargo: 1.99.0 (5f94df478 2026-08-27)
+  SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk (Version 26.5)
+
+Tested Starting Source Commit: 50568143a4c4aef04e54eba88bfb22f0974cafe4
+Branch: claude/mac-release-preparation-2026-10-04
+Provenance: Implementer inspection receipt reconstructed from direct tool runs on host; zero app execution.
+
+Build Command:
+  export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/opt/rustup/bin:$PATH"
+  export SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk"
+  npm run tauri build -- --bundles dmg
+  Command exit: 0
+
+Built Artifact:
+  Path: src-tauri/target/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg
+  Basename: Her Flight Deck_0.5.3_aarch64.dmg
+  Size: 4561979 bytes
+  SHA-256: 1ac53e566e85043260dbe74ef9d3b90c91460e412e1d88f534947f91396d64c0
+  Classification: Local build evidence, not the frozen release candidate and not approved for installation/distribution.
+
+Disk Image Codesign Inspection:
+  Command: codesign -dvv "src-tauri/target/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg"
+  Output:
+    src-tauri/target/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg: code object is not signed at all
+  Exit code: 1
+
+Mounted App Inspection (Read-Only Mount):
+  Mount command: hdiutil attach -quiet -readonly -nobrowse -mountpoint /tmp/hfd-mnt "src-tauri/target/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg"
+  App path: /tmp/hfd-mnt/Her Flight Deck.app
+  Executable: /tmp/hfd-mnt/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+
+  Architecture:
+    Command: file "/tmp/hfd-mnt/Her Flight Deck.app/Contents/MacOS/her-flight-deck"
+    Output: /tmp/hfd-mnt/Her Flight Deck.app/Contents/MacOS/her-flight-deck: Mach-O thin arm64
+    Exit code: 0
+
+  Info.plist Metadata:
+    CFBundleIdentifier: com.herflightdeck.app
+    CFBundleShortVersionString: 0.5.3
+    LSMinimumSystemVersion: 12.0
+
+  Codesign Display:
+    Command: codesign -dvv "/tmp/hfd-mnt/Her Flight Deck.app"
+    Output:
+      Executable=/private/tmp/hfd-mnt/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+      Identifier=her_flight_deck-a93b8bc5f6195384
+      Format=app bundle with Mach-O thin (arm64)
+      CodeDirectory v=20400 size=60840 flags=0x20002(adhoc,linker-signed) hashes=1897+0 location=embedded
+      Signature=adhoc
+      Info.plist=not bound
+      TeamIdentifier=not set
+      Sealed Resources=none
+      Internal requirements=none
+    Exit code: 0
+
+  Codesign Verification (Strict & Deep):
+    Command: codesign --verify --deep --strict "/tmp/hfd-mnt/Her Flight Deck.app"
+    Output: /tmp/hfd-mnt/Her Flight Deck.app: code has no resources but signature indicates they must be present
+    Exit code: 1
+
+Read-Only Readiness Preflight Results:
+  1. DMG artifact inspection:
+     Command: node scripts/mac-readiness-preflight.mjs --artifact "src-tauri/target/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg" --json
+     Summary: { counts: { PASS: 10, FAIL: 1, UNVERIFIED: 8, USER_ACTION: 3 }, exitCode: 1, readyForInstalledUse: false }
+     Failing check: A-DMG-SIGNATURE: FAIL (Disk image is not signed with Developer ID)
+
+  2. Inner app inspection:
+     Command: node scripts/mac-readiness-preflight.mjs --app "/tmp/hfd-mnt/Her Flight Deck.app" --json
+     Summary: { counts: { PASS: 11, FAIL: 1, UNVERIFIED: 4, USER_ACTION: 3 }, exitCode: 1, readyForInstalledUse: false }
+     Failing check: A-APP-SIGNATURE: FAIL (App has ad-hoc linker signature; strict verification failed; Developer ID absent)
+
+Cleanup:
+  Command: hdiutil detach /tmp/hfd-mnt
+  Result: Detached and removed mount point. Zero app launch, zero application-data directory creation or access.
