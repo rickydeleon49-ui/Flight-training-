@@ -1,0 +1,170 @@
+[
+  {
+    "path": "STATUS.md",
+    "expected": "55877aaa785e20b7d76ce7300d70a656cb6be6965df4d05431b9cbe67b584e74",
+    "actual": "55877aaa785e20b7d76ce7300d70a656cb6be6965df4d05431b9cbe67b584e74",
+    "size": 79377,
+    "matches": true
+  },
+  {
+    "path": "docs/ATOMIC_STUDY_MATERIAL_SAVES_2026-10-02.md",
+    "expected": "4d6e3c0f290774aa192196caa5ed071ac98575eb95fe3d828e272b3d4d30e888",
+    "actual": "4d6e3c0f290774aa192196caa5ed071ac98575eb95fe3d828e272b3d4d30e888",
+    "size": 40259,
+    "matches": true
+  },
+  {
+    "path": "docs/FULL_REPOSITORY_AUDIT_2026-09-29.md",
+    "expected": "0a28b73b56b2b6d26fb269f1d6a7b491ee48b6b62d33365ff6c974b0a82331aa",
+    "actual": "0a28b73b56b2b6d26fb269f1d6a7b491ee48b6b62d33365ff6c974b0a82331aa",
+    "size": 36462,
+    "matches": true
+  },
+  {
+    "path": "docs/MAC_PARITY_CHECKLIST.md",
+    "expected": "e5a74080f46ffa2c7ccefeef7013ee1ee0dc1764cd43014ee8dbf2a7febd8f37",
+    "actual": "e5a74080f46ffa2c7ccefeef7013ee1ee0dc1764cd43014ee8dbf2a7febd8f37",
+    "size": 44286,
+    "matches": true
+  },
+  {
+    "path": "src-tauri/fixtures/material-save-contract/expected.json",
+    "expected": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+    "actual": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+    "size": 12877,
+    "matches": true
+  },
+  {
+    "path": "src-tauri/fixtures/material-save-contract/steps.json",
+    "expected": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+    "actual": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+    "size": 2484,
+    "matches": true
+  },
+  {
+    "path": "src-tauri/src/documents.rs",
+    "expected": "68e157a96ef679b8c28c2d46f7fe3a78eda31ce191e3e69a1fb2e57af0afa7d7",
+    "actual": "68e157a96ef679b8c28c2d46f7fe3a78eda31ce191e3e69a1fb2e57af0afa7d7",
+    "size": 124060,
+    "matches": true
+  },
+  {
+    "path": "src-tauri/src/documents_save_tests.rs",
+    "expected": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+    "actual": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+    "size": 37289,
+    "matches": true
+  },
+  {
+    "path": "src-tauri/src/lib.rs",
+    "expected": "521024432f8dc6482865d107cae4307f920a5270e91d2da3f6c22414c546850e",
+    "actual": "521024432f8dc6482865d107cae4307f920a5270e91d2da3f6c22414c546850e",
+    "size": 5984,
+    "matches": true
+  },
+  {
+    "path": "src/data/connectionOwner.ts",
+    "expected": "3c823bc69b00df3260b7806e5f61dfc301f982c7c97172a140f32ed55bad5dff",
+    "actual": "3c823bc69b00df3260b7806e5f61dfc301f982c7c97172a140f32ed55bad5dff",
+    "size": 12614,
+    "matches": true
+  },
+  {
+    "path": "src/data/db.ts",
+    "expected": "46b0f2508b0e1d057529f6b8f05908f6c2a7e95fc13a0dd17c66316b16dac83a",
+    "actual": "46b0f2508b0e1d057529f6b8f05908f6c2a7e95fc13a0dd17c66316b16dac83a",
+    "size": 6051,
+    "matches": true
+  },
+  {
+    "path": "src/data/materialSaveContract.test.ts",
+    "expected": "6325aafa4712d09b8ace833c51cc3f753fd76e529a66c3544c1aa7652d7be54e",
+    "actual": "6325aafa4712d09b8ace833c51cc3f753fd76e529a66c3544c1aa7652d7be54e",
+    "size": 2771,
+    "matches": true
+  },
+  {
+    "path": "src/data/materialTransaction.ts",
+    "expected": "8c65a4d3c01536c815bddff7a3dd67adcb17277d0daab1fd3dced5331b01ae22",
+    "actual": "8c65a4d3c01536c815bddff7a3dd67adcb17277d0daab1fd3dced5331b01ae22",
+    "size": 12352,
+    "matches": true
+  },
+  {
+    "path": "src/data/repositories/documentRepository.test.ts",
+    "expected": "0493ad2a7b6a6ef11eaf9e57fa6701104073ec8e0cbb87f994b7789a0bc529c4",
+    "actual": "0493ad2a7b6a6ef11eaf9e57fa6701104073ec8e0cbb87f994b7789a0bc529c4",
+    "size": 21773,
+    "matches": true
+  },
+  {
+    "path": "src/data/repositories/documentRepository.ts",
+    "expected": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+    "actual": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+    "size": 15378,
+    "matches": true
+  },
+  {
+    "path": "src/data/singleConnectionDrivers.test.ts",
+    "expected": "009bde79c12c29d539933daa41e3a50bebde01a99ebf9faa8bea8e6e44033f77",
+    "actual": "009bde79c12c29d539933daa41e3a50bebde01a99ebf9faa8bea8e6e44033f77",
+    "size": 68806,
+    "matches": true
+  },
+  {
+    "path": "src/data/sqlJsDb.ts",
+    "expected": "2f1b03c034f20a19cac6248239e4f203291057666758c3d1681b6932119317e4",
+    "actual": "2f1b03c034f20a19cac6248239e4f203291057666758c3d1681b6932119317e4",
+    "size": 7811,
+    "matches": true
+  },
+  {
+    "path": "src/data/tauriDb.ts",
+    "expected": "8cf2ca2a56b7e62f8752fb40478ea013ce235917e38e5769ebc7f864e82bca55",
+    "actual": "8cf2ca2a56b7e62f8752fb40478ea013ce235917e38e5769ebc7f864e82bca55",
+    "size": 3335,
+    "matches": true
+  },
+  {
+    "path": "src/data/testing/nodeSqliteDb.ts",
+    "expected": "cc43cdeff48a93fc328c1b5f46fe6642e0b95cd422936c40c09fd31bc5dc39f3",
+    "actual": "cc43cdeff48a93fc328c1b5f46fe6642e0b95cd422936c40c09fd31bc5dc39f3",
+    "size": 3839,
+    "matches": true
+  },
+  {
+    "path": "src/pages/FlightJournal/debriefLinks.test.ts",
+    "expected": "be1181c22d7d19e2e09e8d2404649c06bf2b2d5b977e3be1c071f7861c3bc02c",
+    "actual": "be1181c22d7d19e2e09e8d2404649c06bf2b2d5b977e3be1c071f7861c3bc02c",
+    "size": 36881,
+    "matches": true
+  },
+  {
+    "path": "src/pages/FlightJournal/quickDebrief.test.ts",
+    "expected": "cf4843988eb84d75e6cebd6c3dd52cffb93bfda2fe6ab9581baebb75e9166e4a",
+    "actual": "cf4843988eb84d75e6cebd6c3dd52cffb93bfda2fe6ab9581baebb75e9166e4a",
+    "size": 65782,
+    "matches": true
+  },
+  {
+    "path": "src/pages/StudyLibrary/MaterialFormDialog.test.ts",
+    "expected": "7a24a3accfae9b453ab878750aa18e0b79f5343ed36c30ef0bd8e2461c8b7665",
+    "actual": "7a24a3accfae9b453ab878750aa18e0b79f5343ed36c30ef0bd8e2461c8b7665",
+    "size": 13146,
+    "matches": true
+  },
+  {
+    "path": "src/pages/StudyLibrary/materialSaveIntegration.test.ts",
+    "expected": "cf60f482fcb749ff88eb983c7e4c543982a3cdc41b0161aa978cbee07698594a",
+    "actual": "cf60f482fcb749ff88eb983c7e4c543982a3cdc41b0161aa978cbee07698594a",
+    "size": 7976,
+    "matches": true
+  },
+  {
+    "path": "src/perf/appResponsiveness.bench.test.ts",
+    "expected": "7f7e0dcbd0087055a30ce9d0c29d08d0ac4700e6de74aad50488223bd73b61cc",
+    "actual": "7f7e0dcbd0087055a30ce9d0c29d08d0ac4700e6de74aad50488223bd73b61cc",
+    "size": 11259,
+    "matches": true
+  }
+]

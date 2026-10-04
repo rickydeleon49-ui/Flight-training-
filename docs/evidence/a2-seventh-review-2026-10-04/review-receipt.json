@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-04 America/Los_Angeles",
+  "decision": "REQUEST_R10_VARIABLE_AND_R11_BOM_CORRECTIONS",
+  "ownerBranch": "fix/atomic-study-material-saves",
+  "ownerBase": "533a8f50c2d0de74a75f5542022da3182f376ee9",
+  "observedMain": "4772f8b3d52697f94d7dd6f58db2a1f4d690134b",
+  "submittedHashesMatched": 24,
+  "snapshotFiles": 307,
+  "ownerFilesUnchanged": 307,
+  "deltaSinceSixth": [
+    "src/data/connectionOwner.ts",
+    "src/data/singleConnectionDrivers.test.ts",
+    "STATUS.md",
+    "docs/ATOMIC_STUDY_MATERIAL_SAVES_2026-10-02.md"
+  ],
+  "platform": "Windows source/development-driver tests",
+  "node": "24.16.0",
+  "sqlite": "3.53.0",
+  "sqlJs": "1.14.2",
+  "vitest": "4.1.11",
+  "cli": "<OWNER_CHECKOUT>/node_modules/.bin/vitest.cmd",
+  "cwd": "<REVIEW_ROOT>/snapshot",
+  "arguments": "run src/data/singleConnectionDrivers.test.ts src/data/materialSaveContract.test.ts src/data/repositories/documentRepository.test.ts src/pages/StudyLibrary/MaterialFormDialog.test.ts src/pages/StudyLibrary/materialSaveIntegration.test.ts src/state/editorSafety.test.ts src/data/a2SixthReview.regression.test.ts src/data/a2FifthReview.regression.test.ts src/data/a2FourthReview.regression.test.ts src/data/a2ThirdReview.regression.test.ts src/data/a2ReviewDiagnostics.mac.test.ts src/data/a2SeventhReview.regression.test.ts --reporter=verbose",
+  "exit": 1,
+  "files": 12,
+  "passed": 891,
+  "failed": 50,
+  "skipped": 0,
+  "durationSeconds": 7.28,
+  "passedByFile": {
+    "src/data/materialSaveContract.test.ts": 1,
+    "src/data/a2FifthReview.regression.test.ts": 72,
+    "src/data/a2SeventhReview.regression.test.ts": 18,
+    "src/data/a2FourthReview.regression.test.ts": 14,
+    "src/data/a2SixthReview.regression.test.ts": 152,
+    "src/data/repositories/documentRepository.test.ts": 25,
+    "src/data/a2ThirdReview.regression.test.ts": 12,
+    "src/data/singleConnectionDrivers.test.ts": 391,
+    "src/data/a2ReviewDiagnostics.mac.test.ts": 181,
+    "src/pages/StudyLibrary/MaterialFormDialog.test.ts": 12,
+    "src/pages/StudyLibrary/materialSaveIntegration.test.ts": 3,
+    "src/state/editorSafety.test.ts": 10
+  },
+  "submittedFocusedPassed": 873,
+  "conditionalSeamsReachedAndPassed": 57,
+  "newDiagnostic": {
+    "total": 68,
+    "positiveEngineAndPublicControls": 10,
+    "passingEndSuffixCases": 8,
+    "directBomRefusalFailures": 8,
+    "bomAcknowledgedWriteLossFailures": 2,
+    "variableTrailingRefusalFailures": 40
+  },
+  "fullGateRepeated": false,
+  "nativeChanged": false,
+  "ownerSourceEdited": false,
+  "notes": [
+    "Actual acknowledged synthetic row loss reproduced in development/test drivers through direct leading-BOM BEGIN.",
+    "No native desktop/installed/Mac data loss demonstrated.",
+    "Parameter trailing control is not shown to execute; prepared routes normally execute first statement only.",
+    "Implementer full-matrix evidence is prose only, no raw logs supplied."
+  ]
+}
