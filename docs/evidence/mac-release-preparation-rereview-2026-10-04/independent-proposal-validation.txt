@@ -1,0 +1,40 @@
+=== 1. Validating Read-Only Patch Application ===
+PASS: git apply --check exited 0 cleanly against base release.yml
+
+=== 2. Parsing Proposed Workflow YAML and Validating AST Structure ===
+PASS: Proposed workflow parsed cleanly with zero syntax errors
+PASS: jobs.build.environment is conditionally scoped to macos-signing
+PASS: Step sequence strictly enforces Verification BEFORE Artifact Upload
+PASS: Cleanup step includes if: always() condition
+
+=== 3. Exercising Prerequisites Check (Fail-Closed Guards) ===
+PASS: Correctly rejected push event (status 1)
+PASS: Correctly rejected non-main branch (status 1)
+PASS: Correctly rejected missing APPLE_CERTIFICATE (status 1)
+PASS: Correctly rejected missing APPLE_TEAM_ID (status 1)
+PASS: Correctly rejected missing notarization authentication (status 1)
+PASS: Accepted valid API key authentication (status 0)
+PASS: Accepted valid app-specific password authentication (status 0)
+
+=== 4. Exercising Strict Verification with Synthetic Mock Stubs ===
+PASS: Correctly rejected unsigned DMG container (status 1)
+PASS: Correctly rejected DMG container without Developer ID authority (status 1)
+PASS: Correctly rejected DMG container with wrong team ID (status 1)
+PASS: Correctly rejected DMG container lacking secure timestamp (status 1)
+PASS: Correctly rejected failing stapler validation (status 1)
+PASS: Correctly rejected non-arm64 executable (status 1)
+PASS: Correctly rejected wrong bundle identifier (status 1)
+PASS: Correctly rejected app failing strict integrity check (status 1)
+PASS: Correctly rejected app lacking Developer ID authority (status 1)
+PASS: Correctly rejected app with WRONGTEAM (reproduced probe fixed, status 1)
+PASS: Correctly rejected app with mismatched signing identifier (status 1)
+PASS: Correctly rejected app lacking hardened runtime (status 1)
+PASS: Correctly rejected app lacking secure timestamp (status 1)
+PASS: Correctly rejected app failing Gatekeeper spctl assessment (status 1)
+PASS: Valid synthetic success path passed all container and app checks (status 0)
+
+=== 5. Exercising Temporary Keychain and Material Cleanup ===
+PASS: Cleanup successfully removed temporary keychain, .p8, and .p12 files (status 0)
+PASS: Cleanup correctly failed closed and reported error on keychain failure (status 1)
+
+ALL 24 PROPOSED SIGNING WORKFLOW VALIDATION CHECKS PASSED CLEANLY!
