@@ -1,0 +1,12 @@
+# Slice B preparation review evidence
+
+Supports the [Codex review](../../STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_REVIEW_2026-10-03.md) and [Gemini correction assignment](../../GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_CORRECTIONS_PROMPT_2026-10-03.md). Preparation is not accepted; B source remains unimplemented.
+
+- [Independent eight-file snapshot](reviewed-all-8-hashes.txt): primary-checkout paths and SHA-256 values measured before review; includes the submitted receipt.
+- [Measured static verification](review-verification.json): seven matching submitted hashes; eight intended documentation files; 190 relative links checked; current 62-PR metadata inventory; exact older tag/schema/panel observations; host/build measurement and evidence limitations.
+- [Original preparation report](submitted/docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md.txt), [conditional implementation prompt](submitted/docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md.txt), [receipt](submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt) and [submitted hashes](submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/final-hashes.txt): verbatim reviewed bytes. Every submitted file is preserved under `submitted/`; Markdown uses inert `.md.txt` because its original relative links refer to another directory.
+- [Publication hashes](publication-hashes.txt): hashes the final review publication, excluding itself. Original primary files remain unmodified.
+
+Checks performed: current SHA-256 comparison against submitted receipt; git diff/status inventory; static source inspection of sqlJsDb.ts, AppDataContext.tsx, Slice A types/limits/payload, and backup code; `git ls-tree`/`git show` of v0.5.1; fetched main and `gh pr list --state all --limit 200` metadata; live remote branch names; Markdown links and whitespace. PR metadata/name checks are not a content audit of every historical PR or a Windows-local source inspection. Observed host is macOS 27.0.1/build 26A434, separate from the inherited SDK choice.
+
+No validator/full/frontend/Rust/save/restore/app/picker/profile/database/installed/provider test was executed for this documentation review. All 22 proposed Slice B tests remain planned, not run. The review publication uses documentation-only required CI. Raw source/tag observations and the primary receipt remain available by the exact recorded Git identities.

@@ -1,0 +1,41 @@
+Her Flight Deck — Structured Study Import Slice B Preparation Receipt
+Date: 2026-10-03T17:13:20-07:00
+Implementer: Gemini (Mac)
+Reviewer / Coordinator: Codex
+
+1. Starting Point & Branch Identity
+Repository: rickydeleon49-ui/Flight-training-
+Working Tree: /Users/rickymac/code/Flight-training-
+Base Commit: 3efe95316b200848178033a68d057f66815cf427 (PR #62 merge)
+Branch: codex/structured-study-import-slice-b-preparation
+Remote Tracking: origin/main at 3efe95316b200848178033a68d057f66815cf427
+GitHub Open PRs: 0
+
+2. Environment & Toolchain
+Host: MacBook Air (Mac17,3), Apple M5, 32 GB RAM
+OS: macOS 27.0.1 (Darwin 27.0.0, arm64)
+Node: v22.23.3 (/opt/homebrew/opt/node@22/bin/node)
+npm: 10.9.9 (/opt/homebrew/opt/node@22/bin/npm)
+rustc: 1.99.0 (b940084d7 2026-09-28)
+cargo: 1.99.0 (5f94df478 2026-08-27)
+SDK: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk (version 26.5)
+
+3. Gate Verification
+- Slice A Source Integration: MET (PR #62, base 3efe953, CI passed on 919d53f)
+- Windows A2 Implementation Source: NOT MET (unpublished, local to Windows base 533a8f5)
+- M2 Real-User Check-In: NOT MET (pending owner user study)
+- Owner Decisions D1-D9: NOT MET (proposals documented in preparation report)
+- Working Tree Synchronized: MET (clean branch created from clean main)
+
+4. Scope & Invariants
+- Production code touched: NONE (0 lines of code modified)
+- Database schema migrations added: NONE (schema version remains 10)
+- Dependencies added: NONE (package.json and lockfile unchanged)
+- Packaging / release / signing operations: NONE (all unverified)
+- State of working directory: UNCOMMITTED and UNPUSHED for Codex review
+
+5. Measured Verification Checks
+- git diff --check: EXIT 0 (no whitespace issues or conflict markers)
+- node link-validator: EXIT 0 (all relative markdown links resolve to existing files)
+- node whitespace-check: EXIT 0 (zero trailing whitespace lines across all untracked files)
+- git status: clean working tree apart from the designated preparation deliverables

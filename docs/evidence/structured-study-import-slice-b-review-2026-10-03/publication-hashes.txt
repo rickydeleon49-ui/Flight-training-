@@ -1,0 +1,16 @@
+4f8399ae8c35166763d3a430fd0bb0ef494a070f840a79f24c0e94c59cd5ad4f  STATUS.md
+1fadbeb14d9a26d6f3aee279e0caaab7dde499b52bcce9eae50bfdc09888287b  docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_CORRECTIONS_PROMPT_2026-10-03.md
+0e67eacdbebd0b2f0b3fb22bb1f008742648231438a0461de63a184abe19ffa0  docs/MAC_PARITY_CHECKLIST.md
+f12d3e6d784cb4142632eb83b7fdc2e335fc49bdaae8e42d5922b0e68a88dfb2  docs/PROJECT_HANDOFF.md
+007afe449d1a65735b4a85e02c2d896ad83b69935b4349a2f81cc934d1498462  docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_REVIEW_2026-10-03.md
+5c094d9eb7e3f0ccc1049130663e622e4bb1bfc6f8b96e669c4da2f58fc9f2d3  docs/evidence/structured-study-import-slice-b-review-2026-10-03/README.md
+02db33fe0957883dee542476828bbee460ff422495ef1748cdcf7da538df373f  docs/evidence/structured-study-import-slice-b-review-2026-10-03/review-verification.json
+6b8fb0d6f4c9960f01aa7e86236447fbbdd51ef05e320aa9b0bd5ff0e705a9f4  docs/evidence/structured-study-import-slice-b-review-2026-10-03/reviewed-all-8-hashes.txt
+08a97afb848d1b14e2573d888142311d9746228404158b6bfeea62214f73eb59  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/STATUS.md.txt
+d82ff1b7dcf25e6113048b3fa1b4a532f14273343c095df20f365ff4758413f3  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md.txt
+fa35bae8433a4c96263fc1f0738a754b32125c92fb010c089e3aa011366d7038  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/MAC_PARITY_CHECKLIST.md.txt
+acde6f994e31f975d1097d648c06bba76fefe97849fdaf68cad10559e8a62524  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/PROJECT_HANDOFF.md.txt
+c21cb9350ef7ee07609f17c21c55ff0844a96cadf254ff89dd09d1cfdb4913a7  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md.txt
+37511b846ad9dacba0e23b1dc34b3670253d789e23ad55b81b347f1f8950ae1c  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md.txt
+42fae59b644182400db2aada711084e32884e374104a7c5197ef2b7614aedb1d  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/final-hashes.txt
+c0bca7a363237fb52f5d180e64bf822ab6de9a5c0fd8019414fa4a44ed1a98be  docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt
