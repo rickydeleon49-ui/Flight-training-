@@ -1,18 +1,31 @@
 // Screenshots the browser-mode app (`npm run dev`, SQLite in WebAssembly).
 // Usage: node .claude/skills/run/screenshot.mjs [route ...] [--out DIR] [--width N] [--dark]
 //
-// Reuses a server already listening on the port and never stops it. Otherwise
+// Reuses a server already answering on the port and never signals it. Otherwise
 // starts Vite itself and stops it on every exit path: startup timeout, browser
 // launch failure, navigation or screenshot failure, and browser-close failure.
 //
+// Every wait is bounded:
+//   - each readiness request is cancelled after PROBE_MS (and never runs past
+//     the startup deadline), so a server that accepts connections but never
+//     answers cannot hang the helper;
+//   - startup gives up after STARTUP_MS;
+//   - stopping the server this run started sends SIGTERM to its process group,
+//     waits GRACE_MS, then sends SIGKILL and waits KILL_WAIT_MS, and checks that
+//     the whole group has gone.
+// Any failure, including a failed browser close, exits 1. The first error is
+// the one reported; later cleanup errors are printed as well.
+//
 // Playwright is not a project dependency (the repository gates new packages),
-// so this resolves the copy installed globally in the cloud container.
+// so this resolves the copy installed globally (`npm root -g`).
 //
 // Test seams, used only by .claude/tests/setup-helpers.test.mjs:
 //   HFD_SHOT_PORT        port to use instead of 1420
 //   HFD_SHOT_PLAYWRIGHT  path to a module exporting `chromium`
 //   HFD_SHOT_SERVER      JSON argv for the server instead of Vite
-//   HFD_SHOT_TIMEOUT_MS  how long to wait for the server to answer
+//   HFD_SHOT_TIMEOUT_MS  startup budget (default 30000)
+//   HFD_SHOT_PROBE_MS    one readiness request (default 2000)
+//   HFD_SHOT_GRACE_MS    wait after SIGTERM before SIGKILL (default 5000)
 import { spawn, execSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
@@ -35,12 +48,35 @@ const routes = args.length ? args : ["/"];
 
 const port = Number(process.env.HFD_SHOT_PORT || 1420);
 const BASE = `http://localhost:${port}`;
-const startupMs = Number(process.env.HFD_SHOT_TIMEOUT_MS || 30000);
+const STARTUP_MS = Number(process.env.HFD_SHOT_TIMEOUT_MS || 30_000);
+const PROBE_MS = Number(process.env.HFD_SHOT_PROBE_MS || 2_000);
+const GRACE_MS = Number(process.env.HFD_SHOT_GRACE_MS || 5_000);
+const KILL_WAIT_MS = 2_000;
 const serverArgv = process.env.HFD_SHOT_SERVER
   ? JSON.parse(process.env.HFD_SHOT_SERVER)
   : ["npx", "vite", "--port", String(port), "--strictPort"];
 
-const isUp = () => fetch(BASE).then(() => true, () => false);
+const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
+
+/**
+ * One bounded readiness request: "up" for any HTTP response, "silent" when the
+ * request was cancelled at its time limit (something accepted it but did not
+ * answer), "down" when nothing accepted it.
+ */
+async function probe(timeoutMs) {
+  if (timeoutMs <= 0) return "silent";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(BASE, { signal: controller.signal });
+    await response.body?.cancel().catch(() => {});
+    return "up";
+  } catch {
+    return controller.signal.aborted ? "silent" : "down";
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function loadChromium() {
   if (process.env.HFD_SHOT_PLAYWRIGHT) {
@@ -50,34 +86,74 @@ async function loadChromium() {
   return require("playwright").chromium;
 }
 
-// Only a server this script started is ever stopped.
+// Only a server this run started is ever signalled. npx leaves Vite as a child
+// that can outlive it, so the detached process group is the unit of ownership.
 let server = null;
 let serverExited = false;
-// The whole process group is signalled, because npx leaves Vite as a child
-// that can outlive it; a group that is already gone is not an error.
-function stopServer() {
-  if (!server) return;
+
+function groupAlive() {
   try {
-    process.kill(-server.pid, "SIGTERM");
+    process.kill(-server.pid, 0);
+    return true;
   } catch (error) {
-    if (error.code !== "ESRCH") throw error; // ESRCH: already gone
+    return error.code !== "ESRCH";
+  }
+}
+
+function signalGroup(signal) {
+  try {
+    process.kill(-server.pid, signal);
+  } catch (error) {
+    if (error.code !== "ESRCH") throw error; // already gone is fine
+  }
+}
+
+async function waitForGroupExit(ms) {
+  const end = Date.now() + ms;
+  while (groupAlive()) {
+    if (Date.now() >= end) return false;
+    await sleep(50);
+  }
+  return true;
+}
+
+async function stopServer() {
+  if (!server || server.pid === undefined) return; // reused server, or spawn failed
+  if (!groupAlive()) return;
+  signalGroup("SIGTERM");
+  if (await waitForGroupExit(GRACE_MS)) return;
+  signalGroup("SIGKILL");
+  if (!(await waitForGroupExit(KILL_WAIT_MS))) {
+    throw new Error(`The dev server this run started (process group ${server.pid}) did not exit after SIGKILL`);
   }
 }
 
 let browser = null;
-const errors = [];
+const pageErrors = [];
 let failure = null;
+const note = (error) => {
+  if (failure === null) failure = error;
+  else console.error(`Also failed during cleanup: ${error?.message ?? error}`);
+};
 
 try {
-  if (!(await isUp())) {
+  const initial = await probe(PROBE_MS);
+  if (initial === "silent") {
+    throw new Error(
+      `Something is listening on :${port} but did not answer within ${PROBE_MS} ms. It was left running; stop it or free the port.`,
+    );
+  }
+  if (initial === "down") {
     server = spawn(serverArgv[0], serverArgv.slice(1), { stdio: "ignore", detached: true });
     server.on("exit", () => (serverExited = true));
     server.on("error", () => (serverExited = true));
-    const deadline = Date.now() + startupMs;
-    while (!(await isUp())) {
+    const deadline = Date.now() + STARTUP_MS;
+    for (;;) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw new Error(`The dev server did not answer on :${port} within ${STARTUP_MS} ms`);
+      if ((await probe(Math.min(PROBE_MS, remaining))) === "up") break;
       if (serverExited) throw new Error("The dev server exited before answering");
-      if (Date.now() > deadline) throw new Error(`The dev server did not answer on :${port}`);
-      await new Promise((r) => setTimeout(r, 250));
+      await sleep(Math.min(250, deadline - Date.now()));
     }
   }
 
@@ -90,8 +166,8 @@ try {
     colorScheme: dark ? "dark" : "light",
   });
   const page = await context.newPage();
-  page.on("pageerror", (e) => errors.push(e.message));
-  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  page.on("pageerror", (e) => pageErrors.push(e.message));
+  page.on("console", (m) => m.type() === "error" && pageErrors.push(m.text()));
 
   for (const route of routes) {
     await page.goto(BASE + route, { waitUntil: "networkidle" });
@@ -103,27 +179,27 @@ try {
     console.log(file);
   }
 } catch (error) {
-  failure = error;
+  note(error);
 } finally {
-  // Each step runs even if the one before it fails; the first error wins.
+  // Each step runs even if the one before it failed; the first error wins.
   if (browser) {
     try {
       await browser.close();
     } catch (error) {
-      failure ??= error;
+      note(error);
     }
   }
   try {
-    stopServer();
+    await stopServer();
   } catch (error) {
-    failure ??= error;
+    note(error);
   }
 }
 
 if (failure) {
-  console.error(failure.message ?? failure);
+  console.error(failure?.message ?? failure);
   process.exitCode = 1;
-} else if (errors.length) {
-  console.error("Browser errors:\n" + errors.join("\n"));
+} else if (pageErrors.length) {
+  console.error("Browser errors:\n" + pageErrors.join("\n"));
   process.exitCode = 1;
 }

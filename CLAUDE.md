@@ -52,10 +52,18 @@ touch only Markdown or `docs/` take a lightweight path. Run the relevant
 checks before pushing.
 
 In cloud sessions `.claude/hooks/session-start.sh` installs everything first,
-including the Linux WebKit libraries. It installs npm packages from the
-committed lock and fails rather than changing it. It does nothing on a local
-machine. Its own checks: `node --test .claude/tests/setup-helpers.test.mjs`. To see UI changes, use the `run` skill
-(`.claude/skills/run/`), which screenshots browser mode.
+including the Linux WebKit libraries, within a 900-second budget. npm packages
+come only from the committed lock (`npm ci`); `node_modules` is reused only
+when it provably matches that lock, and setup fails rather than change a
+manifest or lockfile. It does nothing on a local machine. To see UI changes,
+use the `run` skill (`.claude/skills/run/`), which screenshots browser mode.
+Both helpers' checks: `node --test .claude/tests/setup-helpers.test.mjs`.
+
+`.claude/settings.json` pre-approves development commands only: tests, type
+checks, builds, `cargo check/test/fmt/clippy`, the screenshot helper and some
+git commands. Not all of them are read-only: `cargo fmt` rewrites files and
+`git fetch` updates remote refs. Nothing pre-approved pushes, releases or
+installs packages.
 
 ## Rules that protect her data
 
@@ -76,9 +84,11 @@ machine. Its own checks: `node --test .claude/tests/setup-helpers.test.mjs`. To 
   version (`scripts/release-policy.json`).
 - The Gemini API key is typed into Settings, held briefly in React state and
   passed once to the native `configure_gemini` command
-  (`src/services/gemini.ts`). From then on Rust keeps it in a file in the app
-  data folder. The webview only ever gets status back, never the stored key,
-  and the key is never stored in SQLite, included in a backup or committed.
+  (`src/services/gemini.ts`); the field is then cleared. From then on Rust
+  keeps it in a file in the app data folder and the webview only gets status
+  back, never the stored key. That brief webview entry is a known, tracked
+  limitation (MAC-16). The key is never stored in SQLite, included in a
+  backup or committed.
 
 ## Conventions
 
@@ -91,7 +101,9 @@ machine. Its own checks: `node --test .claude/tests/setup-helpers.test.mjs`. To 
 - Forms use `<dialog>` through `src/components/ui/useModalDialog.ts`. The
   macOS minimum is 12.0, but native `showModal` arrived only in WebKit 15.4
   (macOS 12.3), so the hook feature-detects it and falls back to its own
-  modal behavior. Keep that fallback working.
+  modal behavior. Keep that fallback working. The fallback is covered by
+  source tests; behavior on an installed macOS 12.0–12.2 Mac is still
+  unverified.
 - Never tell anyone to bypass Gatekeeper, SmartScreen or Defender.
 - Keep secrets, real databases, private documents, installers, `node_modules`
   and `target/` out of Git.

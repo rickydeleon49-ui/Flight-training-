@@ -14,6 +14,16 @@ fi
 
 cd "$CLAUDE_PROJECT_DIR"
 
+# Setup must never rewrite these. Hashed now and checked again at the end.
+TRACKED=(package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock)
+fingerprint() {
+  local file
+  for file in "${TRACKED[@]}"; do
+    if [ -f "$file" ]; then git hash-object -- "$file"; else echo "missing $file"; fi
+  done
+}
+BEFORE="$(fingerprint)"
+
 # Frontend dependencies, installed from the committed lock and never
 # rewriting it. See npm-deps.sh for the cold and warm paths.
 "$CLAUDE_PROJECT_DIR/.claude/hooks/npm-deps.sh" "$CLAUDE_PROJECT_DIR"
@@ -42,3 +52,9 @@ fi
 # Compile the Rust test binaries once so the first `cargo test` in the
 # session takes seconds. Cheap when the container cache is warm.
 cargo test --locked --manifest-path src-tauri/Cargo.toml --no-run
+
+if [ "$(fingerprint)" != "$BEFORE" ]; then
+  echo "session-start: setup changed a tracked manifest or lockfile; see git diff" >&2
+  exit 1
+fi
+echo "session-start: ready; package and lock files unchanged"

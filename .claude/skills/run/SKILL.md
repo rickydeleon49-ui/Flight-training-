@@ -17,7 +17,13 @@ node .claude/skills/run/screenshot.mjs / /study /settings
 node .claude/skills/run/screenshot.mjs /journal --dark --width 390   # phone width, dark
 ```
 
-- Starts Vite on port 1420 if needed and stops it afterwards.
+- Starts Vite on port 1420 if nothing is listening there, and stops it
+  afterwards, including after a failure. A server that was already running is
+  reused and left running. Every wait is bounded, so a server that accepts
+  connections but never answers cannot hang it.
+- Uses a fresh, isolated browser context. A screenshot is UI evidence only: it
+  cannot show installed macOS behavior, native pickers, persistence or
+  VoiceOver.
 - Writes PNGs to `screenshots/` (git-ignored; `--out DIR` to change it).
   Look at them with the Read tool, then send the useful ones to the user.
 - Exits non-zero and prints them if the page logged errors.
