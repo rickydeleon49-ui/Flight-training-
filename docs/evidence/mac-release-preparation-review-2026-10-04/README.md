@@ -1,6 +1,6 @@
 # Mac release preparation review evidence — 4 October 2026
 
-[Independent review](../../MAC_RELEASE_PREPARATION_REVIEW_2026-10-04.md) and [Claude correction assignment](../../CLAUDE_MAC_RELEASE_PREPARATION_CORRECTIONS_PROMPT_2026-10-04.md).
+[Independent review](../../MAC_RELEASE_PREPARATION_REVIEW_2026-10-04.md) and [Implementation correction assignment](../../MAC_RELEASE_PREPARATION_CORRECTIONS_PROMPT_2026-10-04.md).
 
 `submitted-artifact-hashes.json` freezes all 16 supplied artifact hashes, independently matched, plus the submitted inventory's own hash (17 files). The submission remains unchanged in Claude's checkout. `observations.json` records actual HEAD, read-only patch validation (exit 128), a synthetic signing-metadata guard probe (exit 0 with wrong team and missing authority/timestamp), source/preflight snapshots, build-log EOF-only transformation and independent unsigned-DMG display (exit 1).
 
