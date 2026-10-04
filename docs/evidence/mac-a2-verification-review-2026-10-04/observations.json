@@ -1,0 +1,273 @@
+{
+  "source": [
+    {
+      "path": ".gitattributes",
+      "gitBlob": "1fd8433e8680886700e7831a6795d0a0265de170",
+      "blobMatches": true,
+      "workingBytes": 217,
+      "workingSha256": "5064e02cfc2c3acc8424a71f345a8ab11c96c9ce5792d81f2a799f4d05d44dbc",
+      "acceptedManifestBytes": 217,
+      "acceptedManifestSha256": "5064e02cfc2c3acc8424a71f345a8ab11c96c9ce5792d81f2a799f4d05d44dbc",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "scripts/mac-readiness-preflight.mjs",
+      "gitBlob": "518b45c5e4632ac0b4677c9b0a61bd44e672aadd",
+      "blobMatches": true,
+      "workingBytes": 45742,
+      "workingSha256": "278777d5b873efb1be6d32d94bfcb65aa38262ed9ff89237f2d3e03f4dfe3c69",
+      "acceptedManifestBytes": 45742,
+      "acceptedManifestSha256": "278777d5b873efb1be6d32d94bfcb65aa38262ed9ff89237f2d3e03f4dfe3c69",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src-tauri/fixtures/material-save-contract/expected.json",
+      "gitBlob": "e1a58136bfc0cd05a87a4ba102319c09b712e5bf",
+      "blobMatches": true,
+      "workingBytes": 12877,
+      "workingSha256": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+      "acceptedManifestBytes": 12877,
+      "acceptedManifestSha256": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src-tauri/fixtures/material-save-contract/steps.json",
+      "gitBlob": "00fa6427af39bf90388438ef32b1f5f4d7da0d3b",
+      "blobMatches": true,
+      "workingBytes": 2484,
+      "workingSha256": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+      "acceptedManifestBytes": 2484,
+      "acceptedManifestSha256": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src-tauri/src/documents.rs",
+      "gitBlob": "e22a0d0ff77a0daa1148b2f055cd5c27a3d90d57",
+      "blobMatches": true,
+      "workingBytes": 124060,
+      "workingSha256": "68e157a96ef679b8c28c2d46f7fe3a78eda31ce191e3e69a1fb2e57af0afa7d7",
+      "acceptedManifestBytes": 127299,
+      "acceptedManifestSha256": "36f761ca983bdf7c1143b7a825bde7212a4a1301a175748eebb022cf5b387930",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src-tauri/src/documents_save_tests.rs",
+      "gitBlob": "3d2409c9f6f1f0acb1ef3ddfc080e1c8dde70769",
+      "blobMatches": true,
+      "workingBytes": 37289,
+      "workingSha256": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+      "acceptedManifestBytes": 37289,
+      "acceptedManifestSha256": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "gitBlob": "e6121ade41a3d19594ad06d448286a34fd630359",
+      "blobMatches": true,
+      "workingBytes": 5888,
+      "workingSha256": "e9a13b97a6c832dd29bbba455c42b4a37b292f63ca7d4b13e51e2ab1402acf2b",
+      "acceptedManifestBytes": 6049,
+      "acceptedManifestSha256": "662d89a2f5eee2d942535f28d0ee80b146757dc4e2fefc19f1d63177af5ea2c5",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/data/connectionOwner.ts",
+      "gitBlob": "4a4b195248e485af5948a35e030cf1965843ec25",
+      "blobMatches": true,
+      "workingBytes": 15969,
+      "workingSha256": "2c985a7c515b434a663e495a902bc8451faaeb3daa5de3dc46b6bd173ad3324a",
+      "acceptedManifestBytes": 15969,
+      "acceptedManifestSha256": "2c985a7c515b434a663e495a902bc8451faaeb3daa5de3dc46b6bd173ad3324a",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src/data/db.ts",
+      "gitBlob": "a7519ded0391a3273a867066fee01c789bbc65df",
+      "blobMatches": true,
+      "workingBytes": 5896,
+      "workingSha256": "940e4a0aa5413e904ae4c3af32efc08458e9ad5a2135a3ec054366f05c51d8c3",
+      "acceptedManifestBytes": 6051,
+      "acceptedManifestSha256": "46b0f2508b0e1d057529f6b8f05908f6c2a7e95fc13a0dd17c66316b16dac83a",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/data/materialSaveContract.test.ts",
+      "gitBlob": "a0d657202e96e1950aa321d820adde483b045ce4",
+      "blobMatches": true,
+      "workingBytes": 2771,
+      "workingSha256": "6325aafa4712d09b8ace833c51cc3f753fd76e529a66c3544c1aa7652d7be54e",
+      "acceptedManifestBytes": 2771,
+      "acceptedManifestSha256": "6325aafa4712d09b8ace833c51cc3f753fd76e529a66c3544c1aa7652d7be54e",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src/data/materialTransaction.ts",
+      "gitBlob": "cb97e06c45897306d2a11c71ff8167d721bfb51d",
+      "blobMatches": true,
+      "workingBytes": 12352,
+      "workingSha256": "8c65a4d3c01536c815bddff7a3dd67adcb17277d0daab1fd3dced5331b01ae22",
+      "acceptedManifestBytes": 12352,
+      "acceptedManifestSha256": "8c65a4d3c01536c815bddff7a3dd67adcb17277d0daab1fd3dced5331b01ae22",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src/data/repositories/documentRepository.test.ts",
+      "gitBlob": "3dbf12140cf80fbff1b1d12dc12f622c54afd311",
+      "blobMatches": true,
+      "workingBytes": 21189,
+      "workingSha256": "ec03bedabc01e05fdc7a772a84e7bc25dde2232ebe6491727dc44b326ecf7904",
+      "acceptedManifestBytes": 21773,
+      "acceptedManifestSha256": "0493ad2a7b6a6ef11eaf9e57fa6701104073ec8e0cbb87f994b7789a0bc529c4",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/data/repositories/documentRepository.ts",
+      "gitBlob": "bf610db16f926ba4f7ce30970e85a30e1367ab6a",
+      "blobMatches": true,
+      "workingBytes": 14999,
+      "workingSha256": "1dd08feb08e9b35360c730fdfce6d2cb6f3991a0f0e847a347c87957a5fc268e",
+      "acceptedManifestBytes": 15378,
+      "acceptedManifestSha256": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/data/singleConnectionDrivers.test.ts",
+      "gitBlob": "da9d205ec9cf28e31fd0a7efb32aed6f31fac6e6",
+      "blobMatches": true,
+      "workingBytes": 106951,
+      "workingSha256": "90bc239d5898db07faf23953719223fc1443b5d9a55584a2da04006f51f70f26",
+      "acceptedManifestBytes": 106951,
+      "acceptedManifestSha256": "90bc239d5898db07faf23953719223fc1443b5d9a55584a2da04006f51f70f26",
+      "workingByteComparison": "direct"
+    },
+    {
+      "path": "src/data/sqlJsDb.ts",
+      "gitBlob": "f42504e21cfe7dae0f7067bea65ef239ab03d03c",
+      "blobMatches": true,
+      "workingBytes": 7811,
+      "workingSha256": "2f1b03c034f20a19cac6248239e4f203291057666758c3d1681b6932119317e4",
+      "acceptedManifestBytes": 8043,
+      "acceptedManifestSha256": "8931672c7cf62ef158ec119a4cfe31d751084c90be8030e72f3d8201ebdaeb9d",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/data/tauriDb.ts",
+      "gitBlob": "3ba56129cfa4f60fe475ffacb1289446dae55ef0",
+      "blobMatches": true,
+      "workingBytes": 3266,
+      "workingSha256": "a6e854e58cf3e0dc5bb567a806532ef2f4b02c00c09b9b1635c150ba819a699d",
+      "acceptedManifestBytes": 3335,
+      "acceptedManifestSha256": "8cf2ca2a56b7e62f8752fb40478ea013ce235917e38e5769ebc7f864e82bca55",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/data/testing/nodeSqliteDb.ts",
+      "gitBlob": "a50933cbfb38efecd834b6a52f8e797ebb80ebc0",
+      "blobMatches": true,
+      "workingBytes": 3839,
+      "workingSha256": "cc43cdeff48a93fc328c1b5f46fe6642e0b95cd422936c40c09fd31bc5dc39f3",
+      "acceptedManifestBytes": 3937,
+      "acceptedManifestSha256": "063465305f71a8b956f447d9b450392902482a8b1c838dec7839b46db229e97f",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/pages/FlightJournal/debriefLinks.test.ts",
+      "gitBlob": "2679925a06bf4caa8137f030ebaec3f6167f8baf",
+      "blobMatches": true,
+      "workingBytes": 35883,
+      "workingSha256": "85d85e370ef3caa6a084556efbbd721c6bffe4910808e0e8d185252a7d9eace7",
+      "acceptedManifestBytes": 36881,
+      "acceptedManifestSha256": "be1181c22d7d19e2e09e8d2404649c06bf2b2d5b977e3be1c071f7861c3bc02c",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/pages/FlightJournal/quickDebrief.test.ts",
+      "gitBlob": "8f485d355777fd5e39866010aba9a211a782825f",
+      "blobMatches": true,
+      "workingBytes": 64231,
+      "workingSha256": "34b4f4787b6619714b74f4ee2f1602ac452892aed9320e8a465ccd6e3e3698ce",
+      "acceptedManifestBytes": 65782,
+      "acceptedManifestSha256": "cf4843988eb84d75e6cebd6c3dd52cffb93bfda2fe6ab9581baebb75e9166e4a",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialFormDialog.test.ts",
+      "gitBlob": "641a75750d3ded9474e5d8cee4ebbbb0bdede435",
+      "blobMatches": true,
+      "workingBytes": 12842,
+      "workingSha256": "172a97fe5d7ddecd0d6a9c439adccc5e902acc73c2e596d7ec4eb60aca9a0d2c",
+      "acceptedManifestBytes": 13146,
+      "acceptedManifestSha256": "7a24a3accfae9b453ab878750aa18e0b79f5343ed36c30ef0bd8e2461c8b7665",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/pages/StudyLibrary/materialSaveIntegration.test.ts",
+      "gitBlob": "9f37bc9709612c5ce64eeed645320b5c56ea18f7",
+      "blobMatches": true,
+      "workingBytes": 7789,
+      "workingSha256": "6f99f6f609f0a679fd61d3ace8c1c35676fda222f1114d5ff0afe35d8fc7794d",
+      "acceptedManifestBytes": 7976,
+      "acceptedManifestSha256": "cf60f482fcb749ff88eb983c7e4c543982a3cdc41b0161aa978cbee07698594a",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/perf/appResponsiveness.bench.test.ts",
+      "gitBlob": "2fe3dad969fea387dea593ba81b2db421c92d885",
+      "blobMatches": true,
+      "workingBytes": 17901,
+      "workingSha256": "d9982985753a7b5fea3bb49a5b16c3dc2aa42f319f3e8c4f8dd0b9cb0dca2d0a",
+      "acceptedManifestBytes": 18329,
+      "acceptedManifestSha256": "96b74d772df0049f577f687ee5dd410279482c1717c5deb566a839c07b3c0455",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/perf/studyLibraryFixture.ts",
+      "gitBlob": "d8ba0c70afc269e9f3254b8017b76addd13e745a",
+      "blobMatches": true,
+      "workingBytes": 10069,
+      "workingSha256": "93b834e5a27dc72489c1990e9cfcab362225470d73a7dfcf8ae398e270ae17d8",
+      "acceptedManifestBytes": 10312,
+      "acceptedManifestSha256": "e7d21a11ab21ec58d503a5f3463ca821639739fa5bd99eb933ba32e816a4103e",
+      "workingByteComparison": "full-CRLF-reconstruction"
+    },
+    {
+      "path": "src/perf/studyLibraryScenarios.test.ts",
+      "gitBlob": "7140950205dec1b2c55a6de0a1aaeaea05c6b5ea",
+      "blobMatches": true,
+      "workingBytes": 13773,
+      "workingSha256": "7d77d92cb1e107167bcda8d3c6d4e108846bb736019e5f21c621b790f7090acb",
+      "acceptedManifestBytes": 14028,
+      "acceptedManifestSha256": "663c385cf4ea5fff9877c0a309d5d1706e26fedaedf9aebd94c3f4e070c58740",
+      "workingByteComparison": "raw-byte-reconstruction-unresolved"
+    }
+  ],
+  "conditionalPassedNames": {
+    "QT-11b": 52,
+    "QT-02b": 2,
+    "BD-05": 1,
+    "BD-06": 1,
+    "BD-11": 1
+  },
+  "preflightTextCounts": {
+    "PASS": 10,
+    "FAIL": 0,
+    "UNVERIFIED": 2,
+    "USER_ACTION": 3
+  },
+  "preflightJsonCounts": {
+    "PASS": 9,
+    "FAIL": 0,
+    "UNVERIFIED": 3,
+    "USER_ACTION": 3
+  },
+  "independentChecks": {
+    "trackedWhitespaceExit": 0,
+    "scopedCargoFmtExit": 0,
+    "caseIdentityProbeExit": 0,
+    "caseIdentityProbeMeaning": "Synthetic canonicalization premise only, not app cleanup/trash operations."
+  },
+  "reviewerEnvironmentAttempt": {
+    "unscopedAbsoluteCargoFmtExit": 101,
+    "meaning": "Reviewer PATH did not expose cargo-fmt; corrected scoped PATH run passed. No install or source edit."
+  }
+}

@@ -1,0 +1,4 @@
+alias_exists=true
+canonical_paths_equal=true
+same_device_and_inode=true
+original_name=Some("CaseGuide.pdf") alias_name=Some("CaseGuide.pdf")
