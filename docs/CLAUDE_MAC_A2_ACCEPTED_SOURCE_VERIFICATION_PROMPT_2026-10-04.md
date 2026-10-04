@@ -2,6 +2,14 @@
 
 You are Claude, the Mac verification implementer for rickydeleon49-ui/Flight-training- (https://github.com/rickydeleon49-ui/Flight-training-). Codex is the independent reviewer and Git coordinator. The user asked Codex to finish Gemini's A2 work; the source acceptance is in docs/A2_INTEGRATION_ACCEPTANCE_2026-10-04.md. First confirm its containing PR is merged and fetch origin/main. Do not begin from an old candidate, local Windows files, or the frozen v0.5.3 DMG. No new release is authorized.
 
+## Current publication and owner instruction
+
+A2 is merged through PR #78 at `558725158cd93d49f8f9114693f61b08a00ffe2f`; required CI passed on head `8a69fa2d24c1919cdd05d5370381ef9ead83c45c`. Fetch and verify this accepted commit is an ancestor of your actual main. The older preparation report's “source unavailable” observations are historical, not the current gate state.
+
+The owner has [waived the M2 real-user check-in](M2_REAL_USER_CHECKIN_OWNER_WAIVER_2026-10-04.md). Do not request that check-in again or hold this Mac verification for it. Other product decisions and installed/release prerequisites remain separate.
+
+Preferred clean Mac checkout: `/Users/rickymac/code/Flight-training-pr70-integration`. Confirm current status and create a verification branch from synchronized main. The earlier `/Users/rickymac/code/Flight-training-` has preserved dirty work; do not switch, reset, stash or overwrite it. Do not create a duplicate checkout when the agreed clean one is suitable.
+
 ## Preflight and scope
 
 Read the top of STATUS.md, docs/PROJECT_HANDOFF.md, CLAUDE.md, docs/MAC_PARITY_CHECKLIST.md, the acceptance note, docs/MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md, and docs/MAC_A2_VERIFICATION_PREPARATION_2026-10-03.md. Record clone, branch, clean/dirty state, actual HEAD and origin/main SHA, roles, hardware, OS, Node/npm/Rust and SQLite/sql.js versions. Protect another task's dirty files. Create a separate verification worktree from the accepted source SHA if needed. Scope Node 22 and Rust to the process; use the evidenced MacOSX26.5 SDK, without changing system developer settings. If a prerequisite is missing, report it precisely and continue independent checks.
@@ -28,4 +36,4 @@ When eligible, observe import/Open/Reveal, automatic/manual split and original p
 
 Write docs/MAC_A2_VERIFICATION_2026-10-04.md (use the actual execution date if later) and a dedicated sanitized evidence folder. Give exact commands, exits, counts, timings, versions, source Git SHA/tree, hashes and explicit skips. Separate source tests, browser simulations, native APFS, packaging/signing and installed observations. Update STATUS.md, PROJECT_HANDOFF.md and MAC_PARITY_CHECKLIST.md only with observed evidence. Preserve historical reports as history.
 
-Leave source corrections and notes uncommitted for Codex review; no speculative push/PR/merge/tag/release. Stop on a reproduced data-safety blocker after preserving evidence and propose the smallest correction. Preserve migrations, backup v2 integrity/v1 restore, reference-safe cleanup, bundle identifier, Windows behavior, versions and approved dependency pins. Slice B/C still require the M2 check-in/scoped approval and D1–D9 owner decisions; accepted A2 clears only its source prerequisite. Do not start another feature or rewrite already accepted preparation.
+Leave source corrections and notes uncommitted for Codex review; no speculative push/PR/merge/tag/release. Stop on a reproduced data-safety blocker after preserving evidence and propose the smallest correction. Preserve migrations, backup v2 integrity/v1 restore, reference-safe cleanup, bundle identifier, Windows behavior, versions and approved dependency pins. The M2 real-user check-in is waived by the linked owner decision. Slice B/C still require their separate scoped approval and applicable owner decisions, including D1–D9 for B; neither A2 acceptance nor the check-in waiver supplies those decisions. Do not start another feature or rewrite already accepted preparation.
