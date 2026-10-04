@@ -1,6 +1,6 @@
 # Mac release preparation independent review — 4 October 2026
 
-**Decision: request corrections before accepting the release-preparation handoff.** The local Mac DMG exists and its reported bytes/hash match. Production source and active workflows are unchanged; no new production defect was found. The signing proposal and source/evidence claims need the bounded corrections below. [Evidence](evidence/mac-release-preparation-review-2026-10-04/README.md), [next Claude prompt](CLAUDE_MAC_RELEASE_PREPARATION_CORRECTIONS_PROMPT_2026-10-04.md).
+**Decision: request corrections before accepting the release-preparation handoff.** The local Mac DMG exists and its reported bytes/hash match. Production source and active workflows are unchanged; no new production defect was found. The signing proposal and source/evidence claims need the bounded corrections below. [Evidence](evidence/mac-release-preparation-review-2026-10-04/README.md), [next implementation prompt](MAC_RELEASE_PREPARATION_CORRECTIONS_PROMPT_2026-10-04.md).
 
 ## Independently established
 
@@ -44,4 +44,4 @@ Remove “new 0.5.3 target” from the diagram: the frozen v0.5.3 cannot be reta
 
 ## Next step
 
-Claude corrects proposal and evidence in one pass, validates the proposal in an isolated scratch copy with synthetic negative controls, and leaves changes uncommitted/unpushed for independent re-review. No full test matrix, fresh package build, installed test, account change, provider call, signing credential operation, tag or release is needed. This review publication does not accept or integrate the submitted implementation documents as finished work.
+The assigned implementer corrects proposal and evidence in one pass, validates the proposal in an isolated scratch copy with synthetic negative controls, and leaves changes uncommitted/unpushed for independent re-review. No full test matrix, fresh package build, installed test, account change, provider call, signing credential operation, tag or release is needed. This review publication does not accept or integrate the submitted implementation documents as finished work.
