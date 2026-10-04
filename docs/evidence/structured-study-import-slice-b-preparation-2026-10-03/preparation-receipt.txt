@@ -1,0 +1,89 @@
+Her Flight Deck — Structured Study Import Slice B Preparation Receipt (Validation Corrections)
+Date: 2026-10-03T18:30:00-07:00
+Implementer: Gemini (Mac)
+Reviewer / Coordinator: Codex
+
+1. Starting Point & Branch Identity
+Repository: rickydeleon49-ui/Flight-training-
+Working Tree: /Users/rickymac/code/Flight-training-
+Base Commit: 3efe95316b200848178033a68d057f66815cf427 (PR #62 merge)
+Branch: codex/structured-study-import-slice-b-preparation
+Remote Tracking: origin/main at ad5e8516c8d3a1d3f002be32735fa391a2373042 (PR #65 review merge)
+GitHub Metadata Scope: 65 total PRs (#1-#65), 0 open PRs; checked live remote branches on origin. Metadata and branch-name check only; no audit of all PR source trees or Windows filesystem.
+Tracked Non-Documentation Files: All 351 tracked files remain byte-identical to base commit 3efe953.
+
+2. Authoritative Archived Baseline Reference (Corrected by Codex)
+The prior seven-entry receipt SHA-256 is 645c5035d1a8494cf3052eb04844b34ca5b26fef69443def683f4938d9259892.
+The following are reference values reconstructed and verified from the archived reviewed receipt, not proof of a new local before-edit check:
+aa3b5b0d944d52fe5c8a98828817dab642f62c9596810faca3641f57c3cd27f0  STATUS.md
+2d853bf9bda8d3f13e3ac19db589343290bcded1430320afcee6a963a28c6a89  docs/PROJECT_HANDOFF.md
+3058ca15ffba8633ec866bc50b7ffe10786072005a0ae96aefb23a0b5fd3e17d  docs/MAC_PARITY_CHECKLIST.md
+22cfe2fddf71d1080316d799b7cee41c238e17bae36f34a642c4ea1092619933  docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md
+acf8c32c2992f2c4438f3d04c76defcfd4112ea970ca71c08cac4379b4cefd2f  docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md
+f9f7c083e01d8e250c6af2252a8d92f50e8ce4346e248acefa24525528e4474d  docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md
+746601a487b964f19e7a38abb37bafc52038feac8c8a1c56252eae4d4e6cbab7  docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt
+
+The submitted receipt quoted seven different hashes and asserted a 100% pre-edit match. The provided command transcript does not establish that check; the claim is not adopted. Exact original files and the handoff are retained in acceptance evidence. Codex independently verified all seven current submission entries/eight files and reviewed their actual contents.
+
+3. Inherited Environment & Toolchain (Not Remeasured During Acceptance)
+Host: MacBook Air (Mac17,3), Apple M5, 32 GB RAM
+OS: macOS 27.0.1 (Darwin 27.0.0, arm64)
+Node: v22.23.3 (/opt/homebrew/opt/node@22/bin/node)
+npm: 10.9.9 (/opt/homebrew/opt/node@22/bin/npm)
+rustc: 1.99.0 (b940084d7 2026-09-28)
+cargo: 1.99.0 (5f94df478 2026-08-27)
+SDK: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk (version 26.5)
+
+4. UUID Fixture Audit
+Independently audited all 8 UUID fixtures with Python 3 standard library `uuid.UUID` module:
+- TB-IDEM-01: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='8')
+- TB-IDEM-02: b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='9')
+- TB-CONF-01: c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='8')
+- TB-CONF-02: d4e5f6a7-b8c9-4d0e-9f2a-3b4c5d6e7f8a -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='9')
+- TB-CONF-03: e5f6a7b8-c9d0-4e1f-a23b-4c5d6e7f8a9b -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='a')
+- TB-CONF-04: f6a7b8c9-d0e1-4f2a-b34c-5d6e7f8a9b0c -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='b')
+- TB-CONF-05: a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='8')
+- TB-CONF-06: b8c9d0e1-f2a3-4b4c-9d6e-7f8a9b0c1d2e -> version=4, variant=specified in RFC 4122 (hex[12]='4', hex[16]='9')
+Audit Outcome: 8 of 8 valid RFC 4122 UUID v4 strings. Non-RFC variant bits ('0'-'5') completely eliminated.
+
+5. BPREP-R3 Validation Corrections Mapping
+- BPREP-R3(a) (Normative Validation Specification & Substantive Content):
+  * Target: STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §4.3; GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md Phase 2.
+  * Corrected: Restored single normative field-by-field validation table in §4.3 grounded in accepted limits.ts, schema.ts, semantic.ts, payload.ts, and contract §2.4/§2.8/§3.5. Covered unknown keys, normalization (single-line vs block), Unicode code-point length limits, array count limits, matching titles, fixed defaults, null sourcePage, valid unique options (2..6), integer in-range correctIndex, and substantive content rules.
+  * Substantive Content Definition: A present study set is substantive if its normalized summary is non-empty OR it contains sections OR it contains cards; a non-empty practice test is independently substantive; notes alone do not count; non-empty summary-plus-notes is valid and retains notes.
+  * Static Error Mapping: Mapped all validation failures to existing static error codes/messages (INVALID_ARGUMENT, INVALID_OPERATION_ID, INVALID_HASH_FORMAT, EMPTY_SUBSTANTIVE_CONTENT, CONTENT_LIMIT_EXCEEDED, INVALID_SOURCE_PAGE, UNSUPPORTED_PROVIDER, IDEMPOTENCY_CONFLICT, STORAGE_FAILURE, IPC_TRANSPORT_ERROR).
+  * Explicit Reference: Implementation prompt Phase 2 now explicitly references the normative table in preparation §4.3.
+- BPREP-R3(b) (Conflict Fixture RFC Compliance & Test Isolation):
+  * Target: STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §4.4, §5; GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md Phase 5.
+  * Corrected: Replaced TB-CONF-01 through TB-CONF-06 with verified RFC UUID v4 values. Separated incoming validation from stored conflict comparison: incoming payloads for conflict tests must have identical operationId and materialId, and consistent incoming titles (material.title == studySet.title == "Altered"). For aid title conflicts (TB-IPC-06, TB-IPC-07), specified mutating the stored SQLite row directly and retrying the unchanged valid operation.
+- Matrix Expansion:
+  * Added planned acceptance cases for summary-only (TB-CONT-04) and summary-plus-notes (TB-CONT-05).
+  * Added direct-native boundary cases for invalid answer indexes (TB-IPC-10, TB-IPC-11), mismatched titles (TB-IPC-12), normalized empty fields (TB-IPC-13), and exact length/count boundaries (TB-IPC-14, TB-IPC-15).
+  * Total matrix count reconciled to 69 planned test rows (65 source/dev + 4 installed).
+
+6. Acceptance Matrix Reconciliation
+- 69 distinct planned rows: 65 source/development and four future installed (TB-INST-01..04).
+- All 61 previous revision IDs preserved; all original IDs therefore retained.
+- Added in this correction: TB-CONT-04/05 and TB-IPC-10..15.
+- Every row is planned, not run. UUID parser audit is documentation evidence, not native execution.
+
+7. Scope & Invariants
+- Production code touched: NONE (0 lines of code modified)
+- Database schema migrations added: NONE (schema version remains 10)
+- Dependencies added: NONE (package.json and lockfile unchanged)
+- Packaging / release / signing operations: NONE (all unverified)
+- Original submission state: UNCOMMITTED/UNPUSHED; current publication/synchronization is recorded by the acceptance PR.
+
+8. Measured Verification Checks
+- git diff --check: clean (no whitespace issues or conflict markers)
+- link-validator: clean (all relative markdown links resolve to existing files)
+- whitespace-check: clean (zero trailing whitespace lines across all delivered files)
+- git status: clean working tree apart from the 8 designated preparation deliverables
+
+9. Codex Independent Acceptance Verification
+- Seven incoming receipt entries/eight files matched; incoming receipt SHA-256 8b495e060a0d43a62d5938c6dbcc19fc091538887707287cafbb70c1ec905ca6.
+- All 351 tracked non-documentation files match submitted HEAD; eight RFC UUID v4 fixture values independently parsed and valid.
+- 189 submitted relative file links resolve; whitespace/conflict scan and git diff --check passed.
+- Current pre-publication observation: 65 PR metadata entries, zero open; metadata/ref names only, not every-PR or Windows-machine inspection.
+- No unchanged full frontend/Rust/build matrices or installed/account/signing checks were repeated.
+- Bounded reviewer clarifications and exact original evidence are described in STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_ACCEPTANCE_2026-10-03.md.
