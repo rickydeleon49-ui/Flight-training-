@@ -1,0 +1,189 @@
+{
+  "syntheticOnly": true,
+  "realSecurityCommandsRun": false,
+  "sourceJob": "build-macos",
+  "observations": [
+    {
+      "mode": "local-shell-state-delete-failure",
+      "setupExit": 0,
+      "cleanupExit": 1,
+      "cleanupStdout": "::warning::Failed to remove keychain state file\n::error::Signing cleanup encountered one or more errors\n",
+      "cleanupStderr": "synthetic state removal denied\n",
+      "remaining": {
+        "keychain": false,
+        "state": true,
+        "auth": false,
+        "cert": false
+      },
+      "securityCalls": [
+        [
+          "list-keychains",
+          "-d",
+          "user"
+        ],
+        [
+          "create-keychain",
+          "-p",
+          "0123456789abcdef0123456789abcdef",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "set-keychain-settings",
+          "-lut",
+          "3600",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "unlock-keychain",
+          "-p",
+          "0123456789abcdef0123456789abcdef",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "import",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/cert.p12",
+          "-k",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/hfd-signing.keychain-db",
+          "-P",
+          "synthetic-password",
+          "-T",
+          "/usr/bin/codesign"
+        ],
+        [
+          "set-key-partition-list",
+          "-S",
+          "apple-tool:,apple:",
+          "-k",
+          "0123456789abcdef0123456789abcdef",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "list-keychains",
+          "-d",
+          "user",
+          "-s",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/hfd-signing.keychain-db",
+          "/synthetic/login.keychain-db",
+          "/synthetic/Keychains With Spaces/extra.keychain"
+        ],
+        [
+          "delete-keychain",
+          "/tmp/hfd-cleanup-shell-review-17gz75/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "list-keychains",
+          "-d",
+          "user",
+          "-s",
+          "/synthetic/login.keychain-db",
+          "/synthetic/Keychains With Spaces/extra.keychain"
+        ]
+      ]
+    },
+    {
+      "mode": "github-shell-state-delete-failure",
+      "setupExit": 0,
+      "cleanupExit": 1,
+      "cleanupStdout": "::warning::Failed to remove keychain state file\n::error::Signing cleanup encountered one or more errors\n",
+      "cleanupStderr": "synthetic state removal denied\n",
+      "remaining": {
+        "keychain": false,
+        "state": true,
+        "auth": false,
+        "cert": false
+      },
+      "securityCalls": [
+        [
+          "list-keychains",
+          "-d",
+          "user"
+        ],
+        [
+          "create-keychain",
+          "-p",
+          "0123456789abcdef0123456789abcdef",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "set-keychain-settings",
+          "-lut",
+          "3600",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "unlock-keychain",
+          "-p",
+          "0123456789abcdef0123456789abcdef",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "import",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/cert.p12",
+          "-k",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/hfd-signing.keychain-db",
+          "-P",
+          "synthetic-password",
+          "-T",
+          "/usr/bin/codesign"
+        ],
+        [
+          "set-key-partition-list",
+          "-S",
+          "apple-tool:,apple:",
+          "-k",
+          "0123456789abcdef0123456789abcdef",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "list-keychains",
+          "-d",
+          "user",
+          "-s",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/hfd-signing.keychain-db",
+          "/synthetic/login.keychain-db",
+          "/synthetic/Keychains With Spaces/extra.keychain"
+        ],
+        [
+          "delete-keychain",
+          "/tmp/hfd-cleanup-shell-review-1aqmtq/runner/hfd-signing.keychain-db"
+        ],
+        [
+          "list-keychains",
+          "-d",
+          "user",
+          "-s",
+          "/synthetic/login.keychain-db",
+          "/synthetic/Keychains With Spaces/extra.keychain"
+        ]
+      ]
+    },
+    {
+      "mode": "github-shell-env-write-failure",
+      "setupExit": 1,
+      "cleanupExit": 0,
+      "cleanupStdout": "",
+      "cleanupStderr": "",
+      "remaining": {
+        "keychain": false,
+        "state": false,
+        "auth": false,
+        "cert": false
+      },
+      "securityCalls": [
+        [
+          "list-keychains",
+          "-d",
+          "user"
+        ],
+        [
+          "list-keychains",
+          "-d",
+          "user",
+          "-s",
+          "/synthetic/login.keychain-db",
+          "/synthetic/Keychains With Spaces/extra.keychain"
+        ]
+      ]
+    }
+  ]
+}

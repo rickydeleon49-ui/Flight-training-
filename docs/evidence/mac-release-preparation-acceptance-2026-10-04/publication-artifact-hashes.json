@@ -1,0 +1,120 @@
+{
+  "scope": "Final published preparation/acceptance artifacts; self and shared trackers excluded",
+  "files": [
+    {
+      "path": "docs/MAC_RELEASE_CONTINUATION_PROMPT_2026-10-04.md",
+      "bytes": 4763,
+      "sha256": "5d08669eb5e34add1800d8ca432cfb337fdb0ee1b17c24dce0285e2468eaec5a"
+    },
+    {
+      "path": "docs/MAC_RELEASE_PREPARATION_2026-10-04.md",
+      "bytes": 29213,
+      "sha256": "967768bb629e9e8eb341182121997273154e06517be0cebabfa6c9d4971192bb"
+    },
+    {
+      "path": "docs/MAC_RELEASE_PREPARATION_ACCEPTANCE_2026-10-04.md",
+      "bytes": 5280,
+      "sha256": "09c1c3c4cf9744b3048ae042c85ee0e3821f231cc7f3f2da488bf5cfcc44bbfc"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/README.md",
+      "bytes": 9550,
+      "sha256": "9d2e8d66e1bb3d8acedd08348a793afa6948242f5e83634bd358922e68e3b436"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/build-exit.txt",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/build-output.txt",
+      "bytes": 16159,
+      "sha256": "4205a131cb041f474f1f45c97c22b009fbe915d5a56bb2472410e93748a7a03a"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/local-artifact-inspection.txt",
+      "bytes": 3823,
+      "sha256": "77d49a569046c4e07c688dd4f8d343227f48ef6e286d53332b193492250e62dc"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-initial.json",
+      "bytes": 6555,
+      "sha256": "4c4bb08e3a71fe4d64911bfeab90e65ebbb084f489bbfcb9db6ea3ae0af41511"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-initial.txt",
+      "bytes": 2068,
+      "sha256": "3a90c08f8b4f3a7e576560bfd7e2f496e5fbc38ce9566f768ea30d5991512369"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-app.json",
+      "bytes": 9299,
+      "sha256": "70fbaa189e29e96d9a1a02f20317b7c71b05a5f453b70a600137482df88c8b09"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-app.txt",
+      "bytes": 2600,
+      "sha256": "cb91eb71cef0be9f090019ae85b66bb789e49c6adddb34d971f5df1d58877000"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-dmg.json",
+      "bytes": 9138,
+      "sha256": "e41dc5b7bc66465ed80b1688bcb62d1d55466048f5fdba7cac190199f3a57e66"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-dmg.txt",
+      "bytes": 2808,
+      "sha256": "c58dbb57b967e0ae384523f0dee26e4c4181762462c15bb5837cf1815c14f05c"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/proposed-macos-signing.patch",
+      "bytes": 14024,
+      "sha256": "048c3e8624190557f7aaa06c6dd4c2b828550944c6cec6f8b8e4bf04407c6deb"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/proposed-release-workflow.yml",
+      "bytes": 27840,
+      "sha256": "3dcba2968c110bdf8d3e593e13e57768393ab47ed0c664ed009ddcedcb8793e9"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/results.json",
+      "bytes": 10223,
+      "sha256": "17111d387c4fa326d1bc31077eaca7d7873df319bb215cb3b473b951a6cf9e05"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/signing-proposal-validation.txt",
+      "bytes": 3559,
+      "sha256": "1ddcccadd7a0689a49b0e6ac60234970c26183e11a72614f99957efe3afa0b12"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/submitted-artifact-hashes.json",
+      "bytes": 4417,
+      "sha256": "6a1debbee71bfe0f49323d06ffa4486e24e198b854a72dd0499dcde37dec8563"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/validate-signing-proposal.mjs",
+      "bytes": 42477,
+      "sha256": "4c8d6110963edde02df0e0b45c6f03adbb06551392644cf88f6c508ea83c5da5"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-acceptance-2026-10-04/README.md",
+      "bytes": 1839,
+      "sha256": "737bce940cbced3534dbae74607d647cbb4f686a744f6b6bc202e2ee5ea6acdf"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-acceptance-2026-10-04/cleanup-regression-observations.json",
+      "bytes": 5229,
+      "sha256": "9d3639980d3e49eb64a5f14145a110365136c032372b53d4c965114e6e4d9cd4"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-acceptance-2026-10-04/independent-validation.txt",
+      "bytes": 3559,
+      "sha256": "1ddcccadd7a0689a49b0e6ac60234970c26183e11a72614f99957efe3afa0b12"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-acceptance-2026-10-04/reviewed-submission-hashes.json",
+      "bytes": 4641,
+      "sha256": "f59fea64317299e08a1f6ffd88f09348bef90707dcc05294e3109a9b41d306bf"
+    }
+  ]
+}
