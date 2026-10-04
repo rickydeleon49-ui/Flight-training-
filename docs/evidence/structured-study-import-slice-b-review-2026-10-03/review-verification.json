@@ -1,0 +1,32 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-03",
+  "sourceBase": "3efe95316b200848178033a68d057f66815cf427",
+  "branch": "codex/structured-study-import-slice-b-preparation",
+  "submittedFiles": 8,
+  "receiptEntries": 7,
+  "receiptSha256": "42fae59b644182400db2aada711084e32884e374104a7c5197ef2b7614aedb1d",
+  "mismatches": [],
+  "sourceManifestLockWorkflowChanges": false,
+  "relativeLinksChecked": 190,
+  "brokenLinks": [],
+  "prInventoryCount": 62,
+  "openPRs": 0,
+  "A2BranchNameMatches": [],
+  "remoteVerificationScope": "Fetched main, read live branch names and all 62 PR metadata entries; did not inspect every PR source tree or the Windows-local checkout. No published accepted A2 evidence found in this scope.",
+  "v051Commit": "2dbf6df3f66b18e087b5842fc554f8e733255a0e",
+  "v051Migrations": [
+    "src-tauri/migrations/0001_initial_schema.sql",
+    "src-tauri/migrations/0002_profile_details.sql",
+    "src-tauri/migrations/0003_personal_note.sql",
+    "src-tauri/migrations/0004_app_metadata.sql",
+    "src-tauri/migrations/0005_flight_log.sql",
+    "src-tauri/migrations/0006_pilot_toolkit.sql",
+    "src-tauri/migrations/0007_ai_study.sql",
+    "src-tauri/migrations/0008_notes.sql"
+  ],
+  "v051PracticeTestPanelPresent": false,
+  "measuredOS": "27.0.1",
+  "measuredOSBuild": "26A434",
+  "checksRepeated": "Static source/tag/document inspection, hashes, links, whitespace and remote metadata only; no runtime/full matrix/app/profile/DB testing."
+}

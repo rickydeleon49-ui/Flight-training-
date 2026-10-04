@@ -1,0 +1,158 @@
+# Gemini: implement structured study import Slice B (conditional copy-ready assignment)
+
+> [!IMPORTANT]
+> **GATE PRECONDITION:** Do **NOT** start code implementation under this prompt until **ALL** five prerequisite gates listed in §1 have been verified with concrete evidence in the repository. If any gate is missing, halt implementation and report the specific blocked gate to the owner and Codex.
+
+---
+
+## 1. Required gate evidence before writing code
+
+Before creating a working branch or modifying any production file, inspect the repository and verify:
+
+1. **Gate 1 (Slice A Merged):** `main` contains the accepted Slice A source (PR #62, base `3efe95316b200848178033a68d057f66815cf427` or newer). `src/logic/studyPacket/` and `src-tauri/src/study_packet.rs` exist.
+2. **Gate 2 (Published Accepted A2):** The Windows implementer has published the matching reviewed A2 source branch/PR to GitHub, and Codex has independently reviewed and accepted it ([`A2_SECOND_REVIEW_DETAILS_2026-10-02.md`](A2_SECOND_REVIEW_DETAILS_2026-10-02.md) R6/R7 resolved).
+3. **Gate 3 (M2 Real-User Check-In):** The owner has recorded notes from a real-user study session in `docs/` and granted scoped approval for structured study import.
+4. **Gate 4 (Owner Decisions D1–D9 Approved):** An explicit owner decision document exists approving:
+   - **D1:** Toolbar action "Import study packet…" in `StudyLibrary.tsx`.
+   - **D2:** Create-new only; replacement remains deferred.
+   - **D3:** Storing `provider: "import"` without a migration, accepting that older restored binaries (v0.5.1) will display imported content with Gemini labels.
+   - **D4–D9:** Conservative defaults confirmed as specified in [`STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md`](STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md).
+5. **Gate 5 (Clean Main):** Working directory is clean and synchronized with `origin/main`.
+
+If all five gates are satisfied, create branch `codex/structured-study-import-slice-b` from synchronized `main` and execute the phases below.
+
+---
+
+## 2. Phased implementation plan
+
+Implement Slice B in five focused, reviewable phases. Run focused tests after each phase.
+
+### Phase 1: Domain types and repository mappers
+1. In `src/domain/types.ts`:
+   - Widen `AiStudySet.provider` and `PracticeTest.provider` from `"gemini"` to `"gemini" | "import"`.
+   - Ensure `model: string` accommodates empty string `""` for imported content.
+2. In `src/data/repositories/documentRepository.ts`:
+   - Update `mapAiStudySet` (line 87) and `mapPracticeTest` (line 97) to read `row.provider` through an allowlist:
+     ```ts
+     provider: row.provider === "import" ? "import" : "gemini",
+     ```
+   - Preserve existing `saveAiStudySet` and `savePracticeTest` functions (they continue writing `'gemini'` for AI-generated aids).
+   - Ensure malformed or legacy rows safely default to `"gemini"`.
+
+### Phase 2: Native SQLite atomic command
+1. In `src-tauri/src/study_packet.rs`:
+   - Define Rust DTO `StructuredImportSaveOperation` (matching camelCase JSON):
+     - `material_id: String`
+     - `content_hash: String`
+     - `material: ImportedMaterialDraft` (`title: String`)
+     - `study_set: Option<ImportedStudySetDraft>`
+     - `practice_test: Option<ImportedPracticeTestDraft>`
+   - Implement `save_structured_study_import(app: AppHandle, op: StructuredImportSaveOperation) -> Result<String, String>`:
+     - Execute off the UI thread via `tauri::async_runtime::spawn_blocking`.
+     - Open pinned `Connection::open(&db_path)`.
+     - Configure `connection.busy_timeout(Duration::from_secs(5))` and `connection.pragma_update(None, "foreign_keys", "ON")`.
+     - Start transaction with `connection.transaction_with_behavior(TransactionBehavior::Immediate)`.
+     - **Defensive revalidation:**
+       * `title` is non-empty and ≤ 200 code points.
+       * If `study_set` present: summary ≤ 20,000 code points, sections ≤ 100, flashcards ≤ 500, all flashcards have `source_page: None`, `provider == "import"`.
+       * If `practice_test` present: questions ≤ 200, each question has 2–6 options, `correct_index < options.len()`, `source_page: None`, `provider == "import"`.
+     - **Idempotency check:**
+       * If row with `id = op.material_id` exists in `study_materials`:
+         - Inspect existing `ai_study_sets` and `practice_tests`.
+         - If stored content matches incoming payload: commit transaction and return `Ok("already_saved".to_string())`.
+         - If stored content differs: abort transaction and return `Err("conflict".to_string())`.
+     - **Insert statements:**
+       * Insert into `study_materials` (id, title, material_type='study_guide', topic='general', review_status='needs_review', priority='later', created_at=now, updated_at=now, notes='', file_path=NULL).
+       * If `study_set` is present: insert into `ai_study_sets` (source_material_id, title, summary, sections_json, flashcards_json, source_notes, provider='import', model='', generated_at=now, updated_at=now).
+       * If `practice_test` is present: insert into `practice_tests` (source_material_id, title, questions_json, provider='import', model='', generated_at=now, updated_at=now).
+     - Commit transaction and return `Ok("saved".to_string())`.
+2. In `src-tauri/src/lib.rs`:
+   - Register `study_packet::save_structured_study_import` in Tauri `invoke_handler`.
+
+### Phase 3: Database interfaces and driver adapters
+1. In `src/data/db.ts`:
+   - Add `saveStructuredImportAtomically?(operation: StructuredImportSaveOperation): Promise<"saved" | "already_saved">` to `SqlDatabase`.
+   - Export interface `StructuredImportSaveOperation`.
+2. In `src/data/tauriDb.ts`:
+   - Implement `saveStructuredImportAtomically`: invoke native command `save_structured_study_import`.
+3. In `src/data/sqlJsDb.ts`:
+   - Implement `saveStructuredImportAtomically`:
+     * Execute `db.run("BEGIN IMMEDIATE")`.
+     * Execute insert statements.
+     * Execute `db.run("COMMIT")`.
+     * Call `save(db)` for durable export. Catch any export/storage failure and revert in-memory state.
+4. In `src/data/repositories/documentRepository.ts`:
+   - Implement `importStudyPacket(operation: StructuredImportSaveOperation): Promise<"saved" | "already_saved">`.
+   - **Enforce strict refusal:** If `!db.saveStructuredImportAtomically`, throw `AtomicPersistenceUnsupportedError`. Do **NOT** fall back to sequential repository writes.
+
+### Phase 4: UI integration and accessibility
+1. Create `src/pages/StudyLibrary/ImportStudyPacketDialog.tsx`:
+   - Modal using `Dialog` (`src/components/ui/Dialog.tsx`) and `useModalDialog`.
+   - State machine:
+     * `picking` -> calls `pickStudyPacket()`. If cancelled (`null`), close dialog cleanly.
+     * `validating` -> calls `validatePacketText(picked.text, { bomRemoved: picked.bomRemoved })`. If invalid, display allowlisted error codes and paths.
+     * `preview` -> mint `materialId = newId()` once. Display title, counts of cards/questions/sections, unverified claims, and `discardedOnSave` summary.
+     * `saving` -> compute `contentHash = sha256(canonicalPersistenceJson(payload))`. Call `importStudyPacket(op)`. Prevent duplicate clicks via synchronous ref lock.
+     * `error` -> display failure with "Try again" button reusing the same preview and `materialId`.
+   - Full A3 accessibility: focus trap, `Escape` key closes dialog (when not saving), backdrop click closes, ARIA attributes.
+2. In `src/pages/StudyLibrary/StudyLibrary.tsx`:
+   - Add "Import study packet…" button to the `PageHeader` action area.
+   - Wire button to open `ImportStudyPacketDialog`.
+3. In `src/pages/StudyLibrary/MaterialDetail.tsx`:
+   - When `studySet?.provider === "import"` or `practiceTest?.provider === "import"`:
+     * Change card title to "Imported study packet" (do NOT show "Gemini study assistant").
+     * Display imported-content disclaimer: *"Imported from a file you selected. Its answers and source references have not been checked by Her Flight Deck. Verify against current FAA material, aircraft documents and your instructor."*
+     * Do not show the "Gemini will read this document..." empty-state notice.
+   - If user attaches a file to an imported material and clicks "Regenerate":
+     * Display explicit warning: *"This will replace your imported study guide and practice test with AI-generated content."*
+
+### Phase 5: Verification and acceptance tests
+Execute the acceptance matrix specified in [`STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md`](STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md) §5:
+1. Native temporary rusqlite tests:
+   - Full transaction commit (`TB-ATOM-01`).
+   - Injected failure rollback preserving prior data (`TB-ROLL-01`, `TB-ROLL-02`).
+   - Bounded contention retry on busy lock (`TB-LOCK-01`).
+   - Idempotent retry returning `"already_saved"` (`TB-IDEM-01`).
+   - Conflict detection on mismatched content (`TB-CONF-01`).
+   - Defensive revalidation refusing invalid inputs (`TB-DEF-01` to `TB-DEF-03`).
+2. WebAssembly sql.js tests:
+   - Transaction commit and storage export (`TB-ATOM-02`).
+   - Mid-statement rollback (`TB-ROLL-03`).
+   - Storage durability failure handling (`TB-DUR-01`).
+   - Idempotent retry (`TB-IDEM-02`).
+3. Repository unit tests:
+   - Missing atomic adapter refusal (`TB-REFUSE-01`).
+   - Provenance round-trip and allowlist fallback (`TB-PROV-01`, `TB-PROV-02`).
+4. Native backup and restore tests:
+   - Archive creation and restore preserving `provider: "import"` (`TB-BACK-01`).
+5. UI component tests (jsdom):
+   - Post-save refresh failure handling (`TB-REFRESH-01`).
+   - Keyboard accessibility, focus trap, Escape cancellation (`TB-UI-A11Y-01`, `TB-UI-A11Y-02`).
+   - Wording, disclaimers, and regeneration warnings (`TB-UI-WARN-01`, `TB-UI-REGEN-01`).
+6. Regression guard:
+   - Ensure existing Gemini generation, PDF Open, split materials, and quick debrief tests continue passing with zero regressions.
+
+---
+
+## 3. Strict scope boundaries
+
+- **NO database migrations:** Do not add files to `src-tauri/migrations/`. Schema remains at 10.
+- **NO replacement flow:** Create-new only.
+- **NO new dependencies:** Do not add `react-markdown` (deferred to Slice C) or any other npm package.
+- **NO network calls:** Import must function 100% offline.
+- **NO packaging or signing:** Do not trigger release workflows.
+
+---
+
+## 4. Verification and handoff
+
+When all tests pass:
+1. Run local checks:
+   ```bash
+   npm test
+   npm run build
+   cd src-tauri && cargo test && cargo clippy -- -D warnings && cargo fmt --check
+   ```
+2. Update `STATUS.md`, `docs/PROJECT_HANDOFF.md`, and `docs/MAC_PARITY_CHECKLIST.md`.
+3. Generate evidence receipt in `docs/evidence/structured-study-import-slice-b-2026-10-03/` with exact SHA-256 hashes.
+4. Leave changes uncommitted and unpushed for Codex review.
