@@ -1,0 +1,20 @@
+[
+  {
+    "sourceFile": "host-apfs-save-tests.log",
+    "originalSha256": "a4b46aa64e5dc60684ae540a9ca284729a7d4bea98b29b2007ac0b082bf35eb2",
+    "originalBytes": 2577,
+    "publicationFile": "submitted-host-apfs-save-tests.txt",
+    "publicationSha256": "c8a106c1bc9d05921776f0dd4c425572c90109a7ddb933af76eb251dec9a1c39",
+    "publicationBytes": 2576,
+    "normalization": "Remove terminal blank lines only for the publication whitespace gate; original subject log is unchanged."
+  },
+  {
+    "sourceFile": "case-sensitive-apfs-save-tests.log",
+    "originalSha256": "4de0a81586ac1f4f4876256600b6d9cc5a61d796a8a27b1b0e565844d636e875",
+    "originalBytes": 2512,
+    "publicationFile": "submitted-case-sensitive-apfs-save-tests.txt",
+    "publicationSha256": "1173b6b3c5922b49aabbad436fb3a1f808b2a5fd022ef2e61a8afc353292e841",
+    "publicationBytes": 2511,
+    "normalization": "Remove terminal blank lines only for the publication whitespace gate; original subject log is unchanged."
+  }
+]

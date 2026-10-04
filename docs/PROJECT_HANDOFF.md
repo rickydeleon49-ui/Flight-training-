@@ -6,6 +6,8 @@ Repository: https://github.com/rickydeleon49-ui/Flight-training-. Each machine c
 
 ## Current state and ownership
 
+**Current Mac verification review (4 October):** [MVER-R1–R3 corrections requested](MAC_A2_VERIFICATION_REVIEW_2026-10-04.md); [Claude handles the focused follow-up](CLAUDE_MAC_A2_VERIFICATION_CORRECTIONS_PROMPT_2026-10-04.md). Submitted report/evidence remain uncommitted in the existing Mac verification checkout. A2 accepted source stays merged; no installed certification or new roadmap slice follows this review.
+
 **Current owner decision (4 October):** [M2 real-user check-in waived](M2_REAL_USER_CHECKIN_OWNER_WAIVER_2026-10-04.md). A2 is accepted and merged through PR #78 (`5587251`); [Claude verifies the published source on the Mac](CLAUDE_MAC_A2_ACCEPTED_SOURCE_VERIFICATION_PROMPT_2026-10-04.md). Other Slice B decisions and installed/signing/release prerequisites remain separate. Use this decision when evaluating older gate snapshots.
 
 **Primary platform:** the owner confirmed the main user will use the Mac. Follow [the Mac-first development/readiness plan](MAC_PRIMARY_DEVELOPMENT_PLAN_2026-10-02.md). Reviewed source and evidence must be available through GitHub and validated here; preserve Claude's active Mac baseline and the Windows A2 owner. [Sanitized Mac verification receipt](evidence/mac-source-evaluation-2026-10-02/VERIFICATION_RECEIPT.md) is shared for cross-machine review.
