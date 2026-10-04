@@ -1,0 +1,121 @@
+{
+  "base": "50568143a4c4aef04e54eba88bfb22f0974cafe4",
+  "branch": "claude/mac-release-preparation-2026-10-04",
+  "status": "pending Codex re-review",
+  "files": [
+    {
+      "path": "STATUS.md",
+      "bytes": 113698,
+      "sha256": "2f6982cbad2bd39a10d6f066b7f4cebd2a68ab97cb8681244832e8eed1722140"
+    },
+    {
+      "path": "docs/MAC_PARITY_CHECKLIST.md",
+      "bytes": 61980,
+      "sha256": "0c7ffb7dcaa7cc8d3f49f19287d62d02771e6e021d4e55d01494c356cf29d1d9"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 19269,
+      "sha256": "00833c82ae1b82067fb2b54ae9c1386a6a050e7ce178d547425981dbd0b925ad"
+    },
+    {
+      "path": "docs/MAC_RELEASE_PREPARATION_2026-10-04.md",
+      "bytes": 27523,
+      "sha256": "ce889a382a691bedce784bd8a3e33380653dd42034920b06620e9c37f1dcfb94"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/README.md",
+      "bytes": 8845,
+      "sha256": "8d316a08725a16a41766e27869cb2ab21bf72533cbfdf123f0c8190e5489ee78"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/build-exit.txt",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/build-output.txt",
+      "bytes": 16159,
+      "sha256": "4205a131cb041f474f1f45c97c22b009fbe915d5a56bb2472410e93748a7a03a"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/local-artifact-inspection.txt",
+      "bytes": 3823,
+      "sha256": "77d49a569046c4e07c688dd4f8d343227f48ef6e286d53332b193492250e62dc"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-initial.json",
+      "bytes": 6555,
+      "sha256": "4c4bb08e3a71fe4d64911bfeab90e65ebbb084f489bbfcb9db6ea3ae0af41511"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-initial.txt",
+      "bytes": 2068,
+      "sha256": "3a90c08f8b4f3a7e576560bfd7e2f496e5fbc38ce9566f768ea30d5991512369"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-app.json",
+      "bytes": 9299,
+      "sha256": "70fbaa189e29e96d9a1a02f20317b7c71b05a5f453b70a600137482df88c8b09"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-app.txt",
+      "bytes": 2600,
+      "sha256": "cb91eb71cef0be9f090019ae85b66bb789e49c6adddb34d971f5df1d58877000"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-dmg.json",
+      "bytes": 9138,
+      "sha256": "e41dc5b7bc66465ed80b1688bcb62d1d55466048f5fdba7cac190199f3a57e66"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/preflight-local-dmg.txt",
+      "bytes": 2808,
+      "sha256": "c58dbb57b967e0ae384523f0dee26e4c4181762462c15bb5837cf1815c14f05c"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/proposed-macos-signing.patch",
+      "bytes": 13608,
+      "sha256": "a135c8a5a6808d862fbc7c8ff7169e9eb08d2af438f7190e43587cde91d3011a"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/proposed-release-workflow.yml",
+      "bytes": 27436,
+      "sha256": "22f0a4d5531bdf33d375ec15fa411f4ec41476f92bf68a0b9a93df2752d78f69"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/results.json",
+      "bytes": 9265,
+      "sha256": "bf4724d563d4302f7ae521d6e24e72b2f5458893554cca43826533a0acc005b9"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/signing-proposal-validation.txt",
+      "bytes": 3110,
+      "sha256": "7139ea04104d1131061526de3d77350acfc61e3996820920e458e4e9d372f860"
+    },
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/validate-signing-proposal.mjs",
+      "bytes": 34219,
+      "sha256": "e62e38e78728bc9730f67a529e6cd2558df50bbcc52c85fe7f94785d8878b272"
+    }
+  ],
+  "ignoredLocalOriginals": [
+    {
+      "path": "docs/evidence/mac-release-preparation-2026-10-04/build-output.log",
+      "bytes": 16159,
+      "sha256": "4205a131cb041f474f1f45c97c22b009fbe915d5a56bb2472410e93748a7a03a",
+      "gitStatus": "ignored local copy"
+    },
+    {
+      "path": "/tmp/hfd-local-build-2026-10-04.log",
+      "bytes": 16160,
+      "sha256": "898751ccd92b8e31f0784caa12e2e9d01929ffbf20e3b6de9520801f0cad558d",
+      "gitStatus": "untracked external /tmp raw original"
+    }
+  ],
+  "manifestIdentity": {
+    "path": "docs/evidence/mac-release-preparation-2026-10-04/submitted-artifact-hashes.json",
+    "bytes": 4417,
+    "sha256": "6c8cd76384e920548b7a488a2fab9cb724aec7088eedde83c233a9c252cc2f30"
+  }
+}
