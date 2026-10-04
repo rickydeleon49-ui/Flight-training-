@@ -43,6 +43,8 @@ This is a dated handoff snapshot. Read current STATUS, the branch/PR and its exa
 
 ## Handoff rules for every task
 
+Follow the owner's [development and review workflow](PROJECT_DEVELOPMENT_REVIEW_WORKFLOW.md). Codex serves as senior software developer and independent reviewer, with responsibility for precise work, focused reviews and steady delivery pace.
+
 1. Before work, fetch the remote and record repository, branch, base/head SHA, clean/dirty state, owner/role and machine. Inspect ongoing PRs. Never reset, stash, force-push or edit another machine's branch to make it match yours.
 2. Assign one implementer and one Git coordinator at a time. Claude/Gemini roles can switch when the user says so; the handoff must record the active assignment. Mac evidence and Windows source corrections may proceed independently, but avoid simultaneous edits to the same branch/file.
 3. Implement locally, run focused tests for each substantive change, then one complete required local gate after corrections. Leave source uncommitted for independent review under the current workflow. Share the implementation report and next prompt using [the task template](templates/TASK_HANDOFF_TEMPLATE.md).
