@@ -1,0 +1,344 @@
+--- a/.github/workflows/release.yml	2026-10-04 15:53:05
++++ b/.github/workflows/release.yml	2026-10-04 16:26:51
+@@ -222,17 +222,300 @@
+       - name: Cargo lockfile synchronization check
+         run: npm run test:cargo-lock
+
+-  build:
++  build-macos:
+     permissions:
+       contents: read
+-    name: ${{ matrix.name }}
++    name: macOS (Signed)
+     needs: check
++    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
++    environment: macos-signing
++    runs-on: macos-15
+     timeout-minutes: 60
+-    strategy:
+-      fail-fast: false
+-      matrix: ${{ fromJSON(needs.check.outputs.matrix) }}
++    steps:
++      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
++      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
++        with:
++          node-version: 22
++          cache: npm
++      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
++      - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
++        with:
++          workspaces: src-tauri
++        timeout-minutes: 10
++        continue-on-error: true
+
+-    runs-on: ${{ matrix.os }}
++      - run: npm ci
++
++      - name: Check macOS signing prerequisites (fail-closed)
++        shell: bash
++        env:
++          EVENT_NAME: ${{ github.event_name }}
++          REF_NAME: ${{ github.ref_name }}
++          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
++          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
++          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
++          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
++          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
++          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
++          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
++          APPLE_ID: ${{ secrets.APPLE_ID }}
++          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
++        run: |
++          set -eo pipefail
++
++          if [ "$EVENT_NAME" != "workflow_dispatch" ]; then
++            echo "::error::Signed macOS release builds are permitted only via manual workflow_dispatch, not '$EVENT_NAME'."
++            exit 1
++          fi
++
++          if [ "$REF_NAME" != "main" ]; then
++            echo "::error::Signed macOS release builds must be dispatched from main branch, not '$REF_NAME'."
++            exit 1
++          fi
++
++          MISSING=""
++          if [ -z "$APPLE_CERTIFICATE" ]; then MISSING="$MISSING APPLE_CERTIFICATE"; fi
++          if [ -z "$APPLE_CERTIFICATE_PASSWORD" ]; then MISSING="$MISSING APPLE_CERTIFICATE_PASSWORD"; fi
++          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then MISSING="$MISSING APPLE_SIGNING_IDENTITY"; fi
++          if [ -z "$APPLE_TEAM_ID" ]; then MISSING="$MISSING APPLE_TEAM_ID"; fi
++
++          HAS_API_AUTH=true
++          if [ -z "$APPLE_API_KEY" ] || [ -z "$APPLE_API_KEY_P8" ] || [ -z "$APPLE_API_ISSUER" ]; then
++            HAS_API_AUTH=false
++          fi
++
++          HAS_PWD_AUTH=true
++          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_PASSWORD" ]; then
++            HAS_PWD_AUTH=false
++          fi
++
++          if [ "$HAS_API_AUTH" = false ] && [ "$HAS_PWD_AUTH" = false ]; then
++            MISSING="$MISSING (either APPLE_API_KEY+APPLE_API_KEY_P8+APPLE_API_ISSUER or APPLE_ID+APPLE_PASSWORD)"
++          fi
++
++          if [ -n "$MISSING" ]; then
++            echo "::error::Required macOS signing prerequisites are missing from secrets/environment:$MISSING"
++            exit 1
++          fi
++
++      - name: Prepare temporary signing keychain (macOS)
++        shell: bash
++        env:
++          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
++          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
++          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
++        run: |
++          set -eo pipefail
++
++          KC="$RUNNER_TEMP/hfd-signing.keychain-db"
++          STATE_FILE="$RUNNER_TEMP/hfd-orig-keychains.txt"
++
++          raw_list=$(security list-keychains -d user)
++
++          orig_keychains=()
++          while IFS= read -r line || [ -n "$line" ]; do
++            k=$(echo "$line" | sed -e 's/^[[:space:]]*"//' -e 's/"[[:space:]]*$//')
++            if [ -n "$k" ]; then
++              orig_keychains+=("$k")
++            fi
++          done <<< "$raw_list"
++
++          rm -f "$STATE_FILE"
++          for k in "${orig_keychains[@]}"; do
++            printf '%s\n' "$k" >> "$STATE_FILE"
++          done
++
++          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
++          echo "::add-mask::$KEYCHAIN_PASSWORD"
++          echo "TEMP_KEYCHAIN=$KC" >> "$GITHUB_ENV"
++
++          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
++          security set-keychain-settings -lut 3600 "$KC"
++          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
++
++          echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
++          security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
++          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KC"
++          rm -f "$RUNNER_TEMP/cert.p12"
++
++          security list-keychains -d user -s "$KC" "${orig_keychains[@]}"
++
++          if [ -n "$APPLE_API_KEY_P8" ]; then
++            umask 077
++            printf '%s' "$APPLE_API_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
++            echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
++          fi
++
++      - name: Build macOS application and bundle DMG
++        run: npm run tauri build -- --bundles dmg
++        env:
++          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
++          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
++          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
++          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
++          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
++          APPLE_ID: ${{ secrets.APPLE_ID }}
++          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
++
++      - name: Verify signature, notarization and staple (strict, read-only)
++        shell: bash
++        env:
++          EXPECTED_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
++          VERSION: ${{ needs.check.outputs.version }}
++        run: |
++          set -eo pipefail
++
++          dmg=$(find src-tauri/target/release/bundle/dmg -name '*_aarch64.dmg' -print -quit)
++          if [ -z "$dmg" ] || [ ! -f "$dmg" ]; then
++            echo "::error::Target macOS DMG was not found in bundle output"
++            exit 1
++          fi
++
++          echo "== Verifying DMG container signature and integrity =="
++          codesign --verify --strict "$dmg"
++          dmg_info=$(codesign -dvv "$dmg" 2>&1)
++          echo "$dmg_info"
++
++          if ! grep -q '^Authority=Developer ID Application:' <<< "$dmg_info"; then
++            echo "::error::DMG container lacks Developer ID Application signing authority"
++            exit 1
++          fi
++
++          if ! grep -q "^TeamIdentifier=$EXPECTED_TEAM_ID$" <<< "$dmg_info"; then
++            echo "::error::DMG container TeamIdentifier does not match approved expected team"
++            exit 1
++          fi
++
++          if ! grep -q '^Timestamp=' <<< "$dmg_info"; then
++            echo "::error::DMG container lacks secure timestamp"
++            exit 1
++          fi
++
++          echo "== Validating DMG notarization ticket and staple =="
++          xcrun stapler validate "$dmg"
++
++          echo "== Mounting DMG read-only to verify packaged application =="
++          m="$RUNNER_TEMP/hfd-verify"
++          mkdir -p "$m"
++          hdiutil attach -quiet -readonly -nobrowse -mountpoint "$m" "$dmg"
++          trap 'hdiutil detach -quiet "$m" 2>/dev/null || true; rmdir "$m" 2>/dev/null || true' EXIT
++
++          app="$m/Her Flight Deck.app"
++          if [ ! -d "$app" ]; then
++            echo "::error::Her Flight Deck.app not found in mounted DMG"
++            exit 1
++          fi
++
++          echo "== Verifying app bundle metadata =="
++          exec_arch=$(file "$app/Contents/MacOS/her-flight-deck")
++          if ! grep -q 'arm64' <<< "$exec_arch"; then
++            echo "::error::Packaged executable is not arm64 architecture"
++            exit 1
++          fi
++
++          APP_ID=$(plutil -extract CFBundleIdentifier raw "$app/Contents/Info.plist")
++          if [ "$APP_ID" != "com.herflightdeck.app" ]; then
++            echo "::error::App bundle identifier '$APP_ID' does not match 'com.herflightdeck.app'"
++            exit 1
++          fi
++
++          APP_VER=$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")
++          if [ "$APP_VER" != "$VERSION" ]; then
++            echo "::error::App bundle version '$APP_VER' does not match release version '$VERSION'"
++            exit 1
++          fi
++
++          APP_MIN_OS=$(plutil -extract LSMinimumSystemVersion raw "$app/Contents/Info.plist")
++          if [ "$APP_MIN_OS" != "12.0" ]; then
++            echo "::error::App minimum OS '$APP_MIN_OS' does not match policy minimum '12.0'"
++            exit 1
++          fi
++
++          echo "== Verifying app bundle signature, runtime, and authority =="
++          codesign --verify --deep --strict "$app"
++          app_info=$(codesign -dvv "$app" 2>&1)
++          app_flags=$(codesign -dv "$app" 2>&1)
++          echo "$app_info"
++          echo "$app_flags"
++
++          if ! grep -q '^Authority=Developer ID Application:' <<< "$app_info"; then
++            echo "::error::App bundle lacks Developer ID Application signing authority"
++            exit 1
++          fi
++
++          if ! grep -q "^TeamIdentifier=$EXPECTED_TEAM_ID$" <<< "$app_info"; then
++            echo "::error::App bundle TeamIdentifier does not match approved expected team"
++            exit 1
++          fi
++
++          if ! grep -q '^Identifier=com\.herflightdeck\.app$' <<< "$app_info"; then
++            echo "::error::App signing identifier does not match com.herflightdeck.app"
++            exit 1
++          fi
++
++          if ! grep -q 'flags=.*runtime' <<< "$app_flags"; then
++            echo "::error::App bundle lacks hardened runtime flag"
++            exit 1
++          fi
++
++          if ! grep -q '^Timestamp=' <<< "$app_info"; then
++            echo "::error::App bundle lacks secure timestamp"
++            exit 1
++          fi
++
++          echo "== Assessing Gatekeeper policy compliance =="
++          spctl --assess --type execute -vv "$app"
++
++          hdiutil detach -quiet "$m"
++          trap - EXIT
++          rmdir "$m" 2>/dev/null || true
++
++      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
++        with:
++          name: installer-macOS
++          path: src-tauri/target/release/bundle/dmg/*.dmg
++          if-no-files-found: error
++
++      - name: Clean up temporary signing credentials and keychain
++        if: always()
++        shell: bash
++        run: |
++          CLEANUP_FAILED=0
++          KC="$RUNNER_TEMP/hfd-signing.keychain-db"
++          STATE_FILE="$RUNNER_TEMP/hfd-orig-keychains.txt"
++
++          if [ -f "$KC" ]; then
++            security delete-keychain "$KC" 2>/dev/null || { echo "::warning::Failed to delete temporary keychain"; CLEANUP_FAILED=1; }
++          fi
++
++          if [ -f "$STATE_FILE" ]; then
++            restore_kc=()
++            while IFS= read -r line || [ -n "$line" ]; do
++              if [ -n "$line" ]; then
++                restore_kc+=("$line")
++              fi
++            done < "$STATE_FILE"
++            if [ "${#restore_kc[@]}" -gt 0 ]; then
++              security list-keychains -d user -s "${restore_kc[@]}" 2>/dev/null || { echo "::warning::Failed to restore original keychain search list"; CLEANUP_FAILED=1; }
++            fi
++            rm -f "$STATE_FILE"
++          fi
++
++          rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/cert.p12" || CLEANUP_FAILED=1
++
++          if [ "$CLEANUP_FAILED" -ne 0 ]; then
++            echo "::error::Signing cleanup encountered one or more errors"
++            exit 1
++          fi
++
++  build-windows:
++    permissions:
++      contents: read
++    name: Windows
++    needs: check
++    if: needs.check.outputs.target == 'all'
++    runs-on: windows-latest
++    timeout-minutes: 60
+     steps:
+       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+@@ -247,20 +530,29 @@
+         continue-on-error: true
+
+       - run: npm ci
+-      - run: npm run tauri build -- --bundles ${{ matrix.bundles }}
++      - run: npm run tauri build -- --bundles nsis
+
+       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+         with:
+-          name: installer-${{ matrix.name }}
+-          path: ${{ matrix.pattern }}
++          name: installer-Windows
++          path: src-tauri/target/release/bundle/nsis/*-setup.exe
+           if-no-files-found: error
+
+   publish:
+     permissions:
+       contents: write
+     name: Prepare release draft
+-    needs: [check, build]
+-    if: needs.check.outputs.create_draft == 'true'
++    needs:
++      - check
++      - build-macos
++      - build-windows
++    if: |
++      always() &&
++      needs.check.result == 'success' &&
++      needs.check.outputs.create_draft == 'true' &&
++      (needs.build-macos.result == 'success' || needs.build-macos.result == 'skipped') &&
++      (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped') &&
++      (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+     runs-on: ubuntu-latest
+     timeout-minutes: 15
+     steps:

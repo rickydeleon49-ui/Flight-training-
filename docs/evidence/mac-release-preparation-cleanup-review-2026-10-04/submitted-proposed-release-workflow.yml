@@ -1,0 +1,678 @@
+# Builds installers and prepares them for release review.
+#
+# Two ways to start it:
+#
+#   From the browser  Actions -> Release -> Run workflow, and type the
+#                     version. Nothing needs to be installed anywhere.
+#                     By default (create_draft: false), it produces private CI
+#                     artifacts for device testing without creating a tag or draft.
+#                     Selecting create_draft: true creates a reviewable private
+#                     GitHub Release draft targeting that commit.
+#
+#   From a clone      scripts/release.sh 0.2.0, then push the tag.
+#
+# The workflow builds the target platform installer(s) (default: macos-only
+# while Windows distribution is held on v0.5.1). When create_draft is true,
+# it creates a private GitHub Release draft targeting that commit and attaches installers.
+# The draft must be reviewed and tested on physical hardware before anybody
+# can publish it.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to prepare as a private release draft, e.g. 0.5.3 (must match the version in the repository)"
+        required: true
+        type: string
+      target:
+        description: "Target platform(s) for the release draft (default: macos-only to prevent releasing unapproved Windows installers)"
+        required: false
+        type: choice
+        options:
+          - macos-only
+          - all
+        default: macos-only
+      create_draft:
+        description: "Create reviewable GitHub Release draft targeting commit (default: false produces private CI artifacts only; set true to create draft; Git tag is created only upon publication)"
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ inputs.version || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    permissions:
+      contents: read
+    name: Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      target: ${{ steps.resolve.outputs.target }}
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      create_draft: ${{ steps.resolve.outputs.create_draft }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # The application backs her database up when it sees the version has
+      # changed since the last run. A release whose built version disagrees
+      # with the tag would skip that copy, so refuse to ship one.
+      - name: Work out the version, and check everything agrees
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_TARGET: ${{ inputs.target }}
+          INPUT_CREATE_DRAFT: ${{ inputs.create_draft }}
+          REF_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$REF_NAME" != "main" ]; then
+            echo "::error::Browser releases must be run from the main branch, not $REF_NAME."
+            exit 1
+          fi
+
+          MAIN_SHA=$(git rev-parse origin/main)
+          if [ "$GITHUB_SHA" != "$MAIN_SHA" ]; then
+            echo "::error::Release commit $GITHUB_SHA is not the current main head $MAIN_SHA."
+            exit 1
+          fi
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            RAW_VERSION="$INPUT_VERSION"
+            if ! [[ "$RAW_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Input version '$RAW_VERSION' is not a valid semantic version."
+              exit 1
+            fi
+            VERSION="${RAW_VERSION#v}"
+          else
+            VERSION="${REF_NAME#v}"
+          fi
+
+          node scripts/check-release-version.mjs "$VERSION"
+
+          PKG=$(node -p "require('./package.json').version")
+          LOCK=$(node -p "require('./package-lock.json').version")
+          CONF=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          CARGO=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
+          CARGO_LOCK=$(node -e '
+            const fs = require("node:fs");
+            const match = fs.readFileSync("src-tauri/Cargo.lock", "utf8").match(/\[\[package\]\]\s+name\s*=\s*"her-flight-deck"\s+version\s*=\s*"([^"]+)"/);
+            console.log(match ? match[1] : "");
+          ')
+          echo "releasing=$VERSION package.json=$PKG package-lock.json=$LOCK tauri.conf.json=$CONF Cargo.toml=$CARGO Cargo.lock=$CARGO_LOCK"
+
+          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$LOCK" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ] || [ "$VERSION" != "$CARGO_LOCK" ]; then
+            echo "::error::The repository is at $PKG but you asked for $VERSION. Bump it first with node scripts/bump-version.mjs $VERSION, or release $PKG."
+            exit 1
+          fi
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && git rev-parse --verify "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag v$VERSION already exists in the repository. Bump the version first."
+            exit 1
+          fi
+
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::v$VERSION has already been released. Bump the version first."
+            exit 1
+          fi
+
+          TARGET="${INPUT_TARGET:-macos-only}"
+          if [ "$TARGET" != "macos-only" ] && [ "$TARGET" != "all" ]; then
+            echo "::error::Target '$TARGET' is not recognized. Allowed targets: macos-only, all."
+            exit 1
+          fi
+
+          CREATE_DRAFT="$INPUT_CREATE_DRAFT"
+          if [ "$EVENT_NAME" = "push" ]; then
+            CREATE_DRAFT="true"
+          elif [ "$CREATE_DRAFT" != "true" ]; then
+            CREATE_DRAFT="false"
+          fi
+
+          BUILD_MATRIX=$(node -e '
+            const fs = require("node:fs");
+            const target = process.argv[1];
+            const policy = JSON.parse(fs.readFileSync("scripts/release-policy.json", "utf8"));
+            const winStatus = policy.platformDistribution?.windows?.status;
+            const winReason = policy.platformDistribution?.windows?.holdReason || "Windows distribution is held";
+
+            if (target === "all" && winStatus !== "active") {
+              console.error(`::error::Windows distribution is not active in scripts/release-policy.json (status: "${winStatus}", reason: "${winReason}"). Selecting target \"all\" is forbidden.`);
+              process.exit(1);
+            }
+
+            if (target === "macos-only") {
+              console.log(JSON.stringify({
+                include: [
+                  {
+                    os: "macos-15",
+                    name: "macOS",
+                    bundles: "dmg",
+                    pattern: "src-tauri/target/release/bundle/dmg/*.dmg"
+                  }
+                ]
+              }));
+            } else {
+              console.log(JSON.stringify({
+                include: [
+                  {
+                    os: "macos-15",
+                    name: "macOS",
+                    bundles: "dmg",
+                    pattern: "src-tauri/target/release/bundle/dmg/*.dmg"
+                  },
+                  {
+                    os: "windows-latest",
+                    name: "Windows",
+                    bundles: "nsis",
+                    pattern: "src-tauri/target/release/bundle/nsis/*-setup.exe"
+                  }
+                ]
+              }));
+            }
+          ' "$TARGET")
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "matrix=$BUILD_MATRIX" >> "$GITHUB_OUTPUT"
+          echo "create_draft=$CREATE_DRAFT" >> "$GITHUB_OUTPUT"
+
+      - run: npm test
+
+      # Her backup and restore guards are Rust tests, and they need the same
+      # system libraries a desktop build does.
+      - name: Linux desktop libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libxdo-dev
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
+        with:
+          workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+
+      - name: Cargo lockfile synchronization check
+        run: npm run test:cargo-lock
+
+  build-macos:
+    permissions:
+      contents: read
+    name: macOS (Signed)
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    environment: macos-signing
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
+        with:
+          workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - run: npm ci
+
+      - name: Check macOS signing prerequisites (fail-closed)
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        run: |
+          set -eo pipefail
+
+          if [ "$EVENT_NAME" != "workflow_dispatch" ]; then
+            echo "::error::Signed macOS release builds are permitted only via manual workflow_dispatch, not '$EVENT_NAME'."
+            exit 1
+          fi
+
+          if [ "$REF_NAME" != "main" ]; then
+            echo "::error::Signed macOS release builds must be dispatched from main branch, not '$REF_NAME'."
+            exit 1
+          fi
+
+          MISSING=""
+          if [ -z "$APPLE_CERTIFICATE" ]; then MISSING="$MISSING APPLE_CERTIFICATE"; fi
+          if [ -z "$APPLE_CERTIFICATE_PASSWORD" ]; then MISSING="$MISSING APPLE_CERTIFICATE_PASSWORD"; fi
+          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then MISSING="$MISSING APPLE_SIGNING_IDENTITY"; fi
+          if [ -z "$APPLE_TEAM_ID" ]; then MISSING="$MISSING APPLE_TEAM_ID"; fi
+
+          HAS_API_AUTH=true
+          if [ -z "$APPLE_API_KEY" ] || [ -z "$APPLE_API_KEY_P8" ] || [ -z "$APPLE_API_ISSUER" ]; then
+            HAS_API_AUTH=false
+          fi
+
+          HAS_PWD_AUTH=true
+          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_PASSWORD" ]; then
+            HAS_PWD_AUTH=false
+          fi
+
+          if [ "$HAS_API_AUTH" = false ] && [ "$HAS_PWD_AUTH" = false ]; then
+            MISSING="$MISSING (either APPLE_API_KEY+APPLE_API_KEY_P8+APPLE_API_ISSUER or APPLE_ID+APPLE_PASSWORD)"
+          fi
+
+          if [ -n "$MISSING" ]; then
+            echo "::error::Required macOS signing prerequisites are missing from secrets/environment:$MISSING"
+            exit 1
+          fi
+
+      - name: Prepare temporary signing keychain (macOS)
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          set -eo pipefail
+
+          KC="$RUNNER_TEMP/hfd-signing.keychain-db"
+          STATE_FILE="$RUNNER_TEMP/hfd-orig-keychains.txt"
+
+          raw_list=$(security list-keychains -d user)
+
+          orig_keychains=()
+          while IFS= read -r line || [ -n "$line" ]; do
+            k=$(echo "$line" | sed -e 's/^[[:space:]]*"//' -e 's/"[[:space:]]*$//')
+            if [ -n "$k" ]; then
+              orig_keychains+=("$k")
+            fi
+          done <<< "$raw_list"
+
+          rm -f "$STATE_FILE"
+          for k in "${orig_keychains[@]}"; do
+            printf '%s\n' "$k" >> "$STATE_FILE"
+          done
+
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$KEYCHAIN_PASSWORD"
+          echo "TEMP_KEYCHAIN=$KC" >> "$GITHUB_ENV"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
+          security set-keychain-settings -lut 3600 "$KC"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
+
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KC"
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+          security list-keychains -d user -s "$KC" "${orig_keychains[@]}"
+
+          if [ -n "$APPLE_API_KEY_P8" ]; then
+            umask 077
+            printf '%s' "$APPLE_API_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+            echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build macOS application and bundle DMG
+        run: npm run tauri build -- --bundles dmg
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+
+      - name: Verify signature, notarization and staple (strict, read-only)
+        shell: bash
+        env:
+          EXPECTED_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          set -eo pipefail
+
+          dmg=$(find src-tauri/target/release/bundle/dmg -name '*_aarch64.dmg' -print -quit)
+          if [ -z "$dmg" ] || [ ! -f "$dmg" ]; then
+            echo "::error::Target macOS DMG was not found in bundle output"
+            exit 1
+          fi
+
+          echo "== Verifying DMG container signature and integrity =="
+          codesign --verify --strict "$dmg"
+          dmg_info=$(codesign -dvv "$dmg" 2>&1)
+          echo "$dmg_info"
+
+          if ! grep -q '^Authority=Developer ID Application:' <<< "$dmg_info"; then
+            echo "::error::DMG container lacks Developer ID Application signing authority"
+            exit 1
+          fi
+
+          if ! grep -q "^TeamIdentifier=$EXPECTED_TEAM_ID$" <<< "$dmg_info"; then
+            echo "::error::DMG container TeamIdentifier does not match approved expected team"
+            exit 1
+          fi
+
+          if ! grep -q '^Timestamp=' <<< "$dmg_info"; then
+            echo "::error::DMG container lacks secure timestamp"
+            exit 1
+          fi
+
+          echo "== Validating DMG notarization ticket and staple =="
+          xcrun stapler validate "$dmg"
+
+          echo "== Mounting DMG read-only to verify packaged application =="
+          m="$RUNNER_TEMP/hfd-verify"
+          mkdir -p "$m"
+          hdiutil attach -quiet -readonly -nobrowse -mountpoint "$m" "$dmg"
+          trap 'hdiutil detach -quiet "$m" 2>/dev/null || true; rmdir "$m" 2>/dev/null || true' EXIT
+
+          app="$m/Her Flight Deck.app"
+          if [ ! -d "$app" ]; then
+            echo "::error::Her Flight Deck.app not found in mounted DMG"
+            exit 1
+          fi
+
+          echo "== Verifying app bundle metadata =="
+          exec_arch=$(file "$app/Contents/MacOS/her-flight-deck")
+          if ! grep -q 'arm64' <<< "$exec_arch"; then
+            echo "::error::Packaged executable is not arm64 architecture"
+            exit 1
+          fi
+
+          APP_ID=$(plutil -extract CFBundleIdentifier raw "$app/Contents/Info.plist")
+          if [ "$APP_ID" != "com.herflightdeck.app" ]; then
+            echo "::error::App bundle identifier '$APP_ID' does not match 'com.herflightdeck.app'"
+            exit 1
+          fi
+
+          APP_VER=$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")
+          if [ "$APP_VER" != "$VERSION" ]; then
+            echo "::error::App bundle version '$APP_VER' does not match release version '$VERSION'"
+            exit 1
+          fi
+
+          APP_MIN_OS=$(plutil -extract LSMinimumSystemVersion raw "$app/Contents/Info.plist")
+          if [ "$APP_MIN_OS" != "12.0" ]; then
+            echo "::error::App minimum OS '$APP_MIN_OS' does not match policy minimum '12.0'"
+            exit 1
+          fi
+
+          echo "== Verifying app bundle signature, runtime, and authority =="
+          codesign --verify --deep --strict "$app"
+          app_info=$(codesign -dvv "$app" 2>&1)
+          app_flags=$(codesign -dv "$app" 2>&1)
+          echo "$app_info"
+          echo "$app_flags"
+
+          if ! grep -q '^Authority=Developer ID Application:' <<< "$app_info"; then
+            echo "::error::App bundle lacks Developer ID Application signing authority"
+            exit 1
+          fi
+
+          if ! grep -q "^TeamIdentifier=$EXPECTED_TEAM_ID$" <<< "$app_info"; then
+            echo "::error::App bundle TeamIdentifier does not match approved expected team"
+            exit 1
+          fi
+
+          if ! grep -q '^Identifier=com\.herflightdeck\.app$' <<< "$app_info"; then
+            echo "::error::App signing identifier does not match com.herflightdeck.app"
+            exit 1
+          fi
+
+          if ! grep -q 'flags=.*runtime' <<< "$app_flags"; then
+            echo "::error::App bundle lacks hardened runtime flag"
+            exit 1
+          fi
+
+          if ! grep -q '^Timestamp=' <<< "$app_info"; then
+            echo "::error::App bundle lacks secure timestamp"
+            exit 1
+          fi
+
+          echo "== Assessing Gatekeeper policy compliance =="
+          spctl --assess --type execute -vv "$app"
+
+          hdiutil detach -quiet "$m"
+          trap - EXIT
+          rmdir "$m" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: installer-macOS
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+      - name: Clean up temporary signing credentials and keychain
+        if: always()
+        shell: bash
+        run: |
+          CLEANUP_FAILED=0
+          KC="$RUNNER_TEMP/hfd-signing.keychain-db"
+          STATE_FILE="$RUNNER_TEMP/hfd-orig-keychains.txt"
+
+          if [ -f "$KC" ]; then
+            security delete-keychain "$KC" 2>/dev/null || { echo "::warning::Failed to delete temporary keychain"; CLEANUP_FAILED=1; }
+          fi
+
+          if [ -f "$STATE_FILE" ]; then
+            restore_kc=()
+            while IFS= read -r line || [ -n "$line" ]; do
+              if [ -n "$line" ]; then
+                restore_kc+=("$line")
+              fi
+            done < "$STATE_FILE"
+            if [ "${#restore_kc[@]}" -gt 0 ]; then
+              security list-keychains -d user -s "${restore_kc[@]}" 2>/dev/null || { echo "::warning::Failed to restore original keychain search list"; CLEANUP_FAILED=1; }
+            fi
+            rm -f "$STATE_FILE"
+          fi
+
+          rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/cert.p12" || CLEANUP_FAILED=1
+
+          if [ "$CLEANUP_FAILED" -ne 0 ]; then
+            echo "::error::Signing cleanup encountered one or more errors"
+            exit 1
+          fi
+
+  build-windows:
+    permissions:
+      contents: read
+    name: Windows
+    needs: check
+    if: needs.check.outputs.target == 'all'
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
+        with:
+          workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - run: npm ci
+      - run: npm run tauri build -- --bundles nsis
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: installer-Windows
+          path: src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+
+  publish:
+    permissions:
+      contents: write
+    name: Prepare release draft
+    needs:
+      - check
+      - build-macos
+      - build-windows
+    if: |
+      always() &&
+      needs.check.result == 'success' &&
+      needs.check.outputs.create_draft == 'true' &&
+      (needs.build-macos.result == 'success' || needs.build-macos.result == 'skipped') &&
+      (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped') &&
+      (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: installers
+          merge-multiple: true
+
+      - name: What we are shipping
+        run: ls -lh installers
+
+      - name: Verify artifacts and fail closed
+        run: |
+          if ! ls installers/*.dmg >/dev/null 2>&1; then
+            echo "::error::Expected macOS DMG installer was not produced in installers/!"
+            exit 1
+          fi
+
+          node -e '
+            const fs = require("node:fs");
+            const policy = JSON.parse(fs.readFileSync("scripts/release-policy.json", "utf8"));
+            const winStatus = policy.platformDistribution?.windows?.status;
+            const hasExe = fs.existsSync("installers") && fs.readdirSync("installers").some(f => f.endsWith(".exe"));
+            if (winStatus !== "active" && hasExe) {
+              console.error("::error::Unexpected Windows installer appeared in release artifacts while Windows distribution is not active!");
+              process.exit(1);
+            }
+          '
+
+      # GitHub Releases replaces whitespace with periods in uploaded asset names.
+      # Normalizing filenames prior to hashing ensures SHA256SUMS.txt and the
+      # release notes match the exact downloadable files users receive.
+      - name: Assign stable downloadable installer filenames
+        run: node scripts/normalize-installer-filenames.mjs installers
+
+      - name: Write the release notes and checksums
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          HAS_MAC=false
+          HAS_WIN=false
+          if ls installers/*.dmg >/dev/null 2>&1; then HAS_MAC=true; fi
+          if ls installers/*.exe >/dev/null 2>&1; then HAS_WIN=true; fi
+
+          {
+            if [ "$HAS_MAC" = true ] && [ "$HAS_WIN" = false ]; then
+              echo "## Her Flight Deck $VERSION (macOS)"
+              echo
+              echo "Download the file for your Mac with Apple silicon and open it."
+              echo
+              echo "| Computer | File |"
+              echo "| --- | --- |"
+              echo "| Mac with Apple silicon | the \`.dmg\` |"
+              echo
+              echo "> **Windows notice:** Windows distribution is held on v0.5.1 pending separate Microsoft Defender security review. Do not download or distribute unreviewed Windows installers."
+              echo
+              echo "### Before publishing this draft"
+              echo
+              echo "Download and test the exact draft installer on an Apple Silicon Mac before publishing."
+              echo "Confirm the Mac file installs and opens normally on an Apple silicon Mac."
+            elif [ "$HAS_MAC" = true ] && [ "$HAS_WIN" = true ]; then
+              echo "## Her Flight Deck $VERSION"
+              echo
+              echo "Download the file for your computer and open it."
+              echo
+              echo "| Computer | File |"
+              echo "| --- | --- |"
+              echo "| Mac with Apple silicon | the \`.dmg\` |"
+              echo "| Windows | the \`.exe\` |"
+              echo
+              echo "### Before publishing this draft"
+              echo
+              echo "Download and test the exact draft installers before publishing."
+              echo "Confirm the Windows file is not detected by Microsoft Defender and"
+              echo "confirm the Mac file installs and opens normally on an Apple silicon Mac."
+            else
+              echo "## Her Flight Deck $VERSION"
+              echo
+              echo "Download the installer for your system."
+            fi
+            echo
+            echo "Do not publish a release that asks people to disable or bypass platform"
+            echo "security protections."
+            echo
+            echo "### Updating"
+            echo
+            echo "Download the newer file and open it as before. Your goals,"
+            echo "lessons, study materials, journal, questions and finances stay"
+            echo "exactly as they were — and a safety copy of your database is"
+            echo "taken automatically before a new version runs for the first time."
+            echo
+            echo "### Checksums"
+            echo
+            echo '```'
+            cat installers/SHA256SUMS.txt
+            echo '```'
+          } > notes.md
+          cat notes.md
+
+      # --target specifies the target commit when published, which is what
+      # makes preparing a release draft from the browser possible without
+      # prematurely pushing refs/tags to the repository. --draft means
+      # the installers remain private until an owner explicitly publishes it
+      # after reviewing the exact files.
+      - name: Create a private release draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.check.outputs.tag }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          TITLE="Her Flight Deck $VERSION"
+          if ls installers/*.dmg >/dev/null 2>&1 && ! ls installers/*.exe >/dev/null 2>&1; then
+            TITLE="Her Flight Deck $VERSION (macOS)"
+          fi
+          gh release create "$TAG" \
+            --draft \
+            --title "$TITLE" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA" \
+            installers/*
+          echo "Draft ready for review: $(gh release view "$TAG" --json url --jq .url)"

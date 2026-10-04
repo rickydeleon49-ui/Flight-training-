@@ -1,0 +1,11 @@
+# Mac signing cleanup re-review evidence — 4 October 2026
+
+[Review](../../MAC_RELEASE_PREPARATION_CLEANUP_REVIEW_2026-10-04.md) · [next assignment](../../MAC_RELEASE_PREPARATION_CLEANUP_FIX_PROMPT_2026-10-04.md).
+
+The frozen inventory verifies all 19 submitted deliverables and two original log entries, and additionally records the manifest identity. Copied YAML, patch and validator preserve submitted bytes. These are inactive review snapshots. The independent Node 22 validator run exits 0: 37 printed PASS assertions, including 28 synthetic shell behavior cases. Its footer says 35; that count is incorrect. Patch checking and scratch byte comparison pass. Active source, dependencies and release workflow remain unchanged.
+
+The separate diagnostic extracts the actual submitted setup/cleanup scripts, executes setup under GitHub's Bash options, and injects failures only through task-owned synthetic security/openssl/rm stubs. No real security, signing, keychain, Apple API, app launch, mount or installation is performed. Every temporary diagnostic directory is removed in a finally block.
+
+`cleanup-shell-observations.json` records three probes: (1) failed state-file removal under local bash -c yields cleanup exit 0 with state left; (2) the identical failure under bash --noprofile --norc -eo pipefail yields exit 73 and leaves the synthetic AuthKey.p8; (3) a real environment-write failure within the synthetic setup (GITHUB_ENV is a task-owned directory) yields setup exit 1 and successful cleanup exit 0 with no task-owned materials left. The third probe accepts the environment-write-failure correction; the first two diagnose the remaining cleanup aggregation/shell mismatch.
+
+The diagnostic source uses the agreed implementation checkout to locate the proposal and its existing YAML dependency. It is reproducible while the reviewed bytes match the frozen inventory. Security call arguments in the JSON are synthetic; no credentials were inspected. Original DMG identity remains 4,561,979 bytes, SHA-256 `1ac53e566e85043260dbe74ef9d3b90c91460e412e1d88f534947f91396d64c0`. No rebuild or full suite was run. The implementer's 51-passed/1-skipped releaseSafety result is reported, not independently rerun.

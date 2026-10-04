@@ -1,0 +1,48 @@
+=== 1. Validating Read-Only Patch Application and Scratch Application ===
+PASS: git apply --check exited 0 cleanly against base release.yml
+PASS: Applied patch matches proposed-release-workflow.yml byte-for-byte
+
+=== 2. Parsing Proposed Workflow YAML and Validating AST Structure ===
+PASS: Proposed workflow parsed cleanly with zero syntax errors
+PASS: jobs.build-macos runs on macos-15 and targets macos-signing environment
+PASS: jobs.build-macos.if strictly enforces manual dispatch on main before environment/secrets
+PASS: Secret containment verified: Apple secrets are isolated exclusively to build-macos
+PASS: build-windows is uncredentialed and conditionally gated to target == 'all'
+PASS: Step sequence strictly enforces Verification BEFORE Artifact Upload
+PASS: Cleanup step includes if: always() condition
+
+=== 3. Exercising Prerequisites Check (Shell Defense-in-Depth) ===
+PASS: Correctly rejected push event (status 1)
+PASS: Correctly rejected non-main branch (status 1)
+PASS: Correctly rejected missing certificate (status 1)
+PASS: Correctly rejected missing team ID (status 1)
+PASS: Correctly rejected missing notarization authentication (status 1)
+PASS: Accepted valid API key authentication (status 0)
+PASS: Accepted valid app-specific password authentication (status 0)
+
+=== 4. Exercising Keychain Setup, State Transfer, and Cleanup Execution ===
+PASS: Setup halts before modifications on list query failure; cleanup succeeds (status 1)
+PASS: Setup captures multi-entry ordered keychains including spaces without invalid GITHUB_ENV lines
+PASS: Cleanup accurately restores original search list and removes all task-owned materials (status 0)
+PASS: Cleanup reliably locates task-owned keychain even if environment export failed
+PASS: Cleanup successfully handles partial setup failure and removes temporary keychain
+PASS: Cleanup correctly fails closed and reports error when keychain deletion fails (status 1)
+
+=== 5. Exercising Strict Verification with Synthetic Mock Stubs ===
+PASS: Correctly rejected unsigned DMG container (status 1)
+PASS: Correctly rejected DMG container without Developer ID authority (status 1)
+PASS: Correctly rejected DMG container with wrong team ID (status 1)
+PASS: Correctly rejected DMG container lacking secure timestamp (status 1)
+PASS: Correctly rejected failing stapler validation (status 1)
+PASS: Correctly rejected non-arm64 executable (status 1)
+PASS: Correctly rejected wrong bundle identifier (status 1)
+PASS: Correctly rejected app failing strict integrity check (status 1)
+PASS: Correctly rejected app lacking Developer ID authority (status 1)
+PASS: Correctly rejected app with WRONGTEAM (reproduced probe fixed, status 1)
+PASS: Correctly rejected app with mismatched signing identifier (status 1)
+PASS: Correctly rejected app lacking hardened runtime (status 1)
+PASS: Correctly rejected app lacking secure timestamp (status 1)
+PASS: Correctly rejected app failing Gatekeeper spctl assessment (status 1)
+PASS: Valid synthetic success path passed all container and app checks (status 0)
+
+ALL 35 PROPOSED SIGNING WORKFLOW VALIDATION CHECKS PASSED CLEANLY!
