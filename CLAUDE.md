@@ -52,7 +52,9 @@ touch only Markdown or `docs/` take a lightweight path. Run the relevant
 checks before pushing.
 
 In cloud sessions `.claude/hooks/session-start.sh` installs everything first,
-including the Linux WebKit libraries. To see UI changes, use the `run` skill
+including the Linux WebKit libraries. It installs npm packages from the
+committed lock and fails rather than changing it. It does nothing on a local
+machine. Its own checks: `node --test .claude/tests/setup-helpers.test.mjs`. To see UI changes, use the `run` skill
 (`.claude/skills/run/`), which screenshots browser mode.
 
 ## Rules that protect her data
@@ -67,11 +69,16 @@ including the Linux WebKit libraries. To see UI changes, use the `run` skill
 - Backup, restore and pre-update copies are guarded by Rust tests. Keep those
   guarantees intact (see "Her data survives updates" in the README and
   `docs/backup-format.md`).
-- Bump the version in `package.json`, `src-tauri/tauri.conf.json` and
-  `src-tauri/Cargo.toml` together (`scripts/release.sh`). Never reuse a
-  retired version (`scripts/release-policy.json`).
-- The Gemini API key lives in a file in the app data folder. It is never
-  stored in SQLite, included in a backup, sent to the webview or committed.
+- Change the version only with `scripts/release.sh` (or
+  `scripts/bump-version.mjs`). The version lives in five places that must
+  agree: `package.json`, `package-lock.json`, `src-tauri/tauri.conf.json`,
+  `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock`. Never reuse a retired
+  version (`scripts/release-policy.json`).
+- The Gemini API key is typed into Settings, held briefly in React state and
+  passed once to the native `configure_gemini` command
+  (`src/services/gemini.ts`). From then on Rust keeps it in a file in the app
+  data folder. The webview only ever gets status back, never the stored key,
+  and the key is never stored in SQLite, included in a backup or committed.
 
 ## Conventions
 
@@ -81,7 +88,10 @@ including the Linux WebKit libraries. To see UI changes, use the `run` skill
 - User-facing text is written for her, not for a developer: warm, plain and
   encouraging. AI-generated aviation material is always labelled as a study
   aid to check against FAA guidance and her instructor.
-- Forms use native `<dialog>`. The macOS minimum is 12.0 because of it.
+- Forms use `<dialog>` through `src/components/ui/useModalDialog.ts`. The
+  macOS minimum is 12.0, but native `showModal` arrived only in WebKit 15.4
+  (macOS 12.3), so the hook feature-detects it and falls back to its own
+  modal behavior. Keep that fallback working.
 - Never tell anyone to bypass Gatekeeper, SmartScreen or Defender.
 - Keep secrets, real databases, private documents, installers, `node_modules`
   and `target/` out of Git.

@@ -2,6 +2,10 @@
 # Prepares a Claude Code cloud session so the same checks CI runs
 # (.github/workflows/checks.yml) work from the first prompt.
 # Local machines are left alone: they manage their own toolchains.
+#
+# Budget: settings.json gives this hook 900 seconds. A fully cold container
+# (system libraries, npm ci, first Rust compile) takes about 5 minutes; a
+# warm one takes seconds. Any failing step stops the hook with its error.
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
@@ -10,9 +14,9 @@ fi
 
 cd "$CLAUDE_PROJECT_DIR"
 
-# Frontend dependencies. `npm install` rather than `npm ci` so a cached
-# container reuses node_modules instead of deleting and refetching it.
-npm install --no-audit --no-fund
+# Frontend dependencies, installed from the committed lock and never
+# rewriting it. See npm-deps.sh for the cold and warm paths.
+"$CLAUDE_PROJECT_DIR/.claude/hooks/npm-deps.sh" "$CLAUDE_PROJECT_DIR"
 
 # The Rust tests link against the same system libraries a desktop build does.
 # Same list as the "Linux desktop libraries" step in checks.yml.
