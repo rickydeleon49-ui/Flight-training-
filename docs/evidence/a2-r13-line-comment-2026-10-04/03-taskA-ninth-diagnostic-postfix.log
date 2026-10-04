@@ -1,0 +1,96 @@
+# label: Task A: unchanged ninth 78-case diagnostic after fix
+# command: npx --no-install vitest run src/data/a2NinthReview.regression.test.ts --reporter=verbose
+# cwd: <SCRATCH>/snap-a
+# started: 2026-10-04T10:57:10-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+
+ RUN  v4.1.11 <SCRATCH>/snap-a
+
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > raw engine keeps 'ordinary comment text after CR' inside comment until LF 3ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > raw engine keeps 'CASE comment text after CR' inside comment until LF 0ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts valid SELECT with comment "--\rBEGIN;\n" 8ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts valid SELECT with comment "--\rCASE\n" 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > raw engine accepts and fires trigger with a CR-containing lookahead comment 0ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts and fires trigger with a CR-containing lookahead comment 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse END; after actual line-comment ending 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse END; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse END; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse END; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 6ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > refusal must preserve an acknowledged write after unrelated query failure 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > raw engine keeps 'ordinary comment text after CR' inside comment until LF 26ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > raw engine keeps 'CASE comment text after CR' inside comment until LF 1ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts valid SELECT with comment "--\rBEGIN;\n" 46ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts valid SELECT with comment "--\rCASE\n" 29ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > raw engine accepts and fires trigger with a CR-containing lookahead comment 1ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts and fires trigger with a CR-containing lookahead comment 45ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 20ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 21ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 20ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse END; after actual line-comment ending 18ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 18ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 18ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 25ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse END; after actual line-comment ending 22ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 18ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 19ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse END; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 18ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 18ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 18ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse END; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 19ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 17ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 16ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > refusal must preserve an acknowledged write after unrelated query failure 26ms
+
+ Test Files  1 passed (1)
+      Tests  78 passed (78)
+   Start at  10:57:11
+   Duration  1.30s (transform 120ms, setup 0ms, import 163ms, tests 978ms, environment 0ms)
+
+# ---- end ----
+# exit: 0
+# wall_ms: 2819

@@ -1,0 +1,10 @@
+# label: full gate 5/9
+# command: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+# cwd: <OWNER_CHECKOUT>
+# started: 2026-10-04T11:05:56-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 15.92s
+# ---- end ----
+# exit: 0
+# wall_ms: 16145

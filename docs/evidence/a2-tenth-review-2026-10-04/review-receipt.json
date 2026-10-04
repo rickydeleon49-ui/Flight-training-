@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-04",
+  "decision": "R13_PASSES_LATEST_MAIN_FIXTURE_COMPATIBILITY_BLOCKS_INTEGRATION",
+  "ownerBranch": "fix/atomic-study-material-saves",
+  "ownerHead": "533a8f50c2d0de74a75f5542022da3182f376ee9",
+  "main": "37ec9a1f99af61dc0ce89b672bb0a4b63d69ac51",
+  "matchedSourceFiles": 24,
+  "ownerSnapshotFiles": 311,
+  "ownerFilesUnchanged": 311,
+  "reviewRuntime": {
+    "node": "24.16.0",
+    "sqlite": "3.53.0",
+    "sqlJs": "1.14.2",
+    "vitest": "4.1.11"
+  },
+  "independentOwnerFocused": {
+    "files": 14,
+    "passed": 2085,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 20.99,
+    "exit": 0,
+    "conditionalSeams": 57
+  },
+  "suppliedFullGateLogs": {
+    "allNineStepsExitZero": true,
+    "frontendPassed": 1998,
+    "frontendSkipped": 4,
+    "rustPassed": 283,
+    "rustIgnored": 6,
+    "independentlyRerun": false
+  },
+  "integrationProbe": {
+    "snapshotFiles": 900,
+    "mechanicalResolutions": [
+      "preserve study packet and atomic-save native commands",
+      "preserve latest-main fixture/harness; apply A2 removal of benchmark public transaction wrapper"
+    ],
+    "file": "src/perf/studyLibraryScenarios.test.ts",
+    "passed": 3,
+    "failed": 5,
+    "skipped": 0,
+    "durationSeconds": 1.79,
+    "exit": 1,
+    "rootCause": "seedFixtureMaterials opens a public BEGIN that the reviewed A2 driver correctly refuses"
+  },
+  "environmentStartupAttempt": {
+    "testsCollected": 0,
+    "problem": "Dependency junction creation initially lacked permission; module resolution failed before collection",
+    "correctedBeforeProbe": true
+  },
+  "sourceIntegrationCommitted": false,
+  "fullIntegratedMatrixRun": false,
+  "localCandidatePreserved": true,
+  "coordinatorSourceRestored": true,
+  "ownerSourceEdited": false,
+  "installedOrMacReadinessClaim": false
+}

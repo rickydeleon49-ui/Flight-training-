@@ -1,0 +1,22 @@
+# label: full gate 2/9
+# command: npm test
+# cwd: <OWNER_CHECKOUT>
+# started: 2026-10-04T11:05:15-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+
+> her-flight-deck@0.5.3 test
+> vitest run
+
+
+ RUN  v4.1.11 <OWNER_CHECKOUT>
+
+
+ Test Files  62 passed | 3 skipped (65)
+      Tests  1998 passed | 4 skipped (2002)
+   Start at  11:05:17
+   Duration  30.26s (transform 10.18s, setup 0ms, import 49.55s, tests 109.54s, environment 146.78s)
+
+# ---- end ----
+# exit: 0
+# wall_ms: 32360
