@@ -12,6 +12,8 @@ Foundation fixes were being edited during this review. Their implementation and 
 
 **Shared continuation (2 October 2026):** both machines start from [the project handoff](docs/PROJECT_HANDOFF.md). The [open-source adoption plan](docs/OPEN_SOURCE_ADOPTION_PLAN_2026-10-01.md) and [Mac continuation prompt](docs/OPEN_SOURCE_MAC_HANDOFF.md) support this roadmap without replacing its foundation and M2 user-check-in gates. Research is not dependency or release approval.
 
+**Owner addition (3 October 2026):** [aviation weather and FAA reference data](#17-aviation-weather-and-faa-reference-data-3-october-2026) are now planned product enhancements. A2 corrections are in progress; the owner will notify Codex when they are ready for review. Adding these items does not mark A2 accepted or start their implementation.
+
 ## 1. Product decision
 
 Build a dependable training companion that answers: **What should I work on before my next lesson, and why?**
@@ -315,3 +317,22 @@ Claude is the default feature implementer; Gemini takes explicitly assigned secu
 3. D1–D2 (debrief characterization and pure recommendation selector) merged through PR #32 at `e938f84`.
 4. D3–D4 merged through PR #33 at 4e2651c. D5 merged through PR #34 at `0ad0a57`. D6/D7 and performance polish merged through PR #35 (`1d86d57`). The M1 user check-in gates M2 implementation. Windows desktop smoke (on an isolated profile) and Apple Silicon installed-app tests remain open.
 5. Hold the check-in with her after M1, before M2 starts.
+
+## 17. Aviation weather and FAA reference data (3 October 2026)
+
+Requested by the owner for the product roadmap. Extend the existing daily plan, lesson preparation and Study Library; scope these as optional data integrations after the active A2 corrections and independent acceptance. They do not replace the existing M2 check-in, import-decision or installed/release gates.
+
+| ID | Planned addition | Product use / official source | Acceptance to define before implementation |
+| --- | --- | --- | --- |
+| WX-01 | METAR/TAF weather for selected lesson airports | Daily Flight Plan and lesson preparation, using the public [NOAA/NWS Aviation Weather Center Data API](https://aviationweather.gov/data/api/). Its documented METAR/TAF request flow uses no API key. | Airport-to-weather-station matching; raw report and readable summary; observation, issue and forecast-validity times; explicit unavailable, stale and offline states. |
+| FAA-01 | Airport and radio-frequency reference data | Lesson airport lookup and preparation, using official [FAA NASR datasets](https://www.faa.gov/air_traffic/flight_info/aeronav/aero_data/NASR_Subscription/). The [1 October 2026 cycle](https://www.faa.gov/air_traffic/flight_info/aeronav/aero_data/NASR_Subscription/2026-10-01/) documents airport and frequency CSV groups. | Preserve airport identifiers, frequency purpose/units, source and effective cycle; verify mappings and data refresh behavior. Treat published downloads as a dataset integration, rather than assuming a single FAA REST API exists. |
+| FAA-02 | ACS and Airman Knowledge Test code references | Ground Gemini practice questions and explanations in the relevant [FAA Airman Certification Standards](https://www.faa.gov/training_testing/testing/acs) and [ACS Companion Guide](https://www.faa.gov/training_testing/testing/acs/acs_companion_guide_pilots.pdf). Connect missed-topic codes to study resources and M3 skill mappings. | Select the certificate/rating and source revision; preserve valid and archived code mappings; cite the source element; evaluate generated questions against that element. Generated practice remains distinguishable from official test questions, and a code match alone does not verify an answer. |
+
+### Implementation sequence and behavior
+
+1. After A2 is independently accepted, specify and prioritize the three additions against the user's lesson/study needs. Keep one implementation assignment active and reconcile any M2/M3 schema or content-identity work first.
+2. Weather: request only selected stations, cache bounded results, and retain their timestamps. The API currently limits requests to 100 per minute and does not allow browser cross-origin access; review the desktop/native request route before implementation and recheck the [current API restrictions](https://aviationweather.gov/data/api/#using-the-api). Test no-data responses, timeouts, throttling and stale-cache behavior. Show weather as preparation context with a source link, without issuing an automated flight go/no-go decision.
+3. FAA data: start with versioned, reviewable airport/frequency and ACS reference fixtures. Verify current publication formats, reuse terms and effective dates before importing data. Keep reference data available offline, and show its revision and refresh status.
+4. Gemini grounding: provide only the selected reference context when the user requests generation. Save source/version provenance with the generated content under the reviewed content model; evaluate unsupported claims and incorrect mappings before adoption. Existing saved study remains usable without a network connection or another Gemini request.
+
+This amendment is planning only. No API client, new dependency, database migration, network call or release work is implemented by this update. Official sources above were checked on 3 October 2026; verify their contracts again when implementation begins.
