@@ -1,0 +1,129 @@
+{
+  "head": "50568143a4c4aef04e54eba88bfb22f0974cafe4",
+  "branch": "claude/mac-release-preparation-2026-10-04",
+  "changedTracked": [
+    "STATUS.md",
+    "docs/MAC_PARITY_CHECKLIST.md",
+    "docs/PROJECT_HANDOFF.md"
+  ],
+  "patchCheck": {
+    "exit": 128,
+    "stdout": "",
+    "stderr": "error: corrupt patch at /Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/mac-release-preparation-2026-10-04/proposed-macos-signing.patch:99\n"
+  },
+  "metadataGuardProbe": {
+    "kind": "synthetic codesign function only; no system codesign/keychain/provider calls",
+    "exit": 0,
+    "stdout": "TeamIdentifier=WRONGTEAM\n",
+    "stderr": "",
+    "input": "Wrong team, runtime present, no Developer ID Authority or Timestamp; both proposed guards pass",
+    "script": "set -eo pipefail\ncodesign() { printf '%s\\n' 'TeamIdentifier=WRONGTEAM' 'CodeDirectory flags=0x10000(runtime)'; }\ncodesign -dv --verbose=2 unused 2>&1 | grep -E '^(Authority=Developer ID Application|TeamIdentifier=|Timestamp=)' | sed 's/:.*(/: <redacted> (/'\ncodesign -dv unused 2>&1 | grep -q 'flags=.*runtime'\n"
+  },
+  "buildLog": {
+    "originalBytes": 16160,
+    "originalSha256": "898751ccd92b8e31f0784caa12e2e9d01929ffbf20e3b6de9520801f0cad558d",
+    "copyBytes": 16159,
+    "copySha256": "4205a131cb041f474f1f45c97c22b009fbe915d5a56bb2472410e93748a7a03a",
+    "eofOnly": true,
+    "exitReceipt": "0"
+  },
+  "preflights": {
+    "initial": {
+      "jsonGeneratedAt": "2026-10-04T22:34:27.232Z",
+      "jsonSummary": {
+        "counts": {
+          "PASS": 10,
+          "FAIL": 0,
+          "UNVERIFIED": 2,
+          "USER_ACTION": 3
+        },
+        "exitCode": 0,
+        "readyForInstalledUse": false,
+        "notReadyBecause": [
+          "R-SIGNING-CONFIG: USER_ACTION",
+          "P-TEST-ACCOUNT: USER_ACTION",
+          "P-SIGNING: USER_ACTION",
+          "P-INSTALLED-SMOKE: UNVERIFIED",
+          "P-A2-SOURCE: UNVERIFIED"
+        ]
+      },
+      "textGeneratedLine": "generated 2026-10-04T22:38:52.176Z",
+      "textCountLine": "PASS 8 \u00b7 FAIL 0 \u00b7 UNVERIFIED 4 \u00b7 USER_ACTION 3",
+      "gatekeeper": null
+    },
+    "local-app": {
+      "jsonGeneratedAt": "2026-10-04T22:38:37.749Z",
+      "jsonSummary": {
+        "counts": {
+          "PASS": 11,
+          "FAIL": 1,
+          "UNVERIFIED": 4,
+          "USER_ACTION": 3
+        },
+        "exitCode": 1,
+        "readyForInstalledUse": false,
+        "notReadyBecause": [
+          "R-SIGNING-CONFIG: USER_ACTION",
+          "R-SOURCE: UNVERIFIED",
+          "P-TEST-ACCOUNT: USER_ACTION",
+          "P-SIGNING: USER_ACTION",
+          "P-INSTALLED-SMOKE: UNVERIFIED",
+          "P-A2-SOURCE: UNVERIFIED",
+          "A-APP-SIGNATURE: FAIL",
+          "A-GATEKEEPER: UNVERIFIED"
+        ]
+      },
+      "textGeneratedLine": "generated 2026-10-04T22:38:38.000Z",
+      "textCountLine": "PASS 11 \u00b7 FAIL 1 \u00b7 UNVERIFIED 4 \u00b7 USER_ACTION 3",
+      "gatekeeper": {
+        "id": "A-GATEKEEPER",
+        "category": "artifact",
+        "status": "UNVERIFIED",
+        "summary": "Gatekeeper/stapler assessment not run (opt in with --assess)",
+        "observed": {}
+      }
+    },
+    "local-dmg": {
+      "jsonGeneratedAt": "2026-10-04T22:38:37.110Z",
+      "jsonSummary": {
+        "counts": {
+          "PASS": 10,
+          "FAIL": 1,
+          "UNVERIFIED": 8,
+          "USER_ACTION": 3
+        },
+        "exitCode": 1,
+        "readyForInstalledUse": false,
+        "notReadyBecause": [
+          "R-SIGNING-CONFIG: USER_ACTION",
+          "R-SOURCE: UNVERIFIED",
+          "P-TEST-ACCOUNT: USER_ACTION",
+          "P-SIGNING: USER_ACTION",
+          "P-INSTALLED-SMOKE: UNVERIFIED",
+          "P-A2-SOURCE: UNVERIFIED",
+          "A-SIZE: UNVERIFIED",
+          "A-SHA256: UNVERIFIED",
+          "A-APP-METADATA: UNVERIFIED",
+          "A-INNER-APP-SIGNATURE: UNVERIFIED",
+          "A-DMG-SIGNATURE: FAIL",
+          "A-GATEKEEPER: UNVERIFIED"
+        ]
+      },
+      "textGeneratedLine": "generated 2026-10-04T22:38:37.327Z",
+      "textCountLine": "PASS 10 \u00b7 FAIL 1 \u00b7 UNVERIFIED 8 \u00b7 USER_ACTION 3",
+      "gatekeeper": {
+        "id": "A-GATEKEEPER",
+        "category": "artifact",
+        "status": "UNVERIFIED",
+        "summary": "Gatekeeper/stapler assessment not run (opt in with --assess)",
+        "observed": {}
+      }
+    }
+  },
+  "independentDmgSignature": {
+    "exit": 1,
+    "stdout": "",
+    "stderr": "/Users/rickymac/code/Flight-training-pr70-integration/src-tauri/target/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg: code object is not signed at all\n"
+  },
+  "untrackedWhitespaceDiagnostics": []
+}

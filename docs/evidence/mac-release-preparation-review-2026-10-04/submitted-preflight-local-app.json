@@ -1,0 +1,316 @@
+{
+  "schema": "hfd-mac-readiness-preflight/2",
+  "generatedAt": "2026-10-04T22:38:37.749Z",
+  "tool": "scripts/mac-readiness-preflight.mjs",
+  "mode": {
+    "artifactInspection": true,
+    "assess": false
+  },
+  "repository": {
+    "package": "her-flight-deck",
+    "version": "0.5.3",
+    "identifier": "com.herflightdeck.app",
+    "minimumSystemVersion": "12.0"
+  },
+  "artifact": {
+    "kind": "app",
+    "name": "Her Flight Deck.app",
+    "pathRecorded": "never",
+    "bundleIdentifier": "com.herflightdeck.app",
+    "minimumSystemVersion": "12.0",
+    "version": "0.5.3",
+    "executableArchitectures": [
+      "arm64"
+    ],
+    "signing": {
+      "display": {
+        "state": "observed",
+        "signatureKind": "adhoc",
+        "identifier": "differs-from-expected",
+        "flags": [
+          "adhoc",
+          "linker-signed"
+        ],
+        "hardenedRuntime": false,
+        "teamIdentifier": "not set",
+        "authorityKinds": [],
+        "secureTimestamp": false,
+        "sealedResourcesLine": "none"
+      },
+      "integrity": {
+        "state": "failed",
+        "reason": "verification-failed"
+      }
+    }
+  },
+  "checks": [
+    {
+      "id": "R-VERSION",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "all five version sources agree on 0.5.3",
+      "observed": {
+        "versions": {
+          "package.json": "0.5.3",
+          "package-lock.json": "0.5.3",
+          "src-tauri/tauri.conf.json": "0.5.3",
+          "src-tauri/Cargo.toml": "0.5.3",
+          "src-tauri/Cargo.lock": "0.5.3"
+        }
+      }
+    },
+    {
+      "id": "R-IDENTIFIER",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "bundle identifier is com.herflightdeck.app",
+      "observed": {
+        "configured": "com.herflightdeck.app",
+        "expected": "com.herflightdeck.app"
+      }
+    },
+    {
+      "id": "R-MIN-MACOS",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "minimum macOS 12.0 matches the release policy",
+      "observed": {
+        "configured": "12.0",
+        "policy": "12.0"
+      }
+    },
+    {
+      "id": "R-POLICY",
+      "category": "repository",
+      "status": "PASS",
+      "summary": "release policy macOS candidate version and architecture against the repository version",
+      "observed": {
+        "candidateVersion": "0.5.3",
+        "architecture": "aarch64",
+        "windows": "held"
+      }
+    },
+    {
+      "id": "R-SIGNING-CONFIG",
+      "category": "repository",
+      "status": "USER_ACTION",
+      "summary": "signing/notarization configuration recorded; a Developer ID decision and credentials are owner actions. Absent workflow references do not prove secrets are absent.",
+      "observed": {
+        "signingIdentityConfigured": "not set",
+        "hardenedRuntimeConfigured": "default (not set)",
+        "entitlementsConfigured": "not set",
+        "providerShortNameConfigured": "not set",
+        "workflowReferences": {
+          "checked": true,
+          "signingSecretNames": [],
+          "notarizationSecretNames": []
+        }
+      }
+    },
+    {
+      "id": "R-SOURCE",
+      "category": "repository",
+      "status": "UNVERIFIED",
+      "summary": "working tree has uncommitted changes; the tested source is HEAD plus local changes",
+      "observed": {
+        "head": "50568143a4c4aef04e54eba88bfb22f0974cafe4",
+        "branch": "claude/mac-release-preparation-2026-10-04",
+        "modified": 0,
+        "untracked": 1
+      }
+    },
+    {
+      "id": "H-OS",
+      "category": "host",
+      "status": "PASS",
+      "summary": "macOS 27.0.1 meets the configured minimum 12.0",
+      "observed": {
+        "productVersion": "27.0.1",
+        "buildVersion": "26A434",
+        "configuredMinimum": "12.0",
+        "note": "a current macOS observation never certifies macOS 12"
+      }
+    },
+    {
+      "id": "H-ARCH",
+      "category": "host",
+      "status": "PASS",
+      "summary": "Apple Silicon host with a native (not translated) Node process",
+      "observed": {
+        "machine": "arm64",
+        "nodeProcess": "arm64",
+        "rosettaTranslated": "0",
+        "model": "Mac17,3",
+        "chip": "Apple M5"
+      }
+    },
+    {
+      "id": "H-TOOLCHAIN",
+      "category": "host",
+      "status": "PASS",
+      "summary": "Node, npm, Rust and Cargo identified (project lanes use Node 22 and aarch64-apple-darwin)",
+      "observed": {
+        "node": "v22.23.3",
+        "npm": "10.9.9",
+        "rustc": "1.99.0",
+        "rustHost": "aarch64-apple-darwin",
+        "cargo": "1.99.0"
+      }
+    },
+    {
+      "id": "H-SDK",
+      "category": "host",
+      "status": "PASS",
+      "summary": "explicit SDK 26.5 is the version with recorded native-build evidence",
+      "observed": {
+        "selectedBy": "SDKROOT",
+        "explicitSdk": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+        "evidencedVersions": [
+          "26.5"
+        ],
+        "knownIncompatibleVersions": [
+          "27.0"
+        ],
+        "defaultSdkVersion": "26.5",
+        "developerDir": "CommandLineTools",
+        "note": "identifying the default SDK is not proof that a native build links; only explicit SDK versions with recorded build evidence pass",
+        "presence": "directory",
+        "metadata": "readable",
+        "explicitSdkVersion": "26.5"
+      }
+    },
+    {
+      "id": "H-TOOLS",
+      "category": "host",
+      "status": "PASS",
+      "summary": "read-only inspection tools present at their system paths",
+      "observed": {
+        "missing": []
+      }
+    },
+    {
+      "id": "P-TEST-ACCOUNT",
+      "category": "owner",
+      "status": "USER_ACTION",
+      "summary": "a dedicated standard synthetic test account and its isolation evidence must be provided and recorded (runbook §3); no flag or command here can establish it",
+      "observed": {}
+    },
+    {
+      "id": "P-SIGNING",
+      "category": "owner",
+      "status": "USER_ACTION",
+      "summary": "Developer ID signing/notarization decision, Apple Developer Program team and credential provisioning are owner actions (runbook §4)",
+      "observed": {}
+    },
+    {
+      "id": "P-INSTALLED-SMOKE",
+      "category": "owner",
+      "status": "UNVERIFIED",
+      "summary": "installed smoke phases 1-8 have no recorded execution; this tool never installs, launches or tests the app",
+      "observed": {
+        "phases": 8,
+        "recorded": 0
+      }
+    },
+    {
+      "id": "P-A2-SOURCE",
+      "category": "owner",
+      "status": "UNVERIFIED",
+      "summary": "A2-dependent installed checks wait for the Windows owner's independently accepted source",
+      "observed": {}
+    },
+    {
+      "id": "A-EXISTS",
+      "category": "artifact",
+      "status": "PASS",
+      "summary": "the supplied artifact path exists",
+      "observed": {}
+    },
+    {
+      "id": "A-APP-METADATA",
+      "category": "artifact",
+      "status": "PASS",
+      "summary": "bundle identifier, minimum macOS, version and arm64 executable match the repository",
+      "observed": {
+        "bundleIdentifier": "com.herflightdeck.app",
+        "minimumSystemVersion": "12.0",
+        "version": "0.5.3",
+        "executableArchitectures": [
+          "arm64"
+        ],
+        "expected": {
+          "bundleIdentifier": "com.herflightdeck.app",
+          "minimumSystemVersion": "12.0",
+          "version": "0.5.3",
+          "architecture": "arm64"
+        }
+      }
+    },
+    {
+      "id": "A-APP-SIGNATURE",
+      "category": "artifact",
+      "status": "FAIL",
+      "summary": "app: ad hoc signature; no team identifier; no secure timestamp; no hardened runtime; signature identifier differs from the bundle identity; integrity verification failed (verification-failed)",
+      "observed": {
+        "display": {
+          "state": "observed",
+          "signatureKind": "adhoc",
+          "identifier": "differs-from-expected",
+          "flags": [
+            "adhoc",
+            "linker-signed"
+          ],
+          "hardenedRuntime": false,
+          "teamIdentifier": "not set",
+          "authorityKinds": [],
+          "secureTimestamp": false,
+          "sealedResourcesLine": "none"
+        },
+        "integrity": {
+          "state": "failed",
+          "reason": "verification-failed"
+        }
+      }
+    },
+    {
+      "id": "A-GATEKEEPER",
+      "category": "artifact",
+      "status": "UNVERIFIED",
+      "summary": "Gatekeeper/stapler assessment not run (opt in with --assess)",
+      "observed": {}
+    }
+  ],
+  "summary": {
+    "counts": {
+      "PASS": 11,
+      "FAIL": 1,
+      "UNVERIFIED": 4,
+      "USER_ACTION": 3
+    },
+    "exitCode": 1,
+    "readyForInstalledUse": false,
+    "notReadyBecause": [
+      "R-SIGNING-CONFIG: USER_ACTION",
+      "R-SOURCE: UNVERIFIED",
+      "P-TEST-ACCOUNT: USER_ACTION",
+      "P-SIGNING: USER_ACTION",
+      "P-INSTALLED-SMOKE: UNVERIFIED",
+      "P-A2-SOURCE: UNVERIFIED",
+      "A-APP-SIGNATURE: FAIL",
+      "A-GATEKEEPER: UNVERIFIED"
+    ]
+  },
+  "safety": {
+    "mounted": false,
+    "installed": false,
+    "launched": false,
+    "built": false,
+    "signed": false,
+    "notarized": false,
+    "keychainOrAccountChanged": false,
+    "ciTriggered": false,
+    "providerContacted": false,
+    "appleOnlineLookupPossible": false,
+    "appProfileInspected": false
+  }
+}
