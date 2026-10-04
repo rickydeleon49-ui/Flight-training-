@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-04",
+  "playwrightCli": {
+    "version": "0.1.22",
+    "installedVia": "npm global",
+    "claudeSkill": "/Users/rickymac/.claude/skills/playwright-cli",
+    "verification": "disposable about:blank page; create button, click, verify title HFD tool check passed, close named session",
+    "session": "hfd-tool-setup",
+    "exitCode": 0
+  },
+  "context7": {
+    "claudeScope": "user",
+    "endpoint": "https://mcp.context7.com/mcp",
+    "statusFromClaudeMcpGet": "Connected",
+    "credentialsAdded": false,
+    "codexPreviouslyInstalled": true
+  },
+  "githubCli": {
+    "version": "2.102.0",
+    "accountVerified": "rickydeleon49-ui",
+    "exitCode": 0
+  },
+  "webdriverio": {
+    "cliVersion": "9.32.0",
+    "tauriServiceVersion": "1.4.0",
+    "installedVia": "npm global",
+    "verification": "wdio --version/--help and ESM import of service returns default function",
+    "nativeAppInstrumentationAdded": false,
+    "nativeAppLaunched": false
+  },
+  "cargoDeny": {
+    "version": "0.20.2",
+    "installedVia": "Homebrew Apple Silicon bottle",
+    "command": "cargo deny --locked --manifest-path /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/Cargo.toml --target aarch64-apple-darwin check advisories",
+    "exitCode": 1,
+    "usedDefaultConfig": true,
+    "advisoryCategory": "unmaintained",
+    "advisoryIds": [
+      "RUSTSEC-2026-0192",
+      "RUSTSEC-2025-0081",
+      "RUSTSEC-2025-0075",
+      "RUSTSEC-2025-0080",
+      "RUSTSEC-2025-0100",
+      "RUSTSEC-2025-0098"
+    ],
+    "vulnerabilityDiagnostics": 0,
+    "receiptSha256": "158a5ad95604f5e5d03fea3624f8046fc24dcfb8da53d9275fc8f738f88b0253",
+    "rawReceiptSha256": "c58e7cd06ed4e55c3e0dc929e62c872897e69190ade5dde846933202373d4184",
+    "publicationTransformation": "remove trailing spaces/tabs from lines only; raw receipt preserved in task-owned temporary folder",
+    "rawReceiptBytes": 15726,
+    "publicationReceiptBytes": 15678
+  },
+  "applicationChanges": false,
+  "realProfileTouched": false
+}

@@ -1,0 +1,262 @@
+2026-10-04 21:25:13 [WARN] unable to find a config path, falling back to default config
+error[unmaintained]: `ttf-parser` is unmaintained
+    ┌─ /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/Cargo.lock:297:1
+    │
+297 │ ttf-parser 0.25.1 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+    │
+    ├ ID: RUSTSEC-2026-0192
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2026-0192
+    ├ The author of `ttf-parser` has stated that the crate is unmaintained and will not receive further fixes (see the referenced issue).
+
+      ## Alternative(s)
+
+      - [`skrifa`](https://crates.io/crates/skrifa), an actively maintained TrueType and OpenType font parsing crate, part of the Google Fonts "oxidize" (`fontations`) project.
+    ├ Announcement: https://github.com/harfbuzz/ttf-parser/issues/217
+    ├ Solution: No safe upgrade is available!
+    ├ ttf-parser v0.25.1
+      └── lopdf v0.42.0
+          └── her-flight-deck v0.5.3
+
+error[unmaintained]: `unic-char-property` is unmaintained
+    ┌─ /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/Cargo.lock:300:1
+    │
+300 │ unic-char-property 0.9.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+    │
+    ├ ID: RUSTSEC-2025-0081
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2025-0081
+    ├ All Unicode crates that are part of https://github.com/open-i18n/rust-unic are unmaintained.
+
+      ## Recommended alternatives
+
+      - [`icu_properties`](https://crates.io/crates/icu_properties)
+    ├ Announcement: https://github.com/rustsec/advisory-db/issues/2414
+    ├ Solution: No safe upgrade is available!
+    ├ unic-char-property v0.9.0
+      └── unic-ucd-ident v0.9.0
+          └── urlpattern v0.3.0
+              └── tauri-utils v2.9.3
+                  ├── tauri v2.11.5
+                  │   ├── her-flight-deck v0.5.3
+                  │   ├── tauri-plugin-dialog v2.7.3
+                  │   │   └── her-flight-deck v0.5.3 (*)
+                  │   ├── tauri-plugin-fs v2.5.2
+                  │   │   ├── her-flight-deck v0.5.3 (*)
+                  │   │   └── tauri-plugin-dialog v2.7.3 (*)
+                  │   ├── tauri-plugin-opener v2.5.5
+                  │   │   └── her-flight-deck v0.5.3 (*)
+                  │   └── tauri-plugin-sql v2.4.1
+                  │       └── her-flight-deck v0.5.3 (*)
+                  ├── tauri-build v2.6.3
+                  │   ├── (build) her-flight-deck v0.5.3 (*)
+                  │   └── (build) tauri v2.11.5 (*)
+                  ├── tauri-codegen v2.6.3
+                  │   └── tauri-macros v2.6.3
+                  │       └── tauri v2.11.5 (*)
+                  ├── tauri-macros v2.6.3 (*)
+                  ├── tauri-plugin v2.6.3
+                  │   ├── (build) tauri-plugin-dialog v2.7.3 (*)
+                  │   ├── (build) tauri-plugin-fs v2.5.2 (*)
+                  │   ├── (build) tauri-plugin-opener v2.5.5 (*)
+                  │   └── (build) tauri-plugin-sql v2.4.1 (*)
+                  ├── (build) tauri-plugin-fs v2.5.2 (*)
+                  ├── tauri-runtime v2.11.3
+                  │   ├── tauri v2.11.5 (*)
+                  │   └── tauri-runtime-wry v2.11.4
+                  │       └── tauri v2.11.5 (*)
+                  └── tauri-runtime-wry v2.11.4 (*)
+
+error[unmaintained]: `unic-char-range` is unmaintained
+    ┌─ /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/Cargo.lock:301:1
+    │
+301 │ unic-char-range 0.9.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+    │
+    ├ ID: RUSTSEC-2025-0075
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2025-0075
+    ├ All Unicode crates that are part of https://github.com/open-i18n/rust-unic are unmaintained.
+
+      ## Recommended alternatives
+
+      - Since version [1.45.0](https://releases.rs/docs/1.45.0/#libraries) Rust [supports](https://github.com/rust-lang/rust/pull/72413/) using `char` with `ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo}` to iterate over a range of codepoints.
+    ├ Announcement: https://github.com/rustsec/advisory-db/issues/2414
+    ├ Solution: No safe upgrade is available!
+    ├ unic-char-range v0.9.0
+      ├── unic-char-property v0.9.0
+      │   └── unic-ucd-ident v0.9.0
+      │       └── urlpattern v0.3.0
+      │           └── tauri-utils v2.9.3
+      │               ├── tauri v2.11.5
+      │               │   ├── her-flight-deck v0.5.3
+      │               │   ├── tauri-plugin-dialog v2.7.3
+      │               │   │   └── her-flight-deck v0.5.3 (*)
+      │               │   ├── tauri-plugin-fs v2.5.2
+      │               │   │   ├── her-flight-deck v0.5.3 (*)
+      │               │   │   └── tauri-plugin-dialog v2.7.3 (*)
+      │               │   ├── tauri-plugin-opener v2.5.5
+      │               │   │   └── her-flight-deck v0.5.3 (*)
+      │               │   └── tauri-plugin-sql v2.4.1
+      │               │       └── her-flight-deck v0.5.3 (*)
+      │               ├── tauri-build v2.6.3
+      │               │   ├── (build) her-flight-deck v0.5.3 (*)
+      │               │   └── (build) tauri v2.11.5 (*)
+      │               ├── tauri-codegen v2.6.3
+      │               │   └── tauri-macros v2.6.3
+      │               │       └── tauri v2.11.5 (*)
+      │               ├── tauri-macros v2.6.3 (*)
+      │               ├── tauri-plugin v2.6.3
+      │               │   ├── (build) tauri-plugin-dialog v2.7.3 (*)
+      │               │   ├── (build) tauri-plugin-fs v2.5.2 (*)
+      │               │   ├── (build) tauri-plugin-opener v2.5.5 (*)
+      │               │   └── (build) tauri-plugin-sql v2.4.1 (*)
+      │               ├── (build) tauri-plugin-fs v2.5.2 (*)
+      │               ├── tauri-runtime v2.11.3
+      │               │   ├── tauri v2.11.5 (*)
+      │               │   └── tauri-runtime-wry v2.11.4
+      │               │       └── tauri v2.11.5 (*)
+      │               └── tauri-runtime-wry v2.11.4 (*)
+      └── unic-ucd-ident v0.9.0 (*)
+
+error[unmaintained]: `unic-common` is unmaintained
+    ┌─ /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/Cargo.lock:302:1
+    │
+302 │ unic-common 0.9.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+    │
+    ├ ID: RUSTSEC-2025-0080
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2025-0080
+    ├ All Unicode crates that are part of https://github.com/open-i18n/rust-unic are unmaintained.
+    ├ Announcement: https://github.com/rustsec/advisory-db/issues/2414
+    ├ Solution: No safe upgrade is available!
+    ├ unic-common v0.9.0
+      └── unic-ucd-version v0.9.0
+          └── unic-ucd-ident v0.9.0
+              └── urlpattern v0.3.0
+                  └── tauri-utils v2.9.3
+                      ├── tauri v2.11.5
+                      │   ├── her-flight-deck v0.5.3
+                      │   ├── tauri-plugin-dialog v2.7.3
+                      │   │   └── her-flight-deck v0.5.3 (*)
+                      │   ├── tauri-plugin-fs v2.5.2
+                      │   │   ├── her-flight-deck v0.5.3 (*)
+                      │   │   └── tauri-plugin-dialog v2.7.3 (*)
+                      │   ├── tauri-plugin-opener v2.5.5
+                      │   │   └── her-flight-deck v0.5.3 (*)
+                      │   └── tauri-plugin-sql v2.4.1
+                      │       └── her-flight-deck v0.5.3 (*)
+                      ├── tauri-build v2.6.3
+                      │   ├── (build) her-flight-deck v0.5.3 (*)
+                      │   └── (build) tauri v2.11.5 (*)
+                      ├── tauri-codegen v2.6.3
+                      │   └── tauri-macros v2.6.3
+                      │       └── tauri v2.11.5 (*)
+                      ├── tauri-macros v2.6.3 (*)
+                      ├── tauri-plugin v2.6.3
+                      │   ├── (build) tauri-plugin-dialog v2.7.3 (*)
+                      │   ├── (build) tauri-plugin-fs v2.5.2 (*)
+                      │   ├── (build) tauri-plugin-opener v2.5.5 (*)
+                      │   └── (build) tauri-plugin-sql v2.4.1 (*)
+                      ├── (build) tauri-plugin-fs v2.5.2 (*)
+                      ├── tauri-runtime v2.11.3
+                      │   ├── tauri v2.11.5 (*)
+                      │   └── tauri-runtime-wry v2.11.4
+                      │       └── tauri v2.11.5 (*)
+                      └── tauri-runtime-wry v2.11.4 (*)
+
+error[unmaintained]: `unic-ucd-ident` is unmaintained
+    ┌─ /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/Cargo.lock:303:1
+    │
+303 │ unic-ucd-ident 0.9.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+    │
+    ├ ID: RUSTSEC-2025-0100
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2025-0100
+    ├ All Unicode crates that are part of https://github.com/open-i18n/rust-unic are unmaintained.
+
+      ## Recommended alternatives
+
+      - [`icu_properties`](https://crates.io/crates/icu_properties)
+      - [`unicode-ident`](https://crates.io/crates/unicode-ident)
+    ├ Announcement: https://github.com/rustsec/advisory-db/issues/2414
+    ├ Solution: No safe upgrade is available!
+    ├ unic-ucd-ident v0.9.0
+      └── urlpattern v0.3.0
+          └── tauri-utils v2.9.3
+              ├── tauri v2.11.5
+              │   ├── her-flight-deck v0.5.3
+              │   ├── tauri-plugin-dialog v2.7.3
+              │   │   └── her-flight-deck v0.5.3 (*)
+              │   ├── tauri-plugin-fs v2.5.2
+              │   │   ├── her-flight-deck v0.5.3 (*)
+              │   │   └── tauri-plugin-dialog v2.7.3 (*)
+              │   ├── tauri-plugin-opener v2.5.5
+              │   │   └── her-flight-deck v0.5.3 (*)
+              │   └── tauri-plugin-sql v2.4.1
+              │       └── her-flight-deck v0.5.3 (*)
+              ├── tauri-build v2.6.3
+              │   ├── (build) her-flight-deck v0.5.3 (*)
+              │   └── (build) tauri v2.11.5 (*)
+              ├── tauri-codegen v2.6.3
+              │   └── tauri-macros v2.6.3
+              │       └── tauri v2.11.5 (*)
+              ├── tauri-macros v2.6.3 (*)
+              ├── tauri-plugin v2.6.3
+              │   ├── (build) tauri-plugin-dialog v2.7.3 (*)
+              │   ├── (build) tauri-plugin-fs v2.5.2 (*)
+              │   ├── (build) tauri-plugin-opener v2.5.5 (*)
+              │   └── (build) tauri-plugin-sql v2.4.1 (*)
+              ├── (build) tauri-plugin-fs v2.5.2 (*)
+              ├── tauri-runtime v2.11.3
+              │   ├── tauri v2.11.5 (*)
+              │   └── tauri-runtime-wry v2.11.4
+              │       └── tauri v2.11.5 (*)
+              └── tauri-runtime-wry v2.11.4 (*)
+
+error[unmaintained]: `unic-ucd-version` is unmaintained
+    ┌─ /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/Cargo.lock:304:1
+    │
+304 │ unic-ucd-version 0.9.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+    │
+    ├ ID: RUSTSEC-2025-0098
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2025-0098
+    ├ All Unicode crates that are part of https://github.com/open-i18n/rust-unic are unmaintained.
+    ├ Announcement: https://github.com/rustsec/advisory-db/issues/2414
+    ├ Solution: No safe upgrade is available!
+    ├ unic-ucd-version v0.9.0
+      └── unic-ucd-ident v0.9.0
+          └── urlpattern v0.3.0
+              └── tauri-utils v2.9.3
+                  ├── tauri v2.11.5
+                  │   ├── her-flight-deck v0.5.3
+                  │   ├── tauri-plugin-dialog v2.7.3
+                  │   │   └── her-flight-deck v0.5.3 (*)
+                  │   ├── tauri-plugin-fs v2.5.2
+                  │   │   ├── her-flight-deck v0.5.3 (*)
+                  │   │   └── tauri-plugin-dialog v2.7.3 (*)
+                  │   ├── tauri-plugin-opener v2.5.5
+                  │   │   └── her-flight-deck v0.5.3 (*)
+                  │   └── tauri-plugin-sql v2.4.1
+                  │       └── her-flight-deck v0.5.3 (*)
+                  ├── tauri-build v2.6.3
+                  │   ├── (build) her-flight-deck v0.5.3 (*)
+                  │   └── (build) tauri v2.11.5 (*)
+                  ├── tauri-codegen v2.6.3
+                  │   └── tauri-macros v2.6.3
+                  │       └── tauri v2.11.5 (*)
+                  ├── tauri-macros v2.6.3 (*)
+                  ├── tauri-plugin v2.6.3
+                  │   ├── (build) tauri-plugin-dialog v2.7.3 (*)
+                  │   ├── (build) tauri-plugin-fs v2.5.2 (*)
+                  │   ├── (build) tauri-plugin-opener v2.5.5 (*)
+                  │   └── (build) tauri-plugin-sql v2.4.1 (*)
+                  ├── (build) tauri-plugin-fs v2.5.2 (*)
+                  ├── tauri-runtime v2.11.3
+                  │   ├── tauri v2.11.5 (*)
+                  │   └── tauri-runtime-wry v2.11.4
+                  │       └── tauri v2.11.5 (*)
+                  └── tauri-runtime-wry v2.11.4 (*)
+
+advisories FAILED
+EXIT=1
