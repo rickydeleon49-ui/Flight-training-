@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 C:/Users/ricky/Documents/Codex/2026-09-06/continue-work-on-my-private-github/outputs/mac-github-prep-2026-10-02/repo
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  13:02:07
+   Duration  13.11s (transform 557ms, setup 0ms, import 845ms, tests 11.27s, environment 847ms)
+
+warning: could not open directory 'docs/evidence/structured-study-import-slice-b-acceptance-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/': Filename too long
+warning: could not open directory 'docs/evidence/structured-study-import-slice-b-rereview-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/': Filename too long
+warning: could not open directory 'docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/': Filename too long
+warning: could not open directory 'docs/evidence/structured-study-import-slice-b-validation-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/': Filename too long

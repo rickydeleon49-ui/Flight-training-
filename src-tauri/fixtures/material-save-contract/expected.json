@@ -1,0 +1,457 @@
+{
+  "results": [
+    {
+      "name": "create with every field, duplicate and whitespace tags",
+      "returned": {
+        "id": "contract-1",
+        "title": "Weather theory",
+        "materialType": "lesson_notes",
+        "topic": "weather",
+        "reviewStatus": "studying",
+        "priority": "next_up",
+        "goalId": null,
+        "eventId": null,
+        "notes": "Fronts and stability",
+        "filePath": "contract-guide.pdf",
+        "originalFileName": "Guide.pdf",
+        "fileSize": 12,
+        "createdAt": "2026-10-01T10:00:00.000Z",
+        "updatedAt": "2026-10-01T10:00:00.000Z",
+        "lastReviewedAt": null,
+        "tags": [
+          "Old tag",
+          "Weather"
+        ]
+      },
+      "after": {
+        "materials": [
+          {
+            "id": "contract-1",
+            "title": "Weather theory",
+            "material_type": "lesson_notes",
+            "topic": "weather",
+            "review_status": "studying",
+            "priority": "next_up",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "Fronts and stability",
+            "file_path": "contract-guide.pdf",
+            "original_file_name": "Guide.pdf",
+            "file_size": 12,
+            "created_at": "2026-10-01T10:00:00.000Z",
+            "updated_at": "2026-10-01T10:00:00.000Z",
+            "last_reviewed_at": null
+          }
+        ],
+        "links": [
+          {
+            "material_id": "contract-1",
+            "name": "Old tag"
+          },
+          {
+            "material_id": "contract-1",
+            "name": "Weather"
+          }
+        ],
+        "tagNames": [
+          "Old tag",
+          "Weather"
+        ]
+      }
+    },
+    {
+      "name": "replace a tag (the native id-collision case)",
+      "returned": {
+        "id": "contract-1",
+        "title": "Weather theory",
+        "materialType": "lesson_notes",
+        "topic": "weather",
+        "reviewStatus": "studying",
+        "priority": "next_up",
+        "goalId": null,
+        "eventId": null,
+        "notes": "Fronts and stability",
+        "filePath": "contract-guide.pdf",
+        "originalFileName": "Guide.pdf",
+        "fileSize": 12,
+        "createdAt": "2026-10-01T10:00:00.000Z",
+        "updatedAt": "2026-10-01T11:00:00.000Z",
+        "lastReviewedAt": null,
+        "tags": [
+          "New tag",
+          "Weather"
+        ]
+      },
+      "after": {
+        "materials": [
+          {
+            "id": "contract-1",
+            "title": "Weather theory",
+            "material_type": "lesson_notes",
+            "topic": "weather",
+            "review_status": "studying",
+            "priority": "next_up",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "Fronts and stability",
+            "file_path": "contract-guide.pdf",
+            "original_file_name": "Guide.pdf",
+            "file_size": 12,
+            "created_at": "2026-10-01T10:00:00.000Z",
+            "updated_at": "2026-10-01T11:00:00.000Z",
+            "last_reviewed_at": null
+          }
+        ],
+        "links": [
+          {
+            "material_id": "contract-1",
+            "name": "New tag"
+          },
+          {
+            "material_id": "contract-1",
+            "name": "Weather"
+          }
+        ],
+        "tagNames": [
+          "New tag",
+          "Old tag",
+          "Weather"
+        ]
+      }
+    },
+    {
+      "name": "partial update with omitted tags and explicit nulls",
+      "returned": {
+        "id": "contract-1",
+        "title": "Weather theory II",
+        "materialType": "lesson_notes",
+        "topic": "weather",
+        "reviewStatus": "studying",
+        "priority": "next_up",
+        "goalId": null,
+        "eventId": null,
+        "notes": "Fronts and stability",
+        "filePath": "contract-guide.pdf",
+        "originalFileName": null,
+        "fileSize": null,
+        "createdAt": "2026-10-01T10:00:00.000Z",
+        "updatedAt": "2026-10-01T12:00:00.000Z",
+        "lastReviewedAt": null,
+        "tags": [
+          "New tag",
+          "Weather"
+        ]
+      },
+      "after": {
+        "materials": [
+          {
+            "id": "contract-1",
+            "title": "Weather theory II",
+            "material_type": "lesson_notes",
+            "topic": "weather",
+            "review_status": "studying",
+            "priority": "next_up",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "Fronts and stability",
+            "file_path": "contract-guide.pdf",
+            "original_file_name": null,
+            "file_size": null,
+            "created_at": "2026-10-01T10:00:00.000Z",
+            "updated_at": "2026-10-01T12:00:00.000Z",
+            "last_reviewed_at": null
+          }
+        ],
+        "links": [
+          {
+            "material_id": "contract-1",
+            "name": "New tag"
+          },
+          {
+            "material_id": "contract-1",
+            "name": "Weather"
+          }
+        ],
+        "tagNames": [
+          "New tag",
+          "Old tag",
+          "Weather"
+        ]
+      }
+    },
+    {
+      "name": "minimal create reusing an existing tag, with Unicode and case-distinct names",
+      "returned": {
+        "id": "contract-2",
+        "title": "Checklist",
+        "materialType": "study_guide",
+        "topic": "general",
+        "reviewStatus": "needs_review",
+        "priority": "later",
+        "goalId": null,
+        "eventId": null,
+        "notes": "",
+        "filePath": null,
+        "originalFileName": null,
+        "fileSize": null,
+        "createdAt": "2026-10-01T13:00:00.000Z",
+        "updatedAt": "2026-10-01T13:00:00.000Z",
+        "lastReviewedAt": null,
+        "tags": [
+          "Weather",
+          "IFR",
+          "ifr",
+          "Navigation ✈"
+        ]
+      },
+      "after": {
+        "materials": [
+          {
+            "id": "contract-1",
+            "title": "Weather theory II",
+            "material_type": "lesson_notes",
+            "topic": "weather",
+            "review_status": "studying",
+            "priority": "next_up",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "Fronts and stability",
+            "file_path": "contract-guide.pdf",
+            "original_file_name": null,
+            "file_size": null,
+            "created_at": "2026-10-01T10:00:00.000Z",
+            "updated_at": "2026-10-01T12:00:00.000Z",
+            "last_reviewed_at": null
+          },
+          {
+            "id": "contract-2",
+            "title": "Checklist",
+            "material_type": "study_guide",
+            "topic": "general",
+            "review_status": "needs_review",
+            "priority": "later",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "",
+            "file_path": null,
+            "original_file_name": null,
+            "file_size": null,
+            "created_at": "2026-10-01T13:00:00.000Z",
+            "updated_at": "2026-10-01T13:00:00.000Z",
+            "last_reviewed_at": null
+          }
+        ],
+        "links": [
+          {
+            "material_id": "contract-1",
+            "name": "New tag"
+          },
+          {
+            "material_id": "contract-1",
+            "name": "Weather"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "IFR"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "Navigation ✈"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "Weather"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "ifr"
+          }
+        ],
+        "tagNames": [
+          "IFR",
+          "Navigation ✈",
+          "New tag",
+          "Old tag",
+          "Weather",
+          "ifr"
+        ]
+      }
+    },
+    {
+      "name": "replace the attachment and clear tags",
+      "returned": {
+        "id": "contract-1",
+        "title": "Weather theory II",
+        "materialType": "lesson_notes",
+        "topic": "weather",
+        "reviewStatus": "studying",
+        "priority": "next_up",
+        "goalId": null,
+        "eventId": null,
+        "notes": "Fronts and stability",
+        "filePath": "contract-replacement.pdf",
+        "originalFileName": "Replacement.pdf",
+        "fileSize": 34,
+        "createdAt": "2026-10-01T10:00:00.000Z",
+        "updatedAt": "2026-10-01T14:00:00.000Z",
+        "lastReviewedAt": null,
+        "tags": []
+      },
+      "after": {
+        "materials": [
+          {
+            "id": "contract-1",
+            "title": "Weather theory II",
+            "material_type": "lesson_notes",
+            "topic": "weather",
+            "review_status": "studying",
+            "priority": "next_up",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "Fronts and stability",
+            "file_path": "contract-replacement.pdf",
+            "original_file_name": "Replacement.pdf",
+            "file_size": 34,
+            "created_at": "2026-10-01T10:00:00.000Z",
+            "updated_at": "2026-10-01T14:00:00.000Z",
+            "last_reviewed_at": null
+          },
+          {
+            "id": "contract-2",
+            "title": "Checklist",
+            "material_type": "study_guide",
+            "topic": "general",
+            "review_status": "needs_review",
+            "priority": "later",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "",
+            "file_path": null,
+            "original_file_name": null,
+            "file_size": null,
+            "created_at": "2026-10-01T13:00:00.000Z",
+            "updated_at": "2026-10-01T13:00:00.000Z",
+            "last_reviewed_at": null
+          }
+        ],
+        "links": [
+          {
+            "material_id": "contract-2",
+            "name": "IFR"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "Navigation ✈"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "Weather"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "ifr"
+          }
+        ],
+        "tagNames": [
+          "IFR",
+          "Navigation ✈",
+          "New tag",
+          "Old tag",
+          "Weather",
+          "ifr"
+        ]
+      }
+    },
+    {
+      "name": "remove the attachment and re-add a tag",
+      "returned": {
+        "id": "contract-1",
+        "title": "Weather theory II",
+        "materialType": "lesson_notes",
+        "topic": "weather",
+        "reviewStatus": "studying",
+        "priority": "next_up",
+        "goalId": null,
+        "eventId": null,
+        "notes": "Fronts and stability",
+        "filePath": null,
+        "originalFileName": null,
+        "fileSize": null,
+        "createdAt": "2026-10-01T10:00:00.000Z",
+        "updatedAt": "2026-10-01T15:00:00.000Z",
+        "lastReviewedAt": null,
+        "tags": [
+          "Old tag"
+        ]
+      },
+      "after": {
+        "materials": [
+          {
+            "id": "contract-1",
+            "title": "Weather theory II",
+            "material_type": "lesson_notes",
+            "topic": "weather",
+            "review_status": "studying",
+            "priority": "next_up",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "Fronts and stability",
+            "file_path": null,
+            "original_file_name": null,
+            "file_size": null,
+            "created_at": "2026-10-01T10:00:00.000Z",
+            "updated_at": "2026-10-01T15:00:00.000Z",
+            "last_reviewed_at": null
+          },
+          {
+            "id": "contract-2",
+            "title": "Checklist",
+            "material_type": "study_guide",
+            "topic": "general",
+            "review_status": "needs_review",
+            "priority": "later",
+            "goal_id": null,
+            "event_id": null,
+            "notes": "",
+            "file_path": null,
+            "original_file_name": null,
+            "file_size": null,
+            "created_at": "2026-10-01T13:00:00.000Z",
+            "updated_at": "2026-10-01T13:00:00.000Z",
+            "last_reviewed_at": null
+          }
+        ],
+        "links": [
+          {
+            "material_id": "contract-1",
+            "name": "Old tag"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "IFR"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "Navigation ✈"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "Weather"
+          },
+          {
+            "material_id": "contract-2",
+            "name": "ifr"
+          }
+        ],
+        "tagNames": [
+          "IFR",
+          "Navigation ✈",
+          "New tag",
+          "Old tag",
+          "Weather",
+          "ifr"
+        ]
+      }
+    }
+  ]
+}

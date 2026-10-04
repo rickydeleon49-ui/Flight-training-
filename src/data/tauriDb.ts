@@ -54,6 +54,11 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     async saveDebriefAtomically(operation: import("./db").DebriefSaveOperation): Promise<void> {
       await invoke("save_debrief_operation", { operation });
     },
+    async saveMaterialAtomically(
+      operation: import("./db").MaterialSaveOperation,
+    ): Promise<StudyMaterial> {
+      return invoke<StudyMaterial>("save_material_operation", { operation });
+    },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);
     },

@@ -1,0 +1,4 @@
+Relative links checked: 253
+Credential-pattern scan: no matches
+JSON validation: passed
+Migrations/dependencies/versions/capabilities unchanged (reviewed diff)

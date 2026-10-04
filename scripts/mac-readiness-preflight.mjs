@@ -25,7 +25,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { closeSync, existsSync, openSync, readFileSync, readSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { basename, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const SCHEMA = "hfd-mac-readiness-preflight/2";
@@ -495,7 +495,8 @@ export function runPreflight(options = {}, deps = defaultDeps()) {
     else if (statFailed) sdkResult("UNVERIFIED", "explicit SDK path could not be inspected", { presence: "unreadable" });
     else if (!st.isDirectory()) sdkResult("FAIL", "explicit SDK path is not a directory", { presence: "not a directory" });
     else {
-      const settingsPath = join(sdk, "SDKSettings.json");
+      // SDKROOT is a macOS path, including in injected cross-platform checks.
+      const settingsPath = posix.join(sdk, "SDKSettings.json");
       let metadata = "missing";
       let version = null;
       if (deps.exists(settingsPath)) {

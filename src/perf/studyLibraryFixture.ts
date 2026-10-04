@@ -108,41 +108,31 @@ export async function fixtureIdentity(materials: FixtureMaterial[]): Promise<str
  * through the repository so creation times are deterministic and seeding
  * stays linear; the timed operations all go through the real app code.
  *
- * Wrapped in one public BEGIN/COMMIT, which the current Node test driver
- * accepts. If the A2 driver contract lands and rejects public transaction
- * control, switch this to its supported fixture path rather than loosening it.
+ * Uses the driver's supported atomic batch operation (`saveMaterialsAtomically`).
  */
 export async function seedFixtureMaterials(db: SqlDatabase, materials: FixtureMaterial[]): Promise<void> {
-  const tagIds = new Map<string, string>();
-  for (const material of materials) {
-    for (const tag of material.tags) if (!tagIds.has(tag)) tagIds.set(tag, `tag-${tagIds.size}`);
+  if (!db.saveMaterialsAtomically) {
+    throw new Error("Database driver does not support atomic batch material saving");
   }
-  await db.execute("BEGIN");
-  try {
-    for (const [name, id] of tagIds) {
-      await db.execute("INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?)", [
-        id, name, new Date(CREATED_BASE_MS).toISOString(),
-      ]);
-    }
-    for (const m of materials) {
-      await db.execute(
-        `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority,
-           notes, file_path, original_file_name, file_size, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          m.id, m.title, m.materialType, m.topic, m.reviewStatus, m.priority, m.notes,
-          m.filePath, m.filePath ? `${m.id}.pdf` : null, m.fileSize, m.createdAt, m.createdAt,
-        ],
-      );
-      for (const tag of m.tags) {
-        await db.execute("INSERT INTO material_tags (material_id, tag_id) VALUES (?, ?)", [m.id, tagIds.get(tag)!]);
-      }
-    }
-    await db.execute("COMMIT");
-  } catch (error) {
-    await db.execute("ROLLBACK");
-    throw error;
-  }
+  const studyMaterials: StudyMaterial[] = materials.map((m) => ({
+    id: m.id,
+    title: m.title,
+    materialType: m.materialType,
+    topic: m.topic,
+    reviewStatus: m.reviewStatus,
+    priority: m.priority,
+    goalId: null,
+    eventId: null,
+    notes: m.notes,
+    filePath: m.filePath,
+    originalFileName: m.filePath ? `${m.id}.pdf` : null,
+    fileSize: m.fileSize,
+    createdAt: m.createdAt,
+    updatedAt: m.createdAt,
+    lastReviewedAt: null,
+    tags: m.tags,
+  }));
+  await db.saveMaterialsAtomically(studyMaterials);
 }
 
 export type StatusChip = "Everything" | "Next Up" | "Studying" | "Needs Review" | "Confident" | "Reference Only";

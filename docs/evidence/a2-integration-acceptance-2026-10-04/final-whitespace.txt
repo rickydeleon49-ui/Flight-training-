@@ -1,0 +1,2 @@
+git -c core.longpaths=true diff --cached --check
+exit=0

@@ -1,0 +1,12 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run
+
+
+ RUN  v4.1.11 [review-checkout]
+
+
+ Test Files  77 passed | 3 skipped (80)
+      Tests  2348 passed | 4 skipped (2352)
+   Start at  12:52:55
+   Duration  56.37s (transform 10.12s, setup 0ms, import 47.17s, tests 164.54s, environment 158.28s)

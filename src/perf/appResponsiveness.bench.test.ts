@@ -110,9 +110,6 @@ async function seed(size: (typeof SIZES)[keyof typeof SIZES], materials: Fixture
   await repos.app.set("airline_starter_pack", "skipped-for-bench");
   const today = todayIso();
   await seedFixtureMaterials(base, materials);
-  // Public BEGIN/COMMIT is accepted by the current Node test driver; see
-  // seedFixtureMaterials for what changes if the A2 driver contract lands.
-  await base.execute("BEGIN");
   for (let i = 0; i < size.actions; i++) {
     const open = i % OPEN_ACTION_EVERY === 0;
     await repos.actions.create({
@@ -137,7 +134,6 @@ async function seed(size: (typeof SIZES)[keyof typeof SIZES], materials: Fixture
       answer: unanswered ? "" : "Synthetic answer.",
     });
   }
-  await base.execute("COMMIT");
   return base;
 }
 

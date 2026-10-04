@@ -1,0 +1,186 @@
+v22.22.1
+9.2.0
+TAP version 13
+# Subtest: R2: local session at a spaced checkout path exits 0 and does nothing
+ok 1 - R2: local session at a spaced checkout path exits 0 and does nothing
+  ---
+  duration_ms: 12.121322
+  type: 'test'
+  ...
+# Subtest: R2: local session at a plain path exits 0 and does nothing (control)
+ok 2 - R2: local session at a plain path exits 0 and does nothing (control)
+  ---
+  duration_ms: 4.300301
+  type: 'test'
+  ...
+# Subtest: R2: control: the unquoted command form fails at a spaced path
+ok 3 - R2: control: the unquoted command form fails at a spaced path
+  ---
+  duration_ms: 3.473031
+  type: 'test'
+  ...
+# Subtest: R2: remote session at a spaced checkout path reaches setup
+ok 4 - R2: remote session at a spaced checkout path reaches setup
+  ---
+  duration_ms: 916.288556
+  type: 'test'
+  ...
+# Subtest: R4: cold setup uses npm ci and leaves all four tracked files unchanged
+ok 5 - R4: cold setup uses npm ci and leaves all four tracked files unchanged
+  ---
+  duration_ms: 877.060462
+  type: 'test'
+  ...
+# Subtest: R4: warm setup reuses a verified node_modules without reinstalling
+ok 6 - R4: warm setup reuses a verified node_modules without reinstalling
+  ---
+  duration_ms: 1315.43071
+  type: 'test'
+  ...
+# Subtest: R4: a changed lock invalidates the warm cache and reinstalls with npm ci
+ok 7 - R4: a changed lock invalidates the warm cache and reinstalls with npm ci
+  ---
+  duration_ms: 1330.453209
+  type: 'test'
+  ...
+# Subtest: R4: a changed package.json with the same lock invalidates the warm cache
+ok 8 - R4: a changed package.json with the same lock invalidates the warm cache
+  ---
+  duration_ms: 1322.83485
+  type: 'test'
+  ...
+# Subtest: R4: an incomplete warm cache (simulated failing npm ls) reinstalls with npm ci
+ok 9 - R4: an incomplete warm cache (simulated failing npm ls) reinstalls with npm ci
+  ---
+  duration_ms: 1317.149832
+  type: 'test'
+  ...
+# Subtest: R4: a root-name mismatch never rewrites the committed lock
+ok 10 - R4: a root-name mismatch never rewrites the committed lock
+  ---
+  duration_ms: 862.412491
+  type: 'test'
+  ...
+# Subtest: R4: a real dependency mismatch fails visibly and changes nothing
+ok 11 - R4: a real dependency mismatch fails visibly and changes nothing
+  ---
+  duration_ms: 450.238944
+  type: 'test'
+  ...
+# Subtest: R4: a missing lock fails visibly and no lock is created
+ok 12 - R4: a missing lock fails visibly and no lock is created
+  ---
+  duration_ms: 8.902819
+  type: 'test'
+  ...
+# Subtest: R4: a Cargo.lock change during setup fails the hook (four-file guard)
+ok 13 - R4: a Cargo.lock change during setup fails the hook (four-file guard)
+  ---
+  duration_ms: 860.484489
+  type: 'test'
+  ...
+# Subtest: R4: npm-deps does not trust a marker from a different setup
+ok 14 - R4: npm-deps does not trust a marker from a different setup
+  ---
+  duration_ms: 899.228203
+  type: 'test'
+  ...
+# Subtest: R3: success writes the screenshot and stops the owned server
+ok 15 - R3: success writes the screenshot and stops the owned server
+  ---
+  duration_ms: 692.470284
+  type: 'test'
+  ...
+# Subtest: R3: a launch failure exits 1 with its own error and stops the owned server
+ok 16 - R3: a launch failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 678.210141
+  type: 'test'
+  ...
+# Subtest: R3: a newContext failure exits 1 with its own error and stops the owned server
+ok 17 - R3: a newContext failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 675.464241
+  type: 'test'
+  ...
+# Subtest: R3: a goto failure exits 1 with its own error and stops the owned server
+ok 18 - R3: a goto failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 675.913323
+  type: 'test'
+  ...
+# Subtest: R3: a screenshot failure exits 1 with its own error and stops the owned server
+ok 19 - R3: a screenshot failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 676.008062
+  type: 'test'
+  ...
+# Subtest: R3: a startup timeout exits 1 and stops the owned server
+ok 20 - R3: a startup timeout exits 1 and stops the owned server
+  ---
+  duration_ms: 1907.686499
+  type: 'test'
+  ...
+# Subtest: R3: a server that exits before answering is reported and leaves nothing behind
+ok 21 - R3: a server that exits before answering is reported and leaves nothing behind
+  ---
+  duration_ms: 609.142319
+  type: 'test'
+  ...
+# Subtest: R5: a browser-close failure after successful screenshots exits 1 and still stops the owned server
+ok 22 - R5: a browser-close failure after successful screenshots exits 1 and still stops the owned server
+  ---
+  duration_ms: 675.536447
+  type: 'test'
+  ...
+# Subtest: R5: when navigation and then browser close both fail, the navigation error is the one reported
+ok 23 - R5: when navigation and then browser close both fail, the navigation error is the one reported
+  ---
+  duration_ms: 677.099478
+  type: 'test'
+  ...
+# Subtest: R6: an owned server that ignores SIGTERM is killed within the bound, parent and child
+ok 24 - R6: an owned server that ignores SIGTERM is killed within the bound, parent and child
+  ---
+  duration_ms: 1178.280637
+  type: 'test'
+  ...
+# Subtest: R7: an owned server that accepts but never answers ends at the startup deadline and is stopped
+ok 25 - R7: an owned server that accepts but never answers ends at the startup deadline and is stopped
+  ---
+  duration_ms: 1909.423055
+  type: 'test'
+  ...
+# Subtest: R7: a pre-existing server that never answers ends promptly and is left running
+ok 26 - R7: a pre-existing server that never answers ends promptly and is left running
+  ---
+  duration_ms: 804.160675
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (success)
+ok 27 - R3: a reused server is left running (success)
+  ---
+  duration_ms: 386.043855
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (launch)
+ok 28 - R3: a reused server is left running (launch)
+  ---
+  duration_ms: 367.819579
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (goto+close)
+ok 29 - R3: a reused server is left running (goto+close)
+  ---
+  duration_ms: 367.120039
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22697.433518

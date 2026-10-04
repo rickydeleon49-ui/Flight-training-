@@ -1,0 +1,87 @@
+[
+  {
+    "command": "npm ci",
+    "started": "2026-10-04T19:52:49.530Z",
+    "seconds": 4.621,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-01.log"
+  },
+  {
+    "command": "npm test",
+    "started": "2026-10-04T19:52:54.152Z",
+    "seconds": 58.068,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-02.log"
+  },
+  {
+    "command": "npm run build",
+    "started": "2026-10-04T19:53:52.221Z",
+    "seconds": 7.739,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-03.log"
+  },
+  {
+    "command": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
+    "started": "2026-10-04T19:53:59.961Z",
+    "seconds": 1.222,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-04.log"
+  },
+  {
+    "command": "cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+    "started": "2026-10-04T19:54:01.183Z",
+    "seconds": 44.012,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-05.log"
+  },
+  {
+    "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml",
+    "started": "2026-10-04T19:54:45.196Z",
+    "seconds": 137.202,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-06.log"
+  },
+  {
+    "command": "npm run test:cargo-lock",
+    "started": "2026-10-04T19:57:02.399Z",
+    "seconds": 6.769,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-07.log"
+  },
+  {
+    "command": "node scripts/check-release-version.mjs 0.5.3",
+    "started": "2026-10-04T19:57:09.169Z",
+    "seconds": 0.059,
+    "exitCode": 0,
+    "error": null,
+    "log": "gate-08.log"
+  },
+  {
+    "command": "node --test .claude/tests/setup-helpers.test.mjs",
+    "started": "2026-10-04T19:57:09.229Z",
+    "seconds": 0.138,
+    "exitCode": 1,
+    "error": null,
+    "log": "gate-09.log"
+  },
+  {
+    "command": "WSL Node 22: node --test .claude/tests/setup-helpers.test.mjs (LF archive of unchanged helpers)",
+    "exitCode": 0,
+    "testsPassed": 29,
+    "seconds": 22.697,
+    "log": "gate-09-wsl.txt",
+    "replacesUnavailableWindowsStep": true
+  },
+  {
+    "command": "git -c core.longpaths=true diff --cached --check",
+    "exitCode": 0,
+    "log": "final-whitespace.txt"
+  }
+]

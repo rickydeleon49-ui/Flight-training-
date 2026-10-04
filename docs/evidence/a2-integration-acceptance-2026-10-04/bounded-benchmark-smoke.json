@@ -1,0 +1,1864 @@
+{
+  "environment": {
+    "node": "v24.16.0",
+    "platform": "win32 10.0.26200 x64",
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor           ",
+    "cpuCount": 16,
+    "totalMemGiB": 32,
+    "source": {
+      "head": "53ae33505621fa0cd209a8e7d071cd8fef5cf200",
+      "branch": "fix/a2-atomic-save-integration",
+      "dirtyFiles": [
+        "M .claude/hooks/npm-deps.sh",
+        " M .claude/hooks/session-start.sh",
+        " M .gitattributes",
+        " M docs/ATOMIC_STUDY_MATERIAL_SAVES_2026-10-02.md",
+        " D docs/evidence/structured-study-import-slice-b-acceptance-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md.txt",
+        " D docs/evidence/structured-study-import-slice-b-acceptance-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/final-hashes.txt",
+        " D docs/evidence/structured-study-import-slice-b-acceptance-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt",
+        " D docs/evidence/structured-study-import-slice-b-rereview-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md.txt",
+        " D docs/evidence/structured-study-import-slice-b-rereview-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/final-hashes.txt",
+        " D docs/evidence/structured-study-import-slice-b-rereview-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt",
+        " D docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md.txt",
+        " D docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/final-hashes.txt",
+        " D docs/evidence/structured-study-import-slice-b-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt",
+        " D docs/evidence/structured-study-import-slice-b-validation-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md.txt",
+        " D docs/evidence/structured-study-import-slice-b-validation-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/final-hashes.txt",
+        " D docs/evidence/structured-study-import-slice-b-validation-review-2026-10-03/submitted/docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt",
+        " M public/THIRD_PARTY_NOTICES.txt",
+        " M scripts/mac-readiness-preflight.mjs",
+        " M src-tauri/src/documents.rs",
+        " M src-tauri/src/lib.rs",
+        " M src/data/db.ts",
+        " M src/data/repositories/documentRepository.test.ts",
+        " M src/data/repositories/documentRepository.ts",
+        " M src/data/sqlJsDb.ts",
+        " M src/data/tauriDb.ts",
+        " M src/data/testing/nodeSqliteDb.ts",
+        " M src/pages/FlightJournal/debriefLinks.test.ts",
+        " M src/pages/FlightJournal/quickDebrief.test.ts",
+        " M src/pages/StudyLibrary/MaterialFormDialog.test.ts",
+        " M src/perf/appResponsiveness.bench.test.ts",
+        " M src/perf/studyLibraryFixture.ts",
+        " M src/perf/studyLibraryScenarios.test.ts",
+        "?? docs/CLAUDE_MAC_A2_ACCEPTED_SOURCE_VERIFICATION_PROMPT_2026-10-04.md",
+        "?? src-tauri/fixtures/material-save-contract/",
+        "?? src-tauri/src/documents_save_tests.rs",
+        "?? src/data/connectionOwner.ts",
+        "?? src/data/materialSaveContract.test.ts",
+        "?? src/data/materialTransaction.ts",
+        "?? src/data/singleConnectionDrivers.test.ts",
+        "?? src/pages/StudyLibrary/materialSaveIntegration.test.ts",
+        "?? src/perf/a2SetupSmoke.test.ts"
+      ]
+    },
+    "startedAt": "2026-10-04T20:02:09.370Z",
+    "repeats": 1,
+    "warmupsDiscardedPerInteractionScenario": 0,
+    "timingDomain": "Node + jsdom: JavaScript, React and SQLite (node:sqlite) work. Not WebView paint, Tauri IPC or packaged startup.",
+    "memoryMethod": "process.memoryUsage() sampled after each timed step; max of samples, not true peak; Node process, not packaged app.",
+    "fileStatus": "MOCK: documentExists answered from the fixture; no filesystem access."
+  },
+  "small": {
+    "dataset": {
+      "materials": 100,
+      "actions": 100,
+      "journal": 30,
+      "questions": 50
+    },
+    "fixtureSha256": "2d7e1a3c52b6bb6f41a3b7ea7abc6542b18801cbfded6584453bd722b7f11fdf",
+    "fixtureCoverage": {
+      "withTags": 57,
+      "duplicateTitle": 10,
+      "unicodeTitles": 10,
+      "withFile": 25,
+      "mockMissingFile": 13
+    },
+    "seedMsNotMeasured": 20,
+    "dbMaterialsListMs": {
+      "median": 0.99,
+      "min": 0.99,
+      "max": 0.99,
+      "n": 1,
+      "samples": [
+        0.99
+      ]
+    },
+    "dbMaterialsListSelects": 2,
+    "coldLoadToLibraryListedMs": {
+      "median": 146.15,
+      "min": 146.15,
+      "max": 146.15,
+      "n": 1,
+      "samples": [
+        146.15
+      ]
+    },
+    "loadSelectQueries": 22,
+    "studyLibrary": {
+      "emptyQueryClearsSearch": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"\"",
+            "view": {
+              "query": "",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 48.75,
+              "min": 48.75,
+              "max": 48.75,
+              "n": 1,
+              "samples": [
+                48.75
+              ]
+            },
+            "reactRenderMs": {
+              "median": 38.89,
+              "min": 38.89,
+              "max": 38.89,
+              "n": 1,
+              "samples": [
+                38.89
+              ]
+            },
+            "computeMs": {
+              "median": 0.23,
+              "min": 0.23,
+              "max": 0.23,
+              "n": 1,
+              "samples": [
+                0.23
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 100,
+            "shownCount": 100
+          }
+        ],
+        "final": {
+          "resultCount": 100,
+          "shownCount": 100
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "matchingQueryPasted": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"airspace\"",
+            "view": {
+              "query": "airspace",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 22.08,
+              "min": 22.08,
+              "max": 22.08,
+              "n": 1,
+              "samples": [
+                22.08
+              ]
+            },
+            "reactRenderMs": {
+              "median": 15.69,
+              "min": 15.69,
+              "max": 15.69,
+              "n": 1,
+              "samples": [
+                15.69
+              ]
+            },
+            "computeMs": {
+              "median": 0.08,
+              "min": 0.08,
+              "max": 0.08,
+              "n": 1,
+              "samples": [
+                0.08
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          }
+        ],
+        "final": {
+          "resultCount": 10,
+          "shownCount": 10
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"airspace\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "narrowingQueryTyped": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"a\"",
+            "view": {
+              "query": "a",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 99.79,
+              "min": 99.79,
+              "max": 99.79,
+              "n": 1,
+              "samples": [
+                99.79
+              ]
+            },
+            "reactRenderMs": {
+              "median": 91.1,
+              "min": 91.1,
+              "max": 91.1,
+              "n": 1,
+              "samples": [
+                91.1
+              ]
+            },
+            "computeMs": {
+              "median": 0.06,
+              "min": 0.06,
+              "max": 0.06,
+              "n": 1,
+              "samples": [
+                0.06
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 96,
+            "shownCount": 96
+          },
+          {
+            "step": 1,
+            "event": "query \"ai\"",
+            "view": {
+              "query": "ai",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 41.85,
+              "min": 41.85,
+              "max": 41.85,
+              "n": 1,
+              "samples": [
+                41.85
+              ]
+            },
+            "reactRenderMs": {
+              "median": 34.48,
+              "min": 34.48,
+              "max": 34.48,
+              "n": 1,
+              "samples": [
+                34.48
+              ]
+            },
+            "computeMs": {
+              "median": 0.05,
+              "min": 0.05,
+              "max": 0.05,
+              "n": 1,
+              "samples": [
+                0.05
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 26,
+            "shownCount": 26
+          },
+          {
+            "step": 2,
+            "event": "query \"air\"",
+            "view": {
+              "query": "air",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 34.05,
+              "min": 34.05,
+              "max": 34.05,
+              "n": 1,
+              "samples": [
+                34.05
+              ]
+            },
+            "reactRenderMs": {
+              "median": 30.83,
+              "min": 30.83,
+              "max": 30.83,
+              "n": 1,
+              "samples": [
+                30.83
+              ]
+            },
+            "computeMs": {
+              "median": 0.1,
+              "min": 0.1,
+              "max": 0.1,
+              "n": 1,
+              "samples": [
+                0.1
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 26,
+            "shownCount": 26
+          },
+          {
+            "step": 3,
+            "event": "query \"airs\"",
+            "view": {
+              "query": "airs",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 18.21,
+              "min": 18.21,
+              "max": 18.21,
+              "n": 1,
+              "samples": [
+                18.21
+              ]
+            },
+            "reactRenderMs": {
+              "median": 15.56,
+              "min": 15.56,
+              "max": 15.56,
+              "n": 1,
+              "samples": [
+                15.56
+              ]
+            },
+            "computeMs": {
+              "median": 0.09,
+              "min": 0.09,
+              "max": 0.09,
+              "n": 1,
+              "samples": [
+                0.09
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 4,
+            "event": "query \"airsp\"",
+            "view": {
+              "query": "airsp",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 17.95,
+              "min": 17.95,
+              "max": 17.95,
+              "n": 1,
+              "samples": [
+                17.95
+              ]
+            },
+            "reactRenderMs": {
+              "median": 15.22,
+              "min": 15.22,
+              "max": 15.22,
+              "n": 1,
+              "samples": [
+                15.22
+              ]
+            },
+            "computeMs": {
+              "median": 0.11,
+              "min": 0.11,
+              "max": 0.11,
+              "n": 1,
+              "samples": [
+                0.11
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 5,
+            "event": "query \"airspa\"",
+            "view": {
+              "query": "airspa",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 20.23,
+              "min": 20.23,
+              "max": 20.23,
+              "n": 1,
+              "samples": [
+                20.23
+              ]
+            },
+            "reactRenderMs": {
+              "median": 17.77,
+              "min": 17.77,
+              "max": 17.77,
+              "n": 1,
+              "samples": [
+                17.77
+              ]
+            },
+            "computeMs": {
+              "median": 0.12,
+              "min": 0.12,
+              "max": 0.12,
+              "n": 1,
+              "samples": [
+                0.12
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 6,
+            "event": "query \"airspac\"",
+            "view": {
+              "query": "airspac",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 14.82,
+              "min": 14.82,
+              "max": 14.82,
+              "n": 1,
+              "samples": [
+                14.82
+              ]
+            },
+            "reactRenderMs": {
+              "median": 11.6,
+              "min": 11.6,
+              "max": 11.6,
+              "n": 1,
+              "samples": [
+                11.6
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 7,
+            "event": "query \"airspace\"",
+            "view": {
+              "query": "airspace",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 5.35,
+              "min": 5.35,
+              "max": 5.35,
+              "n": 1,
+              "samples": [
+                5.35
+              ]
+            },
+            "reactRenderMs": {
+              "median": 2.93,
+              "min": 2.93,
+              "max": 2.93,
+              "n": 1,
+              "samples": [
+                2.93
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 8,
+            "event": "query \"airspace \"",
+            "view": {
+              "query": "airspace ",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 4.06,
+              "min": 4.06,
+              "max": 4.06,
+              "n": 1,
+              "samples": [
+                4.06
+              ]
+            },
+            "reactRenderMs": {
+              "median": 2.32,
+              "min": 2.32,
+              "max": 2.32,
+              "n": 1,
+              "samples": [
+                2.32
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 9,
+            "event": "query \"airspace c\"",
+            "view": {
+              "query": "airspace c",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 4.99,
+              "min": 4.99,
+              "max": 4.99,
+              "n": 1,
+              "samples": [
+                4.99
+              ]
+            },
+            "reactRenderMs": {
+              "median": 3,
+              "min": 3,
+              "max": 3,
+              "n": 1,
+              "samples": [
+                3
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 10,
+            "event": "query \"airspace cl\"",
+            "view": {
+              "query": "airspace cl",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 4.52,
+              "min": 4.52,
+              "max": 4.52,
+              "n": 1,
+              "samples": [
+                4.52
+              ]
+            },
+            "reactRenderMs": {
+              "median": 2.76,
+              "min": 2.76,
+              "max": 2.76,
+              "n": 1,
+              "samples": [
+                2.76
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 11,
+            "event": "query \"airspace cla\"",
+            "view": {
+              "query": "airspace cla",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 4.25,
+              "min": 4.25,
+              "max": 4.25,
+              "n": 1,
+              "samples": [
+                4.25
+              ]
+            },
+            "reactRenderMs": {
+              "median": 2.29,
+              "min": 2.29,
+              "max": 2.29,
+              "n": 1,
+              "samples": [
+                2.29
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 12,
+            "event": "query \"airspace clas\"",
+            "view": {
+              "query": "airspace clas",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 4.37,
+              "min": 4.37,
+              "max": 4.37,
+              "n": 1,
+              "samples": [
+                4.37
+              ]
+            },
+            "reactRenderMs": {
+              "median": 2.42,
+              "min": 2.42,
+              "max": 2.42,
+              "n": 1,
+              "samples": [
+                2.42
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 13,
+            "event": "query \"airspace class\"",
+            "view": {
+              "query": "airspace class",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 5.02,
+              "min": 5.02,
+              "max": 5.02,
+              "n": 1,
+              "samples": [
+                5.02
+              ]
+            },
+            "reactRenderMs": {
+              "median": 2.39,
+              "min": 2.39,
+              "max": 2.39,
+              "n": 1,
+              "samples": [
+                2.39
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 14,
+            "event": "query \"airspace class \"",
+            "view": {
+              "query": "airspace class ",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 16.49,
+              "min": 16.49,
+              "max": 16.49,
+              "n": 1,
+              "samples": [
+                16.49
+              ]
+            },
+            "reactRenderMs": {
+              "median": 14.7,
+              "min": 14.7,
+              "max": 14.7,
+              "n": 1,
+              "samples": [
+                14.7
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          },
+          {
+            "step": 15,
+            "event": "query \"airspace class b\"",
+            "view": {
+              "query": "airspace class b",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 11.61,
+              "min": 11.61,
+              "max": 11.61,
+              "n": 1,
+              "samples": [
+                11.61
+              ]
+            },
+            "reactRenderMs": {
+              "median": 9.24,
+              "min": 9.24,
+              "max": 9.24,
+              "n": 1,
+              "samples": [
+                9.24
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 3,
+            "shownCount": 3
+          }
+        ],
+        "final": {
+          "resultCount": 3,
+          "shownCount": 3
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"airspace class b\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "noMatchQuery": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"xylophone\"",
+            "view": {
+              "query": "xylophone",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 16.49,
+              "min": 16.49,
+              "max": 16.49,
+              "n": 1,
+              "samples": [
+                16.49
+              ]
+            },
+            "reactRenderMs": {
+              "median": 10.41,
+              "min": 10.41,
+              "max": 10.41,
+              "n": 1,
+              "samples": [
+                10.41
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 0,
+            "shownCount": 0
+          }
+        ],
+        "final": {
+          "resultCount": 0,
+          "shownCount": 0
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"xylophone\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "unicodeUppercaseAccent": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"MÉTÉO\"",
+            "view": {
+              "query": "MÉTÉO",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 29.18,
+              "min": 29.18,
+              "max": 29.18,
+              "n": 1,
+              "samples": [
+                29.18
+              ]
+            },
+            "reactRenderMs": {
+              "median": 21.77,
+              "min": 21.77,
+              "max": 21.77,
+              "n": 1,
+              "samples": [
+                21.77
+              ]
+            },
+            "computeMs": {
+              "median": 0.05,
+              "min": 0.05,
+              "max": 0.05,
+              "n": 1,
+              "samples": [
+                0.05
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          }
+        ],
+        "final": {
+          "resultCount": 10,
+          "shownCount": 10
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"MÉTÉO\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "unicodeCjk": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"航空\"",
+            "view": {
+              "query": "航空",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 18.09,
+              "min": 18.09,
+              "max": 18.09,
+              "n": 1,
+              "samples": [
+                18.09
+              ]
+            },
+            "reactRenderMs": {
+              "median": 11.9,
+              "min": 11.9,
+              "max": 11.9,
+              "n": 1,
+              "samples": [
+                11.9
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 5,
+            "shownCount": 5
+          }
+        ],
+        "final": {
+          "resultCount": 5,
+          "shownCount": 5
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"航空\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "unicodeDecomposedNoNormalization": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"météo\"",
+            "view": {
+              "query": "météo",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 14.48,
+              "min": 14.48,
+              "max": 14.48,
+              "n": 1,
+              "samples": [
+                14.48
+              ]
+            },
+            "reactRenderMs": {
+              "median": 8.23,
+              "min": 8.23,
+              "max": 8.23,
+              "n": 1,
+              "samples": [
+                8.23
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 0,
+            "shownCount": 0
+          }
+        ],
+        "final": {
+          "resultCount": 0,
+          "shownCount": 0
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"météo\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "duplicateTitlesUnderTitleSort": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"weight and balance\"",
+            "view": {
+              "query": "weight and balance",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "title"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 11.85,
+              "min": 11.85,
+              "max": 11.85,
+              "n": 1,
+              "samples": [
+                11.85
+              ]
+            },
+            "reactRenderMs": {
+              "median": 7.01,
+              "min": 7.01,
+              "max": 7.01,
+              "n": 1,
+              "samples": [
+                7.01
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 10,
+            "shownCount": 10
+          }
+        ],
+        "final": {
+          "resultCount": 10,
+          "shownCount": 10
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"weight and balance\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "tagQuery": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"xc-planning\"",
+            "view": {
+              "query": "xc-planning",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 32.9,
+              "min": 32.9,
+              "max": 32.9,
+              "n": 1,
+              "samples": [
+                32.9
+              ]
+            },
+            "reactRenderMs": {
+              "median": 28.05,
+              "min": 28.05,
+              "max": 28.05,
+              "n": 1,
+              "samples": [
+                28.05
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 25,
+            "shownCount": 25
+          }
+        ],
+        "final": {
+          "resultCount": 25,
+          "shownCount": 25
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"xc-planning\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "notesQuery": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "query \"fuel planning\"",
+            "view": {
+              "query": "fuel planning",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 27.74,
+              "min": 27.74,
+              "max": 27.74,
+              "n": 1,
+              "samples": [
+                27.74
+              ]
+            },
+            "reactRenderMs": {
+              "median": 21.03,
+              "min": 21.03,
+              "max": 21.03,
+              "n": 1,
+              "samples": [
+                21.03
+              ]
+            },
+            "computeMs": {
+              "median": 0.04,
+              "min": 0.04,
+              "max": 0.04,
+              "n": 1,
+              "samples": [
+                0.04
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 15,
+            "shownCount": 15
+          }
+        ],
+        "final": {
+          "resultCount": 15,
+          "shownCount": 15
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "final count equals generator rule \"fuel planning\"",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "filtersAndSortTogether": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "sort \"title\"",
+            "view": {
+              "query": "ground",
+              "topic": "weather",
+              "type": "",
+              "status": "Needs Review",
+              "sort": "title"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 9.84,
+              "min": 9.84,
+              "max": 9.84,
+              "n": 1,
+              "samples": [
+                9.84
+              ]
+            },
+            "reactRenderMs": {
+              "median": 8.35,
+              "min": 8.35,
+              "max": 8.35,
+              "n": 1,
+              "samples": [
+                8.35
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 2,
+            "shownCount": 2
+          }
+        ],
+        "final": {
+          "resultCount": 2,
+          "shownCount": 2
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "statusChipNextUp": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "status \"Next Up\"",
+            "view": {
+              "query": "",
+              "topic": "",
+              "type": "",
+              "status": "Next Up",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 45.35,
+              "min": 45.35,
+              "max": 45.35,
+              "n": 1,
+              "samples": [
+                45.35
+              ]
+            },
+            "reactRenderMs": {
+              "median": 38.59,
+              "min": 38.59,
+              "max": 38.59,
+              "n": 1,
+              "samples": [
+                38.59
+              ]
+            },
+            "computeMs": {
+              "median": 0.02,
+              "min": 0.02,
+              "max": 0.02,
+              "n": 1,
+              "samples": [
+                0.02
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 34,
+            "shownCount": 34
+          }
+        ],
+        "final": {
+          "resultCount": 34,
+          "shownCount": 34
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "sortRecentToPriority": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "sort \"priority\"",
+            "view": {
+              "query": "",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "priority"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 102.27,
+              "min": 102.27,
+              "max": 102.27,
+              "n": 1,
+              "samples": [
+                102.27
+              ]
+            },
+            "reactRenderMs": {
+              "median": 91.86,
+              "min": 91.86,
+              "max": 91.86,
+              "n": 1,
+              "samples": [
+                91.86
+              ]
+            },
+            "computeMs": {
+              "median": 0.13,
+              "min": 0.13,
+              "max": 0.13,
+              "n": 1,
+              "samples": [
+                0.13
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 100,
+            "shownCount": 100
+          }
+        ],
+        "final": {
+          "resultCount": 100,
+          "shownCount": 100
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "sortPriorityToTitle": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "sort \"title\"",
+            "view": {
+              "query": "",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "title"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 27.28,
+              "min": 27.28,
+              "max": 27.28,
+              "n": 1,
+              "samples": [
+                27.28
+              ]
+            },
+            "reactRenderMs": {
+              "median": 14.65,
+              "min": 14.65,
+              "max": 14.65,
+              "n": 1,
+              "samples": [
+                14.65
+              ]
+            },
+            "computeMs": {
+              "median": 0.03,
+              "min": 0.03,
+              "max": 0.03,
+              "n": 1,
+              "samples": [
+                0.03
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 100,
+            "shownCount": 100
+          }
+        ],
+        "final": {
+          "resultCount": 100,
+          "shownCount": 100
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "sortTitleToRecent": {
+        "steps": [
+          {
+            "step": 0,
+            "event": "sort \"recent\"",
+            "view": {
+              "query": "",
+              "topic": "",
+              "type": "",
+              "status": "Everything",
+              "sort": "recent"
+            },
+            "limit": 100,
+            "wallMs": {
+              "median": 31.2,
+              "min": 31.2,
+              "max": 31.2,
+              "n": 1,
+              "samples": [
+                31.2
+              ]
+            },
+            "reactRenderMs": {
+              "median": 21.21,
+              "min": 21.21,
+              "max": 21.21,
+              "n": 1,
+              "samples": [
+                21.21
+              ]
+            },
+            "computeMs": {
+              "median": 0.02,
+              "min": 0.02,
+              "max": 0.02,
+              "n": 1,
+              "samples": [
+                0.02
+              ]
+            },
+            "rendersPerRepeat": [
+              2
+            ],
+            "dbCallsAllRepeats": {
+              "selects": 0,
+              "executes": 0
+            },
+            "resultCount": 100,
+            "shownCount": 100
+          }
+        ],
+        "final": {
+          "resultCount": 100,
+          "shownCount": 100
+        },
+        "verified": [
+          "controls, count and exact shown ids/order checked after reset, after setup and after every measured step (warm-ups included), outside timing",
+          "per-step replica filter + sortMaterials equal the answer key"
+        ]
+      },
+      "showMoreProgressive": {
+        "skipped": "needs at least 101 materials"
+      },
+      "showMoreExpandTo1000": {
+        "skipped": "needs at least 1000 materials"
+      },
+      "queryWhileExpanded": {
+        "skipped": "needs at least 1000 materials"
+      }
+    },
+    "actionMutationWithRefreshMs": {
+      "median": 16.05,
+      "min": 16.05,
+      "max": 16.05,
+      "n": 1,
+      "samples": [
+        16.05
+      ]
+    },
+    "actionMutationQueries": {
+      "selects": 22,
+      "executes": 2
+    },
+    "rendersPerMutation": 1,
+    "materialMutationWithRefreshMs": {
+      "median": 15.45,
+      "min": 15.45,
+      "max": 15.45,
+      "n": 1,
+      "samples": [
+        15.45
+      ]
+    },
+    "materialMutationQueries": {
+      "selects": 21,
+      "executes": 1
+    },
+    "openMaterial": {
+      "noFile": {
+        "materialId": "m-3",
+        "missingNoticeShown": false,
+        "openMs": {
+          "median": 29.21,
+          "min": 29.21,
+          "max": 29.21,
+          "n": 1,
+          "samples": [
+            29.21
+          ]
+        }
+      },
+      "presentFileMock": {
+        "materialId": "m-4",
+        "missingNoticeShown": false,
+        "openMs": {
+          "median": 33.34,
+          "min": 33.34,
+          "max": 33.34,
+          "n": 1,
+          "samples": [
+            33.34
+          ]
+        }
+      },
+      "missingFileMock": {
+        "materialId": "m-8",
+        "missingNoticeShown": true,
+        "openMs": {
+          "median": 15.38,
+          "min": 15.38,
+          "max": 15.38,
+          "n": 1,
+          "samples": [
+            15.38
+          ]
+        }
+      }
+    },
+    "backToLibraryMs": {
+      "median": 137.36,
+      "min": 46.62,
+      "max": 143.59,
+      "n": 3,
+      "samples": [
+        137.36,
+        143.59,
+        46.62
+      ]
+    },
+    "navigationLegMs": {
+      "flightDeck": {
+        "median": 33.33,
+        "min": 33.33,
+        "max": 33.33,
+        "n": 1,
+        "samples": [
+          33.33
+        ]
+      },
+      "studyLibrary": {
+        "median": 50.28,
+        "min": 50.28,
+        "max": 50.28,
+        "n": 1,
+        "samples": [
+          50.28
+        ]
+      },
+      "questions": {
+        "median": 36.01,
+        "min": 36.01,
+        "max": 36.01,
+        "n": 1,
+        "samples": [
+          36.01
+        ]
+      }
+    },
+    "questionsDomNodes": 993,
+    "threeSectionNavigationMs": {
+      "median": 119.67,
+      "min": 119.67,
+      "max": 119.67,
+      "n": 1,
+      "samples": [
+        119.67
+      ]
+    },
+    "nodeMemory": {
+      "endHeapUsedMiB": 157,
+      "endRssMiB": 497,
+      "maxSampledHeapUsedMiB": 276,
+      "maxSampledRssMiB": 497,
+      "samples": 37
+    }
+  }
+}

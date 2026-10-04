@@ -1,0 +1,431 @@
+v22.22.1
+9.2.0
+TAP version 13
+# Subtest: R2: local session at a spaced checkout path exits 0 and does nothing
+not ok 1 - R2: local session at a spaced checkout path exits 0 and does nothing
+  ---
+  duration_ms: 10.953716
+  type: 'test'
+  location: '[synthetic-temp]:107:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    /bin/sh: 1: [synthetic-temp] local-spaced-kNa9JM/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found
+
+
+    127 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 127
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:112:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: R2: local session at a plain path exits 0 and does nothing (control)
+not ok 2 - R2: local session at a plain path exits 0 and does nothing (control)
+  ---
+  duration_ms: 3.51161
+  type: 'test'
+  location: '[synthetic-temp]:118:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    /bin/sh: 1: [synthetic-temp] local-plain-ueeO5E/checkout/.claude/hooks/session-start.sh: not found
+
+
+    127 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 127
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:122:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: R2: control: the unquoted command form fails at a spaced path
+ok 3 - R2: control: the unquoted command form fails at a spaced path
+  ---
+  duration_ms: 3.884546
+  type: 'test'
+  ...
+# Subtest: R2: remote session at a spaced checkout path reaches setup
+not ok 4 - R2: remote session at a spaced checkout path reaches setup
+  ---
+  duration_ms: 4.205293
+  type: 'test'
+  location: '[synthetic-temp]:132:1'
+  failureType: 'testCodeFailure'
+  error: 'the registered command could not even start the hook'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 127
+  actual: 127
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:136:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: cold setup uses npm ci and leaves all four tracked files unchanged
+not ok 5 - R4: cold setup uses npm ci and leaves all four tracked files unchanged
+  ---
+  duration_ms: 4.047384
+  type: 'test'
+  location: '[synthetic-temp]:141:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    /bin/sh: 1: [synthetic-temp] cold-60Sxb6/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found
+
+
+    127 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 127
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:146:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: warm setup reuses a verified node_modules without reinstalling
+not ok 6 - R4: warm setup reuses a verified node_modules without reinstalling
+  ---
+  duration_ms: 3.237313
+  type: 'test'
+  location: '[synthetic-temp]:153:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    127 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 127
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:156:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: a changed lock invalidates the warm cache and reinstalls with npm ci
+not ok 7 - R4: a changed lock invalidates the warm cache and reinstalls with npm ci
+  ---
+  duration_ms: 3.160574
+  type: 'test'
+  location: '[synthetic-temp]:166:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    127 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 127
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:169:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: a changed package.json with the same lock invalidates the warm cache
+not ok 8 - R4: a changed package.json with the same lock invalidates the warm cache
+  ---
+  duration_ms: 3.434071
+  type: 'test'
+  location: '[synthetic-temp]:182:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    127 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 127
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:185:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: an incomplete warm cache (simulated failing npm ls) reinstalls with npm ci
+not ok 9 - R4: an incomplete warm cache (simulated failing npm ls) reinstalls with npm ci
+  ---
+  duration_ms: 3.619039
+  type: 'test'
+  location: '[synthetic-temp]:195:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    127 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 127
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:198:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: a root-name mismatch never rewrites the committed lock
+ok 10 - R4: a root-name mismatch never rewrites the committed lock
+  ---
+  duration_ms: 4.741946
+  type: 'test'
+  ...
+# Subtest: R4: a real dependency mismatch fails visibly and changes nothing
+not ok 11 - R4: a real dependency mismatch fails visibly and changes nothing
+  ---
+  duration_ms: 4.212712
+  type: 'test'
+  location: '[synthetic-temp]:214:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /npm ci failed|npm error/. Input:
+
+    '/bin/sh: 1: [synthetic-temp] dep-mismatch-BACmli/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found\n'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    /bin/sh: 1: [synthetic-temp] dep-mismatch-BACmli/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found
+
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:220:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: a missing lock fails visibly and no lock is created
+not ok 12 - R4: a missing lock fails visibly and no lock is created
+  ---
+  duration_ms: 3.155384
+  type: 'test'
+  location: '[synthetic-temp]:225:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /package-lock\.json is missing/. Input:
+
+    '/bin/sh: 1: [synthetic-temp] no-lock-OSVSEN/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found\n'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    /bin/sh: 1: [synthetic-temp] no-lock-OSVSEN/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found
+
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:230:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: a Cargo.lock change during setup fails the hook (four-file guard)
+not ok 13 - R4: a Cargo.lock change during setup fails the hook (four-file guard)
+  ---
+  duration_ms: 2.988236
+  type: 'test'
+  location: '[synthetic-temp]:234:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /changed a tracked manifest or lockfile/. Input:
+
+    '/bin/sh: 1: [synthetic-temp] cargo-guard-uStYTX/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found\n'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    /bin/sh: 1: [synthetic-temp] cargo-guard-uStYTX/Her Flight Deck checkout/.claude/hooks/session-start.sh: not found
+
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:239:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: npm-deps does not trust a marker from a different setup
+not ok 14 - R4: npm-deps does not trust a marker from a different setup
+  ---
+  duration_ms: 3.719808
+  type: 'test'
+  location: '[synthetic-temp]:242:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [synthetic-temp]: line 14: set: pipefail
+: invalid option name
+
+
+    2 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://[synthetic-temp]:247:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R3: success writes the screenshot and stops the owned server
+ok 15 - R3: success writes the screenshot and stops the owned server
+  ---
+  duration_ms: 700.840114
+  type: 'test'
+  ...
+# Subtest: R3: a launch failure exits 1 with its own error and stops the owned server
+ok 16 - R3: a launch failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 692.29614
+  type: 'test'
+  ...
+# Subtest: R3: a newContext failure exits 1 with its own error and stops the owned server
+ok 17 - R3: a newContext failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 686.043821
+  type: 'test'
+  ...
+# Subtest: R3: a goto failure exits 1 with its own error and stops the owned server
+ok 18 - R3: a goto failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 685.626248
+  type: 'test'
+  ...
+# Subtest: R3: a screenshot failure exits 1 with its own error and stops the owned server
+ok 19 - R3: a screenshot failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 705.365488
+  type: 'test'
+  ...
+# Subtest: R3: a startup timeout exits 1 and stops the owned server
+ok 20 - R3: a startup timeout exits 1 and stops the owned server
+  ---
+  duration_ms: 2015.541178
+  type: 'test'
+  ...
+# Subtest: R3: a server that exits before answering is reported and leaves nothing behind
+ok 21 - R3: a server that exits before answering is reported and leaves nothing behind
+  ---
+  duration_ms: 630.695652
+  type: 'test'
+  ...
+# Subtest: R5: a browser-close failure after successful screenshots exits 1 and still stops the owned server
+ok 22 - R5: a browser-close failure after successful screenshots exits 1 and still stops the owned server
+  ---
+  duration_ms: 681.655309
+  type: 'test'
+  ...
+# Subtest: R5: when navigation and then browser close both fail, the navigation error is the one reported
+ok 23 - R5: when navigation and then browser close both fail, the navigation error is the one reported
+  ---
+  duration_ms: 683.847333
+  type: 'test'
+  ...
+# Subtest: R6: an owned server that ignores SIGTERM is killed within the bound, parent and child
+ok 24 - R6: an owned server that ignores SIGTERM is killed within the bound, parent and child
+  ---
+  duration_ms: 1188.404155
+  type: 'test'
+  ...
+# Subtest: R7: an owned server that accepts but never answers ends at the startup deadline and is stopped
+ok 25 - R7: an owned server that accepts but never answers ends at the startup deadline and is stopped
+  ---
+  duration_ms: 1925.922568
+  type: 'test'
+  ...
+# Subtest: R7: a pre-existing server that never answers ends promptly and is left running
+ok 26 - R7: a pre-existing server that never answers ends promptly and is left running
+  ---
+  duration_ms: 806.107475
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (success)
+ok 27 - R3: a reused server is left running (success)
+  ---
+  duration_ms: 387.667427
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (launch)
+ok 28 - R3: a reused server is left running (launch)
+  ---
+  duration_ms: 367.309368
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (goto+close)
+ok 29 - R3: a reused server is left running (goto+close)
+  ---
+  duration_ms: 375.23932
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 17
+# fail 12
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12832.791239

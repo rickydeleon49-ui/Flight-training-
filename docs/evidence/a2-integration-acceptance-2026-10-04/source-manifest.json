@@ -1,0 +1,150 @@
+{
+  "base": "53ae33505621fa0cd209a8e7d071cd8fef5cf200",
+  "branch": "fix/a2-atomic-save-integration",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 217,
+      "sha256": "5064e02cfc2c3acc8424a71f345a8ab11c96c9ce5792d81f2a799f4d05d44dbc",
+      "gitBlob": "1fd8433e8680886700e7831a6795d0a0265de170"
+    },
+    {
+      "path": "scripts/mac-readiness-preflight.mjs",
+      "bytes": 45742,
+      "sha256": "278777d5b873efb1be6d32d94bfcb65aa38262ed9ff89237f2d3e03f4dfe3c69",
+      "gitBlob": "518b45c5e4632ac0b4677c9b0a61bd44e672aadd"
+    },
+    {
+      "path": "src-tauri/fixtures/material-save-contract/expected.json",
+      "bytes": 12877,
+      "sha256": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+      "gitBlob": "e1a58136bfc0cd05a87a4ba102319c09b712e5bf"
+    },
+    {
+      "path": "src-tauri/fixtures/material-save-contract/steps.json",
+      "bytes": 2484,
+      "sha256": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+      "gitBlob": "00fa6427af39bf90388438ef32b1f5f4d7da0d3b"
+    },
+    {
+      "path": "src-tauri/src/documents.rs",
+      "bytes": 127299,
+      "sha256": "36f761ca983bdf7c1143b7a825bde7212a4a1301a175748eebb022cf5b387930",
+      "gitBlob": "e22a0d0ff77a0daa1148b2f055cd5c27a3d90d57"
+    },
+    {
+      "path": "src-tauri/src/documents_save_tests.rs",
+      "bytes": 37289,
+      "sha256": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+      "gitBlob": "3d2409c9f6f1f0acb1ef3ddfc080e1c8dde70769"
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "bytes": 6049,
+      "sha256": "662d89a2f5eee2d942535f28d0ee80b146757dc4e2fefc19f1d63177af5ea2c5",
+      "gitBlob": "e6121ade41a3d19594ad06d448286a34fd630359"
+    },
+    {
+      "path": "src/data/connectionOwner.ts",
+      "bytes": 15969,
+      "sha256": "2c985a7c515b434a663e495a902bc8451faaeb3daa5de3dc46b6bd173ad3324a",
+      "gitBlob": "4a4b195248e485af5948a35e030cf1965843ec25"
+    },
+    {
+      "path": "src/data/db.ts",
+      "bytes": 6051,
+      "sha256": "46b0f2508b0e1d057529f6b8f05908f6c2a7e95fc13a0dd17c66316b16dac83a",
+      "gitBlob": "a7519ded0391a3273a867066fee01c789bbc65df"
+    },
+    {
+      "path": "src/data/materialSaveContract.test.ts",
+      "bytes": 2771,
+      "sha256": "6325aafa4712d09b8ace833c51cc3f753fd76e529a66c3544c1aa7652d7be54e",
+      "gitBlob": "a0d657202e96e1950aa321d820adde483b045ce4"
+    },
+    {
+      "path": "src/data/materialTransaction.ts",
+      "bytes": 12352,
+      "sha256": "8c65a4d3c01536c815bddff7a3dd67adcb17277d0daab1fd3dced5331b01ae22",
+      "gitBlob": "cb97e06c45897306d2a11c71ff8167d721bfb51d"
+    },
+    {
+      "path": "src/data/repositories/documentRepository.test.ts",
+      "bytes": 21773,
+      "sha256": "0493ad2a7b6a6ef11eaf9e57fa6701104073ec8e0cbb87f994b7789a0bc529c4",
+      "gitBlob": "3dbf12140cf80fbff1b1d12dc12f622c54afd311"
+    },
+    {
+      "path": "src/data/repositories/documentRepository.ts",
+      "bytes": 15378,
+      "sha256": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+      "gitBlob": "bf610db16f926ba4f7ce30970e85a30e1367ab6a"
+    },
+    {
+      "path": "src/data/singleConnectionDrivers.test.ts",
+      "bytes": 106951,
+      "sha256": "90bc239d5898db07faf23953719223fc1443b5d9a55584a2da04006f51f70f26",
+      "gitBlob": "da9d205ec9cf28e31fd0a7efb32aed6f31fac6e6"
+    },
+    {
+      "path": "src/data/sqlJsDb.ts",
+      "bytes": 8043,
+      "sha256": "8931672c7cf62ef158ec119a4cfe31d751084c90be8030e72f3d8201ebdaeb9d",
+      "gitBlob": "f42504e21cfe7dae0f7067bea65ef239ab03d03c"
+    },
+    {
+      "path": "src/data/tauriDb.ts",
+      "bytes": 3335,
+      "sha256": "8cf2ca2a56b7e62f8752fb40478ea013ce235917e38e5769ebc7f864e82bca55",
+      "gitBlob": "3ba56129cfa4f60fe475ffacb1289446dae55ef0"
+    },
+    {
+      "path": "src/data/testing/nodeSqliteDb.ts",
+      "bytes": 3937,
+      "sha256": "063465305f71a8b956f447d9b450392902482a8b1c838dec7839b46db229e97f",
+      "gitBlob": "a50933cbfb38efecd834b6a52f8e797ebb80ebc0"
+    },
+    {
+      "path": "src/pages/FlightJournal/debriefLinks.test.ts",
+      "bytes": 36881,
+      "sha256": "be1181c22d7d19e2e09e8d2404649c06bf2b2d5b977e3be1c071f7861c3bc02c",
+      "gitBlob": "2679925a06bf4caa8137f030ebaec3f6167f8baf"
+    },
+    {
+      "path": "src/pages/FlightJournal/quickDebrief.test.ts",
+      "bytes": 65782,
+      "sha256": "cf4843988eb84d75e6cebd6c3dd52cffb93bfda2fe6ab9581baebb75e9166e4a",
+      "gitBlob": "8f485d355777fd5e39866010aba9a211a782825f"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialFormDialog.test.ts",
+      "bytes": 13146,
+      "sha256": "7a24a3accfae9b453ab878750aa18e0b79f5343ed36c30ef0bd8e2461c8b7665",
+      "gitBlob": "641a75750d3ded9474e5d8cee4ebbbb0bdede435"
+    },
+    {
+      "path": "src/pages/StudyLibrary/materialSaveIntegration.test.ts",
+      "bytes": 7976,
+      "sha256": "cf60f482fcb749ff88eb983c7e4c543982a3cdc41b0161aa978cbee07698594a",
+      "gitBlob": "9f37bc9709612c5ce64eeed645320b5c56ea18f7"
+    },
+    {
+      "path": "src/perf/appResponsiveness.bench.test.ts",
+      "bytes": 18329,
+      "sha256": "96b74d772df0049f577f687ee5dd410279482c1717c5deb566a839c07b3c0455",
+      "gitBlob": "2fe3dad969fea387dea593ba81b2db421c92d885"
+    },
+    {
+      "path": "src/perf/studyLibraryFixture.ts",
+      "bytes": 10312,
+      "sha256": "e7d21a11ab21ec58d503a5f3463ca821639739fa5bd99eb933ba32e816a4103e",
+      "gitBlob": "d8ba0c70afc269e9f3254b8017b76addd13e745a"
+    },
+    {
+      "path": "src/perf/studyLibraryScenarios.test.ts",
+      "bytes": 14028,
+      "sha256": "663c385cf4ea5fff9877c0a309d5d1706e26fedaedf9aebd94c3f4e070c58740",
+      "gitBlob": "7140950205dec1b2c55a6de0a1aaeaea05c6b5ea"
+    }
+  ]
+}

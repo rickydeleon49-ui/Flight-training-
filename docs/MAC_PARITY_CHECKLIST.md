@@ -1,5 +1,7 @@
 # macOS parity and implementation tracker
 
+**4 October A2 source acceptance:** [Latest-main integration](A2_INTEGRATION_ACCEPTANCE_2026-10-04.md) is locally reviewed and green; the containing PR records exact-head CI/merge. [Mac follow-up](CLAUDE_MAC_A2_ACCEPTED_SOURCE_VERIFICATION_PROMPT_2026-10-04.md) verifies the published source against the accepted preparation. Windows results clear no installed, APFS, signing, older-WKWebView or release item. Earlier A2 blocker annotations are historical.
+
 _Last updated: 29 September 2026 (Mac test kit prepared for 2 October 2026). Target: Apple Silicon Macs, macOS 12 or newer. Living checklist; not a claim of release readiness._
 
 **2 October handoff:** the user has a Mac available. Start with the [GitHub Mac handoff](MAC_GITHUB_HANDOFF_2026-10-02.md) and record hardware/OS evidence before changing any UNVERIFIED result. The frozen-candidate kit below remains a separate artifact test; a fresh build of current main cannot be recorded as that candidate.
