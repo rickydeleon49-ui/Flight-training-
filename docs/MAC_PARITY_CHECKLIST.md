@@ -1,5 +1,7 @@
 # macOS parity and implementation tracker
 
+**4 October Mac A2 re-review:** [Independent host regression passes](MAC_A2_VERIFICATION_REREVIEW_2026-10-04.md): 21 harness passes, 20 exercised and one distinct-case early return. [Final documentation/publication cleanup](CLAUDE_MAC_A2_VERIFICATION_FINAL_EVIDENCE_PROMPT_2026-10-04.md) remains; no installed, signing or release status is cleared.
+
 **4 October Mac verification review:** [MVER-R1–R3 corrections pending](MAC_A2_VERIFICATION_REVIEW_2026-10-04.md) before accepting the new Mac report: required case-insensitive alias operations are not exercised, evidence metadata contradicts retained receipts, and linked logs need tracked publication. Source acceptance remains unchanged; installed tracker rows are not cleared.
 
 **4 October A2 source acceptance:** [Latest-main integration](A2_INTEGRATION_ACCEPTANCE_2026-10-04.md) is locally reviewed and green; the containing PR records exact-head CI/merge. [Mac follow-up](CLAUDE_MAC_A2_ACCEPTED_SOURCE_VERIFICATION_PROMPT_2026-10-04.md) verifies the published source against the accepted preparation. Windows results clear no installed, APFS, signing, older-WKWebView or release item. Earlier A2 blocker annotations are historical.

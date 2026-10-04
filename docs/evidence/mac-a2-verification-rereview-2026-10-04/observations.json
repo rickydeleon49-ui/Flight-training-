@@ -1,0 +1,232 @@
+{
+  "acceptedBlobComparisons": [
+    {
+      "path": ".gitattributes",
+      "expected": "1fd8433e8680886700e7831a6795d0a0265de170",
+      "observed": "1fd8433e8680886700e7831a6795d0a0265de170",
+      "match": true
+    },
+    {
+      "path": "scripts/mac-readiness-preflight.mjs",
+      "expected": "518b45c5e4632ac0b4677c9b0a61bd44e672aadd",
+      "observed": "518b45c5e4632ac0b4677c9b0a61bd44e672aadd",
+      "match": true
+    },
+    {
+      "path": "src-tauri/fixtures/material-save-contract/expected.json",
+      "expected": "e1a58136bfc0cd05a87a4ba102319c09b712e5bf",
+      "observed": "e1a58136bfc0cd05a87a4ba102319c09b712e5bf",
+      "match": true
+    },
+    {
+      "path": "src-tauri/fixtures/material-save-contract/steps.json",
+      "expected": "00fa6427af39bf90388438ef32b1f5f4d7da0d3b",
+      "observed": "00fa6427af39bf90388438ef32b1f5f4d7da0d3b",
+      "match": true
+    },
+    {
+      "path": "src-tauri/src/documents.rs",
+      "expected": "e22a0d0ff77a0daa1148b2f055cd5c27a3d90d57",
+      "observed": "e22a0d0ff77a0daa1148b2f055cd5c27a3d90d57",
+      "match": true
+    },
+    {
+      "path": "src-tauri/src/documents_save_tests.rs",
+      "expected": "3d2409c9f6f1f0acb1ef3ddfc080e1c8dde70769",
+      "observed": "7fa77495aa239432b9b67afd2268396bad47952b",
+      "match": false
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "expected": "e6121ade41a3d19594ad06d448286a34fd630359",
+      "observed": "e6121ade41a3d19594ad06d448286a34fd630359",
+      "match": true
+    },
+    {
+      "path": "src/data/connectionOwner.ts",
+      "expected": "4a4b195248e485af5948a35e030cf1965843ec25",
+      "observed": "4a4b195248e485af5948a35e030cf1965843ec25",
+      "match": true
+    },
+    {
+      "path": "src/data/db.ts",
+      "expected": "a7519ded0391a3273a867066fee01c789bbc65df",
+      "observed": "a7519ded0391a3273a867066fee01c789bbc65df",
+      "match": true
+    },
+    {
+      "path": "src/data/materialSaveContract.test.ts",
+      "expected": "a0d657202e96e1950aa321d820adde483b045ce4",
+      "observed": "a0d657202e96e1950aa321d820adde483b045ce4",
+      "match": true
+    },
+    {
+      "path": "src/data/materialTransaction.ts",
+      "expected": "cb97e06c45897306d2a11c71ff8167d721bfb51d",
+      "observed": "cb97e06c45897306d2a11c71ff8167d721bfb51d",
+      "match": true
+    },
+    {
+      "path": "src/data/repositories/documentRepository.test.ts",
+      "expected": "3dbf12140cf80fbff1b1d12dc12f622c54afd311",
+      "observed": "3dbf12140cf80fbff1b1d12dc12f622c54afd311",
+      "match": true
+    },
+    {
+      "path": "src/data/repositories/documentRepository.ts",
+      "expected": "bf610db16f926ba4f7ce30970e85a30e1367ab6a",
+      "observed": "bf610db16f926ba4f7ce30970e85a30e1367ab6a",
+      "match": true
+    },
+    {
+      "path": "src/data/singleConnectionDrivers.test.ts",
+      "expected": "da9d205ec9cf28e31fd0a7efb32aed6f31fac6e6",
+      "observed": "da9d205ec9cf28e31fd0a7efb32aed6f31fac6e6",
+      "match": true
+    },
+    {
+      "path": "src/data/sqlJsDb.ts",
+      "expected": "f42504e21cfe7dae0f7067bea65ef239ab03d03c",
+      "observed": "f42504e21cfe7dae0f7067bea65ef239ab03d03c",
+      "match": true
+    },
+    {
+      "path": "src/data/tauriDb.ts",
+      "expected": "3ba56129cfa4f60fe475ffacb1289446dae55ef0",
+      "observed": "3ba56129cfa4f60fe475ffacb1289446dae55ef0",
+      "match": true
+    },
+    {
+      "path": "src/data/testing/nodeSqliteDb.ts",
+      "expected": "a50933cbfb38efecd834b6a52f8e797ebb80ebc0",
+      "observed": "a50933cbfb38efecd834b6a52f8e797ebb80ebc0",
+      "match": true
+    },
+    {
+      "path": "src/pages/FlightJournal/debriefLinks.test.ts",
+      "expected": "2679925a06bf4caa8137f030ebaec3f6167f8baf",
+      "observed": "2679925a06bf4caa8137f030ebaec3f6167f8baf",
+      "match": true
+    },
+    {
+      "path": "src/pages/FlightJournal/quickDebrief.test.ts",
+      "expected": "8f485d355777fd5e39866010aba9a211a782825f",
+      "observed": "8f485d355777fd5e39866010aba9a211a782825f",
+      "match": true
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialFormDialog.test.ts",
+      "expected": "641a75750d3ded9474e5d8cee4ebbbb0bdede435",
+      "observed": "641a75750d3ded9474e5d8cee4ebbbb0bdede435",
+      "match": true
+    },
+    {
+      "path": "src/pages/StudyLibrary/materialSaveIntegration.test.ts",
+      "expected": "9f37bc9709612c5ce64eeed645320b5c56ea18f7",
+      "observed": "9f37bc9709612c5ce64eeed645320b5c56ea18f7",
+      "match": true
+    },
+    {
+      "path": "src/perf/appResponsiveness.bench.test.ts",
+      "expected": "2fe3dad969fea387dea593ba81b2db421c92d885",
+      "observed": "2fe3dad969fea387dea593ba81b2db421c92d885",
+      "match": true
+    },
+    {
+      "path": "src/perf/studyLibraryFixture.ts",
+      "expected": "d8ba0c70afc269e9f3254b8017b76addd13e745a",
+      "observed": "d8ba0c70afc269e9f3254b8017b76addd13e745a",
+      "match": true
+    },
+    {
+      "path": "src/perf/studyLibraryScenarios.test.ts",
+      "expected": "7140950205dec1b2c55a6de0a1aaeaea05c6b5ea",
+      "observed": "7140950205dec1b2c55a6de0a1aaeaea05c6b5ea",
+      "match": true
+    }
+  ],
+  "unchangedAcceptedBlobs": 23,
+  "expectedTestOnlyAddition": "src-tauri/src/documents_save_tests.rs",
+  "sourceIdentity": {
+    "path": "src/perf/studyLibraryScenarios.test.ts",
+    "working": {
+      "bytes": 13773,
+      "sha256": "7d77d92cb1e107167bcda8d3c6d4e108846bb736019e5f21c621b790f7090acb"
+    },
+    "fullCrlf": {
+      "bytes": 14073,
+      "sha256": "b365b4f6d9cbbbe28a53637dd42071c1299d8534fc6dae3515f259d49facbcf6"
+    },
+    "acceptedWindowsWorking": {
+      "path": "src/perf/studyLibraryScenarios.test.ts",
+      "bytes": 14028,
+      "sha256": "663c385cf4ea5fff9877c0a309d5d1706e26fedaedf9aebd94c3f4e070c58740",
+      "gitBlob": "7140950205dec1b2c55a6de0a1aaeaea05c6b5ea"
+    }
+  },
+  "mirroredLogs": 15,
+  "mirrorMismatches": [],
+  "newFileWhitespace": [
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/a2-diagnostics.txt",
+      "exitCode": 3,
+      "diagnostic": "docs/evidence/mac-a2-verification-2026-10-04/a2-diagnostics.txt:729: new blank line at EOF.\n"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/case-sensitive-apfs-save-tests.txt",
+      "exitCode": 3,
+      "diagnostic": "docs/evidence/mac-a2-verification-2026-10-04/case-sensitive-apfs-save-tests.txt:35: new blank line at EOF.\n"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/host-apfs-save-tests.txt",
+      "exitCode": 3,
+      "diagnostic": "docs/evidence/mac-a2-verification-2026-10-04/host-apfs-save-tests.txt:36: new blank line at EOF.\n"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/focused.txt",
+      "exitCode": 3,
+      "diagnostic": "docs/evidence/mac-a2-verification-2026-10-04/focused.txt:1493: new blank line at EOF.\n"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-06-cargo-test.txt",
+      "exitCode": 3,
+      "diagnostic": "docs/evidence/mac-a2-verification-2026-10-04/gate-06-cargo-test.txt:311: new blank line at EOF.\n"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-02-npm-test.txt",
+      "exitCode": 3,
+      "diagnostic": "docs/evidence/mac-a2-verification-2026-10-04/gate-02-npm-test.txt:208: new blank line at EOF.\n"
+    }
+  ],
+  "reviewerChecks": {
+    "nativeSaveTests": {
+      "exitCode": 0,
+      "harnessPassed": 21,
+      "casesExercised": 20,
+      "earlyReturns": 1,
+      "secondsFromHarness": 5.42,
+      "transientLockWaitMs": 459.626625,
+      "permanentLockTimeoutMs": 5180.108333,
+      "source": "independent tool execution f62ad3/cf5876, disposable native Profile only"
+    },
+    "cargoFmt": {
+      "exitCode": 0
+    },
+    "trackedDiffWhitespace": {
+      "exitCode": 0
+    },
+    "fullMatricesRepeated": false,
+    "caseSensitiveImageMountedByReviewer": false,
+    "realAppLaunched": false
+  },
+  "newPreflightInvocations": {
+    "textGeneratedAt": "2026-10-04T21:01:04.154Z",
+    "jsonGeneratedAt": "2026-10-04T21:01:04.378Z",
+    "bothCounts": {
+      "PASS": 9,
+      "FAIL": 0,
+      "UNVERIFIED": 3,
+      "USER_ACTION": 3
+    }
+  }
+}
