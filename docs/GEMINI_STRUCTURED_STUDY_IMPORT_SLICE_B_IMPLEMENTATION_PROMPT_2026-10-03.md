@@ -12,8 +12,8 @@
 Before creating a working branch or modifying any production file, inspect the repository and verify:
 
 1. **Gate 1 (Slice A Merged):** `main` contains the accepted Slice A source (PR #62, base `3efe95316b200848178033a68d057f66815cf427` or newer). `src/logic/studyPacket/` and `src-tauri/src/study_packet.rs` exist.
-2. **Gate 2 (Published Accepted A2):** The Windows implementer has published the matching reviewed A2 source branch/PR to GitHub, and Codex has independently reviewed and accepted it ([`A2_SECOND_REVIEW_DETAILS_2026-10-02.md`](A2_SECOND_REVIEW_DETAILS_2026-10-02.md) R6/R7 resolved). (Inspection scope: live branches on `origin` and GitHub PRs).
-3. **Gate 3 (M2 Real-User Check-In):** The owner has recorded notes from a real-user study session in `docs/` (or an explicit owner decision narrowing it) and granted scoped approval for structured study import.
+2. **Gate 2 (Published Accepted A2):** [A2 integration acceptance](A2_INTEGRATION_ACCEPTANCE_2026-10-04.md) is published through merged PR #78 (`5587251`, required CI green on `8a69fa2`). Verify that accepted commit is in current main; older A2 source-unavailable reviews are historical.
+3. **Gate 3 (Owner scope):** The owner [explicitly waived the M2 real-user check-in](M2_REAL_USER_CHECKIN_OWNER_WAIVER_2026-10-04.md); do not ask for check-in notes or stop solely because they are absent. Separate scoped approval for structured study import must still be recorded; the waiver alone does not supply that implementation approval.
 4. **Gate 4 (Owner Decisions D1–D9 Approved):** An explicit owner decision document exists approving:
    - **D1:** Toolbar action "Import study packet…" in `StudyLibrary.tsx`.
    - **D2:** Create-new only; replacement remains deferred.
