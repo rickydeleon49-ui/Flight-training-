@@ -1,0 +1,471 @@
+# Structured study import: Slice B implementation preparation (corrected) — 3 October 2026
+
+Prepared on the Mac in `/Users/rickymac/code/Flight-training-` on branch `codex/structured-study-import-slice-b-preparation` from clean synchronized `main` base `3efe95316b200848178033a68d057f66815cf427` (PR #62 merge).
+
+Assignment: [Gemini structured study-import Slice B preparation corrections prompt](https://github.com/rickydeleon49-ui/Flight-training-/blob/main/docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_CORRECTIONS_PROMPT_2026-10-03.md).
+Review reference: [Codex Slice B preparation review](https://github.com/rickydeleon49-ui/Flight-training-/blob/main/docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_REVIEW_2026-10-03.md) (BPREP-R1–R3, PR #63, merge `c5b70329fb94eef58df2d6a16e0edf8c44c4a11e`).
+
+**Status: planning and implementation preparation only. No production database, repository, service, dialog, migration, or packaging code has been modified.**
+All changes remain uncommitted and unpushed for Codex re-review.
+Implementation gates for Slice B remain **unmet**; this package defines the complete technical, architectural, and test contract so that implementation can begin immediately once those gates clear.
+
+---
+
+## 1. Working identity and verified starting point
+
+| Item | Value |
+| --- | --- |
+| Repository | `rickydeleon49-ui/Flight-training-`, local clone `/Users/rickymac/code/Flight-training-` |
+| Working branch | `codex/structured-study-import-slice-b-preparation` (created directly from clean `main` `3efe953`) |
+| Base commit | `3efe95316b200848178033a68d057f66815cf427` (PR #62 merge commit) |
+| Starting checkout | Clean synchronized `main` at `3efe95316b200848178033a68d057f66815cf427`. |
+| Current working state | Working branch dirty with 8 documentation and evidence files under this preparation assignment. Zero production code, tests, manifests, lockfiles, or workflows are modified. |
+| Remote state | `origin/main` is at `c5b70329fb94eef58df2d6a16e0edf8c44c4a11e` (PR #63 review publication). GitHub metadata check: 63 total PRs, 0 open PRs. |
+| Preceding slice | **Slice A merged and accepted:** PR #62 integrated `zod@4.6.5`, pure TypeScript `validatePacketText`/`validatePacketBytes` (`src/logic/studyPacket/`), read-only native command `pick_study_packet` (`src-tauri/src/study_packet.rs`), desktop wrapper (`src/services/studyPackets.ts`), 56 fixtures, 41 permanent regressions, 22 mutation tests, and Zod third-party notices. Required CI passed on exact reviewed head `919d53faa2cf4ea9f4d72835d320be0e9f2080c6`. SA1 and SA2 are closed. |
+| Host / environment | MacBook Air (Mac17,3), Apple M5, arm64, macOS 27.0.1 (26A434); Node v22.23.3, npm 10.9.9, rustc 1.99.0, cargo 1.99.0, SDK `/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk` |
+| Task scope | **Preparation only (corrected for BPREP-R1–R3):** observable durability and recovery design, accurate compatibility and gate evidence, unified native IPC contract, and complete stable-ID acceptance test matrix. Gated implementation, database writes, schema migrations, and UI additions are strictly excluded. |
+
+---
+
+## 2. Implementation gate and prerequisite status
+
+The owner exception granted on 3 October 2026 ([`STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md`](STRUCTURED_STUDY_IMPORT_SLICE_A_OWNER_EXCEPTION_2026-10-03.md)) explicitly covered **Slice A only** and expired with its acceptance. Slice B introduces database writes and user-facing screens, and therefore requires satisfying all foundation and adoption prerequisites before implementation begins.
+
+| Prerequisite gate | Required evidence | Observed status on 3 Oct 2026 | Source / citation | Next responsible action |
+| --- | --- | --- | --- | --- |
+| **G1: Slice A source integration** | Source merged to `main`; passing exact-head required check (`Tests, types, and the data-safety guards` on `ubuntu-latest`); clean Mac main contains validator and reader. | **MET (100%)** | Merged in PR #62 (`3efe95316b200848178033a68d057f66815cf427`); CI head `919d53faa2cf4ea9f4d72835d320be0e9f2080c6` passed; SA1 and SA2 closed. | Maintained on main. |
+| **G2: Published, independently accepted Windows A2 source** | Published remote branch / PR on GitHub with reviewed A2 source (`saveMaterialAtomically`, `MaterialSaveOperation`, connection ownership, R6/R7 corrections); independent Codex acceptance of exact head. | **NOT MET (BLOCKED)** | GitHub metadata check (3 Oct 2026): inspected origin remote branches and 63 total PRs (0 open); zero branches or PRs named `fix/atomic-study-material-saves` or matching A2. Inherited repository status records A2 as uncommitted on the Windows machine (base `533a8f5`). Mac preparation is accepted ([`MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md`](MAC_A2_VERIFICATION_PREPARATION_ACCEPTANCE_2026-10-03.md)), but preparation and oracle controls do not establish A2 implementation source acceptance. | Windows owner publishes matching R6/R7 source branch/PR; Codex reviews and merges. |
+| **G3: M2 real-user check-in & scoped approval** | Documented check-in notes from a real-user study session on Her Flight Deck (per [`ROADMAP.md`](../ROADMAP.md) and [`M2_STUDY_LIBRARY_DESIGN_2026-09-27.md`](M2_STUDY_LIBRARY_DESIGN_2026-09-27.md)); scoped owner approval to proceed with outside study import. | **NOT MET (PENDING)** | Check-in has not been conducted. Stored in repository as future roadmap item. | Owner conducts pilot/student session and records scoped approval in docs (or an explicit owner decision narrowing it). |
+| **G4: Owner decisions on D1–D9** | Owner approval of the 9 implementation decisions in the contract, particularly D1 (toolbar entry), D2 (create-new only), and D3 (provenance without migration). | **NOT MET (PROPOSALS)** | D1–D9 remain proposals in [`STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md`](STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md) §7. No owner decision has been recorded for B. | Owner reviews proposed defaults (§3 below) and approves them. |
+| **G5: Clean synchronized working tree** | Working directory clean; synchronized with `origin/main`; no uncommitted conflicting edits. | **MET AT BASE** | Started from clean `main` (`3efe953`). Current state has 8 uncommitted preparation files awaiting Codex review. | Maintain uncommitted until Codex review. |
+
+---
+
+## 3. Owner decisions table (D1–D9) and analysis
+
+The contract ([`STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md`](STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md) §7) proposed conservative defaults for nine product and architecture decisions. None has been approved yet. Below is the owner-facing decision table detailing the proposed default, practical consequences, and alternatives.
+
+### 3.1 Owner decisions summary
+
+| ID | Decision area | Proposed default | Practical consequence | Alternative / Tradeoff |
+| --- | --- | --- | --- | --- |
+| **D1** | Import entry point in UI | Study Library toolbar action: `Import study packet…` button alongside `Add material`. | Visible in the primary study workspace. When clicked, opens native file dialog directly (desktop) or file selector. | Place under an overflow menu or inside `MaterialFormDialog`. Toolbar button makes import a first-class study aid entry point. |
+| **D2** | Replacement of existing material | **Create-new only.** Do not offer replacement of existing materials in Slice B. | Re-importing a packet creates a new material record. Existing materials, study sets, flashcards, and practice tests are never overwritten or deleted by import. | Replace existing material: deferred. Replacement destroys prior flashcards/questions and risks losing notes without undo; wait for M2 versioning. |
+| **D3** | Content provenance without migration | Store `provider: "import"`, `model: ""` in existing SQLite `TEXT` columns in `ai_study_sets` and `practice_tests`. Widen TypeScript types and allowlist mapper. | Imported content is clearly distinguished in the active application. **Tradeoff (BPREP-R2):** In older binaries that restore such a backup, observed mappers force `provider = "gemini"`. Actual compatibility across older versions (such as v0.5.1) is unverified and has significant schema limits. | Wait for M2 database migration (migration 11) with dedicated provenance tables/columns. See detailed comparison in §3.2. |
+| **D4** | Packet file retention | Store only parsed/validated data. Do **not** retain the original `.json` packet file as a managed document. | Application storage is not bloated by duplicate JSON files. App document counts and backup sizes remain minimal. | Save raw file in managed `documents/`. Adds document-tracking overhead without user benefit since data is already in SQLite. |
+| **D5** | Source references (`sourceRefs`) persistence | Disclose in preview as unverified; do **not** persist in SQLite rows. | No schema changes to `ai_study_sets` or `practice_tests`. Prevents unverified page claims from appearing as verified citations. | Append references to explanations or bodies. Rejected: would silently rewrite imported content. Wait for M2 citation linking. |
+| **D6** | Export IDs persistence | Use export IDs solely for preview association and answer keys; do **not** store export IDs in database. | App domain remains clean; export IDs are ephemeral packet syntax, not durable entity identities. | Add `export_id` column. Rejected: would imply durable attempt tracking which does not exist until M2. |
+| **D7** | Idempotency verification | Verify equality using actual stored substantive content in the native transaction; do **not** trust a client-provided hash alone; no new column. | Avoids adding a dedicated `content_hash` column to the database schema. Client-forged hashes cannot corrupt idempotency. | Add `content_hash TEXT` column to `study_materials`. Rejected: requires a schema migration. |
+| **D8** | Re-import warning for duplicate packets | Not offered in Slice B. Importing the same file twice creates two separate materials. | Keeps the save flow simple and non-interactive after confirmation. Duplicate detection can be added later if requested. | Hash database scan before import to warn "You already imported this packet". Defer to future polish. |
+| **D9** | Markdown rendering scope | Plain text for cards, choices, and tests. Slice C Markdown rendering (if adopted) applies **only** to imported guides. | Gemini guide rendering remains completely unchanged. Plain text is already 100% secure and robust against script injection. | Apply Markdown to Gemini guides too. Rejected: Gemini output has not been audited for Markdown nesting limits. |
+
+*Decisions D10–D12 (GFM tables, opening links externally, and code-point limits) belong to Slice C and future polish. They are not prerequisites for Slice B's plain-text import flow.*
+
+---
+
+### 3.2 Deep dive: Decision D3 (Provenance without migration vs. waiting for M2) — corrected for BPREP-R2
+
+Decision D3 represents an architectural tradeoff between immediate source adoption and formal database migration.
+
+#### Observed source facts in current code
+1. **Current Database Columns:** In `src-tauri/migrations/0007_ai_study.sql` and `0009_practice_tests.sql`, the columns `provider TEXT NOT NULL` and `model TEXT NOT NULL` exist in `ai_study_sets` and `practice_tests`. SQLite column types permit storing `'import'` and `''`.
+2. **Current TypeScript Types:** In `src/domain/types.ts:245, 271`, `AiStudySet` and `PracticeTest` require `provider: "gemini"`.
+3. **Current TypeScript Mappers:** In `src/data/repositories/documentRepository.ts:87, 97`, `mapAiStudySet` and `mapPracticeTest` hardcode `provider: "gemini"`, ignoring the stored column value.
+4. **Current Writes:** `saveAiStudySet` and `savePracticeTest` in `documentRepository.ts:246, 278` hardcode `'gemini'` in their `INSERT` statements.
+
+#### Inspection of Historical Tag `v0.5.1` (`2dbf6df3f66b18e087b5842fc554f8e733255a0e`)
+Static inspection of the actual `v0.5.1` tag reveals:
+1. **Migrations stop at 8:** `src-tauri/migrations/` in `v0.5.1` contains only `0001` through `0008_notes.sql`.
+2. **Practice tests do not exist:** Migration `0009_practice_tests.sql` and `0010_debrief_operations.sql` are absent. The domain, repository, and UI have no concept of `practice_tests`.
+3. **No newer-schema guard:** The backup restore implementation in `v0.5.1` (`backup.rs`) does not contain current main's `CURRENT_SCHEMA_VERSION` guard (added later during A1 restore retention work).
+4. **Consequence:** Because `v0.5.1` has no practice tests and no schema version guard, restoring a modern schema-10 backup into `v0.5.1` is **unverified and unsupported**. It is incorrect to claim that practice tests remain functional or that restore succeeds cleanly without side effects on that historical version. Current `backup.rs` on `main` cannot retroactively protect older released binaries.
+
+#### Comparison of Options for Owner Decision
+
+| Option | What it does | Known Benefits | Disclosed Tradeoffs & Unknowns |
+| --- | --- | --- | --- |
+| **Option A (Proposed Default): Store `provider: "import"` without migration** | Widens TypeScript domain types to `provider: "gemini" \| "import"`. Mappers read through an allowlist. Native save writes `provider = 'import'`. Existing Gemini writes unchanged. | No migration files added (schema stays at version 10). Allows immediate offline study packet import without waiting for M2. | If an archive created with Slice B is restored into older binaries where mappers hardcode `"gemini"`, those older binaries display the imported set with Gemini labels. Full downgrade behavior and restore compatibility across older releases remain **unverified**. |
+| **Option B: Wait for M2 Database Migration (Migration 11)** | Defer study packet persistence until Milestone 2 introduces content versions, stable item IDs, and explicit provenance tables. | Eliminates attribution ambiguity by establishing a formal versioned migration boundary. Modern binaries with migration guards will reject downgrades. | Blocks structured study import indefinitely until M2 user check-in, design, and migrations are completed. Waiting for M2 requires its own migration and restore verification. |
+
+**Status:** The decision remains **PENDING OWNER APPROVAL**. Neither option is pre-approved.
+
+---
+
+### 3.3 Deep dive: Decision D2 (Create-new only vs. deferred replacement)
+
+#### Proposed Flow: Create-New Only
+- Every successful import produces a **new** `StudyMaterial` record with its own minted ID.
+- The packet's guide (if present) is attached to the new material as an `ai_study_sets` row.
+- The packet's test (if present) is attached to the new material as a `practice_tests` row.
+- If the user imports the same packet file twice, two distinct materials are created. The preview modal informs the user: *"Will be imported as a new material."*
+
+#### Why Replacement is Deferred
+1. **Destructive Risk:** Today's schema has only one study set and one practice test per material. Replacing a study set completely overwrites existing flashcards and questions. If a user inadvertently targets an existing material, their prior notes and AI-generated study aids are permanently lost.
+2. **Missing Versioning:** Version history and attempt tracking do not exist yet (scheduled for M2). Once M2 exists, replacement can create a new version while retaining the old version.
+3. **Safety and Simplicity:** Create-new requires zero confirmation diffs, zero fingerprinting of existing rows, and cannot corrupt or delete prior data.
+
+---
+
+## 4. Source-to-flow architecture and integration mapping
+
+Slice B connects the accepted Slice A reader and validator to atomic database persistence and the user interface.
+
+```
++----------------------------------------------------------------------------------------------------+
+|                                    STUDY PACKET IMPORT FLOW                                        |
+|                                                                                                    |
+|  [ User clicks "Import study packet..." in StudyLibrary.tsx ]                                      |
+|                                   |                                                                |
+|                                   v                                                                |
+|  1. PICK: src/services/studyPackets.ts -> pickStudyPacket()                                        |
+|     - Rust spawn_blocking: app.dialog().file().blocking_pick_file()                                |
+|     - Bounded read: <= 4 MiB, strict UTF-8, strips 1 BOM                                           |
+|     - Computes raw disk byte SHA-256 (display only)                                                |
+|     - Returns PickedStudyPacket: { fileName, byteLength, sha256, text, bomRemoved }                |
+|                                   |                                                                |
+|                                   v                                                                |
+|  2. VALIDATE: src/logic/studyPacket/validate.ts -> validatePacketText(text, { bomRemoved })        |
+|     - Pure TypeScript, zero I/O                                                                    |
+|     - Scanner -> Gate -> Schema -> Semantic checks                                                |
+|     - Returns { ok: true, preview: PacketPreview, payload: ImportPayload }                         |
+|       (or { ok: false, errors: PacketError[] } with contract-owned path allowlists)                |
+|                                   |                                                                |
+|                                   v                                                                |
+|  3. PREVIEW: src/pages/StudyLibrary/ImportStudyPacketDialog.tsx                                    |
+|     - Mints operationId / materialId (UUID v4) ONCE per preview session                            |
+|     - Displays title, counts, warnings, unverified source claims & references                      |
+|     - Discloses discarded attributes (discardedOnSave)                                             |
+|     - Computes canonical persistence contentHash: SHA-256(canonicalPersistenceJson(payload))       |
+|                                   |                                                                |
+|                                   v                                                                |
+|  4. CONFIRM: User clicks "Import as new material"                                                  |
+|     - Sets synchronous ref lock (prevent double click)                                             |
+|                                   |                                                                |
+|                                   v                                                                |
+|  5. ATOMIC SAVE: src/data/repositories/documentRepository.ts -> importStudyPacket(op)              |
+|     - Calls db.saveStructuredImportAtomically(op)                                                  |
+|     - If db.saveStructuredImportAtomically is missing: REFUSES SAVE (no sequential fallback)       |
+|     - Desktop: src/data/tauriDb.ts -> invoke("save_structured_study_import", { op })               |
+|       * Pinned rusqlite connection, busy_timeout 5s, PRAGMA foreign_keys = ON                      |
+|       * BEGIN IMMEDIATE                                                                            |
+|       * Complete defensive invariant re-checks (see §4.3)                                          |
+|       * Idempotency verification by inspecting stored content, not hash alone                      |
+|       * Inserts study_materials (fixed defaults: reviewStatus: "needs_review", priority: "later")  |
+|       * Inserts ai_study_sets (if present, provider='import', model='')                            |
+|       * Inserts practice_tests (if present, provider='import', model='')                           |
+|       * COMMIT                                                                                     |
+|     - Browser: src/data/sqlJsDb.ts -> serialized queue -> pre-op snapshot -> BEGIN IMMEDIATE       |
+|       -> statements -> COMMIT -> observable durable flush -> on error: handle restore              |
+|                                   |                                                                |
+|                                   v                                                                |
+|  6. REFRESH: AppDataContext.tsx -> mutate()                                                        |
+|     - Save succeeds -> mutate() returns save result; if refresh fails, sets lastError              |
+|     - UI shows stale-screen notice without rolling back SQLite                                     |
+|     - Closes dialog, navigates to /materials/:materialId                                           |
++----------------------------------------------------------------------------------------------------+
+```
+
+### 4.1 Real file and function anchors
+
+| Stage | Component / Function | File anchor | Contract / Responsibility |
+| --- | --- | --- | --- |
+| **Pick & Read** | `pick_study_packet` | `src-tauri/src/study_packet.rs:91` | Opens native file dialog off the UI thread via `spawn_blocking`. Enforces metadata size ≤ 4 MiB, reads ≤ 4 MiB + 1, verifies strict UTF-8, rejects UTF-16 BOM, strips 1 UTF-8 BOM. Computes `sha256` of **original disk bytes** (including BOM). Returns `PickedPacket`. |
+| **Service wrapper** | `pickStudyPacket` | `src/services/studyPackets.ts:71` | Checks `isTauri()`, throws `DesktopOnlyError` outside desktop. Returns `null` on user cancellation. Translates errors into typed `StudyPacketReadError`. Does **not** validate. |
+| **Validator** | `validatePacketText` | `src/logic/studyPacket/validate.ts:51`<br>`src/logic/studyPacket/index.ts:6` | Pure TypeScript. Re-derives byte size from text and `bomRemoved`. Rejects leading unstripped BOM. Runs scanner, version gate, Zod schema normalization, semantic validation. Returns `PacketPreview` and `ImportPayload`. |
+| **Canonical JSON** | `canonicalPersistenceJson` | `src/logic/studyPacket/payload.ts:111` | Produces compact array JSON `["hfd-study-packet-content/1", [title], setArray, testArray]`. Excludes preview-only claims, references, and export IDs. Caller hashes this with SHA-256 for `contentHash`. |
+| **Preview Dialog** | `ImportStudyPacketDialog` *(proposed)* | `src/pages/StudyLibrary/ImportStudyPacketDialog.tsx` | Accessible modal built with `Dialog` (`src/components/ui/Dialog.tsx`) and `useModalDialog`. Mints `materialId = newId()` upon validation success. Shows title, counts, warnings, claims, discarded list. |
+| **Database contract** | `saveStructuredImportAtomically?` *(proposed)* | `src/data/db.ts:18-21` | Optional method on `SqlDatabase`: `saveStructuredImportAtomically?(operation: StructuredImportSaveOperation): Promise<StructuredImportSaveResult>`. |
+| **Desktop adapter** | `saveStructuredImportAtomically` *(proposed)* | `src/data/tauriDb.ts:51-56` | Invokes native command `save_structured_study_import`. Reused pattern from `save_split_materials` (`tauriDb.ts:51`) and `save_debrief_operation` (`tauriDb.ts:54`). |
+| **Native save** | `save_structured_study_import` *(proposed)* | `src-tauri/src/study_packet.rs` | Pinned rusqlite connection to `her-flight-deck.db`. Sets `busy_timeout(5s)`, `foreign_keys = ON`, `BEGIN IMMEDIATE`. Defensive invariant re-checks. Inserts `study_materials`, `ai_study_sets`, `practice_tests`. Handles idempotency. |
+| **WebAssembly adapter** | `saveStructuredImportAtomically` *(proposed)* | `src/data/sqlJsDb.ts:77-98` | Runs statements inside `BEGIN IMMEDIATE` ... `COMMIT`. Serializes execution, takes pre-op snapshot, calls throwing flush. On durability error, restores live handle. |
+| **Repository** | `importStudyPacket` *(proposed)* | `src/data/repositories/documentRepository.ts` | Orchestrates atomic save. **Refuses operation** if `db.saveStructuredImportAtomically` is missing. Updates mappers `mapAiStudySet` and `mapPracticeTest` to read `provider`. |
+| **Study Library UI** | `StudyLibrary` | `src/pages/StudyLibrary/StudyLibrary.tsx:125` | Adds "Import study packet…" button in `PageHeader` action slot (or adjacent toolbar). Opens `ImportStudyPacketDialog`. |
+| **Material Detail UI** | `MaterialDetail` | `src/pages/StudyLibrary/MaterialDetail.tsx:689, 727, 854` | For `provider === "import"`: displays title "Imported study packet" instead of "Gemini study assistant". Displays imported-content verification disclaimer. Warns if attaching a file that regenerate will replace imported guide. |
+| **Refresh** | `mutate` | `src/state/AppDataContext.tsx:277-312` | Handles post-commit refresh. When refresh fails, returns the successful save result and records `lastError`; does not roll back database. |
+
+---
+
+### 4.2 Hashing separation: Original-file hash vs. Canonical-content hash
+
+A critical requirement of the contract (§3.5) is maintaining strict separation between two different hashes:
+
+1. **Original-File SHA-256 (`originalFileSha256`):**
+   - **Where computed:** In Rust (`src-tauri/src/study_packet.rs:107`), computed over the exact raw disk bytes read from the filesystem, including any UTF-8 BOM.
+   - **Purpose:** Purely for display in the preview dialog and logs as a receipt for the user's reference (verifying which physical file was picked).
+   - **Exclusion:** Never used for database deduplication, entity identity, or idempotency, because whitespace formatting, key ordering, and metadata comments would alter it without altering the study content.
+2. **Canonical-Content SHA-256 (`contentHash`):**
+   - **Where computed:** In TypeScript, computed by taking the SHA-256 of the UTF-8 bytes of `canonicalPersistenceJson(payload)`.
+   - **Structure:** Defined in `src/logic/studyPacket/payload.ts:114-136`:
+     ```json
+     [
+       "hfd-study-packet-content/1",
+       ["Material Title"],
+       ["import", "", "Title", "Summary", [["Heading", "Body"]], [["Front", "Back", null]], "Source Notes"],
+       ["import", "", "Title", [["Question", ["Choice A", "Choice B"], 0, "Explanation", null]]]
+     ]
+     ```
+   - **Properties:** Deterministic fixed-order JSON array. Completely excludes preview-only source claims, export IDs, choice IDs, item-level references, and file formatting. Changing an answer, card, heading, or source note changes this hash; changing key order or claims does not.
+   - **Purpose:** Carried in `StructuredImportSaveOperation` as an operational digest.
+
+---
+
+### 4.3 Unified native IPC contract and defensive validation — corrected for BPREP-R3
+
+To resolve the discrepancy between TypeScript and Rust DTOs and guarantee complete privacy-safe error handling:
+
+#### 1. Unified Operation DTO
+In TypeScript (`src/data/db.ts`):
+```ts
+export interface StructuredImportSaveOperation {
+  operationId: string; // UUID v4 format; must match materialId
+  materialId: string;  // UUID v4 format
+  contentHash: string; // 64-char lowercase hex SHA-256
+  material: { title: string };
+  studySet: ImportedStudySetDraft | null;
+  practiceTest: ImportedPracticeTestDraft | null;
+}
+```
+
+In Rust (`src-tauri/src/study_packet.rs`):
+```rust
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct StructuredImportSaveOperation {
+    pub operation_id: String,
+    pub material_id: String,
+    pub content_hash: String,
+    pub material: ImportedMaterialDraft,
+    pub study_set: Option<ImportedStudySetDraft>,
+    pub practice_test: Option<ImportedPracticeTestDraft>,
+}
+```
+
+#### 2. Unified Success and Failure Return Shapes
+The command returns a typed result, never raw strings or arbitrary exceptions:
+```rust
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum StructuredImportSaveResult {
+    Saved { material_id: String },
+    AlreadySaved { material_id: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeImportSaveFailure {
+    pub code: &'static str,
+    pub message: &'static str,
+}
+```
+
+#### 3. Complete Native Input Invariants (Defensive Validation Table)
+If a caller attempts to invoke `save_structured_study_import` directly without passing through the frontend validator, the native command enforces:
+
+| Field / Component | Invariant Rule | Refusal Code |
+| --- | --- | --- |
+| `operation_id` / `material_id` | Must be valid UUID v4; `operation_id == material_id` | `"invalid_argument"` |
+| `content_hash` | Must match `^[0-9a-f]{64}$` | `"invalid_argument"` |
+| Unknown JSON fields | Any unexpected field rejected (`deny_unknown_fields`) | `"unknown_field"` |
+| `material.title` | Single line, non-empty, 1–200 Unicode code points after NFC | `"title_invalid"` |
+| **Substantive Content** | Must contain at least one: non-empty study set or test with ≥1 question | `"empty_import"` |
+| **Fixed Material Defaults** | Native save enforces: `type='study_guide'`, `topic='general'`, `review_status='needs_review'`, `priority='later'`, `notes=''`, `file_path=NULL`, `original_file_name=NULL`, `file_size=NULL`, `goal_id=NULL`, `event_id=NULL`, `last_reviewed_at=NULL` | (Enforced by SQL) |
+| `study_set.provider` | Strictly `"import"` | `"unsupported_provider"` |
+| `study_set.model` | Strictly `""` | `"invalid_model"` |
+| `study_set.summary` | ≤ 20,000 code points | `"summary_too_long"` |
+| `study_set.sections` | 0–100 items; heading 1–200 code points; body 1–20,000 code points | `"section_limit_exceeded"` |
+| `study_set.flashcards` | 0–500 items; front 1–1,000 code points; back 1–2,000 code points | `"flashcard_limit_exceeded"` |
+| `flashcards[].sourcePage` | Strictly `None` / `null` | `"source_page_not_null"` |
+| `study_set.source_notes` | ≤ 5,000 code points; non-empty notes require substantive guide/cards | `"source_notes_without_study_set"` |
+| `practice_test.provider` | Strictly `"import"` | `"unsupported_provider"` |
+| `practice_test.model` | Strictly `""` | `"invalid_model"` |
+| `practice_test.questions`| 1–200 items; question 1–2,000 code points; explanation 1–4,000 code points | `"question_limit_exceeded"` |
+| `questions[].options` | 2–6 items; each single line, 1–500 code points; no duplicate text | `"invalid_options"` |
+| `questions[].correctIndex` | Integer in `0..options.len()` | `"answer_key_out_of_bounds"` |
+| `questions[].sourcePage` | Strictly `None` / `null` | `"source_page_not_null"` |
+
+---
+
+### 4.4 Idempotency vs. conflict: comparing actual stored content — corrected for BPREP-R3
+
+The native transaction **never trusts the client-supplied `content_hash` as proof of equality**. Instead, equality is determined by inspecting the actual stored database rows:
+
+1. When `material_id` exists in `study_materials`:
+   - Query stored `study_materials.title`. If `stored.title != op.material.title`, refuse with `"conflict"` (title-only conflict).
+   - If material was not created as a study guide import (`material_type != 'study_guide'`), refuse with `"conflict"`.
+2. Inspect `ai_study_sets`:
+   - If incoming has `studySet != null` and stored has no study set (or vice versa), refuse with `"conflict"` (presence change).
+   - If both have study set: compare stored `summary`, parsed `sections_json`, parsed `flashcards_json`, `source_notes`, `provider`, `model`.
+   - If stored `source_notes` differ, refuse with `"conflict"` (notes-only conflict).
+   - If any section, card, or field differs, refuse with `"conflict"`.
+3. Inspect `practice_tests`:
+   - If incoming has `practiceTest != null` and stored has no test (or vice versa), refuse with `"conflict"` (presence change).
+   - If both have test: compare parsed `questions_json` (questions, options, correctIndex, explanation), `provider`, `model`.
+   - If any question or answer differs, refuse with `"conflict"`.
+4. Result:
+   - If all stored content matches the incoming operation payload: commit transaction and return `Ok(StructuredImportSaveResult::AlreadySaved { material_id })`.
+   - If a client supplies a forged `content_hash` matching a prior save but changes the payload: the stored content comparison detects the difference and returns `"conflict"`.
+   - If an unrelated material was created with the same ID: returns `"conflict"`.
+
+---
+
+### 4.5 Observable durability and recovery in WebAssembly (sql.js) — corrected for BPREP-R1
+
+#### The Problem with Error Swallowing in `save(db)`
+In `src/data/sqlJsDb.ts:31-41`, the existing `save(db)` function catches export and storage errors in a local `try/catch` and logs a warning with `console.warn`. A caller cannot observe failures from `save(db)` directly. Furthermore, after `COMMIT`, an SQL `ROLLBACK` cannot undo committed in-memory state, and replacing `const db` within closures fails without an indirection cell.
+
+#### The Corrected Observable Persistence Architecture
+1. **Observable Throwing Persistence Boundary:**
+   Define `persistDurable(dbHandle): void`:
+   ```ts
+   function persistDurable(db: SqlJsDatabaseHandle): void {
+     const bytes = db.export(); // throws if OOM
+     let binary = "";
+     for (let i = 0; i < bytes.length; i++) {
+       binary += String.fromCharCode(bytes[i] as number);
+     }
+     localStorage.setItem(STORAGE_KEY, btoa(binary)); // throws QuotaExceededError
+   }
+   ```
+2. **Handle Ownership via Mutable Indirection Cell:**
+   The connection manager holds the active handle in a mutable cell:
+   ```ts
+   interface DatabaseCell {
+     current: SqlJsDatabaseHandle;
+   }
+   ```
+   All repository methods (`select`, `execute`, `persist`, `saveStructuredImportAtomically`) access `cell.current`.
+3. **Serialized Access Through Save, Flush, and Recovery:**
+   All write transactions are serialized via a FIFO lock queue (`saveMutex`). Unrelated writes cannot interleave between transaction start, commit, flush, and potential recovery.
+4. **Pre-Operation Snapshot Capture:**
+   Before executing `BEGIN IMMEDIATE`, the adapter captures an exact in-memory snapshot:
+   ```ts
+   const preOpSnapshot = cell.current.export();
+   ```
+5. **Execution Sequence & Recovery:**
+   - `cell.current.run("BEGIN IMMEDIATE")`
+   - Execute insert statements.
+   - `cell.current.run("COMMIT")` (In-memory transaction completes).
+   - Call `persistDurable(cell.current)`.
+   - **If `persistDurable` throws (Export or Storage Failure):**
+     * Catch error.
+     * Close failed handle: `cell.current.close()`.
+     * Instantiate clean handle: `cell.current = new SQL.Database(preOpSnapshot)`.
+     * `localStorage` remains completely untouched (prior storage bytes preserved).
+     * Throw typed `StorageDurabilityError("Study packet could not be saved to durable browser storage.")`.
+6. **Retry Semantics after Durability Failure:**
+   - Because `cell.current` was restored from `preOpSnapshot`, in-memory rows for `materialId` no longer exist.
+   - A subsequent retry will NOT report `"already_saved"`; it cleanly re-executes the transaction.
+   - Unrelated records committed *before* this operation are completely preserved.
+
+---
+
+### 4.6 Strict refusal when atomic adapter is unavailable
+
+Her Flight Deck enforces zero data loss: **multi-row operations must be atomic.**
+- If `db.saveStructuredImportAtomically` is undefined on the current `SqlDatabase` driver, `documentRepository.importStudyPacket(operation)` immediately throws `AtomicPersistenceUnsupportedError`.
+- **Prohibition:** The repository must NEVER attempt sequential fallback calls (`create` followed by `saveAiStudySet` followed by `savePracticeTest`).
+
+---
+
+## 5. Acceptance test specification (Stable IDs) — corrected for BPREP-R3
+
+All 22 original IDs are preserved and mapped, with expanded coverage for individual insert failures, distinct durability modes, conflict variants, content varieties, accessibility, and installed checks.
+**Execution state of all rows: planned, not run.**
+
+### 5.1 Test matrix
+
+| Test ID | Category | Target Engine | Setup & Preconditions | Action / Failure Trigger | Observable Assertion | Cleanup / Teardown |
+| --- | --- | --- | --- | --- | --- | --- |
+| **TB-ATOM-01** | Atomic Transaction | Temporary rusqlite (Rust) | Clean test DB with migrations 1–10. | Execute `save_structured_study_import` with valid material, guide, and test. | Returns `Ok(Saved)`. Exactly 1 row in `study_materials`, `ai_study_sets`, `practice_tests`. | Temp DB auto-deleted. |
+| **TB-ATOM-02** | Atomic Transaction | sql.js (WebAssembly) | Clean sql.js instance with migrations 1–10. | Execute `saveStructuredImportAtomically` with combined payload. | Resolves `Saved`. SQL query confirms 1 row in each table. `localStorage` updated. | Clear `localStorage`. |
+| **TB-ROLL-01** | Statement Failure | Temporary rusqlite (Rust) | Test DB. | Trigger on `ai_study_sets` aborts insert. Material insert succeeded before failure. | Returns `Err`. Rollback unwinds: zero new rows in any table. Prior records identical. | Temp DB auto-deleted. |
+| **TB-ROLL-02** | Statement Failure | Temporary rusqlite (Rust) | Test DB. | Trigger on `practice_tests` aborts insert. Material and guide inserts succeeded before failure. | Returns `Err`. Rollback unwinds: material and guide completely deleted. Zero orphan rows. | Temp DB auto-deleted. |
+| **TB-ROLL-03** | Statement Failure | sql.js (WebAssembly) | sql.js instance with prior records. | Inject statement failure during `practice_tests` insert statement. | Error caught; `ROLLBACK` executed. In-memory queries verify no partial rows exist. | Reset in-memory DB. |
+| **TB-ROLL-04** | Statement Failure | Temporary rusqlite (Rust) | Test DB. | Trigger on `study_materials` aborts insert. | Returns `Err`. Rollback verified: zero rows created. | Temp DB auto-deleted. |
+| **TB-ROLL-05** | Statement Failure | sql.js (WebAssembly) | sql.js DB. | Statement error during `study_materials` insert. | `ROLLBACK` executed. Database untouched. | Reset DB. |
+| **TB-ROLL-06** | Statement Failure | sql.js (WebAssembly) | sql.js DB. | Statement error during `ai_study_sets` insert. | `ROLLBACK` executed. Zero partial rows. | Reset DB. |
+| **TB-DUR-01** | Durability (Storage) | sql.js (WebAssembly) | sql.js DB with mock `localStorage.setItem` throwing `QuotaExceededError`. | Execute save. In-memory commit succeeds; storage flush throws. | Error caught; in-memory handle restored from snapshot; throws `StorageDurabilityError`. Storage untouched. | Restore `localStorage`. |
+| **TB-DUR-02** | Durability (Export) | sql.js (WebAssembly) | sql.js DB with `db.export` mocked to throw OOM after commit. | Execute save. Commit succeeds; export throws. | Error caught; handle restored from pre-op snapshot. Storage untouched. | Restore mock. |
+| **TB-DUR-03** | Durability (Recovery) | sql.js (WebAssembly) | sql.js DB. Durability flush fails and snapshot instantiation also fails. | Execute save. | Catches double failure; marks adapter disabled (`DatabaseCorruptedError`). | Reset DB. |
+| **TB-DUR-04** | Durability (Queue) | sql.js (WebAssembly) | sql.js DB with saveMutex. | Dispatch atomic save and concurrent write simultaneously. | Writes are serialized. Second write executes only after first completes flush/recovery. | Reset DB. |
+| **TB-DUR-05** | Durability (Retry) | sql.js (WebAssembly) | sql.js DB where first save failed durability flush and recovered. | Re-send same save operation. | Does NOT return `already_saved`; attempts fresh save. | Reset DB. |
+| **TB-LOCK-01** | Contention / Retry | Temporary rusqlite (Rust) | Test DB with secondary connection holding `BEGIN EXCLUSIVE`. | Execute primary save. | Waits up to 5s (`busy_timeout`), retries bounded intervals, exits cleanly with locked error. Data intact. | Release lock. |
+| **TB-IDEM-01** | Idempotency | Temporary rusqlite (Rust) | Test DB. Valid packet import succeeds with `materialId = "m1"`. | Resubmit identical payload with same `materialId = "m1"`. | Returns `Ok(AlreadySaved)`. Total row count in all tables remains 1. | Temp DB auto-deleted. |
+| **TB-IDEM-02** | Idempotency | sql.js (WebAssembly) | sql.js DB. Save committed with `materialId = "m2"`. | Resubmit identical operation. | Resolves `AlreadySaved`. Database unchanged. | Clear DB. |
+| **TB-CONF-01** | Conflict (General) | Temporary rusqlite (Rust) | Material `"m-conf"` exists. | Resubmit `materialId = "m-conf"` with different content. | Returns `Err("conflict")`. Prior records untouched. | Temp DB auto-deleted. |
+| **TB-CONF-02** | Conflict (Title-only) | Temporary rusqlite (Rust) | Material `"m-title"` exists. | Resubmit `"m-title"` with different title but identical study set/test. | Returns `Err("conflict")`. | Temp DB auto-deleted. |
+| **TB-CONF-03** | Conflict (Notes-only) | Temporary rusqlite (Rust) | Material `"m-notes"` exists with study set. | Resubmit with different `source_notes` in study set. | Returns `Err("conflict")`. | Temp DB auto-deleted. |
+| **TB-CONF-04** | Conflict (Presence) | Temporary rusqlite (Rust) | Material `"m-pres"` exists with guide only. | Resubmit with practice test added. | Returns `Err("conflict")`. | Temp DB auto-deleted. |
+| **TB-CONF-05** | Conflict (Pre-existing) | Temporary rusqlite (Rust) | Material `"m-ext"` exists with `material_type = 'pdf'`. | Submit import with `materialId = "m-ext"`. | Returns `Err("conflict")`. | Temp DB auto-deleted. |
+| **TB-CONF-06** | Conflict (Forged hash)| Temporary rusqlite (Rust) | Material `"m-forge"` exists. | Resubmit with original `contentHash` but altered question text. | Returns `Err("conflict")`. Stored content comparison catches forgery. | Temp DB auto-deleted. |
+| **TB-CONT-01** | Content (Guide-only) | Temporary rusqlite (Rust) | Test DB. | Submit payload with guide and cards, `practiceTest = null`. | Returns `Ok(Saved)`. 1 material, 1 study set, 0 practice tests. | Temp DB auto-deleted. |
+| **TB-CONT-02** | Content (Test-only) | Temporary rusqlite (Rust) | Test DB. | Submit payload with practice test, `studySet = null`. | Returns `Ok(Saved)`. 1 material, 0 study sets, 1 practice test. | Temp DB auto-deleted. |
+| **TB-CONT-03** | Content (Notes retain)| Temporary rusqlite (Rust) | Test DB. | Submit payload with guide having non-empty `sourceNotes`. | Stored `source_notes` matches normalized input exactly. | Temp DB auto-deleted. |
+| **TB-REFUSE-01**| Missing Adapter | Repository (Unit test) | Mock `SqlDatabase` where `saveStructuredImportAtomically` is `undefined`. | Call `documentRepository.importStudyPacket(operation)`. | Rejects with `AtomicPersistenceUnsupportedError`. Asserts zero calls to repository writes. | None. |
+| **TB-DEF-01** | Defensive Guard | Temporary rusqlite (Rust) | Test DB. | Payload with `correctIndex = 5` and 2 choices. | Returns `Err("answer_key_out_of_bounds")`. Zero writes. | Temp DB auto-deleted. |
+| **TB-DEF-02** | Defensive Guard | Temporary rusqlite (Rust) | Test DB. | Flashcard with `sourcePage = Some(4)`. | Returns `Err("source_page_not_null")`. Zero writes. | Temp DB auto-deleted. |
+| **TB-DEF-03** | Defensive Guard | Temporary rusqlite (Rust) | Test DB. | Payload with `provider = "gemini"`. | Returns `Err("unsupported_provider")`. Zero writes. | Temp DB auto-deleted. |
+| **TB-DEF-04** | Defensive Guard | Temporary rusqlite (Rust) | Test DB. | Payload with empty guide and empty test (`practiceTest = null`). | Returns `Err("empty_import")`. Zero writes. | Temp DB auto-deleted. |
+| **TB-PROV-01** | Provenance | Repository (Integration) | Real SQLite DB. | Import packet; read back via `listAiStudySets()` and `listPracticeTests()`. | Mapped objects have `provider === "import"` and `model === ""`. | Temp DB auto-deleted. |
+| **TB-PROV-02** | Legacy Fallback | Repository (Unit test) | Raw SQLite row with `provider = "unknown"`. | Read back via `listAiStudySets()`. | Mapper allowlist falls back safely to `provider: "gemini"`. | None. |
+| **TB-BACK-01** | Backup / Restore | Native `backup.rs` | DB containing imported material (`provider: 'import'`) and Gemini material. | Backup archive created and restored into clean DB. | Restore succeeds. Query confirms imported material retains `provider: 'import'`. | Cleanup archives. |
+| **TB-REFRESH-01**| Refresh Semantics | UI Component (jsdom) | AppDataContext with `mutate`. Save succeeds; `refresh()` fails. | `mutate` catches refresh error, records `lastError`, and returns save result. | Toast shows *"Imported, but the screen could not refresh"*. No DB rollback. | Unmount component. |
+| **TB-UI-LOCK-01**| Double-Click Guard | UI Component (jsdom) | Render open dialog with valid preview. | Click "Import as new material" button twice rapidly. | Second click ignored by synchronous ref lock; exactly one invoke call sent. | Unmount component. |
+| **TB-UI-CAN-01** | Picker Cancel | UI Component (jsdom) | Invoke `pickStudyPacket()`. | User cancels native picker (`null` returned). | Dialog does not open; zero database writes; zero state changes. | None. |
+| **TB-UI-CAN-02** | Preview Cancel | UI Component (jsdom) | Render open dialog with valid preview. | User clicks "Cancel" or closes dialog. | Dialog unmounts; in-memory bytes dropped; zero database writes. | Unmount component. |
+| **TB-UI-A11Y-01**| Accessibility | UI Component (jsdom) | Render `ImportStudyPacketDialog` (`useModalDialog`). | Press `Tab` through dialog elements. | Focus trapped in modal; initial focus on close button/action; page behind `inert`. | Unmount component. |
+| **TB-UI-A11Y-02**| Modal Escape | UI Component (jsdom) | Render open dialog with valid preview. | Press `Escape` key or click backdrop. | `onClose` callback fired. Modal closes; zero database writes. | Unmount component. |
+| **TB-UI-A11Y-03**| Nested Modal Life | UI Component (jsdom) | Render import modal with nested confirmation dialog. | Press `Escape` while nested dialog is active. | Nested dialog closes; parent import modal remains open. | Unmount component. |
+| **TB-UI-WARN-01**| UI Labels | UI Component (jsdom) | Render `MaterialDetail` for `provider === "import"`. | Inspect rendered DOM. | Header displays "Imported study packet"; shows imported disclaimer; Gemini empty-state hidden. | Unmount component. |
+| **TB-UI-REGEN-01**| Overwrite Warning | UI Component (jsdom) | Attach file to imported material; click "Regenerate". | Confirm dialog opens. | Confirm prompt warns: *"This will replace your imported study guide and practice test..."* | Unmount component. |
+| **TB-INST-01** | Installed WKWebView | Installed Mac App | macOS 12.0–12.2 and current macOS. | Open import dialog; import synthetic packet. | Dialog renders smoothly without CSP violations; import completes. | Test account cleanup. |
+| **TB-INST-02** | VoiceOver | Installed Mac App | macOS with VoiceOver enabled. | Navigate import dialog via VoiceOver cursor. | Modal title, counts, unverified warnings, and actions announced accurately. | None. |
+| **TB-INST-03** | Offline Launch | Installed Mac App | Network disconnected; launch app. | Open previously imported study packet. | Material, guide, flashcards, and test render offline with zero network requests. | None. |
+| **TB-INST-04** | Installed Backup | Installed Mac App | Create backup containing imported study material; restore on test machine. | Check restored Study Library. | Imported material and test present with "Imported study packet" label. | Test cleanup. |
+
+---
+
+## 6. Scope boundaries and prohibitions
+
+To prevent scope creep and protect the stability of Her Flight Deck, the following boundaries are strictly enforced for Slice B:
+
+### In Scope for Slice B:
+- Adding `save_structured_study_import` to `src-tauri/src/study_packet.rs` with pinned rusqlite connection, `BEGIN IMMEDIATE`, busy timeout, defensive revalidation, and stored-content idempotency.
+- Adding `saveStructuredImportAtomically` to `SqlDatabase` in `src/data/db.ts` and implementing it in `src/data/tauriDb.ts` and `src/data/sqlJsDb.ts` (with observable throwing flush and snapshot recovery).
+- Updating `src/domain/types.ts` to widen `provider` to `"gemini" | "import"`.
+- Updating mappers and queries in `src/data/repositories/documentRepository.ts` to support `provider: "import"` with allowlist fallback.
+- Refusing import with `AtomicPersistenceUnsupportedError` if the database adapter lacks atomic save support.
+- Creating `ImportStudyPacketDialog.tsx` using `Dialog.tsx` with full A3 accessibility fallback.
+- Adding "Import study packet…" entry point to `StudyLibrary.tsx`.
+- Updating `MaterialDetail.tsx` to render imported-content titles, badges, and disclaimers when `provider === "import"`.
+- Adding confirmation warning when regenerating Gemini content for a material that holds imported content.
+- Unit and integration tests for all rows in §5.
+
+### Strictly Out of Scope for Slice B:
+- **No schema migrations:** No new SQL migration files in `src-tauri/migrations/`. Schema remains at version 10.
+- **No replacement flow:** Replacing an existing material's guide or test is deferred (Decision D2).
+- **No new production dependencies:** No `react-markdown`, `remark-gfm`, or other npm packages. (Markdown rendering is Slice C).
+- **No external network calls:** Import is 100% offline. No telemetry, no Claude API, no Codex API, no Gemini calls during import.
+- **No raw file retention:** Packet JSON is not copied into `documents/` (Decision D4).
+- **No attempt tracking:** Question attempt history and durable item versions belong to M2.
+- **No installer, signing, or release distribution:** Packaging, DMG creation, and signing remain governed by separate release runbooks.
+
+---
+
+## 7. Unresolved questions and implementation preconditions
+
+Before Slice B source code can be written, the following questions require owner signoff:
+
+1. **Gate Acceptance:**
+   - Has the Windows implementer published the reviewed A2 source branch/PR on GitHub, and has Codex independently accepted it?
+   - Has the M2 real-user check-in been completed with documented notes and scoped approval?
+2. **Decision D3 Signoff:**
+   - Does the owner explicitly approve storing `provider: "import"` in existing schema columns without a migration, accepting that older restored binaries display imported items as Gemini-generated and that full downgrade restore behavior is unverified? Or should Slice B wait for the M2 migration?
+3. **Decision D1 Signoff:**
+   - Does the owner confirm placing the "Import study packet…" button in the primary Study Library toolbar next to "Add material"?
+4. **Decision D2 Signoff:**
+   - Does the owner confirm that Slice B will only support creating new materials, with replacement deferred to post-M2?
+
+---
+
+*This document completes the corrected Slice B implementation preparation package. It leaves repository source uncommitted and unpushed for Codex re-review.*

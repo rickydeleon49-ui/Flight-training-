@@ -1,0 +1,56 @@
+Her Flight Deck — Structured Study Import Slice B Preparation Receipt (Corrected)
+Date: 2026-10-03T17:33:00-07:00
+Implementer: Gemini (Mac)
+Reviewer / Coordinator: Codex
+
+1. Starting Point & Branch Identity
+Repository: rickydeleon49-ui/Flight-training-
+Working Tree: /Users/rickymac/code/Flight-training-
+Base Commit: 3efe95316b200848178033a68d057f66815cf427 (PR #62 merge)
+Branch: codex/structured-study-import-slice-b-preparation
+Remote Tracking: origin/main at c5b70329fb94eef58df2d6a16e0edf8c44c4a11e (PR #63 review merge)
+GitHub Metadata Scope: 63 total PRs (#1-#63), 0 open PRs; checked live remote branches on origin
+
+2. Submitted Baseline Verification
+Before editing, verified all 7 submitted files matched the reviewed submission receipt:
+- STATUS.md: 08a97afb848d1b14e2573d888142311d9746228404158b6bfeea62214f73eb59
+- docs/PROJECT_HANDOFF.md: acde6f994e31f975d1097d648c06bba76fefe97849fdaf68cad10559e8a62524
+- docs/MAC_PARITY_CHECKLIST.md: fa35bae8433a4c96263fc1f0738a754b32125c92fb010c089e3aa011366d7038
+- docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md: c21cb9350ef7ee07609f17c21c55ff0844a96cadf254ff89dd09d1cfdb4913a7
+- docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md: d82ff1b7dcf25e6113048b3fa1b4a532f14273343c095df20f365ff4758413f3
+- docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md: 37511b846ad9dacba0e23b1dc34b3670253d789e23ad55b81b347f1f8950ae1c
+- docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt: c0bca7a363237fb52f5d180e64bf822ab6de9a5c0fd8019414fa4a44ed1a98be
+Previous receipt hash: 42fae59b644182400db2aada711084e32884e374104a7c5197ef2b7614aedb1d (all matched 100%)
+
+3. Environment & Toolchain
+Host: MacBook Air (Mac17,3), Apple M5, 32 GB RAM
+OS: macOS 27.0.1 (Darwin 27.0.0, arm64)
+Node: v22.23.3 (/opt/homebrew/opt/node@22/bin/node)
+npm: 10.9.9 (/opt/homebrew/opt/node@22/bin/npm)
+rustc: 1.99.0 (b940084d7 2026-09-28)
+cargo: 1.99.0 (5f94df478 2026-08-27)
+SDK: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk (version 26.5)
+
+4. BPREP-R1 to BPREP-R3 Issue-to-Correction Mapping
+- BPREP-R1 (durable persistence and recovery in sql.js):
+  * Target: STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §4.5, GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md Phase 3.
+  * Corrected: Replaced caller-catch of swallowing save(db) with explicit throwing persistence boundary persistDurable(db); specified mutable handle indirection cell { current: db }; serialized write queue saveMutex; pre-operation snapshot export before BEGIN IMMEDIATE; handle restoration from pre-op snapshot on export or storage failure; verified prior localStorage bytes remain completely untouched; retry after failure executes fresh save and never returns already_saved. Added planned tests TB-DUR-01 through TB-DUR-05.
+- BPREP-R2 (accurate compatibility and gate evidence):
+  * Target: STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §2, §3.1, §3.2; GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md §1 (Gate 4); STATUS.md; docs/PROJECT_HANDOFF.md; docs/MAC_PARITY_CHECKLIST.md.
+  * Corrected: Inspected actual v0.5.1 tag (2dbf6df3f66b18e087b5842fc554f8e733255a0e) confirming migrations stop at 8, practice tests are absent, and restore guard is absent. Removed assertions of safe schema-10 restore or full test functionality in older binaries. Separated observed mapper behavior from unverified downgrade outcomes. D3 kept pending owner approval without unsupported safety/frequency assurances. Removed stale "52 PR heads" claim; cited actual GitHub metadata inspection (63 total PRs, 0 open, 0 A2 branches). Clean main labeled as starting base; current submission labeled as dirty documentation branch.
+- BPREP-R3 (unified native contract and complete acceptance matrix):
+  * Target: STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §4.3, §4.4, §5; GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md Phase 2, Phase 3, Phase 5.
+  * Corrected: Reconciled TypeScript and Rust DTOs (operation_id == material_id, UUID v4). Unified typed success (Saved/AlreadySaved) and failure ({code, message}) return shapes with fixed allowlists and no private content or path echo. Added complete native input limits and invariant table (substantive content requirement, code-point limits, null sourcePage, strict equality on provider/model). Redefined idempotency to inspect actual stored content (title, presence, study set, practice test, notes, questions) rather than trusting client hash. Expanded test matrix: preserved all 22 existing IDs and expanded to 42 cases covering each insert failure in both engines, export vs storage failures, conflict variants, content varieties, picker/preview cancellation, double-click lock, nested modal lifetime, and future installed checks. Fixed TB-REFRESH-01 to match actual mutate semantics (returns save result, records lastError, shows warning, no DB rollback). Updated verification commands to use scoped PATH, SDK 26.5, and locked cargo/clippy.
+
+5. Scope & Invariants
+- Production code touched: NONE (0 lines of code modified)
+- Database schema migrations added: NONE (schema version remains 10)
+- Dependencies added: NONE (package.json and lockfile unchanged)
+- Packaging / release / signing operations: NONE (all unverified)
+- State of working directory: UNCOMMITTED and UNPUSHED for Codex re-review
+
+6. Measured Verification Checks
+- git diff --check: EXIT 0 (no whitespace issues or conflict markers)
+- node link-validator: EXIT 0 (all relative markdown links resolve to existing files)
+- node whitespace-check: EXIT 0 (zero trailing whitespace lines across all files)
+- git status: clean working tree apart from the designated preparation deliverables
