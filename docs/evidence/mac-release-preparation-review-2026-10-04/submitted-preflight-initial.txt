@@ -1,0 +1,21 @@
+Her Flight Deck Mac readiness preflight (hfd-mac-readiness-preflight/2)
+generated 2026-10-04T22:38:52.176Z
+
+[PASS       ] R-VERSION             all five version sources agree on 0.5.3
+[PASS       ] R-IDENTIFIER          bundle identifier is com.herflightdeck.app
+[PASS       ] R-MIN-MACOS           minimum macOS 12.0 matches the release policy
+[PASS       ] R-POLICY              release policy macOS candidate version and architecture against the repository version
+[USER_ACTION] R-SIGNING-CONFIG      signing/notarization configuration recorded; a Developer ID decision and credentials are owner actions. Absent workflow references do not prove secrets are absent.
+[UNVERIFIED ] R-SOURCE              working tree has uncommitted changes; the tested source is HEAD plus local changes
+[PASS       ] H-OS                  macOS 27.0.1 meets the configured minimum 12.0
+[PASS       ] H-ARCH                Apple Silicon host with a native (not translated) Node process
+[UNVERIFIED ] H-TOOLCHAIN           one or more toolchain commands unavailable, failed, timed out or unparsed
+[PASS       ] H-SDK                 explicit SDK 26.5 is the version with recorded native-build evidence
+[PASS       ] H-TOOLS               read-only inspection tools present at their system paths
+[USER_ACTION] P-TEST-ACCOUNT        a dedicated standard synthetic test account and its isolation evidence must be provided and recorded (runbook §3); no flag or command here can establish it
+[USER_ACTION] P-SIGNING             Developer ID signing/notarization decision, Apple Developer Program team and credential provisioning are owner actions (runbook §4)
+[UNVERIFIED ] P-INSTALLED-SMOKE     installed smoke phases 1-8 have no recorded execution; this tool never installs, launches or tests the app
+[UNVERIFIED ] P-A2-SOURCE           A2-dependent installed checks wait for the Windows owner's independently accepted source
+
+PASS 8 · FAIL 0 · UNVERIFIED 4 · USER_ACTION 3
+Not a readiness verdict: installed use stays unverified until the runbook's phases are executed and recorded.

@@ -1,0 +1,98 @@
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -232,6 +232,7 @@ jobs:
+     strategy:
+       fail-fast: false
+       matrix: ${{ fromJSON(needs.check.outputs.matrix) }}
++    environment: ${{ matrix.os == 'macos-15' && 'macos-signing' || '' }}
+
+     runs-on: ${{ matrix.os }}
+     steps:
+@@ -248,8 +249,60 @@ jobs:
+         continue-on-error: true
+
+       - run: npm ci
++
++      - name: Check macOS signing prerequisites (fail-closed)
++        if: matrix.os == 'macos-15'
++        env:
++          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
++          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
++          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
++          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
++          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
++          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
++        run: |
++          MISSING=""
++          if [ -z "$APPLE_CERTIFICATE" ]; then MISSING="$MISSING APPLE_CERTIFICATE"; fi
++          if [ -z "$APPLE_CERTIFICATE_PASSWORD" ]; then MISSING="$MISSING APPLE_CERTIFICATE_PASSWORD"; fi
++          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then MISSING="$MISSING APPLE_SIGNING_IDENTITY"; fi
++          if [ -z "$APPLE_API_ISSUER" ]; then MISSING="$MISSING APPLE_API_ISSUER"; fi
++          if [ -z "$APPLE_API_KEY" ]; then MISSING="$MISSING APPLE_API_KEY"; fi
++          if [ -z "$APPLE_API_KEY_P8" ]; then MISSING="$MISSING APPLE_API_KEY_P8"; fi
++          if [ -n "$MISSING" ]; then
++            echo "::error::Required Apple signing secrets missing from environment:$MISSING"
++            exit 1
++          fi
++
++      - name: Prepare temporary signing keychain (macOS)
++        if: matrix.os == 'macos-15'
++        env:
++          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
++          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
++          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
++        run: |
++          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
++          echo "::add-mask::$KEYCHAIN_PASSWORD"
++          KC="$RUNNER_TEMP/hfd-signing.keychain-db"
++          echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
++          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
++          security set-keychain-settings -lut 3600 "$KC"
++          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
++          security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
++          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KC"
++          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
++          rm -f "$RUNNER_TEMP/cert.p12"
++          umask 077
++          printf '%s' "$APPLE_API_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
++          echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
++
+       - run: npm run tauri build -- --bundles ${{ matrix.bundles }}
++        env:
++          APPLE_SIGNING_IDENTITY: ${{ matrix.os == 'macos-15' && secrets.APPLE_SIGNING_IDENTITY || '' }}
++          APPLE_API_ISSUER: ${{ matrix.os == 'macos-15' && secrets.APPLE_API_ISSUER || '' }}
++          APPLE_API_KEY: ${{ matrix.os == 'macos-15' && secrets.APPLE_API_KEY || '' }}
++          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+
+       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+         with:
+           name: installer-${{ matrix.name }}
+           path: ${{ matrix.pattern }}
+           if-no-files-found: error
++
++      - name: Verify signature, notarization and staple (read-only)
++        if: matrix.os == 'macos-15'
++        run: |
++          dmg=$(find src-tauri/target/release/bundle/dmg -name '*_aarch64.dmg' -print -quit)
++          if [ -z "$dmg" ] || [ ! -f "$dmg" ]; then
++            echo "::error::Target DMG not found in bundle output"
++            exit 1
++          fi
++          m="$RUNNER_TEMP/hfd-verify"
++          mkdir -p "$m"
++          hdiutil attach -quiet -readonly -nobrowse -mountpoint "$m" "$dmg"
++          trap 'hdiutil detach -quiet "$m" 2>/dev/null || true' EXIT
++          app="$m/Her Flight Deck.app"
++          codesign --verify --deep --strict "$app"
++          codesign -dv --verbose=2 "$app" 2>&1 | grep -E '^(Authority=Developer ID Application|TeamIdentifier=|Timestamp=)' | sed 's/:.*(/: <redacted> (/'
++          codesign -dv "$app" 2>&1 | grep -q 'flags=.*runtime'
++          spctl --assess --type execute -vv "$app"
++          hdiutil detach -quiet "$m"
++          trap - EXIT
++          xcrun stapler validate "$dmg"
++
++      - name: Remove temporary signing material
++        if: always() && matrix.os == 'macos-15'
++        run: |
++          security delete-keychain "$RUNNER_TEMP/hfd-signing.keychain-db" 2>/dev/null || true
++          rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/cert.p12"
