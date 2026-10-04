@@ -1,0 +1,194 @@
+[
+  {
+    "path": "STATUS.md",
+    "size": 81260,
+    "sha256": "392cbc029d95e1ee7845067649d945e29d008a5a0cf01371ecbe99c40fdfc5d7",
+    "ninthSha256": "92a4606f13572f6373823304cf4f9415d1924460de5bb634986c29d962d339ea",
+    "ninthSize": 79891,
+    "changedSinceNinth": true
+  },
+  {
+    "path": "docs/ATOMIC_STUDY_MATERIAL_SAVES_2026-10-02.md",
+    "size": 55491,
+    "sha256": "209dabf5f96d88d29760341f7ea6b01b18f6ccf5e7e72ec805da0db85c47a597",
+    "ninthSha256": "ab6b365b1dfa1801b42e68c8655888b39af043169492d90b0e747fb7e7442e08",
+    "ninthSize": 49538,
+    "changedSinceNinth": true
+  },
+  {
+    "path": "src/data/connectionOwner.ts",
+    "size": 15969,
+    "sha256": "2c985a7c515b434a663e495a902bc8451faaeb3daa5de3dc46b6bd173ad3324a",
+    "ninthSha256": "09dd97f1d762657ad4f9c3eefc7152df6fc589a6698ca6a1191d0de0b3de7bf2",
+    "ninthSize": 15605,
+    "changedSinceNinth": true
+  },
+  {
+    "path": "src/data/singleConnectionDrivers.test.ts",
+    "size": 106951,
+    "sha256": "90bc239d5898db07faf23953719223fc1443b5d9a55584a2da04006f51f70f26",
+    "ninthSha256": "60e7f02323adceab78d52cac0b1e9ef62d16753ba3a9b9b0935346f0c65c7972",
+    "ninthSize": 86126,
+    "changedSinceNinth": true
+  },
+  {
+    "path": "docs/FULL_REPOSITORY_AUDIT_2026-09-29.md",
+    "size": 36462,
+    "sha256": "0a28b73b56b2b6d26fb269f1d6a7b491ee48b6b62d33365ff6c974b0a82331aa",
+    "ninthSha256": "0a28b73b56b2b6d26fb269f1d6a7b491ee48b6b62d33365ff6c974b0a82331aa",
+    "ninthSize": 36462,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "docs/MAC_PARITY_CHECKLIST.md",
+    "size": 44286,
+    "sha256": "e5a74080f46ffa2c7ccefeef7013ee1ee0dc1764cd43014ee8dbf2a7febd8f37",
+    "ninthSha256": "e5a74080f46ffa2c7ccefeef7013ee1ee0dc1764cd43014ee8dbf2a7febd8f37",
+    "ninthSize": 44286,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src-tauri/fixtures/material-save-contract/expected.json",
+    "size": 12877,
+    "sha256": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+    "ninthSha256": "b9cad1543ef324f0183dfd50662892eb64c4dde1eaef346792f72ec13ca1641d",
+    "ninthSize": 12877,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src-tauri/fixtures/material-save-contract/steps.json",
+    "size": 2484,
+    "sha256": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+    "ninthSha256": "37ba6fb64f1cd936cdf6e831eda4bc9829ef65506a0cf30cc12d74ba981afb52",
+    "ninthSize": 2484,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src-tauri/src/documents.rs",
+    "size": 124060,
+    "sha256": "68e157a96ef679b8c28c2d46f7fe3a78eda31ce191e3e69a1fb2e57af0afa7d7",
+    "ninthSha256": "68e157a96ef679b8c28c2d46f7fe3a78eda31ce191e3e69a1fb2e57af0afa7d7",
+    "ninthSize": 124060,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src-tauri/src/documents_save_tests.rs",
+    "size": 37289,
+    "sha256": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+    "ninthSha256": "43470dddad914dc97cbf1624ee61a0fa0e72cc45451d309f89ff8231fe2745ed",
+    "ninthSize": 37289,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src-tauri/src/lib.rs",
+    "size": 5984,
+    "sha256": "521024432f8dc6482865d107cae4307f920a5270e91d2da3f6c22414c546850e",
+    "ninthSha256": "521024432f8dc6482865d107cae4307f920a5270e91d2da3f6c22414c546850e",
+    "ninthSize": 5984,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/db.ts",
+    "size": 6051,
+    "sha256": "46b0f2508b0e1d057529f6b8f05908f6c2a7e95fc13a0dd17c66316b16dac83a",
+    "ninthSha256": "46b0f2508b0e1d057529f6b8f05908f6c2a7e95fc13a0dd17c66316b16dac83a",
+    "ninthSize": 6051,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/materialSaveContract.test.ts",
+    "size": 2771,
+    "sha256": "6325aafa4712d09b8ace833c51cc3f753fd76e529a66c3544c1aa7652d7be54e",
+    "ninthSha256": "6325aafa4712d09b8ace833c51cc3f753fd76e529a66c3544c1aa7652d7be54e",
+    "ninthSize": 2771,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/materialTransaction.ts",
+    "size": 12352,
+    "sha256": "8c65a4d3c01536c815bddff7a3dd67adcb17277d0daab1fd3dced5331b01ae22",
+    "ninthSha256": "8c65a4d3c01536c815bddff7a3dd67adcb17277d0daab1fd3dced5331b01ae22",
+    "ninthSize": 12352,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/repositories/documentRepository.test.ts",
+    "size": 21773,
+    "sha256": "0493ad2a7b6a6ef11eaf9e57fa6701104073ec8e0cbb87f994b7789a0bc529c4",
+    "ninthSha256": "0493ad2a7b6a6ef11eaf9e57fa6701104073ec8e0cbb87f994b7789a0bc529c4",
+    "ninthSize": 21773,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/repositories/documentRepository.ts",
+    "size": 15378,
+    "sha256": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+    "ninthSha256": "086cfd5cd6e074000c59a4fa1f950eb10a4b709c0b77577e3cf458b536886000",
+    "ninthSize": 15378,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/sqlJsDb.ts",
+    "size": 7811,
+    "sha256": "2f1b03c034f20a19cac6248239e4f203291057666758c3d1681b6932119317e4",
+    "ninthSha256": "2f1b03c034f20a19cac6248239e4f203291057666758c3d1681b6932119317e4",
+    "ninthSize": 7811,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/tauriDb.ts",
+    "size": 3335,
+    "sha256": "8cf2ca2a56b7e62f8752fb40478ea013ce235917e38e5769ebc7f864e82bca55",
+    "ninthSha256": "8cf2ca2a56b7e62f8752fb40478ea013ce235917e38e5769ebc7f864e82bca55",
+    "ninthSize": 3335,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/data/testing/nodeSqliteDb.ts",
+    "size": 3839,
+    "sha256": "cc43cdeff48a93fc328c1b5f46fe6642e0b95cd422936c40c09fd31bc5dc39f3",
+    "ninthSha256": "cc43cdeff48a93fc328c1b5f46fe6642e0b95cd422936c40c09fd31bc5dc39f3",
+    "ninthSize": 3839,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/pages/FlightJournal/debriefLinks.test.ts",
+    "size": 36881,
+    "sha256": "be1181c22d7d19e2e09e8d2404649c06bf2b2d5b977e3be1c071f7861c3bc02c",
+    "ninthSha256": "be1181c22d7d19e2e09e8d2404649c06bf2b2d5b977e3be1c071f7861c3bc02c",
+    "ninthSize": 36881,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/pages/FlightJournal/quickDebrief.test.ts",
+    "size": 65782,
+    "sha256": "cf4843988eb84d75e6cebd6c3dd52cffb93bfda2fe6ab9581baebb75e9166e4a",
+    "ninthSha256": "cf4843988eb84d75e6cebd6c3dd52cffb93bfda2fe6ab9581baebb75e9166e4a",
+    "ninthSize": 65782,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/pages/StudyLibrary/MaterialFormDialog.test.ts",
+    "size": 13146,
+    "sha256": "7a24a3accfae9b453ab878750aa18e0b79f5343ed36c30ef0bd8e2461c8b7665",
+    "ninthSha256": "7a24a3accfae9b453ab878750aa18e0b79f5343ed36c30ef0bd8e2461c8b7665",
+    "ninthSize": 13146,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/pages/StudyLibrary/materialSaveIntegration.test.ts",
+    "size": 7976,
+    "sha256": "cf60f482fcb749ff88eb983c7e4c543982a3cdc41b0161aa978cbee07698594a",
+    "ninthSha256": "cf60f482fcb749ff88eb983c7e4c543982a3cdc41b0161aa978cbee07698594a",
+    "ninthSize": 7976,
+    "changedSinceNinth": false
+  },
+  {
+    "path": "src/perf/appResponsiveness.bench.test.ts",
+    "size": 11259,
+    "sha256": "7f7e0dcbd0087055a30ce9d0c29d08d0ac4700e6de74aad50488223bd73b61cc",
+    "ninthSha256": "7f7e0dcbd0087055a30ce9d0c29d08d0ac4700e6de74aad50488223bd73b61cc",
+    "ninthSize": 11259,
+    "changedSinceNinth": false
+  }
+]

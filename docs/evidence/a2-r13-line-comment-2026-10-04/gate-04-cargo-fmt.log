@@ -1,0 +1,9 @@
+# label: full gate 4/9
+# command: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+# cwd: <OWNER_CHECKOUT>
+# started: 2026-10-04T11:05:55-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+# ---- end ----
+# exit: 0
+# wall_ms: 535

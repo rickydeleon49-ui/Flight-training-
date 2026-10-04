@@ -1,0 +1,473 @@
+# label: pre-fix reproduction: unchanged ninth diagnostic on matching-source snapshot
+# command: npx --no-install vitest run src/data/a2NinthReview.regression.test.ts --reporter=verbose
+# cwd: <SCRATCH>/snap-pre
+# started: 2026-10-04T10:56:31-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+
+ RUN  v4.1.11 <SCRATCH>/snap-pre
+
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > raw engine keeps 'ordinary comment text after CR' inside comment until LF 3ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > raw engine keeps 'CASE comment text after CR' inside comment until LF 0ms
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts valid SELECT with comment "--\rBEGIN;\n" 11ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts valid SELECT with comment "--\rCASE\n" 7ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > raw engine accepts and fires trigger with a CR-containing lookahead comment 0ms
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts and fires trigger with a CR-containing lookahead comment 7ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 9ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 7ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 8ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse END; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 7ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 7ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 7ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse END; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 7ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 6ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 7ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 6ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse END; after actual line-comment ending 6ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 6ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 6ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 6ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 6ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 6ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse END; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 7ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 7ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 6ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 6ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > refusal must preserve an acknowledged write after unrelated query failure 8ms
+   → expected [] to deeply equal [ { value: 'acknowledged' } ]
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > raw engine keeps 'ordinary comment text after CR' inside comment until LF 26ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > raw engine keeps 'CASE comment text after CR' inside comment until LF 1ms
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts valid SELECT with comment "--\rBEGIN;\n" 45ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts valid SELECT with comment "--\rCASE\n" 32ms
+ ✓ src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > raw engine accepts and fires trigger with a CR-containing lookahead comment 1ms
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts and fires trigger with a CR-containing lookahead comment 36ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 27ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 24ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 22ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse END; after actual line-comment ending 19ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 22ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 18ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 18ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 26ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 18ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 17ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 21ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse END; after actual line-comment ending 17ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 17ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 19ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 17ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 17ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending 20ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending 21ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending 18ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse END; after actual line-comment ending 17ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending 21ms
+   → promise resolved "undefined" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending 19ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending 19ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending 19ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse BEGIN; after actual line-comment ending 18ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending 21ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse COMMIT; after actual line-comment ending 17ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse END; after actual line-comment ending 16ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending 18ms
+   → promise resolved "[]" instead of rejecting
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending 18ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending 18ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending 20ms
+   → expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+ × src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > refusal must preserve an acknowledged write after unrelated query failure 22ms
+   → expected [] to deeply equal [ { value: 'acknowledged' } ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 70 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts valid SELECT with comment "--\rBEGIN;\n"
+Error: Transactions on this connection must go through one of the driver's atomic operations.
+ ❯ refuseTransactionControl src/data/connectionOwner.ts:487:11
+    485| export function refuseTransactionControl(sql: string): void {
+    486|   if (hasTransactionControl(sql)) {
+    487|     throw new Error(
+       |           ^
+    488|       "Transactions on this connection must go through one of the driv…
+    489|     );
+ ❯ src/data/testing/nodeSqliteDb.ts:65:9
+ ❯ src/data/connectionOwner.ts:519:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > public driver accepts and fires trigger with a CR-containing lookahead comment
+Error: Transactions on this connection must go through one of the driver's atomic operations.
+ ❯ refuseTransactionControl src/data/connectionOwner.ts:487:11
+    485| export function refuseTransactionControl(sql: string): void {
+    486|   if (hasTransactionControl(sql)) {
+    487|     throw new Error(
+       |           ^
+    488|       "Transactions on this connection must go through one of the driv…
+    489|     );
+ ❯ src/data/testing/nodeSqliteDb.ts:71:9
+ ❯ src/data/connectionOwner.ts:519:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse END; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse END; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse END; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse END; after actual line-comment ending
+AssertionError: expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+
+- Expected:
+/Transactions on this connection must go through/i
+
++ Received:
+"cannot commit - no transaction is active"
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending
+AssertionError: expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+
+- Expected:
+/Transactions on this connection must go through/i
+
++ Received:
+"cannot rollback - no transaction is active"
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending
+AssertionError: expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+
+- Expected:
+/Transactions on this connection must go through/i
+
++ Received:
+"no such savepoint: sp1"
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'ordinary comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > 'CASE comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending
+AssertionError: promise resolved "[]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[]
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — node:sqlite > refusal must preserve an acknowledged write after unrelated query failure
+AssertionError: expected [] to deeply equal [ { value: 'acknowledged' } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "value": "acknowledged",
+-   },
+- ]
++ []
+
+ ❯ src/data/a2NinthReview.regression.test.ts:31:54
+     29|   await db.execute("INSERT INTO probe VALUES ('acknowledged')");
+     30|   await expect(db.select('SELECT * FROM definitely_missing_table')).re…
+     31|   expect(await db.select('SELECT value FROM probe')).toEqual([{value:'…
+       |                                                      ^
+     32|  }finally{close(db);}});
+     33| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts valid SELECT with comment "--\rBEGIN;\n"
+Error: Transactions on this connection must go through one of the driver's atomic operations.
+ ❯ refuseTransactionControl src/data/connectionOwner.ts:487:11
+    485| export function refuseTransactionControl(sql: string): void {
+    486|   if (hasTransactionControl(sql)) {
+    487|     throw new Error(
+       |           ^
+    488|       "Transactions on this connection must go through one of the driv…
+    489|     );
+ ❯ src/data/sqlJsDb.ts:173:9
+ ❯ src/data/connectionOwner.ts:519:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > public driver accepts and fires trigger with a CR-containing lookahead comment
+Error: Transactions on this connection must go through one of the driver's atomic operations.
+ ❯ refuseTransactionControl src/data/connectionOwner.ts:487:11
+    485| export function refuseTransactionControl(sql: string): void {
+    486|   if (hasTransactionControl(sql)) {
+    487|     throw new Error(
+       |           ^
+    488|       "Transactions on this connection must go through one of the driv…
+    489|     );
+ ❯ src/data/sqlJsDb.ts:179:9
+ ❯ src/data/connectionOwner.ts:519:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse SAVEPOINT sp1; after actual line-comment ending
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse END; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse END; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse END; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse COMMIT; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse END; after actual line-comment ending
+AssertionError: expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot commit - no transaction is act…'
+
+- Expected:
+/Transactions on this connection must go through/i
+
++ Received:
+"cannot commit - no transaction is active"
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse ROLLBACK; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse ROLLBACK; after actual line-comment ending
+AssertionError: expected [Function] to throw error matching /Transactions on this connection must…/i but got 'cannot rollback - no transaction is a…'
+
+- Expected:
+/Transactions on this connection must go through/i
+
++ Received:
+"cannot rollback - no transaction is active"
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > execute > must refuse RELEASE sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse ROLLBACK TO sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse RELEASE sp1; after actual line-comment ending
+AssertionError: expected [Function] to throw error matching /Transactions on this connection must…/i but got 'no such savepoint: sp1'
+
+- Expected:
+/Transactions on this connection must go through/i
+
++ Received:
+"no such savepoint: sp1"
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'ordinary comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse BEGIN; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse BEGIN TRANSACTION; after actual line-comment ending
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > 'CASE comment text after CR' > select > must refuse SAVEPOINT sp1; after actual line-comment ending
+AssertionError: promise resolved "[]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[]
+
+ ❯ src/data/a2NinthReview.regression.test.ts:25:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/70]⎯
+
+ FAIL  src/data/a2NinthReview.regression.test.ts > A2 ninth review — sql.js > refusal must preserve an acknowledged write after unrelated query failure
+AssertionError: expected [] to deeply equal [ { value: 'acknowledged' } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "value": "acknowledged",
+-   },
+- ]
++ []
+
+ ❯ src/data/a2NinthReview.regression.test.ts:31:54
+     29|   await db.execute("INSERT INTO probe VALUES ('acknowledged')");
+     30|   await expect(db.select('SELECT * FROM definitely_missing_table')).re…
+     31|   expect(await db.select('SELECT value FROM probe')).toEqual([{value:'…
+       |                                                      ^
+     32|  }finally{close(db);}});
+     33| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/70]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  70 failed | 8 passed (78)
+   Start at  10:56:33
+   Duration  1.38s (transform 125ms, setup 0ms, import 170ms, tests 1.04s, environment 0ms)
+
+# ---- end ----
+# exit: 1
+# wall_ms: 2874

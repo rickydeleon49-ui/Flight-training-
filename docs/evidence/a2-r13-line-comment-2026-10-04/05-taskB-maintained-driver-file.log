@@ -1,0 +1,18 @@
+# label: Task B focused: full maintained driver file (605 prior + R13 additions)
+# command: npx --no-install vitest run src/data/singleConnectionDrivers.test.ts
+# cwd: <OWNER_CHECKOUT>
+# started: 2026-10-04T11:03:04-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+
+ RUN  v4.1.11 <OWNER_CHECKOUT>
+
+
+ Test Files  1 passed (1)
+      Tests  1385 passed (1385)
+   Start at  11:03:06
+   Duration  18.57s (transform 287ms, setup 0ms, import 386ms, tests 18.00s, environment 0ms)
+
+# ---- end ----
+# exit: 0
+# wall_ms: 20089

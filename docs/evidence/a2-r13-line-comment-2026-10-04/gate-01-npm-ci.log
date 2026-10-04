@@ -1,0 +1,16 @@
+# label: full gate 1/9
+# command: npm ci
+# cwd: <OWNER_CHECKOUT>
+# started: 2026-10-04T11:04:51-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+
+added 165 packages, and audited 166 packages in 23s
+
+33 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+# ---- end ----
+# exit: 0
+# wall_ms: 23459

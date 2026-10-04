@@ -1,0 +1,42 @@
+
+ RUN  v4.1.11 <REVIEW_ROOT>/latest-main-integration
+
+ ✓ src/perf/studyLibraryScenarios.test.ts > Study Library benchmark fixture > gives every tier distinct creation times so each sort order is fully defined 18ms
+ ✓ src/perf/studyLibraryScenarios.test.ts > Study Library benchmark fixture > agrees with the counts stated by the generator rules 8ms
+ ✓ src/perf/studyLibraryScenarios.test.ts > Study Library benchmark fixture > covers tags, Unicode, duplicates and mocked missing files at every tier 0ms
+ × src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > lists exactly the answer key's ids and order on the real page for every scenario 11ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ × src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > measures a stated expanded display of 1,000 cards, and a query from it returns to 100 8ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ × src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > fails the run when the final page result differs from the answer key 7ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ × src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > fails the run on a wrong intermediate keystroke result even when the final result is correct 7ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+ × src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > fails the run on a wrong intermediate count even when the final result is correct 7ms
+   → Transactions on this connection must go through one of the driver's atomic operations.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > lists exactly the answer key's ids and order on the real page for every scenario
+ FAIL  src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > measures a stated expanded display of 1,000 cards, and a query from it returns to 100
+ FAIL  src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > fails the run when the final page result differs from the answer key
+ FAIL  src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > fails the run on a wrong intermediate keystroke result even when the final result is correct
+ FAIL  src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > fails the run on a wrong intermediate count even when the final result is correct
+Error: Transactions on this connection must go through one of the driver's atomic operations.
+ ❯ refuseTransactionControl src/data/connectionOwner.ts:494:11
+    492| export function refuseTransactionControl(sql: string): void {
+    493|   if (hasTransactionControl(sql)) {
+    494|     throw new Error(
+       |           ^
+    495|       "Transactions on this connection must go through one of the driv…
+    496|     );
+ ❯ src/data/testing/nodeSqliteDb.ts:71:9
+ ❯ src/data/connectionOwner.ts:526:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+   Start at  11:16:57
+   Duration  1.79s (transform 348ms, setup 0ms, import 619ms, tests 67ms, environment 932ms)

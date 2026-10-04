@@ -1,0 +1,13 @@
+# label: full gate 9/9
+# command: git diff --check
+# cwd: <OWNER_CHECKOUT>
+# started: 2026-10-04T11:07:01-07:00
+# node: v24.16.0  os: Windows 11 Pro 10.0.26200 (Git Bash)
+# ---- combined stdout+stderr ----
+warning: in the working copy of 'src-tauri/src/documents.rs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/sqlJsDb.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/testing/nodeSqliteDb.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/perf/appResponsiveness.bench.test.ts', LF will be replaced by CRLF the next time Git touches it
+# ---- end ----
+# exit: 0
+# wall_ms: 115
