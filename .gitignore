@@ -121,3 +121,6 @@ logs/
 tmp/
 temp/
 .cache/
+
+# Browser-mode screenshots from .claude/skills/run
+screenshots/

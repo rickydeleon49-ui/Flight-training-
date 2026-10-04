@@ -1,0 +1,33 @@
+PR #70 setup corrections (SETUP-R1 to R4): receipt, 4 October 2026.
+Prepared by Claude in the Mac checkout, branch claude/cool-carson-9wjrub, HEAD
+ea18a0e50f806d1dd90a88755b13f856f9dda6ad (the reviewed head), local and uncommitted. Review:
+https://github.com/rickydeleon49-ui/Flight-training-/pull/70#pullrequestreview-5404813525
+These are NEW local measurements on this Mac (Node v22.23.3, npm 10.9.9, macOS); they do not replace or repeat the
+earlier cloud-session receipts from the original PR, which remain Claude's earlier cloud results.
+
+Starting state: clean checkout of ea18a0e; all six reviewed hashes matched (shasum -a 256 -c); no intervening changes.
+
+Helper checks (.claude/tests/setup-helpers.test.mjs, node:test, temporary directories, mock processes; the hook runs
+real npm offline against a dependency-free fixture with a temporary cache and mock cargo/pkg-config; the screenshot
+helper runs against a mock Playwright module and a mock Vite server on a free port):
+  corrected, spaced fixture path:  node --test .claude/tests/setup-helpers.test.mjs                      exit 0, 21/21
+  corrected, plain fixture path:   HFD_SETUP_PLAIN_PATH=1 node --test ...                                exit 0, 21/21
+  reviewed (git show ea18a0e:<file> into a scratch copy; port literal rewritten to the test port, as in Codex's
+  diagnostic; the lifecycle logic is unchanged):
+    spaced path:                   HFD_SETUP_UNDER_TEST=<copy> HFD_SETUP_PORT_LITERAL=1 node --test ...  exit 1, 8/21 (13 fail)
+    plain path, R2/R4 only:        ... HFD_SETUP_PLAIN_PATH=1 --test-name-pattern="^R[24]:"              exit 1, 1/10 (9 fail)
+  The plain-path run isolates R4: at a spaced path the reviewed hook exits 127 before npm runs, which would mask it.
+  No mock Vite process was left running after the runs (pgrep).
+
+Real npm observations on the offline fixture (temporary cache, no network, no packages, no lifecycle scripts):
+  npm ci, matching lock:           exit 0, lock unchanged
+  npm ci, root name differs:       exit 0, lock unchanged (npm ci validates dependencies, not the root name)
+  npm install, root name differs:  exit 0, lock REWRITTEN (reproduces Codex's diagnostic)
+  npm ci, undeclared dependency:   exit 1 (ENOTCACHED offline; online npm reports the sync error), lock unchanged
+  npm ci, no lock:                 exit 1 (EUSAGE), no lock created
+
+Required local gate after the final corrections (one run): npm test exit 0 (941 passed, 4 skipped); npm run typecheck exit 0.
+Syntax: bash -n session-start.sh, node --check on both .mjs files, settings.json parses. Rust unchanged; not rerun.
+Tracked package.json, package-lock.json, src-tauri/Cargo.toml and src-tauri/Cargo.lock unchanged (git status).
+Not done: no dependency, MCP, provider, A2, product or release change; no Tauri launch, real browser, installer,
+account, signing or owner data. The cloud apt step and a real cold Rust compile were not run on this Mac.
