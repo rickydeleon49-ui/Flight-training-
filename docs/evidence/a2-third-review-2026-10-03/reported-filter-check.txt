@@ -1,0 +1,41 @@
+
+ RUN  v4.1.11 <REVIEW_ROOT>/snapshot
+
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > promoted R4: an unrelated write issued during a failing save survives its rollback
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > a read issued mid-transaction cannot see uncommitted rows
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > concurrent saves, public writes, debriefs and PDF-part batches each keep their own outcome
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > promoted reviewer R6: execute cannot escape ownership or erase an acknowledged write after a later save
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > promoted reviewer R6: select cannot escape ownership or erase an acknowledged write after a later save
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > refuses opening, ending, and multi-statement transaction control across execute and select
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > preserves legitimate SQL containing keywords, parameters, comments, PRAGMAs, and trigger bodies
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > queued ending call requested mid-save is refused without corrupting the completed save
+ ↓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > refuses public transaction control and stays usable after failures
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > promoted R4: an unrelated write issued during a failing save survives its rollback
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > a read issued mid-transaction cannot see uncommitted rows
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > concurrent saves, public writes, debriefs and PDF-part batches each keep their own outcome
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > promoted reviewer R6: execute cannot escape ownership or erase an acknowledged write after a later save
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > promoted reviewer R6: select cannot escape ownership or erase an acknowledged write after a later save
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > refuses opening, ending, and multi-statement transaction control across execute and select
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > preserves legitimate SQL containing keywords, parameters, comments, PRAGMAs, and trigger bodies
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > queued ending call requested mid-save is refused without corrupting the completed save
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > refuses public transaction control and stays usable after failures
+ ↓ src/data/singleConnectionDrivers.test.ts > connection owner > releases after a failed operation so the next one runs
+ ↓ src/data/singleConnectionDrivers.test.ts > connection owner > refuses later work, without hanging, when the connection cannot be made safe
+ ↓ src/data/singleConnectionDrivers.test.ts > connection owner > runs operations strictly one at a time in request order
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > promoted R5: a create that storage refuses is reported as failed and leaves nothing behind
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a refused update keeps the previous row and tags live and after reopening
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a retry after storage recovers saves once, with the retried fields, and survives reopening
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a refused plain write and a refused debrief are undone too
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a persist requested mid-save cannot cut that save's transaction short or store it half-done
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > foreign keys stay enforced after storage round-trips
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > promoted reviewer R7: create export failure restores the last stored state live and after reload
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > promoted reviewer R7: update export failure restores the last stored state live and after reload
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a later acknowledged unrelated write or persist cannot store a previously rejected change
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > an encoding failure during durable write restores state live and after reload
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a foreign-key setting restoration failure inside durable write restores state and leaves connection healthy
+ ↓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > fails closed with a clear recovery error if restoration cannot re-establish a safe connection
+
+ Test Files  1 skipped (1)
+      Tests  33 skipped (33)
+   Start at  23:11:32
+   Duration  458ms (transform 233ms, setup 0ms, import 293ms, tests 0ms, environment 0ms)

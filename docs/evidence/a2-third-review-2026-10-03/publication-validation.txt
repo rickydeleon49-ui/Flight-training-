@@ -1,0 +1,6 @@
+Documentation publication verification, 3 October 2026
+Reviewed-docs link and secret scan: 14 files, 205 local links, 2 JSON files; no problems at first validation.
+Existing releaseSafety suite: exit 0; 51 passed, 1 deliberate missing-shell availability skip; 3.45 seconds.
+No production source, migration, dependency, version, workflow or release asset changed.
+Final whitespace and document-link checks repeated before commit; full source matrix not repeated with known source defects.
+Final document scan: 16 files, 207 relative links, 2 JSON files; no credential-like data, conflict markers or missing links.
