@@ -1,0 +1,2 @@
+   Compiling her-flight-deck v0.5.3 ([review-checkout]\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 43.85s

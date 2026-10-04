@@ -342,7 +342,6 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
 
   it("4. injected failure at each write boundary leaves no partial operation (atomic rollback)", async () => {
     const repos = createRepositories(testDb);
-    const originalExecute = testDb.execute.bind(testDb);
 
     const op: DebriefSaveOperation = {
       targetId: "entry-atomic-rollback",
@@ -383,11 +382,10 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
     };
 
     // Boundary 1: Failure during journal insert
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (sql.includes("INSERT INTO journal_entries")) {
         throw new Error("Disk full on journal insert");
       }
-      return originalExecute(sql, params);
     };
 
     await expect(testDb.saveDebriefAtomically!(op)).rejects.toThrow("Disk full on journal insert");
@@ -396,11 +394,10 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
     expect((await repos.questions.list()).length).toBe(0);
 
     // Boundary 2: Failure during action insert
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (sql.includes("INSERT INTO next_actions")) {
         throw new Error("Transient error on action insert");
       }
-      return originalExecute(sql, params);
     };
 
     await expect(testDb.saveDebriefAtomically!(op)).rejects.toThrow("Transient error on action insert");
@@ -409,11 +406,10 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
     expect((await repos.questions.list()).length).toBe(0);
 
     // Boundary 3: Failure during question insert
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (sql.includes("INSERT INTO questions")) {
         throw new Error("Constraint error on question insert");
       }
-      return originalExecute(sql, params);
     };
 
     await expect(testDb.saveDebriefAtomically!(op)).rejects.toThrow("Constraint error on question insert");
@@ -422,7 +418,7 @@ describe("M1 D6: Connect improvement -> action -> study material -> instructor q
     expect((await repos.questions.list()).length).toBe(0);
 
     // Restore execute and verify normal save succeeds
-    testDb.execute = originalExecute;
+    testDb.beforeStatement = undefined;
     await testDb.saveDebriefAtomically!(op);
     expect((await repos.journal.list()).length).toBe(1);
     expect((await repos.actions.list()).length).toBe(1);

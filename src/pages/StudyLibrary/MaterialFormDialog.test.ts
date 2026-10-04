@@ -237,3 +237,68 @@ it("closes dialog on successful creation of a new material", async () => {
   await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
   await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
 });
+
+it("cancel after failed save of replacement cleans only the new unreferenced file and preserves original", async () => {
+  files.pick.mockResolvedValue({ relativePath: "replacement.pdf", originalFileName: "replacement.pdf", fileSize: 4096 });
+  const onSave = vi.fn().mockResolvedValue(false); // Simulate failed DB save
+  const onClose = vi.fn();
+
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: makeMaterial({ filePath: "original.pdf", originalFileName: "original.pdf" }),
+    goals: [], events: [], newMaterialId: "mat-1",
+    onClose, onSave,
+  }));
+
+  // Replace file
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  await screen.findByText("replacement.pdf");
+
+  // Attempt save -> fails
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+  await screen.findByText(/That material could not be saved/);
+
+  // User decides to Cancel
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  // Crucial: ONLY the uncommitted replacement.pdf is cleaned up, NOT the original.pdf!
+  await waitFor(() => expect(files.cleanup).toHaveBeenCalledWith(["replacement.pdf"]));
+  expect(files.cleanup).not.toHaveBeenCalledWith(["original.pdf"]);
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
+it("retry after failed save preserves user inputs and succeeds on second attempt", async () => {
+  files.pick.mockResolvedValue({ relativePath: "guide.pdf", originalFileName: "guide.pdf", fileSize: 1024 });
+  const onSave = vi.fn()
+    .mockResolvedValueOnce(false) // First save fails
+    .mockResolvedValueOnce(true);  // Retry succeeds
+  const onClose = vi.fn();
+
+  render(h(MaterialFormDialog, {
+    open: true,
+    material: null,
+    goals: [], events: [], newMaterialId: "new-mat-id",
+    onClose, onSave,
+  }));
+
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Flight Maneuvers" } });
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  await screen.findByText("guide.pdf");
+
+  // First save fails
+  fireEvent.click(screen.getByRole("button", { name: "Add material" }));
+  await screen.findByText(/That material could not be saved/);
+
+  // Choices are preserved
+  expect(screen.getByDisplayValue("Flight Maneuvers")).toBeTruthy();
+  expect(screen.getByText("guide.pdf")).toBeTruthy();
+
+  // Retry save
+  fireEvent.click(screen.getByRole("button", { name: "Add material" }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+
+  // Committed file guide.pdf was NEVER sent to cleanup
+  expect(files.cleanup).not.toHaveBeenCalledWith(["guide.pdf"]);
+});

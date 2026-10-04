@@ -1,0 +1,79 @@
+{
+  "files": ["contract-guide.pdf", "contract-replacement.pdf"],
+  "steps": [
+    {
+      "name": "create with every field, duplicate and whitespace tags",
+      "operation": {
+        "mode": "create",
+        "id": "contract-1",
+        "fields": {
+          "title": "  Weather theory  ",
+          "materialType": "lesson_notes",
+          "topic": "weather",
+          "reviewStatus": "studying",
+          "priority": "next_up",
+          "goalId": null,
+          "eventId": null,
+          "notes": "Fronts and stability",
+          "filePath": "contract-guide.pdf",
+          "originalFileName": "Guide.pdf",
+          "fileSize": 12,
+          "lastReviewedAt": null
+        },
+        "tags": ["Old tag", "  Old tag ", "Weather", "   "],
+        "createdAt": "2026-10-01T10:00:00.000Z",
+        "updatedAt": "2026-10-01T10:00:00.000Z"
+      }
+    },
+    {
+      "name": "replace a tag (the native id-collision case)",
+      "operation": {
+        "mode": "update",
+        "id": "contract-1",
+        "fields": {},
+        "tags": ["New tag", "Weather"],
+        "updatedAt": "2026-10-01T11:00:00.000Z"
+      }
+    },
+    {
+      "name": "partial update with omitted tags and explicit nulls",
+      "operation": {
+        "mode": "update",
+        "id": "contract-1",
+        "fields": { "title": "Weather theory II", "originalFileName": null, "fileSize": null },
+        "updatedAt": "2026-10-01T12:00:00.000Z"
+      }
+    },
+    {
+      "name": "minimal create reusing an existing tag, with Unicode and case-distinct names",
+      "operation": {
+        "mode": "create",
+        "id": "contract-2",
+        "fields": { "title": "Checklist" },
+        "tags": ["Weather", "IFR", "ifr", "Navigation ✈"],
+        "createdAt": "2026-10-01T13:00:00.000Z",
+        "updatedAt": "2026-10-01T13:00:00.000Z"
+      }
+    },
+    {
+      "name": "replace the attachment and clear tags",
+      "operation": {
+        "mode": "update",
+        "id": "contract-1",
+        "fields": { "filePath": "contract-replacement.pdf", "originalFileName": "Replacement.pdf", "fileSize": 34 },
+        "tags": [],
+        "updatedAt": "2026-10-01T14:00:00.000Z"
+      }
+    },
+    {
+      "name": "remove the attachment and re-add a tag",
+      "operation": {
+        "mode": "update",
+        "id": "contract-1",
+        "fields": { "filePath": null, "originalFileName": null, "fileSize": null },
+        "tags": ["Old tag"],
+        "updatedAt": "2026-10-01T15:00:00.000Z"
+      }
+    }
+  ]
+}

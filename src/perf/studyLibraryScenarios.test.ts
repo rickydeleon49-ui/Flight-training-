@@ -4,6 +4,9 @@
  * answer key must agree with the generator rules, and every benchmark scenario
  * must produce exactly the expected ids and order on the real page.
  */
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createElement as h, Profiler } from "react";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -18,6 +21,7 @@ import {
   analyticCounts,
   expectedIds,
   fixtureLibrary,
+  fixtureMaterial,
   seedFixtureMaterials,
   type FixtureMaterial,
 } from "./studyLibraryFixture";
@@ -187,4 +191,110 @@ describe("Study Library benchmark scenarios", () => {
     });
     await expect(run).rejects.toThrow(/step 9 \(query "airspace c"\): page reports 999 results/);
   }, 30_000);
+});
+
+describe("seedFixtureMaterials atomic batch behavior on Node SQLite", () => {
+  it("stores exact material fields, dates, and tags matching the deterministic fixture", async () => {
+    const testDb = await createNodeSqliteDatabase();
+    try {
+      const materials = fixtureLibrary(5);
+      await seedFixtureMaterials(testDb, materials);
+
+      const storedMaterials = await testDb.select<Record<string, unknown>>(
+        `SELECT id, title, material_type, topic, review_status, priority,
+                notes, file_path, original_file_name, file_size, created_at, updated_at
+           FROM study_materials ORDER BY id`,
+      );
+      expect(storedMaterials).toHaveLength(5);
+      for (const m of materials) {
+        const stored = storedMaterials.find((r) => r.id === m.id);
+        expect(stored, `stored record for ${m.id}`).toBeDefined();
+        expect(stored!.title).toBe(m.title);
+        expect(stored!.material_type).toBe(m.materialType);
+        expect(stored!.topic).toBe(m.topic);
+        expect(stored!.review_status).toBe(m.reviewStatus);
+        expect(stored!.priority).toBe(m.priority);
+        expect(stored!.notes).toBe(m.notes);
+        expect(stored!.file_path).toBe(m.filePath);
+        expect(stored!.original_file_name).toBe(m.filePath ? `${m.id}.pdf` : null);
+        expect(stored!.file_size).toBe(m.fileSize);
+        expect(stored!.created_at).toBe(m.createdAt);
+        expect(stored!.updated_at).toBe(m.createdAt);
+
+        const storedTags = (
+          await testDb.select<{ name: string }>(
+            `SELECT t.name FROM tags t
+               JOIN material_tags mt ON mt.tag_id = t.id
+              WHERE mt.material_id = ?
+              ORDER BY t.name`,
+            [m.id],
+          )
+        ).map((r) => r.name);
+        expect(storedTags.sort()).toEqual([...m.tags].sort());
+      }
+    } finally {
+      testDb.close();
+    }
+  });
+
+  it("rolls back exact rows, tags and links, then persists a later valid save across reopen", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "hfd-fixture-rollback-"));
+    const path = join(dir, "fixture.sqlite");
+    let testDb: TestDatabase | null = null;
+    const snapshot = async () => ({
+      materials: await testDb!.select("SELECT * FROM study_materials ORDER BY id"),
+      tags: await testDb!.select("SELECT * FROM tags ORDER BY id"),
+      links: await testDb!.select("SELECT * FROM material_tags ORDER BY material_id, tag_id"),
+    });
+    try {
+      testDb = await createNodeSqliteDatabase(path);
+      await seedFixtureMaterials(testDb, fixtureLibrary(3));
+      const before = await snapshot();
+      expect(before.materials).toHaveLength(3);
+
+      // The first insert and its unique tag/link succeed before the second
+      // material collides. A partial rollback would leave an orphan tag.
+      const first = { ...fixtureMaterial(10, 100), tags: ["failed-batch-only"] };
+      const failingBatch: FixtureMaterial[] = [first, { ...fixtureMaterial(11, 100), id: first.id }];
+      await expect(seedFixtureMaterials(testDb, failingBatch)).rejects.toThrow(/UNIQUE/);
+      expect(await snapshot()).toEqual(before);
+
+      // Another immediate transaction succeeds, proving the failed one ended.
+      const next = { ...fixtureMaterial(20, 100), tags: ["committed-after-failure"] };
+      await seedFixtureMaterials(testDb, [next]);
+      const committed = await snapshot();
+      expect(committed.materials).toHaveLength(4);
+      expect(committed.materials.find((row) => row.id === next.id)).toMatchObject({ title: next.title });
+      expect(committed.tags.some((row) => row.name === "committed-after-failure")).toBe(true);
+      expect(committed.tags.some((row) => row.name === "failed-batch-only")).toBe(false);
+      testDb.close();
+      testDb = null;
+      testDb = await createNodeSqliteDatabase(path);
+      expect(await snapshot()).toEqual(committed);
+      expect(await testDb.select("PRAGMA foreign_key_check")).toEqual([]);
+    } finally {
+      testDb?.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses public transaction control on the test connection", async () => {
+    const testDb = await createNodeSqliteDatabase();
+    try {
+      await expect(testDb.execute("BEGIN")).rejects.toThrow(
+        /Transactions on this connection must go through/i,
+      );
+      await expect(testDb.execute("BEGIN TRANSACTION")).rejects.toThrow(
+        /Transactions on this connection must go through/i,
+      );
+      await expect(testDb.execute("COMMIT")).rejects.toThrow(
+        /Transactions on this connection must go through/i,
+      );
+      await expect(testDb.execute("SAVEPOINT sp1")).rejects.toThrow(
+        /Transactions on this connection must go through/i,
+      );
+    } finally {
+      testDb.close();
+    }
+  });
 });

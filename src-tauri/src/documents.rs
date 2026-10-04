@@ -10,7 +10,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::time::Duration;
 use tauri::AppHandle;
 
@@ -107,16 +107,87 @@ pub(crate) fn safe_relative_path(relative_path: &str) -> Result<&str, String> {
     Ok(relative_path)
 }
 
+/// Whether a (forward-slash) stored path is hidden, trashed, or spelled in a
+/// way the filesystem resolves to something other than its literal text: an
+/// empty component (`a//b.pdf`, a trailing slash), or a Windows trailing dot
+/// or space. Such spellings are refused rather than normalized, so a cleanup
+/// request can never name a file under an alias of that kind.
+fn is_hidden_or_ambiguous(safe: &str) -> bool {
+    safe.split('/').any(|part| {
+        part.is_empty() || part.starts_with('.') || part.ends_with('.') || part.ends_with(' ')
+    })
+}
+
+/// Whether any study material refers to the same physical file as
+/// `canonical_target` (the canonicalized path of an existing file).
+///
+/// String equality is not identity: `CaseGuide.pdf` versus `CASEGUIDE.PDF` on
+/// a case-insensitive volume, a path through a directory link, a stored
+/// legacy spelling, or a Windows 8.3 short name can all open the same file.
+/// Each stored path the app itself could open is canonicalized by the
+/// filesystem and compared, so the volume decides case sensitivity: names
+/// that are distinct files on a case-sensitive volume canonicalize
+/// differently and are not conflated. A stored path the app would refuse to
+/// open cannot protect anything and is skipped, as is a stored file that is
+/// simply missing; any other failure to resolve a reference fails closed.
+///
+/// Call this inside the writer transaction that also performs the cleanup.
+fn document_is_referenced(
+    tx: &Connection,
+    docs_dir: &Path,
+    safe_rel: &str,
+    canonical_target: &Path,
+) -> Result<bool, String> {
+    let exact: Option<i64> = tx
+        .query_row(
+            "SELECT 1 FROM study_materials WHERE REPLACE(file_path, CHAR(92), '/') = ?1",
+            params![safe_rel],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| format!("Could not check existing file links: {e}"))?;
+    if exact.is_some() {
+        return Ok(true);
+    }
+    let mut stmt = tx
+        .prepare(
+            "SELECT file_path FROM study_materials WHERE file_path IS NOT NULL AND file_path != ''",
+        )
+        .map_err(|e| format!("Could not check existing file links: {e}"))?;
+    let stored = stmt
+        .query_map([], |row| row.get::<_, String>(0))
+        .map_err(|e| format!("Could not check existing file links: {e}"))?;
+    for path in stored {
+        let path = path.map_err(|e| format!("Could not check existing file links: {e}"))?;
+        let normalized = path.replace('\\', "/");
+        let Ok(stored_safe) = safe_relative_path(&normalized) else {
+            continue;
+        };
+        match docs_dir.join(stored_safe).canonicalize() {
+            Ok(canonical) if canonical == canonical_target => return Ok(true),
+            Ok(_) => {}
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory
+                ) => {}
+            Err(error) => {
+                return Err(format!(
+                    "Could not verify the stored document reference '{stored_safe}', so nothing was removed: {error}"
+                ))
+            }
+        }
+    }
+    Ok(false)
+}
+
 fn active_managed_file(
     root: &Path,
     relative_path: &str,
 ) -> Result<(String, PathBuf, std::fs::Metadata), String> {
     let normalized = relative_path.replace('\\', "/");
     let safe = safe_relative_path(&normalized)?;
-    if safe
-        .split('/')
-        .any(|part| part.starts_with('.') || part.ends_with('.') || part.ends_with(' '))
-    {
+    if is_hidden_or_ambiguous(safe) {
         return Err("Hidden or ambiguous document paths cannot be repaired here.".to_string());
     }
     let docs_dir = root.join(DOCUMENTS_DIR);
@@ -729,13 +800,78 @@ pub async fn commit_delete_document(app: AppHandle, staged_id: String) -> Result
     .map_err(|e| format!("Could not purge deleted document: {e}"))?
 }
 
+/// Remove a stored document using recoverable staging, after verifying it is not referenced in the database.
+pub fn delete_document_in(root: &Path, relative_path: &str) -> Result<(), String> {
+    let normalized = relative_path.replace('\\', "/");
+    let safe_rel = safe_relative_path(&normalized)?;
+    if is_hidden_or_ambiguous(safe_rel) {
+        return Err("Hidden or ambiguous document paths cannot be deleted here.".to_string());
+    }
+
+    let docs_dir = root.join(DOCUMENTS_DIR);
+    let target = docs_dir.join(safe_rel);
+
+    // If genuinely already missing on disk, return Ok(()) deliberately
+    if !target.exists() {
+        return Ok(());
+    }
+
+    let canonical_docs = docs_dir
+        .canonicalize()
+        .map_err(|e| format!("Could not verify document storage: {e}"))?;
+    let canonical_parent = target
+        .parent()
+        .ok_or_else(|| "Invalid document path.".to_string())?
+        .canonicalize()
+        .map_err(|e| format!("Could not verify document folder: {e}"))?;
+    if !canonical_parent.starts_with(&canonical_docs) {
+        return Err("Document path leaves app storage.".to_string());
+    }
+
+    let metadata = std::fs::symlink_metadata(&target)
+        .map_err(|e| format!("Could not read file '{safe_rel}': {e}"))?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err("Only real app-owned files can be deleted here.".to_string());
+    }
+    let canonical_target = target
+        .canonicalize()
+        .map_err(|e| format!("Could not verify file '{safe_rel}': {e}"))?;
+
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        return Err("Database file is missing.".to_string());
+    }
+    let mut connection = Connection::open(&db_path)
+        .map_err(|e| format!("Could not inspect database before deleting file: {e}"))?;
+    connection
+        .busy_timeout(Duration::from_millis(5000))
+        .map_err(|e| format!("Could not set database timeout: {e}"))?;
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|e| format!("Could not start safe file deletion: {e}"))?;
+    if document_is_referenced(&tx, &docs_dir, safe_rel, &canonical_target)? {
+        return Err(format!(
+            "Cannot delete referenced file: {safe_rel} is attached to a study material."
+        ));
+    }
+
+    let staged = stage_delete_document_in(root, safe_rel)?;
+    if let Err(error) = tx.commit() {
+        if !staged.staged_id.is_empty() {
+            let _ = rollback_delete_document_in(root, &staged.staged_id);
+        }
+        return Err(format!("Could not finish safe file deletion: {error}"));
+    }
+
+    commit_delete_document_in(root, &staged.staged_id)
+}
+
 /// Remove a stored document using recoverable staging.
 #[tauri::command]
 pub async fn delete_document(app: AppHandle, relative_path: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
-        let staged = stage_delete_document_in(&root, &relative_path)?;
-        commit_delete_document_in(&root, &staged.staged_id)
+        delete_document_in(&root, &relative_path)
     })
     .await
     .map_err(|e| format!("Could not finish deleting that document: {e}"))?
@@ -1131,7 +1267,10 @@ pub async fn import_unlinked_file(app: AppHandle, relative_path: String) -> Resu
 
 /// Move an unlinked file to recoverable private trash.
 pub fn trash_unlinked_file_in(root: &Path, relative_path: &str) -> Result<StagedDeletion, String> {
-    let (safe_rel, _target_file, _metadata) = active_managed_file(root, relative_path)?;
+    let (safe_rel, target_file, _metadata) = active_managed_file(root, relative_path)?;
+    let canonical_target = target_file
+        .canonicalize()
+        .map_err(|e| format!("Could not verify file '{safe_rel}': {e}"))?;
 
     let db_path = root.join("her-flight-deck.db");
     if !db_path.is_file() {
@@ -1145,15 +1284,7 @@ pub fn trash_unlinked_file_in(root: &Path, relative_path: &str) -> Result<Staged
     let tx = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|e| format!("Could not start safe file move: {e}"))?;
-    let is_referenced: Option<i64> = tx
-        .query_row(
-            "SELECT 1 FROM study_materials WHERE REPLACE(file_path, CHAR(92), '/') = ?1",
-            params![safe_rel],
-            |row| row.get(0),
-        )
-        .optional()
-        .map_err(|e| format!("Could not check existing file links: {e}"))?;
-    if is_referenced.is_some() {
+    if document_is_referenced(&tx, &root.join(DOCUMENTS_DIR), &safe_rel, &canonical_target)? {
         return Err(format!(
             "Cannot move referenced file to trash. It is attached to a study material: {safe_rel}"
         ));
@@ -1294,6 +1425,544 @@ fn save_split_materials_at(root: &Path, materials: &[SplitMaterial]) -> Result<(
         .commit()
         .map_err(|error| format!("Could not commit PDF parts: {error}"))
 }
+
+fn deserialize_nullable<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    Deserialize::deserialize(deserializer).map(Some)
+}
+
+pub fn normalize_tags(tags: &[String]) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut result = Vec::new();
+    for raw in tags {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() || !seen.insert(trimmed.to_string()) {
+            continue;
+        }
+        result.push(trimmed.to_string());
+    }
+    result
+}
+
+/// A fresh random tag id from SQLite itself, in the same 8-4-4-4-12 shape the
+/// frontend's `crypto.randomUUID()` ids use.
+fn new_tag_id(tx: &Connection) -> Result<String, String> {
+    let hex: String = tx
+        .query_row("SELECT lower(hex(randomblob(16)))", [], |row| row.get(0))
+        .map_err(|e| format!("Could not create a tag id: {e}"))?;
+    Ok(format!(
+        "{}-{}-{}-{}-{}",
+        &hex[0..8],
+        &hex[8..12],
+        &hex[12..16],
+        &hex[16..20],
+        &hex[20..32]
+    ))
+}
+
+/// Link a material to each (already normalized) tag name.
+///
+/// A tag is resolved by its unique name. Only a name with no row yet gets a
+/// new row, under a random id and a plain INSERT, so a collision fails the
+/// save instead of being ignored. Ids derived from the material and the tag's
+/// position used to collide with rows a previous edit left behind; the ignored
+/// insert then linked nothing while the save still reported the tag. The links
+/// are read back before returning, so the caller can only acknowledge tags
+/// that are actually stored.
+fn link_material_tags(
+    tx: &Connection,
+    material_id: &str,
+    tags: &[String],
+    created_at: &str,
+) -> Result<(), String> {
+    for tag in tags {
+        let existing: Option<String> = tx
+            .query_row("SELECT id FROM tags WHERE name = ?1", params![tag], |row| {
+                row.get(0)
+            })
+            .optional()
+            .map_err(|e| format!("Could not look up tag: {e}"))?;
+        let tag_id = match existing {
+            Some(id) => id,
+            None => {
+                let id = new_tag_id(tx)?;
+                let inserted = tx
+                    .execute(
+                        "INSERT INTO tags (id, name, created_at) VALUES (?1, ?2, ?3)",
+                        params![&id, tag, created_at],
+                    )
+                    .map_err(|e| format!("Could not save tag: {e}"))?;
+                if inserted != 1 {
+                    return Err(format!("Could not save the tag \"{tag}\"."));
+                }
+                id
+            }
+        };
+        let linked = tx
+            .execute(
+                "INSERT INTO material_tags (material_id, tag_id) VALUES (?1, ?2)",
+                params![material_id, &tag_id],
+            )
+            .map_err(|e| format!("Could not attach tag: {e}"))?;
+        if linked != 1 {
+            return Err(format!("Could not attach the tag \"{tag}\"."));
+        }
+    }
+
+    let mut stmt = tx
+        .prepare(
+            "SELECT t.name FROM material_tags mt JOIN tags t ON t.id = mt.tag_id
+             WHERE mt.material_id = ?1",
+        )
+        .map_err(|e| format!("Could not verify material tags: {e}"))?;
+    let stored = stmt
+        .query_map(params![material_id], |row| row.get::<_, String>(0))
+        .map_err(|e| format!("Could not verify material tags: {e}"))?
+        .collect::<Result<HashSet<String>, _>>()
+        .map_err(|e| format!("Could not verify material tags: {e}"))?;
+    let wanted: HashSet<String> = tags.iter().cloned().collect();
+    if stored != wanted {
+        return Err("The saved tags did not match the requested tags.".to_string());
+    }
+    Ok(())
+}
+
+#[allow(clippy::option_option)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MaterialSaveFields {
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub material_type: Option<String>,
+    #[serde(default)]
+    pub topic: Option<String>,
+    #[serde(default)]
+    pub review_status: Option<String>,
+    #[serde(default)]
+    pub priority: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_nullable")]
+    pub goal_id: Option<Option<String>>,
+    #[serde(default, deserialize_with = "deserialize_nullable")]
+    pub event_id: Option<Option<String>>,
+    #[serde(default)]
+    pub notes: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_nullable")]
+    pub file_path: Option<Option<String>>,
+    #[serde(default, deserialize_with = "deserialize_nullable")]
+    pub original_file_name: Option<Option<String>>,
+    #[serde(default, deserialize_with = "deserialize_nullable")]
+    pub file_size: Option<Option<i64>>,
+    #[serde(default, deserialize_with = "deserialize_nullable")]
+    pub last_reviewed_at: Option<Option<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MaterialSaveOperation {
+    pub mode: String,
+    pub id: String,
+    pub fields: MaterialSaveFields,
+    #[serde(default)]
+    pub tags: Option<Vec<String>>,
+    #[serde(default)]
+    pub created_at: Option<String>,
+    #[serde(default)]
+    pub updated_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StoredStudyMaterial {
+    pub id: String,
+    pub title: String,
+    pub material_type: String,
+    pub topic: String,
+    pub review_status: String,
+    pub priority: String,
+    pub goal_id: Option<String>,
+    pub event_id: Option<String>,
+    pub notes: String,
+    pub file_path: Option<String>,
+    pub original_file_name: Option<String>,
+    pub file_size: Option<i64>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub last_reviewed_at: Option<String>,
+    pub tags: Vec<String>,
+}
+
+#[tauri::command]
+pub async fn save_material_operation(
+    app: AppHandle,
+    operation: MaterialSaveOperation,
+) -> Result<StoredStudyMaterial, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        save_material_operation_at(&root, &operation)
+    })
+    .await
+    .map_err(|error| format!("Could not finish saving study material: {error}"))?
+}
+
+pub fn save_material_operation_at(
+    root: &Path,
+    op: &MaterialSaveOperation,
+) -> Result<StoredStudyMaterial, String> {
+    let database = root.join("her-flight-deck.db");
+    if !database.is_file() {
+        return Err("The library database is missing.".to_string());
+    }
+    let mut connection = Connection::open(database)
+        .map_err(|error| format!("Could not open the library database: {error}"))?;
+    connection
+        .busy_timeout(Duration::from_secs(5))
+        .map_err(|error| format!("Could not configure the library database: {error}"))?;
+    connection
+        .pragma_update(None, "foreign_keys", "ON")
+        .map_err(|error| format!("Could not protect library references: {error}"))?;
+
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|error| format!("Could not start saving study material: {error}"))?;
+
+    let result = match op.mode.as_str() {
+        "create" => handle_create_material(&tx, root, op)?,
+        "update" => handle_update_material(&tx, root, op)?,
+        unknown => return Err(format!("Unknown save mode: {unknown}")),
+    };
+
+    tx.commit()
+        .map_err(|error| format!("Could not commit study material: {error}"))?;
+
+    Ok(result)
+}
+
+/// A newly attached or replacement file must be a real app-owned file that
+/// exists now. This runs inside the save's immediate (writer) transaction, the
+/// same lock file cleanup holds while it checks references and moves a file:
+/// if cleanup won the lock first, the file is already gone and the save is
+/// refused instead of committing a reference to it. Only existence, spelling
+/// and containment are checked; ordinary imports have no size or page limit.
+fn verify_new_attachment(root: &Path, relative_path: &str) -> Result<(), String> {
+    if relative_path.contains('\\') || is_hidden_or_ambiguous(relative_path) {
+        return Err("The attached file has an invalid stored name.".to_string());
+    }
+    active_managed_file(root, relative_path)
+        .map(|_| ())
+        .map_err(|e| {
+            format!("The attached file is no longer available, so nothing was saved. ({e})")
+        })
+}
+
+fn handle_create_material(
+    tx: &rusqlite::Transaction,
+    root: &Path,
+    op: &MaterialSaveOperation,
+) -> Result<StoredStudyMaterial, String> {
+    let exists: bool = tx
+        .query_row(
+            "SELECT 1 FROM study_materials WHERE id = ?1",
+            params![&op.id],
+            |_| Ok(()),
+        )
+        .optional()
+        .map_err(|e| format!("Could not check material collision: {e}"))?
+        .is_some();
+    if exists {
+        return Err(format!(
+            "A study material with id \"{}\" already exists.",
+            op.id
+        ));
+    }
+
+    let title = op.fields.title.as_deref().unwrap_or("").trim().to_string();
+    if title.is_empty() {
+        return Err("Title is required.".to_string());
+    }
+
+    let material_type = op
+        .fields
+        .material_type
+        .as_deref()
+        .unwrap_or("study_guide")
+        .to_string();
+    let topic = op.fields.topic.as_deref().unwrap_or("general").to_string();
+    let review_status = op
+        .fields
+        .review_status
+        .as_deref()
+        .unwrap_or("needs_review")
+        .to_string();
+    let priority = op.fields.priority.as_deref().unwrap_or("later").to_string();
+    let goal_id = op.fields.goal_id.as_ref().and_then(|o| o.clone());
+    let event_id = op.fields.event_id.as_ref().and_then(|o| o.clone());
+    let notes = op.fields.notes.as_deref().unwrap_or("").to_string();
+    let file_path = op.fields.file_path.as_ref().and_then(|o| o.clone());
+    let original_file_name = op
+        .fields
+        .original_file_name
+        .as_ref()
+        .and_then(|o| o.clone());
+    let file_size = op.fields.file_size.as_ref().and_then(|o| *o);
+    let last_reviewed_at = op.fields.last_reviewed_at.as_ref().and_then(|o| o.clone());
+    if let Some(path) = &file_path {
+        verify_new_attachment(root, path)?;
+    }
+
+    let now: String = tx
+        .query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |r| {
+            r.get(0)
+        })
+        .map_err(|e| format!("Could not get current timestamp: {e}"))?;
+    let created_at = op.created_at.clone().unwrap_or_else(|| now.clone());
+    let updated_at = op.updated_at.clone().unwrap_or(now);
+
+    tx.execute(
+        "INSERT INTO study_materials (
+           id, title, material_type, topic, review_status, priority,
+           goal_id, event_id, notes, file_path, original_file_name, file_size,
+           created_at, updated_at, last_reviewed_at
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+        params![
+            &op.id,
+            &title,
+            &material_type,
+            &topic,
+            &review_status,
+            &priority,
+            &goal_id,
+            &event_id,
+            &notes,
+            &file_path,
+            &original_file_name,
+            &file_size,
+            &created_at,
+            &updated_at,
+            &last_reviewed_at,
+        ],
+    )
+    .map_err(|e| format!("Could not save study material: {e}"))?;
+
+    let tags = normalize_tags(op.tags.as_deref().unwrap_or(&[]));
+    link_material_tags(tx, &op.id, &tags, &created_at)?;
+
+    Ok(StoredStudyMaterial {
+        id: op.id.clone(),
+        title,
+        material_type,
+        topic,
+        review_status,
+        priority,
+        goal_id,
+        event_id,
+        notes,
+        file_path,
+        original_file_name,
+        file_size,
+        created_at,
+        updated_at,
+        last_reviewed_at,
+        tags,
+    })
+}
+
+fn handle_update_material(
+    tx: &rusqlite::Transaction,
+    root: &Path,
+    op: &MaterialSaveOperation,
+) -> Result<StoredStudyMaterial, String> {
+    let mut stmt = tx
+        .prepare(
+            "SELECT title, material_type, topic, review_status, priority, goal_id, event_id,
+                    notes, file_path, original_file_name, file_size, created_at, updated_at,
+                    last_reviewed_at
+             FROM study_materials WHERE id = ?1",
+        )
+        .map_err(|e| format!("Could not prepare material select: {e}"))?;
+
+    let existing = stmt
+        .query_row(params![&op.id], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, Option<String>>(5)?,
+                row.get::<_, Option<String>>(6)?,
+                row.get::<_, String>(7)?,
+                row.get::<_, Option<String>>(8)?,
+                row.get::<_, Option<String>>(9)?,
+                row.get::<_, Option<i64>>(10)?,
+                row.get::<_, String>(11)?,
+                row.get::<_, String>(12)?,
+                row.get::<_, Option<String>>(13)?,
+            ))
+        })
+        .optional()
+        .map_err(|e| format!("Could not query existing material: {e}"))?;
+
+    let (
+        cur_title,
+        cur_material_type,
+        cur_topic,
+        cur_review_status,
+        cur_priority,
+        cur_goal_id,
+        cur_event_id,
+        cur_notes,
+        cur_file_path,
+        cur_original_file_name,
+        cur_file_size,
+        cur_created_at,
+        _cur_updated_at,
+        cur_last_reviewed_at,
+    ) = match existing {
+        Some(t) => t,
+        None => return Err("That study material no longer exists.".to_string()),
+    };
+
+    drop(stmt);
+
+    let title = match &op.fields.title {
+        Some(t) => {
+            let trimmed = t.trim();
+            if trimmed.is_empty() {
+                return Err("Title is required.".to_string());
+            }
+            trimmed.to_string()
+        }
+        None => cur_title,
+    };
+
+    let material_type = op.fields.material_type.clone().unwrap_or(cur_material_type);
+    let topic = op.fields.topic.clone().unwrap_or(cur_topic);
+    let review_status = op.fields.review_status.clone().unwrap_or(cur_review_status);
+    let priority = op.fields.priority.clone().unwrap_or(cur_priority);
+
+    let goal_id = match &op.fields.goal_id {
+        Some(val) => val.clone(),
+        None => cur_goal_id,
+    };
+    let event_id = match &op.fields.event_id {
+        Some(val) => val.clone(),
+        None => cur_event_id,
+    };
+    let notes = op.fields.notes.clone().unwrap_or(cur_notes);
+    // Only a different file is new. Re-sending the recorded path (a metadata
+    // edit of a material whose file has gone missing) stays allowed.
+    if let Some(Some(path)) = &op.fields.file_path {
+        if cur_file_path.as_deref() != Some(path.as_str()) {
+            verify_new_attachment(root, path)?;
+        }
+    }
+    let file_path = match &op.fields.file_path {
+        Some(val) => val.clone(),
+        None => cur_file_path,
+    };
+    let original_file_name = match &op.fields.original_file_name {
+        Some(val) => val.clone(),
+        None => cur_original_file_name,
+    };
+    let file_size = match &op.fields.file_size {
+        Some(val) => *val,
+        None => cur_file_size,
+    };
+    let last_reviewed_at = match &op.fields.last_reviewed_at {
+        Some(val) => val.clone(),
+        None => cur_last_reviewed_at,
+    };
+
+    let now: String = tx
+        .query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |r| {
+            r.get(0)
+        })
+        .map_err(|e| format!("Could not get current timestamp: {e}"))?;
+    let updated_at = op.updated_at.clone().unwrap_or(now);
+    let created_at = cur_created_at; // ALWAYS preserve created_at!
+
+    tx.execute(
+        "UPDATE study_materials SET
+           title = ?1, material_type = ?2, topic = ?3, review_status = ?4, priority = ?5,
+           goal_id = ?6, event_id = ?7, notes = ?8, file_path = ?9, original_file_name = ?10,
+           file_size = ?11, updated_at = ?12, last_reviewed_at = ?13
+         WHERE id = ?14",
+        params![
+            &title,
+            &material_type,
+            &topic,
+            &review_status,
+            &priority,
+            &goal_id,
+            &event_id,
+            &notes,
+            &file_path,
+            &original_file_name,
+            &file_size,
+            &updated_at,
+            &last_reviewed_at,
+            &op.id,
+        ],
+    )
+    .map_err(|e| format!("Could not update study material: {e}"))?;
+
+    let final_tags = if let Some(new_tags) = &op.tags {
+        tx.execute(
+            "DELETE FROM material_tags WHERE material_id = ?1",
+            params![&op.id],
+        )
+        .map_err(|e| format!("Could not clear material tags: {e}"))?;
+
+        let tags = normalize_tags(new_tags);
+        link_material_tags(tx, &op.id, &tags, &updated_at)?;
+        tags
+    } else {
+        let mut tag_stmt = tx
+            .prepare(
+                "SELECT t.name
+                 FROM material_tags mt
+                 JOIN tags t ON t.id = mt.tag_id
+                 WHERE mt.material_id = ?1
+                 ORDER BY t.name",
+            )
+            .map_err(|e| format!("Could not query material tags: {e}"))?;
+        let tags_iter = tag_stmt
+            .query_map(params![&op.id], |row| row.get::<_, String>(0))
+            .map_err(|e| format!("Could not map material tags: {e}"))?;
+        let mut tags = Vec::new();
+        for t in tags_iter {
+            tags.push(t.map_err(|e| format!("Could not read tag: {e}"))?);
+        }
+        tags
+    };
+
+    Ok(StoredStudyMaterial {
+        id: op.id.clone(),
+        title,
+        material_type,
+        topic,
+        review_status,
+        priority,
+        goal_id,
+        event_id,
+        notes,
+        file_path,
+        original_file_name,
+        file_size,
+        created_at,
+        updated_at,
+        last_reviewed_at,
+        tags: final_tags,
+    })
+}
+
+#[cfg(test)]
+#[path = "documents_save_tests.rs"]
+mod save_tests;
 
 #[cfg(test)]
 mod tests {
@@ -2313,7 +2982,8 @@ mod tests {
         assert!(report.missing_materials.is_empty());
         assert!(report.unlinked_files.is_empty());
 
-        let _ = std::fs::remove_dir_all(root);
+        drop(conn);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -2342,7 +3012,8 @@ mod tests {
         assert_eq!(report.unlinked_files[0].relative_path, "doc2.pdf");
         assert_eq!(report.unlinked_files[0].file_name, "doc2.pdf");
 
-        let _ = std::fs::remove_dir_all(root);
+        drop(conn);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -2377,7 +3048,8 @@ mod tests {
         assert!(report.missing_materials.is_empty());
         assert!(report.unlinked_files.is_empty());
 
-        let _ = std::fs::remove_dir_all(root);
+        drop(conn);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -2414,7 +3086,8 @@ mod tests {
             .any(|m| m.id == "3" && m.file_path == "doc.pdf:hidden"));
         assert!(report.unlinked_files.is_empty());
 
-        let _ = std::fs::remove_dir_all(root);
+        drop(conn);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -2436,7 +3109,8 @@ mod tests {
             "Deleted file must not be reported as unlinked"
         );
 
-        let _ = std::fs::remove_dir_all(root);
+        drop(_conn);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

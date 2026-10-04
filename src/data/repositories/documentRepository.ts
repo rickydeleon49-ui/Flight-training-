@@ -38,11 +38,18 @@ interface PracticeTestRow {
 }
 
 /**
- * How long to wait before each retry of a transaction that hit a transient
- * SQLite lock — short and bounded. Three tries beyond the first covers a
- * competing autosave or backup snapshot that releases its own lock quickly;
- * anything still locked after roughly a second is treated as a real failure,
- * not retried further, and reported plainly.
+ * How long to wait before each retry of a save that hit a transient SQLite
+ * lock. Three tries beyond the first covers a competing autosave or backup
+ * snapshot that releases its own lock quickly; after that the lock is treated
+ * as a real failure and reported plainly.
+ *
+ * These pauses add up to 1.1 s, but they are not the whole wait. On the
+ * desktop each try is one native command whose connection first waits out
+ * SQLite's five-second `busy_timeout` (measured at about 5.5 s per try on
+ * Windows), so a lock that never clears is reported after roughly
+ * 4 × 5.5 s + 1.1 s ≈ 23 s. That is deliberate: a brief backup snapshot or
+ * autosave clears long before, and nothing is written while waiting. The
+ * single-connection browser and test drivers never contend for a lock.
  */
 const LOCK_RETRY_DELAYS_MS = [100, 300, 700];
 
@@ -54,7 +61,7 @@ const LOCK_RETRY_DELAYS_MS = [100, 300, 700];
  */
 function isTransientLockError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /database is locked|SQLITE_BUSY|\(code:\s*5\)/i.test(message);
+  return /database is locked|SQLITE_BUSY|\(code:\s*5\)|cannot start a transaction within a transaction/i.test(message);
 }
 
 function delay(ms: number): Promise<void> {
@@ -64,6 +71,13 @@ function delay(ms: number): Promise<void> {
 function lockGaveUpError(): Error {
   return new Error(
     "The database was busy, so these parts could not be saved after several tries. " +
+      "Close any other window and try again.",
+  );
+}
+
+function lockGaveUpMaterialError(): Error {
+  return new Error(
+    "The database was busy, so this study material could not be saved after several tries. " +
       "Close any other window and try again.",
   );
 }
@@ -147,59 +161,6 @@ export function documentRepository(db: SqlDatabase) {
       lastReviewedAt: input.lastReviewedAt ?? null,
       tags: input.tags ?? [],
     };
-  }
-
-  async function insertMaterial(input: NewMaterial & { id?: Id }): Promise<StudyMaterial> {
-    const material = buildMaterial(input);
-    await db.execute(
-      `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority,
-         goal_id, event_id, notes, file_path, original_file_name, file_size,
-         created_at, updated_at, last_reviewed_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        material.id, material.title, material.materialType, material.topic,
-        material.reviewStatus, material.priority, material.goalId, material.eventId,
-        material.notes, material.filePath, material.originalFileName, material.fileSize,
-        material.createdAt, material.updatedAt, material.lastReviewedAt,
-      ],
-    );
-    if (material.tags.length) await replaceTags(material.id, material.tags);
-    return material;
-  }
-
-  /** Resolve tag names to ids, creating any that are new. */
-  async function resolveTagIds(names: string[]): Promise<string[]> {
-    const ids: string[] = [];
-    for (const raw of names) {
-      const name = raw.trim();
-      if (!name) continue;
-      const existing = await db.select<{ id: string }>("SELECT id FROM tags WHERE name = ?", [name]);
-      const found = existing[0];
-      if (found) {
-        ids.push(found.id);
-      } else {
-        const id = newId();
-        // Starter initialization can overlap in React's development strict mode.
-        // Let the database settle that race, then use whichever id won.
-        await db.execute("INSERT OR IGNORE INTO tags (id, name, created_at) VALUES (?, ?, ?)", [
-          id, name, nowIso(),
-        ]);
-        const resolved = await db.select<{ id: string }>("SELECT id FROM tags WHERE name = ?", [name]);
-        const winner = resolved[0];
-        if (!winner) throw new Error(`Could not save the tag “${name}”.`);
-        ids.push(winner.id);
-      }
-    }
-    return ids;
-  }
-
-  async function replaceTags(materialId: Id, names: string[]): Promise<void> {
-    await db.execute("DELETE FROM material_tags WHERE material_id = ?", [materialId]);
-    for (const tagId of await resolveTagIds(names)) {
-      await db.execute("INSERT INTO material_tags (material_id, tag_id) VALUES (?, ?)", [
-        materialId, tagId,
-      ]);
-    }
   }
 
   async function tagsByMaterial(): Promise<Map<string, string[]>> {
@@ -296,7 +257,43 @@ export function documentRepository(db: SqlDatabase) {
      * under the material's own id before the row exists.
      */
     async create(input: NewMaterial & { id?: Id }): Promise<StudyMaterial> {
-      return insertMaterial(input);
+      if (typeof db.saveMaterialAtomically !== "function") {
+        throw new Error(
+          "Atomic study material saves require a database driver with atomic transaction support.",
+        );
+      }
+      const material = buildMaterial(input);
+      const operation: import("../db").MaterialSaveOperation = {
+        mode: "create",
+        id: material.id,
+        fields: {
+          title: material.title,
+          materialType: material.materialType,
+          topic: material.topic,
+          reviewStatus: material.reviewStatus,
+          priority: material.priority,
+          goalId: material.goalId,
+          eventId: material.eventId,
+          notes: material.notes,
+          filePath: material.filePath,
+          originalFileName: material.originalFileName,
+          fileSize: material.fileSize,
+          lastReviewedAt: material.lastReviewedAt,
+        },
+        tags: material.tags,
+        createdAt: material.createdAt,
+        updatedAt: material.updatedAt,
+      };
+
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await db.saveMaterialAtomically(operation);
+        } catch (error) {
+          if (!isTransientLockError(error)) throw error;
+          if (attempt >= LOCK_RETRY_DELAYS_MS.length) throw lockGaveUpMaterialError();
+          await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
+        }
+      }
     },
 
     /**
@@ -312,72 +309,67 @@ export function documentRepository(db: SqlDatabase) {
      */
     async createMany(inputs: Array<NewMaterial & { id?: Id }>): Promise<StudyMaterial[]> {
       if (inputs.length === 0) return [];
-      // The desktop SQL plugin uses a pool: separate BEGIN/INSERT/COMMIT calls
-      // may hit different connections. Its native batch owns one connection.
-      if (db.saveMaterialsAtomically) {
-        const materials = inputs.map(buildMaterial);
-        for (let attempt = 0; ; attempt++) {
-          try {
-            await db.saveMaterialsAtomically(materials);
-            return materials;
-          } catch (error) {
-            if (!isTransientLockError(error)) throw error;
-            if (attempt >= LOCK_RETRY_DELAYS_MS.length) throw lockGaveUpError();
-            await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
-          }
-        }
+      // Every driver saves the batch as one operation that owns its connection:
+      // the desktop's native command pins one pooled connection, and the
+      // single-connection drivers run it under their connection owner. Public
+      // BEGIN/INSERT/COMMIT calls could land on different pooled connections,
+      // or let another caller's write join (and be rolled back with) the batch.
+      if (typeof db.saveMaterialsAtomically !== "function") {
+        throw new Error(
+          "Atomic study material saves require a database driver with atomic transaction support.",
+        );
       }
+      const materials = inputs.map(buildMaterial);
       for (let attempt = 0; ; attempt++) {
-        const canRetry = attempt < LOCK_RETRY_DELAYS_MS.length;
-
         try {
-          await db.execute("BEGIN IMMEDIATE");
-        } catch (beginError) {
-          if (canRetry && isTransientLockError(beginError)) {
-            await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
-            continue;
-          }
-          throw isTransientLockError(beginError) ? lockGaveUpError() : beginError;
-        }
-
-        try {
-          const materials: StudyMaterial[] = [];
-          for (const input of inputs) materials.push(await insertMaterial(input));
-          await db.execute("COMMIT");
+          await db.saveMaterialsAtomically(materials);
           return materials;
-        } catch (cause) {
-          try {
-            await db.execute("ROLLBACK");
-          } catch (rollbackError) {
-            throw new AggregateError([cause, rollbackError], "Saving PDF parts failed and the database rollback also failed.");
-          }
-          if (canRetry && isTransientLockError(cause)) {
-            await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
-            continue;
-          }
-          throw isTransientLockError(cause) ? lockGaveUpError() : cause;
+        } catch (error) {
+          if (!isTransientLockError(error)) throw error;
+          if (attempt >= LOCK_RETRY_DELAYS_MS.length) throw lockGaveUpError();
+          await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
         }
       }
     },
 
     async update(id: Id, changes: Partial<StudyMaterial>): Promise<void> {
-      const rows = await db.select<Row>("SELECT * FROM study_materials WHERE id = ?", [id]);
-      const existing = rows[0];
-      if (!existing) throw new Error("That study material no longer exists.");
-      const next = { ...map(existing, []), ...changes, updatedAt: nowIso() };
-      await db.execute(
-        `UPDATE study_materials
-            SET title = ?, material_type = ?, topic = ?, review_status = ?, priority = ?,
-                goal_id = ?, event_id = ?, notes = ?, file_path = ?, original_file_name = ?,
-                file_size = ?, updated_at = ?, last_reviewed_at = ?
-          WHERE id = ?`,
-        [
-          next.title, next.materialType, next.topic, next.reviewStatus, next.priority,
-          next.goalId, next.eventId, next.notes, next.filePath, next.originalFileName,
-          next.fileSize, next.updatedAt, next.lastReviewedAt, id,
-        ],
-      );
-      if (changes.tags) await replaceTags(id, changes.tags);
+      if (typeof db.saveMaterialAtomically !== "function") {
+        throw new Error(
+          "Atomic study material saves require a database driver with atomic transaction support.",
+        );
+      }
+      const fields: import("../db").MaterialSaveFields = {};
+      if (changes.title !== undefined) fields.title = changes.title;
+      if (changes.materialType !== undefined) fields.materialType = changes.materialType;
+      if (changes.topic !== undefined) fields.topic = changes.topic;
+      if (changes.reviewStatus !== undefined) fields.reviewStatus = changes.reviewStatus;
+      if (changes.priority !== undefined) fields.priority = changes.priority;
+      if (changes.goalId !== undefined) fields.goalId = changes.goalId;
+      if (changes.eventId !== undefined) fields.eventId = changes.eventId;
+      if (changes.notes !== undefined) fields.notes = changes.notes;
+      if (changes.filePath !== undefined) fields.filePath = changes.filePath;
+      if (changes.originalFileName !== undefined) fields.originalFileName = changes.originalFileName;
+      if (changes.fileSize !== undefined) fields.fileSize = changes.fileSize;
+      if (changes.lastReviewedAt !== undefined) fields.lastReviewedAt = changes.lastReviewedAt;
+
+      const operation: import("../db").MaterialSaveOperation = {
+        mode: "update",
+        id,
+        fields,
+        tags: changes.tags,
+        updatedAt: nowIso(),
+      };
+
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await db.saveMaterialAtomically(operation);
+          return;
+        } catch (error) {
+          if (!isTransientLockError(error)) throw error;
+          if (attempt >= LOCK_RETRY_DELAYS_MS.length) throw lockGaveUpMaterialError();
+          await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
+        }
+      }
     },
 
     async remove(id: Id): Promise<void> {

@@ -429,13 +429,11 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     const repos = createRepositories(testDb);
 
     let failFirstSave = true;
-    const originalExecute = testDb.execute.bind(testDb);
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (failFirstSave && sql.includes("INSERT INTO next_actions")) {
         failFirstSave = false;
         throw new Error("Simulated transient write glitch during action creation");
       }
-      return originalExecute(sql, params);
     };
 
     await renderJournalForm("/journal/new?mode=quick");
@@ -743,13 +741,11 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     const repos = createRepositories(testDb);
 
     let injectFailure = true;
-    const originalExecute = testDb.execute.bind(testDb);
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (injectFailure && sql.includes("INSERT INTO questions")) {
         injectFailure = false;
         throw new Error("Injected partial save failure at INSERT INTO questions");
       }
-      return originalExecute(sql, params);
     };
 
     await renderJournalForm("/journal/new?mode=quick");
@@ -971,13 +967,11 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     const repos = createRepositories(testDb);
 
     let injectFailure = true;
-    const originalExecute = testDb.execute.bind(testDb);
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (injectFailure && sql.includes("INSERT INTO questions")) {
         injectFailure = false;
         throw new Error("Injected failure during question write");
       }
-      return originalExecute(sql, params);
     };
 
     await renderJournalForm("/journal/new?mode=quick");
@@ -1047,13 +1041,11 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     const repos = createRepositories(testDb);
 
     let injectFailure = true;
-    const originalExecute = testDb.execute.bind(testDb);
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (injectFailure && sql.includes("INSERT INTO questions")) {
         injectFailure = false;
         throw new Error("Temporary question write failure");
       }
-      return originalExecute(sql, params);
     };
 
     await renderJournalForm("/journal/new?mode=quick");
@@ -1207,18 +1199,16 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
 
   it("save safety 1: durable pre-write identity protects against interruption after journal commit, action commit, and question commit without duplicate records", async () => {
     const repos = createRepositories(testDb);
-    const originalExecute = testDb.execute.bind(testDb);
 
     // Boundary A: Interrupted after journal commit (before action commit)
     let shouldFailAction = true;
     let capturedDraftA: any = null;
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (shouldFailAction && sql.includes("INSERT INTO next_actions")) {
         shouldFailAction = false;
         capturedDraftA = readDraft("journal.new");
         throw new Error("Simulated interruption after journal commit");
       }
-      return originalExecute(sql, params);
     };
 
     await renderJournalForm("/journal/new?mode=quick");
@@ -1281,13 +1271,12 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     // Boundary B: Interrupted during question commit (atomic rollback leaves no partial records)
     let shouldFailQuestion = true;
     let capturedDraftB: any = null;
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (shouldFailQuestion && sql.includes("INSERT INTO questions")) {
         shouldFailQuestion = false;
         capturedDraftB = readDraft("journal.new");
         throw new Error("Simulated interruption after action commit");
       }
-      return originalExecute(sql, params);
     };
 
     await renderJournalForm("/journal/new?mode=quick");
@@ -1423,7 +1412,7 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     }
 
     cleanup();
-    testDb.execute = originalExecute;
+    testDb.beforeStatement = undefined;
   });
 
   it("save safety 1: refuses to begin partial database commits if draft storage write fails", async () => {
@@ -1464,7 +1453,6 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
   });
 
   it("save safety 2: disables all controls during save and preserves edits made while saving across deferred write failure and success", async () => {
-    const originalExecute = testDb.execute.bind(testDb);
 
     let resolveWrite: (() => void) | null = null;
     let rejectWrite: ((err: Error) => void) | null = null;
@@ -1473,11 +1461,10 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
       rejectWrite = reject;
     });
 
-    testDb.execute = async (sql: string, params: any[] = []) => {
+    testDb.beforeStatement = async (sql: string) => {
       if (sql.includes("INSERT INTO journal_entries") || sql.includes("UPDATE journal_entries")) {
         await writeDeferred;
       }
-      return originalExecute(sql, params);
     };
 
     await renderJournalForm("/journal/new?mode=quick");
@@ -1559,6 +1546,6 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     expect(screen.queryByTestId("entry-detail")).toBeNull();
     expect(reflectionArea.value).toBe("Even newer text typed while saving");
 
-    testDb.execute = originalExecute;
+    testDb.beforeStatement = undefined;
   });
 });

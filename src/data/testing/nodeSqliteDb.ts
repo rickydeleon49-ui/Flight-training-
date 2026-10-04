@@ -2,12 +2,26 @@
  * SqlDatabase backed by Node's built-in SQLite. Used by the test suite so
  * repositories are exercised against real SQLite — including foreign keys
  * and partial unique indexes — rather than a hand-written fake.
+ *
+ * It holds one connection, so every public method runs through a
+ * `ConnectionOwner` (see `connectionOwner.ts`), exactly like the sql.js
+ * browser driver.
  */
 import type { SqlDatabase, SqlValue } from "../db";
+import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "../connectionOwner";
+import { executeDebriefSave } from "../debriefTransaction";
+import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { applyMigrations } from "../migrations";
 
 export interface TestDatabase extends SqlDatabase {
   close(): void;
+  /**
+   * Test-only fault seam: awaited before every data statement — public
+   * `execute` and the statements inside the atomic saves — so a test can fail
+   * or pause one specific write. Transaction control and reads are not routed
+   * through it. This driver is never used by the app.
+   */
+  beforeStatement?: (sql: string, params: SqlValue[]) => void | Promise<void>;
 }
 
 export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestDatabase> {
@@ -32,21 +46,49 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
 
   await applyMigrations((sql) => db.exec(sql), applied);
 
+  // Raw statements for use inside an owned operation only.
+  const exec = (sql: string): void => {
+    db.exec(sql);
+  };
+  const run = async (sql: string, params: SqlValue[]): Promise<void> => {
+    await testDb.beforeStatement?.(sql, params);
+    db.prepare(sql).run(...params);
+  };
+  const query = (sql: string, params: SqlValue[]) =>
+    db.prepare(sql).all(...params) as Record<string, unknown>[];
+
+  const owner = createConnectionOwner(() => rollbackIfOpen(exec));
+
   const testDb: TestDatabase = {
-    async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
-      return db.prepare(sql).all(...params) as T[];
+    select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
+      return owner.exclusive(() => {
+        refuseTransactionControl(sql);
+        return query(sql, params) as T[];
+      });
     },
-    async execute(sql: string, params: SqlValue[] = []): Promise<void> {
-      db.prepare(sql).run(...params);
+    execute(sql: string, params: SqlValue[] = []): Promise<void> {
+      return owner.exclusive(() => {
+        refuseTransactionControl(sql);
+        return run(sql, params);
+      });
     },
-    async saveDebriefAtomically(operation: import("../db").DebriefSaveOperation): Promise<void> {
-      const { executeDebriefSave } = await import("../debriefTransaction");
-      await executeDebriefSave(
-        (sql) => db.exec(sql),
-        (sql, params) => testDb.execute(sql, params),
-        (sql, params) => Boolean(db.prepare(sql).get(...params)),
-        operation,
+    saveDebriefAtomically(operation: import("../db").DebriefSaveOperation): Promise<void> {
+      return owner.exclusive(() =>
+        executeDebriefSave(
+          exec,
+          run,
+          (sql, params) => Boolean(db.prepare(sql).get(...params)),
+          operation,
+        ),
       );
+    },
+    saveMaterialAtomically(
+      operation: import("../db").MaterialSaveOperation,
+    ): Promise<import("@/domain/types").StudyMaterial> {
+      return owner.exclusive(() => executeMaterialSave(exec, run, query, operation));
+    },
+    saveMaterialsAtomically(materials: import("@/domain/types").StudyMaterial[]): Promise<void> {
+      return owner.exclusive(() => executeMaterialsBatch(exec, run, query, materials));
     },
     close() {
       db.close();

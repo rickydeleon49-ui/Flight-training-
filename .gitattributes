@@ -1,1 +1,5 @@
 *.sql text eol=lf
+# Keep the executable hashbang and upstream license bytes stable on Windows.
+scripts/mac-readiness-preflight.mjs text eol=lf
+public/THIRD_PARTY_NOTICES.txt text eol=lf
+.claude/hooks/*.sh text eol=lf

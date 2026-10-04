@@ -18,6 +18,34 @@ export interface SqlDatabase {
   saveMaterialsAtomically?(materials: import("@/domain/types").StudyMaterial[]): Promise<void>;
   /** Single-connection atomic transaction for debrief multi-record acceptance. */
   saveDebriefAtomically?(operation: DebriefSaveOperation): Promise<void>;
+  /** Single-connection atomic transaction for study material create or update. */
+  saveMaterialAtomically?(
+    operation: MaterialSaveOperation,
+  ): Promise<import("@/domain/types").StudyMaterial>;
+}
+
+export interface MaterialSaveFields {
+  title?: string;
+  materialType?: import("@/domain/types").MaterialType;
+  topic?: import("@/domain/types").Topic;
+  reviewStatus?: import("@/domain/types").ReviewStatus;
+  priority?: import("@/domain/types").Priority;
+  goalId?: string | null;
+  eventId?: string | null;
+  notes?: string;
+  filePath?: string | null;
+  originalFileName?: string | null;
+  fileSize?: number | null;
+  lastReviewedAt?: string | null;
+}
+
+export interface MaterialSaveOperation {
+  mode: "create" | "update";
+  id: string;
+  fields: MaterialSaveFields;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**

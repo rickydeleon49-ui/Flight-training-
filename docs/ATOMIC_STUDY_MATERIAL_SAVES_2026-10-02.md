@@ -1,5 +1,7 @@
 # Her Flight Deck — A2 Atomic Study Library Saves and File Ownership Implementation Note
 
+Publication annotation (4 October): [Codex finished and accepted latest-main integration](A2_INTEGRATION_ACCEPTANCE_2026-10-04.md). The implementation report below retains its historical local/unaccepted state and older counts; current acceptance/evidence supersede those statements.
+
 _Date: 2 October 2026 (review corrections 2–4 October 2026) · Target: confirmed A2 audit finding · Status: implemented locally, uncommitted; **pending independent Codex review and acceptance**_
 
 ---
