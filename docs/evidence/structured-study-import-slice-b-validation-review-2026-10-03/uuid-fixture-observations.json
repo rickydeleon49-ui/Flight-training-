@@ -1,0 +1,54 @@
+{
+  "method": "Python uuid.UUID.version and variant on six documented conflict fixtures",
+  "scope": "Offline documentation diagnostic; no native command or database invoked",
+  "invalidConflictFixtures": [
+    {
+      "file": "docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md",
+      "line": 473,
+      "testId": "TB-CONF-01",
+      "uuid": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+      "isRfcUuidV4": false,
+      "variant": "reserved for NCS compatibility"
+    },
+    {
+      "file": "docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md",
+      "line": 474,
+      "testId": "TB-CONF-02",
+      "uuid": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+      "isRfcUuidV4": false,
+      "variant": "reserved for NCS compatibility"
+    },
+    {
+      "file": "docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md",
+      "line": 475,
+      "testId": "TB-CONF-03",
+      "uuid": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+      "isRfcUuidV4": false,
+      "variant": "reserved for NCS compatibility"
+    },
+    {
+      "file": "docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md",
+      "line": 476,
+      "testId": "TB-CONF-04",
+      "uuid": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+      "isRfcUuidV4": false,
+      "variant": "reserved for NCS compatibility"
+    },
+    {
+      "file": "docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md",
+      "line": 477,
+      "testId": "TB-CONF-05",
+      "uuid": "a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d",
+      "isRfcUuidV4": false,
+      "variant": "reserved for NCS compatibility"
+    },
+    {
+      "file": "docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md",
+      "line": 478,
+      "testId": "TB-CONF-06",
+      "uuid": "b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e",
+      "isRfcUuidV4": false,
+      "variant": "reserved for NCS compatibility"
+    }
+  ]
+}

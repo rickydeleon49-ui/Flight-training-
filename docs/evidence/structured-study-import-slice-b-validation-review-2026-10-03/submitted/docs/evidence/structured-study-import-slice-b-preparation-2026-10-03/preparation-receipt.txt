@@ -1,0 +1,60 @@
+Her Flight Deck — Structured Study Import Slice B Preparation Receipt (Final Corrections)
+Date: 2026-10-03T18:15:00-07:00
+Implementer: Gemini (Mac)
+Reviewer / Coordinator: Codex
+
+1. Starting Point & Branch Identity
+Repository: rickydeleon49-ui/Flight-training-
+Working Tree: /Users/rickymac/code/Flight-training-
+Base Commit: 3efe95316b200848178033a68d057f66815cf427 (PR #62 merge)
+Branch: codex/structured-study-import-slice-b-preparation
+Remote Tracking: origin/main at 5c83d200bd422d7c302179f95a70bc1c773958a0 (PR #64 re-review merge)
+GitHub Metadata Scope: 63 total PRs (#1-#63), 0 open PRs; checked live remote branches on origin. Metadata and branch-name check only; no audit of all PR source trees or Windows filesystem.
+Tracked Non-Documentation Files: All 351 tracked files remain byte-identical to base commit 3efe953.
+
+2. Submitted Baseline Verification
+Before editing, verified all 7 submitted files matched the reviewed submission receipt:
+- STATUS.md: c9dedb3a1f6fa1e3aa54fe5290a3a6fbbeabfe930261a9ba0cb5d6f353c395b4
+- docs/PROJECT_HANDOFF.md: a8cf6c7fc2598209095560fbf4c332a7803ade00385021dcb543e3287ab6081c
+- docs/MAC_PARITY_CHECKLIST.md: 1e21472f415160f91b16ae94998025cbf88e18ed29844309d2d847212e1bdd4a
+- docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md: 6f1645a223a847c354c1cb50ae6d38018adfb6461ea2d0ce496c532be3e58659
+- docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md: b9429cca648c3bf1d1c8254ff8190022047d81985c0b2b831a052fc521e406f2
+- docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md: a2fb50d3f4b79d5dcae7dcfcbeb9a441f0fb62daf49b103c569c49011bf20baf
+- docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt: a10f23e12de3eaeb65cfa5931d8d61f82be4f95e33040eaf5ea10732f1dfda5f
+Previous receipt hash: 988346289cc0d9c68e8c8251a4635b0f664b9d32a3fc765a8f542947fbb8467b (all 7 matched 100%)
+Codex preserved verbatim inert snapshots of all 8 submitted files in docs/evidence/structured-study-import-slice-b-rereview-2026-10-03/submitted/.
+
+3. Environment & Toolchain
+Host: MacBook Air (Mac17,3), Apple M5, 32 GB RAM
+OS: macOS 27.0.1 (Darwin 27.0.0, arm64)
+Node: v22.23.3 (/opt/homebrew/opt/node@22/bin/node)
+npm: 10.9.9 (/opt/homebrew/opt/node@22/bin/npm)
+rustc: 1.99.0 (b940084d7 2026-09-28)
+cargo: 1.99.0 (5f94df478 2026-08-27)
+SDK: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk (version 26.5)
+
+4. BPREP-R4 and BPREP-R3 Issue-to-Correction Mapping
+- BPREP-R4 (database connection lifecycle in sql.js):
+  * Target: STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §4.5, GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md Phase 3.
+  * Corrected: Specified one explicit connection initializer initializeConnection(db: SqlJsDatabaseHandle) executing PRAGMA foreign_keys = ON; and verifying PRAGMA foreign_keys === 1. Runs across four exact execution points: initial open, pre-operation snapshot export before BEGIN IMMEDIATE, durable export before releasing write lock, and replacement recovery before assigning handle to cell.current. Defined ownership through snapshot, transaction, commit, export, and recovery. Prevented prepared statement leakage across async turns or export boundaries (try/finally free). Defined mutable cell { current: db, isUsable: boolean } and serialized queue saveMutex. Delineated failure phases: failure before storage changes leaves localStorage untouched; failure after commit triggers snapshot recovery; double failure poisons adapter (cell.isUsable = false) and safely refuses future calls with DatabaseDisabledError. Made design contingent on accepted A2. Added planned real-sql.js lifecycle tests TB-SQLJS-01 through TB-SQLJS-06.
+- BPREP-R3 (native IPC decoding boundary and exact return shapes):
+  * Target: STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §4.3, §4.4, §5; GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md Phase 2, Phase 3, Phase 5.
+  * Corrected: Established an explicit application decoding boundary where the native command receives an untyped serde_json::Value on a worker thread. Explicitly validates known keys for root and all nested structures, rejecting unknown fields with allowlisted, static INVALID_ARGUMENT error, never echoing field names or raw Serde messages. Distinguished application errors from outer Tauri transport envelope failures (mapped to IPC_TRANSPORT_ERROR in TypeScript wrapper). Settle materialId wire naming with explicit Rust attributes (rename = "materialId") and TypeScript types. Defined complete static code/message mapping table and bounded input limits. Replaced test IDs with valid RFC 4122 UUID v4 fixtures. Redefined idempotency to inspect actual stored SQLite rows across material/guide/test titles, presence, provider/model, summary, sections, flashcards with sourcePage null, sourceNotes, and questions with sourcePage null. Added planned native boundary and equality tests TB-IPC-01 through TB-IPC-09.
+
+5. Acceptance Matrix Reconciliation
+- Total matrix rows: 61 planned test rows (57 source/dev + 4 installed).
+- Preserved all 22 original IDs (TB-ATOM-01..02, TB-ROLL-01..06, TB-DUR-01..05, TB-LOCK-01, TB-IDEM-01..02, TB-CONF-01..06).
+- All 61 rows remain planned, not run.
+
+6. Scope & Invariants
+- Production code touched: NONE (0 lines of code modified)
+- Database schema migrations added: NONE (schema version remains 10)
+- Dependencies added: NONE (package.json and lockfile unchanged)
+- Packaging / release / signing operations: NONE (all unverified)
+- State of working directory: UNCOMMITTED and UNPUSHED for Codex re-review
+
+7. Measured Verification Checks
+- git diff --check: clean (no whitespace issues or conflict markers)
+- link-validator: clean (all relative markdown links resolve to existing files)
+- whitespace-check: clean (zero trailing whitespace lines across all delivered files)
+- git status: clean working tree apart from the designated preparation deliverables
