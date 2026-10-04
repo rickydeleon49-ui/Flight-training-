@@ -1,0 +1,61 @@
+{
+  "observedAtUtc": "2026-10-04T03:34:30.342127+00:00",
+  "reviewDateLocal": "2026-10-03 America/Los_Angeles",
+  "submittedState": {
+    "branch": "main",
+    "head": "e937adaa87fead399cb9d2510a2daf51cceb9583",
+    "originMain": "e937adaa87fead399cb9d2510a2daf51cceb9583",
+    "clean": true
+  },
+  "sourceFilesVerifiedUnchanged": 351,
+  "sliceAAncestorConfirmed": true,
+  "expectedA2RemoteRef": "No match for refs/heads/fix/atomic-study-material-saves* after fetch",
+  "atomicApiSymbolsInMain": "Absent from src and src-tauri/src",
+  "github": {
+    "count": 66,
+    "open": [],
+    "a2Named": [
+      {
+        "headRefName": "codex/mac-a2-verification-preparation",
+        "headRefOid": "42a8dbb65cde903b50a513383a55be7b7cd06578",
+        "number": 54,
+        "state": "MERGED",
+        "title": "docs: accept Mac A2 preparation and prepare installed readiness",
+        "url": "https://github.com/rickydeleon49-ui/Flight-training-/pull/54"
+      },
+      {
+        "headRefName": "codex/mac-a2-preparation-review",
+        "headRefOid": "9e60877e7b430b7c03a35daee1a9c677f399db31",
+        "number": 53,
+        "state": "MERGED",
+        "title": "docs: review A2 Mac preparation and assign three corrections",
+        "url": "https://github.com/rickydeleon49-ui/Flight-training-/pull/53"
+      },
+      {
+        "headRefName": "codex/claude-detailed-a2-prompt",
+        "headRefOid": "03141268f73a337ea8e6e30256e3eccbac381358",
+        "number": 52,
+        "state": "MERGED",
+        "title": "docs: give Claude a detailed Mac A2 verification assignment",
+        "url": "https://github.com/rickydeleon49-ui/Flight-training-/pull/52"
+      },
+      {
+        "headRefName": "codex/mac-a5-evidence-reconciliation",
+        "headRefOid": "92bfe69e72994126841cabee324512d05e1a2deb",
+        "number": 51,
+        "state": "MERGED",
+        "title": "docs: accept Mac A5 evidence and prepare A2 verification",
+        "url": "https://github.com/rickydeleon49-ui/Flight-training-/pull/51"
+      }
+    ],
+    "scope": "PR metadata and ref names; not all PR source trees or the Windows filesystem."
+  },
+  "ownerEvidenceScope": "Current STATUS, PROJECT_HANDOFF, accepted B preparation and conditional prompt, M2 design and Slice A owner exception; no new B approval is recorded in those authorities. This does not claim to inspect private conversations or unpublished owner notes.",
+  "notMeasured": [
+    "Windows working tree or current commit state",
+    "Host/toolchain versions in the pasted handoff",
+    "Slice B production tests",
+    "Installed macOS or VoiceOver",
+    "Unchanged frontend/Rust/build matrices"
+  ]
+}

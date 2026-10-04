@@ -1,0 +1,6 @@
+aee0e7442e4240ac284f774ec1dd36d405b908ed1c085753ca1195cc658f0c62  STATUS.md
+a030d94b60c2fa2503972e01e54004b111da42a409d10fcf266365d4b8efad07  docs/PROJECT_HANDOFF.md
+86717ea349ee63aa1363e5d71f4ec4e9e3e6cd19857996fdb4f222d6ece5549d  docs/STRUCTURED_STUDY_IMPORT_SLICE_B_GATE_REVIEW_2026-10-03.md
+4e81094c7a88acfb69eb8c4533e33a76c22de389d766b4981eb5bac481a6bdb1  docs/evidence/structured-study-import-slice-b-gate-review-2026-10-03/README.md
+bac26f973944b104e20b0c1d0e9fa7b9ee3bc8fbe1de0ed57b50255717cf31b3  docs/evidence/structured-study-import-slice-b-gate-review-2026-10-03/review-verification.json
+cd29162e40e73f3c91b38830ff7a21a8e021a807462cbb88740d7853eec6bc55  docs/evidence/structured-study-import-slice-b-gate-review-2026-10-03/submitted-handoff.txt.gz
