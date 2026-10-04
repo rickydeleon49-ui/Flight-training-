@@ -1,0 +1,229 @@
+{
+  "branch": "claude/mac-a2-verification-2026-10-04",
+  "head": "1efc052391ed96bdf1af17294f9ddc71960fc906",
+  "handoffMatches": 29,
+  "files": [
+    {
+      "path": "STATUS.md",
+      "bytes": 111011,
+      "sha256": "9a258d9945f4af0fd49777d02a9cfb7ba5586889321a06ea42a4029236bc970f"
+    },
+    {
+      "path": "docs/MAC_PARITY_CHECKLIST.md",
+      "bytes": 58465,
+      "sha256": "3c68c3e5867a24802a821a8b3a75ce6a8291d44203eda12d347206d5fd107cc9"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 16265,
+      "sha256": "25c117120b90e35562c291e5799dc2de4158bfa7a62c5537d8adf8f74c857af2"
+    },
+    {
+      "path": "src-tauri/src/documents_save_tests.rs",
+      "bytes": 40445,
+      "sha256": "ce3212f4463e825c4bf5ae4f1c248ed9cf05669a35194728925c7fafefa6e768"
+    },
+    {
+      "path": "docs/MAC_A2_VERIFICATION_2026-10-04.md",
+      "bytes": 19394,
+      "sha256": "2a05be353cd34e73f4b70f30cad74f51b9bd544cc9461277196a678173b561c1"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/README.md",
+      "bytes": 19508,
+      "sha256": "f52547a3c8b3a6608daa092fea24632bd2464c1c6fdf5df81989d0a370e720d1"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/a2-diagnostics.txt",
+      "bytes": 370489,
+      "sha256": "0fdb74011b2da525dd844e47abc0982d9b087b8c42ffe5679be8fdab18d73d2c"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/case-sensitive-apfs-case-alias-test.txt",
+      "bytes": 697,
+      "sha256": "a8b8dffacbdfacd877d42bac6eceb9d49b78be1d5a15bd3c93ae767d94d52895"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/case-sensitive-apfs-save-tests-updated.txt",
+      "bytes": 2709,
+      "sha256": "db1e229442779d0ca519f22a07cbdc411a2171fbfaf57b28e07c68a27ce4fd6e"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/case-sensitive-apfs-save-tests.txt",
+      "bytes": 2512,
+      "sha256": "4de0a81586ac1f4f4876256600b6d9cc5a61d796a8a27b1b0e565844d636e875"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/focused.txt",
+      "bytes": 372981,
+      "sha256": "34ad3cda7d6c2cb851c7b81512b5c6a00088dc4de2a0fb41b20cf0020d87b8fc"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-01-npm-ci.txt",
+      "bytes": 143,
+      "sha256": "6812d549168cf99ca997fdc006dadcdce322d6a11abe3851795f92d376035338"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-02-npm-test.txt",
+      "bytes": 15607,
+      "sha256": "400fba7356eb4be293c7656a7b8d8484eee1b50494f905c80e1a760ef5c2231f"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-03-npm-run-build.txt",
+      "bytes": 4186,
+      "sha256": "974cf7ba32ad9555d93f04d6cbd535c3563a5528076d006eff3e71e3041cf828"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-04-cargo-fmt.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-05-cargo-clippy.txt",
+      "bytes": 9001,
+      "sha256": "3419cc8d2ed728435e416f5ee9d9431fec71fe32ab1fa2090b85c5f264c9c40a"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-06-cargo-test.txt",
+      "bytes": 25523,
+      "sha256": "eaab0ac07cd4b2b54661cebabd70d2f1e1355c36a615f2a0704b231a2c78c751"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-07-test-cargo-lock.txt",
+      "bytes": 254,
+      "sha256": "0c396c93a4465f45b27143b1a480a5660f8169c18338a506df26b2ffbb3cd802"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-08-check-release-version.txt",
+      "bytes": 49,
+      "sha256": "d9f095e7895c142842dbdd55b721cb226b82b3c795d7511e22852fa4f5b0cad1"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-09-setup-helpers.txt",
+      "bytes": 6250,
+      "sha256": "18f8065992b1d9effa71eb0e034001ffcf50bc8afbfa4ce3288bfc8ddbfea9e8"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-10-git-diff-check.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/host-apfs-case-alias-test.txt",
+      "bytes": 701,
+      "sha256": "801e13e938acc135617e873f775d01d51f20abf945935d3559ad70a8161b4f3c"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/host-apfs-save-tests-updated.txt",
+      "bytes": 2677,
+      "sha256": "bc82a8e34b3d6a16afdb0fd60bd5623c859096062b54b4f15f00a675a301a59e"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/host-apfs-save-tests.txt",
+      "bytes": 2577,
+      "sha256": "a4b46aa64e5dc60684ae540a9ca284729a7d4bea98b29b2007ac0b082bf35eb2"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/mac-readiness-preflight.json",
+      "bytes": 6644,
+      "sha256": "c094f0f4c3f2afd51a57ae6fdc0889d029139654fbfd5e9677ff7a280b1b58c9"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/mac-readiness-preflight.txt",
+      "bytes": 2027,
+      "sha256": "d06f2b8788432a69d8f91e40961c67eb782da0d0791851e4cd6ec12c81d777a1"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/preflight-outside-checkout.json",
+      "bytes": 6644,
+      "sha256": "33d7a9d0e00463d50379d70a467d21a003e7efee6af9d738206b4e16b75f540b"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/preflight-outside-checkout.txt",
+      "bytes": 2084,
+      "sha256": "6aa3a9dc9b58e0af4a5e766de90c5e8f989167420aa6aedfaa4d1134b4c4cad5"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/results.json",
+      "bytes": 8435,
+      "sha256": "e919b700f274d48eac5cea801bd666ee5ecd5edcea3771e7cd7da9e446165288"
+    }
+  ],
+  "preservedIgnoredLogs": [
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/a2-diagnostics.log",
+      "bytes": 370489,
+      "sha256": "0fdb74011b2da525dd844e47abc0982d9b087b8c42ffe5679be8fdab18d73d2c"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/case-sensitive-apfs-save-tests.log",
+      "bytes": 2512,
+      "sha256": "4de0a81586ac1f4f4876256600b6d9cc5a61d796a8a27b1b0e565844d636e875"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/focused.log",
+      "bytes": 372981,
+      "sha256": "34ad3cda7d6c2cb851c7b81512b5c6a00088dc4de2a0fb41b20cf0020d87b8fc"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-01-npm-ci.log",
+      "bytes": 143,
+      "sha256": "6812d549168cf99ca997fdc006dadcdce322d6a11abe3851795f92d376035338"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-02-npm-test.log",
+      "bytes": 15607,
+      "sha256": "400fba7356eb4be293c7656a7b8d8484eee1b50494f905c80e1a760ef5c2231f"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-03-npm-run-build.log",
+      "bytes": 4186,
+      "sha256": "974cf7ba32ad9555d93f04d6cbd535c3563a5528076d006eff3e71e3041cf828"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-04-cargo-fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-05-cargo-clippy.log",
+      "bytes": 9001,
+      "sha256": "3419cc8d2ed728435e416f5ee9d9431fec71fe32ab1fa2090b85c5f264c9c40a"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-06-cargo-test.log",
+      "bytes": 25523,
+      "sha256": "eaab0ac07cd4b2b54661cebabd70d2f1e1355c36a615f2a0704b231a2c78c751"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-07-test-cargo-lock.log",
+      "bytes": 254,
+      "sha256": "0c396c93a4465f45b27143b1a480a5660f8169c18338a506df26b2ffbb3cd802"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-08-check-release-version.log",
+      "bytes": 49,
+      "sha256": "d9f095e7895c142842dbdd55b721cb226b82b3c795d7511e22852fa4f5b0cad1"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-09-setup-helpers.log",
+      "bytes": 6250,
+      "sha256": "18f8065992b1d9effa71eb0e034001ffcf50bc8afbfa4ce3288bfc8ddbfea9e8"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/gate-10-git-diff-check.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/host-apfs-save-tests.log",
+      "bytes": 2577,
+      "sha256": "a4b46aa64e5dc60684ae540a9ca284729a7d4bea98b29b2007ac0b082bf35eb2"
+    },
+    {
+      "path": "docs/evidence/mac-a2-verification-2026-10-04/mac-readiness-preflight.log",
+      "bytes": 2027,
+      "sha256": "d06f2b8788432a69d8f91e40961c67eb782da0d0791851e4cd6ec12c81d777a1"
+    }
+  ]
+}

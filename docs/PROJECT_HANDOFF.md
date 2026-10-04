@@ -1,5 +1,7 @@
 # Shared project handoff — Windows and Mac
 
+**Current Mac A2 re-review (4 October):** [Native case-alias regression independently passes](MAC_A2_VERIFICATION_REREVIEW_2026-10-04.md); 29 handoff hashes and 15 mirror pairs verify. [Claude finishes one evidence-only pass](CLAUDE_MAC_A2_VERIFICATION_FINAL_EVIDENCE_PROMPT_2026-10-04.md) before Codex integration. No production change or full matrix is reassigned. Owner priority is a testable Mac build after acceptance, with dedicated-account/signing/installed prerequisites retained.
+
 Updated 4 October 2026. **Both machines start here after fetching GitHub.** Task state, plans, review findings, prompts and sanitized evidence must be shared in this repository or a linked PR; do not rely on private chat history or another computer's local files.
 
 Repository: https://github.com/rickydeleon49-ui/Flight-training-. Each machine chooses its own clone location. References to historical `H:`/Windows paths in old notes describe the original review environment, not required paths on the Mac.
