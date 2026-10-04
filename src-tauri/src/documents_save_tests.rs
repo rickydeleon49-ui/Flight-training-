@@ -522,6 +522,89 @@ fn a_windows_case_alias_cannot_delete_or_trash_a_referenced_file() {
     assert!(trash_is_empty(&profile));
 }
 
+/// On case-insensitive macOS APFS, alternate case spellings (`CASEGUIDE.PDF`
+/// or `caseguide.pdf`) resolve to the same physical file as `CaseGuide.pdf`.
+/// Neither deletion nor trashing via alternate case spellings may remove,
+/// alter, or unlink the referenced file.
+#[cfg(target_os = "macos")]
+#[test]
+fn a_mac_case_alias_cannot_delete_or_trash_a_referenced_file() {
+    #[cfg(unix)]
+    use std::os::unix::fs::MetadataExt;
+
+    let profile = Profile::new();
+    let path = profile.write_doc("CaseGuide.pdf", b"Synthetic referenced bytes");
+    let hash = sha256(&path);
+    let uppercase_alias = profile.docs().join("CASEGUIDE.PDF");
+    let lowercase_alias = profile.docs().join("caseguide.pdf");
+
+    // Establish that differently capitalized paths identify the same physical file.
+    let case_insensitive = uppercase_alias.exists()
+        && lowercase_alias.exists()
+        && path.canonicalize().ok() == uppercase_alias.canonicalize().ok()
+        && path.canonicalize().ok() == lowercase_alias.canonicalize().ok();
+
+    #[cfg(unix)]
+    let same_inode = if case_insensitive {
+        let orig_meta = std::fs::metadata(&path).unwrap();
+        let upper_meta = std::fs::metadata(&uppercase_alias).unwrap();
+        let lower_meta = std::fs::metadata(&lowercase_alias).unwrap();
+        orig_meta.dev() == upper_meta.dev()
+            && orig_meta.ino() == upper_meta.ino()
+            && orig_meta.dev() == lower_meta.dev()
+            && orig_meta.ino() == lower_meta.ino()
+    } else {
+        false
+    };
+    #[cfg(not(unix))]
+    let same_inode = case_insensitive;
+
+    if !case_insensitive || !same_inode {
+        eprintln!("SKIPPED Mac case alias: this volume does not treat differently capitalized paths as the same file");
+        return;
+    }
+
+    save_material_operation_at(
+        profile.path(),
+        &with_file(op("create", "case-alias", None), "CaseGuide.pdf"),
+    )
+    .unwrap();
+
+    let before = references(&profile);
+    assert_eq!(before.len(), 1);
+
+    // Delete through uppercase alias must be refused
+    let deleted = delete_document_in(profile.path(), "CASEGUIDE.PDF");
+    assert!(
+        deleted.is_err(),
+        "uppercase delete should fail: {deleted:?}"
+    );
+
+    // Trash through lowercase alias must be refused
+    let trashed = trash_unlinked_file_in(profile.path(), "caseguide.pdf");
+    assert!(trashed.is_err(), "lowercase trash should fail: {trashed:?}");
+
+    // Delete through lowercase alias must also be refused
+    let deleted_lower = delete_document_in(profile.path(), "caseguide.pdf");
+    assert!(
+        deleted_lower.is_err(),
+        "lowercase delete should fail: {deleted_lower:?}"
+    );
+
+    // Trash through uppercase alias must also be refused
+    let trashed_upper = trash_unlinked_file_in(profile.path(), "CASEGUIDE.PDF");
+    assert!(
+        trashed_upper.is_err(),
+        "uppercase trash should fail: {trashed_upper:?}"
+    );
+
+    // Verify original file, hash, database references after reopen, and empty trash
+    assert!(path.is_file());
+    assert_eq!(sha256(&path), hash);
+    assert_eq!(references(&profile), before);
+    assert!(trash_is_empty(&profile));
+}
+
 /// Legacy stored spellings protect the file they resolve to, whichever
 /// spelling the cleanup request uses.
 #[test]

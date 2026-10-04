@@ -1,0 +1,38 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-d5e8332e99fb3dcb)
+
+running 21 tests
+test documents::save_tests::a_directory_link_alias_cannot_delete_a_referenced_file ... ok
+test documents::save_tests::a_save_waiting_for_the_writer_lock_sees_the_cleanup_outcome ... ok
+SKIPPED Mac case alias: this volume does not treat differently capitalized paths as the same file
+test documents::save_tests::a_mac_case_alias_cannot_delete_or_trash_a_referenced_file ... ok
+test documents::save_tests::distinct_case_files_on_a_case_sensitive_volume_are_not_conflated ... ok
+test documents::save_tests::an_equivalent_slash_spelling_cannot_delete_a_referenced_file ... ok
+test documents::save_tests::cleanup_first_then_a_save_cannot_attach_the_deleted_file ... ok
+test documents::save_tests::a_failed_replacement_keeps_the_old_row_tags_and_file ... ok
+test documents::save_tests::legacy_and_shared_stored_spellings_protect_the_physical_file ... ok
+MEASURED transient lock: save committed after 488.378708ms
+test documents::save_tests::an_ordinary_save_waits_out_a_transient_writer_lock ... ok
+test documents::save_tests::new_attachments_must_be_real_app_owned_files ... ok
+test documents::save_tests::save_first_then_cleanup_preserves_the_now_referenced_file ... ok
+test documents::save_tests::replacing_a_tag_persists_the_acknowledged_tag_after_reopen ... ok
+test documents::save_tests::orphan_tags_and_unrelated_id_collisions_do_not_suppress_links ... ok
+test documents::save_tests::ordinary_attachment_flows_still_work ... ok
+test documents::save_tests::repeated_replacement_reorder_removal_and_shared_tags_stay_truthful ... ok
+test documents::save_tests::shared_contract_fixtures_return_and_persist_the_same_results_as_the_browser_transaction ... ok
+test documents::save_tests::tag_normalization_omission_clearing_unicode_and_case_are_preserved ... ok
+test documents::save_tests::unsafe_paths_and_uninspectable_databases_fail_closed ... ok
+test documents::save_tests::unused_and_no_longer_referenced_files_are_still_cleaned_up ... ok
+test documents::save_tests::tag_and_link_failures_roll_back_create_and_update ... ok
+MEASURED permanent lock: one native attempt gave up after 5.18682175s
+test documents::save_tests::an_ordinary_save_reports_a_permanent_writer_lock_after_one_busy_timeout ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 272 filtered out; finished in 5.75s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-824f5d4ea0a70435)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+EXIT=0
