@@ -1,0 +1,163 @@
+
+ RUN  v4.1.11 <REVIEW_ROOT>/snapshot
+
+ ✓ src/data/materialSaveContract.test.ts > replays the shared material-save fixtures to the same results and rows as the native command 24ms
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite commented execute cannot make a later failure erase an acknowledged public write
+{"route":"commented execute","outcome":"saved","remaining":[{"id":"acknowledged"}]}
+
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite select cannot make a later failure erase an acknowledged public write
+{"route":"select","outcome":"saved","remaining":[{"id":"acknowledged"}]}
+
+ ✓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > raw engine control: CASE in trigger body is legal and fires 3ms
+ ✓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > raw engine control: CASE in trigger WHEN is legal and fires 0ms
+ × src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > public driver must preserve CASE in trigger body 13ms
+   → promise rejected "Error: Transactions on this connection mu…" instead of resolving
+ × src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > public driver must preserve CASE in trigger WHEN 11ms
+   → promise rejected "Error: Transactions on this connection mu…" instead of resolving
+ ✓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > raw engine control: CASE in trigger body is legal and fires 41ms
+ ✓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > raw engine control: CASE in trigger WHEN is legal and fires 3ms
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > sql.js select cannot open a transaction that export rolls back after an acknowledged write
+{"route":"sql.js select","remaining":[{"id":"acknowledged"}],"durable":[{"id":"acknowledged"}]}
+
+ ✓ src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite commented execute cannot make a later failure erase an acknowledged public write 18ms
+ ✓ src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > node:sqlite select cannot make a later failure erase an acknowledged public write 10ms
+ ✓ src/data/repositories/documentRepository.test.ts > creating PDF parts atomically > uses the desktop's pinned batch instead of pooled transaction statements 15ms
+ ✓ src/data/repositories/documentRepository.test.ts > creating PDF parts atomically > rolls back every material when a tag insert fails 20ms
+ ✓ src/data/repositories/documentRepository.test.ts > creating PDF parts atomically > reports a rollback failure together with the original save failure 14ms
+ ✓ src/data/repositories/documentRepository.test.ts > creating PDF parts atomically > refuses a driver without an owned atomic batch instead of using public transaction statements 10ms
+ ✓ src/data/repositories/documentRepository.test.ts > creating PDF parts atomically > does not retry a failure that has nothing to do with a lock 9ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > promoted R4: an unrelated write issued during a failing save survives its rollback 23ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > a read issued mid-transaction cannot see uncommitted rows 15ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > concurrent saves, public writes, debriefs and PDF-part batches each keep their own outcome 13ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > promoted reviewer R6: execute cannot escape ownership or erase an acknowledged write after a later save 11ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > promoted reviewer R6: select cannot escape ownership or erase an acknowledged write after a later save 8ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > refuses opening, ending, and multi-statement transaction control across execute and select 13ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > preserves legitimate SQL containing keywords, parameters, comments, PRAGMAs, and trigger bodies 12ms
+ × src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > public driver must preserve CASE in trigger body 79ms
+   → promise rejected "Error: Transactions on this connection mu…" instead of resolving
+ × src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > public driver must preserve CASE in trigger WHEN 44ms
+   → promise rejected "Error: Transactions on this connection mu…" instead of resolving
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > create export failure restores the last stored state in memory as well as after reload
+{"mode":"create","previous":[],"live":[],"durable":[]}
+
+stdout | src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > update export failure restores the last stored state in memory as well as after reload
+{"mode":"update","previous":[{"id":"guide","title":"Synthetic guide"}],"live":[{"id":"guide","title":"Synthetic guide"}],"durable":[{"id":"guide","title":"Synthetic guide"}]}
+
+ ✓ src/data/a2SecondReview.regression.test.ts > A2 second review: transaction ownership boundary > sql.js select cannot open a transaction that export rolls back after an acknowledged write 128ms
+ ✓ src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > create export failure restores the last stored state in memory as well as after reload 46ms
+ ✓ src/data/a2SecondReview.regression.test.ts > A2 second review: failure before browser storage > update export failure restores the last stored state in memory as well as after reload 44ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > queued ending call requested mid-save is refused without corrupting the completed save 12ms
+ ✓ src/data/singleConnectionDrivers.test.ts > node:sqlite connection ownership > refuses public transaction control and stays usable after failures 14ms
+ ✓ src/data/repositories/documentRepository.test.ts > creating PDF parts atomically > retries past a transient lock when using saveMaterialsAtomically and succeeds 121ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > promoted R4: an unrelated write issued during a failing save survives its rollback 107ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > a read issued mid-transaction cannot see uncommitted rows 45ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > concurrent saves, public writes, debriefs and PDF-part batches each keep their own outcome 61ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > promoted reviewer R6: execute cannot escape ownership or erase an acknowledged write after a later save 39ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > promoted reviewer R6: select cannot escape ownership or erase an acknowledged write after a later save 38ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > refuses opening, ending, and multi-statement transaction control across execute and select 43ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > preserves legitimate SQL containing keywords, parameters, comments, PRAGMAs, and trigger bodies 48ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > queued ending call requested mid-save is refused without corrupting the completed save 33ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js connection ownership > refuses public transaction control and stays usable after failures 42ms
+ ✓ src/data/singleConnectionDrivers.test.ts > connection owner > releases after a failed operation so the next one runs 1ms
+ ✓ src/data/singleConnectionDrivers.test.ts > connection owner > refuses later work, without hanging, when the connection cannot be made safe 0ms
+ ✓ src/data/singleConnectionDrivers.test.ts > connection owner > runs operations strictly one at a time in request order 0ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > promoted R5: a create that storage refuses is reported as failed and leaves nothing behind 30ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a refused update keeps the previous row and tags live and after reopening 28ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a retry after storage recovers saves once, with the retried fields, and survives reopening 32ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a refused plain write and a refused debrief are undone too 35ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a persist requested mid-save cannot cut that save's transaction short or store it half-done 31ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > foreign keys stay enforced after storage round-trips 21ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > promoted reviewer R7: create export failure restores the last stored state live and after reload 32ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > promoted reviewer R7: update export failure restores the last stored state live and after reload 30ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a later acknowledged unrelated write or persist cannot store a previously rejected change 43ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > an encoding failure during durable write restores state live and after reload 32ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > a foreign-key setting restoration failure inside durable write restores state and leaves connection healthy 26ms
+ ✓ src/data/singleConnectionDrivers.test.ts > sql.js browser persistence > fails closed with a clear recovery error if restoration cannot re-establish a safe connection 25ms
+ ✓ src/data/repositories/documentRepository.test.ts > creating PDF parts atomically > gives up boundedly on saveMaterialsAtomically if the lock never clears 1122ms
+ ✓ src/data/repositories/documentRepository.test.ts > practice tests > saves a generated test tied to its source material and reads it back 9ms
+ ✓ src/data/repositories/documentRepository.test.ts > practice tests > replaces a previous test for the same material instead of duplicating it 8ms
+ ✓ src/data/repositories/documentRepository.test.ts > practice tests > removes a saved test when its source material is deleted 7ms
+ ✓ src/data/repositories/documentRepository.test.ts > practice tests > removes a saved test directly without touching its source material 7ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > normalizes and deduplicates duplicate and whitespace tags during create without partial save 7ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > normalizes and deduplicates duplicate tags during update without corrupting tags 8ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > rolls back completely on injected tag-write failure during create, leaving no material debris 8ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > rolls back completely on injected tag-write failure during update, preserving prior metadata, file reference, and tags 10ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > replacement followed by failed save preserves old file reference and leaves new file unreferenced 9ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > refuses create when material ID collides, preserving the existing record 7ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > refuses update when material does not exist 8ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > partial update preserves unchanged fields and createdAt timestamp 7ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > removes a newly imported file when the material form is cancelled 192ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > omitted tags preserves old links; explicit empty array clears them 8ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > handles null and empty fields properly on create and update 8ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > handles Unicode tags and whitespace normalization consistently 7ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > refuses save when db driver lacks atomic transaction support 7ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > keeps the form visible if an abandoned import cannot be removed 76ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > never deletes a saved attachment when an edit is cancelled 92ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > retries transient lock on material save and succeeds 120ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > keeps an import available for retry and prevents duplicate saves 159ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > removes the previous attachment when a replacement file is saved successfully 119ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > removes the previous attachment when the file is removed and saved successfully 78ms
+ ✓ src/pages/StudyLibrary/materialSaveIntegration.test.ts > a failed save leaves no rows and keeps the import; the retry commits once and keeps the file 397ms
+ ✓ src/state/editorSafety.test.ts > preserves actual material typing through refresh, navigation and database save 304ms
+ ✓ src/state/editorSafety.test.ts > serializes read-modify-write mutations and continues after a failure 21ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > preserves the previous attachment and displays an error if saving fails 77ms
+ ✓ src/state/editorSafety.test.ts > does not treat a successful write with failed refresh as a failed save 14ms
+ ✓ src/state/editorSafety.test.ts > keeps a Settings edit when unrelated application data refreshes 52ms
+ ✓ src/state/editorSafety.test.ts > recovers a journal draft and preserves it through a background refresh 70ms
+ ✓ src/state/editorSafety.test.ts > keeps both rapid readiness changes instead of overwriting the first snapshot 64ms
+ ✓ src/pages/StudyLibrary/materialSaveIntegration.test.ts > cancelling after a failed save discards only that new, never-committed import 327ms
+ ✓ src/pages/StudyLibrary/materialSaveIntegration.test.ts > a committed material save followed by refresh failure remains a successful save and keeps the attachment 156ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > surfaces former attachment cleanup failure, keeps dialog open, and allows bounded retry 299ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > cleans up intermediate abandoned files on repeated replacement before saving 78ms
+ ✓ src/state/editorSafety.test.ts > retains newer typing and blocks duplicate submission during a Notes save 71ms
+ ✓ src/state/editorSafety.test.ts > keeps the latest Undo request when several deletes arrive before a write finishes 39ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > closes dialog on successful creation of a new material 60ms
+ ✓ src/state/editorSafety.test.ts > does not reset the material metadata dialog when autosave refreshes data 91ms
+ ✓ src/state/editorSafety.test.ts > closes the edit dialog and updates the material upon saving changes 154ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > cancel after failed save of replacement cleans only the new unreferenced file and preserves original 94ms
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts > retry after failed save preserves user inputs and succeeds on second attempt 110ms
+ ✓ src/data/repositories/documentRepository.test.ts > ordinary material create and update atomicity (A2) > times out boundedly when material save encounters permanent lock 1120ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > public driver must preserve CASE in trigger body
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > public driver must preserve CASE in trigger WHEN
+AssertionError: promise rejected "Error: Transactions on this connection mu…" instead of resolving
+ ❯ src/data/a2ThirdReview.regression.test.ts:61:35
+     59|       await db.execute("CREATE TABLE unrelated (id TEXT)");
+     60|       await db.execute("CREATE TABLE observed (value TEXT)");
+     61|       await expect(db.execute(sql)).resolves.toBeUndefined();
+       |                                   ^
+     62|       await db.execute("INSERT INTO unrelated VALUES ('probe')");
+     63|       expect(await db.select("SELECT value FROM observed")).toEqual([{…
+
+Caused by: Error: Transactions on this connection must go through one of the driver's atomic operations.
+ ❯ refuseTransactionControl src/data/connectionOwner.ts:223:11
+ ❯ src/data/testing/nodeSqliteDb.ts:71:9
+ ❯ src/data/connectionOwner.ts:255:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > public driver must preserve CASE in trigger body
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > public driver must preserve CASE in trigger WHEN
+AssertionError: promise rejected "Error: Transactions on this connection mu…" instead of resolving
+ ❯ src/data/a2ThirdReview.regression.test.ts:61:35
+     59|       await db.execute("CREATE TABLE unrelated (id TEXT)");
+     60|       await db.execute("CREATE TABLE observed (value TEXT)");
+     61|       await expect(db.execute(sql)).resolves.toBeUndefined();
+       |                                   ^
+     62|       await db.execute("INSERT INTO unrelated VALUES ('probe')");
+     63|       expect(await db.select("SELECT value FROM observed")).toEqual([{…
+
+Caused by: Error: Transactions on this connection must go through one of the driver's atomic operations.
+ ❯ refuseTransactionControl src/data/connectionOwner.ts:223:11
+ ❯ src/data/sqlJsDb.ts:179:9
+ ❯ src/data/connectionOwner.ts:255:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  4 failed | 93 passed (97)
+   Start at  23:08:51
+   Duration  3.19s (transform 1.60s, setup 0ms, import 3.15s, tests 7.29s, environment 3.37s)

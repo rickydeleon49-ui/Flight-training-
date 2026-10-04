@@ -1,0 +1,60 @@
+
+ RUN  v4.1.11 <COORDINATOR_CHECKOUT>
+
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > permanently rejects withdrawn version 0.5.2 via CLI 47ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > permanently rejects withdrawn version v0.5.2 with leading v 42ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > rejects malformed versions via CLI 252ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > accepts valid non-retired versions like 0.5.3 via CLI 42ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > evaluates candidate versions correctly through module API 2ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > verifies consistency across all 5 active repository version files without hardcoding a specific version 12ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > explicitly verifies that 0.5.2 is permanently retired in release-policy.json and rejected by validator 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > tests bumpVersions on a disposable temporary copy without touching the real checkout or invoking cargo 25ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures a failed Cargo.lock update fails visibly and throws an error 16ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures bumpVersions detects when Cargo.lock was not updated and aborts 23ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures bumpVersions rejects retired versions and malformed versions before touching disk 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures .github/workflows/release.yml calls check-release-version.mjs 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures scripts/release.sh calls check-release-version.mjs and bump-version.mjs 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures release policy documents Mac-only active candidate and Windows distribution hold 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > evaluates workflow matrix resolution: macos-only produces only macOS Apple Silicon runner 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > evaluates workflow matrix resolution: forbids 'all' target unless Windows is explicitly active 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > evaluates workflow matrix resolution: rejects unknown targets 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > validates GitHub Actions workflow syntax and AST structure using declared YAML parser 17ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures .github/workflows/release.yml enforces 5-file version check including Cargo.lock 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures .github/workflows/release.yml supports create_draft gate defaulting to false 5ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > evaluates create_draft resolution logic and ensures publish job gate defaults to private CI artifact 5ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures .github/workflows/release.yml uses dynamic matrix from check job and fail-closed publish step 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures Cargo lockfile check fails on stale committed state in disposable fixture without rewriting lockfile 6ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > forbids direct interpolation of inputs inside run: shell blocks across workflow definitions 4ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures Cargo commands in checks.yml and release.yml use --locked to prevent silent lockfile mutation 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > reproduces asset filename vs manifest mismatch when filenames have spaces, and verifies normalization fix 5ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > normalizes Windows installer filenames when spaces are present and preserves normalized names 0ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > rejects colliding installer names before changing either file 3ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > fails closed when no installer or an unexpected artifact is present 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > ensures .github/workflows/release.yml normalizes filenames before checksum generation and embeds manifest 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > executes CLI invocation of normalize-installer-filenames.mjs to normalize files and generate manifest 53ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > exits with failure when CLI invocation encounters a collision or no installers 95ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > passes for a valid secret-free archive via module and CLI without sensitive output 48ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > fails closed (status 1) when archive contains gemini-key entry without leaking content 45ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > fails closed (status 1) when archive contains gemini-key.writing entry 44ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > fails closed (status 1) when archive contains nested path containing credential name 46ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > reports inspection error (status 2) on missing archive file 42ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > reports inspection error (status 2) on corrupted or truncated ZIP 46ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > reports inspection error (status 2) when target is a directory 44ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > handles archive paths containing spaces correctly 45ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > reports inspection error (status 2) on count-underreporting tamper reproductions (module and CLI) 91ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > backup archive credential-entry inspection fail-closed safety > reports inspection error (status 2) on inconsistent declared directory size, truncated variable fields, malformed EOCD bounds, and unsupported layouts 224ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > Mac parity checklist documentation integrity > ensures fail-closed credential inspection routine is documented with trap and quiet listing 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > Mac parity checklist documentation integrity > references actual Rust backup allowlist regression tests and eliminates non-existent names 0ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > Mac parity checklist documentation integrity > links full repository audit note and preserves frozen candidate status without claiming bounded RSS 0ms
+ ↓ src/logic/releaseSafety.test.ts > release version policy and validation > Mac parity checklist documentation integrity > visibly marks shell execution as skipped when no bash executable is available 5ms [Deterministic availability seam: missing bash candidate correctly produces an explicit test skip]
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > Mac parity checklist documentation integrity > executes the documented shell routine in a Windows-hosted Git Bash environment verifying status codes, non-disclosure, and cleanup 915ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > synthetic PDF test fixture generation determinism and specifications > generates Fixture A (small checklist, 10 pages) deterministically matching accepted input metrics 1ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > synthetic PDF test fixture generation determinism and specifications > generates Fixture B (long manual, 1,050 pages) deterministically matching accepted input metrics 6ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > synthetic PDF test fixture generation determinism and specifications > generates Fixture C (illustrated charts, 60 pages) deterministically matching accepted input metrics 188ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > synthetic PDF test fixture generation determinism and specifications > verifies generateFixtures produces all three standard fixtures matching FIXTURE_SPECS 181ms
+ ✓ src/logic/releaseSafety.test.ts > release version policy and validation > synthetic PDF test fixture generation determinism and specifications > executes generate-pdf-fixtures CLI script producing exact fixture output 489ms
+
+ Test Files  1 passed (1)
+      Tests  51 passed | 1 skipped (52)
+   Start at  23:20:42
+   Duration  3.45s (transform 78ms, setup 0ms, import 147ms, tests 3.14s, environment 0ms)

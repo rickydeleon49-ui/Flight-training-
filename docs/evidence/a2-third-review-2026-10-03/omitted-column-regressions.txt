@@ -1,0 +1,179 @@
+
+ RUN  v4.1.11 <REVIEW_ROOT>/snapshot
+
+stdout | src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — node:sqlite > a title/tag-only save must preserve unrecognized stored enums
+{"engine":"node:sqlite","fixture":"unrecognized stored enums","before":[{"id":"kept","title":"Prior","material_type":"future-type","topic":"future-topic","review_status":"future-status","priority":"future-priority","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":"","file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-03T10:00:00.000Z","last_reviewed_at":""}],"after":[{"id":"kept","title":"Changed","material_type":"study_guide","topic":"general","review_status":"needs_review","priority":"later","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":null,"file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-04T06:12:19.133Z","last_reviewed_at":null}]}
+
+stdout | src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — node:sqlite > a title/tag-only save must preserve explicit empty optional text
+{"engine":"node:sqlite","fixture":"explicit empty optional text","before":[{"id":"kept","title":"Prior","material_type":"study_guide","topic":"general","review_status":"needs_review","priority":"later","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":"","file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-03T10:00:00.000Z","last_reviewed_at":""}],"after":[{"id":"kept","title":"Changed","material_type":"study_guide","topic":"general","review_status":"needs_review","priority":"later","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":null,"file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-04T06:12:19.147Z","last_reviewed_at":null}]}
+
+stdout | src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — sql.js > a title/tag-only save must preserve unrecognized stored enums
+{"engine":"sql.js","fixture":"unrecognized stored enums","before":[{"id":"kept","title":"Prior","material_type":"future-type","topic":"future-topic","review_status":"future-status","priority":"future-priority","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":"","file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-03T10:00:00.000Z","last_reviewed_at":""}],"after":[{"id":"kept","title":"Changed","material_type":"study_guide","topic":"general","review_status":"needs_review","priority":"later","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":null,"file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-04T06:12:19.233Z","last_reviewed_at":null}]}
+
+ × src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — node:sqlite > a title/tag-only save must preserve unrecognized stored enums 19ms
+   → expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+ × src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — node:sqlite > a title/tag-only save must preserve explicit empty optional text 8ms
+   → expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+stdout | src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — sql.js > a title/tag-only save must preserve explicit empty optional text
+{"engine":"sql.js","fixture":"explicit empty optional text","before":[{"id":"kept","title":"Prior","material_type":"study_guide","topic":"general","review_status":"needs_review","priority":"later","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":"","file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-03T10:00:00.000Z","last_reviewed_at":""}],"after":[{"id":"kept","title":"Changed","material_type":"study_guide","topic":"general","review_status":"needs_review","priority":"later","goal_id":null,"event_id":null,"notes":"","file_path":null,"original_file_name":null,"file_size":null,"created_at":"2026-10-03T10:00:00.000Z","updated_at":"2026-10-04T06:12:19.270Z","last_reviewed_at":null}]}
+
+ × src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — sql.js > a title/tag-only save must preserve unrecognized stored enums 94ms
+   → expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+ × src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — sql.js > a title/tag-only save must preserve explicit empty optional text 35ms
+   → expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > raw engine control: CASE in trigger body is legal and fires
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > raw engine control: CASE in trigger WHEN is legal and fires
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > public driver must preserve CASE in trigger body
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — node:sqlite > public driver must preserve CASE in trigger WHEN
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > raw engine control: CASE in trigger body is legal and fires
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > raw engine control: CASE in trigger WHEN is legal and fires
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > public driver must preserve CASE in trigger body
+ ↓ src/data/a2ThirdReview.regression.test.ts > R8 legitimate trigger compatibility — sql.js > public driver must preserve CASE in trigger WHEN
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — node:sqlite > a title/tag-only save must preserve unrecognized stored enums
+AssertionError: expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+
+- Expected
++ Received
+
+@@ -3,13 +3,13 @@
+    "event_id": null,
+    "file_path": null,
+    "file_size": null,
+    "goal_id": null,
+    "id": "kept",
+-   "last_reviewed_at": "",
+-   "material_type": "future-type",
++   "last_reviewed_at": null,
++   "material_type": "study_guide",
+    "notes": "",
+-   "original_file_name": "",
+-   "priority": "future-priority",
+-   "review_status": "future-status",
+-   "topic": "future-topic",
++   "original_file_name": null,
++   "priority": "later",
++   "review_status": "needs_review",
++   "topic": "general",
+  }
+
+ ❯ src/data/a2ThirdReview.regression.test.ts:42:38
+     40|         };
+     41|         console.log(JSON.stringify({ engine, fixture, before, after })…
+     42|         expect(untouched(after[0]!)).toEqual(untouched(before[0]!));
+       |                                      ^
+     43|         if (engine === "sql.js") {
+     44|           const reopened = await createSqlJsDatabase();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — node:sqlite > a title/tag-only save must preserve explicit empty optional text
+AssertionError: expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+
+- Expected
++ Received
+
+@@ -3,13 +3,13 @@
+    "event_id": null,
+    "file_path": null,
+    "file_size": null,
+    "goal_id": null,
+    "id": "kept",
+-   "last_reviewed_at": "",
++   "last_reviewed_at": null,
+    "material_type": "study_guide",
+    "notes": "",
+-   "original_file_name": "",
++   "original_file_name": null,
+    "priority": "later",
+    "review_status": "needs_review",
+    "topic": "general",
+  }
+
+ ❯ src/data/a2ThirdReview.regression.test.ts:42:38
+     40|         };
+     41|         console.log(JSON.stringify({ engine, fixture, before, after })…
+     42|         expect(untouched(after[0]!)).toEqual(untouched(before[0]!));
+       |                                      ^
+     43|         if (engine === "sql.js") {
+     44|           const reopened = await createSqlJsDatabase();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — sql.js > a title/tag-only save must preserve unrecognized stored enums
+AssertionError: expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+
+- Expected
++ Received
+
+@@ -3,13 +3,13 @@
+    "event_id": null,
+    "file_path": null,
+    "file_size": null,
+    "goal_id": null,
+    "id": "kept",
+-   "last_reviewed_at": "",
+-   "material_type": "future-type",
++   "last_reviewed_at": null,
++   "material_type": "study_guide",
+    "notes": "",
+-   "original_file_name": "",
+-   "priority": "future-priority",
+-   "review_status": "future-status",
+-   "topic": "future-topic",
++   "original_file_name": null,
++   "priority": "later",
++   "review_status": "needs_review",
++   "topic": "general",
+  }
+
+ ❯ src/data/a2ThirdReview.regression.test.ts:42:38
+     40|         };
+     41|         console.log(JSON.stringify({ engine, fixture, before, after })…
+     42|         expect(untouched(after[0]!)).toEqual(untouched(before[0]!));
+       |                                      ^
+     43|         if (engine === "sql.js") {
+     44|           const reopened = await createSqlJsDatabase();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/data/a2ThirdReview.regression.test.ts > R9 omitted-column preservation — sql.js > a title/tag-only save must preserve explicit empty optional text
+AssertionError: expected { id: 'kept', …(12) } to deeply equal { id: 'kept', …(12) }
+
+- Expected
++ Received
+
+@@ -3,13 +3,13 @@
+    "event_id": null,
+    "file_path": null,
+    "file_size": null,
+    "goal_id": null,
+    "id": "kept",
+-   "last_reviewed_at": "",
++   "last_reviewed_at": null,
+    "material_type": "study_guide",
+    "notes": "",
+-   "original_file_name": "",
++   "original_file_name": null,
+    "priority": "later",
+    "review_status": "needs_review",
+    "topic": "general",
+  }
+
+ ❯ src/data/a2ThirdReview.regression.test.ts:42:38
+     40|         };
+     41|         console.log(JSON.stringify({ engine, fixture, before, after })…
+     42|         expect(untouched(after[0]!)).toEqual(untouched(before[0]!));
+       |                                      ^
+     43|         if (engine === "sql.js") {
+     44|           const reopened = await createSqlJsDatabase();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 8 skipped (12)
+   Start at  23:12:18
+   Duration  482ms (transform 117ms, setup 0ms, import 158ms, tests 156ms, environment 0ms)
