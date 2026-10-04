@@ -1,0 +1,18 @@
+{
+  "probe": "Dependency lifecycle diagnostic, not Slice B implementation",
+  "result": "observations confirmed",
+  "observations": {
+    "installedVersion": "1.14.2",
+    "lockedVersion": "1.14.2",
+    "beforeSnapshot": 1,
+    "afterSnapshot": 0,
+    "orphanAccepted": true,
+    "cascadeMissed": true,
+    "afterRecovery": 0,
+    "originalRowsPreserved": true,
+    "afterReinitialize": 1,
+    "orphanRejectedAfterReinitialize": true,
+    "cascadeWorksAfterReinitialize": true,
+    "afterDurableExport": 0
+  }
+}

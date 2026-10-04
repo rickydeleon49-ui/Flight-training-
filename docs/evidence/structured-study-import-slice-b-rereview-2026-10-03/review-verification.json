@@ -1,0 +1,113 @@
+{
+  "observedAt": "2026-10-04T00:52:19.214710+00:00",
+  "branch": "codex/structured-study-import-slice-b-preparation",
+  "head": "3efe95316b200848178033a68d057f66815cf427",
+  "originMain": "c5b70329fb94eef58df2d6a16e0edf8c44c4a11e",
+  "reviewedFiles": [
+    "STATUS.md",
+    "docs/PROJECT_HANDOFF.md",
+    "docs/MAC_PARITY_CHECKLIST.md",
+    "docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md",
+    "docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-03.md",
+    "docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/README.md",
+    "docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/preparation-receipt.txt",
+    "docs/evidence/structured-study-import-slice-b-preparation-2026-10-03/final-hashes.txt"
+  ],
+  "submittedReceiptSha256": "988346289cc0d9c68e8c8251a4635b0f664b9d32a3fc765a8f542947fbb8467b",
+  "receiptEntriesVerified": 7,
+  "dirtyFilesVerified": 8,
+  "unchangedNonDocumentationTrackedFiles": 351,
+  "relativeLinksResolved": 188,
+  "whitespaceAndConflictMarkers": "clean across all eight submitted files",
+  "plannedTestRows": 46,
+  "plannedSourceTestRows": 42,
+  "plannedInstalledTestRows": 4,
+  "originalIdsPreserved": 22,
+  "plannedTestIds": [
+    "TB-ATOM-01",
+    "TB-ATOM-02",
+    "TB-ROLL-01",
+    "TB-ROLL-02",
+    "TB-ROLL-03",
+    "TB-ROLL-04",
+    "TB-ROLL-05",
+    "TB-ROLL-06",
+    "TB-DUR-01",
+    "TB-DUR-02",
+    "TB-DUR-03",
+    "TB-DUR-04",
+    "TB-DUR-05",
+    "TB-LOCK-01",
+    "TB-IDEM-01",
+    "TB-IDEM-02",
+    "TB-CONF-01",
+    "TB-CONF-02",
+    "TB-CONF-03",
+    "TB-CONF-04",
+    "TB-CONF-05",
+    "TB-CONF-06",
+    "TB-CONT-01",
+    "TB-CONT-02",
+    "TB-CONT-03",
+    "TB-REFUSE-01",
+    "TB-DEF-01",
+    "TB-DEF-02",
+    "TB-DEF-03",
+    "TB-DEF-04",
+    "TB-PROV-01",
+    "TB-PROV-02",
+    "TB-BACK-01",
+    "TB-REFRESH-01",
+    "TB-UI-LOCK-01",
+    "TB-UI-CAN-01",
+    "TB-UI-CAN-02",
+    "TB-UI-A11Y-01",
+    "TB-UI-A11Y-02",
+    "TB-UI-A11Y-03",
+    "TB-UI-WARN-01",
+    "TB-UI-REGEN-01",
+    "TB-INST-01",
+    "TB-INST-02",
+    "TB-INST-03",
+    "TB-INST-04"
+  ],
+  "githubMetadataScope": {
+    "command": "gh pr list --state all --limit 200 --json number,state,headRefName",
+    "count": 63,
+    "open": [],
+    "a2NamedPrMetadata": [
+      {
+        "headRefName": "codex/mac-a2-verification-preparation",
+        "number": 54,
+        "state": "MERGED"
+      },
+      {
+        "headRefName": "codex/mac-a2-preparation-review",
+        "number": 53,
+        "state": "MERGED"
+      },
+      {
+        "headRefName": "codex/claude-detailed-a2-prompt",
+        "number": 52,
+        "state": "MERGED"
+      }
+    ],
+    "liveA2NamedRemoteBranches": [
+      "origin/codex/claude-detailed-a2-prompt",
+      "origin/codex/mac-a2-preparation-review",
+      "origin/codex/mac-a2-verification-preparation"
+    ],
+    "limitation": "Metadata and branch-name check only; no audit of all PR source trees or Windows filesystem."
+  },
+  "checksNotRun": [
+    "Slice B implementation tests (no implementation assigned)",
+    "unchanged full frontend/Rust matrices",
+    "installed macOS/VoiceOver/picker tests"
+  ],
+  "lockedNativeSourceInspected": {
+    "tauri": "2.11.5: ipc/command.rs:61-69, error.rs:58-60, ipc/mod.rs:249-253",
+    "tauriMacros": "2.6.3: src/command/wrapper.rs:387-394, 417-433",
+    "serdeCore": "1.0.229: src/de/mod.rs:269-281",
+    "limitation": "Source inspection, not an executed Tauri IPC diagnostic."
+  }
+}
