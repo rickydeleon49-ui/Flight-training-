@@ -1,5 +1,7 @@
 # Structured study import: Slice B implementation preparation (final corrections) — 3 October 2026
 
+**4 October owner decision:** [Slice B scope and D1–D9 approved](STRUCTURED_STUDY_IMPORT_SLICE_B_OWNER_APPROVAL_2026-10-04.md), including the older-version limitation. A2 is accepted and M2 check-in is waived. Earlier pending-gate statements below are historical where superseded. Use the [active model-neutral implementation assignment](STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-04.md); installed/signing/release results remain separate.
+
 Prepared on the Mac in `/Users/rickymac/code/Flight-training-` on branch `codex/structured-study-import-slice-b-preparation` from clean synchronized `main` base `3efe95316b200848178033a68d057f66815cf427` (PR #62 merge).
 
 Assignment: [Gemini structured study-import Slice B final preparation corrections prompt](https://github.com/rickydeleon49-ui/Flight-training-/blob/main/docs/GEMINI_STRUCTURED_STUDY_IMPORT_SLICE_B_FINAL_PREPARATION_CORRECTIONS_PROMPT_2026-10-03.md).
