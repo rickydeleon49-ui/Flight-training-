@@ -1,5 +1,7 @@
 # Gemini: implement structured study import Slice B (conditional copy-ready assignment, final corrections)
 
+**Superseded:** Owner scope/D1–D9 are now approved. Use the [active model-neutral implementation assignment](STRUCTURED_STUDY_IMPORT_SLICE_B_IMPLEMENTATION_PROMPT_2026-10-04.md). The conditional gates below describe the earlier planning state.
+
 **Reviewed next assignment:** [Codex preparation acceptance](STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_ACCEPTANCE_2026-10-03.md) closes BPREP-R1–R4 as specifications. Start with one current gate check using repository evidence and actual recorded owner decisions. When all gates clear, implement the five phases below from clean synchronized Mac main, aligning the adapter with accepted A2. When a gate is missing, return its exact missing evidence and responsible next action; do not create duplicate preparation files or start gated code. Source/development and installed results remain separate.
 
 > [!IMPORTANT]
