@@ -1,0 +1,53 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/pages/StudyLibrary/ImportStudyPacketDialog.codex-review.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:46323) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/ImportStudyPacketDialog.codex-review.test.ts (2 tests | 2 failed) 209ms
+     × lets the owner inspect packet content before any save 150ms
+     × shows each item's unverified reference before discarding it 58ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/ImportStudyPacketDialog.codex-review.test.ts > Codex Slice B confirmation preview diagnostics > lets the owner inspect packet content before any save
+AssertionError: expected 'Import study packetCheck what\'s insi…' to contain 'Cards and an explicit structured test.'
+
+Expected: "Cards and an explicit structured test."
+Received: "Import study packetCheck what's inside before anything is saved.CloseWill be imported as a new materialLetters and labelsFrom letters.json · SHA-256 d5101e8c58c7…Study guide3 flashcards2 practice questionsImported from a file you selected. Its answers and source references have not been checked by Her Flight Deck. Verify against current FAA material, aircraft documents and your instructor.Source details from the file (not checked)Made with: Example assistant (claim)Created: 2026-10-03T12:00:00ZSynthetic packet for contract tests.Source references come from the packet and have not been checked against any file. They are shown in this preview but not saved.The packet says who or what produced it. That claim has not been verified.Shown here but not saved: 2 source references, the file's source details, the packet's item IDs.CancelImport as new material"
+
+ ❯ src/pages/StudyLibrary/ImportStudyPacketDialog.codex-review.test.ts:128:40
+    126|     expect(saveSpy).not.toHaveBeenCalled();
+    127|     expect(await importedCount()).toBe(0);
+    128|     expect(importDialog().textContent).toContain("Cards and an explici…
+       |                                        ^
+    129|     expect(importDialog().textContent).toContain("Which letter follows…
+    130|     expect(importDialog().textContent).toContain("In the invented alph…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/ImportStudyPacketDialog.codex-review.test.ts > Codex Slice B confirmation preview diagnostics > shows each item's unverified reference before discarding it
+AssertionError: expected 'Import study packetCheck what\'s insi…' to contain 'Invented chart'
+
+Expected: "Invented chart"
+Received: "Import study packetCheck what's inside before anything is saved.CloseWill be imported as a new materialLetters and labelsFrom letters.json · SHA-256 d5101e8c58c7…Study guide3 flashcards2 practice questionsImported from a file you selected. Its answers and source references have not been checked by Her Flight Deck. Verify against current FAA material, aircraft documents and your instructor.Source details from the file (not checked)Made with: Example assistant (claim)Created: 2026-10-03T12:00:00ZSynthetic packet for contract tests.Source references come from the packet and have not been checked against any file. They are shown in this preview but not saved.The packet says who or what produced it. That claim has not been verified.Shown here but not saved: 2 source references, the file's source details, the packet's item IDs.CancelImport as new material"
+
+ ❯ src/pages/StudyLibrary/ImportStudyPacketDialog.codex-review.test.ts:137:40
+    135|     expect(saveSpy).not.toHaveBeenCalled();
+    136|     expect(await importedCount()).toBe(0);
+    137|     expect(importDialog().textContent).toContain("Invented chart");
+       |                                        ^
+    138|     expect(importDialog().textContent).toContain("Invented chart secti…
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  17:44:41
+   Duration  794ms (transform 185ms, setup 0ms, import 274ms, tests 209ms, environment 230ms)
+

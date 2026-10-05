@@ -1,0 +1,15 @@
+import { readFileSync } from "node:fs";
+import { expect, it } from "vitest";
+import { decodeStructuredImport } from "./structuredImportTransaction";
+const base = JSON.parse(readFileSync(`${process.cwd()}/src-tauri/fixtures/import-contract/operation.json`, "utf8"));
+it("TypeScript control refuses NFC-equivalent choices", () => {
+  const op = structuredClone(base);
+  op.practiceTest.questions[0].options = ["Café", "Cafe\u0301"];
+  expect(() => decodeStructuredImport(op)).toThrowError(expect.objectContaining({ code: "INVALID_ARGUMENT" }));
+});
+it("TypeScript control accepts a 200-code-point NFC title", () => {
+  const op = structuredClone(base);
+  op.material.title = op.studySet.title = op.practiceTest.title = "e\u0301".repeat(200);
+  const decoded = decodeStructuredImport(op);
+  expect(decoded.title).toBe("é".repeat(200));
+});

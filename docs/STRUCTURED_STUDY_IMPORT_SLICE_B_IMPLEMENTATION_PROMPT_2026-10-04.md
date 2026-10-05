@@ -1,5 +1,7 @@
 # Implement structured study import Slice B — owner-approved model-neutral assignment, 4 October 2026
 
+**Superseded for remaining work:** implementation has been submitted and independently reviewed. Use the [SB-R1/SB-R2 correction assignment](STRUCTURED_STUDY_IMPORT_SLICE_B_CORRECTIONS_PROMPT_2026-10-04.md). This initial assignment is historical; do not restart implementation.
+
 Any implementation model selected by the owner may complete this assignment. Use `/Users/rickymac/code/Flight-training-pr70-integration` on `codex/structured-study-import-slice-b`, prepared from updated origin/main. Use one active implementer. Codex owns senior engineering review and Git integration. Confirm checkout, branch, HEAD, status and current main once; preserve other checkouts and historical evidence. Do not edit the dirty primary checkout.
 
 **Owner approval is recorded:** [Slice B scope and all D1–D9 defaults](STRUCTURED_STUDY_IMPORT_SLICE_B_OWNER_APPROVAL_2026-10-04.md), including D3's older-version tradeoff. The [accepted preparation](STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_ACCEPTANCE_2026-10-03.md) closes BPREP-R1–R4. The [M2 check-in waiver](M2_REAL_USER_CHECKIN_OWNER_WAIVER_2026-10-04.md) remains in force. Do not ask again for scoped approval, D1–D9 or check-in notes, and do not stop source implementation solely because signing/installed evidence is pending.
