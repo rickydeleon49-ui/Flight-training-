@@ -1,0 +1,18 @@
+Review base: 95874216fd70170460da0a460d47aa5475c7577e
+Submitted scope SHA-256: b284c4e6f74369bd6caa065066d6e4346c60c92f6578ebe6e9e01592e3e89a1d
+Canonical reviewed scope SHA-256: 91c441d44d773f4652078940414d5b916301e7306b8c29267acec99bd15d30ff
+
+Checks actually run:
+- python3 diagnose.py: exit 0; 9 proposed-submission and 12 reviewed-schema checks pass with foreign_keys=ON in SQLite :memory:.
+- All 10 JSON wire examples in each scope parse successfully.
+- Repeated diagnostic output matches observations.json byte-for-byte (cmp exit 0).
+- Frozen submitted proposal matches implementer working document byte-for-byte (cmp exit 0).
+- Frozen reviewed proposal matches canonical document byte-for-byte (cmp exit 0).
+- 34 relative file links and 10 local heading anchors resolve in the authored/updated documents.
+- Documentation/evidence whitespace checked; git diff --check exit 0; staged check repeated before commit.
+- reviewer-amendments.json carries the exact unified diff between hash-identified snapshots.
+
+Limits:
+DDL/JSON diagnostics verify a proposed contract, not production replay/concurrency, native/browser durability or a full archive restore.
+No app launch, full source suite, owner profile/data access, actual Migration 11 application, provider call, packaging/signing or installed testing.
+M2 source/retention approval remains pending; PR 1 implementation prompt is conditional.

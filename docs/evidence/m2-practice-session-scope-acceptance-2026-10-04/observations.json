@@ -1,0 +1,35 @@
+{
+  "submitted-scope.md.txt": {
+    "sha256": "b284c4e6f74369bd6caa065066d6e4346c60c92f6578ebe6e9e01592e3e89a1d",
+    "schema_checks": {
+      "second_active_version_rejected": true,
+      "second_in_progress_attempt_rejected": true,
+      "cross_version_insert_rejected": true,
+      "null_selection_without_flag_rejected": true,
+      "dont_know_with_selection_rejected": true,
+      "cross_version_update_rejected": true,
+      "durable_receipt_table_exists": true,
+      "policy_a_completed_review_retained_draft_pruned": true,
+      "foreign_keys_enabled_and_clean": true
+    },
+    "valid_json_examples": 10
+  },
+  "reviewed-scope.md.txt": {
+    "sha256": "91c441d44d773f4652078940414d5b916301e7306b8c29267acec99bd15d30ff",
+    "schema_checks": {
+      "second_active_version_rejected": true,
+      "second_in_progress_attempt_rejected": true,
+      "cross_version_insert_rejected": true,
+      "null_selection_without_flag_rejected": true,
+      "dont_know_with_selection_rejected": true,
+      "cross_version_update_rejected": true,
+      "durable_receipt_table_exists": true,
+      "policy_a_completed_review_retained_draft_pruned": true,
+      "foreign_keys_enabled_and_clean": true,
+      "history_key_survives_material_deletion": true,
+      "pruned_attempt_receipt_tombstoned": true,
+      "revision_nonnegative_constraint": true
+    },
+    "valid_json_examples": 10
+  }
+}

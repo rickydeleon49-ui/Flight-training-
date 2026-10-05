@@ -1,5 +1,7 @@
 # M2 saved practice-session scope — focused re-review, 4 October 2026
 
+> Follow-up: the [reviewed scope is ready for owner approval](M2_PRACTICE_SESSION_SCOPE_ACCEPTANCE_2026-10-04.md). The [conditional PR 1 assignment](M2_PRACTICE_SESSION_PR1_PROMPT_2026-10-04.md) is the next source task after approval. This document is historical.
+
 **Decision: M2S-R1's retention mismatch is closed; M2S-R2 and M2S-R3 are partially corrected and remain open.** Finish the two remaining contract sections together using the [model-neutral finalization assignment](M2_PRACTICE_SESSION_SCOPE_FINALIZATION_PROMPT_2026-10-04.md). The proposed feature and two-PR split remain sound. Scope/retention approval and source implementation are still pending.
 
 ## Identity and verification
