@@ -1,0 +1,216 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.04s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 171 tests
+test backup::codex_m2_final_review::in_progress_false_totals_refused ... FAILED
+test backup::codex_m2_final_review::no_op_ownership_trigger_refused ... FAILED
+test backup::codex_m2_final_review::receipt_wrong_frozen_version_refused ... FAILED
+test backup::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state ... FAILED
+test backup::codex_m2_final_review::unique_index_wrong_key_refused ... FAILED
+test backup::tests::a_backup_cannot_be_saved_inside_the_folder_it_is_protecting ... ok
+test backup::tests::a_chosen_safety_copy_cannot_climb_out_of_the_backup_folder ... ok
+test backup::tests::a_complete_backup_puts_back_the_database_and_every_document ... ok
+test backup::tests::a_copy_is_taken_whenever_another_version_wrote_the_database ... ok
+test backup::tests::a_damaged_backup_is_refused_before_anything_of_hers_moves ... ok
+test backup::tests::a_database_is_recognized_by_its_header ... ok
+test backup::tests::a_document_changing_during_collection_is_detected_and_refused ... ok
+test backup::tests::a_failed_retry_leaves_an_existing_valid_backup_untouched ... ok
+test backup::tests::a_failed_rewrite_leaves_an_existing_backup_exactly_as_it_was ... ok
+test backup::tests::a_format_version_one_backup_still_restores ... ok
+test backup::tests::a_lock_that_never_clears_fails_the_snapshot_boundedly_with_a_plain_message ... ok
+test backup::tests::a_missing_or_damaged_plan_is_treated_as_a_complete_archive ... ok
+test backup::tests::a_new_import_or_split_appearing_after_the_snapshot_is_refused ... ok
+test backup::tests::a_referenced_file_disappearing_after_the_database_snapshot_is_refused ... ok
+test backup::tests::a_referenced_file_disappearing_during_collection_is_refused ... ok
+test backup::tests::a_restore_plan_survives_being_written_and_read_back ... ok
+test backup::tests::a_safety_copy_puts_the_database_back_and_leaves_her_uploads_alone ... ok
+test backup::tests::a_same_size_content_change_fails_the_integrity_check ... ok
+test backup::tests::a_stable_database_and_document_set_exports_and_restores_successfully ... ok
+test backup::tests::a_timestamp_reads_as_a_sortable_date ... ok
+test backup::tests::a_transient_lock_during_snapshot_clears_and_the_backup_still_completes ... ok
+test backup::tests::a_valid_backup_still_passes_its_own_finished_archive_check ... ok
+test backup::tests::a_valid_sqlite_file_with_the_wrong_schema_is_refused ... ok
+test backup::tests::an_archive_carrying_anything_unexpected_is_refused ... ok
+test backup::tests::an_archive_may_only_contain_her_database_and_documents ... ok
+test backup::tests::an_install_failure_after_protection_restores_current_data ... ok
+test backup::tests::an_online_snapshot_includes_committed_wal_changes ... ok
+test backup::tests::archive_names_reject_windows_streams_and_excessive_lengths ... ok
+test backup::tests::audit_committed_activation_with_cleanup_failure_does_not_replay ... ok
+test backup::tests::audit_db_wal_shm_documents_never_silently_mixed ... ok
+test backup::tests::audit_document_return_obstruction_retains_document_and_db_wal ... ok
+test backup::tests::audit_failed_rollback_must_retain_original_database ... ok
+test backup::tests::audit_failure_after_partial_protection_and_partial_install ... ok
+test backup::tests::audit_interrupted_states_resume_safely_on_startup ... ok
+test backup::tests::audit_malformed_journal_handled_conservatively ... ok
+test backup::tests::audit_pruning_cannot_discard_unresolved_recovery_folder ... ok
+test backup::tests::audit_recovery_completes_after_obstruction_removed ... ok
+test backup::tests::audit_repeated_startup_on_unresolved_recovery_is_idempotent ... ok
+test backup::tests::audit_startup_blocks_on_unresolved_and_allows_safe_states ... ok
+test backup::tests::audit_successful_complete_and_database_only_restores_keep_contracts ... ok
+test backup::tests::counterfeit_unique_index_refused ... ok
+test backup::tests::cross_material_attempt_refused ... ok
+test backup::tests::current_database_version_matches_the_registered_migrations ... ok
+test backup::tests::current_practice_test_schema_can_be_backed_up_but_future_schema_cannot ... ok
+test backup::tests::export_refuses_referenced_document_when_trash_metadata_is_corrupt_and_retries_transiently ... ok
+test backup::tests::export_refuses_referenced_document_with_deletion_in_progress_and_retries_transiently ... ok
+test backup::tests::export_with_missing_referenced_file_succeeds_and_restores_cleanly ... ok
+test backup::tests::export_with_unreferenced_orphan_file_succeeds_and_excludes_orphan ... ok
+test backup::tests::extreme_compression_ratios_are_refused ... ok
+test backup::tests::foreign_key_violation_is_refused ... ok
+test backup::tests::format_v2_with_unreferenced_document_inspects_and_restores_cleanly ... ok
+test backup::tests::format_v3_inspection_proves_database_and_document_completeness ... ok
+test backup::tests::format_v3_with_unreferenced_document_fails_inspection ... ok
+test backup::tests::frozen_key_score_is_derived ... ok
+test backup::tests::interrupted_conversion_preserves_state_and_safe_retry ... ok
+test backup::tests::interrupted_restore_preserves_prior_state_and_safe_retry ... ok
+test backup::tests::legacy_schema_10_archive_upgrade_round_trip ... ok
+test backup::tests::malformed_receipt_json_is_refused ... ok
+test backup::tests::manual_safety_copy_is_a_consistent_online_snapshot ... ok
+test backup::tests::matrix_interrupted_original_return_preserves_already_returned_files ... ok
+test backup::tests::matrix_journal_unreadable_or_corrupt_phase_blocks_conservatively ... ok
+test backup::tests::matrix_missing_original_artifact_blocks_recovery_even_if_same_named_file_exists ... ok
+test backup::tests::missing_required_unique_index_is_refused ... ok
+test backup::tests::missing_version_column_refused ... ok
+test backup::tests::no_op_preserves_returned_answered_time ... ok
+test backup::tests::null_completed_score_refused ... ok
+test backup::tests::old_style_format_v2_with_missing_referenced_document_inspects_and_restores_with_warning ... ok
+test backup::tests::only_a_folder_holding_a_real_database_offers_to_be_restored ... ok
+test backup::tests::out_of_range_stored_response_refused ... ok
+test backup::tests::receipt_empty_object_refused ... ok
+test backup::tests::req_15_schema_10_backup_validates_without_new_tables ... ok
+test backup::tests::req_16_schema_11_backup_validation_catches_semantic_violations ... ok
+test backup::tests::restored_files_are_hashed_from_exactly_the_bytes_written ... ok
+test backup::tests::reviewer_backups_parent_is_not_a_valid_recovery_folder ... ok
+test backup::tests::reviewer_missing_journal_with_recovery_marker_blocks_startup ... ok
+test backup::tests::reviewer_non_regular_journal_is_not_equivalent_to_absent ... ok
+test backup::tests::reviewer_stale_rollback_journal_cannot_delete_returned_original ... ok
+test backup::tests::reviewer_unrecorded_wal_move_preserves_committed_rows ... ok
+test backup::tests::round2_unidentified_regular_destination_is_not_deleted ... ok
+test backup::tests::round3_changed_original_document_cannot_be_reported_recovered ... ok
+test backup::tests::round3_missing_original_document_cannot_be_reported_recovered ... ok
+test backup::tests::round3_original_document_absence_must_not_leave_selected_documents ... ok
+test backup::tests::round3_unknown_pending_owner_must_not_be_deleted_by_terminal_cleanup ... ok
+test backup::tests::round4_document_protection_failure_recovers_on_next_launch ... ok
+test backup::tests::round4_empty_original_manifest_rejects_unidentified_document ... ok
+test backup::tests::round4_linked_pending_root_must_not_move_external_data_unix ... ok
+test backup::tests::round4_modern_terminal_missing_plan_preserves_unknown_pending ... ok
+test backup::tests::round5_journal_write_or_sync_failures_can_recover_on_restart ... ok
+test backup::tests::round5_legacy_pending_activation_does_not_leave_unverifiable_owner ... ok
+test backup::tests::round5_protection_failure_with_real_original_wal_and_shm_recovers ... ok
+test backup::tests::round6_cleanup_entry_read_fault_preserves_plan_and_recovers_on_restart ... ok
+test backup::tests::round6_cleanup_obstruction_during_startup_preserves_plan_and_clears_on_restart ... ok
+test backup::tests::task1_changed_same_size_document_bytes_blocks ... ok
+test backup::tests::task1_interrupted_return_after_directory_rename_resumes_cleanly ... ok
+test backup::tests::task1_invalid_directory_type_pending_refuses_activation ... ok
+test backup::tests::task1_missing_entire_document_directory_blocks ... ok
+test backup::tests::task1_missing_single_document_in_populated_dir_blocks ... ok
+test backup::tests::task1_nested_document_paths_verified ... ok
+test backup::tests::task1_ordinary_valid_pending_activation_succeeds ... ok
+test backup::tests::task1_repeated_startup_after_clearing_obstruction_succeeds ... ok
+test backup::tests::task2_original_document_absence_uninstalls_selected_documents ... ok
+test backup::tests::task2_original_empty_document_dir_restored ... ok
+test backup::tests::task2_original_populated_document_dir_restored ... ok
+test backup::tests::task2_overlapping_document_content_survives ... ok
+test backup::tests::task2_protection_failure_with_active_documents_modified_blocks ... ok
+test backup::tests::task2_protection_failure_with_empty_documents_recovers ... ok
+test backup::tests::task2_unrelated_active_document_preserved_and_blocks ... ok
+test backup::tests::task3_empty_manifest_with_nested_unexpected_file_blocks ... ok
+test backup::tests::task3_journal_invalid_inventory_names_rejected ... ok
+test backup::tests::task4_document_selected_install_failure_recovers_original_documents ... ok
+test backup::tests::task4_documents_original_return_failure_preserves_documents_and_recovers ... ok
+test backup::tests::task4_journal_delete_failure_retries_safely_without_replay ... ok
+test backup::tests::task4_legacy_database_restore_without_operation_id_preserves_documents ... ok
+test backup::tests::task4_modern_terminal_matching_plan_cleans_up ... ok
+test backup::tests::task4_pending_cleanup_interrupted_after_plan_removed_recovers_if_staged_payload_matches ... ok
+test backup::tests::task4_pending_cleanup_interrupted_with_unknown_payload_refuses_deletion ... ok
+test backup::tests::task4_prior_canonical_journal_preserved_on_write_sync_rename_failures ... ok
+test backup::tests::task4_temporary_sibling_detector_rejects_actual_prefix_leftover_negative_control ... ok
+test backup::tests::task4_terminal_cleanup_corrupted_plan_refuses_deletion ... ok
+test backup::tests::task4_terminal_cleanup_empty_id_refuses_deletion ... ok
+test backup::tests::task4_terminal_cleanup_genuine_legacy_state ... ok
+test backup::tests::task4_terminal_cleanup_matching_id_committed ... ok
+test backup::tests::task4_terminal_cleanup_matching_id_rolled_back ... ok
+test backup::tests::task4_terminal_cleanup_mismatched_id_refuses_deletion ... ok
+test backup::tests::task4_wal_original_return_failure_preserves_committed_wal_and_recovers ... ok
+test backup::tests::task4_wal_selected_install_failure_uninstalls_wal_and_recovers_original ... ok
+test backup::tests::task5_backups_readdir_fault_observed_and_blocks_safely ... ok
+test backup::tests::task5_inventory_readdir_fault_observed_and_blocks ... ok
+test backup::tests::task5_journal_read_fault_observed_and_blocks_safely ... ok
+test backup::tests::task5_matrix_install_move_fault_triggers_clean_rollback ... ok
+test backup::tests::task5_matrix_journal_delete_fault ... ok
+test backup::tests::task5_matrix_journal_rename_fault ... ok
+test backup::tests::task5_matrix_journal_sync_fault ... ok
+test backup::tests::task5_matrix_journal_temp_create_fault ... ok
+test backup::tests::task5_matrix_journal_write_fault ... ok
+test backup::tests::task5_matrix_protect_move_fault_conserves_original_data ... ok
+test backup::tests::task5_matrix_return_move_fault_conserves_all_files ... ok
+test backup::tests::task5_matrix_unreadable_journal_file_blocks_startup ... ok
+test backup::tests::task5_occurrence_second_journal_write_failure_recovers_with_expected_cleanup ... ok
+test backup::tests::task5_plan_read_fault_observed_and_refuses_deletion ... ok
+test backup::tests::task5_root_readdir_fault_observed_and_blocks_safely ... ok
+test backup::tests::the_write_ahead_log_travels_with_the_database ... ok
+test backup::tests::unidentified_document_and_sidecar_are_not_deleted ... ok
+test backup::tests::valid_schema_11_archive_round_trip ... ok
+test backup::tests::valid_schema_11_control_is_accepted ... ok
+test practice_sessions::tests::all_answered_cursor_is_null_and_early_completion ... ok
+test practice_sessions::tests::canonical_content_hashing_matches_regardless_of_key_order ... ok
+test practice_sessions::tests::concurrent_starts_serialize_to_single_unfinished_attempt ... ok
+test practice_sessions::tests::direct_native_writer_refuses_when_legacy_conversion_pending ... ok
+test practice_sessions::tests::failed_replacement_preserves_previous_test_and_progress ... ok
+test practice_sessions::tests::remove_practice_test_prunes_unfinished_and_keeps_completed ... ok
+test practice_sessions::tests::req_01_interrupted_resume ... ok
+test practice_sessions::tests::req_02_idempotent_replay ... ok
+test practice_sessions::tests::req_03_operation_conflict ... ok
+test practice_sessions::tests::req_04_single_in_progress_attempt ... ok
+test practice_sessions::tests::req_05_and_06_cross_version_item_triggers ... ok
+test practice_sessions::tests::req_07_and_08_contradictory_choice_flags ... ok
+test practice_sessions::tests::req_09_completed_attempt_mutation_refused ... ok
+test practice_sessions::tests::req_10_exactly_once_completion ... ok
+test practice_sessions::tests::req_11_version_isolation_on_regeneration ... ok
+test practice_sessions::tests::req_12_policy_a_deletion_lifecycle ... ok
+test practice_sessions::tests::req_13_legacy_startup_upgrade_and_200_questions ... ok
+test practice_sessions::tests::req_14_malformed_legacy_handling ... ok
+test practice_sessions::tests::stale_retakes_cannot_replace_each_other ... ok
+test practice_sessions::tests::stale_revision_mismatch_refused ... ok
+test practice_sessions::tests::strict_payload_rejects_unknown_keys_and_oversized ... ok
+
+failures:
+
+---- backup::codex_m2_final_review::in_progress_false_totals_refused stdout ----
+
+thread 'backup::codex_m2_final_review::in_progress_false_totals_refused' (750560) panicked at src/backup.rs:11550:173:
+one-question unfinished attempt with 99 total/88 answered was accepted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- backup::codex_m2_final_review::no_op_ownership_trigger_refused stdout ----
+
+thread 'backup::codex_m2_final_review::no_op_ownership_trigger_refused' (750561) panicked at src/backup.rs:11548:259:
+same-name no-op ownership trigger was accepted
+
+---- backup::codex_m2_final_review::receipt_wrong_frozen_version_refused stdout ----
+
+thread 'backup::codex_m2_final_review::receipt_wrong_frozen_version_refused' (750562) panicked at src/backup.rs:11549:216:
+receipt result for wrong frozen version was accepted
+
+---- backup::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state stdout ----
+
+thread 'backup::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state' (750563) panicked at src/backup.rs:11551:645:
+startup conversion and direct session write both succeed for validator-refused state
+
+---- backup::codex_m2_final_review::unique_index_wrong_key_refused stdout ----
+
+thread 'backup::codex_m2_final_review::unique_index_wrong_key_refused' (750564) panicked at src/backup.rs:11547:272:
+same-name UNIQUE index on id was accepted instead of material key
+
+
+failures:
+    backup::codex_m2_final_review::in_progress_false_totals_refused
+    backup::codex_m2_final_review::no_op_ownership_trigger_refused
+    backup::codex_m2_final_review::receipt_wrong_frozen_version_refused
+    backup::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state
+    backup::codex_m2_final_review::unique_index_wrong_key_refused
+
+test result: FAILED. 166 passed; 5 failed; 0 ignored; 0 measured; 215 filtered out; finished in 30.82s
+
+error: test failed, to rerun pass `--lib`
