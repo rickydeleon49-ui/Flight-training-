@@ -1,5 +1,7 @@
 # M2 saved practice-session planning acceptance, 4 October 2026
 
+> Owner approval followed this planning review: [all M2 defaults and PR 1 are now approved](M2_PRACTICE_SESSION_OWNER_APPROVAL_2026-10-04.md). Use the [authorized implementation prompt](M2_PRACTICE_SESSION_PR1_PROMPT_2026-10-04.md). Pending-approval language below records the historical pre-approval checkpoint.
+
 **Decision: the reviewed planning scope is ready for owner approval.** M2S-R1–R3 are closed against the [canonical reviewed scope](M2_PRACTICE_SESSION_SCOPE_2026-10-04.md), including the explicitly attributed reviewer amendments in Appendix E. This accepts the plan, not application source, Migration 11, installed verification or a release. Owner approval of the M2 defaults and PR 1 remains pending.
 
 ## Reviewed identity

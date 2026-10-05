@@ -1,9 +1,9 @@
 # M2 Practice Sessions Scope: Saved and Resumable Practice Tests
 
 **Date:** 4 October 2026
-**Status:** Independently reviewed planning scope; explicit owner approval pending. No M2 application code is implemented or accepted.
+**Status:** Owner approved the scope/defaults and authorized PR 1 on 4 October 2026; see the [approval record](M2_PRACTICE_SESSION_OWNER_APPROVAL_2026-10-04.md). No M2 application code is accepted by this planning document.
 **Review:** [Planning acceptance and reviewer amendments](M2_PRACTICE_SESSION_SCOPE_ACCEPTANCE_2026-10-04.md). Codex reconciled the remaining engineering details below; the submitted draft is preserved in evidence.
-**Next Assignment:** [Conditional PR 1 implementation prompt](M2_PRACTICE_SESSION_PR1_PROMPT_2026-10-04.md), executable only after owner approval of this scope.
+**Next Assignment:** [Authorized PR 1 implementation prompt](M2_PRACTICE_SESSION_PR1_PROMPT_2026-10-04.md).
 **Review Record:** [M2_PRACTICE_SESSION_SCOPE_REREVIEW_2026-10-04.md](M2_PRACTICE_SESSION_SCOPE_REREVIEW_2026-10-04.md) (historical submission review; see the planning acceptance above)
 **Foundation:** Merged main at `9587421` (including accepted Slice B study-packet import); [M2 Study Library Design](M2_STUDY_LIBRARY_DESIGN_2026-09-27.md); [Owner Check-in Waiver](M2_REAL_USER_CHECKIN_OWNER_WAIVER_2026-10-04.md).
 
@@ -140,7 +140,7 @@ The practice session UI integrates into the existing Practice Test card on [Mate
 
 ## 6. First Implementation Assignment (PR 1: Foundation & Persistence)
 
-*Conditional on explicit owner approval of this scope.*
+*Authorized by the owner on 4 October 2026. Complete PR 1 and stop for independent review before PR 2.*
 
 ### Objectives & Deliverables
 1. **Migration 11:** Implement `src-tauri/migrations/0011_practice_sessions.sql` (Appendix A) and register checksums in `src/data/migration-checksums.json` and `src/data/migrations.ts`.
@@ -168,11 +168,11 @@ The practice session UI integrates into the existing Practice Test card on [Mate
 
 ---
 
-## 7. Owner Approval Requested
+## 7. Owner Approval Recorded
 
-Approve or change D1–D5 and the recommended immediate training feedback. Approval authorizes PR 1's additive schema, conversion, native/browser persistence, writer integration and tests. PR 2 UI follows only after PR 1 independent review. This is not release/signing/installed-testing authorization.
+The owner approved D1–D5 and immediate training feedback; see the [approval record](M2_PRACTICE_SESSION_OWNER_APPROVAL_2026-10-04.md). PR 1's additive schema, conversion, native/browser persistence, writer integration and tests are authorized. PR 2 UI follows only after PR 1 independent review. This is not release/signing/installed-testing authorization.
 
-Recommended defaults: retain completed detailed history after source deletion; abandon unfinished work with notice on regeneration; single-material practice; safely skip corrupt legacy tests; informational practice scores; immediate explanations. History erasure removes historical study content without deleting the current source/test, with the backup limits disclosed in D1.
+Approved defaults: retain completed detailed history after source deletion; abandon unfinished work with notice on regeneration; single-material practice; safely skip corrupt legacy tests; informational practice scores; immediate explanations. History erasure removes historical study content without deleting the current source/test, with the backup limits disclosed in D1.
 
 ---
 
