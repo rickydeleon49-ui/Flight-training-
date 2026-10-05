@@ -1,0 +1,44 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ❯ src/data/codex-browser-startup.test.ts (1 test | 1 failed) 72ms
+   × browser reopen refuses semantically invalid persisted practice state 71ms
+(node:77767) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:77766) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/codex-browser-startup.test.ts > browser reopen refuses semantically invalid persisted practice state
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/codex-browser-startup.test.ts:7:709
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 29 passed (30)
+   Start at  23:11:24
+   Duration  542ms (transform 286ms, setup 0ms, import 397ms, tests 478ms, environment 0ms)
+
