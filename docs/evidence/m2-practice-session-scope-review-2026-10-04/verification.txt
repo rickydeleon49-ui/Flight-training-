@@ -1,0 +1,5 @@
+Baseline: 1f5ea3e4db6e66b8c1a7dfee236d43e0a3cb22b6
+Independent proposal/schema review only.
+Command: python3 docs/evidence/m2-practice-session-scope-review-2026-10-04/reproduce-schema.py
+Exit: 0; observations exactly reproduce schema-observations.json.
+No application or migration execution, full suite, account or release actions.

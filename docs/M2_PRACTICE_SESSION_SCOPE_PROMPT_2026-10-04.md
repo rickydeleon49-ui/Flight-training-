@@ -1,5 +1,7 @@
 # Prepare the first durable practice-session scope — model-neutral assignment, 4 October 2026
 
+**Initial draft submitted; use the active correction assignment:** [M2S-R1–R3 review](M2_PRACTICE_SESSION_SCOPE_REVIEW_2026-10-04.md) and [one correction prompt](M2_PRACTICE_SESSION_SCOPE_CORRECTIONS_PROMPT_2026-10-04.md). Do not restart the broad proposal or begin implementation.
+
 Any implementation model selected by the owner may complete this assignment. Use one active implementer. Codex is the senior reviewer and Git coordinator.
 
 ## Outcome
