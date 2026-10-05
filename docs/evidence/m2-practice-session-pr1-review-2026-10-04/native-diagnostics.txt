@@ -1,0 +1,44 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.82s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 6 tests
+
+thread 'backup::codex_m2_review::missing_required_unique_index_is_refused' (657605) panicked at src/backup.rs:10472:147:
+archive without required single-attempt index was accepted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test backup::codex_m2_review::missing_required_unique_index_is_refused ... FAILED
+test backup::codex_m2_review::valid_schema_11_control_is_accepted ... ok
+
+thread 'backup::codex_m2_review::foreign_key_violation_is_refused' (657602) panicked at src/backup.rs:10474:213:
+archive with missing source foreign key was accepted
+test backup::codex_m2_review::foreign_key_violation_is_refused ... FAILED
+
+thread 'backup::codex_m2_review::malformed_receipt_json_is_refused' (657604) panicked at src/backup.rs:10473:174:
+archive with malformed receipt JSON was accepted
+test backup::codex_m2_review::malformed_receipt_json_is_refused ... FAILED
+
+thread 'backup::codex_m2_review::frozen_key_score_is_derived' (657603) panicked at src/backup.rs:10475:443:
+assertion `left == right` failed
+  left: Number(100.0)
+ right: Number(0.0)
+test backup::codex_m2_review::frozen_key_score_is_derived ... FAILED
+
+thread 'backup::codex_m2_review::no_op_preserves_returned_answered_time' (657606) panicked at src/backup.rs:10476:293:
+assertion `left == right` failed
+  left: String("2026-10-05T04:18:12.332Z")
+ right: String("2026-10-05T04:18:12.358Z")
+test backup::codex_m2_review::no_op_preserves_returned_answered_time ... FAILED
+
+failures:
+
+failures:
+    backup::codex_m2_review::foreign_key_violation_is_refused
+    backup::codex_m2_review::frozen_key_score_is_derived
+    backup::codex_m2_review::malformed_receipt_json_is_refused
+    backup::codex_m2_review::missing_required_unique_index_is_refused
+    backup::codex_m2_review::no_op_preserves_returned_answered_time
+
+test result: FAILED. 1 passed; 5 failed; 0 ignored; 0 measured; 361 filtered out; finished in 0.25s
+
+error: test failed, to rerun pass `--lib`

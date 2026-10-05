@@ -1,0 +1,126 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:68157) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > conversion failure must prevent adapter exposure
+Startup legacy conversion failed: Error: synthetic failure
+    at run (/Users/rickymac/code/Flight-training-pr70-integration/src/data/testing/nodeSqliteDb.ts:64:21)
+    at executeLegacyConversion (/Users/rickymac/code/Flight-training-pr70-integration/src/data/practiceSessionTransaction.ts:772:7)
+    at createNodeSqliteDatabase (/Users/rickymac/code/Flight-training-pr70-integration/src/data/testing/nodeSqliteDb.ts:71:5)
+    at /Users/rickymac/code/Flight-training-pr70-integration/src/data/codex-diagnostic.test.ts:16:853
+    at file:///Users/rickymac/code/Flight-training-pr70-integration/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1811,
+  errstr: 'constraint failed'
+}
+
+ ❯ src/data/codex-diagnostic.test.ts (7 tests | 7 failed) 121ms
+     × conversion failure must prevent adapter exposure 37ms
+     × unset marker with conflicting version must refuse startup 34ms
+     × matching version must repair unset marker without duplicating 27ms
+     × completion derives score from frozen key, not stored correctness 6ms
+     × same-choice no-op returns original answered timestamp 6ms
+     × unsupported regeneration driver refuses before any write 6ms
+     × unsupported removal driver refuses before any write 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > conversion failure must prevent adapter exposure
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/data/codex-diagnostic.test.ts:16:929
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > unset marker with conflicting version must refuse startup
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/data/codex-diagnostic.test.ts:17:757
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > matching version must repair unset marker without duplicating
+AssertionError: expected null not to be null
+ ❯ src/data/codex-diagnostic.test.ts:18:718
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > completion derives score from frozen key, not stored correctness
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/data/codex-diagnostic.test.ts:19:406
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > same-choice no-op returns original answered timestamp
+AssertionError: expected '2026-10-04T12:01:00.000Z' to be '2026-10-04T12:00:00.000Z' // Object.is equality
+
+Expected: "2026-10-04T12:00:00.000Z"
+Received: "2026-10-04T12:01:00.000Z"
+
+ ❯ src/data/codex-diagnostic.test.ts:20:524
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > unsupported regeneration driver refuses before any write
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/data/codex-diagnostic.test.ts:21:380
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/data/codex-diagnostic.test.ts > Codex independent M2 diagnostics > unsupported removal driver refuses before any write
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/data/codex-diagnostic.test.ts:22:286
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  21:18:07
+   Duration  327ms (transform 89ms, setup 0ms, import 125ms, tests 121ms, environment 0ms)
+
