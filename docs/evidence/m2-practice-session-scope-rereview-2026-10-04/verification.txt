@@ -1,0 +1,24 @@
+Review base: 504a253ffc99650e0903aa3cf452034bd93d13ac
+Reviewed proposal SHA-256: b7c14382344fd53ff1178bbfb682bdebe9c02e96e7253cbde7eb35483db22dc8
+
+Independent checks actually run:
+- python3 reproduce-schema.py: exit 0; proposed DDL executes with foreign_keys=ON.
+- Repeated diagnostic output compared to schema-observations.json: exit 0, byte-identical.
+- Frozen proposal compared to implementer working file: exit 0, byte-identical.
+- 16 relative links in authored/updated review documents resolve; whitespace clean.
+- git diff --check: exit 0. Staged check is repeated before commit.
+
+Confirmed corrected behavior:
+- Rejects a second active version, cross-version response INSERT, and tested contradictory dont-know/selection.
+- Material deletion preserves completed review and prunes the unfinished attempt/unused version; foreign-key check clean.
+
+Remaining design observations:
+- Sketch accepts two in-progress attempts, a cross-version response UPDATE and NULL selection without dont-know.
+- No operation identity/receipt field appears in proposed tables; normative durable replay rules remain absent.
+- Unmarked new legacy row is selected for conversion despite its existing active version; reconversion insertion conflicts.
+- Minimal schema-10 fixture passes current basic-table/ceiling predicates but fails unconditional new-table presence checks.
+
+Limits:
+These are in-memory schema/predicate diagnostics, not shipped source tests, a complete archive restore, or actual Rust verifier execution.
+No app launch, full frontend/Rust matrix, owner data/profile access, migration execution on real data, provider call, packaging or installed verification.
+Original and revised proposals remain uncommitted in the implementation checkout; primary dirty clone preserved.
