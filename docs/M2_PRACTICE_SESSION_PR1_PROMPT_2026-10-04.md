@@ -4,11 +4,11 @@ Any owner-selected model may implement this task. One implementer; Codex indepen
 
 ## Authorization and starting state
 
-**Execute only after the human owner explicitly approves the M2 scope/defaults and PR 1.** Read the [planning acceptance](M2_PRACTICE_SESSION_SCOPE_ACCEPTANCE_2026-10-04.md) and [canonical reviewed scope](M2_PRACTICE_SESSION_SCOPE_2026-10-04.md), especially Appendices B–E. The earlier uncommitted proposal/finalization handoff is historical; Appendix E and the revised wire shapes govern. Do not infer M2 approval from the separate Slice B approval or real-user check-in waiver.
+**Authorized now: the owner approved all M2 defaults and PR 1 on 4 October 2026.** The [owner approval record](M2_PRACTICE_SESSION_OWNER_APPROVAL_2026-10-04.md) is the authority; begin the bounded source implementation without another scope-confirmation request. Read the [planning acceptance](M2_PRACTICE_SESSION_SCOPE_ACCEPTANCE_2026-10-04.md) and [canonical reviewed scope](M2_PRACTICE_SESSION_SCOPE_2026-10-04.md), especially Appendices B–E. The earlier uncommitted proposal/finalization handoff is historical; Appendix E and the revised wire shapes govern. This explicit M2 approval is separate from the earlier Slice B approval; the real-user check-in waiver remains effective.
 
 Use `/Users/rickymac/code/Flight-training-pr70-integration`. Codex publishes/synchronizes the reviewed scope before this assignment. Confirm repository/base/working status once, fetch latest main and start a clean `codex/m2-practice-session-foundation` branch from accepted main, or reuse a matching active branch after verifying it contains no competing work. Preserve unexpected changes and the historical Slice B branch; do not reset another agent's work or use the separate dirty primary clone. No additional worktree is needed unless a real conflict requires isolation.
 
-If the owner has not approved this scope, stop as ready for approval; do not run implementation gates, rebuild, start migrations or ask for signing credentials. Once approval exists, do the authorized implementation without repeatedly requesting routine engineering decisions.
+Implement PR 1 to completion, including its required source verification and handoff. Resolve routine engineering choices within the reviewed contract; ask only if a concrete new conflict changes approved scope or safe data handling. Signing credentials and release decisions are not prerequisites for this source task.
 
 ## Deliver useful data foundation, keeping UI for PR 2
 
