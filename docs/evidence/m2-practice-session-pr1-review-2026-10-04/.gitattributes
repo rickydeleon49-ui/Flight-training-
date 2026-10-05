@@ -1,0 +1,3 @@
+# Preserve exact execution receipts; scope applies only to this evidence pack.
+submitted-gate/*.txt whitespace=-blank-at-eof
+*-diagnostics.txt whitespace=-blank-at-eof
