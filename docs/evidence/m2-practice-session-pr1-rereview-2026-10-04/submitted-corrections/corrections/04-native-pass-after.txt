@@ -1,0 +1,20 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.49s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 6 tests
+test backup::codex_m2_review::missing_required_unique_index_is_refused ... ok
+test backup::codex_m2_review::foreign_key_violation_is_refused ... ok
+test backup::codex_m2_review::malformed_receipt_json_is_refused ... ok
+test backup::codex_m2_review::valid_schema_11_control_is_accepted ... ok
+test backup::codex_m2_review::frozen_key_score_is_derived ... ok
+test backup::codex_m2_review::no_op_preserves_returned_answered_time ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 371 filtered out; finished in 0.24s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-6bb5cae655f02641)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
