@@ -1,5 +1,7 @@
 # M2 saved practice-session scope — independent review, 4 October 2026
 
+> Follow-up: the [focused re-review](M2_PRACTICE_SESSION_SCOPE_REREVIEW_2026-10-04.md) closes the retention mismatch and identifies the remaining R2/R3 work. Use the [current finalization assignment](M2_PRACTICE_SESSION_SCOPE_FINALIZATION_PROMPT_2026-10-04.md). This original review is historical.
+
 **Decision: revise the proposal before owner approval.** The user outcome and two sequential source PRs are reasonable. Three concrete planning findings remain; this is not a rejection of the roadmap feature or a defect in accepted Slice B. Use the [single model-neutral correction assignment](M2_PRACTICE_SESSION_SCOPE_CORRECTIONS_PROMPT_2026-10-04.md). No M2 implementation is authorized.
 
 ## Reviewed identity and evidence

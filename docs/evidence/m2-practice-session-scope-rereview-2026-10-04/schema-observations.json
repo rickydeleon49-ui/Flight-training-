@@ -1,0 +1,45 @@
+{
+  "proposal_sha256": "b7c14382344fd53ff1178bbfb682bdebe9c02e96e7253cbde7eb35483db22dc8",
+  "observations": {
+    "second_active_version_rejected": true,
+    "cross_version_insert_rejected": true,
+    "dont_know_with_selection_rejected": true,
+    "cross_version_update_accepted_by_sketch": true,
+    "two_in_progress_attempts_accepted_by_sketch": true,
+    "null_selection_without_dont_know_accepted_by_check": true,
+    "operation_receipt_storage_defined_in_sketch": false,
+    "new_writer_without_marker_is_reselected_for_legacy_conversion": true,
+    "reconversion_active_insert_conflicts": true,
+    "foreign_key_violations": [],
+    "policy_a_after_material_delete": {
+      "versions": [
+        [
+          "v1",
+          null,
+          0
+        ]
+      ],
+      "attempts": [
+        [
+          "done",
+          "completed",
+          null
+        ]
+      ],
+      "items": [
+        [
+          "i1"
+        ]
+      ],
+      "responses": [
+        [
+          "r-done"
+        ]
+      ]
+    },
+    "minimal_schema10_fixture": {
+      "current_basic_table_and_ceiling_predicates_pass": true,
+      "unconditional_proposed_table_check_passes": false
+    }
+  }
+}

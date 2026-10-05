@@ -1,5 +1,7 @@
 # Finish the resumable-practice-test proposal — model-neutral correction assignment, 4 October 2026
 
+> Superseded for the next edit by the [focused finalization assignment](M2_PRACTICE_SESSION_SCOPE_FINALIZATION_PROMPT_2026-10-04.md). This earlier assignment remains context; retention mismatch R1 is closed.
+
 Any owner-selected model may complete this task. One active implementer; Codex reviews and coordinates Git.
 
 ## Result and boundary
