@@ -1,0 +1,6 @@
+
+> her-flight-deck@0.5.3 typecheck
+> tsc --noEmit
+
+src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts(225,53): error TS7006: Parameter 'call' implicitly has an 'any' type.
+src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts(244,39): error TS7006: Parameter 'operation' implicitly has an 'any' type.

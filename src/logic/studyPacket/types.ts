@@ -1,9 +1,9 @@
 /**
  * Public types for structured study-packet validation (contract §2.12–2.13).
  *
- * The import DTOs omit and redefine `provider` instead of reusing the stored
- * domain types: `AiStudySet` and `PracticeTest` still require "gemini", and
- * widening them belongs to the later persistence slice.
+ * The import DTOs narrow `provider` to "import" and `model` to "". The stored
+ * domain types `AiStudySet` and `PracticeTest` accept both "gemini" and
+ * "import" (Slice B), so a saved import reads back with its provenance.
  */
 import type { AiStudySet, PracticeTest, StudyMaterial } from "@/domain/types";
 

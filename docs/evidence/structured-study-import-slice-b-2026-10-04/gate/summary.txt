@@ -1,0 +1,22 @@
+01-focused-npm exit=0 seconds=0
+02-focused-cargo exit=0 seconds=10
+03-npm-ci exit=0 seconds=2
+04-typecheck exit=2 seconds=3
+05-cargo-test exit=0 seconds=23
+06-clippy exit=0 seconds=1
+07-fmt exit=0 seconds=1
+08-cargo-lock exit=0 seconds=1
+09-npm-test exit=0 seconds=37
+10-build exit=2 seconds=5
+11-diff-check exit=0 seconds=0
+DONE
+--- rerun after typing the test spy (ImportStudyPacketDialog.test.ts) ---
+04-typecheck-rerun exit=127 seconds=0
+09-npm-test-rerun exit=127 seconds=0
+10-build-rerun exit=127 seconds=0
+11-diff-check-rerun exit=127 seconds=0
+--- (the four 127 lines above: zsh did not word-split the command variable; nothing ran) ---
+04-typecheck-rerun exit=0 seconds=5
+09-npm-test-rerun exit=0 seconds=57
+10-build-rerun exit=0 seconds=9
+11-diff-check-rerun exit=0 seconds=0

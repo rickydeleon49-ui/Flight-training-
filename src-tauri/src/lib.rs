@@ -136,6 +136,7 @@ pub fn run() {
             documents::trash_unlinked_file,
             documents::save_split_materials,
             study_packet::pick_study_packet,
+            study_packet::save_structured_study_material_atomically,
             documents::save_material_operation,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,

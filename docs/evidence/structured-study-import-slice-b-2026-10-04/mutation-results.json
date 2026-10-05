@@ -1,0 +1,101 @@
+[
+  {
+    "mutation": "M1 sql.js export skips initializeConnection",
+    "file": "src/data/sqlJsDb.ts",
+    "command": "npx vitest run src/data/structuredImport.test.ts -t TB-SQLJS-02",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 0.6,
+    "restoredSha256": "1e2f224c1a905117b7bdceb39251d7ed63a54d6f589eb72d79b4d986cf2914c9"
+  },
+  {
+    "mutation": "M2 provider mapper ignores the stored value",
+    "file": "src/data/repositories/documentRepository.ts",
+    "command": "npx vitest run src/data/repositories/importStudyPacket.test.ts -t TB-PROV-01",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 0.6,
+    "restoredSha256": "dc12b6a2fa4e3b3c9c1d695a470dad88d2987ff132117d6b39bfe81ec806abca"
+  },
+  {
+    "mutation": "M3 dialog without the synchronous save lock",
+    "file": "src/pages/StudyLibrary/ImportStudyPacketDialog.tsx",
+    "command": "npx vitest run src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts -t TB-UI-LOCK-01",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 1.1,
+    "restoredSha256": "68d4c6d4e40f18deb879dcd231097d7e34de920abeb16c4b323248771d13393c"
+  },
+  {
+    "mutation": "M4 Gemini upsert keeps imported provenance",
+    "file": "src/data/repositories/documentRepository.ts",
+    "command": "npx vitest run src/data/repositories/importStudyPacket.test.ts -t relabels it as Gemini",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 0.6,
+    "restoredSha256": "dc12b6a2fa4e3b3c9c1d695a470dad88d2987ff132117d6b39bfe81ec806abca"
+  },
+  {
+    "mutation": "M5 refresh failure shows the raw refresh error",
+    "file": "src/state/AppDataContext.tsx",
+    "command": "npx vitest run src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts -t TB-REFRESH-01",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 2.1,
+    "restoredSha256": "f9639ce48a99b6a42964c108b8e183f6505310484a1f41e9d6916dec0f34a378"
+  },
+  {
+    "mutation": "M6 browser retry trusts any stored row",
+    "file": "src/data/structuredImportTransaction.ts",
+    "command": "npx vitest run src/data/structuredImport.test.ts -t changed retry under the same id",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 0.6,
+    "restoredSha256": "711d8ef3bd1bb4eaabbbc53a7a051bcf4312470cb119069f9178b6df5468f255"
+  },
+  {
+    "mutation": "M7 imported guide titled as Gemini",
+    "file": "src/pages/StudyLibrary/MaterialDetail.tsx",
+    "command": "npx vitest run src/pages/StudyLibrary/MaterialDetailImport.test.ts -t TB-UI-WARN-01",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 2.1,
+    "restoredSha256": "bf987d664dbff908ff1e77c6f173d644288c8c9e4cd3489be9605afab9754c5b"
+  },
+  {
+    "mutation": "M8 desktop adapter passes any rejection through",
+    "file": "src/data/tauriDb.ts",
+    "command": "npx vitest run src/data/repositories/importStudyPacket.test.ts -t known code with a different message",
+    "exitWithMutation": 1,
+    "killed": true,
+    "seconds": 0.6,
+    "restoredSha256": "a32c5b29f818011af4002be4cc1ec213de502922d849bad1ab588d33042305e6"
+  },
+  {
+    "mutation": "R1 native retry trusts any stored row",
+    "file": "src-tauri/src/study_packet.rs",
+    "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked tb_conf_0",
+    "exitWithMutation": 101,
+    "killed": true,
+    "seconds": 4.1,
+    "restoredSha256": "5574dc0d26de6128c6e9cb09886fc641d2b387e977a226291b9ad64718f73576"
+  },
+  {
+    "mutation": "R2 native decoding accepts unknown keys",
+    "file": "src-tauri/src/study_packet.rs",
+    "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked tb_ipc_01",
+    "exitWithMutation": 101,
+    "killed": true,
+    "seconds": 2.3,
+    "restoredSha256": "5574dc0d26de6128c6e9cb09886fc641d2b387e977a226291b9ad64718f73576"
+  },
+  {
+    "mutation": "R3 native save without busy_timeout",
+    "file": "src-tauri/src/study_packet.rs",
+    "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked tb_lock_01",
+    "exitWithMutation": 101,
+    "killed": true,
+    "seconds": 2.0,
+    "restoredSha256": "5574dc0d26de6128c6e9cb09886fc641d2b387e977a226291b9ad64718f73576"
+  }
+]

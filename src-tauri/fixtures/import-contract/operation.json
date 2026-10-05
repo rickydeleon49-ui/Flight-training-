@@ -1,0 +1,62 @@
+{
+  "operationId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "materialId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "contentHash": "679ae4eef7e83eb63b1537c5e88934644b38632ed83e584822841e01672ea8b5",
+  "material": {
+    "title": "Letters and labels"
+  },
+  "studySet": {
+    "title": "Letters and labels",
+    "provider": "import",
+    "model": "",
+    "summary": "Cards and an explicit structured test.",
+    "sections": [],
+    "flashcards": [
+      {
+        "front": "Which letter follows A?",
+        "back": "B",
+        "sourcePage": null
+      },
+      {
+        "front": "Which letter follows B?",
+        "back": "C",
+        "sourcePage": null
+      },
+      {
+        "front": "Which letter follows C?",
+        "back": "D",
+        "sourcePage": null
+      }
+    ],
+    "sourceNotes": ""
+  },
+  "practiceTest": {
+    "title": "Letters and labels",
+    "provider": "import",
+    "model": "",
+    "questions": [
+      {
+        "question": "In the invented alphabet, which label comes after Plinth 1?",
+        "options": [
+          "Zorb",
+          "Quill",
+          "Marrow"
+        ],
+        "correctIndex": 1,
+        "explanation": "In this made-up sequence, Quill always follows Plinth.",
+        "sourcePage": null
+      },
+      {
+        "question": "In the invented alphabet, which label comes after Plinth 2?",
+        "options": [
+          "Zorb",
+          "Quill",
+          "Marrow"
+        ],
+        "correctIndex": 2,
+        "explanation": "In this made-up sequence, Quill always follows Plinth.",
+        "sourcePage": null
+      }
+    ]
+  }
+}

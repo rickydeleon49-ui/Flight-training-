@@ -66,6 +66,16 @@ export interface AppData {
 
 type Status = "loading" | "ready" | "error";
 
+export interface MutateOptions {
+  /**
+   * Shown as `lastError` instead of the refresh error's own text when the
+   * write succeeded but the screens could not reload.
+   */
+  refreshFailureMessage?: string;
+  /** Called (before `mutate` resolves) when the write succeeded but the reload failed. */
+  onRefreshError?: () => void;
+}
+
 /** How long "Undo" stays available after a deletion is confirmed. */
 export const UNDO_WINDOW_MS = 7000;
 
@@ -84,7 +94,7 @@ interface AppDataContextValue {
   data: AppData;
   repositories: Repositories | null;
   /** Run a write and refresh. Returns null if the write failed. */
-  mutate: <T>(work: (repos: Repositories) => Promise<T>) => Promise<T | null>;
+  mutate: <T>(work: (repos: Repositories) => Promise<T>, options?: MutateOptions) => Promise<T | null>;
   refresh: () => Promise<void>;
   /**
    * Delete after a short pause, so it can be taken back.
@@ -277,6 +287,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const mutate = useCallback(
     async <T,>(
       work: (repos: Repositories) => Promise<T>,
+      options?: MutateOptions,
     ): Promise<T | null> => {
       const repositories = repositoriesRef.current;
       if (!repositories) return null;
@@ -297,7 +308,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           await refresh();
           setLastError(null);
         } catch (refreshError) {
-          setLastError(describeError(refreshError));
+          setLastError(options?.refreshFailureMessage ?? describeError(refreshError));
+          options?.onRefreshError?.();
         }
         return result;
       };

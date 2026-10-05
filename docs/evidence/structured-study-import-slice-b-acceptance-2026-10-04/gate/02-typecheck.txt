@@ -1,0 +1,6 @@
+
+> her-flight-deck@0.5.3 typecheck
+> tsc --noEmit
+
+
+exit: 0

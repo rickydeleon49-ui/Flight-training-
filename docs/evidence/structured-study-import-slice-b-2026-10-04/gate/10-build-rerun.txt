@@ -1,0 +1,70 @@
+
+> her-flight-deck@0.5.3 build
+> tsc --noEmit && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 293 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                               0.46 kB │ gzip:   0.30 kB
+dist/assets/fraunces-vietnamese-opsz-normal-Czevyj-6.woff2   19.70 kB
+dist/assets/inter-latin-400-normal-C38fXH4l.woff2            23.66 kB
+dist/assets/inter-latin-500-normal-Cerq10X2.woff2            24.27 kB
+dist/assets/inter-latin-600-normal-LgqL8muc.woff2            24.45 kB
+dist/assets/inter-latin-400-normal-CyCys3Eg.woff             30.70 kB
+dist/assets/inter-latin-600-normal-CiBQ2DWP.woff             31.26 kB
+dist/assets/inter-latin-500-normal-BL9OpVg8.woff             31.28 kB
+dist/assets/fraunces-latin-ext-opsz-normal-CJcjJNj7.woff2    59.39 kB
+dist/assets/fraunces-latin-opsz-normal-DihXLNYH.woff2        67.30 kB
+dist/assets/sql-wasm-DfANybxk.wasm                          658.41 kB │ gzip: 322.61 kB
+dist/assets/Questions-Du4Bo5Go.css                            0.77 kB │ gzip:   0.33 kB
+dist/assets/Notes-COqlICI-.css                                0.79 kB │ gzip:   0.37 kB
+dist/assets/Settings-B53mTTx_.css                             1.64 kB │ gzip:   0.55 kB
+dist/assets/Finances-Bp4xR8uu.css                             1.80 kB │ gzip:   0.65 kB
+dist/assets/schedule-DVfZp1AJ.css                             2.23 kB │ gzip:   0.75 kB
+dist/assets/FlightPath-DFx47Aid.css                           2.55 kB │ gzip:   0.88 kB
+dist/assets/PilotToolkit-qvUpLuad.css                         2.59 kB │ gzip:   0.90 kB
+dist/assets/journal-UsNMfShQ.css                              4.54 kB │ gzip:   1.11 kB
+dist/assets/studyLibrary-MKc9urQp.css                         4.71 kB │ gzip:   1.31 kB
+dist/assets/index-HMD9yFKN.css                               32.26 kB │ gzip:   6.83 kB
+dist/assets/drafts-D_AvSePS.js                                0.42 kB │ gzip:   0.25 kB
+dist/assets/useDraftRecovery-BsSl6Wi_.js                      0.50 kB │ gzip:   0.31 kB
+dist/assets/useRememberedState-CJOf32SU.js                    0.53 kB │ gzip:   0.34 kB
+dist/assets/tauriDb-DRyLtz_U.js                               1.53 kB │ gzip:   0.71 kB
+dist/assets/gemini-c8B7GdlG.js                                2.03 kB │ gzip:   0.97 kB
+dist/assets/documents-B5bcCdAu.js                             2.16 kB │ gzip:   0.94 kB
+dist/assets/schedule-D3EbHAXT.js                              3.86 kB │ gzip:   1.40 kB
+dist/assets/Schedule-Bdc3BnmH.js                              4.23 kB │ gzip:   1.66 kB
+dist/assets/Notes-BJ_xyiAx.js                                 5.13 kB │ gzip:   2.09 kB
+dist/assets/debriefTransaction-PNrQypXx.js                    5.20 kB │ gzip:   1.51 kB
+dist/assets/materialTransaction-DLOQ0MQ-.js                   5.45 kB │ gzip:   1.95 kB
+dist/assets/JournalEntryDetail-Bz7Y3Obj.js                    5.83 kB │ gzip:   2.12 kB
+dist/assets/StudyLibrary-B3Et8FNk.js                          5.84 kB │ gzip:   2.42 kB
+dist/assets/structuredImportTransaction-D1w7uuCy.js           6.54 kB │ gzip:   2.37 kB
+dist/assets/Questions-DUq2T-m6.js                             7.38 kB │ gzip:   2.77 kB
+dist/assets/EventDetail-D2rM00W3.js                           8.17 kB │ gzip:   2.88 kB
+dist/assets/FlightJournal-BPvHjucX.js                         9.91 kB │ gzip:   3.10 kB
+dist/assets/Finances-Dw7BzpCz.js                             10.09 kB │ gzip:   3.34 kB
+dist/assets/FlightPath-7_OapzPe.js                           14.98 kB │ gzip:   4.66 kB
+dist/assets/studyLibrary-2uxgR4kd.js                         20.69 kB │ gzip:   7.48 kB
+dist/assets/JournalForm-D7nsxFrl.js                          21.70 kB │ gzip:   5.42 kB
+dist/assets/PilotToolkit-RNO4agJw.js                         22.69 kB │ gzip:   6.93 kB
+dist/assets/Settings-C0aBAAzK.js                             28.11 kB │ gzip:   8.68 kB
+dist/assets/MaterialDetail-wyZSye8C.js                       31.96 kB │ gzip:   9.99 kB
+dist/assets/sqlJsDb-DBHhkzeo.js                              65.38 kB │ gzip:  21.59 kB
+dist/assets/schema-8hxcGptv.js                               97.74 kB │ gzip:  28.86 kB
+dist/assets/index-r5fHY8a_.js                               387.58 kB │ gzip: 120.70 kB
+✓ built in 2.18s

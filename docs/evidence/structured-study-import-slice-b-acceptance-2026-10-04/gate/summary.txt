@@ -1,0 +1,11 @@
+Independent integration gate; sequential; synthetic/disposable data only.
+Node 22 + rustup stable, SDK 26.5. Existing target cache reused; isolated checkout has its own npm install.
+01-npm-ci: exit 0, 1.20s, command: npm ci
+02-typecheck: exit 0, 2.77s, command: npm run typecheck
+03-npm-test: exit 0, 27.20s, command: npm test
+04-build: exit 0, 3.88s, command: npm run build
+05-cargo-test: exit 0, 32.63s, command: cargo test --manifest-path src-tauri/Cargo.toml --locked --all-targets
+06-clippy: exit 0, 3.21s, command: cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings
+07-fmt: exit 0, 0.20s, command: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+08-lock: exit 0, 2.50s, command: npm run test:cargo-lock
+09-diff: exit 0, 0.01s, command: git diff --check

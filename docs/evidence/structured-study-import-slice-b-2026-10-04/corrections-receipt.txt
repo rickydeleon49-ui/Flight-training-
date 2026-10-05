@@ -1,0 +1,47 @@
+# Structured study import Slice B: corrections receipt, 4 October 2026
+
+Date: 2026-10-04T18:18:29-07:00
+Checkout: /Users/rickymac/code/Flight-training-pr70-integration
+Branch: codex/structured-study-import-slice-b
+Base commit: 6b418ee3c92f0ba64952d35278aa7c9999f9c824
+Status: SB-R1/SB-R2 corrected, pending Codex re-review (uncommitted, unpushed)
+
+## Environment & Toolchain
+- OS: macOS 27.0.1 (Darwin 26.0.0 arm64)
+- Node: v22.23.3 (/opt/homebrew/opt/node@22/bin/node)
+- npm: 10.9.9 (/opt/homebrew/opt/node@22/bin/npm)
+- rustc: 1.99.0 (stable-aarch64-apple-darwin)
+- cargo: 1.99.0 (stable-aarch64-apple-darwin)
+- SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+
+## Correction Verifications
+- SB-R1 (Confirmation Preview):
+  - File: src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts
+  - Result: 21 passed, 0 failed (exit code 0)
+  - Log: docs/evidence/structured-study-import-slice-b-2026-10-04/corrections/04-sb-r1-preview-pass-after.txt
+- SB-R2 (Native NFC Normalization):
+  - File: src-tauri/src/study_packet_save_tests.rs
+  - Command: cargo test --manifest-path src-tauri/Cargo.toml --locked study_packet::
+  - Result: 65 passed, 0 failed (exit code 0)
+  - Log: docs/evidence/structured-study-import-slice-b-2026-10-04/corrections/02-sb-r2-nfc-pass-after.txt
+
+## Sequential Gate Results
+1. npm run typecheck: exit 0 (05-typecheck.txt)
+2. npm test -- --run: exit 0, 81 passed / 3 skipped, 2460 passed / 4 skipped (06-npm-test.txt)
+3. npm run build: exit 0 (07-npm-build.txt)
+4. cargo test --locked --all-targets: exit 0, 336 passed / 6 ignored (08-cargo-test.txt)
+5. cargo clippy --locked --all-targets -- -D warnings: exit 0 (09-cargo-clippy.txt)
+6. cargo fmt --check: exit 0 (10-cargo-fmt.txt)
+7. npm run test:cargo-lock: exit 0 (11-test-cargo-lock.txt)
+8. git diff --check: exit 0 (12-git-diff-check.txt)
+
+## Dependencies & Notices
+- Promoted unicode-normalization 0.1.25 to direct dependency in src-tauri/Cargo.toml
+- Zero new resolved crates in src-tauri/Cargo.lock
+- test:cargo-lock verified
+- public/THIRD_PARTY_NOTICES.txt preserved and valid for Zod 4.6.5
+
+## Invariants Retained
+- MAC-23 and TB-INST-01–04 remain UNVERIFIED
+- No installed app launches, no testing accounts, no network/provider calls
+- All changes uncommitted and unpushed
