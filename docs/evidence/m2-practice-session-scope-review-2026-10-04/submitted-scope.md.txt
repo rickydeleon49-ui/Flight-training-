@@ -1,0 +1,349 @@
+# M2 Practice Sessions Scope: Saved and Resumable Practice Tests
+
+**Date:** 4 October 2026
+**Status:** Proposal for owner scope approval (uncommitted, unpushed; no migrations or production changes applied)
+**Reference Assignment:** [M2_PRACTICE_SESSION_SCOPE_PROMPT_2026-10-04.md](M2_PRACTICE_SESSION_SCOPE_PROMPT_2026-10-04.md)
+**Foundation:** Merged main at `1f5ea3e` (including accepted Slice B atomic study-packet import); [M2 Study Library Design](M2_STUDY_LIBRARY_DESIGN_2026-09-27.md); [Owner Check-in Waiver](M2_REAL_USER_CHECKIN_OWNER_WAIVER_2026-10-04.md).
+
+---
+
+## 1. User Experience: Before, After, and Scope Boundaries
+
+### Before (Current Main / Slice B Baseline)
+- Practice tests for both Gemini and imported study packets exist in the `practice_tests` table (one row per source material, storing a JSON array of questions without stable item IDs).
+- [PracticeTestPanel.tsx](file:///Users/rickymac/code/Flight-training-pr70-integration/src/pages/StudyLibrary/PracticeTestPanel.tsx) keeps the test index, selected answer, and score strictly in transient React memory (`useState`).
+- Navigating to another tab, switching materials, closing the window, or quitting the app immediately destroys all in-progress answers and scores.
+- "Retake this test" simply resets in-memory component state back to question 0; previous attempts leave no trace.
+- Regenerating a test via Gemini or re-importing immediately overwrites the single `practice_tests` row (keyed on `updatedAt`), which would invalidate or corrupt any ongoing attempt.
+- The user has no way to say "I don't know" or "Skip for now"; guessing is forced, distorting study feedback.
+- The score screen shows an uncontextualized fraction ("X of Y correct") without distinguishing guessed from mastered questions.
+
+### After (Proposed First Increment)
+- **Start or Resume:** Opening a practice test on any material (Gemini or imported) automatically resumes any existing in-progress attempt or allows starting a fresh one.
+- **Durable Progress:** Answering a question or choosing "I don't know" saves immediately and atomically to SQLite via background transaction.
+- **Interruption Tolerance:** The user can close the app, sleep their Mac, or switch tabs mid-test; returning to the material restores their exact position, prior answers, and remaining questions with an honest status badge (*"In progress — 7 of 15 answered"*).
+- **Distinct "I Don't Know":** A first-class choice alongside multiple-choice options. It is tallied separately from wrong guesses and unanswered questions, rewarding honest self-assessment.
+- **Trustworthy Completion:** Submitting the final question computes an immutable, native/server-verified snapshot (`correct`, `incorrect`, `dont_know`, `unanswered`, `score_percent`).
+- **Educational Review:** The completed screen clearly displays the score alongside a breakdown of missed and skipped questions with explanations and source references.
+- **Version Isolation:** Regenerating the practice test creates a new content version. Historical completed attempts remain immutably anchored to the exact questions and choices the student actually answered.
+- **Fresh Retakes:** Clicking "Retake this test" archives the completed attempt and starts a clean attempt on the latest active version.
+
+### Explicit Scope Boundaries
+- **Included in this increment:** Single-material practice tests (Gemini and imported); durable in-progress attempt resume; atomic per-question persistence; explicit "I don't know"; immutable completed attempt snapshots; review of missed/"I don't know" items; retake flow; content versioning on regeneration; additive migration 11 with safe legacy conversion.
+- **Explicitly deferred to later increments:** Multi-material / library-wide quiz sessions; flashcard spaced repetition (FSRS / scheduler, M2-3); PDF viewer navigation / inline highlight jumps (M4); AI debrief question generation; official FAA certification / readiness claims; voice coaching / oral exam simulation; replacement import flows.
+
+---
+
+## 2. Implementation Strategy: Two-PR Increment vs. Single PR
+
+We recommend structuring this scope into **two tightly connected, sequential PRs** rather than a single monolithic change:
+
+```text
+PR 1: Foundation & Persistence (Backend/Repository)
+  ├── Migration 0011_practice_sessions.sql (additive tables + legacy upgrade)
+  ├── Native atomic commands (rusqlite: start, respond, complete, retake)
+  ├── Browser/test transaction mirror (sqlJsDb durable write + node:sqlite)
+  ├── Repositories & domain models (PracticeSessionRepository)
+  └── Comprehensive contract & persistence tests (zero UI changes)
+        │
+        ▼ (Merged after independent review)
+PR 2: User Interface & Interaction (Frontend Polish)
+  ├── Updated PracticeTestPanel.tsx (resume state, "I don't know", keyboard nav)
+  ├── MaterialDetail.tsx integration (resume banner, past results summary)
+  └── End-to-end UI regression tests (interruption, retake, review display)
+```
+
+### Concrete Tradeoff:
+- **Single Monolithic PR:** Involves ~1,800 lines across Rust Tauri commands, SQL migrations, TypeScript adapters, repositories, and React UI components. Review fatigue increases the risk of subtle persistence or concurrency oversights.
+- **Two Sequential PRs (Recommended):** PR 1 locks down data integrity, schema migration checksums, native atomic transactions, legacy data safety, and backup/restore round trips with automated tests. PR 2 is then implemented strictly against proven, working repository contracts without backend uncertainty. Total development pace is faster because verification boundaries are clean and isolated.
+
+---
+
+## 3. Owner Decision Table
+
+These five decisions govern data retention, versioning, and product claims. Recommended defaults are provided with concrete consequences:
+
+| # | Decision | Recommended Default | Alternatives Considered | Concrete Consequence of Recommended Default |
+|---|---|---|---|---|
+| **D1** | **Source Deletion & Attempt Retention** | **Preserve detached attempt summaries:** Deleting a study material erases its PDF file, active guide, and active test, but keeps historical completed attempts with a frozen `source_material_title` snapshot (`ON DELETE SET NULL`). | **A:** Cascade-delete all attempts when material is deleted.<br>**B:** Prompt user interactively every time. | Past study effort and test history are not wiped out when obsolete PDF documents are pruned from the library. Database storage impact is negligible (<1 KB per attempt). |
+| **D2** | **Regeneration vs. In-Progress Attempt** | **Abandon with notice:** Regenerating a test creates a new active version and marks any existing *in-progress* attempt on the old version as `abandoned`. Completed attempts remain unchanged. | **A:** Forbid regeneration while an attempt is in progress.<br>**B:** Silently map in-progress answers to the new test. | Prevents grading answers against modified or replaced question keys. The student receives a clear notice: *"Test was regenerated; previous unfinished session closed."* |
+| **D3** | **Session Breadth** | **Single-material only:** Practice sessions are strictly scoped to one selected study material. Multi-material sessions remain deferred. | **A:** Allow multi-material custom quiz pools immediately. | Avoids complex multi-parent foreign keys, cross-material indexing, and query bottlenecks in this initial increment. Delivers reliable core value first. |
+| **D4** | **Legacy Corrupt `questions_json`** | **Safe skip with warning:** If an existing `practice_tests` row contains malformed JSON or zero valid questions during migration 11, mark conversion status `unmigrated` and log a warning; do not fail the migration. | **A:** Fail database migration and block app startup.<br>**B:** Silently discard corrupt rows. | The user's application always starts safely even if a past Gemini call stored truncated JSON. The material displays: *"Existing practice test could not be migrated; please regenerate."* |
+| **D5** | **Score Wording & Legal Truthfulness** | **Informational practice label:** Display *"Practice result from your material ({n}%). Not an official FAA knowledge test score or flight readiness certification."* | **A:** Show generic "Score: {n}%".<br>**B:** Estimate FAA pass likelihood. | Strictly complies with product guidelines (ROADMAP §2) by preventing unwarranted student overconfidence or legal liability regarding FAA testing standards. |
+
+---
+
+## 4. Minimal Accessible UI Flow in MaterialDetail
+
+The practice session UI integrates directly into the existing Practice Test card on [MaterialDetail.tsx](file:///Users/rickymac/code/Flight-training-pr70-integration/src/pages/StudyLibrary/MaterialDetail.tsx):
+
+```text
+[ Practice Test Card ]
+┌────────────────────────────────────────────────────────────────────────┐
+│ Status: In progress (7 of 15 answered)                Started: Today   │
+│ [ Resume practice test ]        [ Abandon and start over ]             │
+└────────────────────────────────────────────────────────────────────────┘
+                                    │ (Clicks "Resume")
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ Question 8 of 15                                      Source: p. 42    │
+│ What is the maximum demonstrated crosswind component for this aircraft?│
+│                                                                        │
+│ ( ) A. 12 knots                                                        │
+│ ( ) B. 15 knots                                                        │
+│ ( ) C. 17 knots                                                        │
+│ ( ) D. 20 knots                                                        │
+│ [ ? I don't know / Skip for now ]                                      │
+│                                                                        │
+│ [ Continue ]                                                           │
+└────────────────────────────────────────────────────────────────────────┘
+                                    │ (Completes question 15)
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ Practice Test Completed                                                │
+│ 12 of 15 correct (80%)                                                 │
+│ Breakdown: 12 Correct · 2 Incorrect · 1 I don't know                   │
+│                                                                        │
+│ Notice: Practice result from your material — not an official FAA       │
+│ knowledge test score or flight readiness certification.                │
+│                                                                        │
+│ ▼ Review 3 missed or skipped questions                                │
+│   ├─ Question 4: Incorrect (Selected A, Correct: C)                    │
+│   │  Explanation: Vfe is 85 knots for full flaps... [p. 14]            │
+│   └─ Question 8: I don't know (Correct: B)                             │
+│      Explanation: Section 5 of the POH lists 15 knots... [p. 42]       │
+│                                                                        │
+│ [ Retake this test (new attempt) ]                                     │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Accessibility & Navigation Standards:
+- Standard radio group semantics (`role="radiogroup"`, `role="radio"`, `aria-checked`) with arrow key navigation matching existing `PracticeTestPanel`.
+- "I don't know" button has a distinct accessible label and shortcut (`Alt+K` or dedicated button).
+- Live region (`aria-live="polite"`) announces question advancement, save confirmation, and final score.
+- Unsaved changes guard: navigating away while an answer is in-flight waits for the atomic save to complete; closing the window triggers no data loss because saves occur immediately on option selection.
+
+---
+
+## 5. Backup, Downgrade & Lifecycle Policies
+
+- **Archive Integrity:** New tables (`practice_test_versions`, `practice_test_items`, `practice_attempts`, `practice_responses`) reside inside the primary SQLite database. The existing backup engine ([src-tauri/src/backup.rs](file:///Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs)) automatically captures them during standard ZIP archive creation with zero custom archive serialization code required.
+- **Restore Compatibility:**
+  - Backups created by version 11 will be inspected by `backup.rs`. If restored into an older application build (version 10 or earlier), `backup.rs` line 424 checks `newest_migration > CURRENT_SCHEMA_VERSION` and cleanly rejects the restore with the standard message: *"That backup was created by a newer database format. Update the app first."*
+  - Older backups (versions 1–10) restored into version 11 pass validation, unpack the database, and execute migration 11 automatically on first launch.
+- **Foreign Key Enforcement:** `foreign_keys = ON` is enforced at all times. When a source material is deleted:
+  - Active test versions set `source_material_id = NULL`.
+  - Attempts set `source_material_id = NULL`.
+  - Cascades safely remove items when a version is deleted, and responses when an attempt is deleted.
+
+---
+
+## 6. Genuine Unresolved Questions for the Owner
+
+The following questions require owner confirmation because they directly alter user-facing behavior or data retention:
+
+1. **Attempt Retention on Material Deletion (D1):**
+   *Do you prefer keeping historical test attempt scores/breakdowns when a study material is deleted (Option B, default), or should deleting a material permanently wipe all past attempt records associated with it (Option A)?*
+2. **Review Mode Timing:**
+   *Should explanations appear immediately after each question is answered (as the current panel does today), or should explanations be revealed only after the entire test is submitted?*
+   *(Recommendation: Keep immediate feedback for study effectiveness, but summarize all missed questions at completion).*
+3. **Approval to Proceed with PR 1:**
+   *Do you approve moving forward with implementation of PR 1 (Schema Migration 11, Native/Browser Atomic Persistence, and Contract Tests) based on the specification below?*
+
+---
+
+## 7. First Implementation Assignment (PR 1: Foundation & Persistence)
+
+*Conditional on explicit owner approval of this scope.*
+
+### Objectives
+1. Implement additive migration `src-tauri/migrations/0011_practice_sessions.sql` and update checksums in `src/data/migration-checksums.json` and `src/data/migrations.ts`.
+2. Update `CURRENT_SCHEMA_VERSION = 11` in `src-tauri/src/lib.rs` and verify `backup.rs` compatibility.
+3. Migrate existing rows in `practice_tests` into `practice_test_versions` (v1) and `practice_test_items`.
+4. Create native atomic command in `src-tauri/src/practice_sessions.rs`: `save_practice_session_atomically` supporting actions `start`, `record_response`, `complete`, and `retake`.
+5. Mirror native atomic behavior in browser adapter `src/data/sqlJsDb.ts` using connection owner mutex and durable write cycle.
+6. Provide `PracticeSessionRepository` in `src/data/repositories/practiceSessionRepository.ts`.
+7. Add shared contract tests in `src-tauri/fixtures/practice-session-contract/` asserting bit-for-bit identical outcomes between native Rust and browser TypeScript.
+
+### Verification Gate
+- `npm run typecheck` passes cleanly.
+- `npm test` passes all existing tests plus new repository and contract tests.
+- `cargo test --locked --all-targets` passes all existing tests plus new native session tests.
+- `npm run test:cargo-lock` passes with zero lockfile drifts.
+- `git diff --check` passes cleanly.
+- Stop for Codex review before touching any UI component.
+
+---
+
+# Technical Appendix
+
+## Appendix A: Proposed Additive Schema (Migration 11 Sketch)
+
+```sql
+-- Migration 0011_practice_sessions.sql
+-- Additive tables for durable, versioned, resumable practice tests.
+
+-- 1. Versioned practice tests (anchors items and historical attempts)
+CREATE TABLE IF NOT EXISTS practice_test_versions (
+    id                    TEXT PRIMARY KEY,
+    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,
+    source_material_title TEXT NOT NULL,
+    version_number        INTEGER NOT NULL DEFAULT 1,
+    provider              TEXT NOT NULL DEFAULT 'gemini',
+    model                 TEXT NOT NULL DEFAULT '',
+    title                 TEXT NOT NULL DEFAULT '',
+    content_hash          TEXT NOT NULL,
+    created_at            TEXT NOT NULL,
+    is_active             INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX IF NOT EXISTS idx_practice_versions_material
+    ON practice_test_versions(source_material_id, is_active);
+
+-- 2. Stable practice questions belonging to a test version
+CREATE TABLE IF NOT EXISTS practice_test_items (
+    id            TEXT PRIMARY KEY,
+    version_id    TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE CASCADE,
+    ordinal       INTEGER NOT NULL,
+    question_text TEXT NOT NULL,
+    options_json  TEXT NOT NULL,
+    correct_index INTEGER NOT NULL,
+    explanation   TEXT NOT NULL DEFAULT '',
+    source_page   INTEGER,
+    UNIQUE(version_id, ordinal)
+);
+
+CREATE INDEX IF NOT EXISTS idx_practice_items_version
+    ON practice_test_items(version_id, ordinal);
+
+-- 3. Individual user attempts on a specific test version
+CREATE TABLE IF NOT EXISTS practice_attempts (
+    id                    TEXT PRIMARY KEY,
+    version_id            TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE RESTRICT,
+    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,
+    started_at            TEXT NOT NULL,
+    completed_at          TEXT,
+    status                TEXT NOT NULL CHECK (status IN ('in_progress', 'completed', 'abandoned')),
+    total_questions       INTEGER NOT NULL,
+    answered_count        INTEGER NOT NULL DEFAULT 0,
+    correct_count         INTEGER NOT NULL DEFAULT 0,
+    incorrect_count       INTEGER NOT NULL DEFAULT 0,
+    dont_know_count       INTEGER NOT NULL DEFAULT 0,
+    score_percent         REAL
+);
+
+CREATE INDEX IF NOT EXISTS idx_practice_attempts_material
+    ON practice_attempts(source_material_id, status);
+
+-- 4. Recorded responses per item within an attempt
+CREATE TABLE IF NOT EXISTS practice_responses (
+    id             TEXT PRIMARY KEY,
+    attempt_id     TEXT NOT NULL REFERENCES practice_attempts(id) ON DELETE CASCADE,
+    item_id        TEXT NOT NULL REFERENCES practice_test_items(id) ON DELETE CASCADE,
+    selected_index INTEGER,
+    is_dont_know   INTEGER NOT NULL DEFAULT 0,
+    is_correct     INTEGER NOT NULL DEFAULT 0,
+    answered_at    TEXT NOT NULL,
+    UNIQUE(attempt_id, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_practice_responses_attempt
+    ON practice_responses(attempt_id);
+
+-- 5. Safe legacy migration: populate version 1 from existing practice_tests
+-- Handled by custom Rust/TypeScript migration step to reliably parse JSON arrays
+-- and mint deterministic UUIDs for existing questions.
+```
+
+---
+
+## Appendix B: Atomic Persistence Contracts & Synthetic Wire Shapes
+
+### 1. Start or Resume Attempt Contract
+```json
+// Request payload to save_practice_session_atomically
+{
+  "action": "start_or_resume",
+  "operationId": "e5b12852-50d4-4bb2-9907-73b88b48858f",
+  "materialId": "mat-c172-systems",
+  "versionId": "ver-7a20c9e1-648b-4972-8812-78dcb9287311",
+  "timestamp": "2026-10-04T19:00:00.000Z"
+}
+
+// Response wire shape
+{
+  "attemptId": "att-4f1a2384-912c-47ea-8d19-204128591234",
+  "versionId": "ver-7a20c9e1-648b-4972-8812-78dcb9287311",
+  "status": "in_progress",
+  "startedAt": "2026-10-04T19:00:00.000Z",
+  "completedAt": null,
+  "totalQuestions": 10,
+  "answeredCount": 3,
+  "responses": [
+    { "itemId": "item-1", "selectedIndex": 2, "isDontKnow": false, "isCorrect": true },
+    { "itemId": "item-2", "selectedIndex": 0, "isDontKnow": false, "isCorrect": false },
+    { "itemId": "item-3", "selectedIndex": null, "isDontKnow": true, "isCorrect": false }
+  ]
+}
+```
+
+### 2. Record Response Contract
+```json
+{
+  "action": "record_response",
+  "operationId": "d8214fa3-0182-4fa8-b219-482019482103",
+  "attemptId": "att-4f1a2384-912c-47ea-8d19-204128591234",
+  "itemId": "item-4",
+  "selectedIndex": 1,
+  "isDontKnow": false,
+  "timestamp": "2026-10-04T19:01:15.000Z"
+}
+
+// Response wire shape
+{
+  "attemptId": "att-4f1a2384-912c-47ea-8d19-204128591234",
+  "answeredCount": 4,
+  "isCorrect": true
+}
+```
+
+### 3. Complete Attempt Contract
+```json
+{
+  "action": "complete",
+  "operationId": "a90184b2-2931-412e-9981-817293847192",
+  "attemptId": "att-4f1a2384-912c-47ea-8d19-204128591234",
+  "timestamp": "2026-10-04T19:05:00.000Z"
+}
+
+// Response wire shape
+{
+  "attemptId": "att-4f1a2384-912c-47ea-8d19-204128591234",
+  "status": "completed",
+  "completedAt": "2026-10-04T19:05:00.000Z",
+  "totalQuestions": 10,
+  "answeredCount": 10,
+  "correctCount": 8,
+  "incorrectCount": 1,
+  "dontKnowCount": 1,
+  "unansweredCount": 0,
+  "scorePercent": 80.0
+}
+```
+
+---
+
+## Appendix C: Requirement-to-Test Verification Matrix
+
+| Requirement | Test Scenario | Automated Test Level | Expected Outcome |
+|---|---|---|---|
+| **REQ-01: Interrupted Resume** | Start attempt, answer 3 of 5 questions, close database, reopen, call `start_or_resume`. | Native Rust & Vitest | Returns existing attempt ID with 3 recorded answers; next uncompleted index is 3. |
+| **REQ-02: Idempotent Responses** | Send duplicate `record_response` with same `operationId` or retry rapid clicks. | Native Rust & Vitest | Exactly one response row stored; `answered_count` is unchanged on duplicate. |
+| **REQ-03: Distinct "I Don't Know"** | Record response with `isDontKnow: true, selectedIndex: null`. | Native Rust & Vitest | Stored with `is_dont_know = 1, is_correct = 0`; counted in `dont_know_count`, not guessed wrong. |
+| **REQ-04: Exactly-Once Completion** | Call `complete` twice sequentially or concurrently with same attempt ID. | Native Rust & Vitest | State transitions once; second call returns identical completed snapshot; timestamps immutable. |
+| **REQ-05: Version Isolation on Regen** | Complete attempt on v1, regenerate test (creates v2), start new attempt. | Native Rust & Vitest | Old attempt remains linked to v1 questions; new attempt starts against v2 questions; zero score cross-talk. |
+| **REQ-06: Material Deletion Handling** | Delete study material with existing completed attempts. | Native Rust & Vitest | Material deleted; PDF deleted; attempt rows retained with `source_material_id = NULL` and preserved title snapshot. |
+| **REQ-07: Corrupt Legacy Data** | Load database with malformed JSON string in `practice_tests.questions_json`. | Vitest & Rust | Migration 11 completes without error; corrupt row flagged; clean error message in UI. |
+| **REQ-08: Provider Parity** | Run session lifecycle on a Gemini-generated test and an imported packet test. | Shared contract fixtures | Identical response structures, storage formats, and scoring behavior for both providers. |
+| **REQ-09: Offline Isolation** | Execute full session lifecycle without internet or Gemini API key. | Full test suite | Zero network calls made; local SQLite handles all operations under 5ms. |
+| **REQ-10: Backup Round Trip** | Create v3 backup with active and completed attempts; wipe data; restore archive. | Native Rust `backup.rs` test | All versions, items, attempts, and responses restored byte-for-byte; migration 11 intact. |

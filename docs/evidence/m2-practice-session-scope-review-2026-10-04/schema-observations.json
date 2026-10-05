@@ -1,0 +1,23 @@
+{
+  "proposal_sha256": "b6f036757d91b24ae971d47a00c05bcd1c28b9c3437e9349517a01ad8418717c",
+  "foreign_keys_enabled": 1,
+  "same_material_active_versions": 2,
+  "cross_version_response_stored": [
+    "version-a",
+    "version-b"
+  ],
+  "contradictory_response_stored": [
+    99,
+    1,
+    1
+  ],
+  "retained_after_deletion": {
+    "practice_test_versions": 2,
+    "practice_test_items": 2,
+    "practice_attempts": 1,
+    "practice_responses": 1
+  },
+  "remaining_active_versions": 2,
+  "retained_question_characters": 4150,
+  "foreign_key_violations": []
+}
