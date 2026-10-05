@@ -7,3 +7,7 @@ public/THIRD_PARTY_NOTICES.txt text eol=lf
 # trailing blank lines. Source and ordinary documentation checks stay enabled.
 docs/evidence/structured-study-import-slice-b-2026-10-04/gate/*.txt whitespace=-blank-at-eof
 docs/evidence/structured-study-import-slice-b-acceptance-2026-10-04/slice-b-rereview-focused-*.txt whitespace=-blank-at-eof
+
+# Preserve exact submitted/independent M2 review log bytes.
+docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/*.txt whitespace=-blank-at-eof
+docs/evidence/m2-practice-session-pr1-review-2026-10-04/*-diagnostics.txt whitespace=-blank-at-eof
