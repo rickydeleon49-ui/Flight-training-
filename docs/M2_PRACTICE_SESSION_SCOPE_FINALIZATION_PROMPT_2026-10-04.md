@@ -1,5 +1,7 @@
 # Finish M2 practice-session contracts — model-neutral assignment, 4 October 2026
 
+> Follow-up: the [reviewed scope is ready for owner approval](M2_PRACTICE_SESSION_SCOPE_ACCEPTANCE_2026-10-04.md). The [conditional PR 1 assignment](M2_PRACTICE_SESSION_PR1_PROMPT_2026-10-04.md) is the next source task after approval. This document is historical.
+
 Any owner-selected model may complete this task. One implementer; Codex provides technical direction, independently reviews and coordinates Git. This is the next active assignment after the [focused re-review](M2_PRACTICE_SESSION_SCOPE_REREVIEW_2026-10-04.md).
 
 ## Outcome and authorization
