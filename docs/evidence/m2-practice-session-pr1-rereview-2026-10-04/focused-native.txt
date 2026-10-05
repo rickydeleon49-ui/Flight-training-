@@ -1,0 +1,84 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.06s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 33 tests
+test backup::codex_m2_review::foreign_key_violation_is_refused ... ok
+test backup::codex_m2_review::frozen_key_score_is_derived ... ok
+test backup::codex_m2_review::malformed_receipt_json_is_refused ... ok
+test backup::codex_m2_review::missing_required_unique_index_is_refused ... ok
+test backup::codex_m2_review::no_op_preserves_returned_answered_time ... ok
+test backup::codex_m2_review::valid_schema_11_control_is_accepted ... ok
+test backup::codex_m2_semantic_rereview::counterfeit_unique_index_refused ... FAILED
+test backup::codex_m2_semantic_rereview::cross_material_attempt_refused ... FAILED
+test backup::codex_m2_semantic_rereview::missing_version_column_refused ... FAILED
+test backup::codex_m2_semantic_rereview::null_completed_score_refused ... FAILED
+test backup::codex_m2_semantic_rereview::out_of_range_stored_response_refused ... FAILED
+test backup::codex_m2_semantic_rereview::receipt_empty_object_refused ... FAILED
+test practice_sessions::tests::all_answered_cursor_is_null_and_early_completion ... ok
+test practice_sessions::tests::canonical_content_hashing_matches_regardless_of_key_order ... ok
+test practice_sessions::tests::concurrent_starts_serialize_to_single_unfinished_attempt ... ok
+test practice_sessions::tests::direct_native_writer_refuses_when_legacy_conversion_pending ... ok
+test practice_sessions::tests::failed_replacement_preserves_previous_test_and_progress ... ok
+test practice_sessions::tests::remove_practice_test_prunes_unfinished_and_keeps_completed ... ok
+test practice_sessions::tests::req_01_interrupted_resume ... ok
+test practice_sessions::tests::req_02_idempotent_replay ... ok
+test practice_sessions::tests::req_03_operation_conflict ... ok
+test practice_sessions::tests::req_04_single_in_progress_attempt ... ok
+test practice_sessions::tests::req_05_and_06_cross_version_item_triggers ... ok
+test practice_sessions::tests::req_07_and_08_contradictory_choice_flags ... ok
+test practice_sessions::tests::req_09_completed_attempt_mutation_refused ... ok
+test practice_sessions::tests::req_10_exactly_once_completion ... ok
+test practice_sessions::tests::req_11_version_isolation_on_regeneration ... ok
+test practice_sessions::tests::req_12_policy_a_deletion_lifecycle ... ok
+test practice_sessions::tests::req_13_legacy_startup_upgrade_and_200_questions ... ok
+test practice_sessions::tests::req_14_malformed_legacy_handling ... ok
+test practice_sessions::tests::stale_retakes_cannot_replace_each_other ... ok
+test practice_sessions::tests::stale_revision_mismatch_refused ... ok
+test practice_sessions::tests::strict_payload_rejects_unknown_keys_and_oversized ... ok
+
+failures:
+
+---- backup::codex_m2_semantic_rereview::counterfeit_unique_index_refused stdout ----
+
+thread 'backup::codex_m2_semantic_rereview::counterfeit_unique_index_refused' (703817) panicked at src/backup.rs:10789:219:
+same-name nonunique replacement was accepted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- backup::codex_m2_semantic_rereview::cross_material_attempt_refused stdout ----
+
+thread 'backup::codex_m2_semantic_rereview::cross_material_attempt_refused' (703818) panicked at src/backup.rs:10788:281:
+cross-material attempt owner was accepted
+
+---- backup::codex_m2_semantic_rereview::missing_version_column_refused stdout ----
+
+thread 'backup::codex_m2_semantic_rereview::missing_version_column_refused' (703819) panicked at src/backup.rs:10790:145:
+missing version model column was accepted
+
+---- backup::codex_m2_semantic_rereview::null_completed_score_refused stdout ----
+
+thread 'backup::codex_m2_semantic_rereview::null_completed_score_refused' (703820) panicked at src/backup.rs:10791:391:
+null completed score was accepted
+
+---- backup::codex_m2_semantic_rereview::out_of_range_stored_response_refused stdout ----
+
+thread 'backup::codex_m2_semantic_rereview::out_of_range_stored_response_refused' (703821) panicked at src/backup.rs:10787:182:
+selected_index=99 for two options was accepted
+
+---- backup::codex_m2_semantic_rereview::receipt_empty_object_refused stdout ----
+
+thread 'backup::codex_m2_semantic_rereview::receipt_empty_object_refused' (703822) panicked at src/backup.rs:10786:159:
+empty-object result was accepted
+
+
+failures:
+    backup::codex_m2_semantic_rereview::counterfeit_unique_index_refused
+    backup::codex_m2_semantic_rereview::cross_material_attempt_refused
+    backup::codex_m2_semantic_rereview::missing_version_column_refused
+    backup::codex_m2_semantic_rereview::null_completed_score_refused
+    backup::codex_m2_semantic_rereview::out_of_range_stored_response_refused
+    backup::codex_m2_semantic_rereview::receipt_empty_object_refused
+
+test result: FAILED. 27 passed; 6 failed; 0 ignored; 0 measured; 350 filtered out; finished in 1.08s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,6 @@
+# Preserve exact submitted and independent execution receipt bytes only here.
+*.txt whitespace=-blank-at-eof
+submitted-corrections/corrections/*.txt whitespace=-blank-at-eof
+submitted-corrections/gate/*.txt whitespace=-blank-at-eof
+# Preserve submitted Markdown hard-break bytes in the frozen receipt only.
+submitted-corrections/README.md whitespace=-blank-at-eol

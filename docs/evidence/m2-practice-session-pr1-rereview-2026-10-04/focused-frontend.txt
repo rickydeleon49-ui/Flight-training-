@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:71829) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:71830) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+   Start at  21:57:09
+   Duration  527ms (transform 212ms, setup 0ms, import 288ms, tests 407ms, environment 0ms)
+
