@@ -1,0 +1,76 @@
+ M STATUS.md
+A  docs/M2_PRACTICE_SESSION_PR1_CORRECTIONS_PROMPT_2026-10-04.md
+A  docs/M2_PRACTICE_SESSION_PR1_R3_BOUNDARY_CORRECTIONS_PROMPT_2026-10-04.md
+A  docs/M2_PRACTICE_SESSION_PR1_R3_BOUNDARY_REVIEW_2026-10-04.md
+A  docs/M2_PRACTICE_SESSION_PR1_REVIEW_2026-10-04.md
+ M docs/PROJECT_HANDOFF.md
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/.gitattributes
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/README.md
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/SHA256SUMS
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/codex-diagnostic.test.ts
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/focused-frontend.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/focused-native.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/remaining.rs
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/results.json
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/run.py
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/source-hashes.json
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-changes.json
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/README.md
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/SHA256SUMS
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/corrections-report.md
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/corrections/01-r3-fail-before.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/corrections/02-r3-pass-after.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/01-typecheck.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/02-npm-test.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/03-build.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/04-cargo-test.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/05-clippy.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/06-fmt.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/07-cargo-lock.txt
+A  docs/evidence/m2-practice-session-pr1-r3-boundary-review-2026-10-04/submitted-validation/gate/08-git-diff.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/.gitattributes
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/README.md
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/SHA256SUMS
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/codex-diagnostic.test.ts
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/codex_backup_diagnostic.rs
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/diagnostic-results.json
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/frontend-diagnostics.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/native-diagnostics.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/run_diagnostics.py
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-SHA256SUMS
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-changes.json
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/01-typecheck.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/02-npm-test.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/03-build.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/04-cargo-test.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/05-clippy.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/06-fmt.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/07-cargo-lock.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-gate/08-git-diff.txt
+A  docs/evidence/m2-practice-session-pr1-review-2026-10-04/submitted-report.md
+ M src-tauri/src/backup.rs
+ M src-tauri/src/debrief.rs
+ M src-tauri/src/lib.rs
+ M src-tauri/src/study_packet.rs
+ M src/acceptance/m1Upgrade.acceptance.test.ts
+ M src/data/db.ts
+ M src/data/migration-checksums.json
+ M src/data/migrationSafety.test.ts
+ M src/data/migrations.ts
+ M src/data/persistenceErrors.ts
+ M src/data/repositories/documentRepository.ts
+ M src/data/repositories/index.ts
+ M src/data/sqlJsDb.ts
+ M src/data/structuredImportTransaction.ts
+ M src/data/tauriDb.ts
+ M src/data/testing/nodeSqliteDb.ts
+ M src/domain/types.ts
+?? docs/evidence/m2-practice-session-foundation-2026-10-04/
+?? docs/evidence/m2-practice-session-pr1-corrections-2026-10-04/
+?? docs/evidence/m2-practice-session-pr1-validation-2026-10-04/
+?? src-tauri/migrations/0011_practice_sessions.sql
+?? src-tauri/src/practice_session_tests.rs
+?? src-tauri/src/practice_sessions.rs
+?? src/data/practiceSessionContract.test.ts
+?? src/data/practiceSessionTransaction.ts
+?? src/data/repositories/practiceSessionRepository.ts

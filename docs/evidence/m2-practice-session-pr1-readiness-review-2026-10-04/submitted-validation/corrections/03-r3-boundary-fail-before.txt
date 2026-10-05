@@ -1,0 +1,49 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 5 tests
+test backup::tests::codex_m2_final_review::unique_index_wrong_key_refused ... FAILED
+test backup::tests::codex_m2_final_review::no_op_ownership_trigger_refused ... FAILED
+test backup::tests::codex_m2_final_review::in_progress_false_totals_refused ... FAILED
+test backup::tests::codex_m2_final_review::receipt_wrong_frozen_version_refused ... FAILED
+test backup::tests::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state ... FAILED
+
+failures:
+
+---- backup::tests::codex_m2_final_review::unique_index_wrong_key_refused stdout ----
+
+thread 'backup::tests::codex_m2_final_review::unique_index_wrong_key_refused' (763002) panicked at src/backup.rs:11603:13:
+same-name UNIQUE index on id was accepted instead of material key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- backup::tests::codex_m2_final_review::no_op_ownership_trigger_refused stdout ----
+
+thread 'backup::tests::codex_m2_final_review::no_op_ownership_trigger_refused' (762999) panicked at src/backup.rs:11612:13:
+same-name no-op ownership trigger was accepted
+
+---- backup::tests::codex_m2_final_review::in_progress_false_totals_refused stdout ----
+
+thread 'backup::tests::codex_m2_final_review::in_progress_false_totals_refused' (762998) panicked at src/backup.rs:11632:13:
+one-question unfinished attempt with 99 total/88 answered was accepted
+
+---- backup::tests::codex_m2_final_review::receipt_wrong_frozen_version_refused stdout ----
+
+thread 'backup::tests::codex_m2_final_review::receipt_wrong_frozen_version_refused' (763000) panicked at src/backup.rs:11622:13:
+receipt result for wrong frozen version was accepted
+
+---- backup::tests::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state stdout ----
+
+thread 'backup::tests::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state' (763001) panicked at src/backup.rs:11652:13:
+startup conversion and direct session write both succeed for validator-refused state
+
+
+failures:
+    backup::tests::codex_m2_final_review::in_progress_false_totals_refused
+    backup::tests::codex_m2_final_review::no_op_ownership_trigger_refused
+    backup::tests::codex_m2_final_review::receipt_wrong_frozen_version_refused
+    backup::tests::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state
+    backup::tests::codex_m2_final_review::unique_index_wrong_key_refused
+
+test result: FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 381 filtered out; finished in 0.17s
+
+error: test failed, to rerun pass `--lib`

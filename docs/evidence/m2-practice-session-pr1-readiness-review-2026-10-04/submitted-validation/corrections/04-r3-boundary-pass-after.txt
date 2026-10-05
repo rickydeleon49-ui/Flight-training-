@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 5 tests
+test backup::tests::codex_m2_final_review::unique_index_wrong_key_refused ... ok
+test backup::tests::codex_m2_final_review::no_op_ownership_trigger_refused ... ok
+test backup::tests::codex_m2_final_review::receipt_wrong_frozen_version_refused ... ok
+test backup::tests::codex_m2_final_review::in_progress_false_totals_refused ... ok
+test backup::tests::codex_m2_final_review::startup_conversion_and_native_write_refuse_invalid_state ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 381 filtered out; finished in 0.43s
+
