@@ -1,0 +1,13 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/services/studyPackets.test.ts src/logic/studyPacket/
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+
+ Test Files  7 passed (7)
+      Tests  244 passed (244)
+   Start at  17:29:18
+   Duration  345ms (transform 350ms, setup 0ms, import 644ms, tests 306ms, environment 0ms)
+

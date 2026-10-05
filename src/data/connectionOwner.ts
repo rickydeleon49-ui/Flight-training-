@@ -1,3 +1,5 @@
+import { DatabaseDisabledError } from "./persistenceErrors";
+
 /**
  * One owner at a time for a single-connection SQLite driver.
  *
@@ -528,10 +530,7 @@ export function createConnectionOwner(releaseAfterFailure: () => void): Connecti
           try {
             releaseAfterFailure();
           } catch (releaseError) {
-            broken = new Error(
-              "The local database connection could not be returned to a safe state. Reload the app before making more changes.",
-              { cause: releaseError },
-            );
+            broken = new DatabaseDisabledError({ cause: releaseError });
           }
           throw error;
         }

@@ -1,5 +1,7 @@
 # Her Flight Deck — implementation roadmap
 
+**4 October current state:** Structured study import Slice B is [accepted for source integration](docs/STRUCTURED_STUDY_IMPORT_SLICE_B_ACCEPTANCE_2026-10-04.md). The real-user check-in has been waived; installed/release observations remain separate. The [next assignment](docs/M2_PRACTICE_SESSION_SCOPE_PROMPT_2026-10-04.md) prepares one bounded saved/resumable-practice-test scope using this existing M2 design. Remaining retention/versioning decisions and new migration/attempt implementation still require owner scope approval. Earlier check-in and pending-import descriptions below are historical where superseded.
+
 Prepared 24 September 2026. Planning document; no feature implementation or release authorization is implied.
 
 Repository: `H:\Ai Repo clones\Flight-training-`

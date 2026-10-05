@@ -1,0 +1,21 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/services/studyPackets.test.ts src/data/structuredImport.test.ts src/data/repositories/importStudyPacket.test.ts src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts src/pages/StudyLibrary/MaterialDetailImport.test.ts src/logic/studyPacket/notices.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:52521) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52519) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52520) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52518) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  6 passed (6)
+      Tests  124 passed (124)
+   Start at  18:21:49
+   Duration  3.06s (transform 590ms, setup 0ms, import 994ms, tests 3.29s, environment 572ms)
+

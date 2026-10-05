@@ -1,0 +1,4 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/.codex/worktrees/mac-a2-verification-review/Flight-training-/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.13s
+
+exit: 0

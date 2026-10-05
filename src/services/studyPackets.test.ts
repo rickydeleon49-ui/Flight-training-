@@ -9,7 +9,7 @@ vi.mock("@/data", () => ({ isTauri: mocks.isTauri }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: mocks.invoke }));
 
 import { DesktopOnlyError } from "./documents";
-import { pickStudyPacket, StudyPacketReadError } from "./studyPackets";
+import { buildImportOperation, pickStudyPacket, sha256Hex, StudyPacketReadError } from "./studyPackets";
 
 const packet = {
   fileName: "packet.json",
@@ -66,5 +66,36 @@ describe("pickStudyPacket (simulated invoke; no native dialog opens in tests)", 
     await expect(pickStudyPacket()).rejects.toMatchObject({ code: "file_read_failed" });
     mocks.invoke.mockResolvedValue({ text: "x" });
     await expect(pickStudyPacket()).rejects.toMatchObject({ code: "file_read_failed" });
+  });
+});
+
+describe("buildImportOperation (Slice B)", () => {
+  it("hashes with SHA-256 over UTF-8 (known vectors)", async () => {
+    expect(await sha256Hex("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+    // Computed independently with Python's hashlib over the UTF-8 bytes.
+    expect(await sha256Hex("✈ Class B")).toBe("4e9d6b76f3dbc842d0aa4498c23728a173fbe91c75b2e47123888719e89c70cb");
+  });
+
+  it("copies only contract fields, so nothing extra reaches the native boundary", async () => {
+    const payload = {
+      material: { title: "T", extra: "x" },
+      studySet: {
+        title: "T", summary: "S", sections: [{ heading: "H", body: "B", extra: 1 }],
+        flashcards: [{ front: "F", back: "B", sourcePage: null, extra: 1 }], sourceNotes: "", provider: "import", model: "",
+        extra: 1,
+      },
+      practiceTest: null,
+    } as never;
+    const id = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
+    const operation = await buildImportOperation(payload, id);
+    expect(JSON.stringify(operation)).not.toContain("extra");
+    expect(operation).toMatchObject({ operationId: id, materialId: id, practiceTest: null });
+    expect(operation.contentHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("refuses to save without secure hashing rather than send a fake hash", async () => {
+    vi.stubGlobal("crypto", {});
+    await expect(sha256Hex("abc")).rejects.toThrow(/Secure hashing is unavailable/);
+    vi.unstubAllGlobals();
   });
 });

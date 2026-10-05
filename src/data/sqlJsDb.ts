@@ -14,6 +14,17 @@
  * see the same data. The one gap: if storage already failed while the app
  * was starting, the live database is ahead of what a reload would find until
  * the next successful write.
+ *
+ * Connection invariant: `foreign_keys` is per connection, and sql.js resets
+ * it whenever a connection is created or `export()` reopens one. Every such
+ * point (initial open, every export, and recovery from the last stored bytes)
+ * goes through `initializeConnection`, which switches it on and verifies it.
+ * Recovery that cannot re-establish it disables the adapter
+ * (`DatabaseDisabledError`) rather than continue without foreign keys.
+ *
+ * The pre-operation snapshot of the Slice B design is `lastStored`: every
+ * write is durable or undone, so between operations the live database always
+ * equals those bytes, and they are what a failed write is restored from.
  */
 import initSqlJs, { type Database as SqlJsDatabaseHandle } from "sql.js";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
@@ -21,6 +32,7 @@ import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "./connectionOwner";
 import { applyMigrations } from "./migrations";
 import type { SqlDatabase, SqlValue } from "./db";
+import { DatabaseDisabledError, StorageDurabilityError } from "./persistenceErrors";
 
 const STORAGE_KEY = "her-flight-deck.dev-database";
 
@@ -51,12 +63,29 @@ function store(bytes: Uint8Array): void {
   localStorage.setItem(STORAGE_KEY, encodeBytes(bytes));
 }
 
+/**
+ * Switch foreign keys on for this connection and prove they are on. Runs after
+ * every point that creates or reopens a connection; throws if it cannot.
+ */
+export function initializeConnection(db: SqlJsDatabaseHandle): void {
+  db.run("PRAGMA foreign_keys = ON");
+  const result = db.exec("PRAGMA foreign_keys");
+  if (result[0]?.values[0]?.[0] !== 1) {
+    throw new Error("Connection invariant violation: PRAGMA foreign_keys could not be enabled.");
+  }
+}
+
 export async function createSqlJsDatabase(): Promise<SqlDatabase> {
   const SQL = await initSqlJs({ locateFile: () => wasmUrl });
 
   const open = (bytes: Uint8Array | null): SqlJsDatabaseHandle => {
     const handle = bytes ? new SQL.Database(bytes) : new SQL.Database();
-    handle.run("PRAGMA foreign_keys = ON");
+    try {
+      initializeConnection(handle);
+    } catch (error) {
+      handle.close();
+      throw error;
+    }
     return handle;
   };
   let db = open(loadSaved());
@@ -74,11 +103,11 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
    * sql.js `export()` closes and reopens the connection: it silently rolls
    * back an open transaction and resets per-connection settings such as
    * foreign keys. It is only ever called inside the connection owner, between
-   * operations, and foreign keys are switched straight back on.
+   * operations, and the connection is initialized again straight away.
    */
   const exportBytes = (): Uint8Array => {
     const bytes = db.export();
-    db.run("PRAGMA foreign_keys = ON");
+    initializeConnection(db);
     return bytes;
   };
 
@@ -90,42 +119,58 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
     console.warn("Development database could not be saved.", error);
   }
 
-  let connectionBroken: Error | null = null;
+  let connectionBroken: DatabaseDisabledError | null = null;
 
+  /**
+   * Put the live database back to the last stored bytes. The restored handle
+   * is initialized before it replaces the old one; if that fails the adapter
+   * is disabled and every later call is refused.
+   */
   const restoreLastStored = (): void => {
+    let restored: SqlJsDatabaseHandle;
     try {
+      restored = open(lastStored);
+    } catch (error) {
+      connectionBroken = new DatabaseDisabledError({ cause: error });
       try {
         db.close();
       } catch {
         // Handle might already be closed or invalid
       }
-      db = open(lastStored);
-    } catch (error) {
-      connectionBroken = new Error(
-        "The local database connection could not be returned to a safe state. Reload the app before making more changes.",
-        { cause: error },
-      );
       throw connectionBroken;
     }
+    try {
+      db.close();
+    } catch {
+      // Handle might already be closed or invalid
+    }
+    db = restored;
   };
 
-  /** Run a write; succeed only once its result is in storage, otherwise undo it. */
-  const durableWrite = async <T>(work: () => Promise<T> | T): Promise<T> => {
+  /**
+   * Run a write; succeed only once its result is in storage, otherwise undo it.
+   * `durabilityError`, when given, replaces an error from the export, encoding
+   * or storage step (after the undo), so a caller can type that failure.
+   */
+  const durableWrite = async <T>(
+    work: () => Promise<T> | T,
+    durabilityError?: (cause: unknown) => Error,
+  ): Promise<T> => {
     if (connectionBroken) throw connectionBroken;
     let result: T;
     try {
       result = await work();
+    } catch (error) {
+      restoreLastStored();
+      throw error;
+    }
+    try {
       const bytes = exportBytes();
-      let encoded: string;
-      try {
-        encoded = encodeBytes(bytes);
-      } catch (encodeError) {
-        throw encodeError;
-      }
+      const encoded = encodeBytes(bytes);
       try {
         localStorage.setItem(STORAGE_KEY, encoded);
       } catch (storageError) {
-        throw new Error(
+        throw new StorageDurabilityError(
           "Browser storage refused this change, so it was undone and nothing was saved. Free some browser storage and try again.",
           { cause: storageError },
         );
@@ -134,7 +179,7 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
       return result;
     } catch (error) {
       restoreLastStored();
-      throw error;
+      throw durabilityError ? durabilityError(error) : error;
     }
   };
 
@@ -211,6 +256,29 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
           const { executeMaterialsBatch } = await import("./materialTransaction");
           await executeMaterialsBatch(exec, run, query, materials);
         }),
+      );
+    },
+    /**
+     * Slice B import: one owned operation, one immediate transaction, then the
+     * durable export. A storage or export failure after the commit restores
+     * the last stored bytes and reports `StorageDurabilityError`, so a retry
+     * with the same id saves afresh rather than reporting `already_saved`.
+     */
+    saveStructuredImportAtomically(
+      operation: import("./db").StructuredImportSaveOperation,
+    ): Promise<import("./db").NativeImportSaveResult> {
+      return owner.exclusive(() =>
+        durableWrite(
+          async () => {
+            const { executeStructuredImport } = await import("./structuredImportTransaction");
+            return executeStructuredImport(exec, run, query, operation);
+          },
+          (cause) =>
+            new StorageDurabilityError(
+              "The study packet could not be saved to browser storage, so nothing was saved. Free some browser storage and try again.",
+              { cause },
+            ),
+        ),
       );
     },
     /** Every acknowledged write is already stored; this re-stores and reports failure. */

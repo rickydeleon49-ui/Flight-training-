@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -9,6 +9,7 @@ import {
   Card,
   DocumentIcon,
   EmptyState,
+  NoteIcon,
   PlusIcon,
   SearchIcon,
   Select,
@@ -30,6 +31,7 @@ import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic
 import { useAppData } from "@/state/AppDataContext";
 import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
+import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import "./studyLibrary.css";
 
@@ -50,6 +52,8 @@ const MATERIAL_PAGE_SIZE = 100;
 
 export function StudyLibrary() {
   const { data, mutate } = useAppData();
+  const navigate = useNavigate();
+  const [importing, setImporting] = useState(false);
   // Kept while the app is open, so moving to a material and back does not
   // throw away the filtering she just set up.
   const [status, setStatus] = useRememberedState<StatusFilter>(
@@ -123,9 +127,14 @@ export function StudyLibrary() {
         title="Study Library"
         subtitle="Your training binder — notes, handouts, worksheets and what to do with them."
         action={
-          <Button variant="primary" onClick={() => setCreating(true)}>
-            <PlusIcon size={16} /> Add material
-          </Button>
+          <div className="row row--wrap">
+            <Button onClick={() => setImporting(true)} disabled={importing}>
+              <NoteIcon size={16} /> Import study packet…
+            </Button>
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              <PlusIcon size={16} /> Add material
+            </Button>
+          </div>
         }
       />
 
@@ -248,6 +257,17 @@ export function StudyLibrary() {
         newMaterialId={draftId}
         onClose={() => setCreating(false)}
         onSave={save}
+      />
+
+      <ImportStudyPacketDialog
+        open={importing}
+        onClose={() => setImporting(false)}
+        onImported={(materialId, refreshed) => {
+          setImporting(false);
+          // Without a refresh the new material is not on screen yet; the page
+          // banner says so, and opening it now would show "not found".
+          if (refreshed) navigate(`/study/${materialId}`);
+        }}
       />
     </>
   );

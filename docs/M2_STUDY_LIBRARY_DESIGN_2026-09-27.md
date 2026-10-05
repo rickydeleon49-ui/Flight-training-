@@ -1,5 +1,7 @@
 # M2 Study Library sessions — design and decision record
 
+**4 October current state:** Structured study import Slice B is [accepted for source integration](STRUCTURED_STUDY_IMPORT_SLICE_B_ACCEPTANCE_2026-10-04.md). The real-user check-in has been waived; installed/release observations remain separate. The [next assignment](M2_PRACTICE_SESSION_SCOPE_PROMPT_2026-10-04.md) prepares one bounded saved/resumable-practice-test scope using this existing M2 design. Remaining retention/versioning decisions and new migration/attempt implementation still require owner scope approval. Earlier check-in and pending-import descriptions below are historical where superseded.
+
 _Prepared 27 September 2026 from merged `main` at `1d86d57` (PR #35). Planning only: no migration, product code, release version, or user data changed._
 
 ## Goal and entry gate

@@ -14,10 +14,20 @@ import {
   type PracticeQuestion,
   type PracticeTest,
   type StudyFlashcard,
+  type StudyAidProvider,
   type StudyGuideSection,
   type Topic,
 } from "@/domain/types";
-import { toEnum, toNullableNumber, toNullableText, toText, type SqlDatabase } from "../db";
+import {
+  toEnum,
+  toNullableNumber,
+  toNullableText,
+  toText,
+  type NativeImportSaveResult,
+  type SqlDatabase,
+  type StructuredImportSaveOperation,
+} from "../db";
+import { AtomicPersistenceUnsupportedError } from "../persistenceErrors";
 
 interface Row {
   id: string; title: unknown; material_type: unknown; topic: unknown;
@@ -91,6 +101,12 @@ function jsonArray<T>(value: unknown): T[] {
   }
 }
 
+/**
+ * Stored provenance through an allowlist: only "import" is recognized besides
+ * the default, so a legacy, malformed or unknown value reads as "gemini".
+ */
+const toProvider = (value: unknown): StudyAidProvider => (value === "import" ? "import" : "gemini");
+
 const mapAiStudySet = (row: AiRow): AiStudySet => ({
   sourceMaterialId: row.source_material_id,
   title: toText(row.title),
@@ -98,7 +114,7 @@ const mapAiStudySet = (row: AiRow): AiStudySet => ({
   sections: jsonArray<StudyGuideSection>(row.sections_json),
   flashcards: jsonArray<StudyFlashcard>(row.flashcards_json),
   sourceNotes: toText(row.source_notes),
-  provider: "gemini",
+  provider: toProvider(row.provider),
   model: toText(row.model),
   generatedAt: toText(row.generated_at),
   updatedAt: toText(row.updated_at),
@@ -108,7 +124,7 @@ const mapPracticeTest = (row: PracticeTestRow): PracticeTest => ({
   sourceMaterialId: row.source_material_id,
   title: toText(row.title),
   questions: jsonArray<PracticeQuestion>(row.questions_json),
-  provider: "gemini",
+  provider: toProvider(row.provider),
   model: toText(row.model),
   generatedAt: toText(row.generated_at),
   updatedAt: toText(row.updated_at),
@@ -198,6 +214,10 @@ export function documentRepository(db: SqlDatabase) {
       return rows.map(mapAiStudySet);
     },
 
+    /**
+     * Save a Gemini study set. Replacing an imported set also replaces its
+     * provenance, so regenerated content is never labelled as imported.
+     */
     async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">): Promise<void> {
       const timestamp = nowIso();
       await db.execute(
@@ -208,7 +228,7 @@ export function documentRepository(db: SqlDatabase) {
          ON CONFLICT(source_material_id) DO UPDATE SET
            title = excluded.title, summary = excluded.summary,
            sections_json = excluded.sections_json, flashcards_json = excluded.flashcards_json,
-           source_notes = excluded.source_notes, model = excluded.model,
+           source_notes = excluded.source_notes, provider = excluded.provider, model = excluded.model,
            generated_at = excluded.generated_at, updated_at = excluded.updated_at`,
         [
           input.sourceMaterialId, input.title, input.summary,
@@ -229,6 +249,7 @@ export function documentRepository(db: SqlDatabase) {
       return rows.map(mapPracticeTest);
     },
 
+    /** Save a Gemini practice test; like `saveAiStudySet`, it always writes "gemini". */
     async savePracticeTest(
       input: Omit<PracticeTest, "provider" | "generatedAt" | "updatedAt">,
     ): Promise<void> {
@@ -239,7 +260,7 @@ export function documentRepository(db: SqlDatabase) {
          VALUES (?, ?, ?, 'gemini', ?, ?, ?)
          ON CONFLICT(source_material_id) DO UPDATE SET
            title = excluded.title, questions_json = excluded.questions_json,
-           model = excluded.model, generated_at = excluded.generated_at,
+           provider = excluded.provider, model = excluded.model, generated_at = excluded.generated_at,
            updated_at = excluded.updated_at`,
         [
           input.sourceMaterialId, input.title, JSON.stringify(input.questions),
@@ -374,6 +395,24 @@ export function documentRepository(db: SqlDatabase) {
 
     async remove(id: Id): Promise<void> {
       await db.execute("DELETE FROM study_materials WHERE id = ?", [id]);
+    },
+
+    /**
+     * Save a previewed study packet as a new material with its imported study
+     * set and practice test, as one atomic change (Slice B, create-new only).
+     *
+     * There is no sequential fallback: creating the material, then the set,
+     * then the test as separate writes could leave half an import behind, so a
+     * driver without the atomic operation refuses instead. A lock that outlasts
+     * the native busy timeout comes back as `STORAGE_FAILURE`; the dialog's
+     * "Try again" resends the same operation, which is safe because a retry
+     * whose stored content matches is `already_saved`.
+     */
+    async importStudyPacket(operation: StructuredImportSaveOperation): Promise<NativeImportSaveResult> {
+      if (typeof db.saveStructuredImportAtomically !== "function") {
+        throw new AtomicPersistenceUnsupportedError();
+      }
+      return db.saveStructuredImportAtomically(operation);
     },
   };
 }

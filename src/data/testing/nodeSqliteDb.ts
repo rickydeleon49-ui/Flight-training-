@@ -11,6 +11,7 @@ import type { SqlDatabase, SqlValue } from "../db";
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "../connectionOwner";
 import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
+import { executeStructuredImport } from "../structuredImportTransaction";
 import { applyMigrations } from "../migrations";
 
 export interface TestDatabase extends SqlDatabase {
@@ -89,6 +90,11 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
     },
     saveMaterialsAtomically(materials: import("@/domain/types").StudyMaterial[]): Promise<void> {
       return owner.exclusive(() => executeMaterialsBatch(exec, run, query, materials));
+    },
+    saveStructuredImportAtomically(
+      operation: import("../db").StructuredImportSaveOperation,
+    ): Promise<import("../db").NativeImportSaveResult> {
+      return owner.exclusive(() => executeStructuredImport(exec, run, query, operation));
     },
     close() {
       db.close();

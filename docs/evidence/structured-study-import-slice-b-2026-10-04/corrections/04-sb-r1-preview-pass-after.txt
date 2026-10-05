@@ -1,0 +1,18 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:50517) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts (21 tests) 2304ms
+     ✓ previews the packet, imports it as a new material and opens it  601ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  18:16:38
+   Duration  3.93s (transform 527ms, setup 0ms, import 768ms, tests 2.30s, environment 680ms)
+
+exit: 0

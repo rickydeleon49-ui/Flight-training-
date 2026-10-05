@@ -22,6 +22,76 @@ export interface SqlDatabase {
   saveMaterialAtomically?(
     operation: MaterialSaveOperation,
   ): Promise<import("@/domain/types").StudyMaterial>;
+  /**
+   * One atomic save of a previewed structured study packet as a new material
+   * (Slice B). There is deliberately no fallback: without it, import refuses.
+   */
+  saveStructuredImportAtomically?(
+    operation: StructuredImportSaveOperation,
+  ): Promise<NativeImportSaveResult>;
+}
+
+/**
+ * The structured study-import save contract (Slice B), shared by the dialog,
+ * the Tauri adapter (`invoke("save_structured_study_material_atomically",
+ * { operation })`), the native validator in `src-tauri/src/study_packet.rs`
+ * and the browser/test transaction in `structuredImportTransaction.ts`.
+ *
+ * Built from the accepted validator's persistence payload. `operationId` and
+ * `materialId` are the same UUID v4, minted once per preview, so "Try again"
+ * resends the same identity: a retry whose stored content matches is
+ * `already_saved`; any difference is `IDEMPOTENCY_CONFLICT`. `contentHash` is
+ * SHA-256 of `canonicalPersistenceJson(payload)`; it is carried as a digest and
+ * never trusted as proof of equality.
+ */
+export interface StructuredImportSaveOperation {
+  operationId: string;
+  materialId: string;
+  contentHash: string;
+  material: { title: string };
+  studySet: {
+    title: string;
+    provider: "import";
+    model: "";
+    summary: string;
+    sections: Array<{ heading: string; body: string }>;
+    flashcards: Array<{ front: string; back: string; sourcePage: null }>;
+    sourceNotes: string;
+  } | null;
+  practiceTest: {
+    title: string;
+    provider: "import";
+    model: "";
+    questions: Array<{
+      question: string;
+      options: string[];
+      correctIndex: number;
+      explanation: string;
+      sourcePage: null;
+    }>;
+  } | null;
+}
+
+export type NativeImportSaveResult =
+  | { status: "saved"; materialId: string }
+  | { status: "already_saved"; materialId: string };
+
+export type NativeImportSaveErrorCode =
+  | "INVALID_ARGUMENT"
+  | "INVALID_OPERATION_ID"
+  | "INVALID_HASH_FORMAT"
+  | "EMPTY_SUBSTANTIVE_CONTENT"
+  | "CONTENT_LIMIT_EXCEEDED"
+  | "INVALID_SOURCE_PAGE"
+  | "UNSUPPORTED_PROVIDER"
+  | "IDEMPOTENCY_CONFLICT"
+  | "STORAGE_FAILURE"
+  | "IPC_TRANSPORT_ERROR";
+
+/** A refusal on the wire: one allowlisted code and its fixed message. */
+export interface NativeImportSaveError {
+  code: NativeImportSaveErrorCode;
+  message: string;
 }
 
 export interface MaterialSaveFields {

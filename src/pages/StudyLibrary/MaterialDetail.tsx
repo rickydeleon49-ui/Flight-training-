@@ -59,6 +59,7 @@ import { useActionOperations } from "@/state/useActions";
 import { canSplitPdfs } from "@/services/pdf";
 
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
+import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
@@ -192,6 +193,10 @@ function MaterialDetailPage({
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );
+  // Imported study packets are labelled as imported, never as Gemini output.
+  const importedSet = studySet?.provider === "import";
+  const importedTest = practiceTest?.provider === "import";
+  const hasImported = importedSet || importedTest;
 
   useEffect(() => {
     void getGeminiStatus()
@@ -686,8 +691,14 @@ function MaterialDetailPage({
           {material.filePath || studySet ? (
             <Card>
               <CardHeader
-                title="Gemini study assistant"
-                eyebrow={studySet ? "Saved on this computer" : "Guide and flashcards"}
+                title={importedSet ? "Imported study packet" : "Gemini study assistant"}
+                eyebrow={
+                  importedSet
+                    ? "Imported from a file you selected"
+                    : studySet
+                      ? "Saved on this computer"
+                      : "Guide and flashcards"
+                }
                 action={
                   canOfferGemini ? (
                     <Button
@@ -724,8 +735,9 @@ function MaterialDetailPage({
                     <div className="ai-disclaimer">
                       <AlertIcon size={16} />
                       <p className="tiny">
-                        AI-generated study aid. Verify everything against the source, current FAA
-                        material, aircraft documents, and your instructor before using it.
+                        {importedSet
+                          ? IMPORTED_CONTENT_DISCLAIMER
+                          : "AI-generated study aid. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it."}
                       </p>
                     </div>
 
@@ -790,7 +802,7 @@ function MaterialDetailPage({
                       </section>
                     ) : null}
                   </div>
-                ) : canOfferGemini && !fileMissing && !generating ? (
+                ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
                   <p className="small muted">
                     Gemini will read only this file and create a source-based study guide plus
                     10–20 flashcards. The result will be saved locally with your other data.
@@ -810,7 +822,13 @@ function MaterialDetailPage({
             <Card>
               <CardHeader
                 title="Practice test"
-                eyebrow={practiceTest ? "Saved on this computer" : "Optional, from this document"}
+                eyebrow={
+                  importedTest
+                    ? "Imported study packet"
+                    : practiceTest
+                      ? "Saved on this computer"
+                      : "Optional, from this document"
+                }
                 action={
                   canOfferGemini ? (
                   <Button
@@ -851,13 +869,14 @@ function MaterialDetailPage({
                     <div className="ai-disclaimer">
                       <AlertIcon size={16} />
                       <p className="tiny">
-                        AI-generated practice test. Verify every answer against the source, current
-                        FAA material, aircraft documents, and your instructor before relying on it.
+                        {importedTest
+                          ? IMPORTED_CONTENT_DISCLAIMER
+                          : "AI-generated practice test. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it."}
                       </p>
                     </div>
                     <PracticeTestPanel practiceTest={practiceTest} key={practiceTest.updatedAt} />
                   </div>
-                ) : !generatingPractice ? (
+                ) : !generatingPractice && !hasImported ? (
                   <p className="small muted">
                     Gemini will read only this file and create a multiple-choice practice test with
                     explanations. The result will be saved locally with your other data.
@@ -1102,7 +1121,7 @@ function MaterialDetailPage({
       <ConfirmDialog
         open={confirmingAi && !isGeneratingAny}
         title="Send this file to Google?"
-        message={aiCheck.reason}
+        message={importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ${aiCheck.reason}` : aiCheck.reason}
         confirmLabel="Send to Gemini"
         destructive={false}
         onConfirm={() => {
@@ -1116,7 +1135,7 @@ function MaterialDetailPage({
       <ConfirmDialog
         open={confirmingPracticeTest && !isGeneratingAny}
         title="Send this file to Google?"
-        message={aiCheck.reason}
+        message={importedTest ? `${IMPORT_TEST_REGENERATE_WARNING} ${aiCheck.reason}` : aiCheck.reason}
         confirmLabel="Send to Gemini"
         destructive={false}
         onConfirm={() => {
@@ -1152,6 +1171,15 @@ function MaterialDetailPage({
     </>
   );
 }
+
+/**
+ * Said before Gemini replaces imported content. Each names only what that
+ * button replaces: regenerating the guide leaves an imported test alone.
+ */
+export const IMPORT_GUIDE_REGENERATE_WARNING =
+  "This will replace your imported study guide and flashcards with AI-generated content.";
+export const IMPORT_TEST_REGENERATE_WARNING =
+  "This will replace your imported practice test with AI-generated content.";
 
 /** Why a new or replacement Gemini study aid cannot be requested right now. */
 interface GenerationNotice {

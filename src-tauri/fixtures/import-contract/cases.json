@@ -1,0 +1,615 @@
+{
+ "description": "Shared Slice B save contract. Each case patches operation.json (JSON Pointer; an empty pointer replaces the root; {repeat, count} is a string of one character repeated) and expects 'saved' or one allowlisted code. Replayed by src-tauri/src/study_packet_save_tests.rs and src/data/structuredImport.test.ts.",
+ "cases": [
+  {
+   "name": "valid operation from the accepted 02 fixture",
+   "patches": [],
+   "expected": "saved"
+  },
+  {
+   "name": "unknown root key is refused without echo",
+   "patches": [
+    {
+     "pointer": "/apiKey_secret",
+     "value": "sensitive"
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "unknown nested flashcard key",
+   "patches": [
+    {
+     "pointer": "/studySet/flashcards/0/extraField",
+     "value": "x"
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "unknown nested question key",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/1/extraField",
+     "value": "x"
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "missing material title",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "delete": true
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "material title is a number",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "value": 123
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "missing nullable aid key",
+   "patches": [
+    {
+     "pointer": "/practiceTest",
+     "delete": true
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "root is an array",
+   "patches": [
+    {
+     "pointer": "",
+     "value": []
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "option is not a string",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/options/2",
+     "value": 3
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "correctIndex is a string",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/correctIndex",
+     "value": "1"
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "operationId differs from materialId",
+   "patches": [
+    {
+     "pointer": "/operationId",
+     "value": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e"
+    }
+   ],
+   "expected": "INVALID_OPERATION_ID"
+  },
+  {
+   "name": "UUID version 1",
+   "patches": [
+    {
+     "pointer": "/operationId",
+     "value": "a1b2c3d4-e5f6-1a7b-8c9d-0e1f2a3b4c5d"
+    },
+    {
+     "pointer": "/materialId",
+     "value": "a1b2c3d4-e5f6-1a7b-8c9d-0e1f2a3b4c5d"
+    }
+   ],
+   "expected": "INVALID_OPERATION_ID"
+  },
+  {
+   "name": "uppercase UUID",
+   "patches": [
+    {
+     "pointer": "/operationId",
+     "value": "A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D"
+    },
+    {
+     "pointer": "/materialId",
+     "value": "A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D"
+    }
+   ],
+   "expected": "INVALID_OPERATION_ID"
+  },
+  {
+   "name": "uppercase hash",
+   "patches": [
+    {
+     "pointer": "/contentHash",
+     "value": "679AE4EEF7E83EB63B1537C5E88934644B38632ED83E584822841E01672EA8B5"
+    }
+   ],
+   "expected": "INVALID_HASH_FORMAT"
+  },
+  {
+   "name": "63-character hash",
+   "patches": [
+    {
+     "pointer": "/contentHash",
+     "value": "679ae4eef7e83eb63b1537c5e88934644b38632ed83e584822841e01672ea8b"
+    }
+   ],
+   "expected": "INVALID_HASH_FORMAT"
+  },
+  {
+   "name": "gemini provider",
+   "patches": [
+    {
+     "pointer": "/studySet/provider",
+     "value": "gemini"
+    }
+   ],
+   "expected": "UNSUPPORTED_PROVIDER"
+  },
+  {
+   "name": "model name on the test",
+   "patches": [
+    {
+     "pointer": "/practiceTest/model",
+     "value": "gemini-2.5-flash"
+    }
+   ],
+   "expected": "UNSUPPORTED_PROVIDER"
+  },
+  {
+   "name": "flashcard claims a page",
+   "patches": [
+    {
+     "pointer": "/studySet/flashcards/1/sourcePage",
+     "value": 3
+    }
+   ],
+   "expected": "INVALID_SOURCE_PAGE"
+  },
+  {
+   "name": "question claims a page as text",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/sourcePage",
+     "value": "12"
+    }
+   ],
+   "expected": "INVALID_SOURCE_PAGE"
+  },
+  {
+   "name": "missing sourcePage key",
+   "patches": [
+    {
+     "pointer": "/studySet/flashcards/0/sourcePage",
+     "delete": true
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "whitespace-only titles",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "value": " \t "
+    },
+    {
+     "pointer": "/studySet/title",
+     "value": " \t "
+    },
+    {
+     "pointer": "/practiceTest/title",
+     "value": " \t "
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "title at 200 code points",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "repeat": "\u2708",
+     "count": 200
+    },
+    {
+     "pointer": "/studySet/title",
+     "repeat": "\u2708",
+     "count": 200
+    },
+    {
+     "pointer": "/practiceTest/title",
+     "repeat": "\u2708",
+     "count": 200
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "title at 201 code points",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "repeat": "\u2708",
+     "count": 201
+    },
+    {
+     "pointer": "/studySet/title",
+     "repeat": "\u2708",
+     "count": 201
+    },
+    {
+     "pointer": "/practiceTest/title",
+     "repeat": "\u2708",
+     "count": 201
+    }
+   ],
+   "expected": "CONTENT_LIMIT_EXCEEDED"
+  },
+  {
+   "name": "summary at 20,000 astral code points",
+   "patches": [
+    {
+     "pointer": "/studySet/summary",
+     "repeat": "\ud834\udd1e",
+     "count": 20000
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "summary at 20,001 astral code points",
+   "patches": [
+    {
+     "pointer": "/studySet/summary",
+     "repeat": "\ud834\udd1e",
+     "count": 20001
+    }
+   ],
+   "expected": "CONTENT_LIMIT_EXCEEDED"
+  },
+  {
+   "name": "source notes at 5,001 code points",
+   "patches": [
+    {
+     "pointer": "/studySet/sourceNotes",
+     "repeat": "n",
+     "count": 5001
+    }
+   ],
+   "expected": "CONTENT_LIMIT_EXCEEDED"
+  },
+  {
+   "name": "duplicate options under case folding",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/options",
+     "value": [
+      "Zorb",
+      "zorb",
+      "Marrow"
+     ]
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "duplicate options after whitespace normalization",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/options",
+     "value": [
+      "Zorb",
+      "  zorb ",
+      "Marrow"
+     ]
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "seven options",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/options",
+     "value": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g"
+     ]
+    }
+   ],
+   "expected": "CONTENT_LIMIT_EXCEEDED"
+  },
+  {
+   "name": "one option",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/options",
+     "value": [
+      "only"
+     ]
+    },
+    {
+     "pointer": "/practiceTest/questions/0/correctIndex",
+     "value": 0
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "negative correctIndex",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/correctIndex",
+     "value": -1
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "fractional correctIndex",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/correctIndex",
+     "value": 1.5
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "out-of-range correctIndex",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/correctIndex",
+     "value": 3
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "study set title differs",
+   "patches": [
+    {
+     "pointer": "/studySet/title",
+     "value": "Other"
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "practice test title differs",
+   "patches": [
+    {
+     "pointer": "/practiceTest/title",
+     "value": "Other"
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "neither aid",
+   "patches": [
+    {
+     "pointer": "/studySet",
+     "value": null
+    },
+    {
+     "pointer": "/practiceTest",
+     "value": null
+    }
+   ],
+   "expected": "EMPTY_SUBSTANTIVE_CONTENT"
+  },
+  {
+   "name": "notes-only study set and no test",
+   "patches": [
+    {
+     "pointer": "/studySet/summary",
+     "value": ""
+    },
+    {
+     "pointer": "/studySet/flashcards",
+     "value": []
+    },
+    {
+     "pointer": "/studySet/sourceNotes",
+     "value": "Only notes"
+    },
+    {
+     "pointer": "/practiceTest",
+     "value": null
+    }
+   ],
+   "expected": "EMPTY_SUBSTANTIVE_CONTENT"
+  },
+  {
+   "name": "summary-only guide",
+   "patches": [
+    {
+     "pointer": "/studySet/flashcards",
+     "value": []
+    },
+    {
+     "pointer": "/practiceTest",
+     "value": null
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "summary plus notes",
+   "patches": [
+    {
+     "pointer": "/studySet/flashcards",
+     "value": []
+    },
+    {
+     "pointer": "/studySet/sourceNotes",
+     "value": "Notes"
+    },
+    {
+     "pointer": "/practiceTest",
+     "value": null
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "test only",
+   "patches": [
+    {
+     "pointer": "/studySet",
+     "value": null
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "empty study set beside a test",
+   "patches": [
+    {
+     "pointer": "/studySet/summary",
+     "value": ""
+    },
+    {
+     "pointer": "/studySet/flashcards",
+     "value": []
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "present test with no questions",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions",
+     "value": []
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "CRLF and whitespace runs normalize to the aid titles",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "value": "  Letters\r\nand   labels "
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "NBSP and BOM are whitespace to both sides",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "value": "Letters\u00a0and\ufefflabels"
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "U+0085 is not whitespace to either side",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "value": "Letters and labels\u0085"
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "NFC-equivalent options are rejected as duplicates",
+   "patches": [
+    {
+     "pointer": "/practiceTest/questions/0/options",
+     "value": [
+      "Café",
+      "Cafe\u0301"
+     ]
+    }
+   ],
+   "expected": "INVALID_ARGUMENT"
+  },
+  {
+   "name": "200 NFC code point title after composition is accepted",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "repeat": "e\u0301",
+     "count": 200
+    },
+    {
+     "pointer": "/studySet/title",
+     "repeat": "e\u0301",
+     "count": 200
+    },
+    {
+     "pointer": "/practiceTest/title",
+     "repeat": "e\u0301",
+     "count": 200
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "canonically equivalent material and aid titles match",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "value": "Café"
+    },
+    {
+     "pointer": "/studySet/title",
+     "value": "Cafe\u0301"
+    },
+    {
+     "pointer": "/practiceTest/title",
+     "value": "Cafe\u0301"
+    }
+   ],
+   "expected": "saved"
+  },
+  {
+   "name": "combining sequences that do not compose are retained",
+   "patches": [
+    {
+     "pointer": "/material/title",
+     "value": "q\u0307uestion"
+    },
+    {
+     "pointer": "/studySet/title",
+     "value": "q\u0307uestion"
+    },
+    {
+     "pointer": "/practiceTest/title",
+     "value": "q\u0307uestion"
+    }
+   ],
+   "expected": "saved"
+  }
+ ]
+}

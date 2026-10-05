@@ -3,12 +3,15 @@
  *
  * The Rust command opens the native dialog and reads the chosen file with a
  * hard size bound, so the webview never names a path. Nothing is copied into
- * the library and nothing is saved: the returned text goes to the validator in
- * `@/logic/studyPacket`. Not yet connected to any screen (Slice A only).
+ * the library: the returned text goes to the validator in `@/logic/studyPacket`,
+ * and only the validated persistence payload is saved (Slice B, through
+ * `buildImportOperation` and `documents.importStudyPacket`).
  */
 import { invoke } from "@tauri-apps/api/core";
 
 import { isTauri } from "@/data";
+import type { StructuredImportSaveOperation } from "@/data/db";
+import { canonicalPersistenceJson, type ImportPayload } from "@/logic/studyPacket";
 import { DesktopOnlyError } from "./documents";
 
 /** Returned by `pick_study_packet`. `sha256` covers the original bytes, BOM included; it is not the content hash. */
@@ -79,4 +82,57 @@ export async function pickStudyPacket(): Promise<PickedStudyPacket | null> {
   if (result === null) return null;
   if (!isPickedPacket(result)) throw new StudyPacketReadError("file_read_failed");
   return result;
+}
+
+/** Lowercase hex SHA-256 of a string's UTF-8 bytes, computed locally. */
+export async function sha256Hex(text: string): Promise<string> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) throw new Error("Secure hashing is unavailable, so this study packet cannot be saved.");
+  const digest = await subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * The save operation for a validated payload. `materialId` is minted once per
+ * preview and doubles as the operation id, so "Try again" resends the same
+ * identity. Fields are copied one by one: the native boundary refuses any key
+ * it does not know, so nothing beyond the contract may travel.
+ */
+export async function buildImportOperation(
+  payload: ImportPayload,
+  materialId: string,
+): Promise<StructuredImportSaveOperation> {
+  const set = payload.studySet;
+  const test = payload.practiceTest;
+  return {
+    operationId: materialId,
+    materialId,
+    contentHash: await sha256Hex(canonicalPersistenceJson(payload)),
+    material: { title: payload.material.title },
+    studySet: set
+      ? {
+          title: set.title,
+          provider: "import",
+          model: "",
+          summary: set.summary,
+          sections: set.sections.map((section) => ({ heading: section.heading, body: section.body })),
+          flashcards: set.flashcards.map((card) => ({ front: card.front, back: card.back, sourcePage: null })),
+          sourceNotes: set.sourceNotes,
+        }
+      : null,
+    practiceTest: test
+      ? {
+          title: test.title,
+          provider: "import",
+          model: "",
+          questions: test.questions.map((question) => ({
+            question: question.question,
+            options: [...question.options],
+            correctIndex: question.correctIndex,
+            explanation: question.explanation,
+            sourcePage: null,
+          })),
+        }
+      : null,
+  };
 }

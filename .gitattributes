@@ -3,3 +3,7 @@
 scripts/mac-readiness-preflight.mjs text eol=lf
 public/THIRD_PARTY_NOTICES.txt text eol=lf
 .claude/hooks/*.sh text eol=lf
+# Preserve exact bytes of immutable Slice B execution receipts, including
+# trailing blank lines. Source and ordinary documentation checks stay enabled.
+docs/evidence/structured-study-import-slice-b-2026-10-04/gate/*.txt whitespace=-blank-at-eof
+docs/evidence/structured-study-import-slice-b-acceptance-2026-10-04/slice-b-rereview-focused-*.txt whitespace=-blank-at-eof
