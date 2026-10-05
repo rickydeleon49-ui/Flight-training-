@@ -1,0 +1,13 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/data/structuredImport.codex-review.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  17:46:21
+   Duration  149ms (transform 41ms, setup 0ms, import 68ms, tests 2ms, environment 0ms)
+

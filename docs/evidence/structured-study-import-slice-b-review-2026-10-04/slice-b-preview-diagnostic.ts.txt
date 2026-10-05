@@ -1,0 +1,140 @@
+// @vitest-environment jsdom
+/**
+ * Slice B import dialog in the real Study Library, on a real node:sqlite
+ * database. Only the native file picker is replaced. Row IDs from the
+ * accepted preparation §5 (TB-UI-*, TB-REFRESH-01).
+ */
+import { readFileSync } from "node:fs";
+import { createElement as h, useState } from "react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
+
+import { ConfirmDialog } from "@/components/ui";
+import type { NativeImportSaveResult, StructuredImportSaveOperation } from "@/data/db";
+import { StructuredImportSaveError } from "@/data/persistenceErrors";
+import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
+import * as studyPackets from "@/services/studyPackets";
+import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { removeCapabilities } from "@/testing/capabilities";
+
+import { IMPORT_REFRESH_WARNING, IMPORTED_CONTENT_DISCLAIMER, ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
+import { MaterialDetail } from "./MaterialDetail";
+import { StudyLibrary } from "./StudyLibrary";
+
+let db: TestDatabase;
+vi.mock("@/data", () => ({
+  getDatabase: () => Promise.resolve(db),
+  isTauri: () => false,
+}));
+
+// jsdom tests have no file: import.meta.url, so resolve from the project root.
+const PACKET_TEXT = readFileSync(
+  `${process.cwd()}/src/testing/fixtures/study-packets/02-flashcards-and-test.json`,
+  "utf8",
+);
+const picked = (text = PACKET_TEXT): studyPackets.PickedStudyPacket => ({
+  fileName: "letters.json",
+  byteLength: text.length,
+  sha256: "d5101e8c58c70c21943295bb22ec5c88394c8db81aeec402bd8f7836612e1f99",
+  text,
+  bomRemoved: false,
+});
+
+let context: ReturnType<typeof useAppData>;
+let location: ReturnType<typeof useLocation>;
+function Probe() {
+  context = useAppData();
+  location = useLocation();
+  return null;
+}
+
+function Ready() {
+  const { status } = useAppData();
+  return status === "ready"
+    ? h(
+        Routes,
+        null,
+        h(Route, { path: "/study", element: h(StudyLibrary) }),
+        h(Route, { path: "/study/:materialId", element: h(MaterialDetail) }),
+      )
+    : null;
+}
+
+async function openLibrary() {
+  render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/study"] }, h(Probe), h(Ready))));
+  await waitFor(() => expect(context.status).toBe("ready"));
+  await screen.findByRole("heading", { name: "Study Library" });
+}
+
+const importButton = () => screen.getByRole("button", { name: /Import study packet/ });
+const importDialog = () => screen.getByRole("dialog", { name: "Import study packet" });
+const confirmButton = () => screen.getByRole("button", { name: "Import as new material" });
+/** Materials holding imported content (the app also seeds starter materials). */
+const importedCount = async () =>
+  (
+    await db.select(
+      `SELECT id FROM study_materials WHERE id IN (
+         SELECT source_material_id FROM ai_study_sets WHERE provider = 'import'
+         UNION SELECT source_material_id FROM practice_tests WHERE provider = 'import')`,
+    )
+  ).length;
+const totalMaterials = async () => (await db.select("SELECT id FROM study_materials")).length;
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+async function openPreview() {
+  fireEvent.click(importButton());
+  await screen.findByRole("heading", { name: "Letters and labels" });
+}
+
+let saveSpy: MockInstance<(operation: StructuredImportSaveOperation) => Promise<NativeImportSaveResult>>;
+let realSave: (operation: StructuredImportSaveOperation) => Promise<NativeImportSaveResult>;
+
+beforeEach(async () => {
+  localStorage.clear();
+  sessionStorage.clear();
+  db = await createNodeSqliteDatabase();
+  realSave = db.saveStructuredImportAtomically!.bind(db);
+  saveSpy = vi.spyOn(db as Required<TestDatabase>, "saveStructuredImportAtomically");
+  vi.spyOn(studyPackets, "pickStudyPacket").mockResolvedValue(picked());
+});
+
+afterEach(() => {
+  cleanup();
+  db.close();
+  vi.restoreAllMocks();
+  document.body.innerHTML = "";
+});
+
+describe("Codex Slice B confirmation preview diagnostics", () => {
+  beforeEach(() => {
+    HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
+    HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
+  });
+  it("lets the owner inspect packet content before any save", async () => {
+    await openLibrary();
+    await openPreview();
+    expect(saveSpy).not.toHaveBeenCalled();
+    expect(await importedCount()).toBe(0);
+    expect(importDialog().textContent).toContain("Cards and an explicit structured test.");
+    expect(importDialog().textContent).toContain("Which letter follows B?");
+    expect(importDialog().textContent).toContain("In the invented alphabet, which label comes after Plinth 1?");
+  });
+  it("shows each item's unverified reference before discarding it", async () => {
+    await openLibrary();
+    await openPreview();
+    expect(saveSpy).not.toHaveBeenCalled();
+    expect(await importedCount()).toBe(0);
+    expect(importDialog().textContent).toContain("Invented chart");
+    expect(importDialog().textContent).toContain("Invented chart section 2");
+  });
+});

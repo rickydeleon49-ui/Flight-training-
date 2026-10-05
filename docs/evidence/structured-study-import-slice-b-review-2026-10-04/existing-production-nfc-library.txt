@@ -1,0 +1,10 @@
+Read-only command: cargo tree --locked -i unicode-normalization --edges normal
+Working directory: /Users/rickymac/code/Flight-training-pr70-integration/src-tauri
+Exit: 0
+
+unicode-normalization v0.1.25
+└── stringprep v0.1.5
+    └── lopdf v0.42.0
+        └── her-flight-deck v0.5.3
+
+Thus the proposed direct declaration reuses an existing normal production library. No newly resolved package/version is authorized.

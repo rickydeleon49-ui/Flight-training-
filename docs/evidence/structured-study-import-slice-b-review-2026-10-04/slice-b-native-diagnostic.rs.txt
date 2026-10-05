@@ -1,0 +1,17 @@
+
+#[test]
+fn codex_review_nfc_equivalent_choices_are_rejected() {
+    let mut op = operation(ID);
+    op["practiceTest"]["questions"][0]["options"] = json!(["Café", "Cafe\u{301}"]);
+    assert!(matches!(decode_import_operation(&op), Err(ImportSaveCode::InvalidArgument)),
+        "native must reject duplicate choices after NFC, like TypeScript");
+}
+
+#[test]
+fn codex_review_nfc_title_limit_is_applied_after_composition() {
+    let mut op = operation(ID);
+    let title = "e\u{301}".repeat(200);
+    with_title(&mut op, &title);
+    assert!(decode_import_operation(&op).is_ok(),
+        "200 NFC characters must fit the 200-code-point title limit");
+}

@@ -1,0 +1,29 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.07s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-d5e8332e99fb3dcb)
+
+running 2 tests
+test study_packet::save_tests::codex_review_nfc_title_limit_is_applied_after_composition ... FAILED
+test study_packet::save_tests::codex_review_nfc_equivalent_choices_are_rejected ... FAILED
+
+failures:
+
+---- study_packet::save_tests::codex_review_nfc_title_limit_is_applied_after_composition stdout ----
+
+thread 'study_packet::save_tests::codex_review_nfc_title_limit_is_applied_after_composition' (403184) panicked at src/study_packet_save_tests.rs:1087:5:
+200 NFC characters must fit the 200-code-point title limit
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- study_packet::save_tests::codex_review_nfc_equivalent_choices_are_rejected stdout ----
+
+thread 'study_packet::save_tests::codex_review_nfc_equivalent_choices_are_rejected' (403183) panicked at src/study_packet_save_tests.rs:1078:5:
+native must reject duplicate choices after NFC, like TypeScript
+
+
+failures:
+    study_packet::save_tests::codex_review_nfc_equivalent_choices_are_rejected
+    study_packet::save_tests::codex_review_nfc_title_limit_is_applied_after_composition
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 337 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`
