@@ -2,7 +2,7 @@
 
 Baseline main: 1f5ea3e4db6e66b8c1a7dfee236d43e0a3cb22b6. Submitted path: /Users/rickymac/code/Flight-training-pr70-integration/docs/M2_PRACTICE_SESSION_SCOPE_2026-10-04.md.
 
-submitted-scope.md.txt is a byte-identical frozen copy (350 lines), SHA-256 b6f036757d91b24ae971d47a00c05bcd1c28b9c3437e9349517a01ad8418717c. The local draft remains uncommitted and unchanged.
+submitted-scope.md.txt is a byte-identical frozen copy, SHA-256 b6f036757d91b24ae971d47a00c05bcd1c28b9c3437e9349517a01ad8418717c. The local draft remains uncommitted and unchanged.
 
 schema-observations.json records an independent Python sqlite3 :memory: execution of the proposed SQL with foreign keys enabled, using only synthetic records. It shows:
 - two active versions for one material;

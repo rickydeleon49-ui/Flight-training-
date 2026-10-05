@@ -5,7 +5,7 @@
 ## Reviewed identity and evidence
 
 - Checkout: `/Users/rickymac/code/Flight-training-pr70-integration`, detached accepted main `1f5ea3e4db6e66b8c1a7dfee236d43e0a3cb22b6`.
-- Sole working change: untracked `docs/M2_PRACTICE_SESSION_SCOPE_2026-10-04.md`, 350 lines, SHA-256 `b6f036757d91b24ae971d47a00c05bcd1c28b9c3437e9349517a01ad8418717c`.
+- Sole working change: untracked `docs/M2_PRACTICE_SESSION_SCOPE_2026-10-04.md`, SHA-256 `b6f036757d91b24ae971d47a00c05bcd1c28b9c3437e9349517a01ad8418717c`.
 - [Frozen submitted proposal and synthetic observations](evidence/m2-practice-session-scope-review-2026-10-04/README.md) are shared for other agents. The original proposal remains untouched and uncommitted in its checkout.
 - Reviewed the document against PracticeTestPanel, Gemini and Slice B persistence, migration registration and backup validation. Ran only an in-memory SQLite diagnostic of the proposed SQL. No application, migration, full test matrix or owner data was used.
 
