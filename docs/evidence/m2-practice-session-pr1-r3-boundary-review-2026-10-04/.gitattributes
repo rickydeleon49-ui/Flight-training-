@@ -1,0 +1,5 @@
+# Preserve exact frozen receipts, scoped to this evidence pack.
+*.txt whitespace=-blank-at-eof
+submitted-validation/corrections/*.txt whitespace=-blank-at-eof
+submitted-validation/gate/*.txt whitespace=-blank-at-eof
+submitted-validation/*.md whitespace=-blank-at-eol
