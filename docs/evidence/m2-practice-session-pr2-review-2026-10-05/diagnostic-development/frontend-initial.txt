@@ -1,0 +1,879 @@
+$ npx vitest run src/pages/StudyLibrary/codex-pr2-review.test.ts src/pages/StudyLibrary/PracticeSessionPR2.test.ts src/data/practiceSessionContract.test.ts src/data/practiceStartupValidation.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:12702) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12703) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12701) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Exception in PromiseRejectCallback:
+/Users/rickymac/code/Flight-training-pr70-integration/src/pages/StudyLibrary/codex-pr2-review.test.ts:144
+      return read(id);
+
+RangeError: Maximum call stack size exceeded
+
+Exception in PromiseRejectCallback:
+file:///Users/rickymac/code/Flight-training-pr70-integration/node_modules/@vitest/spy/dist/index.js:361
+					returnValue.then((settledValue) => {
+					            ^
+
+RangeError: Maximum call stack size exceeded
+
+(node:12700) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts (10 tests | 9 failed) 2635ms
+     × [R1] feedback is withheld until the response save is confirmed 141ms
+     × [R2] Continue is disabled while a mutation outcome is unknown 88ms
+     × [R1] a failed completion exposes retry and does not claim completion 79ms
+     × [R2] a successful refresh retry clears the refresh failure and unlocks editing 1070ms
+     × [R1] a repository read failure cannot expose editable volatile practice 23ms
+     × [R1] displayed questions come from the frozen repository version 67ms
+     × [R3] a late material A load cannot bind material B answers to A 1081ms
+     × [R3] late group A results cannot label group B destructive confirmation 43ms
+     × [R4] lost erase acknowledgement retries the same identity and preserves later progress 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] feedback is withheld until the response save is confirmed
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:83:29
+     81|   gate.resolve();
+     82|   await waitFor(async () => expect(await db.select('SELECT id FROM pra…
+     83|   expect(prematureFeedback).toBe(false);
+       |                             ^
+     84|  });
+     85|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] Continue is disabled while a mutation outcome is unknown
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:100:23
+     98|   gate.resolve();
+     99|   await waitFor(async () => expect(await db.select('SELECT id FROM pra…
+    100|   expect(canContinue).toBe(false);
+       |                       ^
+    101|  });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a failed completion exposes retry and does not claim completion
+AssertionError: expected { completedVisible: true, …(2) } to deeply equal { completedVisible: false, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "completedVisible": false,
+-   "retryVisible": true,
++   "completedVisible": true,
++   "retryVisible": false,
+    "storedStatus": "in_progress",
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:110:174
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] a successful refresh retry clears the refresh failure and unlocks editing
+TestingLibraryElementError: Unable to find role="button" and name "Retry refresh"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-labelledby[39m=[32m"practice-test-title"[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Question selector"[39m
+        [33mclass[39m=[32m"practice-nav-pills"[39m
+        [33mrole[39m=[32m"navigation"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-current[39m=[32m"true"[39m
+          [33maria-label[39m=[32m"Question 1 (Answered)"[39m
+          [33mclass[39m=[32m"practice-pill practice-pill--current"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Question 2"[39m
+          [33mclass[39m=[32m"practice-pill"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--between"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"ai-guide__title"[39m
+          [33mid[39m=[32m"practice-test-title"[39m
+        [36m>[39m
+          [0mQuestion [0m
+          [0m1[0m
+          [0m of [0m
+          [0m2[0m
+        [36m</h3>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--study"[39m
+        [36m>[39m
+          [0mCheck source[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"small ai-copy"[39m
+      [36m>[39m
+        [0mFrozen refresh question 1[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Answer choices"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+        [33mrole[39m=[32m"radiogroup"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-checked[39m=[32m"true"[39m
+          [33maria-label[39m=[32m"First (Correct answer)"[39m
+          [33mclass[39m=[32m"practice-option practice-option--correct"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mrole[39m=[32m"radio"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mFirst[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-checked[39m=[32m"false"[39m
+          [33maria-label[39m=[32m"Second"[39m
+          [33mclass[39m=[32m"practice-option practice-option--default"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mrole[39m=[32m"radio"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSecond[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Question result"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+        [33mrole[39m=[32m"region"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap row--gap-2"[39m
+          [33mstyle[39m=[32m"align-items: center;"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--complete"[39m
+          [36m>[39m
+            [0mCorrect[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost button--small"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChange answer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny dim ai-copy"[39m
+        [36m>[39m
+          [0mConfirmed refresh explanation[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between"[39m
+          [33mstyle[39m=[32m"margin-top: var(--space-2);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--primary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mContinue[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mComplete test now ([0m
+            [0m1[0m
+            [0m unanswered)[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<dialog[39m
+        [33maria-labelledby[39m=[32m"_r_3_"[39m
+        [33mclass[39m=[32m"dialog dialog--narrow"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dialog__header"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"dialog__title"[39m
+              [33mid[39m=[32m"_r_3_"[39m
+            [36m>[39m
+              [0mAbandon this practice attempt?[0m
+            [36m</h2>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"icon-button"[39m
+            [33mtitle[39m=[32m"Close"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"18"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"18"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mClose[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dialog__body"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"muted"[39m
+          [36m>[39m
+            [0mThis will mark the current in-progress attempt as abandoned. Completed attempts remain in your history.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dialog__footer"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAbandon attempt[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</dialog>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-labelledby[39m=[32m"practice-test-title"[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Question selector"[39m
+        [33mclass[39m=[32m"practice-nav-pills"[39m
+        [33mrole[39m=[32m"navigation"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-current[39m=[32m"true"[39m
+          [33maria-label[39m=[32m"Question 1 (Answered)"[39m
+          [33mclass[39m=[32m"practice-pill practice-pill--current"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Question 2"[39m
+          [33mclass[39m=[32m"practice-pill"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--between"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"ai-guide__title"[39m
+          [33mid[39m=[32m"practice-test-title"[39m
+        [36m>[39m
+          [0mQuestion [0m
+          [0m1[0m
+          [0m of [0m
+          [0m2[0m
+        [36m</h3>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--study"[39m
+        [36m>[39m
+          [0mCheck source[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"small ai-copy"[39m
+      [36m>[39m
+        [0mFrozen refresh question 1[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Answer choices"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+        [33mrole[39m=[32m"radiogroup"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-checked[39m=[32m"true"[39m
+          [33maria-label[39m=[32m"First (Correct answer)"[39m
+          [33mclass[39m=[32m"practice-option practice-option--correct"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mrole[39m=[32m"radio"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mFirst[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-checked[39m=[32m"false"[39m
+          [33maria-label[39m=[32m"Second"[39m
+          [33mclass[39m=[32m"practice-option practice-option--default"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mrole[39m=[32m"radio"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSecond[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Question result"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+        [33mrole[39m=[32m"region"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap row--gap-2"[39m
+          [33mstyle[39m=[32m"align-items: center;"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--complete"[39m
+          [36m>[39m
+            [0mCorrect[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost button--small"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChange answer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny dim ai-copy"[39m
+        [36m>[39m
+          [0mConfirmed refresh explanation[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between"[39m
+          [33mstyle[39m=[32m"margin-top: var(--space-2);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--primary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mContinue[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mComplete test now ([0m
+            [0m1[0m
+            [0m unanswered)[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<dialog[39m
+        [33maria-labelledby[39m=[32m"_r_3_"[39m
+        [33mclass[39m=[32m"dialog dialog--narrow"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dialog__header"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"dialog__title"[39m
+              [33mid[39m=[32m"_r_3_"[39m
+            [36m>[39m
+              [0mAbandon this practice attempt?[0m
+            [36m</h2>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"icon-button"[39m
+            [33mtitle[39m=[32m"Close"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"18"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"18"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mClose[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dialog__body"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"muted"[39m
+          [36m>[39m
+            [0mThis will mark the current in-progress attempt as abandoned. Completed attempts remain in your history.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dialog__footer"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAbandon attempt[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</dialog>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:128:32
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a repository read failure cannot expose editable volatile practice
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:138:81
+    136|   render(wrap(h(PracticeTestPanel, { practiceTest: test })));
+    137|   await act(async () => { await Promise.resolve(); });
+    138|   expect(screen.queryAllByRole('radio').some(r => !r.hasAttribute('dis…
+       |                                                                                 ^
+    139|  });
+    140|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] displayed questions come from the frozen repository version
+AssertionError: expected null not to be null
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:147:69
+    145|   ] });
+    146|   await panel(stale);
+    147|   expect(screen.queryByText('Current frozen version question')).not.to…
+       |                                                                     ^
+    148|  });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] a late material A load cannot bind material B answers to A
+AssertionError: expected [] to have a length of 1 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"practice-test-title"[39m
+        [33mclass[39m=[32m"stack stack--3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"stack stack--2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ai-disclaimer"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.6"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 3.8 21 19.5H3z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 10v4.2M12 17.2h.01"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"tiny"[39m
+            [36m>[39m
+              [0mThe requested resource was not found.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--secondary button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRetry[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Question selector"[39m
+          [33mclass[39m=[32m"practice-nav-pills"[39m
+          [33mrole[39m=[32m"navigation"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-current[39m=[32m"true"[39m
+            [33maria-label[39m=[32m"Question 1 (Answered)"[39m
+            [33mclass[39m=[32m"practice-pill practice-pill--current"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Question 2"[39m
+            [33mclass[39m=[32m"practice-pill"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m2[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"ai-guide__title"[39m
+            [33mid[39m=[32m"practice-test-title"[39m
+          [36m>[39m
+            [0mQuestion [0m
+            [0m1[0m
+            [0m of [0m
+            [0m2[0m
+          [36m</h3>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--study"[39m
+          [36m>[39m
+            [0mCheck source[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small ai-copy"[39m
+        [36m>[39m
+          [0mFrozen route-B question 1[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Answer choices"[39m
+          [33mclass[39m=[32m"stack stack--2"[39m
+          [33mrole[39m=[32m"radiogroup"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-checked[39m=[32m"true"[39m
+            [33maria-label[39m=[32m"First (Correct answer)"[39m
+            [33mclass[39m=[32m"practice-option practice-option--correct"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mrole[39m=[32m"radio"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mFirst[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-checked[39m=[32m"false"[39m
+            [33maria-label[39m=[32m"Second"[39m
+            [33mclass[39m=[32m"practice-option practice-option--default"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mrole[39m=[32m"radio"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mSecond[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Question result"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"stack stack--2"[39m
+          [33mrole[39m=[32m"region"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row row--wrap row--gap-2"[39m
+            [33mstyle[39m=[32m"align-items: center;"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--complete"[39m
+            [36m>[39m
+              [0mCorrect[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--ghost button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mChange answer[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"tiny dim ai-copy"[39m
+          [36m>[39m
+            [0mConfirmed route-B explanation[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row row--between"[39m
+            [33mstyle[39m=[32m"margin-top: var(--space-2);"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--primary"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mContinue[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--secondary button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mComplete test now ([0m
+              [0m1[0m
+              [0m unanswered)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<dialog[39m
+          [33maria-labelledby[39m=[32m"_r_6_"[39m
+          [33mclass[39m=[32m"dialog dialog--narrow"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dialog__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"dialog__title"[39m
+                [33mid[39m=[32m"_r_6_"[39m
+              [36m>[39m
+                [0mAbandon this practice attempt?[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"icon-button"[39m
+              [33mtitle[39m=[32m"Close"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+              [36m>[39m
+                [0mClose[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dialog__body"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"muted"[39m
+            [36m>[39m
+              [0mThis will mark the current in-progress attempt as abandoned. Completed attempts remain in your history.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dialog__footer"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--secondary"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mCancel[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--danger"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAbandon attempt[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</dialog>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:163:90
+    161|   await act(async () => { await Promise.resolve(); });
+    162|   fireEvent.click(screen.getAllByRole('radio')[0]!);
+    163|   await waitFor(async () => expect(await db.select('SELECT id FROM pra…
+       |                                                                                          ^
+    164|   const result = await db.select<{ source_material_id: string }>('SELE…
+    165|   expect(result).toEqual([{ source_material_id: 'route-B' }]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] late group A results cannot label group B destructive confirmation
+AssertionError: expected null not to be null
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:179:77
+    177|   gate.resolve(await read('history-A'));
+    178|   await act(async () => { await Promise.resolve(); });
+    179|   expect(screen.queryByRole('heading', { name: 'Material history-B' })…
+       |                                                                             ^
+    180|  });
+    181|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+AssertionError: expected { sameOperation: false, …(1) } to deeply equal { sameOperation: true, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "remainingAttempts": 1,
+-   "sameOperation": true,
++   "remainingAttempts": 0,
++   "sameOperation": false,
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:201:99
+    199|   await act(async () => { await Promise.resolve(); });
+    200|   const remaining = await db.select('SELECT id FROM practice_attempts'…
+    201|   expect({ sameOperation: identities[0] === identities[1], remainingAt…
+       |                                                                                                   ^
+    202|  });
+    203|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+RangeError: Maximum call stack size exceeded
+ ❯ Object.getCurrentAttempt node_modules/@vitest/spy/dist/index.js:287:41
+ ❯ Object.<anonymous> src/pages/StudyLibrary/codex-pr2-review.test.ts:119:11
+    117|   vi.spyOn(repos.practiceSessions, 'getCurrentAttempt').mockImplementa…
+    118|    if (failNext) { failNext = false; throw Error('Synthetic read failu…
+    119|    return read(id);
+       |           ^
+    120|   });
+    121|   const save = repos.practiceSessions.saveSessionAction.bind(repos.pra…
+ ❯ Object.getCurrentAttempt node_modules/@vitest/spy/dist/index.js:332:34
+ ❯ Object.<anonymous> src/pages/StudyLibrary/codex-pr2-review.test.ts:119:11
+ ❯ Object.getCurrentAttempt node_modules/@vitest/spy/dist/index.js:332:34
+ ❯ Object.<anonymous> src/pages/StudyLibrary/codex-pr2-review.test.ts:119:11
+ ❯ Object.getCurrentAttempt node_modules/@vitest/spy/dist/index.js:332:34
+ ❯ Object.<anonymous> src/pages/StudyLibrary/codex-pr2-review.test.ts:119:11
+ ❯ Object.getCurrentAttempt node_modules/@vitest/spy/dist/index.js:332:34
+ ❯ Object.<anonymous> src/pages/StudyLibrary/codex-pr2-review.test.ts:119:11
+
+This error originated in "src/pages/StudyLibrary/codex-pr2-review.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "[R2] a successful refresh retry clears the refresh failure and unlocks editing". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  9 failed | 46 passed (55)
+     Errors  1 error
+   Start at  22:10:56
+   Duration  3.32s (transform 743ms, setup 0ms, import 1.11s, tests 4.71s, environment 535ms)
+

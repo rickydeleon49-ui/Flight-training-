@@ -1,0 +1,12 @@
+$ cargo test --manifest-path src-tauri/Cargo.toml --locked --lib req_erase_history -- --test-threads=1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 4 tests
+test practice_sessions::tests::req_erase_history_atomic_pruning_and_tombstones ... ok
+test practice_sessions::tests::req_erase_history_restart_refusal_and_backup_validation ... ok
+test practice_sessions::tests::req_erase_history_unrelated_isolation_and_safe_new_practice ... ok
+test practice_sessions::tests::req_erase_history_validation_checks ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 392 filtered out; finished in 0.17s
+

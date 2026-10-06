@@ -1,0 +1,13 @@
+# M2 PR2 independent review evidence
+
+Application source remains uncommitted/unpushed in the agreed implementation checkout. All 23 entries of the submitter's repository-relative source/status manifest matched before and after review. `source-hashes.json` uses repository-relative paths; it is not an evidence manifest. `submitted-changes.json` freezes the tracked diff plus both new source files for other agents. Do not apply it over a dirty checkout.
+
+`frontend.txt`: independent actual-component/disposable Node SQLite review run, exit1; 45 existing focused tests plus one same-ID erasure positive control pass; nine new assertions fail. Four blocking findings group eight assertions. The panel prop-change test is an additional component-contract boundary; production MaterialDetail already keys its page by material ID, so that test is not evidence of cross-material corruption through ordinary production navigation. The genuine same-component history route race is independently reproduced.
+
+`native.txt`: four existing native erase-history tests pass, exit0. `results.json` records observations and source preservation. Submitted full gates (2,511 frontend passes/4 skips, 390 Rust passes/6 ignored and other checks) are preserved under `submitted-validation/`; they were not rerun or relabeled independent. The submitted README's independent-verification wording and some named-test mappings are inaccurate; the correction prompt requires an accurate replacement report without changing original receipts.
+
+`diagnostic-development/frontend-initial.txt` preserves the initial review-harness attempt. A test bound an existing spy and then replaced it, producing recursion; Codex corrected the diagnostic delegate and strengthened the material-switch fixture with an existing A attempt. The final frontend log has zero runtime errors. Native checks were not repeated for this harness-only correction.
+
+`codex-pr2-review.test.ts` is the final diagnostic source. `run_review.py` records the original temporary-test/cleanup procedure and toolchain; adapt its `/private/tmp` artifact input paths to this pack before replay. Copy only the diagnostic into `src/pages/StudyLibrary/codex-pr2-review.test.ts`, run the exact frontend command in the receipt, and remove it in finally. The native command needs no source injection. No app launch, real user data/store, provider call, installed test or release work occurred.
+
+`SHA256SUMS` hashes all evidence bytes relative to this directory, excluding itself. Submitted source `SHA256SUMS` remains byte-preserved with its distinct repository-root interpretation. Earlier PR1 work and migrations remain untouched.

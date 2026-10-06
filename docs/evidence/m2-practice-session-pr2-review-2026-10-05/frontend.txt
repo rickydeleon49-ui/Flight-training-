@@ -1,0 +1,198 @@
+$ npx vitest run src/pages/StudyLibrary/codex-pr2-review.test.ts src/pages/StudyLibrary/PracticeSessionPR2.test.ts src/data/practiceSessionContract.test.ts src/data/practiceStartupValidation.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:12823) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12821) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12824) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts (10 tests | 9 failed) 599ms
+     × [R1] feedback is withheld until the response save is confirmed 142ms
+     × [R2] Continue is disabled while a mutation outcome is unknown 85ms
+     × [R1] a failed completion exposes retry and does not claim completion 78ms
+     × [R2] a successful refresh retry clears the refresh failure and unlocks editing 93ms
+     × [R1] a repository read failure cannot expose editable volatile practice 9ms
+     × [R1] displayed questions come from the frozen repository version 61ms
+     × [R3] a late material A load cannot bind material B answers to A 71ms
+     × [R3] late group A results cannot label group B destructive confirmation 22ms
+     × [R4] lost erase acknowledgement retries the same identity and preserves later progress 30ms
+(node:12822) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] feedback is withheld until the response save is confirmed
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:83:29
+     81|   gate.resolve();
+     82|   await waitFor(async () => expect(await db.select('SELECT id FROM pra…
+     83|   expect(prematureFeedback).toBe(false);
+       |                             ^
+     84|  });
+     85|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] Continue is disabled while a mutation outcome is unknown
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:100:23
+     98|   gate.resolve();
+     99|   await waitFor(async () => expect(await db.select('SELECT id FROM pra…
+    100|   expect(canContinue).toBe(false);
+       |                       ^
+    101|  });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a failed completion exposes retry and does not claim completion
+AssertionError: expected { completedVisible: true, …(2) } to deeply equal { completedVisible: false, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "completedVisible": false,
+-   "retryVisible": true,
++   "completedVisible": true,
++   "retryVisible": false,
+    "storedStatus": "in_progress",
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:110:174
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] a successful refresh retry clears the refresh failure and unlocks editing
+AssertionError: expected { errorRemains: true, …(1) } to deeply equal { errorRemains: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "changeDisabled": false,
+-   "errorRemains": false,
++   "changeDisabled": true,
++   "errorRemains": true,
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:130:174
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a repository read failure cannot expose editable volatile practice
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:138:81
+    136|   render(wrap(h(PracticeTestPanel, { practiceTest: test })));
+    137|   await act(async () => { await Promise.resolve(); });
+    138|   expect(screen.queryAllByRole('radio').some(r => !r.hasAttribute('dis…
+       |                                                                                 ^
+    139|  });
+    140|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] displayed questions come from the frozen repository version
+AssertionError: expected null not to be null
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:147:69
+    145|   ] });
+    146|   await panel(stale);
+    147|   expect(screen.queryByText('Current frozen version question')).not.to…
+       |                                                                     ^
+    148|  });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] a late material A load cannot bind material B answers to A
+AssertionError: expected [ { source_material_id: 'route-A' } ] to deeply equal [ { source_material_id: 'route-B' } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "source_material_id": "route-B",
++     "source_material_id": "route-A",
+    },
+  ]
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:166:18
+    164|   await waitFor(async () => expect(await db.select('SELECT id FROM pra…
+    165|   const result = await db.select<{ source_material_id: string }>('SELE…
+    166|   expect(result).toEqual([{ source_material_id: 'route-B' }]);
+       |                  ^
+    167|  });
+    168|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] late group A results cannot label group B destructive confirmation
+AssertionError: expected null not to be null
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:180:77
+    178|   gate.resolve(await read('history-A'));
+    179|   await act(async () => { await Promise.resolve(); });
+    180|   expect(screen.queryByRole('heading', { name: 'Material history-B' })…
+       |                                                                             ^
+    181|  });
+    182|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-review.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+AssertionError: expected { sameOperation: false, …(1) } to deeply equal { sameOperation: true, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "remainingAttempts": 1,
+-   "sameOperation": true,
++   "remainingAttempts": 0,
++   "sameOperation": false,
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-review.test.ts:202:99
+    200|   await act(async () => { await Promise.resolve(); });
+    201|   const remaining = await db.select('SELECT id FROM practice_attempts'…
+    202|   expect({ sameOperation: identities[0] === identities[1], remainingAt…
+       |                                                                                                   ^
+    203|  });
+    204|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  9 failed | 46 passed (55)
+   Start at  22:12:04
+   Duration  1.32s (transform 699ms, setup 0ms, import 1.06s, tests 2.67s, environment 555ms)
+
