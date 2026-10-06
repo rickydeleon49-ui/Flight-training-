@@ -1,0 +1,25 @@
+{
+  "frontend": {
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/pages/StudyLibrary/codex-pr2-review.test.ts",
+      "src/pages/StudyLibrary/PracticeSessionPR2.test.ts",
+      "src/data/practiceSessionContract.test.ts",
+      "src/data/practiceStartupValidation.test.ts"
+    ],
+    "exit": 1,
+    "passed": 46,
+    "failed": 9,
+    "existing_focused_passed": 45,
+    "control_passed": 1,
+    "runtime_errors": 0
+  },
+  "source_unchanged": true,
+  "native": {
+    "exit": 0,
+    "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --lib req_erase_history -- --test-threads=1",
+    "passed": 4
+  }
+}
