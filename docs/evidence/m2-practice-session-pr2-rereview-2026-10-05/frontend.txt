@@ -1,0 +1,280 @@
+$ npx vitest run src/pages/StudyLibrary/codex-pr2-rereview.test.ts src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts src/pages/StudyLibrary/PracticeSessionPR2.test.ts src/pages/StudyLibrary/PracticeTestPanel.test.ts src/pages/StudyLibrary/MaterialDetailOffline.test.ts src/data/practiceSessionContract.test.ts src/data/practiceStartupValidation.test.ts --reporter=verbose
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:17040) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-01: starts or resumes practice attempt and enforces single unfinished attempt 29ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-02 & REQ-03: records response, updates revisions, keeps I don't know separate, computes correctness 20ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-04 & REQ-05: enforces strict validation and rejects invalid choice bounds 8ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-06: prevents stale revisions on responses and completion 7ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-07: completes attempt, computes score and tallies, and makes completed attempts immutable 12ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-08: retake attempt abandons current attempt with expectedAttemptId and creates fresh attempt 18ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-09: operation receipt idempotency: identical retry returns original result, changed reuse conflicts 9ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-10: legacy conversion converts up to 200 questions without truncation, quarantines corrupt rows, and avoids duplicate conversion 45ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-11: practice test removal prunes unfinished attempts and receipts, preserving completed review history 7ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-12: material deletion cascades: completed history remains addressable, unfinished records pruned 7ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-13: sqlJsDb browser storage refusal rolls back live state and preserves last stored bytes 129ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > conversion failure must prevent adapter exposure (M2P1-R1) 37ms
+(node:17042) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17043) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17037) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > unset marker with conflicting version must refuse startup (M2P1-R1) 47ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > matching version must repair unset marker without duplicating (M2P1-R1) 40ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > completion derives score from frozen key, not stored correctness (M2P1-R2) 13ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > same-choice no-op returns original answered timestamp (M2P1-R2) 15ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > unsupported regeneration driver refuses before any write (M2P1-R4) 13ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > unsupported removal driver refuses before any write (M2P1-R4) 15ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > renders the first question with options in radiogroup 94ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] feedback is withheld until the response save is confirmed 94ms
+(node:17038) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17041) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > canonical content hashing produces identical hash regardless of key order (shared hash parity) 13ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > string attemptId alone is insufficient and rejects incomplete wire results (M2P1-R3) 15ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > validates action-specific wire shapes across all action types (M2P1-R3) 6ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > invokePracticeTestSave and invokeRemovePracticeTest adhere to unit-return contract (M2P1-R3) 6ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > PR2: atomic history erasure prunes attempts, responses, inactive versions, and tombstones receipts 12ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > reveals explanation and marks answer as correct when choosing correct option 58ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > reveals explanation and marks answer as incorrect when choosing wrong option 34ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] feedback is withheld until the response save is confirmed 109ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] Continue is disabled while a mutation outcome is unknown 75ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] Continue is disabled while a mutation outcome is unknown 47ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a failed completion exposes retry and does not claim completion 45ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > PR2: atomic history erasure on sqlJsDb with storage failure rolls back cleanly 85ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > PR2: sqlJsDb unrelated-history isolation and restart refusal of late old replay 102ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > navigates through questions and calculates final score, allowing retake 92ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a failed completion exposes retry and does not claim completion 46ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] a successful refresh retry clears the refresh failure and unlocks editing 52ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a repository read failure cannot expose editable volatile practice 15ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] displayed questions come from the frozen repository version 15ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] a successful refresh retry clears the refresh failure and unlocks editing 75ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a repository read failure cannot expose editable volatile practice 10ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] displayed questions come from the frozen repository version 13ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] a late material A load cannot bind material B answers to A 28ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] late group A results cannot label group B destructive confirmation 30ms
+ ✓ src/data/practiceStartupValidation.test.ts > shared validation contract on the real sql.js engine > matches every native accept/refuse outcome 653ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > valid reopen control: a saved session reopens with a usable adapter 92ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > resumes in-progress attempt at nextUnansweredOrdinal across remount 183ms
+stderr | src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+stderr | src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress 48ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [control] same-identity erasure replay preserves a newly started attempt 8ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > supports keyboard navigation with arrows, Home, End, Space and Enter 43ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > moves focus to Continue on mouse click, and to first option of next question on Continue 37ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > moves focus to Continue on Space, and to See score after final question answer selection 51ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] a late material A load cannot bind material B answers to A 17ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] late group A results cannot label group B destructive confirmation 25ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress 41ms
+ ✓ src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [control] same-identity erasure replay preserves a newly started attempt 8ms
+stderr | src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] rapid confirmation uses a synchronous lock and one erase identity
+No routes matched location "/study/history" 
+
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > moves focus to See score when final question is selected via mouse click or Space 49ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles 'I don’t know' distinctly from incorrect and unanswered 92ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > allows deliberate answer changes while attempt remains in-progress 49ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > promoted browser-startup regression: reopen refuses persisted 99 total / 88 answered 82ms
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] rapid confirmation uses a synchronous lock and one erase identity 29ms
+   → expected 2 to be 1 // Object.is equality
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R5] initial current-attempt read keeps all answer controls blocked 13ms
+   → expected true to be false // Object.is equality
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R6] failed changed answer does not mix draft selection with saved correctness 32ms
+   → expected { draftChecked: 'true', …(2) } to deeply equal { draftChecked: 'true', …(2) }
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R6] uncertain completion blocks fresh completion identity 30ms
+   → expected { enabled: true, calls: 2 } to deeply equal { enabled: false, calls: 1 }
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > refuses a stored database whose schema lost a foreign key definition 66ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > supports skipping and navigation pills across questions 83ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles retake by abandoning previous attempt and starting fresh 41ms
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R7] failed retake from result exposes same-ID retry in result view 25ms
+   → expected { alert: false, retry: false } to deeply equal { alert: true, retry: true }
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R8] acknowledged response followed by null refresh clears the old attempt 50ms
+   → expected { staleFeedback: true, …(1) } to deeply equal { staleFeedback: false, …(1) }
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] an erase acknowledgement from group A cannot navigate away from group B 47ms
+   → expected null not to be null
+ × src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] changing only history key revalidates attempt membership 21ms
+   → expected null not to be null
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content without a usable Gemini connection > keeps the saved guide, cards and practice test usable with Gemini disconnected 441ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles in-progress abandon with truthful confirmation 62ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > renders quarantined legacy notice on malformed test without start button 64ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > keeps completed history reachable after source material deletion 30ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > conversion plus validation is atomic: a failure stores nothing, and a repaired retry converts once 138ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > storage refusing the prepared database fails startup, keeps the previous bytes, and a retry converts once 63ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > erases practice history atomically with truthful confirmation modal 43ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles transient mutation error with same-operationId retry 28ms
+(node:17039) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > an unchanged database reopens without needing to store again 44ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > a practice write whose recovery fails disables the adapter 45ms
+ ✓ src/data/practiceStartupValidation.test.ts > node:sqlite test driver initialization > refuses persisted false progress, and a valid file reopens 42ms
+ ✓ src/data/practiceStartupValidation.test.ts > node:sqlite test driver initialization > rolls back conversion when validation fails, then a repaired retry converts once 36ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content without a usable Gemini connection > keeps saved content usable while the Gemini status is still loading 250ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content without a usable Gemini connection > keeps saved content usable when the Gemini status check fails 200ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > explains a missing PDF and keeps saved content, with regeneration disabled 198ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > explains a replaced unsupported source and keeps saved content 186ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > explains a replaced oversized source and keeps saved content 184ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > keeps saved content when the material no longer has a file attached 179ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > offers regeneration for both saved items only when connected and the file is eligible 180ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > keeps the old guide visible during and after a failed regeneration 123ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > keeps the old practice test usable during and after a failed regeneration 82ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > keeps another material's saved content usable while a generation runs elsewhere, and a late result changes nothing 311ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] rapid confirmation uses a synchronous lock and one erase identity
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:229:17
+    227|   await waitFor(async () => expect(await repos.practiceSessions.getCom…
+    228|   await act(async () => { await Promise.resolve(); });
+    229|   expect(count).toBe(1);
+       |                 ^
+    230|  });
+    231|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R5] initial current-attempt read keeps all answer controls blocked
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:242:19
+    240|   gate.resolve(await read('initial-held'));
+    241|   await act(async () => { await Promise.resolve(); });
+    242|   expect(enabled).toBe(false);
+       |                   ^
+    243|  });
+    244|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R6] failed changed answer does not mix draft selection with saved correctness
+AssertionError: expected { draftChecked: 'true', …(2) } to deeply equal { draftChecked: 'true', …(2) }
+
+- Expected
++ Received
+
+  {
+    "draftChecked": "true",
+-   "feedbackVisible": false,
++   "feedbackVisible": true,
+    "storedChoice": 0,
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:254:219
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R6] uncertain completion blocks fresh completion identity
+AssertionError: expected { enabled: true, calls: 2 } to deeply equal { enabled: false, calls: 1 }
+
+- Expected
++ Received
+
+  {
+-   "calls": 1,
+-   "enabled": false,
++   "calls": 2,
++   "enabled": true,
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:268:46
+    266|   fireEvent.click(completeButton);
+    267|   await act(async () => { await Promise.resolve(); });
+    268|   expect({ enabled, calls: actions.length }).toEqual({ enabled: false,…
+       |                                              ^
+    269|  });
+    270|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R7] failed retake from result exposes same-ID retry in result view
+AssertionError: expected { alert: false, retry: false } to deeply equal { alert: true, retry: true }
+
+- Expected
++ Received
+
+  {
+-   "alert": true,
+-   "retry": true,
++   "alert": false,
++   "retry": false,
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:279:129
+    277|   fireEvent.click(screen.getByRole('button', { name: 'Retake this test…
+    278|   await act(async () => { await Promise.resolve(); });
+    279|   expect({ alert: !!screen.queryByText('Synthetic retake refusal'), re…
+       |                                                                                                                                 ^
+    280|  });
+    281|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R8] acknowledged response followed by null refresh clears the old attempt
+AssertionError: expected { staleFeedback: true, …(1) } to deeply equal { staleFeedback: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "staleAbandon": false,
+-   "staleFeedback": false,
++   "staleAbandon": true,
++   "staleFeedback": true,
+  }
+
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:297:165
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] an erase acknowledgement from group A cannot navigate away from group B
+AssertionError: expected null not to be null
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:317:75
+    315|   await waitFor(async () => expect(await repos.practiceSessions.getCom…
+    316|   await act(async () => { await Promise.resolve(); });
+    317|   expect(screen.queryByRole('heading', { name: 'Material erase-B' })).…
+       |                                                                           ^
+    318|  });
+    319|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-rereview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] changing only history key revalidates attempt membership
+AssertionError: expected null not to be null
+ ❯ src/pages/StudyLibrary/codex-pr2-rereview.test.ts:330:94
+    328|   fireEvent.click(screen.getByRole('link', { name: 'Switch group' }));
+    329|   await act(async () => { await Promise.resolve(); });
+    330|   expect(screen.queryByText('Practice attempt does not belong to this …
+       |                                                                                              ^
+    331|  });
+    332| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  8 failed | 84 passed (92)
+   Start at  22:53:32
+   Duration  3.29s (transform 1.38s, setup 0ms, import 2.50s, tests 6.49s, environment 1.93s)
+

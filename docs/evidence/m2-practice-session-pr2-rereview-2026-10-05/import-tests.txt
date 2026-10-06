@@ -1,0 +1,32 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:16823) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > previews the packet, imports it as a new material and opens it 207ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > TB-UI-CAN-01: cancelling the file picker opens nothing and writes nothing 50ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > TB-UI-CAN-02: cancelling the preview closes it and writes nothing 67ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > TB-UI-A11Y-02 (native): Escape and a backdrop click close the preview without writing 100ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > TB-UI-LOCK-01: a rapid second click sends exactly one save 74ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > a failed save keeps the preview; Try again resends the same identity and succeeds 96ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > an unexpected error is never shown raw 73ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > TB-REFRESH-01: a failed refresh after a successful save keeps the save, records the warning and does not roll back 66ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > shows validation problems with fixed messages and saves nothing 40ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > with native modal dialogs > shows an unreadable file's fixed message 38ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > without native modal dialogs (macOS 12.0–12.2 fallback, source-level only) > TB-UI-A11Y-01: focus starts inside, Tab stays inside, and the page behind is out of reach 51ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > without native modal dialogs (macOS 12.0–12.2 fallback, source-level only) > TB-UI-A11Y-02 (fallback): Escape and the backdrop close the preview; focus returns; nothing is written 86ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > without native modal dialogs (macOS 12.0–12.2 fallback, source-level only) > TB-UI-A11Y-03: Escape closes a nested dialog first and leaves the import preview open 26ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: lets the owner inspect packet content before any save 45ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: shows each item's unverified reference before discarding it 43ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: displays all counts and truthful discard disclosure including choice IDs 45ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: confirms that nothing is uploaded and answers come from the packet rather than Her Flight Deck or Gemini 43ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: truthfully handles guide-only packets with explicit absence wording 41ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: truthfully handles questions-only packets with explicit absence wording 40ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: preview navigation and cancellation cause zero save calls and zero imported rows 48ms
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > SB-R1 confirmation preview regressions > SB-R1: subsequent save discards preview-only fields and preserves operation identity across retries 56ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  22:52:29
+   Duration  1.96s (transform 221ms, setup 0ms, import 319ms, tests 1.33s, environment 228ms)
+

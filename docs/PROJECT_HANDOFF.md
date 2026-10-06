@@ -1,5 +1,7 @@
 # Shared project handoff — Windows and Mac
 
+M2 PR2 correction re-review, 5 October 2026: all ten original diagnostics pass; five remaining UI groups (R5–R9, eight failing assertions) and invalid full-gate claim (R10) require one bounded correction. Independent focused results: 84pass/8fail, zero runtime errors; isolated import21pass. Submitted full log contains two unhandled errors. Source remains uncommitted/unaccepted. See [specific review](M2_PRACTICE_SESSION_PR2_REREVIEW_2026-10-05.md) and [active model-neutral finishing assignment](M2_PRACTICE_SESSION_PR2_FINISH_CORRECTIONS_PROMPT_2026-10-05.md). Existing approval/accepted PR1 persist; older review rows below are historical.
+
 M2 PR2 review, 5 October 2026: application source remains uncommitted; four confirmed UI confirmation/refresh/history-route/erasure-identity blockers remain. Independent focused results: 46 frontend passes, 9 new failures and 4 native erasure passes. See [review](M2_PRACTICE_SESSION_PR2_REVIEW_2026-10-05.md) and [correction assignment](M2_PRACTICE_SESSION_PR2_CORRECTIONS_PROMPT_2026-10-05.md). Existing approval and accepted PR1 remain effective.
 
 M2 PR1 source review completed on 5 October 2026: R1–R4 and remaining startup/FK/rollback corrections verified; 2,498 frontend and 386 Rust tests pass. Integration is conditional on required CI before merge. See [completion review](M2_PRACTICE_SESSION_PR1_COMPLETION_REVIEW_2026-10-05.md) and [PR2 assignment](M2_PRACTICE_SESSION_PR2_PROMPT_2026-10-05.md). Installed/release gates remain separate.
