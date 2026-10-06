@@ -1,0 +1,229 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/rickymac/code/Flight-training-pr70-integration[39m
+
+(node:21056) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21051) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21057) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21054) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21052) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21050) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21049) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21055) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/repositories/documentRepository.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 2658[2mms[22m[39m
+     [33m[2m✓[22m[39m gives up boundedly on saveMaterialsAtomically if the lock never clears [33m 1113[2mms[22m[39m
+     [33m[2m✓[22m[39m times out boundedly when material save encounters permanent lock [33m 1120[2mms[22m[39m
+ [32m✓[39m src/logic/releaseSafety.test.ts [2m([22m[2m52 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 3021[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects malformed versions via CLI [33m 366[2mms[22m[39m
+       [33m[2m✓[22m[39m reports inspection error (status 2) on inconsistent declared directory size, truncated variable fields, malformed EOCD bounds, and unsupported layouts [33m 361[2mms[22m[39m
+       [33m[2m✓[22m[39m generates Fixture C (illustrated charts, 60 pages) deterministically matching accepted input metrics [33m 423[2mms[22m[39m
+       [33m[2m✓[22m[39m executes generate-pdf-fixtures CLI script producing exact fixture output [33m 308[2mms[22m[39m
+ [32m✓[39m src/pages/Questions/Questions.paging.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 2647[2mms[22m[39m
+     [33m[2m✓[22m[39m shows a page at a time, keeps every question reachable, and filters the whole list [33m 2529[2mms[22m[39m
+ [32m✓[39m src/pages/StudyLibrary/MaterialDetailGemini.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 2598[2mms[22m[39m
+     [33m[2m✓[22m[39m prevents duplicate Gemini study aid calls when activated repeatedly during in-flight generation [33m 512[2mms[22m[39m
+     [33m[2m✓[22m[39m starting study aid on material A blocks practice test on material B across navigation until A resolves [33m 318[2mms[22m[39m
+     [33m[2m✓[22m[39m starting practice test on material A blocks study aid on material B across navigation until A resolves [33m 332[2mms[22m[39m
+ [32m✓[39m src/pages/FlightJournal/quickDebrief.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 2891[2mms[22m[39m
+     [33m[2m✓[22m[39m creates a quick debrief with reflections, confidence, and deliberate action and question, persisting to real SQLite [33m 344[2mms[22m[39m
+(node:21334) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21332) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21333) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 3360[2mms[22m[39m
+     [33m[2m✓[22m[39m previews the packet, imports it as a new material and opens it [33m 498[2mms[22m[39m
+(node:21337) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/structuredImport.test.ts [2m([22m[2m69 tests[22m[2m)[22m[33m 1773[2mms[22m[39m
+(node:21335) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/practiceStartupValidation.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1981[2mms[22m[39m
+     [33m[2m✓[22m[39m matches every native accept/refuse outcome [33m 1008[2mms[22m[39m
+ [32m✓[39m src/components/dailyPlan/DailyPlanCard.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 1671[2mms[22m[39m
+ [32m✓[39m src/pages/StudyLibrary/StudyLibrary.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 1340[2mms[22m[39m
+   [33m[2m✓[22m[39m shows a bounded first page, loads more, and searches all materials [33m 945[2mms[22m[39m
+   [33m[2m✓[22m[39m opens add material dialog and closes it when creation succeeds [33m 394[2mms[22m[39m
+[90mstderr[2m | src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts[2m > [22m[2mM2UI-R9: erasure identity, lock and route generation[2m > [22m[2m[R9] rapid confirmation uses a synchronous lock and one erase identity
+[22m[39mNo routes matched location "/study/history" 
+
+ [32m✓[39m src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts [2m([22m[2m22 tests[22m[2m)[22m[33m 1533[2mms[22m[39m
+(node:21341) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21340) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/logic/macReadinessPreflight.test.ts [2m([22m[2m34 tests[22m[2m)[22m[33m 958[2mms[22m[39m
+     [33m[2m✓[22m[39m documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt [33m 526[2mms[22m[39m
+ [32m✓[39m src/pages/StudyLibrary/MaterialFormDialog.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 1136[2mms[22m[39m
+(node:21348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21415) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/pages/FlightJournal/debriefLinks.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 1034[2mms[22m[39m
+     [33m[2m✓[22m[39m 1. deliberate workflow: turns improvement into action, links study material and upcoming lesson, and saves atomically [33m 400[2mms[22m[39m
+ [32m✓[39m src/acceptance/m1Workflow.acceptance.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 1067[2mms[22m[39m
+     [33m[2m✓[22m[39m runs the whole workflow, survives a restart, retries safely, and stays honest after deletions [33m 858[2mms[22m[39m
+(node:21413) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/pages/StudyLibrary/materialSaveIntegration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 1054[2mms[22m[39m
+   [33m[2m✓[22m[39m a failed save leaves no rows and keeps the import; the retry commits once and keeps the file [33m 506[2mms[22m[39m
+   [33m[2m✓[22m[39m cancelling after a failed save discards only that new, never-committed import [33m 405[2mms[22m[39m
+(node:21416) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/practiceSessionContract.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 988[2mms[22m[39m
+ [32m✓[39m src/pages/Questions/Questions.drafts.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 7880[2mms[22m[39m
+     [33m[2m✓[22m[39m keep a draft when a new question pushes its row off the page, and restore it after Show more [33m 1289[2mms[22m[39m
+     [33m[2m✓[22m[39m keep a draft across filter changes and paging [33m 1805[2mms[22m[39m
+     [33m[2m✓[22m[39m returns to one page when switching away and back, before and after expanding the other filter [33m 2999[2mms[22m[39m
+     [33m[2m✓[22m[39m does not reset when the same filter is chosen again [33m 1029[2mms[22m[39m
+(node:21417) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/state/editorSafety.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 913[2mms[22m[39m
+   [33m[2m✓[22m[39m preserves actual material typing through refresh, navigation and database save [33m 377[2mms[22m[39m
+ [32m✓[39m src/pages/StudyLibrary/MaterialDetailImport.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 779[2mms[22m[39m
+     [33m[2m✓[22m[39m TB-UI-REGEN-01: regenerating an imported guide or test warns that Gemini will replace it [33m 426[2mms[22m[39m
+(node:21419) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21420) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/pages/StudyLibrary/MaterialDetailOffline.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 5764[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the saved guide, cards and practice test usable with Gemini disconnected [33m 829[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps saved content usable while the Gemini status is still loading [33m 599[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps saved content usable when the Gemini status check fails [33m 563[2mms[22m[39m
+     [33m[2m✓[22m[39m explains a missing PDF and keeps saved content, with regeneration disabled [33m 473[2mms[22m[39m
+     [33m[2m✓[22m[39m explains a replaced unsupported source and keeps saved content [33m 481[2mms[22m[39m
+     [33m[2m✓[22m[39m explains a replaced oversized source and keeps saved content [33m 656[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps saved content when the material no longer has a file attached [33m 486[2mms[22m[39m
+     [33m[2m✓[22m[39m offers regeneration for both saved items only when connected and the file is eligible [33m 440[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps another material's saved content usable while a generation runs elsewhere, and a late result changes nothing [33m 695[2mms[22m[39m
+(node:21421) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/components/ui/Dialog.fallback.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 626[2mms[22m[39m
+ [32m✓[39m src/pages/StudyLibrary/PracticeSessionPR2.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1248[2mms[22m[39m
+ [32m✓[39m src/pages/FlightJournal/debriefContract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 530[2mms[22m[39m
+     [33m[2m✓[22m[39m create, lost-response retry, deliberate edit, and both withdrawals [33m 518[2mms[22m[39m
+ [32m✓[39m src/components/quickfind/QuickFind.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 481[2mms[22m[39m
+(node:21422) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/pages/StudyLibrary/PracticeTestPanel.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 749[2mms[22m[39m
+(node:21426) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21423) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/logic/studyPacket/fixtures.test.ts [2m([22m[2m164 tests[22m[2m)[22m[32m 162[2mms[22m[39m
+ [32m✓[39m src/data/repositories/importStudyPacket.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 190[2mms[22m[39m
+(node:21428) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/logic/debriefCharacterization.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 166[2mms[22m[39m
+[90mstderr[2m | src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts[2m > [22m[2mCodex PR2 review: actual UI and disposable persisted state[2m > [22m[2m[R4] lost erase acknowledgement retries the same identity and preserves later progress
+[22m[39mNo routes matched location "/study/history" 
+
+ [32m✓[39m src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 585[2mms[22m[39m
+(node:21424) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/components/dailyPlan/DailyPlanStart.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 394[2mms[22m[39m
+(node:21429) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/logic/toolkitDefaults.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 144[2mms[22m[39m
+(node:21430) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/repositories/appRepository.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 111[2mms[22m[39m
+ [32m✓[39m src/state/legacyWebKitStartup.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 373[2mms[22m[39m
+   [33m[2m✓[22m[39m starts fresh and adds a material without structuredClone, randomUUID or modal dialogs [33m 373[2mms[22m[39m
+(node:21431) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/acceptance/m1Upgrade.acceptance.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 119[2mms[22m[39m
+(node:21432) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/repositories/profileRepository.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 129[2mms[22m[39m
+ [32m✓[39m src/pages/PilotToolkit/PilotToolkit.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 369[2mms[22m[39m
+(node:21434) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/repositories/financeRepository.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 134[2mms[22m[39m
+ [32m✓[39m src/logic/studyPacket/regressions.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 92[2mms[22m[39m
+(node:21436) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/lib/id.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+(node:21437) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/repositories/noteRepository.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+(node:21439) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/repositories/toolkitRepository.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+(node:21438) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/starter.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+ [32m✓[39m src/logic/studyPacket/jitless.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+(node:21445) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/migrations.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+(node:21442) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/repositories/journalRepository.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/components/ui/Dialog.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 125[2mms[22m[39m
+(node:21444) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/materialSaveContract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m src/services/studyPackets.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/lib/backups.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/logic/recommendations.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m src/logic/actions.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m src/logic/quickFind.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/logic/aiLimits.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/logic/finance.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/logic/dailyPlan.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m src/state/useMaterialNotes.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+ [32m✓[39m src/logic/keyDates.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/state/useLocalToday.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m src/logic/feedback.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/logic/toolkit.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/logic/studyPacket/diagnostics.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m src/logic/library.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/logic/preparation.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/logic/progress.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/logic/studyPacket/validator.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/services/documents.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/logic/dataSafety.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/logic/aiSafety.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/logic/dashboard.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/logic/flightLog.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/state/useDraftRecovery.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/data/migrationSafety.test.ts [2m([22m[2m69 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/logic/encouragement.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/services/backups.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/lib/drafts.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/logic/documentRecovery.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/logic/notes.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/logic/pendingDeletes.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/logic/studyPacket/notices.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/lib/image.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/lib/platform.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/logic/pdfParts.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/components/layout/shell.css.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+ [2m[90m↓[39m[22m src/logic/quickFind.bench.test.ts [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/pages/StudyLibrary/StudyLibrary.bench.test.ts [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/perf/appResponsiveness.bench.test.ts [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [32m✓[39m src/data/singleConnectionDrivers.test.ts [2m([22m[2m1385 tests[22m[2m)[22m[33m 24685[2mms[22m[39m
+ [32m✓[39m src/perf/studyLibraryScenarios.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 27005[2mms[22m[39m
+     [33m[2m✓[22m[39m lists exactly the answer key's ids and order on the real page for every scenario [33m 13026[2mms[22m[39m
+     [33m[2m✓[22m[39m measures a stated expanded display of 1,000 cards, and a query from it returns to 100 [33m 12148[2mms[22m[39m
+     [33m[2m✓[22m[39m fails the run on a wrong intermediate keystroke result even when the final result is correct [33m 784[2mms[22m[39m
+     [33m[2m✓[22m[39m fails the run on a wrong intermediate count even when the final result is correct [33m 745[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m86 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (89)[39m
+[2m      Tests [22m [1m[32m2543 passed[39m[22m[2m | [22m[33m4 skipped[39m[90m (2547)[39m
+[2m   Start at [22m 23:37:01
+[2m   Duration [22m 28.03s[2m (transform 3.68s, setup 0ms, import 11.72s, tests 106.38s, environment 13.86s)[22m
+

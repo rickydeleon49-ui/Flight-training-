@@ -1,0 +1,3904 @@
+diff --git a/STATUS.md b/STATUS.md
+index 6cd5b11..8952b31 100644
+--- a/STATUS.md
++++ b/STATUS.md
+@@ -1,6 +1,10 @@
+ # Her Flight Deck — current project status
+ 
+-M2 PR1 source review completed on 5 October 2026: R1–R4 and remaining startup/FK/rollback corrections verified; 2,498 frontend and 386 Rust tests pass. Integration is conditional on required CI before merge. See [completion review](docs/M2_PRACTICE_SESSION_PR1_COMPLETION_REVIEW_2026-10-05.md) and [PR2 assignment](docs/M2_PRACTICE_SESSION_PR2_PROMPT_2026-10-05.md). Installed/release gates remain separate.
++**5 October 2026: M2 practice-session PR2 finish corrections implemented, pending Codex independent review.** The eight failing behaviors and the invalid gate claim from the [PR2 correction rereview](docs/M2_PRACTICE_SESSION_PR2_REREVIEW_2026-10-05.md) are closed on top of accepted PR1 and the passing PR2 corrections. The panel now owns one reducer phase machine gated by request generation with a synchronous intent lock (M2UI-R5, M2UI-R6), keeps pending/error/retry presentation reachable from the completed result and reconciles a retake against the real current attempt (M2UI-R7), and reconciles null/closed/replaced state through one adoption path (M2UI-R8). History views use per-route generations that survive an A→B→A round trip, a synchronous per-key erasure lock, one bounded pending confirmation dialog, and attempt revalidation when only the history key changes (M2UI-R9). The rereview's frozen diagnostic passed verbatim (92/92, exit 0) before being removed; its eight behaviors plus 15 extensions are permanent in `src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts`, and the ten earlier promoted positives are untouched. Exits are now captured per step with no `tee` masking: the final sequential gate is 9/9 exit 0 — typecheck, `npm test` 2,545 passed / 4 skipped / **zero unhandled errors**, build, 391 Rust passed / 6 ignored, Clippy `-D warnings`, fmt, cargo-lock, whitespace/final-newline hygiene, and migrations 1–11 plus the checksum registry unchanged. The two previously missing proofs were added: native erasure mid-write rollback and browser erasure disabled-recovery. The earlier run's two unhandled `DatabaseDisabledError` rejections did not recur in one full plus three isolated runs of the implicated file; nothing was suppressed and no production recovery semantics were changed, and the failed receipt is preserved. Gating this work caught and fixed two further defects in it: a load-dependent focus race (feedback reveal disables the focused choice, so the focus hand-off now runs in a layout effect) and a conflict message that announced a refresh before the authoritative read succeeded. All changes stay uncommitted and unpushed in `/Users/rickymac/code/Flight-training-pr70-integration` on branch `codex/m2-practice-session-ui`. Stopped before Git integration, new roadmap features, app launch against user data, signing, packaging or release. See [finish-corrections report](docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/submitted-report.md) and [evidence manifest](docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/README.md).
++
++**5 October 2026 (earlier round, now superseded):** PR2 corrections for M2UI-R1–R4 were submitted as "all 8 sequential integration gates passed". The independent rereview above confirms the ten promoted diagnostics pass but **invalidates that gate claim**: its own attached `npm test` receipt records two unhandled `DatabaseDisabledError` rejections despite the reported exit 0, and its closure map names three permanent cases that `src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts` does not contain. That submission's report and receipts are preserved unchanged at [docs/evidence/m2-practice-session-pr2-corrections-2026-10-05](docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/README.md); its ten diagnostics remain the accepted passing baseline, and its remaining gaps are the R5–R10 work closed in the entry above.
++
++M2 PR1 source review completed on 5 October 2026: R1–R4 and remaining startup/FK/rollback corrections verified; 2,498 frontend and 386 Rust tests pass. Integration merged through PR #101, commit 61031d4c7143fdf181bba2cc18616c5345521c3e. See [completion review](docs/M2_PRACTICE_SESSION_PR1_COMPLETION_REVIEW_2026-10-05.md) and [PR2 assignment](docs/M2_PRACTICE_SESSION_PR2_PROMPT_2026-10-05.md). Installed/release gates remain separate.
+ 
+ **4 October M2 PR 1 initialization re-review — R3 still open:** [Review](docs/M2_PRACTICE_SESSION_PR1_READINESS_REVIEW_2026-10-04.md) verifies all previous boundary fixes, 29 frontend passes and171 existing native passes. Three additional failures remain: browser invalid-state reopen, missing schema FK definition and conversion committed before semantic failure. [One focused model-neutral assignment](docs/M2_PRACTICE_SESSION_PR1_READINESS_CORRECTIONS_PROMPT_2026-10-04.md) completes actual browser validation, FK metadata and atomic initialization while preserving closed fixes. Source stays uncommitted/unaccepted; PR2 and installed/signing/release work deferred.
+ 
+diff --git a/docs/PROJECT_HANDOFF.md b/docs/PROJECT_HANDOFF.md
+index 152cfa8..9665802 100644
+--- a/docs/PROJECT_HANDOFF.md
++++ b/docs/PROJECT_HANDOFF.md
+@@ -1,6 +1,10 @@
+ # Shared project handoff — Windows and Mac
+ 
+-M2 PR1 source review completed on 5 October 2026: R1–R4 and remaining startup/FK/rollback corrections verified; 2,498 frontend and 386 Rust tests pass. Integration is conditional on required CI before merge. See [completion review](M2_PRACTICE_SESSION_PR1_COMPLETION_REVIEW_2026-10-05.md) and [PR2 assignment](M2_PRACTICE_SESSION_PR2_PROMPT_2026-10-05.md). Installed/release gates remain separate.
++**5 October 2026: M2 practice-session PR2 finish corrections implemented, pending Codex independent review.** The eight failing behaviors and the invalid gate claim from the [PR2 correction rereview](M2_PRACTICE_SESSION_PR2_REREVIEW_2026-10-05.md) are closed on top of accepted PR1 and the passing PR2 corrections. The panel now owns one reducer phase machine gated by request generation with a synchronous intent lock (M2UI-R5, M2UI-R6), keeps pending/error/retry presentation reachable from the completed result and reconciles a retake against the real current attempt (M2UI-R7), and reconciles null/closed/replaced state through one adoption path (M2UI-R8). History views use per-route generations that survive an A→B→A round trip, a synchronous per-key erasure lock, one bounded pending confirmation dialog, and attempt revalidation when only the history key changes (M2UI-R9). The rereview's frozen diagnostic passed verbatim (92/92, exit 0) before being removed; its eight behaviors plus 15 extensions are permanent in `src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts`, and the ten earlier promoted positives are untouched. Exits are now captured per step with no `tee` masking: the final sequential gate is 9/9 exit 0 — typecheck, `npm test` 2,545 passed / 4 skipped / **zero unhandled errors**, build, 391 Rust passed / 6 ignored, Clippy `-D warnings`, fmt, cargo-lock, whitespace/final-newline hygiene, and migrations 1–11 plus the checksum registry unchanged. The two previously missing proofs were added: native erasure mid-write rollback and browser erasure disabled-recovery. The earlier run's two unhandled `DatabaseDisabledError` rejections did not recur in one full plus three isolated runs of the implicated file; nothing was suppressed and no production recovery semantics were changed, and the failed receipt is preserved. Gating this work caught and fixed two further defects in it: a load-dependent focus race (feedback reveal disables the focused choice, so the focus hand-off now runs in a layout effect) and a conflict message that announced a refresh before the authoritative read succeeded. All changes stay uncommitted and unpushed in `/Users/rickymac/code/Flight-training-pr70-integration` on branch `codex/m2-practice-session-ui`; Codex reviews once and coordinates the accepted source PR. Stopped before Git integration, new roadmap features, app launch against user data, signing, packaging or release. See [finish-corrections report](evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/submitted-report.md) and [evidence manifest](evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/README.md).
++
++**5 October 2026 (earlier round, now superseded):** PR2 corrections for M2UI-R1–R4 were submitted as "all 8 sequential integration gates passed". The independent rereview above confirms the ten promoted diagnostics pass but **invalidates that gate claim**: its own attached `npm test` receipt records two unhandled `DatabaseDisabledError` rejections despite the reported exit 0, and its closure map names three permanent cases that `src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts` does not contain. That submission's report and receipts are preserved unchanged at [evidence/m2-practice-session-pr2-corrections-2026-10-05](evidence/m2-practice-session-pr2-corrections-2026-10-05/README.md).
++
++M2 PR1 source review completed on 5 October 2026: R1–R4 and remaining startup/FK/rollback corrections verified; 2,498 frontend and 386 Rust tests pass. Integration merged through PR #101, commit 61031d4c7143fdf181bba2cc18616c5345521c3e. See [completion review](M2_PRACTICE_SESSION_PR1_COMPLETION_REVIEW_2026-10-05.md) and [PR2 assignment](M2_PRACTICE_SESSION_PR2_PROMPT_2026-10-05.md). Installed/release gates remain separate.
+ 
+ **4 October M2 PR 1 initialization re-review — R3 still open:** [Review](M2_PRACTICE_SESSION_PR1_READINESS_REVIEW_2026-10-04.md) verifies all previous boundary fixes, 29 frontend passes and171 existing native passes. Three additional failures remain: browser invalid-state reopen, missing schema FK definition and conversion committed before semantic failure. [One focused model-neutral assignment](M2_PRACTICE_SESSION_PR1_READINESS_CORRECTIONS_PROMPT_2026-10-04.md) completes actual browser validation, FK metadata and atomic initialization while preserving closed fixes. Source stays uncommitted/unaccepted; PR2 and installed/signing/release work deferred.
+ 
+diff --git a/src-tauri/fixtures/practice-validation/cases.json b/src-tauri/fixtures/practice-validation/cases.json
+index 7324236..4a42bf0 100644
+--- a/src-tauri/fixtures/practice-validation/cases.json
++++ b/src-tauri/fixtures/practice-validation/cases.json
+@@ -63,6 +63,9 @@
+     { "name": "a receipt whose result names another attempt is refused", "category": "receipts", "sql": ["UPDATE practice_session_operations SET result_json = '{\"attemptId\":\"att-done\",\"revision\":1,\"answeredAt\":\"2026-10-04T11:01:00.000Z\"}' WHERE operation_id = '10000000-0000-4000-8000-000000000002'"], "expect": "refuse" },
+     { "name": "a start receipt naming a version other than the attempt's frozen version is refused", "category": "receipts", "sql": ["UPDATE practice_session_operations SET result_json = '{\"attemptId\":\"att-open\",\"revision\":0,\"versionId\":\"ver-old\",\"status\":\"in_progress\"}' WHERE operation_id = '10000000-0000-4000-8000-000000000001'"], "expect": "refuse" },
+     { "name": "a completion receipt missing its tallies is refused", "category": "receipts", "sql": ["UPDATE practice_session_operations SET result_json = '{\"attemptId\":\"att-done\",\"revision\":4,\"status\":\"completed\",\"completedAt\":\"2026-10-04T10:05:00.000Z\",\"scorePercent\":33.3}' WHERE operation_id = '10000000-0000-4000-8000-000000000003'"], "expect": "refuse" },
+-    { "name": "a receipt whose history key differs from its attempt's version is refused", "category": "receipts", "sql": ["UPDATE practice_session_operations SET history_key = 'mat-2' WHERE operation_id = '10000000-0000-4000-8000-000000000002'"], "expect": "refuse" }
++    { "name": "a receipt whose history key differs from its attempt's version is refused", "category": "receipts", "sql": ["UPDATE practice_session_operations SET history_key = 'mat-2' WHERE operation_id = '10000000-0000-4000-8000-000000000002'"], "expect": "refuse" },
++    { "name": "a valid erase_history receipt is accepted", "category": "receipts", "sql": ["INSERT INTO practice_session_operations (operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased) VALUES ('10000000-0000-4000-8000-000000000005', 'erase_history', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', '2026-10-04T12:00:00.000Z', '{\"action\":\"erase_history\",\"historyKey\":\"mat-1\",\"erased\":true}', 'mat-1', 'mat-1', 0)"], "expect": "accept" },
++    { "name": "an erase_history receipt that retains score or response content is refused", "category": "receipts", "sql": ["INSERT INTO practice_session_operations (operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased) VALUES ('10000000-0000-4000-8000-000000000005', 'erase_history', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', '2026-10-04T12:00:00.000Z', '{\"action\":\"erase_history\",\"historyKey\":\"mat-1\",\"erased\":true,\"scorePercent\":100.0}', 'mat-1', 'mat-1', 0)"], "expect": "refuse" },
++    { "name": "an erase_history receipt with mismatched historyKey is refused", "category": "receipts", "sql": ["INSERT INTO practice_session_operations (operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased) VALUES ('10000000-0000-4000-8000-000000000005', 'erase_history', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', '2026-10-04T12:00:00.000Z', '{\"action\":\"erase_history\",\"historyKey\":\"mat-2\",\"erased\":true}', 'mat-1', 'mat-1', 0)"], "expect": "refuse" }
+   ]
+ }
+diff --git a/src-tauri/src/backup.rs b/src-tauri/src/backup.rs
+index 0976905..9158dab 100644
+--- a/src-tauri/src/backup.rs
++++ b/src-tauri/src/backup.rs
+@@ -1497,6 +1497,7 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(),
+             "complete_attempt",
+             "abandon_attempt",
+             "retake_attempt",
++            "erase_history",
+         ]
+         .contains(&action.as_str())
+         {
+@@ -1531,142 +1532,183 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(),
+                 ));
+             }
+ 
+-            let res_attempt_id = obj
+-                .get("attemptId")
+-                .and_then(|v| v.as_str())
+-                .ok_or_else(|| format!("Operation receipt {op_id} result is missing attemptId"))?;
+-            if res_attempt_id != att_id {
+-                return Err(format!(
+-                    "Operation receipt {op_id} result attemptId ({res_attempt_id}) does not match receipt attempt_id ({att_id})"
+-                ));
+-            }
+-
+-            let res_rev = obj
+-                .get("revision")
+-                .or_else(|| obj.get("currentRevision"))
+-                .and_then(|v| v.as_i64())
+-                .ok_or_else(|| format!("Operation receipt {op_id} result is missing revision"))?;
+-            if res_rev < 0 {
+-                return Err(format!(
+-                    "Operation receipt {op_id} result has negative revision"
+-                ));
+-            }
+-
+-            match action.as_str() {
+-                "start_or_resume" | "retake_attempt" => {
+-                    let v_id = obj
+-                        .get("versionId")
++            if action == "erase_history" {
++                let h_key = obj
++                    .get("historyKey")
++                    .and_then(|v| v.as_str())
++                    .ok_or_else(|| {
++                        format!("Operation receipt {op_id} erase_history missing historyKey")
++                    })?;
++                if h_key != hist_key {
++                    return Err(format!(
++                        "Operation receipt {op_id} erase_history historyKey ({h_key}) does not match receipt history_key ({hist_key})"
++                    ));
++                }
++                let erased_field = obj.get("erased").and_then(|v| v.as_bool());
++                if erased_field != Some(true) {
++                    return Err(format!(
++                        "Operation receipt {op_id} erase_history missing erased boolean flag"
++                    ));
++                }
++                for forbidden in [
++                    "selectedIndex",
++                    "responses",
++                    "questions",
++                    "scorePercent",
++                    "correctIndex",
++                    "isCorrect",
++                ] {
++                    if obj.contains_key(forbidden) {
++                        return Err("The backup contains erased operation receipts that still retain result content.".to_string());
++                    }
++                }
++            } else {
++                let res_attempt_id =
++                    obj.get("attemptId")
+                         .and_then(|v| v.as_str())
+                         .ok_or_else(|| {
+-                            format!("Operation receipt {op_id} start result missing versionId")
++                            format!("Operation receipt {op_id} result is missing attemptId")
+                         })?;
+-                    if v_id.trim().is_empty() {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} start result has empty versionId"
+-                        ));
+-                    }
+-                    let attempt_version_id: Option<String> = connection
+-                        .query_row(
+-                            "SELECT version_id FROM practice_attempts WHERE id = ?1",
+-                            [&att_id],
+-                            |r| r.get(0),
+-                        )
+-                        .ok();
+-                    if let Some(expected_ver) = attempt_version_id {
+-                        if v_id != expected_ver {
++                if res_attempt_id != att_id {
++                    return Err(format!(
++                        "Operation receipt {op_id} result attemptId ({res_attempt_id}) does not match receipt attempt_id ({att_id})"
++                    ));
++                }
++
++                let res_rev = obj
++                    .get("revision")
++                    .or_else(|| obj.get("currentRevision"))
++                    .and_then(|v| v.as_i64())
++                    .ok_or_else(|| {
++                        format!("Operation receipt {op_id} result is missing revision")
++                    })?;
++                if res_rev < 0 {
++                    return Err(format!(
++                        "Operation receipt {op_id} result has negative revision"
++                    ));
++                }
++
++                match action.as_str() {
++                    "start_or_resume" | "retake_attempt" => {
++                        let v_id =
++                            obj.get("versionId")
++                                .and_then(|v| v.as_str())
++                                .ok_or_else(|| {
++                                    format!(
++                                        "Operation receipt {op_id} start result missing versionId"
++                                    )
++                                })?;
++                        if v_id.trim().is_empty() {
+                             return Err(format!(
++                                "Operation receipt {op_id} start result has empty versionId"
++                            ));
++                        }
++                        let attempt_version_id: Option<String> = connection
++                            .query_row(
++                                "SELECT version_id FROM practice_attempts WHERE id = ?1",
++                                [&att_id],
++                                |r| r.get(0),
++                            )
++                            .ok();
++                        if let Some(expected_ver) = attempt_version_id {
++                            if v_id != expected_ver {
++                                return Err(format!(
+                                 "Operation receipt {op_id} start result versionId ({v_id}) does not match attempt frozen version ({expected_ver})"
+                             ));
++                            }
++                        }
++                        let status =
++                            obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
++                                format!("Operation receipt {op_id} start result missing status")
++                            })?;
++                        if status != "in_progress" {
++                            return Err(format!(
++                                "Operation receipt {op_id} start result status must be in_progress"
++                            ));
+                         }
+                     }
+-                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+-                        format!("Operation receipt {op_id} start result missing status")
+-                    })?;
+-                    if status != "in_progress" {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} start result status must be in_progress"
+-                        ));
+-                    }
+-                }
+-                "record_response" => {
+-                    let ans_at =
+-                        obj.get("answeredAt")
+-                            .and_then(|v| v.as_str())
+-                            .ok_or_else(|| {
+-                                format!(
++                    "record_response" => {
++                        let ans_at =
++                            obj.get("answeredAt")
++                                .and_then(|v| v.as_str())
++                                .ok_or_else(|| {
++                                    format!(
+                                     "Operation receipt {op_id} response result missing answeredAt"
+                                 )
+-                            })?;
+-                    if ans_at.trim().is_empty() {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} response result has empty answeredAt"
+-                        ));
++                                })?;
++                        if ans_at.trim().is_empty() {
++                            return Err(format!(
++                                "Operation receipt {op_id} response result has empty answeredAt"
++                            ));
++                        }
+                     }
+-                }
+-                "complete_attempt" => {
+-                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+-                        format!("Operation receipt {op_id} complete result missing status")
+-                    })?;
+-                    if status != "completed" {
+-                        return Err(format!(
++                    "complete_attempt" => {
++                        let status =
++                            obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
++                                format!("Operation receipt {op_id} complete result missing status")
++                            })?;
++                        if status != "completed" {
++                            return Err(format!(
+                             "Operation receipt {op_id} complete result status must be completed"
+                         ));
+-                    }
+-                    let comp_at =
+-                        obj.get("completedAt")
+-                            .and_then(|v| v.as_str())
+-                            .ok_or_else(|| {
+-                                format!(
++                        }
++                        let comp_at =
++                            obj.get("completedAt")
++                                .and_then(|v| v.as_str())
++                                .ok_or_else(|| {
++                                    format!(
+                                     "Operation receipt {op_id} complete result missing completedAt"
+                                 )
+-                            })?;
+-                    if comp_at.trim().is_empty() {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} complete result has empty completedAt"
+-                        ));
+-                    }
+-                    if obj.get("scorePercent").and_then(|v| v.as_f64()).is_none() {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} complete result missing scorePercent"
+-                        ));
+-                    }
+-                    if obj.get("correctCount").and_then(|v| v.as_i64()).is_none()
+-                        || obj.get("incorrectCount").and_then(|v| v.as_i64()).is_none()
+-                        || obj.get("dontKnowCount").and_then(|v| v.as_i64()).is_none()
+-                        || obj
+-                            .get("unansweredCount")
+-                            .and_then(|v| v.as_i64())
+-                            .is_none()
+-                    {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} complete result missing tallies"
+-                        ));
+-                    }
+-                }
+-                "abandon_attempt" => {
+-                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+-                        format!("Operation receipt {op_id} abandon result missing status")
+-                    })?;
+-                    if status != "abandoned" {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} abandon result status must be abandoned"
+-                        ));
++                                })?;
++                        if comp_at.trim().is_empty() {
++                            return Err(format!(
++                                "Operation receipt {op_id} complete result has empty completedAt"
++                            ));
++                        }
++                        if obj.get("scorePercent").and_then(|v| v.as_f64()).is_none() {
++                            return Err(format!(
++                                "Operation receipt {op_id} complete result missing scorePercent"
++                            ));
++                        }
++                        if obj.get("correctCount").and_then(|v| v.as_i64()).is_none()
++                            || obj.get("incorrectCount").and_then(|v| v.as_i64()).is_none()
++                            || obj.get("dontKnowCount").and_then(|v| v.as_i64()).is_none()
++                            || obj
++                                .get("unansweredCount")
++                                .and_then(|v| v.as_i64())
++                                .is_none()
++                        {
++                            return Err(format!(
++                                "Operation receipt {op_id} complete result missing tallies"
++                            ));
++                        }
+                     }
+-                    let comp_at =
+-                        obj.get("completedAt")
+-                            .and_then(|v| v.as_str())
+-                            .ok_or_else(|| {
+-                                format!(
++                    "abandon_attempt" => {
++                        let status =
++                            obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
++                                format!("Operation receipt {op_id} abandon result missing status")
++                            })?;
++                        if status != "abandoned" {
++                            return Err(format!(
++                                "Operation receipt {op_id} abandon result status must be abandoned"
++                            ));
++                        }
++                        let comp_at =
++                            obj.get("completedAt")
++                                .and_then(|v| v.as_str())
++                                .ok_or_else(|| {
++                                    format!(
+                                     "Operation receipt {op_id} abandon result missing completedAt"
+                                 )
+-                            })?;
+-                    if comp_at.trim().is_empty() {
+-                        return Err(format!(
+-                            "Operation receipt {op_id} abandon result has empty completedAt"
+-                        ));
++                                })?;
++                        if comp_at.trim().is_empty() {
++                            return Err(format!(
++                                "Operation receipt {op_id} abandon result has empty completedAt"
++                            ));
++                        }
+                     }
++                    _ => {}
+                 }
+-                _ => {}
+             }
+         }
+     }
+diff --git a/src-tauri/src/lib.rs b/src-tauri/src/lib.rs
+index 3d6cde7..e3fea29 100644
+--- a/src-tauri/src/lib.rs
++++ b/src-tauri/src/lib.rs
+@@ -145,6 +145,7 @@ pub fn run() {
+             study_packet::pick_study_packet,
+             study_packet::save_structured_study_material_atomically,
+             practice_sessions::save_practice_session_atomically,
++            practice_sessions::erase_practice_history_atomically,
+             practice_sessions::save_practice_test_atomically,
+             practice_sessions::remove_practice_test_atomically,
+             practice_sessions::run_practice_legacy_conversion,
+diff --git a/src-tauri/src/practice_session_tests.rs b/src-tauri/src/practice_session_tests.rs
+index 8ca33a9..26bff65 100644
+--- a/src-tauri/src/practice_session_tests.rs
++++ b/src-tauri/src/practice_session_tests.rs
+@@ -1693,3 +1693,787 @@ fn restore_during_initialization_does_not_publish_stale_readiness() {
+     assert_eq!(run_legacy_conversion_at(dir.path()).unwrap(), 0);
+     assert!(is_root_ready(dir.path()));
+ }
++
++#[test]
++fn req_erase_history_atomic_pruning_and_tombstones() {
++    let dir = TempDir::new("erase_history");
++    let conn = setup_test_db(dir.path());
++    let (v1_id, item_ids) = seed_material_and_v1(&conn, "mat-erase", "Erase History Test");
++    drop(conn);
++
++    // 1. Start and complete attempt on v1
++    let op1 = "11111111-1111-4111-8111-111111111111";
++    let start_res = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": op1,
++            "materialId": "mat-erase",
++            "versionId": v1_id,
++        }),
++    )
++    .unwrap();
++    let att1_id = start_res["attemptId"].as_str().unwrap().to_string();
++
++    let op2 = "22222222-2222-4222-8222-222222222222";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": op2,
++            "attemptId": att1_id,
++            "itemId": item_ids[0],
++            "expectedRevision": 0,
++            "selectedIndex": 1,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++
++    let op3 = "33333333-3333-4333-8333-333333333333";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "complete_attempt",
++            "operationId": op3,
++            "attemptId": att1_id,
++            "expectedRevision": 1,
++        }),
++    )
++    .unwrap();
++
++    // 2. Regenerate practice test: new active version v2, v1 becomes inactive
++    let new_questions = serde_json::json!([
++        {
++            "question": "New Question 1",
++            "options": ["Opt A", "Opt B", "Opt C"],
++            "correctIndex": 0,
++            "explanation": "Exp 1"
++        }
++    ]);
++    save_practice_test_at(
++        dir.path(),
++        "mat-erase",
++        "Erase History Test V2",
++        &new_questions.to_string(),
++        "gemini-1.5-pro",
++    )
++    .unwrap();
++
++    let conn2 = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
++    let (v2_id,): (String,) = conn2
++        .query_row(
++            "SELECT id FROM practice_test_versions WHERE source_material_id = 'mat-erase' AND is_active = 1",
++            [],
++            |r| Ok((r.get(0)?,)),
++        )
++        .unwrap();
++    let v2_item_id: String = conn2
++        .query_row(
++            "SELECT id FROM practice_test_items WHERE version_id = ?1",
++            [&v2_id],
++            |r| r.get(0),
++        )
++        .unwrap();
++    drop(conn2);
++
++    // 3. Start attempt on v2
++    let op4 = "44444444-4444-4444-8444-444444444444";
++    let start_v2 = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": op4,
++            "materialId": "mat-erase",
++            "versionId": v2_id,
++        }),
++    )
++    .unwrap();
++    let att2_id = start_v2["attemptId"].as_str().unwrap().to_string();
++
++    let op5 = "55555555-5555-4555-8555-555555555555";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": op5,
++            "attemptId": att2_id,
++            "itemId": v2_item_id,
++            "expectedRevision": 0,
++            "selectedIndex": 0,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++
++    // Verify before erase: 2 versions, 2 attempts, 2 responses, 5 operations
++    let check_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
++    let ver_count: i64 = check_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_test_versions WHERE history_key = 'mat-erase'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    let att_count: i64 = check_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_attempts WHERE source_material_id = 'mat-erase'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    let resp_count: i64 = check_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_responses WHERE attempt_id IN (?1, ?2)",
++            [&att1_id, &att2_id],
++            |r| r.get(0),
++        )
++        .unwrap();
++    let op_count: i64 = check_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-erase'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(ver_count, 2);
++    assert_eq!(att_count, 2);
++    assert_eq!(resp_count, 2);
++    assert_eq!(op_count, 5);
++    drop(check_conn);
++
++    // 4. Execute atomic erase history
++    let erase_op = "66666666-6666-4666-8666-666666666666";
++    let erase_req = serde_json::json!({
++        "action": "erase_history",
++        "operationId": erase_op,
++        "historyKey": "mat-erase",
++    });
++    let erase_res = erase_practice_history_at(dir.path(), &erase_req).unwrap();
++    assert_eq!(erase_res["action"], "erase_history");
++    assert_eq!(erase_res["historyKey"], "mat-erase");
++    assert_eq!(erase_res["erased"], true);
++
++    // Verify after erase:
++    // - attempts removed (0)
++    // - responses removed (0)
++    // - inactive version v1 removed, active version v2 preserved (1)
++    // - practice_tests row preserved
++    // - previous 5 receipts are tombstones: is_erased = 1, result_json = 'null'
++    // - 1 new receipt for erase_history: is_erased = 0
++    let verify_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
++    let after_att: i64 = verify_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_attempts WHERE source_material_id = 'mat-erase'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(after_att, 0);
++
++    let after_resp: i64 = verify_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_responses WHERE attempt_id IN (?1, ?2)",
++            [&att1_id, &att2_id],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(after_resp, 0);
++
++    let after_ver: Vec<(String, i64)> = {
++        let mut stmt = verify_conn
++            .prepare(
++                "SELECT id, is_active FROM practice_test_versions WHERE history_key = 'mat-erase'",
++            )
++            .unwrap();
++        stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
++            .unwrap()
++            .map(|r| r.unwrap())
++            .collect()
++    };
++    assert_eq!(after_ver.len(), 1);
++    assert_eq!(after_ver[0].0, v2_id);
++    assert_eq!(after_ver[0].1, 1);
++
++    let pt_count: i64 = verify_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_tests WHERE source_material_id = 'mat-erase'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(pt_count, 1);
++
++    let tombstoned_count: i64 = verify_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-erase' AND is_erased = 1 AND result_json = 'null'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(tombstoned_count, 5);
++
++    let erase_receipt_count: i64 = verify_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_session_operations WHERE operation_id = ?1 AND action = 'erase_history' AND is_erased = 0",
++            [erase_op],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(erase_receipt_count, 1);
++
++    drop(verify_conn);
++
++    // 5. Old replay on tombstoned receipt fails with InvalidState
++    let replay_old = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": op1,
++            "materialId": "mat-erase",
++            "versionId": v1_id,
++        }),
++    );
++    assert_eq!(
++        replay_old.unwrap_err().code,
++        PracticeSessionErrorCode::InvalidState
++    );
++
++    // 6. Idempotent replay of erase_history succeeds
++    let replay_erase = erase_practice_history_at(dir.path(), &erase_req).unwrap();
++    assert_eq!(replay_erase["action"], "erase_history");
++    assert_eq!(replay_erase["erased"], true);
++
++    // 7. Conflicting erase_history with same operationId but changed payload returns OperationConflict
++    let conflict_erase = erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_history",
++            "operationId": erase_op,
++            "historyKey": "different-key",
++        }),
++    );
++    assert_eq!(
++        conflict_erase.unwrap_err().code,
++        PracticeSessionErrorCode::OperationConflict
++    );
++}
++
++/// Row counts that describe everything a history erasure is allowed to touch
++/// for `mat-erase-mid`: (versions, active versions, attempts, responses,
++/// receipts, tombstoned receipts).
++fn erase_mid_write_counts(path: &std::path::Path) -> (i64, i64, i64, i64, i64, i64) {
++    let conn = Connection::open(path).unwrap();
++    let one = |sql: &str| -> i64 { conn.query_row(sql, [], |r| r.get(0)).unwrap() };
++    (
++        one("SELECT COUNT(*) FROM practice_test_versions WHERE history_key = 'mat-erase-mid'"),
++        one("SELECT COUNT(*) FROM practice_test_versions \
++             WHERE history_key = 'mat-erase-mid' AND is_active = 1"),
++        one("SELECT COUNT(*) FROM practice_attempts a \
++             JOIN practice_test_versions v ON a.version_id = v.id \
++             WHERE v.history_key = 'mat-erase-mid'"),
++        one("SELECT COUNT(*) FROM practice_responses r \
++             JOIN practice_attempts a ON r.attempt_id = a.id \
++             JOIN practice_test_versions v ON a.version_id = v.id \
++             WHERE v.history_key = 'mat-erase-mid'"),
++        one("SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-erase-mid'"),
++        one("SELECT COUNT(*) FROM practice_session_operations \
++             WHERE history_key = 'mat-erase-mid' AND is_erased = 1"),
++    )
++}
++
++#[test]
++fn req_erase_history_mid_write_failure_rolls_back_every_change() {
++    let dir = TempDir::new("erase_mid_write");
++    let conn = setup_test_db(dir.path());
++    let (v1_id, item_ids) = seed_material_and_v1(&conn, "mat-erase-mid", "Erase Mid Write");
++    drop(conn);
++    let db_path = dir.path().join("her-flight-deck.db");
++
++    // One completed attempt on v1, then a regeneration that leaves v1 inactive,
++    // then an unfinished attempt on v2. This is the full set the erasure would
++    // tombstone, prune and receipt in one transaction.
++    let start1 = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": "2a2a2a2a-2a2a-4a2a-8a2a-2a2a2a2a2a2a",
++            "materialId": "mat-erase-mid",
++            "versionId": v1_id,
++        }),
++    )
++    .unwrap();
++    let att1 = start1["attemptId"].as_str().unwrap().to_string();
++
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": "2b2b2b2b-2b2b-4b2b-8b2b-2b2b2b2b2b2b",
++            "attemptId": att1,
++            "itemId": item_ids[0],
++            "expectedRevision": 0,
++            "selectedIndex": 1,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "complete_attempt",
++            "operationId": "2c2c2c2c-2c2c-4c2c-8c2c-2c2c2c2c2c2c",
++            "attemptId": att1,
++            "expectedRevision": 1,
++        }),
++    )
++    .unwrap();
++
++    let new_questions = serde_json::json!([
++        {
++            "question": "Mid Write Question 1",
++            "options": ["Opt A", "Opt B"],
++            "correctIndex": 0,
++            "explanation": "Exp 1"
++        }
++    ]);
++    save_practice_test_at(
++        dir.path(),
++        "mat-erase-mid",
++        "Erase Mid Write V2",
++        &new_questions.to_string(),
++        "gemini-1.5-pro",
++    )
++    .unwrap();
++
++    let conn_v2 = Connection::open(&db_path).unwrap();
++    let v2_id: String = conn_v2
++        .query_row(
++            "SELECT id FROM practice_test_versions WHERE history_key = 'mat-erase-mid' AND is_active = 1",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    let v2_item_id: String = conn_v2
++        .query_row(
++            "SELECT id FROM practice_test_items WHERE version_id = ?1",
++            [&v2_id],
++            |r| r.get(0),
++        )
++        .unwrap();
++    drop(conn_v2);
++
++    let start2 = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": "2d2d2d2d-2d2d-4d2d-8d2d-2d2d2d2d2d2d",
++            "materialId": "mat-erase-mid",
++            "versionId": v2_id,
++        }),
++    )
++    .unwrap();
++    let att2 = start2["attemptId"].as_str().unwrap().to_string();
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": "2e2e2e2e-2e2e-4e2e-8e2e-2e2e2e2e2e2e",
++            "attemptId": att2,
++            "itemId": v2_item_id,
++            "expectedRevision": 0,
++            "selectedIndex": 0,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++
++    let before = erase_mid_write_counts(&db_path);
++    assert_eq!(
++        before,
++        (2, 1, 2, 2, 5, 0),
++        "seeding must leave two versions, two attempts, two responses and five receipts"
++    );
++
++    // Synthetic mid-write failure: the erasure has already tombstoned receipts
++    // and deleted attempts, responses and the inactive version by the time its
++    // own receipt insert is refused.
++    let conn_trigger = Connection::open(&db_path).unwrap();
++    conn_trigger
++        .execute_batch(
++            "CREATE TRIGGER inject_mid_erase_failure
++             BEFORE INSERT ON practice_session_operations
++             WHEN NEW.action = 'erase_history'
++             BEGIN
++                 SELECT RAISE(FAIL, 'synthetic mid-erase receipt insert failure');
++             END;",
++        )
++        .unwrap();
++    drop(conn_trigger);
++
++    let refused = erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_history",
++            "operationId": "2f2f2f2f-2f2f-4f2f-8f2f-2f2f2f2f2f2f",
++            "historyKey": "mat-erase-mid",
++        }),
++    );
++    assert_eq!(
++        refused.unwrap_err().code,
++        PracticeSessionErrorCode::StorageError
++    );
++
++    // Nothing was kept from the aborted transaction: not a single row changed.
++    assert_eq!(
++        erase_mid_write_counts(&db_path),
++        before,
++        "a mid-write erasure failure must roll back tombstones, prunes and receipt"
++    );
++    let conn_absent = Connection::open(&db_path).unwrap();
++    let erase_receipts: i64 = conn_absent
++        .query_row(
++            "SELECT COUNT(*) FROM practice_session_operations WHERE action = 'erase_history'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(erase_receipts, 0, "a rolled-back erasure leaves no receipt");
++    conn_absent
++        .execute_batch("DROP TRIGGER inject_mid_erase_failure")
++        .unwrap();
++    drop(conn_absent);
++
++    // Safe new erasure with a fresh identity completes and prunes correctly.
++    let erased = erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_history",
++            "operationId": "30303030-3030-4330-8330-303030303030",
++            "historyKey": "mat-erase-mid",
++        }),
++    )
++    .unwrap();
++    assert_eq!(erased["erased"], true);
++    assert_eq!(
++        erase_mid_write_counts(&db_path),
++        (1, 1, 0, 0, 6, 5),
++        "the active version survives while saved attempts, responses and its \
++         inactive version are pruned and earlier receipts become tombstones"
++    );
++
++    let conn_final = Connection::open(&db_path).unwrap();
++    let saved_attempt: i64 = conn_final
++        .query_row("SELECT COUNT(*) FROM practice_attempts", [], |r| r.get(0))
++        .unwrap();
++    assert_eq!(
++        saved_attempt, 0,
++        "no attempt may remain under an erased key"
++    );
++    drop(conn_final);
++}
++
++#[test]
++fn req_erase_history_validation_checks() {
++    let dir = TempDir::new("erase_validation");
++    let conn = setup_test_db(dir.path());
++    let _ = seed_material_and_v1(&conn, "mat-val", "Val Test");
++    drop(conn);
++
++    // Non-uuid operationId
++    let bad_uuid = erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_history",
++            "operationId": "not-a-uuid",
++            "historyKey": "mat-val",
++        }),
++    );
++    assert_eq!(
++        bad_uuid.unwrap_err().code,
++        PracticeSessionErrorCode::InvalidArgument
++    );
++
++    // Bad action
++    let bad_action = erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_something_else",
++            "operationId": "11111111-1111-4111-8111-111111111111",
++            "historyKey": "mat-val",
++        }),
++    );
++    assert_eq!(
++        bad_action.unwrap_err().code,
++        PracticeSessionErrorCode::InvalidArgument
++    );
++
++    // Extra keys
++    let extra_keys = erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_history",
++            "operationId": "11111111-1111-4111-8111-111111111111",
++            "historyKey": "mat-val",
++            "extra": true,
++        }),
++    );
++    assert_eq!(
++        extra_keys.unwrap_err().code,
++        PracticeSessionErrorCode::InvalidArgument
++    );
++}
++
++#[test]
++fn req_erase_history_unrelated_isolation_and_safe_new_practice() {
++    let dir = TempDir::new("erase_isolation");
++    let conn = setup_test_db(dir.path());
++    let (v_a, items_a) = seed_material_and_v1(&conn, "mat-A", "Material A");
++    let (v_b, items_b) = seed_material_and_v1(&conn, "mat-B", "Material B");
++    drop(conn);
++
++    // Complete session on mat-A
++    let op_a1 = "aaaa0001-0000-4000-8000-000000000001";
++    let start_a = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": op_a1,
++            "materialId": "mat-A",
++            "versionId": v_a,
++        }),
++    )
++    .unwrap();
++    let att_a = start_a["attemptId"].as_str().unwrap().to_string();
++
++    let op_a2 = "aaaa0002-0000-4000-8000-000000000002";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": op_a2,
++            "attemptId": att_a,
++            "itemId": items_a[0],
++            "expectedRevision": 0,
++            "selectedIndex": 1,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++
++    let op_a3 = "aaaa0003-0000-4000-8000-000000000003";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "complete_attempt",
++            "operationId": op_a3,
++            "attemptId": att_a,
++            "expectedRevision": 1,
++        }),
++    )
++    .unwrap();
++
++    // Complete session on mat-B
++    let op_b1 = "bbbb0001-0000-4000-8000-000000000001";
++    let start_b = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": op_b1,
++            "materialId": "mat-B",
++            "versionId": v_b,
++        }),
++    )
++    .unwrap();
++    let att_b = start_b["attemptId"].as_str().unwrap().to_string();
++
++    let op_b2 = "bbbb0002-0000-4000-8000-000000000002";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": op_b2,
++            "attemptId": att_b,
++            "itemId": items_b[0],
++            "expectedRevision": 0,
++            "selectedIndex": 0,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++
++    let op_b3 = "bbbb0003-0000-4000-8000-000000000003";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "complete_attempt",
++            "operationId": op_b3,
++            "attemptId": att_b,
++            "expectedRevision": 1,
++        }),
++    )
++    .unwrap();
++
++    // Erase history for mat-A only
++    let erase_op = "eeee0001-0000-4000-8000-000000000001";
++    let erase_res = erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_history",
++            "operationId": erase_op,
++            "historyKey": "mat-A",
++        }),
++    )
++    .unwrap();
++    assert_eq!(erase_res["erased"], true);
++
++    // Verify mat-B is completely unaffected
++    let check_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
++    let b_atts: i64 = check_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_attempts WHERE source_material_id = 'mat-B' AND status = 'completed'",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(b_atts, 1);
++
++    let b_resps: i64 = check_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_responses WHERE attempt_id = ?1",
++            [&att_b],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(b_resps, 1);
++
++    let b_active_receipts: i64 = check_conn
++        .query_row(
++            "SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-B' AND is_erased = 0",
++            [],
++            |r| r.get(0),
++        )
++        .unwrap();
++    assert_eq!(b_active_receipts, 3);
++
++    // Verify safe new practice on mat-A using preserved active version
++    drop(check_conn);
++    let new_start_op = "aaaa0004-0000-4000-8000-000000000004";
++    let new_start = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": new_start_op,
++            "materialId": "mat-A",
++            "versionId": v_a,
++        }),
++    )
++    .unwrap();
++    let new_att_a = new_start["attemptId"].as_str().unwrap().to_string();
++    assert_ne!(new_att_a, att_a);
++    assert_eq!(new_start["status"], "in_progress");
++
++    let new_ans_op = "aaaa0005-0000-4000-8000-000000000005";
++    let ans_res = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": new_ans_op,
++            "attemptId": new_att_a,
++            "itemId": items_a[0],
++            "expectedRevision": 0,
++            "selectedIndex": 2,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++    assert_eq!(ans_res["answeredCount"], 1);
++
++    let new_comp_op = "aaaa0006-0000-4000-8000-000000000006";
++    let comp_res = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "complete_attempt",
++            "operationId": new_comp_op,
++            "attemptId": new_att_a,
++            "expectedRevision": 1,
++        }),
++    )
++    .unwrap();
++    assert_eq!(comp_res["status"], "completed");
++}
++
++#[test]
++fn req_erase_history_restart_refusal_and_backup_validation() {
++    let dir = TempDir::new("erase_restart_backup");
++    let conn = setup_test_db(dir.path());
++    let (v1, items) = seed_material_and_v1(&conn, "mat-rst", "Restart Test");
++    drop(conn);
++
++    let op1 = "11112222-3333-4444-8888-000000000001";
++    let start_res = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": op1,
++            "materialId": "mat-rst",
++            "versionId": v1,
++        }),
++    )
++    .unwrap();
++    let att = start_res["attemptId"].as_str().unwrap().to_string();
++
++    let op2 = "11112222-3333-4444-8888-000000000002";
++    save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "record_response",
++            "operationId": op2,
++            "attemptId": att,
++            "itemId": items[0],
++            "expectedRevision": 0,
++            "selectedIndex": 0,
++            "isDontKnow": false,
++        }),
++    )
++    .unwrap();
++
++    let erase_op = "11112222-3333-4444-8888-000000000003";
++    erase_practice_history_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "erase_history",
++            "operationId": erase_op,
++            "historyKey": "mat-rst",
++        }),
++    )
++    .unwrap();
++
++    // Reopen database connection to simulate complete app restart
++    let restart_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
++
++    // Verify backup / startup schema-11 semantics validator passes on the erased DB
++    let validation_result = crate::backup::verify_schema_11_semantics(&restart_conn);
++    assert!(
++        validation_result.is_ok(),
++        "verify_schema_11_semantics must accept database with history erasure receipts: {:?}",
++        validation_result
++    );
++    drop(restart_conn);
++
++    // Replay of old operation after restart is refused
++    let late_replay = save_practice_session_at(
++        dir.path(),
++        &serde_json::json!({
++            "action": "start_or_resume",
++            "operationId": op1,
++            "materialId": "mat-rst",
++            "versionId": v1,
++        }),
++    );
++    assert_eq!(
++        late_replay.unwrap_err().code,
++        PracticeSessionErrorCode::InvalidState
++    );
++}
+diff --git a/src-tauri/src/practice_sessions.rs b/src-tauri/src/practice_sessions.rs
+index 6a0f729..6e1d381 100644
+--- a/src-tauri/src/practice_sessions.rs
++++ b/src-tauri/src/practice_sessions.rs
+@@ -525,6 +525,45 @@ pub fn decode_practice_action(value: &Value) -> ResultCheck<PracticeActionPayloa
+     }
+ }
+ 
++#[derive(Debug, Clone, PartialEq, Eq)]
++pub struct EraseHistoryPayload {
++    pub operation_id: String,
++    pub history_key: String,
++}
++
++/// Strictly decode and validate an incoming erase history request.
++pub fn decode_erase_history_action(value: &Value) -> ResultCheck<EraseHistoryPayload> {
++    let payload_str = value.to_string();
++    if payload_str.len() > MAX_REQUEST_PAYLOAD_BYTES {
++        return Err(PracticeSessionErrorCode::InvalidArgument);
++    }
++
++    let map = value
++        .as_object()
++        .ok_or(PracticeSessionErrorCode::InvalidArgument)?;
++    exact_keys_check(map, &["action", "operationId", "historyKey"])?;
++
++    let action = parse_string_field(map, "action")?;
++    if action != "erase_history" {
++        return Err(PracticeSessionErrorCode::InvalidArgument);
++    }
++
++    let operation_id = parse_string_field(map, "operationId")?;
++    if !is_uuid_v4(operation_id) {
++        return Err(PracticeSessionErrorCode::InvalidArgument);
++    }
++
++    let history_key = parse_string_field(map, "historyKey")?;
++    if !is_valid_id(history_key) {
++        return Err(PracticeSessionErrorCode::InvalidArgument);
++    }
++
++    Ok(EraseHistoryPayload {
++        operation_id: operation_id.to_string(),
++        history_key: history_key.to_string(),
++    })
++}
++
+ /* ------------------------------------------------------------------ */
+ /* Execution Engine & State Machine                                   */
+ /* ------------------------------------------------------------------ */
+@@ -1205,6 +1244,115 @@ pub fn save_practice_session_at(
+     Ok(result)
+ }
+ 
++/// Execute erase_practice_history_atomically at a specified database root.
++pub fn erase_practice_history_at(
++    root: &Path,
++    action_value: &Value,
++) -> Result<Value, PracticeSessionErrorWire> {
++    let payload = decode_erase_history_action(action_value).map_err(|c| c.error())?;
++    let db_path = root.join("her-flight-deck.db");
++    if !db_path.is_file() {
++        return Err(PracticeSessionErrorCode::StorageError.error());
++    }
++
++    if !is_root_ready(root) {
++        return Err(PracticeSessionErrorCode::InvalidState.error());
++    }
++
++    let mut connection =
++        Connection::open(&db_path).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++    connection
++        .busy_timeout(Duration::from_secs(5))
++        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++    connection
++        .pragma_update(None, "foreign_keys", "ON")
++        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    if let Err(e) = ensure_legacy_conversion_ready(&connection) {
++        unmark_root_ready(root);
++        return Err(e);
++    }
++
++    let tx = connection
++        .transaction_with_behavior(TransactionBehavior::Immediate)
++        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    let current_hash = compute_canonical_hash(action_value);
++
++    // 1. Inspect practice_session_operations for replay or conflict
++    let receipt: Option<(String, String, i64)> = tx
++        .query_row(
++            "SELECT request_hash, result_json, is_erased FROM practice_session_operations WHERE operation_id = ?1",
++            [&payload.operation_id],
++            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
++        )
++        .optional()
++        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    if let Some((stored_hash, result_json, is_erased)) = receipt {
++        if stored_hash != current_hash {
++            return Err(PracticeSessionErrorCode::OperationConflict.error());
++        }
++        if is_erased == 1 {
++            return Err(PracticeSessionErrorCode::InvalidState.error());
++        }
++        let parsed_result: Value = serde_json::from_str(&result_json)
++            .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++        return Ok(parsed_result);
++    }
++
++    // 2. Turn associated receipts into non-content tombstones sufficient to refuse old replay
++    tx.execute(
++        "UPDATE practice_session_operations SET is_erased = 1, result_json = 'null' WHERE history_key = ?1",
++        [&payload.history_key],
++    )
++    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    // 3. Remove saved attempts/responses (including unfinished progress under that key)
++    tx.execute(
++        "DELETE FROM practice_attempts WHERE version_id IN (SELECT id FROM practice_test_versions WHERE history_key = ?1)",
++        [&payload.history_key],
++    )
++    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    // 4. Remove unused inactive versions/items under that key
++    tx.execute(
++        "DELETE FROM practice_test_versions WHERE history_key = ?1 AND is_active = 0",
++        [&payload.history_key],
++    )
++    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    // 5. Store erasure receipt
++    let now = db_now_iso(&tx).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++    let result_val = serde_json::json!({
++        "action": "erase_history",
++        "historyKey": payload.history_key,
++        "erased": true,
++    });
++    let result_json = serde_json::to_string(&result_val)
++        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    tx.execute(
++        "INSERT INTO practice_session_operations (
++            operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased
++         ) VALUES (?1, 'erase_history', ?2, ?3, ?4, ?5, ?6, 0)",
++        params![
++            payload.operation_id,
++            current_hash,
++            now,
++            result_json,
++            payload.history_key,
++            payload.history_key,
++        ],
++    )
++    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    tx.commit()
++        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++
++    Ok(result_val)
++}
++
+ /* ------------------------------------------------------------------ */
+ /* Legacy Practice Tests Conversion                                    */
+ /* ------------------------------------------------------------------ */
+@@ -1812,6 +1960,17 @@ pub async fn save_practice_session_atomically(
+         .map_err(|_| PracticeSessionErrorCode::StorageError.error())?
+ }
+ 
++#[tauri::command]
++pub async fn erase_practice_history_atomically(
++    app: AppHandle,
++    action: Value,
++) -> Result<Value, PracticeSessionErrorWire> {
++    let root = app_root(&app).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
++    tauri::async_runtime::spawn_blocking(move || erase_practice_history_at(&root, &action))
++        .await
++        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?
++}
++
+ #[tauri::command]
+ pub async fn save_practice_test_atomically(
+     app: AppHandle,
+diff --git a/src/App.tsx b/src/App.tsx
+index c05e4af..0e81aec 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -20,6 +20,7 @@ const EventDetail = lazy(() => import("@/pages/Schedule/EventDetail").then((m) =
+ const Schedule = lazy(() => import("@/pages/Schedule/Schedule").then((m) => ({ default: m.Schedule })));
+ const Settings = lazy(() => import("@/pages/Settings/Settings").then((m) => ({ default: m.Settings })));
+ const MaterialDetail = lazy(() => import("@/pages/StudyLibrary/MaterialDetail").then((m) => ({ default: m.MaterialDetail })));
++const PracticeHistory = lazy(() => import("@/pages/StudyLibrary/PracticeHistory").then((m) => ({ default: m.PracticeHistory })));
+ const StudyLibrary = lazy(() => import("@/pages/StudyLibrary/StudyLibrary").then((m) => ({ default: m.StudyLibrary })));
+ 
+ /** Holds the shell back until the database is open, so no screen sees a
+@@ -58,6 +59,9 @@ function Gate() {
+           <Route index element={<FlightDeck />} />
+           <Route path="flight-path" element={<FlightPath />} />
+           <Route path="study" element={<StudyLibrary />} />
++          <Route path="study/history" element={<PracticeHistory />} />
++          <Route path="study/history/:historyKey" element={<PracticeHistory />} />
++          <Route path="study/history/:historyKey/:attemptId" element={<PracticeHistory />} />
+           <Route path="study/:materialId" element={<MaterialDetail />} />
+           <Route path="schedule" element={<Schedule />} />
+           <Route path="schedule/:eventId" element={<EventDetail />} />
+diff --git a/src/components/ui/Dialog.tsx b/src/components/ui/Dialog.tsx
+index ec0c163..e2477cc 100644
+--- a/src/components/ui/Dialog.tsx
++++ b/src/components/ui/Dialog.tsx
+@@ -100,6 +100,13 @@ interface ConfirmDialogProps {
+   message: string;
+   confirmLabel?: string;
+   destructive?: boolean;
++  /**
++   * A confirmed action whose outcome is not settled yet. While pending, the
++   * dialog cannot be dismissed — Escape, backdrop, the close button and
++   * Cancel all stay put, so the caller keeps exactly one intent in flight.
++   */
++  pending?: boolean;
++  pendingLabel?: string;
+   onConfirm: () => void;
+   onCancel: () => void;
+ }
+@@ -111,6 +118,8 @@ export function ConfirmDialog({
+   message,
+   confirmLabel = "Delete",
+   destructive = true,
++  pending = false,
++  pendingLabel,
+   onConfirm,
+   onCancel,
+ }: ConfirmDialogProps) {
+@@ -120,16 +129,28 @@ export function ConfirmDialog({
+       onClose={onCancel}
+       title={title}
+       narrow
++      dismissible={!pending}
+       footer={
+         <>
+-          <Button onClick={onCancel}>Cancel</Button>
+-          <Button variant={destructive ? "danger" : "primary"} onClick={onConfirm}>
+-            {confirmLabel}
++          <Button onClick={onCancel} disabled={pending}>
++            Cancel
++          </Button>
++          <Button
++            variant={destructive ? "danger" : "primary"}
++            onClick={onConfirm}
++            disabled={pending}
++          >
++            {pending && pendingLabel ? pendingLabel : confirmLabel}
+           </Button>
+         </>
+       }
+     >
+       <p className="muted">{message}</p>
++      {pending ? (
++        <p className="tiny muted" role="status">
++          Waiting for the result. This stays open until the outcome is known.
++        </p>
++      ) : null}
+     </Dialog>
+   );
+ }
+diff --git a/src/data/db.ts b/src/data/db.ts
+index 0f787c3..6a500c6 100644
+--- a/src/data/db.ts
++++ b/src/data/db.ts
+@@ -47,6 +47,12 @@ export interface SqlDatabase {
+   removePracticeTestAtomically?(
+     sourceMaterialId: string,
+   ): Promise<void>;
++  /**
++   * Single-connection atomic transaction for erasing practice history for a history key (M2 PR 2).
++   */
++  erasePracticeHistoryAtomically?(
++    action: import("@/domain/types").EraseHistoryAction,
++  ): Promise<import("@/domain/types").EraseHistoryResult>;
+ }
+ 
+ export interface PracticeTestSaveOperation {
+diff --git a/src/data/practiceSessionContract.test.ts b/src/data/practiceSessionContract.test.ts
+index 9302f64..6cad774 100644
+--- a/src/data/practiceSessionContract.test.ts
++++ b/src/data/practiceSessionContract.test.ts
+@@ -1120,5 +1120,314 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
+       ).resolves.toBeUndefined();
+       expect(removeCalledWith).toEqual({ sourceMaterialId: "mat" });
+     });
++
++    it("PR2: atomic history erasure prunes attempts, responses, inactive versions, and tombstones receipts", async () => {
++      const repo = practiceSessionRepository(db);
++      const matId = "mat-erase-pr2";
++      await seedMaterial(matId, "Erase Test");
++
++      // Save v1 test
++      await db.savePracticeTestAtomically!({
++        sourceMaterialId: matId,
++        title: "Erase Test V1",
++        questions: [{ question: "Q1", options: ["A", "B"], correctIndex: 0, explanation: "E1", sourcePage: 1 }],
++        model: "m1",
++      });
++
++      const activeV1 = (await repo.getActiveVersion(matId))!;
++      const op1 = "11111111-1111-4111-8111-111111111111";
++      const startRes = await repo.saveSessionAction({
++        action: "start_or_resume",
++        operationId: op1,
++        materialId: matId,
++        versionId: activeV1.version.id,
++      });
++      assertSessionState(startRes);
++
++      const op2 = "22222222-2222-4222-8222-222222222222";
++      await repo.saveSessionAction({
++        action: "record_response",
++        operationId: op2,
++        attemptId: startRes.attemptId,
++        itemId: activeV1.items[0]!.id,
++        expectedRevision: 0,
++        selectedIndex: 0,
++        isDontKnow: false,
++      });
++
++      const op3 = "33333333-3333-4333-8333-333333333333";
++      await repo.saveSessionAction({
++        action: "complete_attempt",
++        operationId: op3,
++        attemptId: startRes.attemptId,
++        expectedRevision: 1,
++      });
++
++      // Regenerate test: creates v2, v1 becomes inactive
++      await db.savePracticeTestAtomically!({
++        sourceMaterialId: matId,
++        title: "Erase Test V2",
++        questions: [{ question: "Q2", options: ["C", "D"], correctIndex: 1, explanation: "E2", sourcePage: 2 }],
++        model: "m2",
++      });
++
++      const activeV2 = (await repo.getActiveVersion(matId))!;
++      expect(activeV2.version.id).not.toBe(activeV1.version.id);
++
++      // Start attempt on v2
++      const op4 = "44444444-4444-4444-8444-444444444444";
++      const startV2Res = await repo.saveSessionAction({
++        action: "start_or_resume",
++        operationId: op4,
++        materialId: matId,
++        versionId: activeV2.version.id,
++      });
++      assertSessionState(startV2Res);
++
++      // Verify counts before erasure
++      const attsBefore = await db.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
++      expect(attsBefore).toHaveLength(2);
++      const versBefore = await db.select("SELECT id FROM practice_test_versions WHERE history_key = ?", [matId]);
++      expect(versBefore).toHaveLength(2);
++      const opsBefore = await db.select("SELECT operation_id FROM practice_session_operations WHERE history_key = ?", [matId]);
++      expect(opsBefore).toHaveLength(4);
++
++      // Execute atomic history erasure
++      const eraseOp = "55555555-5555-4555-8555-555555555555";
++      const eraseRes = await repo.eraseHistory({
++        action: "erase_history",
++        operationId: eraseOp,
++        historyKey: matId,
++      });
++      expect(eraseRes).toEqual({
++        action: "erase_history",
++        historyKey: matId,
++        erased: true,
++      });
++
++      // Verify attempts and responses are removed
++      const attsAfter = await db.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
++      expect(attsAfter).toHaveLength(0);
++      const respsAfter = await db.select("SELECT id FROM practice_responses WHERE attempt_id IN (?, ?)", [startRes.attemptId, startV2Res.attemptId]);
++      expect(respsAfter).toHaveLength(0);
++
++      // Inactive v1 is pruned; active v2 is preserved
++      const versAfter = await db.select<{ id: string; is_active: number }>("SELECT id, is_active FROM practice_test_versions WHERE history_key = ?", [matId]);
++      expect(versAfter).toHaveLength(1);
++      expect(versAfter[0]?.id).toBe(activeV2.version.id);
++      expect(versAfter[0]?.is_active).toBe(1);
++
++      // practice_tests row is preserved
++      const ptAfter = await db.select("SELECT source_material_id FROM practice_tests WHERE source_material_id = ?", [matId]);
++      expect(ptAfter).toHaveLength(1);
++
++      // Previous receipts converted to tombstones (is_erased = 1, result_json = 'null')
++      const tombstones = await db.select<{ is_erased: number; result_json: string }>(
++        "SELECT is_erased, result_json FROM practice_session_operations WHERE history_key = ? AND is_erased = 1",
++        [matId],
++      );
++      expect(tombstones).toHaveLength(4);
++      for (const t of tombstones) {
++        expect(t.result_json).toBe("null");
++      }
++
++      // Replay of old tombstoned operation is refused with INVALID_STATE
++      await expect(
++        repo.saveSessionAction({
++          action: "start_or_resume",
++          operationId: op1,
++          materialId: matId,
++          versionId: activeV1.version.id,
++        }),
++      ).rejects.toMatchObject({ code: "INVALID_STATE" });
++
++      // Idempotent replay of erase succeeds
++      const replayErase = await repo.eraseHistory({
++        action: "erase_history",
++        operationId: eraseOp,
++        historyKey: matId,
++      });
++      expect(replayErase).toEqual({
++        action: "erase_history",
++        historyKey: matId,
++        erased: true,
++      });
++
++      // Conflicting erase with changed payload returns OPERATION_CONFLICT
++      await expect(
++        repo.eraseHistory({
++          action: "erase_history",
++          operationId: eraseOp,
++          historyKey: "other-key",
++        }),
++      ).rejects.toMatchObject({ code: "OPERATION_CONFLICT" });
++
++      // Preserved active version is usable for fresh practice session
++      const freshOp = "66666666-6666-4666-8666-666666666666";
++      const freshStart = await repo.saveSessionAction({
++        action: "start_or_resume",
++        operationId: freshOp,
++        materialId: matId,
++        versionId: activeV2.version.id,
++      });
++      assertSessionState(freshStart);
++      expect(freshStart.versionId).toBe(activeV2.version.id);
++    });
++
++    it("PR2: atomic history erasure on sqlJsDb with storage failure rolls back cleanly", async () => {
++      const { createSqlJsDatabase } = await import("./sqlJsDb");
++      const stored = new Map<string, string>();
++      let storageFails = false;
++
++      Object.defineProperty(globalThis, "localStorage", {
++        value: {
++          getItem: (key: string) => stored.get(key) ?? null,
++          setItem: (key: string, value: string) => {
++            if (storageFails) throw new Error("quota exceeded");
++            stored.set(key, value);
++          },
++        },
++        configurable: true,
++        writable: true,
++      });
++
++      const browserDb = await createSqlJsDatabase();
++      const matId = "mat-browser-erase";
++      await browserDb.execute(
++        `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority, created_at, updated_at)
++         VALUES ('${matId}', 'Browser Erase', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}')`,
++      );
++      await browserDb.savePracticeTestAtomically!({
++        sourceMaterialId: matId,
++        title: "Browser Erase Test",
++        questions: [{ question: "Q1", options: ["A", "B"], correctIndex: 0, explanation: "", sourcePage: null }],
++        model: "test-model",
++      });
++
++      const repo = practiceSessionRepository(browserDb);
++      const active = (await repo.getActiveVersion(matId))!;
++      const startRes = await repo.saveSessionAction({
++        action: "start_or_resume",
++        operationId: "11111111-2222-4333-8444-555555555555",
++        materialId: matId,
++        versionId: active.version.id,
++      });
++      assertSessionState(startRes);
++
++      // Trigger storage failure during erase
++      storageFails = true;
++      await expect(
++        repo.eraseHistory({
++          action: "erase_history",
++          operationId: "99999999-9999-4999-8999-999999999999",
++          historyKey: matId,
++        }),
++      ).rejects.toThrow("Browser storage refused");
++      storageFails = false;
++
++      // Rolled back: attempt still exists
++      const attemptsAfterFail = await browserDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
++      expect(attemptsAfterFail).toHaveLength(1);
++
++      // Successful erase
++      const eraseRes = await repo.eraseHistory({
++        action: "erase_history",
++        operationId: "88888888-8888-4888-8888-888888888888",
++        historyKey: matId,
++      });
++      expect(eraseRes.erased).toBe(true);
++
++      const attemptsAfterSuccess = await browserDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
++      expect(attemptsAfterSuccess).toHaveLength(0);
++    });
++
++    it("PR2: sqlJsDb unrelated-history isolation and restart refusal of late old replay", async () => {
++      const { createSqlJsDatabase } = await import("./sqlJsDb");
++      const stored = new Map<string, string>();
++
++      Object.defineProperty(globalThis, "localStorage", {
++        value: {
++          getItem: (key: string) => stored.get(key) ?? null,
++          setItem: (key: string, value: string) => stored.set(key, value),
++        },
++        configurable: true,
++        writable: true,
++      });
++
++      const browserDb = await createSqlJsDatabase();
++      const matA = "mat-browser-a";
++      const matB = "mat-browser-b";
++
++      await browserDb.execute(
++        `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority, created_at, updated_at)
++         VALUES ('${matA}', 'Browser A', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}'),
++                ('${matB}', 'Browser B', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}')`,
++      );
++
++      await browserDb.savePracticeTestAtomically!({
++        sourceMaterialId: matA,
++        title: "Test A",
++        questions: [{ question: "QA", options: ["1", "2"], correctIndex: 0, explanation: "", sourcePage: null }],
++        model: "test-model",
++      });
++
++      await browserDb.savePracticeTestAtomically!({
++        sourceMaterialId: matB,
++        title: "Test B",
++        questions: [{ question: "QB", options: ["3", "4"], correctIndex: 1, explanation: "", sourcePage: null }],
++        model: "test-model",
++      });
++
++      const repoA = practiceSessionRepository(browserDb);
++      const activeA = (await repoA.getActiveVersion(matA))!;
++      const opA1 = "aaaa1111-2222-4333-8444-555555555555";
++      const startA = await repoA.saveSessionAction({
++        action: "start_or_resume",
++        operationId: opA1,
++        materialId: matA,
++        versionId: activeA.version.id,
++      });
++      assertSessionState(startA);
++
++      const activeB = (await repoA.getActiveVersion(matB))!;
++      const opB1 = "bbbb1111-2222-4333-8444-555555555555";
++      const startB = await repoA.saveSessionAction({
++        action: "start_or_resume",
++        operationId: opB1,
++        materialId: matB,
++        versionId: activeB.version.id,
++      });
++      assertSessionState(startB);
++
++      // Erase only matA
++      const eraseOp = "eeee1111-2222-4333-8444-555555555555";
++      await repoA.eraseHistory({
++        action: "erase_history",
++        operationId: eraseOp,
++        historyKey: matA,
++      });
++
++      // matB attempts are untouched
++      const bAttempts = await browserDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matB]);
++      expect(bAttempts).toHaveLength(1);
++
++      // Simulate browser restart by creating new database from stored localStorage
++      const restartedDb = await createSqlJsDatabase();
++      const restartedRepo = practiceSessionRepository(restartedDb);
++
++      // Replay of old opA1 is refused with INVALID_STATE
++      await expect(
++        restartedRepo.saveSessionAction({
++          action: "start_or_resume",
++          operationId: opA1,
++          materialId: matA,
++          versionId: activeA.version.id,
++        }),
++      ).rejects.toMatchObject({ code: "INVALID_STATE" });
++
++      // matB still has attempt after restart
++      const bAttemptsAfterRestart = await restartedDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matB]);
++      expect(bAttemptsAfterRestart).toHaveLength(1);
++    });
+   });
+ });
+diff --git a/src/data/practiceSessionTransaction.ts b/src/data/practiceSessionTransaction.ts
+index af5405f..518d86f 100644
+--- a/src/data/practiceSessionTransaction.ts
++++ b/src/data/practiceSessionTransaction.ts
+@@ -11,6 +11,8 @@
+  */
+ 
+ import type {
++  EraseHistoryAction,
++  EraseHistoryResult,
+   PracticeAbandonResult,
+   PracticeCompletedResult,
+   PracticeQuestion,
+@@ -1046,3 +1048,101 @@ export async function executeRemovePracticeTest(
+     throw new PracticeSessionError("STORAGE_ERROR", { cause: error });
+   }
+ }
++
++/** Strictly validate and decode incoming erase history request. */
++export function decodeEraseHistoryAction(value: unknown): EraseHistoryAction {
++  if (value === null || typeof value !== "object" || Array.isArray(value)) {
++    refuse("INVALID_ARGUMENT");
++  }
++  const jsonStr = JSON.stringify(value);
++  if (jsonStr.length > MAX_PAYLOAD_BYTES) refuse("INVALID_ARGUMENT");
++
++  exactObject(value, ["action", "operationId", "historyKey"]);
++  const obj = value as Record<string, unknown>;
++  const action = stringAt(obj, "action");
++  if (action !== "erase_history") refuse("INVALID_ARGUMENT");
++  const operationId = stringAt(obj, "operationId");
++  if (!isUuidV4(operationId)) refuse("INVALID_ARGUMENT");
++  const historyKey = stringAt(obj, "historyKey");
++  if (!isValidId(historyKey)) refuse("INVALID_ARGUMENT");
++
++  return { action: "erase_history", operationId, historyKey };
++}
++
++/** Single-connection atomic transaction for erasing history for a history key (M2 PR 2). */
++export async function executeEraseHistoryAction(
++  exec: (sql: string) => Promise<void> | void,
++  run: (sql: string, params: SqlValue[]) => Promise<void> | void,
++  query: Query,
++  actionInput: unknown,
++  timestamp: string = new Date().toISOString(),
++): Promise<EraseHistoryResult> {
++  const action = decodeEraseHistoryAction(actionInput);
++  const currentHash = await computeCanonicalHash(actionInput);
++  const operationId = action.operationId;
++  const historyKey = action.historyKey;
++
++  await exec("BEGIN IMMEDIATE");
++  try {
++    // 1. Inspect practice_session_operations for replay or conflict
++    const [receipt] = await query(
++      "SELECT request_hash, result_json, is_erased FROM practice_session_operations WHERE operation_id = ?",
++      [operationId],
++    );
++
++    if (receipt) {
++      if (receipt["request_hash"] !== currentHash) {
++        refuse("OPERATION_CONFLICT");
++      }
++      if (Number(receipt["is_erased"]) === 1) {
++        refuse("INVALID_STATE");
++      }
++      await exec("COMMIT");
++      return JSON.parse(String(receipt["result_json"])) as EraseHistoryResult;
++    }
++
++    // 2. Turn associated receipts into non-content tombstones sufficient to refuse old replay
++    await run(
++      "UPDATE practice_session_operations SET is_erased = 1, result_json = 'null' WHERE history_key = ?",
++      [historyKey],
++    );
++
++    // 3. Remove saved attempts/responses (including unfinished progress under that key)
++    await run(
++      "DELETE FROM practice_attempts WHERE version_id IN (SELECT id FROM practice_test_versions WHERE history_key = ?)",
++      [historyKey],
++    );
++
++    // 4. Remove unused inactive versions/items under that key
++    await run(
++      "DELETE FROM practice_test_versions WHERE history_key = ? AND is_active = 0",
++      [historyKey],
++    );
++
++    // 5. Store erasure receipt
++    const resultObj: EraseHistoryResult = {
++      action: "erase_history",
++      historyKey,
++      erased: true,
++    };
++    const resultJson = JSON.stringify(resultObj);
++
++    await run(
++      `INSERT INTO practice_session_operations (
++         operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased
++       ) VALUES (?, 'erase_history', ?, ?, ?, ?, ?, 0)`,
++      [operationId, currentHash, timestamp, resultJson, historyKey, historyKey],
++    );
++
++    await exec("COMMIT");
++    return resultObj;
++  } catch (error) {
++    try {
++      await exec("ROLLBACK");
++    } catch {
++      // rollback best effort
++    }
++    if (error instanceof PracticeSessionError) throw error;
++    throw new PracticeSessionError("STORAGE_ERROR", { cause: error });
++  }
++}
+diff --git a/src/data/practiceStateValidation.ts b/src/data/practiceStateValidation.ts
+index f49634d..e3b14dc 100644
+--- a/src/data/practiceStateValidation.ts
++++ b/src/data/practiceStateValidation.ts
+@@ -40,7 +40,7 @@ const PRACTICE_TABLES = [
+   "practice_tests",
+ ] as const;
+ 
+-const RECEIPT_ACTIONS = ["start_or_resume", "record_response", "complete_attempt", "abandon_attempt", "retake_attempt"];
++const RECEIPT_ACTIONS = ["start_or_resume", "record_response", "complete_attempt", "abandon_attempt", "retake_attempt", "erase_history"];
+ 
+ const UUID_V4_ANY_CASE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+ 
+@@ -521,6 +521,30 @@ export async function validatePracticeState(query: ValidationQuery, reference: V
+     if (typeof result !== "object" || Array.isArray(result)) refuse(`Operation receipt ${operationId} result must be an object.`);
+     const obj = result as Record<string, unknown>;
+     if (Object.keys(obj).length === 0) refuse(`Operation receipt ${operationId} has an empty result.`);
++
++    if (action === "erase_history") {
++      const hKey = obj["historyKey"];
++      if (typeof hKey !== "string" || hKey !== historyKey) {
++        refuse(`Operation receipt ${operationId} erase_history historyKey does not match receipt history_key.`);
++      }
++      if (obj["erased"] !== true) {
++        refuse(`Operation receipt ${operationId} erase_history missing erased flag.`);
++      }
++      for (const forbidden of [
++        "selectedIndex",
++        "responses",
++        "questions",
++        "scorePercent",
++        "correctIndex",
++        "isCorrect",
++      ]) {
++        if (Object.prototype.hasOwnProperty.call(obj, forbidden)) {
++          refuse("The database contains erased receipts that still retain result content.");
++        }
++      }
++      continue;
++    }
++
+     if (typeof obj["attemptId"] !== "string") refuse(`Operation receipt ${operationId} result is missing attemptId.`);
+     if (obj["attemptId"] !== attemptId) refuse(`Operation receipt ${operationId} result names another attempt.`);
+     const revision = obj["revision"] !== undefined ? obj["revision"] : obj["currentRevision"];
+diff --git a/src/data/repositories/practiceSessionRepository.ts b/src/data/repositories/practiceSessionRepository.ts
+index f5829cc..7e04bc4 100644
+--- a/src/data/repositories/practiceSessionRepository.ts
++++ b/src/data/repositories/practiceSessionRepository.ts
+@@ -11,6 +11,9 @@
+  */
+ import type {
+   CompletedHistoryItem,
++  EraseHistoryAction,
++  EraseHistoryResult,
++  PracticeHistoryGroup,
+   PracticeAttempt,
+   PracticeAttemptStatus,
+   PracticeResponse,
+@@ -25,9 +28,11 @@ import type { SqlDatabase } from "../db";
+ 
+ export interface PracticeSessionRepository {
+   saveSessionAction(action: PracticeSessionAction): Promise<PracticeSessionActionResult>;
++  eraseHistory(action: EraseHistoryAction): Promise<EraseHistoryResult>;
+   getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null>;
+   getAttempt(attemptId: string): Promise<PracticeAttempt | null>;
+   getCompletedHistory(historyKey: string): Promise<CompletedHistoryItem[]>;
++  getCompletedHistoryGroups(): Promise<PracticeHistoryGroup[]>;
+   getActiveVersion(materialId: string): Promise<{ version: PracticeTestVersion; items: PracticeTestItem[] } | null>;
+   getVersion(versionId: string): Promise<PracticeTestVersion | null>;
+   getItems(versionId: string): Promise<PracticeTestItem[]>;
+@@ -44,6 +49,60 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
+       return db.savePracticeSessionAtomically(action);
+     },
+ 
++    async eraseHistory(action: EraseHistoryAction): Promise<EraseHistoryResult> {
++      if (typeof db.erasePracticeHistoryAtomically !== "function") {
++        throw new Error("Practice history erasure requires a database driver with atomic transaction support.");
++      }
++      return db.erasePracticeHistoryAtomically(action);
++    },
++
++    async getCompletedHistoryGroups(): Promise<PracticeHistoryGroup[]> {
++      const rows = await db.select<{
++        history_key: string;
++        source_material_title: string;
++        source_material_id: string | null;
++        completed_count: number;
++        latest_completed_at: string | null;
++        latest_score_percent: number | null;
++      }>(
++        `SELECT
++           v.history_key,
++           COALESCE(
++             (SELECT v2.source_material_title FROM practice_test_versions v2 WHERE v2.history_key = v.history_key ORDER BY v2.version_number DESC LIMIT 1),
++             v.source_material_title
++           ) AS source_material_title,
++           (SELECT v2.source_material_id FROM practice_test_versions v2 WHERE v2.history_key = v.history_key AND v2.source_material_id IS NOT NULL LIMIT 1) AS source_material_id,
++           COUNT(a.id) AS completed_count,
++           MAX(a.completed_at) AS latest_completed_at,
++           (
++             SELECT a2.score_percent
++             FROM practice_attempts a2
++             JOIN practice_test_versions v2 ON a2.version_id = v2.id
++             WHERE v2.history_key = v.history_key AND a2.status = 'completed'
++             ORDER BY a2.completed_at DESC, a2.id DESC
++             LIMIT 1
++           ) AS latest_score_percent
++         FROM practice_test_versions v
++         JOIN practice_attempts a ON a.version_id = v.id AND a.status = 'completed'
++         GROUP BY v.history_key
++         ORDER BY latest_completed_at DESC, v.history_key ASC`,
++      );
++
++      const activeMaterialIds = new Set(
++        (await db.select<{ id: string }>("SELECT id FROM study_materials")).map((m) => m.id),
++      );
++
++      return rows.map((r) => ({
++        historyKey: r.history_key,
++        sourceMaterialTitle: r.source_material_title,
++        sourceMaterialId: r.source_material_id,
++        completedCount: Number(r.completed_count),
++        latestCompletedAt: r.latest_completed_at,
++        latestScorePercent: r.latest_score_percent !== null && r.latest_score_percent !== undefined ? Number(r.latest_score_percent) : null,
++        hasActiveMaterial: r.source_material_id !== null && activeMaterialIds.has(r.history_key),
++      }));
++    },
++
+     async getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null> {
+       const attempts = await db.select<{
+         id: string;
+diff --git a/src/data/sqlJsDb.ts b/src/data/sqlJsDb.ts
+index f0d3d6f..3a83ff2 100644
+--- a/src/data/sqlJsDb.ts
++++ b/src/data/sqlJsDb.ts
+@@ -382,6 +382,16 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
+         }),
+       );
+     },
++    erasePracticeHistoryAtomically(
++      action: import("@/domain/types").EraseHistoryAction,
++    ): Promise<import("@/domain/types").EraseHistoryResult> {
++      return owner.exclusive(() =>
++        durableWrite(async () => {
++          const { executeEraseHistoryAction } = await import("./practiceSessionTransaction");
++          return executeEraseHistoryAction(exec, run, query, action);
++        }),
++      );
++    },
+     /** Every acknowledged write is already stored; this re-stores and reports failure. */
+     persist(): Promise<void> {
+       return owner.exclusive(() => {
+diff --git a/src/data/tauriDb.ts b/src/data/tauriDb.ts
+index 66eeb14..b4c7c01 100644
+--- a/src/data/tauriDb.ts
++++ b/src/data/tauriDb.ts
+@@ -218,6 +218,37 @@ export async function invokeRemovePracticeTest(
+   }
+ }
+ 
++/**
++ * Invoke native practice history erasure.
++ */
++export async function invokeErasePracticeHistory(
++  action: import("@/domain/types").EraseHistoryAction,
++  call: typeof invoke = invoke,
++): Promise<import("@/domain/types").EraseHistoryResult> {
++  try {
++    const raw = await call("erase_practice_history_atomically", { action });
++    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
++      throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
++    }
++    const r = raw as Record<string, unknown>;
++    if (r.action !== "erase_history" || typeof r.historyKey !== "string" || typeof r.erased !== "boolean") {
++      throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
++    }
++    return raw as import("@/domain/types").EraseHistoryResult;
++  } catch (rejection) {
++    if (rejection instanceof PracticeSessionError) throw rejection;
++    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
++    if (
++      isPracticeSessionErrorCode(code) &&
++      code !== "IPC_TRANSPORT_ERROR" &&
++      message === PRACTICE_SESSION_ERROR_MESSAGES[code]
++    ) {
++      throw new PracticeSessionError(code);
++    }
++    throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
++  }
++}
++
+ export async function createTauriDatabase(): Promise<SqlDatabase> {
+   // Migrations were registered in Rust and run as part of this load().
+   const db = await Database.load(DB_URL);
+@@ -288,6 +319,11 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
+     ): Promise<void> {
+       return invokeRemovePracticeTest(sourceMaterialId);
+     },
++    erasePracticeHistoryAtomically(
++      action: import("@/domain/types").EraseHistoryAction,
++    ): Promise<import("@/domain/types").EraseHistoryResult> {
++      return invokeErasePracticeHistory(action);
++    },
+     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
+       return db.select<T[]>(toNumberedPlaceholders(sql), params);
+     },
+diff --git a/src/data/testing/nodeSqliteDb.ts b/src/data/testing/nodeSqliteDb.ts
+index 11847de..c9953ff 100644
+--- a/src/data/testing/nodeSqliteDb.ts
++++ b/src/data/testing/nodeSqliteDb.ts
+@@ -19,6 +19,7 @@ import { executeDebriefSave } from "../debriefTransaction";
+ import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
+ import { executeStructuredImport } from "../structuredImportTransaction";
+ import {
++  executeEraseHistoryAction,
+   executeLegacyConversion,
+   executePracticeSessionAction,
+   executeRemovePracticeTest,
+@@ -155,6 +156,11 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
+     ): Promise<void> {
+       return owner.exclusive(() => executeRemovePracticeTest(exec, run, query, sourceMaterialId));
+     },
++    erasePracticeHistoryAtomically(
++      action: import("@/domain/types").EraseHistoryAction,
++    ): Promise<import("@/domain/types").EraseHistoryResult> {
++      return owner.exclusive(() => executeEraseHistoryAction(exec, run, query, action));
++    },
+     close() {
+       db.close();
+     },
+diff --git a/src/domain/types.ts b/src/domain/types.ts
+index ddd0849..d70e001 100644
+--- a/src/domain/types.ts
++++ b/src/domain/types.ts
+@@ -468,6 +468,28 @@ export interface CompletedHistoryItem {
+   scorePercent: number;
+ }
+ 
++export interface EraseHistoryAction {
++  action: "erase_history";
++  operationId: string;
++  historyKey: string;
++}
++
++export interface EraseHistoryResult {
++  action: "erase_history";
++  historyKey: string;
++  erased: boolean;
++}
++
++export interface PracticeHistoryGroup {
++  historyKey: string;
++  sourceMaterialTitle: string;
++  sourceMaterialId: string | null;
++  completedCount: number;
++  latestCompletedAt: IsoDateTime | null;
++  latestScorePercent: number | null;
++  hasActiveMaterial: boolean;
++}
++
+ /* ------------------------------------------------------------------ */
+ /* Schedule                                                            */
+ /* ------------------------------------------------------------------ */
+diff --git a/src/pages/StudyLibrary/MaterialDetail.tsx b/src/pages/StudyLibrary/MaterialDetail.tsx
+index 14fe322..e5791b0 100644
+--- a/src/pages/StudyLibrary/MaterialDetail.tsx
++++ b/src/pages/StudyLibrary/MaterialDetail.tsx
+@@ -104,7 +104,7 @@ function MaterialDetailPage({
+ }: MaterialDetailPageProps) {
+   const { materialId } = useParams();
+   const navigate = useNavigate();
+-  const { data, mutate, deleteWithUndo } = useAppData();
++  const { data, mutate, deleteWithUndo, repositories } = useAppData();
+   const operations = useActionOperations();
+   const today = todayIso();
+ 
+@@ -113,6 +113,11 @@ function MaterialDetailPage({
+   const [addingAction, setAddingAction] = useState(false);
+   const [newQuestion, setNewQuestion] = useState("");
+   const [fileMissing, setFileMissing] = useState(false);
++  const [conversionStatus, setConversionStatus] = useState<{
++    legacyMigratedAt: string | null;
++    legacyError: string | null;
++  } | null>(null);
++  const [completedCount, setCompletedCount] = useState(0);
+   const [splitting, setSplitting] = useState(false);
+   const [splittingManually, setSplittingManually] = useState(false);
+   const [openError, setOpenError] = useState<string | null>(null);
+@@ -189,6 +194,21 @@ function MaterialDetailPage({
+         activeGeminiOp?.kind === "practice-test",
+     );
+   }, [materialId, activeGeminiOp]);
++
++  useEffect(() => {
++    let cancelled = false;
++    if (materialId && repositories?.practiceSessions) {
++      void repositories.practiceSessions.getConversionStatus(materialId).then((status) => {
++        if (!cancelled) setConversionStatus(status);
++      });
++      void repositories.practiceSessions.getCompletedHistory(materialId).then((items) => {
++        if (!cancelled) setCompletedCount(items.length);
++      });
++    }
++    return () => {
++      cancelled = true;
++    };
++  }, [materialId, repositories]);
+   const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
+   const practiceTest = data.practiceTests.find(
+     (candidate) => candidate.sourceMaterialId === materialId,
+@@ -864,17 +884,47 @@ function MaterialDetailPage({
+                     </div>
+                   </div>
+                 ) : null}
+-                {practiceTest ? (
+-                  <div className="stack stack--4">
+-                    <div className="ai-disclaimer">
++                {conversionStatus?.legacyError === "MALFORMED_QUESTION" ? (
++                  <div className="stack stack--3">
++                    <div className="ai-disclaimer" role="alert">
+                       <AlertIcon size={16} />
+                       <p className="tiny">
+-                        {importedTest
+-                          ? IMPORTED_CONTENT_DISCLAIMER
+-                          : "AI-generated practice test. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it."}
++                        This practice test contains malformed questions from an earlier version and cannot be started. Please regenerate the practice test.
+                       </p>
+                     </div>
+-                    <PracticeTestPanel practiceTest={practiceTest} key={practiceTest.updatedAt} />
++                    {completedCount > 0 ? (
++                      <div>
++                        <Link
++                          to={`/study/history/${encodeURIComponent(material.id)}`}
++                          className="button button--secondary button--small"
++                        >
++                          View practice history ({completedCount})
++                        </Link>
++                      </div>
++                    ) : null}
++                  </div>
++                ) : practiceTest ? (
++                  <div className="stack stack--4">
++                    <div className="row row--between" style={{ alignItems: "center" }}>
++                      <div className="ai-disclaimer" style={{ flex: 1, margin: 0 }}>
++                        <AlertIcon size={16} />
++                        <p className="tiny">
++                          {importedTest
++                            ? IMPORTED_CONTENT_DISCLAIMER
++                            : "AI-generated practice test. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it."}
++                        </p>
++                      </div>
++                      {completedCount > 0 ? (
++                        <Link
++                          to={`/study/history/${encodeURIComponent(material.id)}`}
++                          className="button button--secondary button--small"
++                          style={{ marginLeft: "var(--space-3)", flexShrink: 0 }}
++                        >
++                          View practice history ({completedCount})
++                        </Link>
++                      ) : null}
++                    </div>
++                    <PracticeTestPanel practiceTest={practiceTest} materialId={material.id} key={practiceTest.updatedAt} />
+                   </div>
+                 ) : !generatingPractice && !hasImported ? (
+                   <p className="small muted">
+@@ -1135,7 +1185,11 @@ function MaterialDetailPage({
+       <ConfirmDialog
+         open={confirmingPracticeTest && !isGeneratingAny}
+         title="Send this file to Google?"
+-        message={importedTest ? `${IMPORT_TEST_REGENERATE_WARNING} ${aiCheck.reason}` : aiCheck.reason}
++        message={
++          practiceTest
++            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason}`
++            : aiCheck.reason
++        }
+         confirmLabel="Send to Gemini"
+         destructive={false}
+         onConfirm={() => {
+diff --git a/src/pages/StudyLibrary/MaterialDetailOffline.test.ts b/src/pages/StudyLibrary/MaterialDetailOffline.test.ts
+index 3c0843e..43953fe 100644
+--- a/src/pages/StudyLibrary/MaterialDetailOffline.test.ts
++++ b/src/pages/StudyLibrary/MaterialDetailOffline.test.ts
+@@ -123,11 +123,16 @@ async function studySavedContent() {
+ 
+   expect(screen.getByText("Saved question one?")).toBeTruthy();
+   fireEvent.click(screen.getByRole("radio", { name: /Right choice/ }));
+-  expect(within(screen.getByRole("region", { name: "Question result" })).getByText("Correct")).toBeTruthy();
++  expect(within(await screen.findByRole("region", { name: "Question result" })).getByText("Correct")).toBeTruthy();
+   expect(screen.getByText("Saved explanation one.")).toBeTruthy();
+-  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
++  const continueBtn = screen.getByRole("button", { name: "Continue" });
++  await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
++  fireEvent.click(continueBtn);
+   fireEvent.click(screen.getByRole("radio", { name: /Bravo/ }));
+-  fireEvent.click(screen.getByRole("button", { name: "See score" }));
++  const scoreBtn = screen.getByRole("button", { name: "See score" });
++  await waitFor(() => expect(scoreBtn.hasAttribute("disabled")).toBe(false));
++  fireEvent.click(scoreBtn);
++  await screen.findByText("1 of 2 correct");
+   expect(screen.getByText("1 of 2 correct")).toBeTruthy();
+ }
+ 
+diff --git a/src/pages/StudyLibrary/PracticeTestPanel.test.ts b/src/pages/StudyLibrary/PracticeTestPanel.test.ts
+index 1a137ae..0c62a32 100644
+--- a/src/pages/StudyLibrary/PracticeTestPanel.test.ts
++++ b/src/pages/StudyLibrary/PracticeTestPanel.test.ts
+@@ -1,14 +1,18 @@
+ // @vitest-environment jsdom
+-import { createElement as h } from "react";
+-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+-import { afterEach, describe, expect, it } from "vitest";
++import { createElement as h, type ContextType } from "react";
++import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
++import { afterEach, beforeEach, describe, expect, it } from "vitest";
+ 
++import { createRepositories, type Repositories } from "@/data/repositories";
++import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
+ import type { PracticeTest } from "@/domain/types";
+ import { PracticeTestPanel } from "./PracticeTestPanel";
+-
+-afterEach(cleanup);
++import { AppDataContext, EMPTY_DATA } from "@/state/AppDataContext";
+ 
+ describe("PracticeTestPanel", () => {
++  let db: TestDatabase;
++  let repos: Repositories;
++
+   const sampleTest: PracticeTest = {
+     sourceMaterialId: "mat-1",
+     title: "Traffic Pattern Operations",
+@@ -34,8 +38,38 @@ describe("PracticeTestPanel", () => {
+     updatedAt: "2026-09-01T12:00:00.000Z",
+   };
+ 
+-  it("renders the first question with options in radiogroup", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  beforeEach(async () => {
++    db = await createNodeSqliteDatabase();
++    repos = createRepositories(db);
++    await repos.documents.create({ id: sampleTest.sourceMaterialId, title: sampleTest.title });
++    await repos.documents.savePracticeTest(sampleTest);
++    HTMLDialogElement.prototype.showModal = function () {
++      this.setAttribute("open", "");
++    };
++    HTMLDialogElement.prototype.close = function () {
++      this.removeAttribute("open");
++    };
++  });
++
++  afterEach(() => {
++    cleanup();
++    db?.close();
++  });
++
++  async function renderPanel(ui: React.ReactElement) {
++    const value = {
++      repositories: repos,
++      data: EMPTY_DATA,
++      status: "ready",
++      error: null,
++    } as ContextType<typeof AppDataContext>;
++    const view = render(h(AppDataContext.Provider, { value }, ui));
++    await screen.findByText("Question 1 of 2");
++    return view;
++  }
++
++  it("renders the first question with options in radiogroup", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     expect(screen.getByText("Question 1 of 2")).toBeTruthy();
+     expect(screen.getByText("Source p. 42")).toBeTruthy();
+@@ -48,62 +82,68 @@ describe("PracticeTestPanel", () => {
+     expect(options[2]?.textContent).toContain("1,500 feet AGL");
+   });
+ 
+-  it("reveals explanation and marks answer as correct when choosing correct option", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  it("reveals explanation and marks answer as correct when choosing correct option", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     const options = screen.getAllByRole("radio");
+     fireEvent.click(options[1]!); // 1,000 feet AGL is correct
+ 
+-    expect(screen.getByText("Correct")).toBeTruthy();
++    await screen.findByText("Correct");
+     expect(screen.getByText(/Standard pattern altitude is 1,000 feet AGL/)).toBeTruthy();
+-    expect(screen.getByRole("button", { name: "Continue" })).toBeTruthy();
++    const continueBtn = screen.getByRole("button", { name: "Continue" });
++    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
+ 
+     // Radio buttons should be disabled once revealed
+-    for (const opt of options) {
++    for (const opt of screen.getAllByRole("radio")) {
+       expect(opt.hasAttribute("disabled")).toBe(true);
+     }
+   });
+ 
+-  it("reveals explanation and marks answer as incorrect when choosing wrong option", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  it("reveals explanation and marks answer as incorrect when choosing wrong option", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     const options = screen.getAllByRole("radio");
+     fireEvent.click(options[0]!); // 800 feet AGL is wrong
+ 
+-    expect(screen.getByText("Not quite")).toBeTruthy();
++    await screen.findByText("Not quite");
+     expect(screen.getByText(/Standard pattern altitude is 1,000 feet AGL/)).toBeTruthy();
+   });
+ 
+-  it("navigates through questions and calculates final score, allowing retake", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  it("navigates through questions and calculates final score, allowing retake", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     // Q1: answer correctly
+     fireEvent.click(screen.getAllByRole("radio")[1]!);
+-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
++    await screen.findByText("Correct");
++    const cont1 = screen.getByRole("button", { name: "Continue" });
++    await waitFor(() => expect(cont1.hasAttribute("disabled")).toBe(false));
++    fireEvent.click(cont1);
+ 
+     // Q2: answer incorrectly
+-    expect(screen.getByText("Question 2 of 2")).toBeTruthy();
+-    expect(screen.getByText("Check source")).toBeTruthy(); // sourcePage is null
++    await screen.findByText("Question 2 of 2");
++    expect(screen.getByText("Check source")).toBeTruthy();
+     fireEvent.click(screen.getAllByRole("radio")[0]!); // Crosswind is wrong
+ 
+-    expect(screen.getByText("Not quite")).toBeTruthy();
+-    expect(screen.getByRole("button", { name: "See score" })).toBeTruthy();
++    await screen.findByText("Not quite");
++    const scoreBtn = screen.getByRole("button", { name: "See score" });
++    await waitFor(() => expect(scoreBtn.hasAttribute("disabled")).toBe(false));
+ 
+     // Finish test
+-    fireEvent.click(screen.getByRole("button", { name: "See score" }));
++    fireEvent.click(scoreBtn);
+ 
+-    expect(screen.getByText("Practice test complete")).toBeTruthy();
++    await screen.findByText("Practice test complete");
+     expect(screen.getByText("1 of 2 correct")).toBeTruthy();
+ 
+     // Retake
+     const retakeButton = screen.getByRole("button", { name: "Retake this test" });
++    await waitFor(() => expect(retakeButton.hasAttribute("disabled")).toBe(false));
+     fireEvent.click(retakeButton);
+ 
+-    expect(screen.getByText("Question 1 of 2")).toBeTruthy();
++    await screen.findByText("Question 1 of 2");
+   });
+ 
+-  it("supports keyboard navigation with arrows, Home, End, Space and Enter", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  it("supports keyboard navigation with arrows, Home, End, Space and Enter", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     const options = screen.getAllByRole("radio");
+     // Only one option in tab order initially
+@@ -142,64 +182,72 @@ describe("PracticeTestPanel", () => {
+     fireEvent.keyDown(options[1]!, { key: "Enter" });
+ 
+     // Answer should now be revealed and focus moved to Continue
+-    expect(screen.getByText("Correct")).toBeTruthy();
+-    expect(options[1]?.getAttribute("aria-label")).toContain("Correct answer");
++    await screen.findByText("Correct");
++    expect(screen.getAllByRole("radio")[1]?.getAttribute("aria-label")).toContain("Correct answer");
+     const continueBtn = screen.getByRole("button", { name: "Continue" });
+     expect(document.activeElement).toBe(continueBtn);
+   });
+ 
+-  it("moves focus to Continue on mouse click, and to first option of next question on Continue", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  it("moves focus to Continue on mouse click, and to first option of next question on Continue", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     const options = screen.getAllByRole("radio");
+     fireEvent.click(options[0]!);
+ 
+-    expect(screen.getByText("Not quite")).toBeTruthy();
++    await screen.findByText("Not quite");
+     const continueBtn = screen.getByRole("button", { name: "Continue" });
+     expect(document.activeElement).toBe(continueBtn);
+ 
+     // Click Continue and verify focus moves to first option of Question 2
++    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
+     fireEvent.click(continueBtn);
+-    expect(screen.getByText("Question 2 of 2")).toBeTruthy();
++    await screen.findByText("Question 2 of 2");
+     const nextOptions = screen.getAllByRole("radio");
+     expect(document.activeElement).toBe(nextOptions[0]);
+     expect(nextOptions[0]?.getAttribute("tabindex")).toBe("0");
+   });
+ 
+-  it("moves focus to Continue on Space, and to See score after final question answer selection", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  it("moves focus to Continue on Space, and to See score after final question answer selection", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     const options = screen.getAllByRole("radio");
+     // Press Space on option 1 (Question 1)
+     fireEvent.keyDown(options[1]!, { key: " " });
+ 
+-    expect(screen.getByText("Correct")).toBeTruthy();
++    await screen.findByText("Correct");
+     const continueBtn = screen.getByRole("button", { name: "Continue" });
+     expect(document.activeElement).toBe(continueBtn);
+ 
+     // Advance to Question 2 (final question)
++    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
+     fireEvent.click(continueBtn);
+-    expect(screen.getByText("Question 2 of 2")).toBeTruthy();
++    await screen.findByText("Question 2 of 2");
+     const q2Options = screen.getAllByRole("radio");
+     expect(document.activeElement).toBe(q2Options[0]);
+ 
+     // Select final question answer with Enter
+     fireEvent.keyDown(q2Options[1]!, { key: "Enter" });
++    await screen.findByText("Correct");
+     const seeScoreBtn = screen.getByRole("button", { name: "See score" });
+     expect(document.activeElement).toBe(seeScoreBtn);
+   });
+ 
+-  it("moves focus to See score when final question is selected via mouse click or Space", () => {
+-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
++  it("moves focus to See score when final question is selected via mouse click or Space", async () => {
++    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+ 
+     // Advance to final question
+     fireEvent.click(screen.getAllByRole("radio")[0]!);
+-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
++    await screen.findByText("Not quite");
++    const continueBtn = screen.getByRole("button", { name: "Continue" });
++    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
++    fireEvent.click(continueBtn);
+ 
+     // Click final question option
++    await screen.findByText("Question 2 of 2");
+     const finalOptions = screen.getAllByRole("radio");
+     fireEvent.click(finalOptions[0]!);
+ 
++    await screen.findByText("Not quite");
+     const seeScoreBtn = screen.getByRole("button", { name: "See score" });
+     expect(document.activeElement).toBe(seeScoreBtn);
+   });
+diff --git a/src/pages/StudyLibrary/PracticeTestPanel.tsx b/src/pages/StudyLibrary/PracticeTestPanel.tsx
+index 1a02a31..df559c6 100644
+--- a/src/pages/StudyLibrary/PracticeTestPanel.tsx
++++ b/src/pages/StudyLibrary/PracticeTestPanel.tsx
+@@ -1,130 +1,1081 @@
+-import { useEffect, useRef, useState } from "react";
++import {
++  useCallback,
++  useContext,
++  useEffect,
++  useLayoutEffect,
++  useReducer,
++  useRef,
++  useState,
++} from "react";
+ 
+-import { Badge, Button } from "@/components/ui";
+-import type { PracticeTest } from "@/domain/types";
++import { AlertIcon, Badge, Button, ConfirmDialog } from "@/components/ui";
++import { PracticeSessionError } from "@/data/persistenceErrors";
++import type {
++  PracticeCompletedResult,
++  PracticeSessionAction,
++  PracticeSessionState,
++  PracticeTest,
++  PracticeTestItem,
++  PracticeTestVersion,
++} from "@/domain/types";
++import { AppDataContext } from "@/state/AppDataContext";
++import "./studyLibrary.css";
++
++export interface PracticeTestPanelProps {
++  practiceTest: PracticeTest;
++  materialId?: string;
++  materialTitle?: string;
++  onComplete?: (result: PracticeCompletedResult) => void;
++}
++
++interface DraftSelection {
++  choiceIndex: number | null;
++  isDontKnow: boolean;
++}
++
++/**
++ * One intended mutation. Identity is allocated once per intent and Retry
++ * resends this exact payload, so an uncertain outcome can never turn into a
++ * fresh start, answer, completion, retake or abandonment.
++ */
++interface SessionIntent {
++  payload: PracticeSessionAction;
++  /**
++   * An answer chosen before its attempt was acknowledged. It is held here —
++   * never revealed as saved feedback, never silently lost when a start retry
++   * succeeds.
++   */
++  heldAnswer: {
++    responseOperationId: string;
++    draft: DraftSelection;
++    itemIndex: number;
++  } | null;
++}
+ 
+ /**
+- * One saved practice test, taken one question at a time.
+- *
+- * Keyed by the caller on `practiceTest.updatedAt` (see `MaterialDetail`), so
+- * regenerating the test remounts this with fresh state instead of leaving a
+- * stale answer selected against a question that no longer exists.
++ * The panel's only authority over what is editable. Every unresolved
++ * transition is an explicit phase instead of an inferred combination of
++ * booleans, so a failed or uncertain write keeps its lock.
+  */
+-export function PracticeTestPanel({ practiceTest }: { practiceTest: PracticeTest }) {
+-  const [index, setIndex] = useState(0);
+-  const [selected, setSelected] = useState<number | null>(null);
+-  const [focusedIndex, setFocusedIndex] = useState(0);
+-  const [correctCount, setCorrectCount] = useState(0);
++type Phase =
++  | "loading"
++  | "load_failed"
++  | "unavailable"
++  | "ready"
++  | "write_in_flight"
++  | "write_unknown"
++  | "refresh_in_flight"
++  | "refresh_failed"
++  | "completed";
++
++interface PanelState {
++  /** Request generation: the only token allowed to publish state or unlock. */
++  generation: number;
++  materialId: string;
++  phase: Phase;
++  version: PracticeTestVersion | null;
++  items: PracticeTestItem[] | null;
++  attempt: PracticeSessionState | null;
++  completedResult: PracticeCompletedResult | null;
++  index: number;
++  focusIndex: number;
++  /** Local selection; never evidence of a saved response. */
++  draft: DraftSelection | null;
++  changingAnswer: boolean;
++  intent: (SessionIntent & { error: string | null }) | null;
++  failure: { kind: "load" | "write" | "refresh"; text: string } | null;
++  notice: string | null;
++}
++
++type PanelAction =
++  | { type: "load_started"; generation: number; materialId: string }
++  | {
++      type: "snapshot_adopted";
++      generation: number;
++      version: PracticeTestVersion;
++      items: PracticeTestItem[];
++      attempt: PracticeSessionState | null;
++    }
++  | { type: "snapshot_unavailable"; generation: number }
++  | { type: "load_failed"; generation: number; text: string }
++  | { type: "intent_started"; generation: number; intent: SessionIntent }
++  | { type: "intent_unresolved"; generation: number; intent: SessionIntent; text: string }
++  | { type: "intent_settled"; generation: number }
++  | { type: "notice"; generation: number; text: string }
++  | { type: "refresh_started"; generation: number }
++  | {
++      type: "attempt_adopted";
++      generation: number;
++      attempt: PracticeSessionState | null;
++      version: PracticeTestVersion | null;
++      items: PracticeTestItem[] | null;
++      /** The start acknowledgement is only half of an answer intent. */
++      preserveDraft?: boolean;
++    }
++  | { type: "refresh_failed"; generation: number; text: string }
++  | { type: "completed_acknowledged"; generation: number; result: PracticeCompletedResult }
++  | { type: "draft"; generation: number; draft: DraftSelection }
++  | { type: "navigated"; generation: number; index: number; focusIndex: number }
++  | { type: "changing_answer"; generation: number }
++  | { type: "focused"; generation: number; focusIndex: number };
++
++const REFRESH_FAILURE = "Action applied, but refreshing status failed. Click Retry to refresh.";
++
++function initialPanelState(materialId: string, generation: number): PanelState {
++  return {
++    generation,
++    materialId,
++    phase: "loading",
++    version: null,
++    items: null,
++    attempt: null,
++    completedResult: null,
++    index: 0,
++    focusIndex: 0,
++    draft: null,
++    changingAnswer: false,
++    intent: null,
++    failure: null,
++    notice: null,
++  };
++}
++
++/** Next unanswered ordinal, bounded by the frozen items actually displayed. */
++function resumeIndex(
++  attempt: PracticeSessionState | null,
++  items: PracticeTestItem[] | null,
++): number {
++  const next = attempt?.nextUnansweredOrdinal;
++  if (next === null || next === undefined || !items || items.length === 0) return 0;
++  return next < items.length ? next : 0;
++}
++
++function panelReducer(state: PanelState, action: PanelAction): PanelState {
++  // A load always owns a new generation; a different material starts over.
++  if (action.type === "load_started") {
++    if (action.generation < state.generation) return state;
++    if (action.materialId !== state.materialId) {
++      return initialPanelState(action.materialId, action.generation);
++    }
++    // A retry keeps the held intent: no load may clear a newer pending mutation.
++    return { ...state, generation: action.generation, phase: "loading", failure: null };
++  }
++
++  if (action.generation !== state.generation) return state;
++
++  switch (action.type) {
++    case "snapshot_adopted": {
++      const replacedAttempt = action.attempt?.attemptId !== state.attempt?.attemptId;
++      return {
++        ...state,
++        phase: "ready",
++        version: action.version,
++        items: action.items,
++        attempt: action.attempt,
++        completedResult: null,
++        index: replacedAttempt ? resumeIndex(action.attempt, action.items) : state.index,
++        focusIndex: 0,
++        draft: null,
++        changingAnswer: false,
++        failure: null,
++      };
++    }
++    case "snapshot_unavailable":
++      return {
++        ...state,
++        phase: "unavailable",
++        version: null,
++        items: null,
++        attempt: null,
++        completedResult: null,
++        index: 0,
++        focusIndex: 0,
++        draft: null,
++        changingAnswer: false,
++        intent: null,
++        failure: null,
++        notice: null,
++      };
++    case "load_failed":
++      return {
++        ...state,
++        phase: "load_failed",
++        version: null,
++        items: null,
++        attempt: null,
++        draft: null,
++        changingAnswer: false,
++        failure: { kind: "load", text: action.text },
++      };
++    case "intent_started":
++      return {
++        ...state,
++        phase: "write_in_flight",
++        intent: { ...action.intent, error: null },
++        changingAnswer: false,
++        failure: null,
++        notice: null,
++      };
++    case "intent_unresolved":
++      return {
++        ...state,
++        phase: "write_unknown",
++        intent: { ...action.intent, error: action.text },
++        failure: { kind: "write", text: action.text },
++      };
++    case "intent_settled":
++      return { ...state, intent: null };
++    case "notice":
++      return { ...state, notice: action.text };
++    case "refresh_started":
++      return { ...state, phase: "refresh_in_flight", failure: null };
++    case "attempt_adopted": {
++      // M2UI-R8: one adoption path for null, current and replaced state.
++      if (action.attempt === null) {
++        return {
++          ...state,
++          phase: "ready",
++          attempt: null,
++          completedResult: null,
++          version: action.version ?? state.version,
++          items: action.items ?? state.items,
++          index: 0,
++          focusIndex: 0,
++          draft: null,
++          changingAnswer: false,
++          intent: null,
++          failure: null,
++        };
++      }
++      const items = action.items ?? state.items;
++      if (action.preserveDraft) {
++        // Half of one answer intent: the attempt is acknowledged, the answer
++        // is still in flight. Position and held selection stay as they are.
++        return {
++          ...state,
++          attempt: action.attempt,
++          version: action.version ?? state.version,
++          items,
++          failure: null,
++          notice: null,
++        };
++      }
++      const replacedAttempt = action.attempt.attemptId !== state.attempt?.attemptId;
++      return {
++        ...state,
++        phase: "ready",
++        attempt: action.attempt,
++        // An acknowledged current attempt replaces any earlier result view.
++        completedResult: null,
++        version: action.version ?? state.version,
++        items,
++        index: replacedAttempt ? resumeIndex(action.attempt, items) : state.index,
++        draft: null,
++        changingAnswer: false,
++        intent: null,
++        failure: null,
++      };
++    }
++    case "refresh_failed":
++      // The write is acknowledged, so its identity is no longer pending; the
++      // failed read keeps everything else locked.
++      return {
++        ...state,
++        phase: "refresh_failed",
++        intent: null,
++        failure: { kind: "refresh", text: action.text },
++      };
++    case "completed_acknowledged":
++      return {
++        ...state,
++        phase: "completed",
++        completedResult: action.result,
++        intent: null,
++        failure: null,
++        notice: null,
++      };
++    case "draft":
++      return { ...state, draft: action.draft, changingAnswer: false, notice: null };
++    case "navigated":
++      return {
++        ...state,
++        index: action.index,
++        focusIndex: action.focusIndex,
++        draft: null,
++        changingAnswer: false,
++        notice: null,
++      };
++    case "changing_answer":
++      return { ...state, changingAnswer: true, draft: null, notice: null };
++    case "focused":
++      return { ...state, focusIndex: action.focusIndex };
++    default:
++      return state;
++  }
++}
++
++/** Typed refusals are settled outcomes; anything else has an unknown result. */
++function settledRefusalText(error: unknown): string | null {
++  if (error instanceof PracticeSessionError) {
++    if (
++      error.code === "OPERATION_CONFLICT" ||
++      error.code === "INVALID_STATE" ||
++      error.code === "NOT_FOUND" ||
++      error.code === "INVALID_ARGUMENT"
++    ) {
++      return error.message;
++    }
++  }
++  return null;
++}
++
++function failureText(error: unknown): string {
++  if (error instanceof Error && error.message) return error.message;
++  if (typeof error === "string" && error) return error;
++  return "The operation could not be completed.";
++}
++
++function pendingLabel(intent: SessionIntent | null): string {
++  switch (intent?.payload.action) {
++    case "start_or_resume":
++      return "Starting your practice attempt…";
++    case "complete_attempt":
++      return "Submitting your score…";
++    case "retake_attempt":
++      return "Starting your retake…";
++    case "abandon_attempt":
++      return "Closing this attempt…";
++    default:
++      return "Saving your answer…";
++  }
++}
++
++export function PracticeTestPanel({
++  practiceTest,
++  materialId: propMaterialId,
++  materialTitle: _materialTitle,
++  onComplete,
++}: PracticeTestPanelProps) {
++  const appData = useContext(AppDataContext);
++  const repositories = appData?.repositories?.practiceSessions;
++  const materialId = propMaterialId || practiceTest.sourceMaterialId;
++
++  const [state, dispatch] = useReducer(
++    panelReducer,
++    undefined,
++    () => initialPanelState(materialId, 1),
++  );
++  const [confirmingAbandon, setConfirmingAbandon] = useState(false);
++
++  // Synchronous authority. React state cannot be read before the next render,
++  // so two events inside one render are gated by these refs instead.
++  const generationRef = useRef(state.generation);
++  const busyRef = useRef(false);
++  const intentRef = useRef<SessionIntent | null>(null);
++  const mountedRef = useRef(true);
++  const renderedRef = useRef(state);
++  renderedRef.current = state;
++
++  const onCompleteRef = useRef(onComplete);
++  onCompleteRef.current = onComplete;
++
+   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+   const actionButtonRef = useRef<HTMLButtonElement | null>(null);
+ 
+-  const { questions } = practiceTest;
+-  const finished = index >= questions.length;
+-  const question = questions[index];
++  const isCurrent = useCallback((generation: number) => {
++    return mountedRef.current && generation === generationRef.current;
++  }, []);
++
++  const nextGeneration = useCallback(() => {
++    generationRef.current += 1;
++    return generationRef.current;
++  }, []);
++
++  // -------------------------------------------------------------------------
++  // Reads
++  // -------------------------------------------------------------------------
++
++  const loadSnapshot = useCallback(
++    async (reason: "initial" | "retry" | "reconcile", refreshedNotice?: string): Promise<void> => {
++      if (!materialId || !repositories) return;
++      const generation = nextGeneration();
++      dispatch({ type: "load_started", generation, materialId });
++      try {
++        // Both authoritative reads settle before anything becomes editable.
++        const [active, attempt] = await Promise.all([
++          repositories.getActiveVersion(materialId),
++          repositories.getCurrentAttempt(materialId),
++        ]);
++        if (!isCurrent(generation)) return;
++        if (!active || active.items.length === 0) {
++          dispatch({ type: "snapshot_unavailable", generation });
++          return;
++        }
++        dispatch({
++          type: "snapshot_adopted",
++          generation,
++          version: active.version,
++          items: active.items,
++          attempt,
++        });
++        if (refreshedNotice) {
++          // Only reachable once the authoritative read really succeeded.
++          dispatch({ type: "notice", generation, text: refreshedNotice });
++        }
++      } catch (error) {
++        if (!isCurrent(generation)) return;
++        if (reason === "reconcile") {
++          dispatch({ type: "refresh_failed", generation, text: REFRESH_FAILURE });
++          return;
++        }
++        dispatch({ type: "load_failed", generation, text: failureText(error) });
++      }
++    },
++    [dispatch, isCurrent, materialId, nextGeneration, repositories],
++  );
+ 
+   useEffect(() => {
+-    if (selected !== null && !finished) {
+-      actionButtonRef.current?.focus();
++    void loadSnapshot("initial");
++  }, [loadSnapshot]);
++
++  useEffect(
++    () => () => {
++      mountedRef.current = false;
++      generationRef.current += 1;
++    },
++    [],
++  );
++
++  /**
++   * The single adoption transition (M2UI-R8). A valid null is authoritative
++   * state, not a failed read, and clears everything derived from the old
++   * attempt. A replaced attempt refreshes its own frozen items before editing.
++   * Returns the adopted content so a continuation never guesses from stale
++   * render state.
++   */
++  const adoptAttempt = useCallback(
++    async (
++      attempt: PracticeSessionState | null,
++      generation: number,
++      preserveDraft = false,
++    ): Promise<{ version: PracticeTestVersion | null; items: PracticeTestItem[] | null }> => {
++      if (!repositories || !isCurrent(generation)) return { version: null, items: null };
++      let version: PracticeTestVersion | null = null;
++      let items: PracticeTestItem[] | null = null;
++      if (attempt) {
++        const known = renderedRef.current;
++        if (known.version?.id === attempt.versionId && known.items) {
++          version = known.version;
++          items = known.items;
++        } else {
++          const [fetchedVersion, fetchedItems] = await Promise.all([
++            repositories.getVersion(attempt.versionId),
++            repositories.getItems(attempt.versionId),
++          ]);
++          if (!isCurrent(generation)) return { version: null, items: null };
++          version = fetchedVersion;
++          items = fetchedItems;
++        }
++      }
++      if (!isCurrent(generation)) return { version: null, items: null };
++      dispatch({ type: "attempt_adopted", generation, attempt, version, items, preserveDraft });
++      return { version, items };
++    },
++    [dispatch, isCurrent, repositories],
++  );
++
++  const refreshCurrentAttempt = useCallback(
++    async (generation: number): Promise<void> => {
++      if (!repositories || !materialId || !isCurrent(generation)) return;
++      dispatch({ type: "refresh_started", generation });
++      let attempt: PracticeSessionState | null;
++      try {
++        attempt = await repositories.getCurrentAttempt(materialId);
++      } catch {
++        if (isCurrent(generation)) {
++          dispatch({ type: "refresh_failed", generation, text: REFRESH_FAILURE });
++        }
++        return;
++      }
++      if (!isCurrent(generation)) return;
++      await adoptAttempt(attempt, generation);
++    },
++    [adoptAttempt, dispatch, isCurrent, materialId, repositories],
++  );
++
++  // -------------------------------------------------------------------------
++  // Writes
++  // -------------------------------------------------------------------------
++
++  const runIntent = useCallback(
++    async (intent: SessionIntent, generation: number): Promise<void> => {
++      if (!repositories || !isCurrent(generation)) {
++        busyRef.current = false;
++        return;
++      }
++
++      let result: unknown;
++      try {
++        result = await repositories.saveSessionAction(intent.payload);
++      } catch (error) {
++        busyRef.current = false;
++        if (!isCurrent(generation)) return;
++        const settled = settledRefusalText(error);
++        if (settled) {
++          intentRef.current = null;
++          dispatch({ type: "intent_settled", generation });
++          // Stay blocked while the current state is re-read; announce the
++          // refresh only if that read succeeds, otherwise read recovery shows.
++          void loadSnapshot(
++            "reconcile",
++            `${settled} The practice state was refreshed; choose the action again.`,
++          );
++          return;
++        }
++        // Unknown outcome: identity stays pending and keeps every conflicting
++        // action locked until it is deliberately retried with the same payload.
++        dispatch({ type: "intent_unresolved", generation, intent, text: failureText(error) });
++        return;
++      }
++
++      if (!isCurrent(generation)) {
++        busyRef.current = false;
++        return;
++      }
++
++      const payload = intent.payload;
++
++      if (payload.action === "complete_attempt") {
++        intentRef.current = null;
++        busyRef.current = false;
++        const completed = result as PracticeCompletedResult;
++        dispatch({ type: "completed_acknowledged", generation, result: completed });
++        onCompleteRef.current?.(completed);
++        return;
++      }
++
++      if (payload.action === "start_or_resume") {
++        const acknowledged = result as PracticeSessionState;
++        const held = intent.heldAnswer;
++        intentRef.current = null;
++        busyRef.current = false;
++        const adopted = await adoptAttempt(acknowledged, generation, Boolean(held));
++        if (!isCurrent(generation) || !held) return;
++        // The held answer applies only against the acknowledged attempt and
++        // its own frozen item — never another version or revision.
++        const item =
++          adopted.version?.id === acknowledged.versionId
++            ? adopted.items?.[held.itemIndex]
++            : undefined;
++        if (!item) {
++          dispatch({
++            type: "notice",
++            generation,
++            text: "The practice content changed while starting. Choose your answer again.",
++          });
++          return;
++        }
++        const responseIntent: SessionIntent = {
++          payload: {
++            action: "record_response",
++            operationId: held.responseOperationId,
++            attemptId: acknowledged.attemptId,
++            itemId: item.id,
++            expectedRevision: acknowledged.revision,
++            selectedIndex: held.draft.choiceIndex,
++            isDontKnow: held.draft.isDontKnow,
++          },
++          heldAnswer: null,
++        };
++        intentRef.current = responseIntent;
++        busyRef.current = true;
++        dispatch({ type: "intent_started", generation, intent: responseIntent });
++        await runIntent(responseIntent, generation);
++        return;
++      }
++
++      if (payload.action === "retake_attempt") {
++        const acknowledged = result as PracticeSessionState;
++        intentRef.current = null;
++        busyRef.current = false;
++        await adoptAttempt(acknowledged, generation);
++        if (!isCurrent(generation)) return;
++        // A receipt can be historical: reconcile the actual current attempt
++        // before editing is unlocked.
++        await refreshCurrentAttempt(generation);
++        return;
++      }
++
++      // record_response / abandon_attempt: acknowledged, then re-read state.
++      intentRef.current = null;
++      busyRef.current = false;
++      await refreshCurrentAttempt(generation);
++    },
++    [adoptAttempt, dispatch, isCurrent, loadSnapshot, refreshCurrentAttempt, repositories],
++  );
++
++  /** Allocates one intent; a second event in the same render cannot get past this. */
++  const beginIntent = useCallback(
++    async (intent: SessionIntent): Promise<void> => {
++      if (busyRef.current || intentRef.current) return;
++      intentRef.current = intent;
++      busyRef.current = true;
++      const generation = generationRef.current;
++      dispatch({ type: "intent_started", generation, intent });
++      await runIntent(intent, generation);
++    },
++    [dispatch, runIntent],
++  );
++
++  /** Resends the exact unresolved payload; never allocates a new identity. */
++  const retryPending = useCallback(async (): Promise<void> => {
++    const intent = intentRef.current;
++    if (!intent || busyRef.current) return;
++    if (renderedRef.current.phase !== "write_unknown") return;
++    const generation = generationRef.current;
++    busyRef.current = true;
++    dispatch({ type: "intent_started", generation, intent });
++    await runIntent(intent, generation);
++  }, [dispatch, runIntent]);
++
++  /** Read-only recovery; an acknowledged write is never resent here. */
++  const retryRefresh = useCallback(async (): Promise<void> => {
++    if (busyRef.current || intentRef.current) return;
++    if (renderedRef.current.phase !== "refresh_failed") return;
++    await refreshCurrentAttempt(generationRef.current);
++  }, [refreshCurrentAttempt]);
++
++  // -------------------------------------------------------------------------
++  // Derived render data
++  // -------------------------------------------------------------------------
++
++  const questions: PracticeTestItem[] = state.items ?? [];
++  const totalQuestions = questions.length;
++  const question = questions[state.index];
++  const currentItem = questions[state.index];
++
++  const confirmedResponse =
++    currentItem && state.attempt
++      ? state.attempt.responses.find((r) => r.itemId === currentItem.id)
++      : undefined;
++
++  const canEdit = state.phase === "ready";
++
++  // Durable feedback only: an unsaved draft never inherits saved correctness.
++  const revealed =
++    !state.changingAnswer && state.draft === null && confirmedResponse !== undefined;
++
++  const shownChoice = state.draft ? state.draft.choiceIndex : confirmedResponse?.selectedIndex ?? null;
++  const shownDontKnow = state.draft ? state.draft.isDontKnow : confirmedResponse?.isDontKnow ?? false;
++  const isCorrect = revealed && confirmedResponse !== undefined && confirmedResponse.isCorrect;
++
++  const answeredCount = state.attempt?.answeredCount ?? 0;
++  const showContinue = state.draft !== null || confirmedResponse !== undefined;
++
++  // -------------------------------------------------------------------------
++  // Actions
++  // -------------------------------------------------------------------------
++
++  const submitAnswer = useCallback(
++    (choiceIndex: number | null, isDontKnow: boolean): void => {
++      if (busyRef.current || intentRef.current) return;
++      const current = renderedRef.current;
++      if (current.phase !== "ready") return;
++      const item = current.items?.[current.index];
++      if (!item) return;
++
++      const draft: DraftSelection = { choiceIndex, isDontKnow };
++      dispatch({ type: "draft", generation: current.generation, draft });
++
++      const responseOperationId = crypto.randomUUID();
++
++      if (!current.attempt) {
++        if (!current.version) return;
++        void beginIntent({
++          payload: {
++            action: "start_or_resume",
++            operationId: crypto.randomUUID(),
++            materialId: current.materialId,
++            versionId: current.version.id,
++          },
++          heldAnswer: { responseOperationId, draft, itemIndex: current.index },
++        });
++        return;
++      }
++
++      void beginIntent({
++        payload: {
++          action: "record_response",
++          operationId: responseOperationId,
++          attemptId: current.attempt.attemptId,
++          itemId: item.id,
++          expectedRevision: current.attempt.revision,
++          selectedIndex: choiceIndex,
++          isDontKnow,
++        },
++        heldAnswer: null,
++      });
++    },
++    [beginIntent, dispatch],
++  );
++
++  const handleSelectOption = useCallback(
++    (optionIndex: number) => {
++      submitAnswer(optionIndex, false);
++    },
++    [submitAnswer],
++  );
++
++  const handleDontKnow = useCallback(() => {
++    submitAnswer(null, true);
++  }, [submitAnswer]);
++
++  const handleChangeAnswer = useCallback(() => {
++    if (busyRef.current || intentRef.current) return;
++    if (renderedRef.current.phase !== "ready") return;
++    dispatch({ type: "changing_answer", generation: generationRef.current });
++  }, [dispatch]);
++
++  const goToIndex = useCallback(
++    (nextIndex: number, focusIndex = 0) => {
++      if (busyRef.current || intentRef.current) return;
++      if (renderedRef.current.phase !== "ready") return;
++      dispatch({
++        type: "navigated",
++        generation: generationRef.current,
++        index: nextIndex,
++        focusIndex,
++      });
++    },
++    [dispatch],
++  );
++
++  const handleComplete = useCallback(() => {
++    if (busyRef.current || intentRef.current) return;
++    const current = renderedRef.current;
++    if (current.phase !== "ready") return;
++    if (!current.attempt) {
++      void loadSnapshot("retry");
++      return;
+     }
+-  }, [selected, finished]);
++    void beginIntent({
++      payload: {
++        action: "complete_attempt",
++        operationId: crypto.randomUUID(),
++        attemptId: current.attempt.attemptId,
++        expectedRevision: current.attempt.revision,
++      },
++      heldAnswer: null,
++    });
++  }, [beginIntent, loadSnapshot]);
+ 
+-  useEffect(() => {
+-    if (index > 0 && !finished) {
++  const handleContinue = useCallback(() => {
++    const current = renderedRef.current;
++    if (current.index + 1 < totalQuestions) {
++      goToIndex(current.index + 1);
++      return;
++    }
++    handleComplete();
++  }, [goToIndex, handleComplete, totalQuestions]);
++
++  const handleRetake = useCallback(() => {
++    if (busyRef.current || intentRef.current) return;
++    const current = renderedRef.current;
++    if (current.phase !== "completed" || !current.version) return;
++    const inProgress =
++      current.attempt && current.attempt.status === "in_progress" && !current.completedResult
++        ? current.attempt
++        : null;
++    void beginIntent({
++      payload: {
++        action: "retake_attempt",
++        operationId: crypto.randomUUID(),
++        // A completed attempt has no current attempt to expect, as accepted
++        // by the contract.
++        expectedAttemptId: inProgress ? inProgress.attemptId : null,
++        materialId: current.materialId,
++        versionId: current.version.id,
++      },
++      heldAnswer: null,
++    });
++  }, [beginIntent]);
++
++  const handleAbandon = useCallback(() => {
++    setConfirmingAbandon(false);
++    if (busyRef.current || intentRef.current) return;
++    const current = renderedRef.current;
++    if (current.phase !== "ready" || !current.attempt) return;
++    void beginIntent({
++      payload: {
++        action: "abandon_attempt",
++        operationId: crypto.randomUUID(),
++        attemptId: current.attempt.attemptId,
++        expectedRevision: current.attempt.revision,
++      },
++      heldAnswer: null,
++    });
++  }, [beginIntent]);
++
++  const handleKeyDown = useCallback(
++    (event: React.KeyboardEvent, optionIndex: number) => {
++      if (!canEdit || busyRef.current || intentRef.current || revealed) return;
++      const count = question?.options.length ?? 0;
++      let next: number | null = null;
++
++      switch (event.key) {
++        case "ArrowDown":
++        case "ArrowRight":
++          event.preventDefault();
++          next = (optionIndex + 1) % count;
++          break;
++        case "ArrowUp":
++        case "ArrowLeft":
++          event.preventDefault();
++          next = (optionIndex - 1 + count) % count;
++          break;
++        case "Home":
++          event.preventDefault();
++          next = 0;
++          break;
++        case "End":
++          event.preventDefault();
++          next = count - 1;
++          break;
++        case "Enter":
++        case " ":
++        case "Spacebar":
++          event.preventDefault();
++          handleSelectOption(optionIndex);
++          return;
++      }
++
++      if (next !== null) {
++        dispatch({ type: "focused", generation: generationRef.current, focusIndex: next });
++        optionRefs.current[next]?.focus();
++      }
++    },
++    [canEdit, dispatch, handleSelectOption, question, revealed],
++  );
++
++  // Focus follows the authoritative phase, not a pending click. These are layout
++  // effects on purpose: the choice that just became revealed is disabled in the
++  // same commit, and a browser blurs a disabled element. A passive effect would
++  // leave a frame where focus sits on <body> before the action button takes it.
++  useLayoutEffect(() => {
++    if (revealed && !state.completedResult) actionButtonRef.current?.focus();
++  }, [revealed, state.completedResult]);
++
++  useLayoutEffect(() => {
++    if (canEdit && state.index > 0 && !revealed && !state.completedResult) {
+       optionRefs.current[0]?.focus();
+     }
+-  }, [index, finished]);
+-
+-  const retake = () => {
+-    setIndex(0);
+-    setSelected(null);
+-    setFocusedIndex(0);
+-    setCorrectCount(0);
+-    setTimeout(() => optionRefs.current[0]?.focus(), 0);
+-  };
++  }, [canEdit, revealed, state.index, state.completedResult]);
+ 
+-  const handleContinue = () => {
+-    if (isCorrect) setCorrectCount((count) => count + 1);
+-    setIndex((current) => current + 1);
+-    setSelected(null);
+-    setFocusedIndex(0);
+-  };
++  // -------------------------------------------------------------------------
++  // Shared notices — reachable from the question view AND the result view (R7)
++  // -------------------------------------------------------------------------
++
++  const notices = (
++    <>
++      {state.notice ? (
++        <div className="ai-disclaimer" role="note">
++          <AlertIcon size={16} />
++          <p className="tiny">{state.notice}</p>
++        </div>
++      ) : null}
++
++      {state.phase === "load_failed" && state.failure ? (
++        <div className="stack stack--2">
++          <div className="ai-disclaimer" role="alert">
++            <AlertIcon size={16} />
++            <p className="tiny">{state.failure.text}</p>
++          </div>
++          <div>
++            <Button size="small" variant="secondary" onClick={() => void loadSnapshot("retry")}>
++              Retry
++            </Button>
++          </div>
++        </div>
++      ) : null}
+ 
+-  if (finished) {
++      {state.phase === "write_unknown" && state.intent?.error ? (
++        <div className="stack stack--2">
++          <div className="ai-disclaimer" role="alert">
++            <AlertIcon size={16} />
++            <p className="tiny">{state.intent.error}</p>
++          </div>
++          <div>
++            <Button size="small" variant="secondary" onClick={() => void retryPending()}>
++              Retry
++            </Button>
++          </div>
++        </div>
++      ) : null}
++
++      {state.phase === "refresh_failed" && state.failure?.kind === "refresh" ? (
++        <div className="stack stack--2">
++          <div className="ai-disclaimer" role="alert">
++            <AlertIcon size={16} />
++            <p className="tiny">{state.failure.text}</p>
++          </div>
++          <div>
++            <Button size="small" variant="secondary" onClick={() => void retryRefresh()}>
++              Retry refresh
++            </Button>
++          </div>
++        </div>
++      ) : null}
++
++      {state.phase === "write_in_flight" || state.phase === "refresh_in_flight" ? (
++        <div className="ai-disclaimer" role="status">
++          <AlertIcon size={16} />
++          <p className="tiny">
++            {state.phase === "refresh_in_flight"
++              ? "Confirming your saved state…"
++              : pendingLabel(state.intent)}
++          </p>
++        </div>
++      ) : null}
++    </>
++  );
++
++  // -------------------------------------------------------------------------
++  // Settled non-editable phases
++  // -------------------------------------------------------------------------
++
++  if (appData?.status === "loading" || state.phase === "loading") {
+     return (
+       <div className="stack stack--3" role="status">
+-        <p className="eyebrow">Practice test complete</p>
+-        <h3 className="ai-guide__title">
+-          {correctCount} of {questions.length} correct
+-        </h3>
+-        <div>
+-          <Button onClick={retake}>Retake this test</Button>
++        <p className="dim">Loading practice test…</p>
++      </div>
++    );
++  }
++
++  if (state.phase === "load_failed") {
++    return <div className="stack stack--3">{notices}</div>;
++  }
++
++  if (state.phase === "unavailable") {
++    return (
++      <div className="stack stack--3">
++        <div className="ai-disclaimer" role="note">
++          <AlertIcon size={16} />
++          <p className="tiny">
++            No saved practice test is available for this material yet. Create or regenerate the
++            practice test to start practicing — practice questions come only from your saved
++            content, never from unsaved fallbacks.
++          </p>
+         </div>
+       </div>
+     );
+   }
+-  // `finished` above already guarantees an in-range index, but TypeScript's
+-  // array indexing always types the result as possibly `undefined`.
+-  if (!question) return null;
+-
+-  const revealed = selected !== null;
+-  const isCorrect = revealed && selected === question.correctIndex;
+-
+-  const handleKeyDown = (e: React.KeyboardEvent, optionIndex: number) => {
+-    if (revealed) return;
+-    const optionCount = question.options.length;
+-    let nextIndex: number | null = null;
+-
+-    switch (e.key) {
+-      case "ArrowDown":
+-      case "ArrowRight":
+-        e.preventDefault();
+-        nextIndex = (optionIndex + 1) % optionCount;
+-        break;
+-      case "ArrowUp":
+-      case "ArrowLeft":
+-        e.preventDefault();
+-        nextIndex = (optionIndex - 1 + optionCount) % optionCount;
+-        break;
+-      case "Home":
+-        e.preventDefault();
+-        nextIndex = 0;
+-        break;
+-      case "End":
+-        e.preventDefault();
+-        nextIndex = optionCount - 1;
+-        break;
+-      case "Enter":
+-      case " ":
+-      case "Spacebar":
+-        e.preventDefault();
+-        setFocusedIndex(optionIndex);
+-        setSelected(optionIndex);
+-        return;
+-    }
+ 
+-    if (nextIndex !== null) {
+-      setFocusedIndex(nextIndex);
+-      optionRefs.current[nextIndex]?.focus();
+-    }
+-  };
++  // -------------------------------------------------------------------------
++  // Completed result: immutable, and still shows pending recovery (R7)
++  // -------------------------------------------------------------------------
++
++  if (state.completedResult !== null) {
++    const result = state.completedResult;
++    const disclaimer = `Practice result from your material (${result.scorePercent}%). Not an official FAA knowledge test score or certification of flight readiness.`;
++    return (
++      <div className="stack stack--4" role="status">
++        {notices}
++        <div className="stack stack--2">
++          <p className="eyebrow">Practice test complete</p>
++          <h3 className="ai-guide__title">
++            {result.correctCount} of {result.totalQuestions} correct
++          </h3>
++        </div>
++
++        <div className="row row--wrap row--gap-2">
++          <Badge tone="complete">{result.correctCount} correct</Badge>
++          <Badge tone="overdue">{result.incorrectCount} incorrect</Badge>
++          <Badge tone="neutral">{result.dontKnowCount} don’t know</Badge>
++          <Badge tone="due">{result.unansweredCount} unanswered</Badge>
++        </div>
++
++        <div className="ai-disclaimer" role="note">
++          <AlertIcon size={16} />
++          <p className="tiny">{disclaimer}</p>
++        </div>
++
++        <div className="row row--wrap row--gap-2">
++          <Button onClick={handleRetake} disabled={state.phase !== "completed"}>
++            Retake this test
++          </Button>
++          {materialId && (
++            <a
++              href={`#/study/history/${encodeURIComponent(materialId)}`}
++              className="button button--secondary"
++            >
++              View practice history
++            </a>
++          )}
++        </div>
++      </div>
++    );
++  }
++
++  if (!question) return <div className="stack stack--3">{notices}</div>;
+ 
+   return (
+     <div className="stack stack--3" aria-labelledby="practice-test-title">
++      {notices}
++
++      {/* Deliberate start/resume: an attempt is acknowledged before an answer sticks. */}
++      <div className="ai-disclaimer" role="status">
++        <AlertIcon size={16} />
++        <p className="tiny">
++          {state.attempt
++            ? `Resuming your attempt — ${answeredCount} of ${totalQuestions} answered. Feedback appears after each answer is saved.`
++            : "New attempt — your first answer starts it, and saves only once it is confirmed."}
++        </p>
++      </div>
++
++      {totalQuestions > 1 && (
++        <div className="practice-nav-pills" role="navigation" aria-label="Question selector">
++          {questions.map((itm, qIdx) => {
++            const resp = state.attempt?.responses.find((r) => r.itemId === itm.id);
++            let pillClass = "practice-pill";
++            if (qIdx === state.index) pillClass += " practice-pill--current";
++            else if (resp?.isDontKnow) pillClass += " practice-pill--dont-know";
++            else if (resp) pillClass += " practice-pill--answered";
++
++            return (
++              <button
++                key={itm.id ?? qIdx}
++                type="button"
++                className={pillClass}
++                disabled={!canEdit}
++                aria-label={`Question ${qIdx + 1}${resp ? (resp.isDontKnow ? " (Don't know)" : " (Answered)") : ""}`}
++                aria-current={qIdx === state.index ? "true" : undefined}
++                onClick={() => goToIndex(qIdx)}
++              >
++                {qIdx + 1}
++              </button>
++            );
++          })}
++        </div>
++      )}
++
+       <div className="row row--between">
+         <h3 id="practice-test-title" className="ai-guide__title">
+-          Question {index + 1} of {questions.length}
++          Question {state.index + 1} of {totalQuestions}
+         </h3>
+-        <Badge tone="study">{question.sourcePage ? `Source p. ${question.sourcePage}` : "Check source"}</Badge>
++        <Badge tone="study">
++          {question.sourcePage ? `Source p. ${question.sourcePage}` : "Check source"}
++        </Badge>
+       </div>
+ 
+-      <p className="small ai-copy">{question.question}</p>
++      <p className="small ai-copy">{question.questionText}</p>
+ 
+       <div className="stack stack--2" role="radiogroup" aria-label="Answer choices">
+         {question.options.map((option, optionIndex) => {
+-          const isChosen = selected === optionIndex;
++          const isChosen = shownChoice === optionIndex && !shownDontKnow;
+           const isTheCorrectAnswer = optionIndex === question.correctIndex;
+           let tone: "default" | "correct" | "incorrect" = "default";
+           let ariaLabel = option;
++
+           if (revealed) {
+             if (isTheCorrectAnswer) {
+               tone = "correct";
+@@ -135,7 +1086,7 @@ export function PracticeTestPanel({ practiceTest }: { practiceTest: PracticeTest
+             }
+           }
+ 
+-          const tabIndex = revealed ? -1 : optionIndex === focusedIndex ? 0 : -1;
++          const isRadioDisabled = !canEdit || revealed;
+ 
+           return (
+             <button
+@@ -147,14 +1098,13 @@ export function PracticeTestPanel({ practiceTest }: { practiceTest: PracticeTest
+               role="radio"
+               aria-checked={isChosen}
+               aria-label={ariaLabel}
+-              tabIndex={tabIndex}
+-              disabled={revealed}
++              tabIndex={isRadioDisabled ? -1 : optionIndex === state.focusIndex ? 0 : -1}
++              disabled={isRadioDisabled}
+               className={`practice-option practice-option--${tone}`}
+-              onClick={() => {
+-                setFocusedIndex(optionIndex);
+-                setSelected(optionIndex);
+-              }}
+-              onFocus={() => setFocusedIndex(optionIndex)}
++              onClick={() => handleSelectOption(optionIndex)}
++              onFocus={() =>
++                dispatch({ type: "focused", generation: generationRef.current, focusIndex: optionIndex })
++              }
+               onKeyDown={(e) => handleKeyDown(e, optionIndex)}
+             >
+               {option}
+@@ -163,19 +1113,89 @@ export function PracticeTestPanel({ practiceTest }: { practiceTest: PracticeTest
+         })}
+       </div>
+ 
+-      {revealed ? (
++      {!revealed && (
++        <div className="row row--between">
++          <Button size="small" variant="ghost" disabled={!canEdit} onClick={handleDontKnow}>
++            I don’t know
++          </Button>
++
++          {state.index + 1 < totalQuestions && (
++            <Button
++              size="small"
++              variant="ghost"
++              disabled={!canEdit}
++              onClick={() => goToIndex(state.index + 1)}
++            >
++              Skip for now →
++            </Button>
++          )}
++        </div>
++      )}
++
++      {revealed && (
+         <div className="stack stack--2" role="region" aria-live="polite" aria-label="Question result">
+-          <Badge tone={isCorrect ? "complete" : "overdue"}>
+-            {isCorrect ? "Correct" : "Not quite"}
+-          </Badge>
+-          <p className="tiny dim ai-copy">{question.explanation}</p>
+-          <div>
+-            <Button ref={actionButtonRef} variant="primary" onClick={handleContinue}>
+-              {index + 1 < questions.length ? "Continue" : "See score"}
++          <div className="row row--wrap row--gap-2" style={{ alignItems: "center" }}>
++            <Badge tone={shownDontKnow ? "due" : isCorrect ? "complete" : "overdue"}>
++              {shownDontKnow ? "Marked as don’t know" : isCorrect ? "Correct" : "Not quite"}
++            </Badge>
++            <Button size="small" variant="ghost" disabled={!canEdit} onClick={handleChangeAnswer}>
++              Change answer
+             </Button>
+           </div>
++
++          <p className="tiny dim ai-copy">{question.explanation}</p>
+         </div>
+-      ) : null}
++      )}
++
++      {showContinue && (
++        <div className="row row--between" style={{ marginTop: "var(--space-2)" }}>
++          <Button
++            ref={actionButtonRef}
++            variant="primary"
++            disabled={!canEdit || confirmedResponse === undefined}
++            onClick={handleContinue}
++          >
++            {state.index + 1 < totalQuestions ? "Continue" : "See score"}
++          </Button>
++
++          {answeredCount > 0 && answeredCount < totalQuestions && (
++            <Button size="small" variant="secondary" disabled={!canEdit} onClick={handleComplete}>
++              Complete test now ({totalQuestions - answeredCount} unanswered)
++            </Button>
++          )}
++        </div>
++      )}
++
++      {state.attempt && (
++        <div
++          style={{
++            marginTop: "var(--space-4)",
++            borderTop: "1px dashed var(--border-subtle)",
++            paddingTop: "var(--space-2)",
++          }}
++        >
++          <Button
++            size="small"
++            variant="ghost"
++            disabled={!canEdit}
++            onClick={() => setConfirmingAbandon(true)}
++          >
++            Abandon attempt
++          </Button>
++        </div>
++      )}
++
++      <ConfirmDialog
++        open={confirmingAbandon}
++        title="Abandon this practice attempt?"
++        message="This will mark the current in-progress attempt as abandoned. Completed attempts remain in your history."
++        confirmLabel="Abandon attempt"
++        destructive={true}
++        pending={state.phase === "write_in_flight" || state.phase === "write_unknown"}
++        pendingLabel="Abandoning…"
++        onConfirm={handleAbandon}
++        onCancel={() => setConfirmingAbandon(false)}
++      />
+     </div>
+   );
+ }
+diff --git a/src/pages/StudyLibrary/StudyLibrary.tsx b/src/pages/StudyLibrary/StudyLibrary.tsx
+index e35adb9..1498378 100644
+--- a/src/pages/StudyLibrary/StudyLibrary.tsx
++++ b/src/pages/StudyLibrary/StudyLibrary.tsx
+@@ -128,6 +128,9 @@ export function StudyLibrary() {
+         subtitle="Your training binder — notes, handouts, worksheets and what to do with them."
+         action={
+           <div className="row row--wrap">
++            <Link to="/study/history" className="button button--secondary">
++              Practice history
++            </Link>
+             <Button onClick={() => setImporting(true)} disabled={importing}>
+               <NoteIcon size={16} /> Import study packet…
+             </Button>
+diff --git a/src/pages/StudyLibrary/studyLibrary.css b/src/pages/StudyLibrary/studyLibrary.css
+index acc059c..5d3be58 100644
+--- a/src/pages/StudyLibrary/studyLibrary.css
++++ b/src/pages/StudyLibrary/studyLibrary.css
+@@ -267,3 +267,54 @@
+   padding-top: var(--space-2);
+   border-top: 1px dashed var(--border-subtle);
+ }
++
++.practice-nav-pills {
++  display: flex;
++  flex-wrap: wrap;
++  gap: var(--space-2);
++  margin-bottom: var(--space-3);
++}
++
++.practice-pill {
++  width: 2rem;
++  height: 2rem;
++  padding: 0;
++  display: grid;
++  place-items: center;
++  border-radius: var(--radius-sm);
++  border: 1px solid var(--border-subtle);
++  background: var(--surface-card);
++  font-size: var(--text-xs);
++  cursor: pointer;
++}
++
++.practice-pill:disabled {
++  cursor: default;
++}
++
++.practice-pill--current {
++  border-color: var(--accent-primary);
++  background: var(--surface-sunken);
++  font-weight: 600;
++}
++
++.practice-pill--answered {
++  background: var(--category-complete-fill);
++  border-color: var(--category-complete-edge);
++}
++
++.practice-pill--dont-know {
++  background: var(--surface-sunken);
++  border-color: var(--border-strong);
++}
++
++.practice-history-card {
++  display: flex;
++  flex-direction: column;
++  gap: var(--space-3);
++  padding: var(--space-4);
++  background: var(--surface-card);
++  border: 1px solid var(--border-subtle);
++  border-radius: var(--radius-lg);
++  box-shadow: var(--shadow-sm);
++}

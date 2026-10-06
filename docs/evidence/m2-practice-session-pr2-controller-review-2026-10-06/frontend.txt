@@ -1,0 +1,266 @@
+$ npx vitest run src/pages/StudyLibrary/codex-pr2-finalreview.test.ts src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts src/pages/StudyLibrary/PracticeSessionPR2.test.ts src/pages/StudyLibrary/PracticeTestPanel.test.ts src/pages/StudyLibrary/MaterialDetailOffline.test.ts src/data/practiceSessionContract.test.ts src/data/practiceStartupValidation.test.ts src/data/practiceEraseDurability.test.ts src/components/ui/Dialog.fallback.test.ts --reporter=verbose
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:30250) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-01: starts or resumes practice attempt and enforces single unfinished attempt 37ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-02 & REQ-03: records response, updates revisions, keeps I don't know separate, computes correctness 22ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-04 & REQ-05: enforces strict validation and rejects invalid choice bounds 17ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-06: prevents stale revisions on responses and completion 61ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-07: completes attempt, computes score and tallies, and makes completed attempts immutable 13ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-08: retake attempt abandons current attempt with expectedAttemptId and creates fresh attempt 8ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-09: operation receipt idempotency: identical retry returns original result, changed reuse conflicts 10ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-10: legacy conversion converts up to 200 questions without truncation, quarantines corrupt rows, and avoids duplicate conversion 60ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-11: practice test removal prunes unfinished attempts and receipts, preserving completed review history 48ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-12: material deletion cascades: completed history remains addressable, unfinished records pruned 33ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > shows a named modal dialog with a backdrop and focuses inside it 97ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > REQ-13: sqlJsDb browser storage refusal rolls back live state and preserves last stored bytes 116ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > conversion failure must prevent adapter exposure (M2P1-R1) 40ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > keeps Tab and Shift+Tab inside the dialog 34ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > brings focus back when something outside tries to take it 21ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > hides the page behind from assistive technology and restores it afterwards 15ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > closes on Escape and backdrop through the owner, and returns focus to the opener 15ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > ignores clicks on the dialog box itself; only the backdrop dismisses 10ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > stays open and modal for a running task (dismissible=false) 5ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > stays open and modal when the owner refuses the close during cleanup 7ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > leaves nothing behind after repeated opening and closing 24ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > cleans up when unmounted while open 3ms
+(node:30254) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > unset marker with conflicting version must refuse startup (M2P1-R1) 50ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > matching version must repair unset marker without duplicating (M2P1-R1) 46ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > completion derives score from frozen key, not stored correctness (M2P1-R2) 15ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > same-choice no-op returns original answered timestamp (M2P1-R2) 16ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > unsupported regeneration driver refuses before any write (M2P1-R4) 17ms
+(node:30248) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30252) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30251) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog without native modal support > behaves the same under StrictMode's repeated effects 8ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > layered fallback dialogs > gives keys and focus only to the top dialog and restores the lower one intact 16ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > layered fallback dialogs > does not let a lower dialog closing first restore the background or take focus 21ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > Dialog with native modal support > uses showModal/close and adds no fallback semantics 5ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R1: hides the previous sibling modal when a third modal opens 10ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R1: re-exposes each lower modal as the ones above close, in reverse and out of order 14ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R1/R4: makes a nested modal the only reachable one, excluding its parent until it closes 11ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R2: gives a new top modal a higher layer after a lower modal closed 11ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R5: every edit waits for the whole authoritative read > [R5] initial current-attempt read keeps all answer controls blocked 45ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > unsupported removal driver refuses before any write (M2P1-R4) 17ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > canonical content hashing produces identical hash regardless of key order (shared hash parity) 7ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > string attemptId alone is insufficient and rejects incomplete wire results (M2P1-R3) 21ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > validates action-specific wire shapes across all action types (M2P1-R3) 6ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > invokePracticeTestSave and invokeRemovePracticeTest adhere to unit-return contract (M2P1-R3) 9ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > PR2: atomic history erasure prunes attempts, responses, inactive versions, and tombstones receipts 36ms
+(node:30246) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30249) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R2: keeps strict paint order across reopening in every DOM order 48ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R3: returns focus to the surviving opener when the lower modal closes first 11ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R3: restores into the surviving lower modal, not a closed middle one 13ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > fallback modal stack (Codex A3-R1–R3 regressions) > A3-R3: never focuses a removed prior target; stays in the surviving modal or leaves the page 2ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: keeps an open nested modal outside closed ancestors when its parent closes first 6ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: presents the still-open child and its backdrop at viewport level, above the parent 4ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: sends Escape and backdrop requests only to the open child's owner 6ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: keeps a refusing child visible and modal after its parent closes 12ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: returns focus to the page opener and clears exclusion when the child finally closes 8ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: cleans up when the whole tree unmounts with the child open 3ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: behaves the same under StrictMode 5ms
+ ✓ src/components/ui/Dialog.fallback.test.ts > nested fallback dialog lifetime (Codex A3-R4) > A3-R4: renders inline, without a portal, when rendered on a server 5ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R5: every edit waits for the whole authoritative read > [R5] a retry load stays blocked while its read is held 88ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R5: every edit waits for the whole authoritative read > [R5] a rejected retry load stays non-editable with read recovery visible 32ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > renders the first question with options in radiogroup 125ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] feedback is withheld until the response save is confirmed 132ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] Continue is disabled while a mutation outcome is unknown 56ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] feedback is withheld until the response save is confirmed 159ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] Continue is disabled while a mutation outcome is unknown 71ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R5: every edit waits for the whole authoritative read > [R5] an obsolete initial read cannot overwrite the newer material phase 47ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R5: every edit waits for the whole authoritative read > [R5] no active version settles non-editable instead of falling back to legacy props 15ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R6: one unresolved intent locks every conflicting action > [R6] failed changed answer does not mix draft selection with saved correctness 51ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > PR2: atomic history erasure on sqlJsDb with storage failure rolls back cleanly 87ms
+ ✓ src/data/practiceSessionContract.test.ts > Practice Session Persistence Contract (M2 PR 1) > Codex review permanent regressions (M2P1-R1–R4) > PR2: sqlJsDb unrelated-history isolation and restart refusal of late old replay 137ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > reveals explanation and marks answer as correct when choosing correct option 103ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > reveals explanation and marks answer as incorrect when choosing wrong option 56ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a failed completion exposes retry and does not claim completion 92ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a failed completion exposes retry and does not claim completion 100ms
+ ✓ src/data/practiceStartupValidation.test.ts > shared validation contract on the real sql.js engine > matches every native accept/refuse outcome 933ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > navigates through questions and calculates final score, allowing retake 119ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R6: one unresolved intent locks every conflicting action > [R6] uncertain completion blocks fresh completion identity 56ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R6: one unresolved intent locks every conflicting action > [R6] Retry replays the exact payload once and accepts no fresh mutation 69ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] a successful refresh retry clears the refresh failure and unlocks editing 40ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a repository read failure cannot expose editable volatile practice 13ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] displayed questions come from the frozen repository version 13ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] a late material A load cannot bind material B answers to A 27ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] late group A results cannot label group B destructive confirmation 31ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R2] a successful refresh retry clears the refresh failure and unlocks editing 110ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] a repository read failure cannot expose editable volatile practice 13ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R1] displayed questions come from the frozen repository version 16ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] a late material A load cannot bind material B answers to A 23ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R3] late group A results cannot label group B destructive confirmation 31ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > resumes in-progress attempt at nextUnansweredOrdinal across remount 253ms
+stderr | src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+stderr | src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > valid reopen control: a saved session reopens with a usable adapter 96ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > supports keyboard navigation with arrows, Home, End, Space and Enter 49ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > moves focus to Continue on mouse click, and to first option of next question on Continue 58ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress 63ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [control] same-identity erasure replay preserves a newly started attempt 17ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R6: one unresolved intent locks every conflicting action > [R6] Retry refresh performs reads only and never resends the acknowledged write 60ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R6: one unresolved intent locks every conflicting action > [R6] a refused start keeps its identity and still applies the held answer on Retry 67ms
+stderr | src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] rapid confirmation uses a synchronous lock and one erase identity
+No routes matched location "/study/history" 
+
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress 87ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [control] same-identity erasure replay preserves a newly started attempt 8ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] rapid confirmation uses a synchronous lock and one erase identity 25ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > moves focus to Continue on Space, and to See score after final question answer selection 56ms
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts > PracticeTestPanel > moves focus to See score when final question is selected via mouse click or Space 60ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles 'I don’t know' distinctly from incorrect and unanswered 115ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > allows deliberate answer changes while attempt remains in-progress 63ms
+ ✓ src/data/practiceEraseDurability.test.ts > browser history erasure durability (M2 PR2 R10) > an erasure whose recovery fails disables the adapter and keeps every saved row 182ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > promoted browser-startup regression: reopen refuses persisted 99 total / 88 answered 116ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > refuses a stored database whose schema lost a foreign key definition 86ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R5] initial current-attempt read keeps all answer controls blocked 15ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R6] failed changed answer does not mix draft selection with saved correctness 39ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R6] uncertain completion blocks fresh completion identity 44ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R7: recovery stays reachable from the result view > [R7] failed retake from result exposes same-ID retry in result view 47ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R7: recovery stays reachable from the result view > [R7] a committed retake with a lost acknowledgement replays and reconciles 58ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > supports skipping and navigation pills across questions 104ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R7: recovery stays reachable from the result view > [R7] the completion callback and displayed score follow the acknowledged result 38ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R8: null and replaced state reconcile in one place > [R8] acknowledged response followed by null refresh clears the old attempt 39ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R8: null and replaced state reconcile in one place > [R8] a null current attempt through Retry refresh clears the obsolete attempt 57ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R7] failed retake from result exposes same-ID retry in result view 29ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R8] acknowledged response followed by null refresh clears the old attempt 37ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles retake by abandoning previous attempt and starting fresh 43ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles in-progress abandon with truthful confirmation 64ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content without a usable Gemini connection > keeps the saved guide, cards and practice test usable with Gemini disconnected 591ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > conversion plus validation is atomic: a failure stores nothing, and a repaired retry converts once 128ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > storage refusing the prepared database fails startup, keeps the previous bytes, and a retry converts once 72ms
+stderr | src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R9: erasure identity, lock and route generation > [R9] rapid confirmation uses a synchronous lock and one erase identity
+No routes matched location "/study/history" 
+
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R8: null and replaced state reconcile in one place > [R8] a settled conflict refresh with no current attempt clears the stale one 36ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R8: null and replaced state reconcile in one place > [R8] Abandon never keeps pointing at the attempt it closed 44ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R9: erasure identity, lock and route generation > [R9] rapid confirmation uses a synchronous lock and one erase identity 25ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] an erase acknowledgement from group A cannot navigate away from group B 94ms
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] changing only history key revalidates attempt membership 18ms
+ × src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex final controller review > [R11] actual StrictMode wrapper can finish loading 16ms
+   → expected +0 to be 2 // Object.is equality
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > renders quarantined legacy notice on malformed test without start button 71ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > keeps completed history reachable after source material deletion 58ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R9: erasure identity, lock and route generation > [R9] an erase acknowledgement from group A cannot navigate away from group B 101ms
+ × src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex final controller review > [R12] a failed replacement-version read exposes read-only retry 39ms
+   → expected null not to be null
+ × src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex final controller review > [boundary] old material mutation cannot keep a new material action locked 89ms
+   → expected false to be true // Object.is equality
+(node:30247) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > an unchanged database reopens without needing to store again 56ms
+ ✓ src/data/practiceStartupValidation.test.ts > sql.js initialization > a practice write whose recovery fails disables the adapter 66ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > erases practice history atomically with truthful confirmation modal 57ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts > M2 Practice-Session PR2 UI & Flow Verification > handles transient mutation error with same-operationId retry 41ms
+ ✓ src/data/practiceStartupValidation.test.ts > node:sqlite test driver initialization > refuses persisted false progress, and a valid file reopens 53ms
+ ✓ src/data/practiceStartupValidation.test.ts > node:sqlite test driver initialization > rolls back conversion when validation fails, then a repaired retry converts once 48ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R9: erasure identity, lock and route generation > [R9] changing only history key revalidates attempt membership 29ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content without a usable Gemini connection > keeps saved content usable while the Gemini status is still loading 291ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R9: erasure identity, lock and route generation > [R9] returning to a group cannot revive an obsolete erasure acknowledgement 117ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R9: erasure identity, lock and route generation > [R9] leaving the view does not cancel committed erasure work or update a dead page 69ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts > M2UI-R9: erasure identity, lock and route generation > [R9] a new route key never reinterprets the pending erasure confirmation 34ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content without a usable Gemini connection > keeps saved content usable when the Gemini status check fails 234ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > explains a missing PDF and keeps saved content, with regeneration disabled 218ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > explains a replaced unsupported source and keeps saved content 292ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > explains a replaced oversized source and keeps saved content 221ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: saved study content when the source can no longer be sent > keeps saved content when the material no longer has a file attached 195ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > offers regeneration for both saved items only when connected and the file is eligible 192ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > keeps the old guide visible during and after a failed regeneration 124ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > keeps the old practice test usable during and after a failed regeneration 105ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > keeps another material's saved content usable while a generation runs elsewhere, and a late result changes nothing 314ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex final controller review > [R11] actual StrictMode wrapper can finish loading
+AssertionError: expected +0 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts:341:49
+    339|   await waitFor(() => expect(read).toHaveBeenCalledWith('strict-mount'…
+    340|   await act(async () => { await Promise.resolve(); await Promise.resol…
+    341|   expect(screen.queryAllByRole('radio').length).toBe(2);
+       |                                                 ^
+    342|  });
+    343|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex final controller review > [R12] a failed replacement-version read exposes read-only retry
+AssertionError: expected null not to be null
+ ❯ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts:363:71
+    361|   await waitFor(() => expect(versionRead).toHaveBeenCalled());
+    362|   await act(async () => { await Promise.resolve(); await Promise.resol…
+    363|   expect(screen.queryByRole('button', { name: 'Retry refresh' })).not.…
+       |                                                                       ^
+    364|  });
+    365|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex final controller review > [boundary] old material mutation cannot keep a new material action locked
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts:388:114
+    386|   fireEvent.click(screen.getAllByRole('radio')[0]!);
+    387|   await act(async () => { await Promise.resolve(); await Promise.resol…
+    388|   expect(sent.some(action => action.action === 'start_or_resume' && ac…
+       |                                                                                                                  ^
+    389|  });
+    390| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: Synthetic replacement content read failure
+ ❯ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts:358:88
+    356|    return result;
+    357|   });
+    358|   const versionRead = vi.spyOn(repos.practiceSessions, 'getVersion').m…
+       |                                                                                        ^
+    359|   fireEvent.click(screen.getByRole('button', { name: 'Change answer' }…
+    360|   fireEvent.click(screen.getAllByRole('radio')[1]!);
+ ❯ node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+This error originated in "src/pages/StudyLibrary/codex-pr2-finalreview.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "[R12] a failed replacement-version read exposes read-only retry". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 9 passed (10)
+      Tests  3 failed | 146 passed (149)
+     Errors  1 error
+   Start at  00:15:45
+   Duration  4.44s (transform 2.78s, setup 0ms, import 4.92s, tests 10.27s, environment 5.92s)
+

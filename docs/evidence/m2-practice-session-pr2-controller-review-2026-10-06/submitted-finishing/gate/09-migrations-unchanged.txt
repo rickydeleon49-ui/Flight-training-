@@ -1,0 +1,14 @@
+$ git diff --name-only 61031d4c7143fdf181bba2cc18616c5345521c3e -- src-tauri/migrations src/data/migrations.ts src/data/migrationSafety.test.ts
+changed=[]
+migrations 1-11 and checksum registry unchanged
+0001_initial_schema.sql
+0002_profile_details.sql
+0003_personal_note.sql
+0004_app_metadata.sql
+0005_flight_log.sql
+0006_pilot_toolkit.sql
+0007_ai_study.sql
+0008_notes.sql
+0009_practice_tests.sql
+0010_debrief_links.sql
+0011_practice_sessions.sql
