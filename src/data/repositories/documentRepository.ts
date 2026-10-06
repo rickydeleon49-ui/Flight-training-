@@ -249,28 +249,30 @@ export function documentRepository(db: SqlDatabase) {
       return rows.map(mapPracticeTest);
     },
 
-    /** Save a Gemini practice test; like `saveAiStudySet`, it always writes "gemini". */
+    /** Save a Gemini practice test; requires atomic writer support. */
     async savePracticeTest(
       input: Omit<PracticeTest, "provider" | "generatedAt" | "updatedAt">,
     ): Promise<void> {
-      const timestamp = nowIso();
-      await db.execute(
-        `INSERT INTO practice_tests
-           (source_material_id, title, questions_json, provider, model, generated_at, updated_at)
-         VALUES (?, ?, ?, 'gemini', ?, ?, ?)
-         ON CONFLICT(source_material_id) DO UPDATE SET
-           title = excluded.title, questions_json = excluded.questions_json,
-           provider = excluded.provider, model = excluded.model, generated_at = excluded.generated_at,
-           updated_at = excluded.updated_at`,
-        [
-          input.sourceMaterialId, input.title, JSON.stringify(input.questions),
-          input.model, timestamp, timestamp,
-        ],
-      );
+      if (typeof db.savePracticeTestAtomically !== "function") {
+        throw new Error(
+          "Atomic practice test persistence requires a database driver with atomic transaction support.",
+        );
+      }
+      await db.savePracticeTestAtomically({
+        sourceMaterialId: input.sourceMaterialId,
+        title: input.title,
+        questions: input.questions,
+        model: input.model,
+      });
     },
 
     async removePracticeTest(sourceMaterialId: Id): Promise<void> {
-      await db.execute("DELETE FROM practice_tests WHERE source_material_id = ?", [sourceMaterialId]);
+      if (typeof db.removePracticeTestAtomically !== "function") {
+        throw new Error(
+          "Atomic practice test removal requires a database driver with atomic transaction support.",
+        );
+      }
+      await db.removePracticeTestAtomically(sourceMaterialId);
     },
 
     /**

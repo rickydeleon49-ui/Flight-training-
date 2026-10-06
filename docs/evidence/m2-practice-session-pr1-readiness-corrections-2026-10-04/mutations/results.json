@@ -1,0 +1,102 @@
+{
+  "all_killed": true,
+  "all_source_restored": true,
+  "mutations": [
+    {
+      "id": "T1",
+      "mutation": "sql.js startup skips validation",
+      "file": "src/data/sqlJsDb.ts",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts",
+      "exit": 1,
+      "killed": true
+    },
+    {
+      "id": "T2",
+      "mutation": "sql.js stores migrated bytes before conversion/validation (old order)",
+      "file": "src/data/sqlJsDb.ts",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts",
+      "exit": 1,
+      "killed": true
+    },
+    {
+      "id": "T3",
+      "mutation": "Node driver validates only after the conversion committed",
+      "file": "src/data/testing/nodeSqliteDb.ts",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts",
+      "exit": 1,
+      "killed": true
+    },
+    {
+      "id": "T4",
+      "mutation": "TS validator ignores foreign-key definitions",
+      "file": "src/data/practiceStateValidation.ts",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts",
+      "exit": 1,
+      "killed": true
+    },
+    {
+      "id": "T5",
+      "mutation": "TS validator ignores CHECK constraints",
+      "file": "src/data/practiceStateValidation.ts",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts",
+      "exit": 1,
+      "killed": true
+    },
+    {
+      "id": "T6",
+      "mutation": "TS startup never runs the schema-11 practice validation",
+      "file": "src/data/practiceStateValidation.ts",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts",
+      "exit": 1,
+      "killed": true
+    },
+    {
+      "id": "T7",
+      "mutation": "sql.js always re-stores an unchanged database at startup",
+      "file": "src/data/sqlJsDb.ts",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts",
+      "exit": 1,
+      "killed": true
+    },
+    {
+      "id": "R1",
+      "mutation": "native verifier ignores foreign-key definitions",
+      "file": "src-tauri/src/backup.rs",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --lib -- practice_sessions::tests --test-threads=1",
+      "exit": 101,
+      "killed": true
+    },
+    {
+      "id": "R2",
+      "mutation": "native verifier ignores CHECK constraints",
+      "file": "src-tauri/src/backup.rs",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --lib -- practice_sessions::tests::shared_validation_contract --test-threads=1",
+      "exit": 101,
+      "killed": true
+    },
+    {
+      "id": "R3",
+      "mutation": "native conversion commits before validation (old order)",
+      "file": "src-tauri/src/practice_sessions.rs",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --lib -- practice_sessions::tests::failed_semantic_validation_rolls_back_legacy_conversion --test-threads=1",
+      "exit": 101,
+      "killed": true
+    },
+    {
+      "id": "R4",
+      "mutation": "native initialization keeps stale readiness on entry",
+      "file": "src-tauri/src/practice_sessions.rs",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --lib -- practice_sessions::tests::early_conversion_error_revokes_stale_readiness --test-threads=1",
+      "exit": 101,
+      "killed": true
+    },
+    {
+      "id": "R5",
+      "mutation": "native initialization publishes readiness without the generation guard",
+      "file": "src-tauri/src/practice_sessions.rs",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --lib -- practice_sessions::tests::restore_during_initialization_does_not_publish_stale_readiness --test-threads=1",
+      "exit": 101,
+      "killed": true
+    }
+  ]
+}

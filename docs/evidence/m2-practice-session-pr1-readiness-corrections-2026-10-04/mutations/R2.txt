@@ -1,0 +1,25 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.08s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 1 test
+test practice_sessions::tests::shared_validation_contract_native_outcomes ... FAILED
+
+failures:
+
+---- practice_sessions::tests::shared_validation_contract_native_outcomes stdout ----
+
+thread 'practice_sessions::tests::shared_validation_contract_native_outcomes' (833679) panicked at src/practice_session_tests.rs:1445:5:
+[
+    "a removed CHECK constraint is refused: expected refuse, got Ok(())",
+    "a weakened CHECK constraint is refused: expected refuse, got Ok(())",
+]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    practice_sessions::tests::shared_validation_contract_native_outcomes
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 391 filtered out; finished in 1.97s
+
+error: test failed, to rerun pass `--lib`

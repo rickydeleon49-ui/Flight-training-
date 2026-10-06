@@ -1,0 +1,3 @@
+$ cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+    Checking her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.66s

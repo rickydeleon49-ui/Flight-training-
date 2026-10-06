@@ -11,9 +11,15 @@
  * refuses it (quota, private mode), the write reports failure, localStorage
  * keeps its previous bytes, and the live in-memory database is put back to
  * the last state that was stored, so the screen, a retry and a reload all
- * see the same data. The one gap: if storage already failed while the app
- * was starting, the live database is ahead of what a reload would find until
- * the next successful write.
+ * see the same data.
+ *
+ * Initialization contract: migrations, legacy practice-test conversion and
+ * whole-database validation (`practiceStateValidation.ts`) run on the one
+ * connection, with conversion and validation in a single transaction, before
+ * anything is stored or the adapter exists. Startup succeeds only when
+ * validation passes and the result is in localStorage. On any failure the
+ * handle is discarded, localStorage keeps its previous bytes untouched, no
+ * adapter is returned, and a later start retries from those same bytes.
  *
  * Connection invariant: `foreign_keys` is per connection, and sql.js resets
  * it whenever a connection is created or `export()` reopens one. Every such
@@ -31,6 +37,8 @@ import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "./connectionOwner";
 import { applyMigrations } from "./migrations";
+import { executeLegacyConversion } from "./practiceSessionTransaction";
+import { validateApplicationDatabase } from "./practiceStateValidation";
 import type { SqlDatabase, SqlValue } from "./db";
 import { DatabaseDisabledError, StorageDurabilityError } from "./persistenceErrors";
 
@@ -63,6 +71,12 @@ function store(bytes: Uint8Array): void {
   localStorage.setItem(STORAGE_KEY, encodeBytes(bytes));
 }
 
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
 /**
  * Switch foreign keys on for this connection and prove they are on. Runs after
  * every point that creates or reopens a connection; throws if it cannot.
@@ -73,6 +87,31 @@ export function initializeConnection(db: SqlJsDatabaseHandle): void {
   if (result[0]?.values[0]?.[0] !== 1) {
     throw new Error("Connection invariant violation: PRAGMA foreign_keys could not be enabled.");
   }
+}
+
+type SqlJsStatic = Awaited<ReturnType<typeof initSqlJs>>;
+
+/**
+ * An in-memory database built from the registered migrations: the schema
+ * reference initialization validation compares against. Read-only use.
+ */
+async function createReference(SQL: SqlJsStatic) {
+  const handle = new SQL.Database();
+  await applyMigrations((sql) => handle.run(sql), new Set());
+  return {
+    query: (sql: string, params: SqlValue[]): Record<string, unknown>[] => {
+      const statement = handle.prepare(sql);
+      try {
+        statement.bind(params as never);
+        const rows: Record<string, unknown>[] = [];
+        while (statement.step()) rows.push(statement.getAsObject());
+        return rows;
+      } finally {
+        statement.free();
+      }
+    },
+    close: () => handle.close(),
+  };
 }
 
 export async function createSqlJsDatabase(): Promise<SqlDatabase> {
@@ -88,16 +127,30 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
     }
     return handle;
   };
-  let db = open(loadSaved());
+  /** The previous durable bytes; initialization never overwrites them unless it succeeds. */
+  const saved = loadSaved();
+  let db = open(saved);
 
-  const applied = new Set<number>();
-  try {
-    const result = db.exec("SELECT version FROM schema_migrations");
-    for (const row of result[0]?.values ?? []) applied.add(Number(row[0]));
-  } catch {
-    // No migrations table yet — this is a fresh database.
-  }
-  await applyMigrations((sql) => db.run(sql), applied);
+  // Raw statements for use inside an owned operation only; `db` is read at
+  // call time because a failed write replaces the handle.
+  const exec = (sql: string): void => {
+    db.run(sql);
+  };
+  const run = (sql: string, params: SqlValue[]): void => {
+    db.run(sql, params as never);
+  };
+  const query = (sql: string, params: SqlValue[]): Record<string, unknown>[] => {
+    const statement = db.prepare(sql);
+    try {
+      statement.bind(params as never);
+      const rows: Record<string, unknown>[] = [];
+      while (statement.step()) rows.push(statement.getAsObject());
+      return rows;
+    } finally {
+      statement.free();
+    }
+  };
+
 
   /**
    * sql.js `export()` closes and reopens the connection: it silently rolls
@@ -111,12 +164,50 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
     return bytes;
   };
 
-  /** The last database state known to match storage (or startup, see above). */
-  let lastStored = exportBytes();
+  /**
+   * Initialization (see the contract above): migrate, then convert and
+   * validate on one transaction, then store. Any failure discards the handle
+   * without touching localStorage, so no adapter is ever exposed over an
+   * unvalidated or unsaved state.
+   */
+  let lastStored: Uint8Array;
   try {
-    store(lastStored);
+    const applied = new Set<number>();
+    try {
+      const result = db.exec("SELECT version FROM schema_migrations");
+      for (const row of result[0]?.values ?? []) applied.add(Number(row[0]));
+    } catch {
+      // No migrations table yet — this is a fresh database.
+    }
+    await applyMigrations((sql) => db.run(sql), applied);
+
+    const reference = await createReference(SQL);
+    try {
+      await executeLegacyConversion(exec, run, query, undefined, () =>
+        validateApplicationDatabase(query, reference.query),
+      );
+    } finally {
+      reference.close();
+    }
+
+    lastStored = exportBytes();
+    if (!saved || !sameBytes(saved, lastStored)) {
+      try {
+        store(lastStored);
+      } catch (storageError) {
+        throw new StorageDurabilityError(
+          "Browser storage refused the prepared database, so nothing was changed. Free some browser storage and reload.",
+          { cause: storageError },
+        );
+      }
+    }
   } catch (error) {
-    console.warn("Development database could not be saved.", error);
+    try {
+      db.close();
+    } catch {
+      // Handle might already be closed or invalid
+    }
+    throw error;
   }
 
   let connectionBroken: DatabaseDisabledError | null = null;
@@ -180,26 +271,6 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
     } catch (error) {
       restoreLastStored();
       throw durabilityError ? durabilityError(error) : error;
-    }
-  };
-
-  // Raw statements for use inside an owned operation only; `db` is read at
-  // call time because a failed write replaces the handle.
-  const exec = (sql: string): void => {
-    db.run(sql);
-  };
-  const run = (sql: string, params: SqlValue[]): void => {
-    db.run(sql, params as never);
-  };
-  const query = (sql: string, params: SqlValue[]): Record<string, unknown>[] => {
-    const statement = db.prepare(sql);
-    try {
-      statement.bind(params as never);
-      const rows: Record<string, unknown>[] = [];
-      while (statement.step()) rows.push(statement.getAsObject());
-      return rows;
-    } finally {
-      statement.free();
     }
   };
 
@@ -279,6 +350,36 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
               { cause },
             ),
         ),
+      );
+    },
+    savePracticeSessionAtomically(
+      action: import("@/domain/types").PracticeSessionAction,
+    ): Promise<import("@/domain/types").PracticeSessionActionResult> {
+      return owner.exclusive(() =>
+        durableWrite(async () => {
+          const { executePracticeSessionAction } = await import("./practiceSessionTransaction");
+          return executePracticeSessionAction(exec, run, query, action);
+        }),
+      );
+    },
+    savePracticeTestAtomically(
+      operation: import("./db").PracticeTestSaveOperation,
+    ): Promise<void> {
+      return owner.exclusive(() =>
+        durableWrite(async () => {
+          const { executeSavePracticeTest } = await import("./practiceSessionTransaction");
+          await executeSavePracticeTest(exec, run, query, operation);
+        }),
+      );
+    },
+    removePracticeTestAtomically(
+      sourceMaterialId: string,
+    ): Promise<void> {
+      return owner.exclusive(() =>
+        durableWrite(async () => {
+          const { executeRemovePracticeTest } = await import("./practiceSessionTransaction");
+          await executeRemovePracticeTest(exec, run, query, sourceMaterialId);
+        }),
       );
     },
     /** Every acknowledged write is already stored; this re-stores and reports failure. */

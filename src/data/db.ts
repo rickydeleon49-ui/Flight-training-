@@ -29,6 +29,31 @@ export interface SqlDatabase {
   saveStructuredImportAtomically?(
     operation: StructuredImportSaveOperation,
   ): Promise<NativeImportSaveResult>;
+  /**
+   * Single-connection atomic transaction for practice session mutations (M2 PR 1).
+   */
+  savePracticeSessionAtomically?(
+    action: import("@/domain/types").PracticeSessionAction,
+  ): Promise<import("@/domain/types").PracticeSessionActionResult>;
+  /**
+   * Single-connection atomic transaction for saving or regenerating a practice test.
+   */
+  savePracticeTestAtomically?(
+    operation: PracticeTestSaveOperation,
+  ): Promise<void>;
+  /**
+   * Single-connection atomic transaction for removing a practice test.
+   */
+  removePracticeTestAtomically?(
+    sourceMaterialId: string,
+  ): Promise<void>;
+}
+
+export interface PracticeTestSaveOperation {
+  sourceMaterialId: string;
+  title: string;
+  questions: import("@/domain/types").PracticeQuestion[];
+  model: string;
 }
 
 /**

@@ -331,12 +331,45 @@ export async function executeStructuredImport(
       );
     }
     if (content.practiceTest) {
+      const qJson = JSON.stringify(content.practiceTest);
       await run(
         `INSERT INTO practice_tests (
-           source_material_id, title, questions_json, provider, model, generated_at, updated_at
-         ) VALUES (?, ?, ?, 'import', '', ?, ?)`,
-        [id, content.title, JSON.stringify(content.practiceTest), timestamp, timestamp],
+           source_material_id, title, questions_json, provider, model, generated_at, updated_at, legacy_migrated_at, legacy_error
+         ) VALUES (?, ?, ?, 'import', '', ?, ?, ?, NULL)`,
+        [id, content.title, qJson, timestamp, timestamp, timestamp],
       );
+
+      const versionId = crypto.randomUUID();
+      const { computeCanonicalHash } = await import("./practiceSessionTransaction");
+      const contentHash = await computeCanonicalHash(content.practiceTest);
+
+      await run(
+        `INSERT INTO practice_test_versions (
+           id, source_material_id, history_key, source_material_title,
+           version_number, provider, model, title, content_hash, created_at, is_active
+         ) VALUES (?, ?, ?, ?, 1, 'import', '', ?, ?, ?, 1)`,
+        [versionId, id, id, content.title, content.title, contentHash, timestamp],
+      );
+
+      for (let i = 0; i < content.practiceTest.length; i++) {
+        const q = content.practiceTest[i]!;
+        const itemId = crypto.randomUUID();
+        await run(
+          `INSERT INTO practice_test_items (
+             id, version_id, ordinal, question_text, options_json,
+             correct_index, explanation, source_page
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, NULL)`,
+          [
+            itemId,
+            versionId,
+            i,
+            q.question,
+            JSON.stringify(q.options),
+            q.correctIndex,
+            q.explanation,
+          ],
+        );
+      }
     }
     await exec("COMMIT");
     return { status: "saved", materialId: id };

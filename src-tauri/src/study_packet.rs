@@ -998,14 +998,63 @@ pub(crate) fn persist_import(
     }
 
     if let Some(questions) = &content.practice_test {
+        let q_json = questions_json(questions)?;
         tx.execute(
             "INSERT INTO practice_tests (
                 source_material_id, title, questions_json, provider, model,
-                generated_at, updated_at
-             ) VALUES (?1, ?2, ?3, 'import', '', ?4, ?4)",
-            params![id, content.title, questions_json(questions)?, now],
+                generated_at, updated_at, legacy_migrated_at, legacy_error
+             ) VALUES (?1, ?2, ?3, 'import', '', ?4, ?4, ?4, NULL)",
+            params![id, content.title, q_json, now],
         )
         .map_err(storage)?;
+
+        let version_id = crate::practice_sessions::generate_uuid_v4(&tx)
+            .map_err(|_| ImportSaveCode::StorageFailure)?;
+        let canonical_questions: Vec<crate::practice_sessions::CanonicalQuestion<'_>> = questions
+            .iter()
+            .map(|q| crate::practice_sessions::CanonicalQuestion {
+                correct_index: q.correct_index,
+                explanation: &q.explanation,
+                options: &q.options,
+                question: &q.question,
+                source_page: q.source_page.map(|p| p as i64),
+            })
+            .collect();
+        let content_hash =
+            crate::practice_sessions::compute_canonical_content_hash(&canonical_questions)
+                .map_err(|_| ImportSaveCode::StorageFailure)?;
+
+        tx.execute(
+            "INSERT INTO practice_test_versions (
+                id, source_material_id, history_key, source_material_title,
+                version_number, provider, model, title, content_hash, created_at, is_active
+             ) VALUES (?1, ?2, ?2, ?3, 1, 'import', '', ?3, ?4, ?5, 1)",
+            params![version_id, id, content.title, content_hash, now],
+        )
+        .map_err(storage)?;
+
+        for (ordinal, q) in questions.iter().enumerate() {
+            let item_id = crate::practice_sessions::generate_uuid_v4(&tx)
+                .map_err(|_| ImportSaveCode::StorageFailure)?;
+            let options_json =
+                serde_json::to_string(&q.options).map_err(|_| ImportSaveCode::StorageFailure)?;
+            tx.execute(
+                "INSERT INTO practice_test_items (
+                    id, version_id, ordinal, question_text, options_json,
+                    correct_index, explanation, source_page
+                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL)",
+                params![
+                    item_id,
+                    version_id,
+                    ordinal as i64,
+                    q.question,
+                    options_json,
+                    q.correct_index as i64,
+                    q.explanation,
+                ],
+            )
+            .map_err(storage)?;
+        }
     }
 
     tx.commit().map_err(storage)?;

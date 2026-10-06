@@ -1,0 +1,111 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:80676) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/practiceStartupValidation.test.ts (10 tests | 3 failed) 806ms
+     × promoted browser-startup regression: reopen refuses persisted 99 total / 88 answered 45ms
+     × refuses a stored database whose schema lost a foreign key definition 55ms
+     × conversion plus validation is atomic: a failure stores nothing, and a repaired retry converts once 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > promoted browser-startup regression: reopen refuses persisted 99 total / 88 answered
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:193:39
+    191|     await db.execute("UPDATE practice_attempts SET total_questions = 9…
+    192|     const before = stored.get(STORAGE_KEY);
+    193|     await expect(createSqlJsDatabase()).rejects.toBeInstanceOf(Practic…
+       |                                       ^
+    194|     // Refusal never rewrites the previous durable bytes; a retry refu…
+    195|     expect(stored.get(STORAGE_KEY)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > refuses a stored database whose schema lost a foreign key definition
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:213:39
+    211|     for (const byte of bytes) binary += String.fromCharCode(byte);
+    212|     stored.set(STORAGE_KEY, btoa(binary));
+    213|     await expect(createSqlJsDatabase()).rejects.toThrow("foreign keys …
+       |                                       ^
+    214|   });
+    215|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > conversion plus validation is atomic: a failure stores nothing, and a repaired retry converts once
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:226:39
+    224|     const before = stored.get(STORAGE_KEY);
+    225|
+    226|     await expect(createSqlJsDatabase()).rejects.toBeInstanceOf(Practic…
+       |                                       ^
+    227|     expect(stored.get(STORAGE_KEY)).toBe(before);
+    228|     const unchanged = await storedDatabase();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  23:42:21
+   Duration  1.02s (transform 96ms, setup 0ms, import 135ms, tests 806ms, environment 0ms)
+

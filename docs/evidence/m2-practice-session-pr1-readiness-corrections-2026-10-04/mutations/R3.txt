@@ -1,0 +1,24 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.16s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 1 test
+test practice_sessions::tests::failed_semantic_validation_rolls_back_legacy_conversion ... FAILED
+
+failures:
+
+---- practice_sessions::tests::failed_semantic_validation_rolls_back_legacy_conversion stdout ----
+
+thread 'practice_sessions::tests::failed_semantic_validation_rolls_back_legacy_conversion' (834051) panicked at src/practice_session_tests.rs:1590:5:
+assertion `left == right` failed: failed initialization changed state
+  left: ["108607d4-22c9-4eb2-bca6-be04e5ad5073|legacy|1|06e582c61276abf7038404ecc2f71c1356915b205b92adc6d171e7e316172580", "e184d0c7-a28a-4bdb-ae0d-b47457d58619|mat|1|06e582c61276abf7038404ecc2f71c1356915b205b92adc6d171e7e316172580", "396abdd5-ba61-4135-8641-1d577305f89f|e184d0c7-a28a-4bdb-ae0d-b47457d58619|0", "f2c71b55-dba3-40f5-8757-40edec05ef78|108607d4-22c9-4eb2-bca6-be04e5ad5073|0", "c0eecf0a-d1b4-4e12-892d-24d109dca315|in_progress|1|1", "b0d7ec58-c39d-4831-8b3d-53c7bfafd193|99|0", "20000000-0000-4000-8000-000000000001|{\"answeredCount\":0,\"attemptId\":\"c0eecf0a-d1b4-4e12-892d-24d109dca315\",\"completedAt\":null,\"nextUnansweredOrdinal\":0,\"responses\":[],\"revision\":0,\"startedAt\":\"2026-10-05T06:42:42.933Z\",\"status\":\"in_progress\",\"totalQuestions\":1,\"versionId\":\"e184d0c7-a28a-4bdb-ae0d-b47457d58619\"}", "20000000-0000-4000-8000-000000000002|{\"answeredAt\":\"2026-10-05T06:42:42.934Z\",\"answeredCount\":1,\"attemptId\":\"c0eecf0a-d1b4-4e12-892d-24d109dca315\",\"isCorrect\":false,\"itemId\":\"396abdd5-ba61-4135-8641-1d577305f89f\",\"revision\":1}", "legacy|[{\"question\":\"Synthetic\",\"options\":[\"A\",\"B\"],\"correctIndex\":0,\"explanation\":\"\",\"sourcePage\":null}]|2026-10-05T06:42:42.936Z|-", "mat|[{\"question\":\"Synthetic\",\"options\":[\"A\",\"B\"],\"correctIndex\":0,\"explanation\":\"\",\"sourcePage\":null}]|2026-10-05T06:42:42.931Z|-"]
+ right: ["e184d0c7-a28a-4bdb-ae0d-b47457d58619|mat|1|06e582c61276abf7038404ecc2f71c1356915b205b92adc6d171e7e316172580", "396abdd5-ba61-4135-8641-1d577305f89f|e184d0c7-a28a-4bdb-ae0d-b47457d58619|0", "c0eecf0a-d1b4-4e12-892d-24d109dca315|in_progress|1|1", "b0d7ec58-c39d-4831-8b3d-53c7bfafd193|99|0", "20000000-0000-4000-8000-000000000001|{\"answeredCount\":0,\"attemptId\":\"c0eecf0a-d1b4-4e12-892d-24d109dca315\",\"completedAt\":null,\"nextUnansweredOrdinal\":0,\"responses\":[],\"revision\":0,\"startedAt\":\"2026-10-05T06:42:42.933Z\",\"status\":\"in_progress\",\"totalQuestions\":1,\"versionId\":\"e184d0c7-a28a-4bdb-ae0d-b47457d58619\"}", "20000000-0000-4000-8000-000000000002|{\"answeredAt\":\"2026-10-05T06:42:42.934Z\",\"answeredCount\":1,\"attemptId\":\"c0eecf0a-d1b4-4e12-892d-24d109dca315\",\"isCorrect\":false,\"itemId\":\"396abdd5-ba61-4135-8641-1d577305f89f\",\"revision\":1}", "legacy|[{\"question\":\"Synthetic\",\"options\":[\"A\",\"B\"],\"correctIndex\":0,\"explanation\":\"\",\"sourcePage\":null}]|-|-", "mat|[{\"question\":\"Synthetic\",\"options\":[\"A\",\"B\"],\"correctIndex\":0,\"explanation\":\"\",\"sourcePage\":null}]|2026-10-05T06:42:42.931Z|-"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    practice_sessions::tests::failed_semantic_validation_rolls_back_legacy_conversion
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 391 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `--lib`

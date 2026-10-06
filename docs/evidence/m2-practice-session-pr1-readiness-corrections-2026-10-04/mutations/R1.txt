@@ -1,0 +1,58 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.10s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 27 tests
+test practice_sessions::tests::all_answered_cursor_is_null_and_early_completion ... ok
+test practice_sessions::tests::canonical_content_hashing_matches_regardless_of_key_order ... ok
+test practice_sessions::tests::concurrent_starts_serialize_to_single_unfinished_attempt ... ok
+test practice_sessions::tests::direct_native_writer_refuses_when_legacy_conversion_pending ... ok
+test practice_sessions::tests::early_conversion_error_revokes_stale_readiness ... ok
+test practice_sessions::tests::failed_replacement_preserves_previous_test_and_progress ... ok
+test practice_sessions::tests::failed_semantic_validation_rolls_back_legacy_conversion ... ok
+test practice_sessions::tests::intact_source_fk_keeps_material_deletion_history_behavior ... ok
+test practice_sessions::tests::missing_source_fk_definition_refused ... FAILED
+test practice_sessions::tests::remove_practice_test_prunes_unfinished_and_keeps_completed ... ok
+test practice_sessions::tests::req_01_interrupted_resume ... ok
+test practice_sessions::tests::req_02_idempotent_replay ... ok
+test practice_sessions::tests::req_03_operation_conflict ... ok
+test practice_sessions::tests::req_04_single_in_progress_attempt ... ok
+test practice_sessions::tests::req_05_and_06_cross_version_item_triggers ... ok
+test practice_sessions::tests::req_07_and_08_contradictory_choice_flags ... ok
+test practice_sessions::tests::req_09_completed_attempt_mutation_refused ... ok
+test practice_sessions::tests::req_10_exactly_once_completion ... ok
+test practice_sessions::tests::req_11_version_isolation_on_regeneration ... ok
+test practice_sessions::tests::req_12_policy_a_deletion_lifecycle ... ok
+test practice_sessions::tests::req_13_legacy_startup_upgrade_and_200_questions ... ok
+test practice_sessions::tests::req_14_malformed_legacy_handling ... ok
+test practice_sessions::tests::restore_during_initialization_does_not_publish_stale_readiness ... ok
+test practice_sessions::tests::shared_validation_contract_native_outcomes ... FAILED
+test practice_sessions::tests::stale_retakes_cannot_replace_each_other ... ok
+test practice_sessions::tests::stale_revision_mismatch_refused ... ok
+test practice_sessions::tests::strict_payload_rejects_unknown_keys_and_oversized ... ok
+
+failures:
+
+---- practice_sessions::tests::missing_source_fk_definition_refused stdout ----
+
+thread 'practice_sessions::tests::missing_source_fk_definition_refused' (833330) panicked at src/practice_session_tests.rs:1539:70:
+called `Result::unwrap_err()` on an `Ok` value: ()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- practice_sessions::tests::shared_validation_contract_native_outcomes stdout ----
+
+thread 'practice_sessions::tests::shared_validation_contract_native_outcomes' (833348) panicked at src/practice_session_tests.rs:1445:5:
+[
+    "the removed source-material foreign key definition is refused: expected refuse, got Ok(())",
+    "a changed foreign key delete action is refused: expected refuse, got Ok(())",
+    "the removed attempt source-material foreign key definition is refused: expected refuse, got Ok(())",
+]
+
+
+failures:
+    practice_sessions::tests::missing_source_fk_definition_refused
+    practice_sessions::tests::shared_validation_contract_native_outcomes
+
+test result: FAILED. 25 passed; 2 failed; 0 ignored; 0 measured; 365 filtered out; finished in 2.93s
+
+error: test failed, to rerun pass `--lib`

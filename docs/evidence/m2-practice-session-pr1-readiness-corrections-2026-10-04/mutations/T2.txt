@@ -1,0 +1,47 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:80696) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/practiceStartupValidation.test.ts (10 tests | 2 failed) 898ms
+     × storage refusing the prepared database fails startup, keeps the previous bytes, and a retry converts once 30ms
+     × an unchanged database reopens without needing to store again 36ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > storage refusing the prepared database fails startup, keeps the previous bytes, and a retry converts once
+AssertionError: expected Error: synthetic quota failure to be an instance of StorageDurabilityError
+ ❯ src/data/practiceStartupValidation.test.ts:256:39
+    254|
+    255|     storageFails = true;
+    256|     await expect(createSqlJsDatabase()).rejects.toBeInstanceOf(Storage…
+       |                                       ^
+    257|     expect(stored.get(STORAGE_KEY)).toBe(before);
+    258|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > an unchanged database reopens without needing to store again
+AssertionError: promise rejected "Error: synthetic quota failure" instead of resolving
+ ❯ src/data/practiceStartupValidation.test.ts:274:39
+    272|     await seedSession(await createSqlJsDatabase());
+    273|     storageFails = true;
+    274|     await expect(createSqlJsDatabase()).resolves.toBeDefined();
+       |                                       ^
+    275|   });
+    276|
+
+Caused by: Error: synthetic quota failure
+ ❯ Object.setItem src/data/practiceStartupValidation.test.ts:48:31
+ ❯ store src/data/sqlJsDb.ts:71:16
+ ❯ Module.createSqlJsDatabase src/data/sqlJsDb.ts:183:5
+ ❯ src/data/practiceStartupValidation.test.ts:274:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  23:42:22
+   Duration  1.12s (transform 98ms, setup 0ms, import 138ms, tests 898ms, environment 0ms)
+

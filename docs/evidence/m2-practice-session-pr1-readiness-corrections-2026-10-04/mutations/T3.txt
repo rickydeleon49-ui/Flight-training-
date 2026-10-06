@@ -1,0 +1,37 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:80717) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/practiceStartupValidation.test.ts (10 tests | 1 failed) 889ms
+     × rolls back conversion when validation fails, then a repaired retry converts once 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > node:sqlite test driver initialization > rolls back conversion when validation fails, then a repaired retry converts once
+AssertionError: expected { n: 1 } to deeply equal { n: +0 }
+
+- Expected
++ Received
+
+  {
+-   "n": 0,
++   "n": 1,
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:348:121
+    346|     await expect(createNodeSqliteDatabase(path)).rejects.toBeInstanceO…
+    347|     const check = await raw(path);
+    348|     expect(check.prepare("SELECT COUNT(*) AS n FROM practice_test_vers…
+       |                                                                                                                         ^
+    349|       n: 0,
+    350|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  23:42:23
+   Duration  1.10s (transform 93ms, setup 0ms, import 131ms, tests 889ms, environment 0ms)
+

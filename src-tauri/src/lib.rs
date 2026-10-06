@@ -13,6 +13,7 @@ mod pdf;
 // command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
 // comment for why.
 mod platform;
+mod practice_sessions;
 mod secrets;
 mod storage;
 mod study_packet;
@@ -21,7 +22,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 10;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 11;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -89,6 +90,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0010_debrief_links.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 11,
+            description: "practice_sessions",
+            sql: include_str!("../migrations/0011_practice_sessions.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -137,6 +144,10 @@ pub fn run() {
             documents::save_split_materials,
             study_packet::pick_study_packet,
             study_packet::save_structured_study_material_atomically,
+            practice_sessions::save_practice_session_atomically,
+            practice_sessions::save_practice_test_atomically,
+            practice_sessions::remove_practice_test_atomically,
+            practice_sessions::run_practice_legacy_conversion,
             documents::save_material_operation,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,

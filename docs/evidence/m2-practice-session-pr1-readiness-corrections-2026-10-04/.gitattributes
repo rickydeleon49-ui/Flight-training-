@@ -1,0 +1,2 @@
+# Preserve raw command receipts; source and authored documents retain normal whitespace checks.
+*.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
