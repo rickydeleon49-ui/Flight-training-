@@ -1,0 +1,3 @@
+*.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+submitted-diff.patch whitespace=-blank-at-eof,-blank-at-eol
+submitted-finishing/submitted-report.md whitespace=-blank-at-eof,-blank-at-eol

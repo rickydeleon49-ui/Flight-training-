@@ -1,0 +1,36 @@
+{
+  "frontend": {
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/pages/StudyLibrary/codex-pr2-finalreview.test.ts",
+      "src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts",
+      "src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts",
+      "src/pages/StudyLibrary/PracticeSessionPR2.test.ts",
+      "src/pages/StudyLibrary/PracticeTestPanel.test.ts",
+      "src/pages/StudyLibrary/MaterialDetailOffline.test.ts",
+      "src/data/practiceSessionContract.test.ts",
+      "src/data/practiceStartupValidation.test.ts",
+      "src/data/practiceEraseDurability.test.ts",
+      "src/components/ui/Dialog.fallback.test.ts",
+      "--reporter=verbose"
+    ],
+    "exit": 1
+  },
+  "native": {
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--locked",
+      "--lib",
+      "req_erase_history",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit": 0
+  },
+  "source_unchanged": true
+}
