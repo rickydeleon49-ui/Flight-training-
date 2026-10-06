@@ -1,0 +1,17 @@
+{
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "src/pages/StudyLibrary/codex-pr2-rereview.test.ts",
+    "src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts",
+    "src/pages/StudyLibrary/PracticeSessionPR2.test.ts",
+    "src/pages/StudyLibrary/PracticeTestPanel.test.ts",
+    "src/pages/StudyLibrary/MaterialDetailOffline.test.ts",
+    "src/data/practiceSessionContract.test.ts",
+    "src/data/practiceStartupValidation.test.ts",
+    "--reporter=verbose"
+  ],
+  "exit": 1,
+  "source_unchanged": true
+}
