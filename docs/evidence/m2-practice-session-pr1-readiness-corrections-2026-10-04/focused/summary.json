@@ -1,0 +1,18 @@
+{
+  "attempts": [
+    {
+      "step": "00-focused-frontend",
+      "command": "npx vitest run src/data/practiceStartupValidation.test.ts src/data/practiceSessionContract.test.ts src/data/singleConnectionDrivers.test.ts src/data/structuredImport.test.ts src/data/migrationSafety.test.ts src/data/migrations.test.ts src/data/repositories/importStudyPacket.test.ts src/acceptance/m1Upgrade.acceptance.test.ts",
+      "exit": 0,
+      "seconds": 17.0,
+      "finished_utc": "2026-10-05T06:44:24+00:00"
+    },
+    {
+      "step": "00-focused-native",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --lib -- practice_sessions::tests backup::tests --test-threads=1",
+      "exit": 0,
+      "seconds": 36.2,
+      "finished_utc": "2026-10-05T06:45:01+00:00"
+    }
+  ]
+}

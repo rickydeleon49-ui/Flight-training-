@@ -1,0 +1,67 @@
+{
+  "attempts": [
+    {
+      "step": "01-typecheck",
+      "command": "npm run typecheck",
+      "exit": 0,
+      "seconds": 2.9,
+      "finished_utc": "2026-10-06T03:41:43+00:00"
+    },
+    {
+      "step": "02-npm-test",
+      "command": "npm test",
+      "exit": 0,
+      "seconds": 27.8,
+      "finished_utc": "2026-10-06T03:42:11+00:00"
+    },
+    {
+      "step": "03-build",
+      "command": "npm run build",
+      "exit": 0,
+      "seconds": 3.9,
+      "finished_utc": "2026-10-06T03:42:15+00:00"
+    },
+    {
+      "step": "04-cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --all-targets",
+      "exit": 0,
+      "seconds": 30.5,
+      "finished_utc": "2026-10-06T03:42:45+00:00"
+    },
+    {
+      "step": "05-clippy",
+      "command": "cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "exit": 0,
+      "seconds": 1.7,
+      "finished_utc": "2026-10-06T03:42:47+00:00"
+    },
+    {
+      "step": "06-fmt",
+      "command": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
+      "exit": 0,
+      "seconds": 0.2,
+      "finished_utc": "2026-10-06T03:42:47+00:00"
+    },
+    {
+      "step": "07-test-cargo-lock",
+      "command": "npm run test:cargo-lock",
+      "exit": 0,
+      "seconds": 1.4,
+      "finished_utc": "2026-10-06T03:42:49+00:00"
+    },
+    {
+      "step": "08-git-diff-check",
+      "command": "whitespace_check",
+      "exit": 1,
+      "seconds": 0.4,
+      "finished_utc": "2026-10-06T03:42:49+00:00"
+    },
+    {
+      "step": "09-migration-consistency",
+      "command": "migration_consistency",
+      "exit": 0,
+      "seconds": 0.0,
+      "finished_utc": "2026-10-06T03:42:49+00:00"
+    }
+  ]
+}

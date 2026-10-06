@@ -6,13 +6,26 @@
  * It holds one connection, so every public method runs through a
  * `ConnectionOwner` (see `connectionOwner.ts`), exactly like the sql.js
  * browser driver.
+ *
+ * Initialization follows the browser contract: legacy conversion and
+ * whole-database validation (`practiceStateValidation.ts`) run on one
+ * transaction before the driver is returned. A failure rolls the conversion
+ * back, closes the connection and rejects, so tests exercise the same
+ * refusal the browser driver gives.
  */
 import type { SqlDatabase, SqlValue } from "../db";
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "../connectionOwner";
 import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { executeStructuredImport } from "../structuredImportTransaction";
+import {
+  executeLegacyConversion,
+  executePracticeSessionAction,
+  executeRemovePracticeTest,
+  executeSavePracticeTest,
+} from "../practiceSessionTransaction";
 import { applyMigrations } from "../migrations";
+import { validateApplicationDatabase, type ValidationQuery } from "../practiceStateValidation";
 
 export interface TestDatabase extends SqlDatabase {
   close(): void;
@@ -25,11 +38,28 @@ export interface TestDatabase extends SqlDatabase {
   beforeStatement?: (sql: string, params: SqlValue[]) => void | Promise<void>;
 }
 
+// Keep this native-only module out of Vite's jsdom client transform. Node 22
+// supports it, but does not expose it through builtinModules for Vite to
+// recognize automatically.
+const nativeSqlite = "node:sqlite";
+
+let reference: Promise<ValidationQuery> | null = null;
+
+/**
+ * The registered-migration schema reference, built once per process: it is
+ * only ever read, and every test database opens through it.
+ */
+function schemaReference(): Promise<ValidationQuery> {
+  reference ??= (async () => {
+    const { DatabaseSync } = await import(/* @vite-ignore */ nativeSqlite);
+    const handle = new DatabaseSync(":memory:");
+    await applyMigrations((sql) => handle.exec(sql), new Set());
+    return (sql: string, params: SqlValue[]) => handle.prepare(sql).all(...params) as Record<string, unknown>[];
+  })();
+  return reference;
+}
+
 export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestDatabase> {
-  // Keep this native-only module out of Vite's jsdom client transform. Node 22
-  // supports it, but does not expose it through builtinModules for Vite to
-  // recognize automatically.
-  const nativeSqlite = "node:sqlite";
   const { DatabaseSync } = await import(/* @vite-ignore */ nativeSqlite);
   const db = new DatabaseSync(path);
   db.exec("PRAGMA foreign_keys = ON");
@@ -47,20 +77,34 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
 
   await applyMigrations((sql) => db.exec(sql), applied);
 
+  let testDb: TestDatabase;
+
   // Raw statements for use inside an owned operation only.
   const exec = (sql: string): void => {
     db.exec(sql);
   };
   const run = async (sql: string, params: SqlValue[]): Promise<void> => {
-    await testDb.beforeStatement?.(sql, params);
+    await testDb?.beforeStatement?.(sql, params);
     db.prepare(sql).run(...params);
   };
   const query = (sql: string, params: SqlValue[]) =>
     db.prepare(sql).all(...params) as Record<string, unknown>[];
 
+  // Initialization: conversion plus validation on one transaction, before
+  // the driver exists.
+  const referenceQuery = await schemaReference();
+  try {
+    await executeLegacyConversion(exec, run, query, undefined, () =>
+      validateApplicationDatabase(query, referenceQuery),
+    );
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+
   const owner = createConnectionOwner(() => rollbackIfOpen(exec));
 
-  const testDb: TestDatabase = {
+  testDb = {
     select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return owner.exclusive(() => {
         refuseTransactionControl(sql);
@@ -95,6 +139,21 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
       operation: import("../db").StructuredImportSaveOperation,
     ): Promise<import("../db").NativeImportSaveResult> {
       return owner.exclusive(() => executeStructuredImport(exec, run, query, operation));
+    },
+    savePracticeSessionAtomically(
+      action: import("@/domain/types").PracticeSessionAction,
+    ): Promise<import("@/domain/types").PracticeSessionActionResult> {
+      return owner.exclusive(() => executePracticeSessionAction(exec, run, query, action));
+    },
+    savePracticeTestAtomically(
+      operation: import("../db").PracticeTestSaveOperation,
+    ): Promise<void> {
+      return owner.exclusive(() => executeSavePracticeTest(exec, run, query, operation));
+    },
+    removePracticeTestAtomically(
+      sourceMaterialId: string,
+    ): Promise<void> {
+      return owner.exclusive(() => executeRemovePracticeTest(exec, run, query, sourceMaterialId));
     },
     close() {
       db.close();

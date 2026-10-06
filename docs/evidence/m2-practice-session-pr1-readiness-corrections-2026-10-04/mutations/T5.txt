@@ -1,0 +1,38 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:80760) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/practiceStartupValidation.test.ts (10 tests | 1 failed) 869ms
+     × matches every native accept/refuse outcome 428ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > shared validation contract on the real sql.js engine > matches every native accept/refuse outcome
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "a removed CHECK constraint is refused: expected refuse, got accept",
++   "a weakened CHECK constraint is refused: expected refuse, got accept",
++ ]
+
+ ❯ src/data/practiceStartupValidation.test.ts:156:24
+    154|     }
+    155|     reference.close();
+    156|     expect(mismatches).toEqual([]);
+       |                        ^
+    157|     expect(CONTRACT.cases.length).toBeGreaterThanOrEqual(30);
+    158|     expect(new Set(CONTRACT.cases.map((c) => c.category))).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  23:42:26
+   Duration  1.10s (transform 102ms, setup 0ms, import 144ms, tests 869ms, environment 0ms)
+

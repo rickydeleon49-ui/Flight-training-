@@ -67,7 +67,7 @@ describe("migrations are additive", () => {
   ];
 
   for (const file of files) {
-    const sql = stripComments(readFileSync(join(DIR, file), "utf8"));
+    const sql = stripTriggers(stripComments(readFileSync(join(DIR, file), "utf8")));
 
     for (const [what, pattern] of destructive) {
       it(`${file} does not risk her data by ${what}`, () => {
@@ -88,4 +88,12 @@ function stripComments(sql: string): string {
   return sql
     .replace(/--[^\n]*/g, "")
     .replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
+/**
+ * Triggers define subsequent runtime behavior (such as cleanup on delete),
+ * rather than statements executed as part of applying the migration itself.
+ */
+function stripTriggers(sql: string): string {
+  return sql.replace(/CREATE\s+TRIGGER[\s\S]*?\bEND;/gi, "");
 }

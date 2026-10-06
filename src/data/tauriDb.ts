@@ -6,16 +6,24 @@
  */
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
-import type { StudyMaterial } from "@/domain/types";
+import type { PracticeSessionAction, PracticeSessionActionResult, StudyMaterial } from "@/domain/types";
 
 import {
   toNumberedPlaceholders,
   type NativeImportSaveResult,
+  type PracticeTestSaveOperation,
   type SqlDatabase,
   type SqlValue,
   type StructuredImportSaveOperation,
 } from "./db";
-import { IMPORT_SAVE_MESSAGES, isImportSaveErrorCode, StructuredImportSaveError } from "./persistenceErrors";
+import {
+  IMPORT_SAVE_MESSAGES,
+  isImportSaveErrorCode,
+  isPracticeSessionErrorCode,
+  PRACTICE_SESSION_ERROR_MESSAGES,
+  PracticeSessionError,
+  StructuredImportSaveError,
+} from "./persistenceErrors";
 
 const DB_URL = "sqlite:her-flight-deck.db";
 
@@ -49,6 +57,165 @@ export async function invokeStructuredImportSave(
     return { status, materialId };
   }
   throw new StructuredImportSaveError("IPC_TRANSPORT_ERROR");
+}
+
+/**
+ * Invoke the native practice session save and accept only its allowlisted
+ * outcomes.
+ */
+export async function invokePracticeSessionSave(
+  action: PracticeSessionAction,
+  call: typeof invoke = invoke,
+): Promise<PracticeSessionActionResult> {
+  let result: unknown;
+  try {
+    result = await call("save_practice_session_atomically", { action });
+  } catch (rejection) {
+    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (
+      isPracticeSessionErrorCode(code) &&
+      code !== "IPC_TRANSPORT_ERROR" &&
+      message === PRACTICE_SESSION_ERROR_MESSAGES[code]
+    ) {
+      throw new PracticeSessionError(code);
+    }
+    throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
+  }
+  return validatePracticeActionResult(action, result);
+}
+
+function validatePracticeActionResult(
+  action: PracticeSessionAction,
+  result: unknown,
+): PracticeSessionActionResult {
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
+    throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+  }
+  const r = result as Record<string, unknown>;
+  if (typeof r.attemptId !== "string" || !r.attemptId.trim()) {
+    throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+  }
+  const rev = r.revision ?? r.currentRevision;
+  if (
+    typeof rev !== "number" ||
+    !Number.isInteger(rev) ||
+    rev < 0
+  ) {
+    throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+  }
+
+  switch (action.action) {
+    case "start_or_resume":
+    case "retake_attempt":
+      if (typeof r.versionId !== "string" || !r.versionId.trim()) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (r.status !== "in_progress") {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (
+        typeof r.totalQuestions !== "number" ||
+        typeof r.answeredCount !== "number"
+      ) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      break;
+
+    case "record_response":
+      if (typeof r.itemId !== "string" || !r.itemId.trim()) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (typeof r.answeredCount !== "number") {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (typeof r.isCorrect !== "boolean") {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (typeof r.answeredAt !== "string" || !r.answeredAt.trim()) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      break;
+
+    case "complete_attempt":
+      if (r.status !== "completed") {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (typeof r.completedAt !== "string" || !r.completedAt.trim()) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (typeof r.scorePercent !== "number" || Number.isNaN(r.scorePercent)) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (
+        typeof r.correctCount !== "number" ||
+        typeof r.incorrectCount !== "number" ||
+        typeof r.dontKnowCount !== "number" ||
+        typeof r.unansweredCount !== "number" ||
+        typeof r.totalQuestions !== "number"
+      ) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      break;
+
+    case "abandon_attempt":
+      if (r.status !== "abandoned") {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      if (typeof r.completedAt !== "string" || !r.completedAt.trim()) {
+        throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+      }
+      break;
+
+    default:
+      throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+  }
+
+  return result as PracticeSessionActionResult;
+}
+
+/**
+ * Invoke the native practice test save/regeneration.
+ * Unit return contract: awaits native completion without wire result object.
+ */
+export async function invokePracticeTestSave(
+  operation: PracticeTestSaveOperation,
+  call: typeof invoke = invoke,
+): Promise<void> {
+  try {
+    await call("save_practice_test_atomically", { operation });
+  } catch (rejection) {
+    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (
+      isPracticeSessionErrorCode(code) &&
+      code !== "IPC_TRANSPORT_ERROR" &&
+      message === PRACTICE_SESSION_ERROR_MESSAGES[code]
+    ) {
+      throw new PracticeSessionError(code);
+    }
+    throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
+  }
+}
+
+/**
+ * Invoke the native practice test removal.
+ */
+export async function invokeRemovePracticeTest(
+  sourceMaterialId: string,
+  call: typeof invoke = invoke,
+): Promise<void> {
+  try {
+    await call("remove_practice_test_atomically", { sourceMaterialId });
+  } catch (rejection) {
+    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (
+      isPracticeSessionErrorCode(code) &&
+      code !== "IPC_TRANSPORT_ERROR" &&
+      message === PRACTICE_SESSION_ERROR_MESSAGES[code]
+    ) {
+      throw new PracticeSessionError(code);
+    }
+    throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
+  }
 }
 
 export async function createTauriDatabase(): Promise<SqlDatabase> {
@@ -86,6 +253,9 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     // Nothing to do — the database still works, just with more contention.
   }
 
+  // Run legacy practice test conversion after migrations and before session repositories become ready.
+  await invoke("run_practice_legacy_conversion");
+
   return {
     async saveMaterialsAtomically(materials: StudyMaterial[]): Promise<void> {
       await invoke("save_split_materials", { materials });
@@ -102,6 +272,21 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
       operation: StructuredImportSaveOperation,
     ): Promise<NativeImportSaveResult> {
       return invokeStructuredImportSave(operation);
+    },
+    savePracticeSessionAtomically(
+      action: PracticeSessionAction,
+    ): Promise<PracticeSessionActionResult> {
+      return invokePracticeSessionSave(action);
+    },
+    savePracticeTestAtomically(
+      operation: PracticeTestSaveOperation,
+    ): Promise<void> {
+      return invokePracticeTestSave(operation);
+    },
+    removePracticeTestAtomically(
+      sourceMaterialId: string,
+    ): Promise<void> {
+      return invokeRemovePracticeTest(sourceMaterialId);
     },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);

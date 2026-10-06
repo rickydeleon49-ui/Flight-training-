@@ -1,0 +1,38 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:80800) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/practiceStartupValidation.test.ts (10 tests | 1 failed) 883ms
+     × an unchanged database reopens without needing to store again 41ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > an unchanged database reopens without needing to store again
+AssertionError: promise rejected "StorageDurabilityError: Browser storage r…" instead of resolving
+ ❯ src/data/practiceStartupValidation.test.ts:274:39
+    272|     await seedSession(await createSqlJsDatabase());
+    273|     storageFails = true;
+    274|     await expect(createSqlJsDatabase()).resolves.toBeDefined();
+       |                                       ^
+    275|   });
+    276|
+
+Caused by: StorageDurabilityError: Browser storage refused the prepared database, so nothing was changed. Free some browser storage and reload.
+ ❯ Module.createSqlJsDatabase src/data/sqlJsDb.ts:198:15
+ ❯ src/data/practiceStartupValidation.test.ts:274:5
+
+Caused by: Error: synthetic quota failure
+ ❯ Object.setItem src/data/practiceStartupValidation.test.ts:48:31
+ ❯ store src/data/sqlJsDb.ts:71:16
+ ❯ Module.createSqlJsDatabase src/data/sqlJsDb.ts:196:9
+ ❯ src/data/practiceStartupValidation.test.ts:274:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  23:42:29
+   Duration  1.10s (transform 94ms, setup 0ms, import 132ms, tests 883ms, environment 0ms)
+

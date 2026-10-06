@@ -366,7 +366,207 @@ fn add_file_to_archive<W: Write + Seek>(
     })
 }
 
-fn verify_application_database(path: &Path) -> Result<(), String> {
+fn normalize_sql(sql: &str) -> String {
+    let mut clean = String::new();
+    let chars: Vec<char> = sql.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '-' && i + 1 < chars.len() && chars[i + 1] == '-' {
+            i += 2;
+            while i < chars.len() && chars[i] != '\n' {
+                i += 1;
+            }
+        } else if chars[i] == '/' && i + 1 < chars.len() && chars[i + 1] == '*' {
+            i += 2;
+            while i + 1 < chars.len() && !(chars[i] == '*' && chars[i + 1] == '/') {
+                i += 1;
+            }
+            i += 2;
+        } else {
+            clean.push(chars[i]);
+            i += 1;
+        }
+    }
+    clean
+        .split_whitespace()
+        .collect::<Vec<&str>>()
+        .join(" ")
+        .to_ascii_lowercase()
+}
+
+fn is_valid_uuid_v4(uuid_str: &str) -> bool {
+    let bytes = uuid_str.as_bytes();
+    if bytes.len() != 36 {
+        return false;
+    }
+    for (i, &b) in bytes.iter().enumerate() {
+        if i == 8 || i == 13 || i == 18 || i == 23 {
+            if b != b'-' {
+                return false;
+            }
+        } else if i == 14 {
+            if b != b'4' {
+                return false;
+            }
+        } else if i == 19 {
+            if !matches!(b, b'8' | b'9' | b'a' | b'b' | b'A' | b'B') {
+                return false;
+            }
+        } else if !b.is_ascii_hexdigit() {
+            return false;
+        }
+    }
+    true
+}
+
+/// One foreign key: parent table, ordered (child, parent) column pairs, and
+/// its ON UPDATE / ON DELETE / MATCH actions.
+type ForeignKeyShape = (
+    String,
+    Vec<(String, Option<String>)>,
+    String,
+    String,
+    String,
+);
+
+/// A table's foreign keys in a comparable form, independent of declaration
+/// order and identifier case.
+fn foreign_key_shapes(
+    connection: &Connection,
+    table: &str,
+) -> Result<Vec<ForeignKeyShape>, String> {
+    let mut stmt = connection
+        .prepare(&format!(
+            "SELECT id, \"table\", \"from\", \"to\", on_update, on_delete, \"match\"
+             FROM pragma_foreign_key_list('{table}') ORDER BY id, seq"
+        ))
+        .map_err(|e| format!("Could not read foreign keys for {table}: {e}"))?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, Option<String>>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, String>(5)?,
+                r.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|e| format!("Could not query foreign keys for {table}: {e}"))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Could not collect foreign keys for {table}: {e}"))?;
+    let mut grouped: std::collections::BTreeMap<i64, ForeignKeyShape> =
+        std::collections::BTreeMap::new();
+    for (id, parent, from, to, on_update, on_delete, matching) in rows {
+        let entry = grouped.entry(id).or_insert_with(|| {
+            (
+                parent.to_ascii_lowercase(),
+                Vec::new(),
+                on_update.to_ascii_uppercase(),
+                on_delete.to_ascii_uppercase(),
+                matching.to_ascii_uppercase(),
+            )
+        });
+        entry.1.push((
+            from.to_ascii_lowercase(),
+            to.map(|column| column.to_ascii_lowercase()),
+        ));
+    }
+    let mut shapes: Vec<ForeignKeyShape> = grouped.into_values().collect();
+    shapes.sort();
+    Ok(shapes)
+}
+
+/// The stored CREATE statement of a table.
+fn table_sql(connection: &Connection, table: &str) -> Result<String, String> {
+    connection
+        .query_row(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            [table],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Could not read the definition of {table}: {e}"))
+}
+
+/// The CHECK constraints of a CREATE TABLE statement, bounded to their
+/// expressions with whitespace and identifier quoting removed and sorted, so
+/// equivalent formatting compares equal while a missing or altered check does
+/// not.
+fn check_constraints(sql: &str) -> Vec<String> {
+    let chars: Vec<char> = normalize_sql(sql).chars().collect();
+    let is_word = |c: char| c.is_ascii_alphanumeric() || c == '_';
+    let mut checks = Vec::new();
+    let mut in_quote = false;
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        if c == '\'' {
+            in_quote = !in_quote;
+            i += 1;
+            continue;
+        }
+        let at_check = !in_quote
+            && chars[i..].starts_with(&['c', 'h', 'e', 'c', 'k'])
+            && (i == 0 || !is_word(chars[i - 1]))
+            && !chars.get(i + 5).is_some_and(|next| is_word(*next));
+        if !at_check {
+            i += 1;
+            continue;
+        }
+        let mut j = i + 5;
+        while chars.get(j) == Some(&' ') {
+            j += 1;
+        }
+        if chars.get(j) != Some(&'(') {
+            i += 5;
+            continue;
+        }
+        let (mut depth, mut quoted, mut expression) = (0usize, false, String::new());
+        while j < chars.len() {
+            let d = chars[j];
+            if d == '\'' {
+                quoted = !quoted;
+            } else if !quoted && d == '(' {
+                depth += 1;
+            } else if !quoted && d == ')' {
+                depth -= 1;
+                if depth == 0 {
+                    break;
+                }
+            }
+            if depth > 0 && !(depth == 1 && d == '(' && expression.is_empty()) {
+                expression.push(d);
+            }
+            j += 1;
+        }
+        checks.push(
+            expression
+                .chars()
+                .filter(|c| !c.is_whitespace() && *c != '"' && *c != '`')
+                .collect(),
+        );
+        i = j + 1;
+    }
+    checks.sort();
+    checks
+}
+
+fn get_reference_schema_connection() -> Result<Connection, String> {
+    let ref_conn = Connection::open_in_memory()
+        .map_err(|e| format!("Could not open in-memory reference DB: {e}"))?;
+    ref_conn
+        .pragma_update(None, "foreign_keys", "ON")
+        .map_err(|e| format!("Could not enable foreign keys on reference DB: {e}"))?;
+    for m in crate::migrations() {
+        ref_conn
+            .execute_batch(m.sql)
+            .map_err(|e| format!("Could not apply migrations to reference DB: {e}"))?;
+    }
+    Ok(ref_conn)
+}
+
+pub(crate) fn verify_application_database(path: &Path) -> Result<(), String> {
     verify_sqlite_file(path)?;
     let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Could not open the database in that backup: {e}"))?;
@@ -377,6 +577,13 @@ fn verify_application_database(path: &Path) -> Result<(), String> {
     // instead of just waiting the moment out. Checking a live database, not
     // only a staged one, is exactly the case this matters for.
     let _ = connection.busy_timeout(BUSY_TIMEOUT);
+    verify_application_connection(&connection)
+}
+
+/// The checks of `verify_application_database` on an already-open
+/// connection. Initialization runs them on its own open transaction, so they
+/// see the pending conversion before it commits.
+pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(), String> {
     let quick_check: String = connection
         .query_row("PRAGMA quick_check", [], |row| row.get(0))
         .map_err(|e| format!("Could not check the database in that backup: {e}"))?;
@@ -426,6 +633,1099 @@ fn verify_application_database(path: &Path) -> Result<(), String> {
             "That backup was created by a newer database format. Update the app first.".to_string(),
         );
     }
+    if newest_migration >= 11 {
+        verify_schema_11_semantics(connection)?;
+    }
+    Ok(())
+}
+
+pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(), String> {
+    // 1. Foreign key check
+    let mut fk_stmt = connection
+        .prepare("PRAGMA foreign_key_check")
+        .map_err(|e| format!("Could not check foreign keys in that backup: {e}"))?;
+    let mut fk_rows = fk_stmt
+        .query([])
+        .map_err(|e| format!("Could not run foreign key check: {e}"))?;
+    if let Some(row) = fk_rows
+        .next()
+        .map_err(|e| format!("Could not read foreign key check: {e}"))?
+    {
+        let table: String = row.get(0).unwrap_or_default();
+        let parent: String = row.get(2).unwrap_or_default();
+        return Err(format!(
+            "The database violates foreign key constraints between {table} and {parent}."
+        ));
+    }
+
+    let ref_conn = get_reference_schema_connection()?;
+
+    // 2. Validate tables, column types, nullability, and PKs against reference schema
+    let practice_tables = [
+        "practice_test_versions",
+        "practice_test_items",
+        "practice_attempts",
+        "practice_responses",
+        "practice_session_operations",
+        "practice_tests",
+    ];
+
+    for table in practice_tables {
+        let present: i64 = connection
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+                [table],
+                |r| r.get(0),
+            )
+            .map_err(|e| format!("Could not inspect schema for {table}: {e}"))?;
+        if present != 1 {
+            return Err(format!("The backup is missing required table: {table}"));
+        }
+
+        let mut ref_stmt = ref_conn
+            .prepare(&format!(
+                "SELECT name, type, [notnull], pk FROM pragma_table_info('{table}')"
+            ))
+            .map_err(|e| format!("Failed to read ref columns for {table}: {e}"))?;
+        let ref_cols: Vec<(String, String, i64, i64)> = ref_stmt
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, i64>(2)?,
+                    r.get::<_, i64>(3)?,
+                ))
+            })
+            .map_err(|e| format!("Failed to query ref columns for {table}: {e}"))?
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("Collect ref columns error: {e}"))?;
+
+        let mut conn_stmt = connection
+            .prepare(&format!(
+                "SELECT name, type, [notnull], pk FROM pragma_table_info('{table}')"
+            ))
+            .map_err(|e| format!("Failed to read actual columns for {table}: {e}"))?;
+        let conn_cols: std::collections::HashMap<String, (String, i64, i64)> = conn_stmt
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    (
+                        r.get::<_, String>(1)?,
+                        r.get::<_, i64>(2)?,
+                        r.get::<_, i64>(3)?,
+                    ),
+                ))
+            })
+            .map_err(|e| format!("Failed to query actual columns for {table}: {e}"))?
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("Collect actual columns error: {e}"))?;
+
+        for (col_name, col_type, notnull, pk) in ref_cols {
+            if table == "practice_tests"
+                && !["legacy_migrated_at", "legacy_error"].contains(&col_name.as_str())
+            {
+                continue;
+            }
+            let Some((actual_type, actual_notnull, actual_pk)) = conn_cols.get(&col_name) else {
+                return Err(format!("Table {table} missing required column: {col_name}"));
+            };
+            if !actual_type.eq_ignore_ascii_case(&col_type) {
+                return Err(format!(
+                    "Table {table} column {col_name} type mismatch: expected {col_type}, found {actual_type}"
+                ));
+            }
+            if *actual_notnull != notnull {
+                return Err(format!(
+                    "Table {table} column {col_name} notnull mismatch: expected {notnull}, found {actual_notnull}"
+                ));
+            }
+            if *actual_pk != pk {
+                return Err(format!(
+                    "Table {table} column {col_name} pk mismatch: expected {pk}, found {actual_pk}"
+                ));
+            }
+        }
+
+        // Foreign-key definitions: `PRAGMA foreign_key_check` only checks rows
+        // against definitions that exist, so a missing or altered definition
+        // must be caught here, against the registered reference.
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&ref_conn, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&ref_conn, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+    }
+
+    // 3. Required compound uniqueness constraints
+    // practice_test_items: compound UNIQUE(version_id, ordinal)
+    {
+        let mut idx_stmt = connection
+            .prepare("SELECT name, [unique] FROM pragma_index_list('practice_test_items')")
+            .map_err(|e| format!("Inspect index list items: {e}"))?;
+        let indexes: Vec<(String, i64)> = idx_stmt
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .map_err(|e| format!("Query index list items: {e}"))?
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("Collect index list items: {e}"))?;
+
+        let has_compound_unique = indexes.iter().any(|(idx_name, is_unique)| {
+            if *is_unique != 1 {
+                return false;
+            }
+            let mut info_stmt = match connection.prepare(&format!(
+                "SELECT name FROM pragma_index_info('{idx_name}') ORDER BY seqno ASC"
+            )) {
+                Ok(s) => s,
+                Err(_) => return false,
+            };
+            let cols: Vec<String> = info_stmt
+                .query_map([], |r| r.get(0))
+                .ok()
+                .map(|m| m.filter_map(|r| r.ok()).collect())
+                .unwrap_or_default();
+            cols == ["version_id", "ordinal"]
+        });
+
+        if !has_compound_unique {
+            return Err("The backup table practice_test_items is missing compound UNIQUE constraint on (version_id, ordinal).".to_string());
+        }
+    }
+
+    // practice_responses: compound UNIQUE(attempt_id, item_id)
+    {
+        let mut idx_stmt = connection
+            .prepare("SELECT name, [unique] FROM pragma_index_list('practice_responses')")
+            .map_err(|e| format!("Inspect index list responses: {e}"))?;
+        let indexes: Vec<(String, i64)> = idx_stmt
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .map_err(|e| format!("Query index list responses: {e}"))?
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("Collect index list responses: {e}"))?;
+
+        let has_compound_unique = indexes.iter().any(|(idx_name, is_unique)| {
+            if *is_unique != 1 {
+                return false;
+            }
+            let mut info_stmt = match connection.prepare(&format!(
+                "SELECT name FROM pragma_index_info('{idx_name}') ORDER BY seqno ASC"
+            )) {
+                Ok(s) => s,
+                Err(_) => return false,
+            };
+            let cols: Vec<String> = info_stmt
+                .query_map([], |r| r.get(0))
+                .ok()
+                .map(|m| m.filter_map(|r| r.ok()).collect())
+                .unwrap_or_default();
+            cols == ["attempt_id", "item_id"]
+        });
+
+        if !has_compound_unique {
+            return Err("The backup table practice_responses is missing compound UNIQUE constraint on (attempt_id, item_id).".to_string());
+        }
+    }
+
+    // 4. Required partial unique indexes with key and predicate inspection
+    let required_unique_indexes: &[(&str, &str, &[&str], &str)] = &[
+        (
+            "practice_test_versions",
+            "uq_active_practice_version",
+            &["source_material_id"],
+            "is_active = 1",
+        ),
+        (
+            "practice_attempts",
+            "uq_single_in_progress_attempt",
+            &["source_material_id"],
+            "status = 'in_progress'",
+        ),
+    ];
+
+    for &(table, index_name, expected_cols, where_clause) in required_unique_indexes {
+        let unique_val: Option<i64> = connection
+            .query_row(
+                &format!("SELECT [unique] FROM pragma_index_list('{table}') WHERE name = ?1"),
+                [index_name],
+                |r| r.get(0),
+            )
+            .ok();
+
+        match unique_val {
+            Some(1) => {
+                let mut info_stmt = connection
+                    .prepare(&format!(
+                        "SELECT name FROM pragma_index_info('{index_name}') ORDER BY seqno ASC"
+                    ))
+                    .map_err(|e| format!("Inspect index info {index_name}: {e}"))?;
+                let cols: Vec<String> = info_stmt
+                    .query_map([], |r| r.get(0))
+                    .map_err(|e| format!("Query index info {index_name}: {e}"))?
+                    .collect::<Result<_, _>>()
+                    .map_err(|e| format!("Collect index info {index_name}: {e}"))?;
+
+                if cols.as_slice() != expected_cols {
+                    return Err(format!(
+                        "The backup unique index {index_name} has invalid key columns: expected {expected_cols:?}, found {cols:?}"
+                    ));
+                }
+
+                let sql: Option<String> = connection
+                    .query_row(
+                        "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?1",
+                        [index_name],
+                        |r| r.get(0),
+                    )
+                    .ok();
+                if let Some(s) = sql {
+                    let s_norm = s.to_ascii_lowercase();
+                    if !s_norm.contains("unique")
+                        || !s_norm.contains(&where_clause.to_ascii_lowercase())
+                        || !s_norm.contains("source_material_id is not null")
+                    {
+                        return Err(format!(
+                            "The backup unique index {index_name} does not match expected predicate."
+                        ));
+                    }
+                }
+            }
+            Some(_) => {
+                return Err(format!(
+                    "The backup index {index_name} must be a UNIQUE index."
+                ));
+            }
+            None => {
+                return Err(format!(
+                    "The backup is missing required unique index: {index_name}"
+                ));
+            }
+        }
+    }
+
+    // Required secondary indexes with key column verification against reference schema
+    let required_indexes = [
+        ("practice_test_versions", "idx_practice_versions_history"),
+        ("practice_test_items", "idx_practice_items_version"),
+        ("practice_attempts", "idx_practice_attempts_material"),
+        ("practice_attempts", "idx_practice_attempts_version"),
+        ("practice_responses", "idx_practice_responses_attempt"),
+        ("practice_session_operations", "idx_practice_ops_history"),
+        ("practice_session_operations", "idx_practice_ops_attempt"),
+    ];
+
+    for (table, index_name) in required_indexes {
+        let exists: bool = connection
+            .query_row(
+                &format!("SELECT 1 FROM pragma_index_list('{table}') WHERE name = ?1"),
+                [index_name],
+                |_| Ok(true),
+            )
+            .ok()
+            .unwrap_or(false);
+        if !exists {
+            return Err(format!(
+                "The backup is missing required index: {index_name}"
+            ));
+        }
+
+        let mut ref_info = ref_conn
+            .prepare(&format!(
+                "SELECT name FROM pragma_index_info('{index_name}') ORDER BY seqno ASC"
+            ))
+            .map_err(|e| format!("Inspect ref index info {index_name}: {e}"))?;
+        let ref_cols: Vec<String> = ref_info
+            .query_map([], |r| r.get(0))
+            .map_err(|e| format!("Query ref index info {index_name}: {e}"))?
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("Collect ref index info {index_name}: {e}"))?;
+
+        let mut info_stmt = connection
+            .prepare(&format!(
+                "SELECT name FROM pragma_index_info('{index_name}') ORDER BY seqno ASC"
+            ))
+            .map_err(|e| format!("Inspect index info {index_name}: {e}"))?;
+        let cols: Vec<String> = info_stmt
+            .query_map([], |r| r.get(0))
+            .map_err(|e| format!("Query index info {index_name}: {e}"))?
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("Collect index info {index_name}: {e}"))?;
+
+        if cols != ref_cols {
+            return Err(format!(
+                "Index {index_name} key columns mismatch: expected {ref_cols:?}, found {cols:?}"
+            ));
+        }
+    }
+
+    // 5. Relational orphaned records and cross-version validation
+    let orphan_items: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM practice_test_items i LEFT JOIN practice_test_versions v ON i.version_id = v.id WHERE v.id IS NULL",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check orphan items: {e}"))?;
+    if orphan_items > 0 {
+        return Err(
+            "The backup contains practice test items without a parent version.".to_string(),
+        );
+    }
+
+    let orphan_attempts: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM practice_attempts a LEFT JOIN practice_test_versions v ON a.version_id = v.id WHERE v.id IS NULL",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check orphan attempts: {e}"))?;
+    if orphan_attempts > 0 {
+        return Err("The backup contains practice attempts without a parent version.".to_string());
+    }
+
+    let orphan_responses: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM practice_responses r
+             LEFT JOIN practice_attempts a ON r.attempt_id = a.id
+             LEFT JOIN practice_test_items i ON r.item_id = i.id
+             WHERE a.id IS NULL OR i.id IS NULL",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check orphan responses: {e}"))?;
+    if orphan_responses > 0 {
+        return Err(
+            "The backup contains practice responses without a parent attempt or item.".to_string(),
+        );
+    }
+
+    let cross_version: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM practice_responses r
+             JOIN practice_attempts a ON r.attempt_id = a.id
+             JOIN practice_test_items i ON r.item_id = i.id
+             WHERE a.version_id != i.version_id",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check cross-version responses: {e}"))?;
+    if cross_version > 0 {
+        return Err(
+            "The backup contains practice responses referencing items from a different version."
+                .to_string(),
+        );
+    }
+
+    // Cross-material consistency:
+    // Every attempt's source_material_id must match its version's source_material_id (if not detached)
+    let cross_material: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM practice_attempts a
+             JOIN practice_test_versions v ON a.version_id = v.id
+             WHERE (a.source_material_id IS NOT NULL AND (v.source_material_id IS NULL OR a.source_material_id != v.source_material_id))
+                OR (a.source_material_id IS NULL AND v.source_material_id IS NOT NULL AND v.is_active = 1)",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check cross-material attempts: {e}"))?;
+    if cross_material > 0 {
+        return Err("The backup contains practice attempts whose material ownership does not match their version.".to_string());
+    }
+
+    let invalid_op_history: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM practice_session_operations o
+             JOIN practice_attempts a ON o.attempt_id = a.id
+             JOIN practice_test_versions v ON a.version_id = v.id
+             WHERE o.history_key != v.history_key",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check operation history keys: {e}"))?;
+    if invalid_op_history > 0 {
+        return Err("The backup contains operation receipts whose history_key does not match attempt version.".to_string());
+    }
+
+    let duplicate_active_versions: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM (
+                 SELECT source_material_id FROM practice_test_versions
+                 WHERE is_active = 1 AND source_material_id IS NOT NULL
+                 GROUP BY source_material_id HAVING COUNT(*) > 1
+             )",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check duplicate active versions: {e}"))?;
+    if duplicate_active_versions > 0 {
+        return Err(
+            "The backup contains multiple active versions for the same study material.".to_string(),
+        );
+    }
+
+    let duplicate_in_progress: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM (
+                 SELECT source_material_id FROM practice_attempts
+                 WHERE status = 'in_progress' AND source_material_id IS NOT NULL
+                 GROUP BY source_material_id HAVING COUNT(*) > 1
+             )",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check duplicate in-progress attempts: {e}"))?;
+    if duplicate_in_progress > 0 {
+        return Err(
+            "The backup contains multiple in-progress attempts for the same study material."
+                .to_string(),
+        );
+    }
+
+    let detached_active: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM practice_test_versions WHERE source_material_id IS NULL AND is_active = 1",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Failed to check detached version status: {e}"))?;
+    if detached_active > 0 {
+        return Err(
+            "The backup contains detached practice test versions that are marked active."
+                .to_string(),
+        );
+    }
+
+    // 6. Validate every frozen version has 1..=200 complete items with contiguous zero-based ordinals
+    let mut ver_stmt = connection
+        .prepare("SELECT id FROM practice_test_versions")
+        .map_err(|e| format!("Failed to query versions: {e}"))?;
+    let ver_ids: Vec<String> = ver_stmt
+        .query_map([], |r| r.get(0))
+        .map_err(|e| format!("Failed to read versions: {e}"))?
+        .collect::<Result<_, _>>()
+        .map_err(|e| format!("Collect versions error: {e}"))?;
+
+    for ver_id in &ver_ids {
+        let mut item_stmt = connection
+            .prepare(
+                "SELECT id, ordinal, question_text, options_json, correct_index, explanation, source_page
+                 FROM practice_test_items WHERE version_id = ?1 ORDER BY ordinal ASC",
+            )
+            .map_err(|e| format!("Failed to prepare version items query: {e}"))?;
+        type VersionItemRow = (String, i64, String, String, i64, String, Option<i64>);
+        let items: Vec<VersionItemRow> = item_stmt
+            .query_map([ver_id], |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                ))
+            })
+            .map_err(|e| format!("Query items error: {e}"))?
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("Collect items error: {e}"))?;
+
+        if items.is_empty() || items.len() > 200 {
+            return Err(format!(
+                "Practice test version {ver_id} has invalid question count: {}",
+                items.len()
+            ));
+        }
+
+        for (expected_ordinal, item) in items.iter().enumerate() {
+            let (
+                item_id,
+                ordinal,
+                question_text,
+                options_json,
+                correct_index,
+                explanation,
+                source_page,
+            ) = item;
+            if *ordinal != expected_ordinal as i64 {
+                return Err(format!(
+                    "Item {item_id} in version {ver_id} has non-contiguous ordinal: expected {expected_ordinal}, found {ordinal}"
+                ));
+            }
+            if question_text.trim().is_empty() || question_text.chars().count() > 10_000 {
+                return Err(format!("Item {item_id} has invalid question text length"));
+            }
+            if explanation.chars().count() > 5_000 {
+                return Err(format!(
+                    "Item {item_id} has explanation exceeding 5000 characters"
+                ));
+            }
+            if let Some(sp) = source_page {
+                if !(1..=1_000).contains(sp) {
+                    return Err(format!(
+                        "Item {item_id} has out-of-bounds source page: {sp}"
+                    ));
+                }
+            }
+
+            let options: Vec<serde_json::Value> = serde_json::from_str(options_json)
+                .map_err(|_| format!("Item {item_id} has invalid options JSON"))?;
+            if options.len() < 2 || options.len() > 8 {
+                return Err(format!(
+                    "Item {item_id} has out-of-bounds option count: {}",
+                    options.len()
+                ));
+            }
+            for opt in &options {
+                let opt_str = opt
+                    .as_str()
+                    .ok_or_else(|| format!("Item {item_id} options must be string values"))?;
+                if opt_str.trim().is_empty() || opt_str.chars().count() > 1_000 {
+                    return Err(format!("Item {item_id} has invalid option length"));
+                }
+            }
+            if *correct_index < 0 || *correct_index as usize >= options.len() {
+                return Err(format!(
+                    "Item {item_id} has out-of-bounds correct index: {correct_index}"
+                ));
+            }
+        }
+    }
+
+    // 7. Validate responses choice flags, selected_index upper bounds, and is_correct
+    let mut resp_stmt = connection
+        .prepare(
+            "SELECT r.id, r.selected_index, r.is_dont_know, r.is_correct, i.options_json, i.correct_index, r.answered_at
+             FROM practice_responses r
+             JOIN practice_test_items i ON r.item_id = i.id",
+        )
+        .map_err(|e| format!("Failed to prepare responses check: {e}"))?;
+    let resp_rows = resp_stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, Option<i64>>(1)?,
+                r.get::<_, i64>(2)?,
+                r.get::<_, i64>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, i64>(5)?,
+                r.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query responses: {e}"))?;
+
+    for r_res in resp_rows {
+        let (resp_id, sel_idx, is_dk, is_cor, options_json, item_correct_index, answered_at) =
+            r_res.map_err(|e| format!("Failed to read response row: {e}"))?;
+
+        if answered_at.trim().is_empty() {
+            return Err(format!(
+                "Response {resp_id} has empty answered_at timestamp"
+            ));
+        }
+
+        if is_dk == 1 {
+            if sel_idx.is_some() || is_cor != 0 {
+                return Err(format!(
+                    "Response {resp_id} with is_dont_know=1 must have NULL selected_index and is_correct=0"
+                ));
+            }
+        } else {
+            let idx = sel_idx.ok_or_else(|| {
+                format!(
+                    "Response {resp_id} with is_dont_know=0 must have a non-null selected_index"
+                )
+            })?;
+            if idx < 0 {
+                return Err(format!(
+                    "Response {resp_id} has negative selected_index: {idx}"
+                ));
+            }
+            let options: Vec<serde_json::Value> =
+                serde_json::from_str(&options_json).map_err(|_| {
+                    format!("Response {resp_id} references item with invalid options JSON")
+                })?;
+            if idx as usize >= options.len() {
+                return Err(format!(
+                    "Response {resp_id} has selected_index {idx} out of bounds for {} options",
+                    options.len()
+                ));
+            }
+            let expected_cor = if idx == item_correct_index { 1 } else { 0 };
+            if is_cor != expected_cor {
+                return Err(format!(
+                    "Response {resp_id} has incorrect is_correct value (stored: {is_cor}, expected: {expected_cor})"
+                ));
+            }
+        }
+    }
+
+    // 8. Completed and in-progress attempt derivations, status, timestamps, and scores
+    let mut stmt = connection
+        .prepare(
+            "SELECT id, version_id, status, started_at, completed_at, revision, total_questions,
+                    answered_count, correct_count, incorrect_count, dont_know_count, score_percent
+             FROM practice_attempts",
+        )
+        .map_err(|e| format!("Failed to prepare attempts query: {e}"))?;
+
+    let attempt_rows = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, Option<String>>(4)?,
+                r.get::<_, i64>(5)?,
+                r.get::<_, i64>(6)?,
+                r.get::<_, i64>(7)?,
+                r.get::<_, i64>(8)?,
+                r.get::<_, i64>(9)?,
+                r.get::<_, i64>(10)?,
+                r.get::<_, Option<f64>>(11)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query attempts: {e}"))?;
+
+    for row_res in attempt_rows {
+        let (
+            att_id,
+            ver_id,
+            status,
+            started_at,
+            completed_at,
+            revision,
+            stored_total,
+            stored_ans,
+            stored_cor,
+            stored_inc,
+            stored_dk,
+            stored_pct,
+        ) = row_res.map_err(|e| format!("Failed to read attempt row: {e}"))?;
+
+        if started_at.trim().is_empty() {
+            return Err(format!("Attempt {att_id} has empty started_at timestamp"));
+        }
+        if revision < 0 {
+            return Err(format!(
+                "Attempt {att_id} has negative revision: {revision}"
+            ));
+        }
+        if stored_ans < 0 || stored_cor < 0 || stored_inc < 0 || stored_dk < 0 {
+            return Err(format!("Attempt {att_id} has negative counts"));
+        }
+
+        let actual_total: i64 = connection
+            .query_row(
+                "SELECT COUNT(*) FROM practice_test_items WHERE version_id = ?1",
+                [&ver_id],
+                |r| r.get(0),
+            )
+            .map_err(|e| format!("Failed to count items: {e}"))?;
+
+        let actual_ans: i64 = connection
+            .query_row(
+                "SELECT COUNT(*) FROM practice_responses WHERE attempt_id = ?1",
+                [&att_id],
+                |r| r.get(0),
+            )
+            .map_err(|e| format!("Failed to count responses: {e}"))?;
+
+        if stored_ans > stored_total {
+            return Err(format!(
+                "Attempt {att_id} answered_count exceeds total_questions"
+            ));
+        }
+
+        match status.as_str() {
+            "in_progress" => {
+                if completed_at.is_some() {
+                    return Err(format!(
+                        "In-progress attempt {att_id} must have NULL completed_at"
+                    ));
+                }
+                if stored_total != actual_total {
+                    return Err(format!(
+                        "In-progress attempt {att_id} total_questions ({stored_total}) does not match frozen version ({actual_total})"
+                    ));
+                }
+                if stored_ans != actual_ans {
+                    return Err(format!(
+                        "In-progress attempt {att_id} answered_count ({stored_ans}) does not match response count ({actual_ans})"
+                    ));
+                }
+            }
+            "completed" => {
+                let comp_at = completed_at.ok_or_else(|| {
+                    format!("The backup contains completed practice attempt {att_id} with no completion timestamp.")
+                })?;
+                if comp_at.trim().is_empty() {
+                    return Err(format!("Attempt {att_id} has empty completed_at timestamp"));
+                }
+
+                let stored_score = stored_pct.ok_or_else(|| {
+                    format!("Completed practice attempt {att_id} has null score_percent")
+                })?;
+
+                if stored_total != actual_total {
+                    return Err("The backup contains a completed attempt whose total questions does not match its frozen version.".to_string());
+                }
+
+                if stored_ans != actual_ans {
+                    return Err("The backup contains a completed practice attempt whose answered count does not match stored responses.".to_string());
+                }
+
+                let derived_cor: i64 = connection
+                    .query_row(
+                        "SELECT COUNT(*) FROM practice_responses r
+                         JOIN practice_test_items i ON r.item_id = i.id
+                         WHERE r.attempt_id = ?1 AND r.is_dont_know = 0 AND r.selected_index = i.correct_index",
+                        [&att_id],
+                        |r| r.get(0),
+                    )
+                    .map_err(|e| format!("Failed to derive correct count: {e}"))?;
+
+                let actual_dk: i64 = connection
+                    .query_row(
+                        "SELECT COUNT(*) FROM practice_responses WHERE attempt_id = ?1 AND is_dont_know = 1",
+                        [&att_id],
+                        |r| r.get(0),
+                    )
+                    .map_err(|e| format!("Failed to count dont_know: {e}"))?;
+
+                let derived_inc: i64 = connection
+                    .query_row(
+                        "SELECT COUNT(*) FROM practice_responses r
+                         JOIN practice_test_items i ON r.item_id = i.id
+                         WHERE r.attempt_id = ?1 AND r.is_dont_know = 0 AND r.selected_index != i.correct_index",
+                        [&att_id],
+                        |r| r.get(0),
+                    )
+                    .map_err(|e| format!("Failed to derive incorrect count: {e}"))?;
+
+                if stored_cor != derived_cor || stored_dk != actual_dk || stored_inc != derived_inc
+                {
+                    return Err("The backup contains completed practice attempt tallies that do not match stored responses.".to_string());
+                }
+
+                let expected_score = if actual_total > 0 {
+                    ((derived_cor as f64 / actual_total as f64) * 1000.0).round() / 10.0
+                } else {
+                    0.0
+                };
+
+                // Exact match on the one-decimal grid (no 0.05 tolerance)
+                if (stored_score - expected_score).abs() > 1e-6 {
+                    return Err("The backup contains a completed practice attempt with inconsistent score percentage.".to_string());
+                }
+            }
+            "abandoned" => {
+                if completed_at.is_none() {
+                    return Err(format!(
+                        "Abandoned attempt {att_id} must have a completion timestamp"
+                    ));
+                }
+                if stored_total != actual_total {
+                    return Err(format!(
+                        "Abandoned attempt {att_id} total_questions ({stored_total}) does not match frozen version ({actual_total})"
+                    ));
+                }
+            }
+            other => {
+                return Err(format!("Attempt {att_id} has invalid status: {other}"));
+            }
+        }
+    }
+
+    // 9. Operations and receipts validation
+    let mut op_stmt = connection
+        .prepare(
+            "SELECT operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased
+             FROM practice_session_operations",
+        )
+        .map_err(|e| format!("Failed to prepare receipts query: {e}"))?;
+
+    let op_rows = op_stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, String>(5)?,
+                r.get::<_, String>(6)?,
+                r.get::<_, i64>(7)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query receipts: {e}"))?;
+
+    for row_res in op_rows {
+        let (op_id, action, req_hash, applied_at, result_json, hist_key, att_id, is_erased) =
+            row_res.map_err(|e| format!("Failed to read receipt: {e}"))?;
+
+        if !is_valid_uuid_v4(&op_id) {
+            return Err(format!("Operation receipt {op_id} is not a valid UUIDv4"));
+        }
+
+        if req_hash.len() != 64 || !req_hash.chars().all(|c| c.is_ascii_hexdigit()) {
+            return Err(format!(
+                "Operation receipt {op_id} has invalid request hash format"
+            ));
+        }
+
+        if applied_at.trim().is_empty() || !applied_at.contains('T') || applied_at.len() < 19 {
+            return Err(format!(
+                "Operation receipt {op_id} has invalid ISO applied_at timestamp: {applied_at}"
+            ));
+        }
+
+        if hist_key.trim().is_empty() || att_id.trim().is_empty() {
+            return Err(
+                "The backup contains operation receipts with missing required fields.".to_string(),
+            );
+        }
+
+        if ![
+            "start_or_resume",
+            "record_response",
+            "complete_attempt",
+            "abandon_attempt",
+            "retake_attempt",
+        ]
+        .contains(&action.as_str())
+        {
+            return Err(format!(
+                "The backup contains operation receipt with unknown action: {action}"
+            ));
+        }
+
+        let parsed_result: serde_json::Value =
+            serde_json::from_str(&result_json).map_err(|_| {
+                format!("The backup contains malformed receipt JSON in operation {op_id}")
+            })?;
+
+        if is_erased == 1 {
+            if result_json != "null" || !parsed_result.is_null() {
+                return Err("The backup contains erased operation receipts that still retain result content.".to_string());
+            }
+        } else {
+            if parsed_result.is_null() {
+                return Err(format!(
+                    "The backup contains non-erased operation receipt {op_id} with null result."
+                ));
+            }
+
+            let obj = parsed_result
+                .as_object()
+                .ok_or_else(|| format!("Operation receipt {op_id} result must be a JSON object"))?;
+
+            if obj.is_empty() {
+                return Err(format!(
+                    "The backup contains empty-object result in operation receipt {op_id}"
+                ));
+            }
+
+            let res_attempt_id = obj
+                .get("attemptId")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| format!("Operation receipt {op_id} result is missing attemptId"))?;
+            if res_attempt_id != att_id {
+                return Err(format!(
+                    "Operation receipt {op_id} result attemptId ({res_attempt_id}) does not match receipt attempt_id ({att_id})"
+                ));
+            }
+
+            let res_rev = obj
+                .get("revision")
+                .or_else(|| obj.get("currentRevision"))
+                .and_then(|v| v.as_i64())
+                .ok_or_else(|| format!("Operation receipt {op_id} result is missing revision"))?;
+            if res_rev < 0 {
+                return Err(format!(
+                    "Operation receipt {op_id} result has negative revision"
+                ));
+            }
+
+            match action.as_str() {
+                "start_or_resume" | "retake_attempt" => {
+                    let v_id = obj
+                        .get("versionId")
+                        .and_then(|v| v.as_str())
+                        .ok_or_else(|| {
+                            format!("Operation receipt {op_id} start result missing versionId")
+                        })?;
+                    if v_id.trim().is_empty() {
+                        return Err(format!(
+                            "Operation receipt {op_id} start result has empty versionId"
+                        ));
+                    }
+                    let attempt_version_id: Option<String> = connection
+                        .query_row(
+                            "SELECT version_id FROM practice_attempts WHERE id = ?1",
+                            [&att_id],
+                            |r| r.get(0),
+                        )
+                        .ok();
+                    if let Some(expected_ver) = attempt_version_id {
+                        if v_id != expected_ver {
+                            return Err(format!(
+                                "Operation receipt {op_id} start result versionId ({v_id}) does not match attempt frozen version ({expected_ver})"
+                            ));
+                        }
+                    }
+                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+                        format!("Operation receipt {op_id} start result missing status")
+                    })?;
+                    if status != "in_progress" {
+                        return Err(format!(
+                            "Operation receipt {op_id} start result status must be in_progress"
+                        ));
+                    }
+                }
+                "record_response" => {
+                    let ans_at =
+                        obj.get("answeredAt")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                format!(
+                                    "Operation receipt {op_id} response result missing answeredAt"
+                                )
+                            })?;
+                    if ans_at.trim().is_empty() {
+                        return Err(format!(
+                            "Operation receipt {op_id} response result has empty answeredAt"
+                        ));
+                    }
+                }
+                "complete_attempt" => {
+                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+                        format!("Operation receipt {op_id} complete result missing status")
+                    })?;
+                    if status != "completed" {
+                        return Err(format!(
+                            "Operation receipt {op_id} complete result status must be completed"
+                        ));
+                    }
+                    let comp_at =
+                        obj.get("completedAt")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                format!(
+                                    "Operation receipt {op_id} complete result missing completedAt"
+                                )
+                            })?;
+                    if comp_at.trim().is_empty() {
+                        return Err(format!(
+                            "Operation receipt {op_id} complete result has empty completedAt"
+                        ));
+                    }
+                    if obj.get("scorePercent").and_then(|v| v.as_f64()).is_none() {
+                        return Err(format!(
+                            "Operation receipt {op_id} complete result missing scorePercent"
+                        ));
+                    }
+                    if obj.get("correctCount").and_then(|v| v.as_i64()).is_none()
+                        || obj.get("incorrectCount").and_then(|v| v.as_i64()).is_none()
+                        || obj.get("dontKnowCount").and_then(|v| v.as_i64()).is_none()
+                        || obj
+                            .get("unansweredCount")
+                            .and_then(|v| v.as_i64())
+                            .is_none()
+                    {
+                        return Err(format!(
+                            "Operation receipt {op_id} complete result missing tallies"
+                        ));
+                    }
+                }
+                "abandon_attempt" => {
+                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+                        format!("Operation receipt {op_id} abandon result missing status")
+                    })?;
+                    if status != "abandoned" {
+                        return Err(format!(
+                            "Operation receipt {op_id} abandon result status must be abandoned"
+                        ));
+                    }
+                    let comp_at =
+                        obj.get("completedAt")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                format!(
+                                    "Operation receipt {op_id} abandon result missing completedAt"
+                                )
+                            })?;
+                    if comp_at.trim().is_empty() {
+                        return Err(format!(
+                            "Operation receipt {op_id} abandon result has empty completedAt"
+                        ));
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // 10. Required triggers with exact registered migration contract comparison
+    for trigger_name in [
+        "trg_enforce_response_item_version_insert",
+        "trg_enforce_response_item_version_update",
+        "trg_cleanup_material_delete",
+    ] {
+        let actual_sql: Option<String> = connection
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?1",
+                [trigger_name],
+                |r| r.get(0),
+            )
+            .ok();
+        let Some(sql) = actual_sql else {
+            return Err(format!(
+                "The backup is missing required trigger: {trigger_name}"
+            ));
+        };
+
+        let ref_sql: String = ref_conn
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?1",
+                [trigger_name],
+                |r| r.get(0),
+            )
+            .map_err(|e| format!("Failed to read ref trigger {trigger_name}: {e}"))?;
+
+        let norm_actual = normalize_sql(&sql);
+        let norm_ref = normalize_sql(&ref_sql);
+        if norm_actual != norm_ref {
+            return Err(format!(
+                "The backup trigger {trigger_name} does not match the registered migration contract."
+            ));
+        }
+
+        if trigger_name.contains("enforce_response_item_version") {
+            if !norm_actual.contains("raise(abort")
+                || !norm_actual.contains("practice_attempts")
+                || !norm_actual.contains("practice_test_items")
+            {
+                return Err(format!(
+                    "Trigger {trigger_name} is missing required version enforcement logic."
+                ));
+            }
+        } else if trigger_name == "trg_cleanup_material_delete"
+            && (!norm_actual.contains("is_erased = 1")
+                || !norm_actual.contains("delete from practice_attempts")
+                || !norm_actual.contains("is_active = 0"))
+        {
+            return Err(format!(
+                "Trigger {trigger_name} is missing required material deletion cleanup logic."
+            ));
+        }
+    }
+
     Ok(())
 }
 
@@ -3616,6 +4916,7 @@ where
         match resume_decision {
             StartupRestoreDecision::ProceedNormally => {}
             StartupRestoreDecision::RestoreCompleted => {
+                crate::practice_sessions::bump_readiness_generation_at(root);
                 return Ok(RestoreApplicationResult::Installed);
             }
             StartupRestoreDecision::StagingRefusedUnchanged { reason } => {
@@ -3944,6 +5245,7 @@ where
         let _ = remove_journal(root);
     }
 
+    crate::practice_sessions::bump_readiness_generation_at(root);
     Ok(RestoreApplicationResult::Installed)
 }
 
@@ -4401,6 +5703,83 @@ mod tests {
         assert!(verify_application_database(&database)
             .unwrap_err()
             .contains("newer"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn req_15_schema_10_backup_validates_without_new_tables() {
+        let root = scratch("schema-10-backup");
+        let database = root.join(DB_FILES[0]);
+        let conn = Connection::open(&database).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE settings (id TEXT PRIMARY KEY);
+             CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT);
+             CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);
+             INSERT INTO _sqlx_migrations (version) VALUES (10);",
+        )
+        .unwrap();
+
+        // Schema 10 must pass without requiring practice_test_versions or other migration 11 tables
+        assert!(verify_application_database(&database).is_ok());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn req_16_schema_11_backup_validation_catches_semantic_violations() {
+        let root = scratch("schema-11-backup");
+        let database = root.join(DB_FILES[0]);
+
+        // Start with a full schema 11 db
+        let conn = Connection::open(&database).unwrap();
+        conn.busy_timeout(BUSY_TIMEOUT).unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        conn.execute_batch("CREATE TABLE IF NOT EXISTS _sqlx_migrations (version INTEGER PRIMARY KEY); INSERT INTO _sqlx_migrations (version) VALUES (11);").unwrap();
+
+        // 1. Valid empty schema 11 db passes
+        assert!(verify_application_database(&database).is_ok());
+
+        // 2. Add material, version, items, and completed attempt with score
+        conn.execute("INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('mat-1', 'Test', '2026-10-04T12:00:00Z', '2026-10-04T12:00:00Z')", []).unwrap();
+        conn.execute("INSERT INTO practice_test_versions (id, source_material_id, history_key, source_material_title, version_number, content_hash, created_at, is_active) VALUES ('ver-1', 'mat-1', 'mat-1', 'Test', 1, 'h', '2026-10-04T12:00:00Z', 1)", []).unwrap();
+        conn.execute("INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index) VALUES ('item-1', 'ver-1', 0, 'Q1', '[\"A\",\"B\"]', 0)", []).unwrap();
+        conn.execute("INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index) VALUES ('item-2', 'ver-1', 1, 'Q2', '[\"A\",\"B\"]', 1)", []).unwrap();
+
+        conn.execute("INSERT INTO practice_attempts (id, version_id, source_material_id, source_material_title, started_at, completed_at, status, total_questions, answered_count, correct_count, incorrect_count, dont_know_count, score_percent) VALUES ('att-1', 'ver-1', 'mat-1', 'Test', '2026-10-04T12:00:00Z', '2026-10-04T12:05:00Z', 'completed', 2, 2, 2, 0, 0, 100.0)", []).unwrap();
+        conn.execute("INSERT INTO practice_responses (id, attempt_id, item_id, selected_index, is_dont_know, is_correct, answered_at) VALUES ('r-1', 'att-1', 'item-1', 0, 0, 1, '2026-10-04T12:01:00Z')", []).unwrap();
+        conn.execute("INSERT INTO practice_responses (id, attempt_id, item_id, selected_index, is_dont_know, is_correct, answered_at) VALUES ('r-2', 'att-1', 'item-2', 1, 0, 1, '2026-10-04T12:02:00Z')", []).unwrap();
+
+        // Consistent state passes
+        assert!(verify_application_database(&database).is_ok());
+
+        // 3. Corrupt completed score (e.g. 50.0 instead of 100.0)
+        conn.execute(
+            "UPDATE practice_attempts SET score_percent = 50.0 WHERE id = 'att-1'",
+            [],
+        )
+        .unwrap();
+        let err_score = verify_application_database(&database).unwrap_err();
+        assert!(err_score.contains("inconsistent score percentage"));
+
+        // Restore correct score
+        conn.execute(
+            "UPDATE practice_attempts SET score_percent = 100.0 WHERE id = 'att-1'",
+            [],
+        )
+        .unwrap();
+        assert!(verify_application_database(&database).is_ok());
+
+        // 4. Cross-version violation: second version with item belonging to it, but response points to att-1
+        conn.execute("INSERT INTO practice_test_versions (id, source_material_id, history_key, source_material_title, version_number, content_hash, created_at, is_active) VALUES ('ver-2', NULL, 'mat-1', 'Test', 2, 'h2', '2026-10-04T12:00:00Z', 0)", []).unwrap();
+        conn.execute("INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index) VALUES ('item-3', 'ver-2', 0, 'Q3', '[\"A\",\"B\"]', 0)", []).unwrap();
+        conn.execute_batch("DROP TRIGGER trg_enforce_response_item_version_update; UPDATE practice_responses SET item_id = 'item-3' WHERE id = 'r-2';").unwrap();
+
+        let err_cross = verify_application_database(&database).unwrap_err();
+        assert!(err_cross.contains("different version"));
+
+        drop(conn);
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -10067,5 +11446,649 @@ mod tests {
         assert_eq!(third, StartupRestoreDecision::ProceedNormally);
 
         std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    struct M2ArchiveFixture(PathBuf);
+    impl Drop for M2ArchiveFixture {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    fn m2_archive_fixture() -> (M2ArchiveFixture, Connection) {
+        static FIXTURE_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+        let count = FIXTURE_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!(
+            "m2-archive-test-{}-{}-{}",
+            std::process::id(),
+            count,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        for migration in crate::migrations() {
+            conn.execute_batch(migration.sql).unwrap();
+        }
+        conn.execute_batch(
+            "CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY);
+             INSERT INTO schema_migrations VALUES(11);
+             INSERT INTO study_materials(id,title,created_at,updated_at) VALUES('mat','Synthetic','2026-10-04','2026-10-04');",
+        )
+        .unwrap();
+        crate::practice_sessions::mark_root_ready(&root);
+        crate::practice_sessions::save_practice_test_at(
+            &root,
+            "mat",
+            "Synthetic",
+            r#"[{"question":"Synthetic","options":["A","B"],"correctIndex":0,"explanation":"","sourcePage":null}]"#,
+            "synthetic",
+        )
+        .unwrap();
+        (M2ArchiveFixture(root), conn)
+    }
+
+    fn m2_start(f: &M2ArchiveFixture, c: &Connection) -> serde_json::Value {
+        let v: String = c
+            .query_row("SELECT id FROM practice_test_versions", [], |r| r.get(0))
+            .unwrap();
+        crate::practice_sessions::save_practice_session_at(
+            &f.0,
+            &serde_json::json!({
+                "action": "start_or_resume",
+                "operationId": "10000000-0000-4000-8000-000000000001",
+                "materialId": "mat",
+                "versionId": v
+            }),
+        )
+        .unwrap()
+    }
+
+    fn m2_response(
+        f: &M2ArchiveFixture,
+        c: &Connection,
+        s: &serde_json::Value,
+        revision: i64,
+        op: &str,
+    ) -> serde_json::Value {
+        let item: String = c
+            .query_row("SELECT id FROM practice_test_items", [], |r| r.get(0))
+            .unwrap();
+        crate::practice_sessions::save_practice_session_at(
+            &f.0,
+            &serde_json::json!({
+                "action": "record_response",
+                "operationId": op,
+                "attemptId": s["attemptId"],
+                "itemId": item,
+                "expectedRevision": revision,
+                "selectedIndex": 1,
+                "isDontKnow": false
+            }),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn valid_schema_11_control_is_accepted() {
+        let (f, _) = m2_archive_fixture();
+        assert!(verify_application_database(&f.0.join("her-flight-deck.db")).is_ok());
+    }
+
+    #[test]
+    fn missing_required_unique_index_is_refused() {
+        let (f, c) = m2_archive_fixture();
+        c.execute_batch("DROP INDEX uq_single_in_progress_attempt")
+            .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "archive without required single-attempt index was accepted"
+        );
+    }
+
+    #[test]
+    fn malformed_receipt_json_is_refused() {
+        let (f, c) = m2_archive_fixture();
+        m2_start(&f, &c);
+        c.execute_batch("UPDATE practice_session_operations SET result_json='not-json'")
+            .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "archive with malformed receipt JSON was accepted"
+        );
+    }
+
+    #[test]
+    fn foreign_key_violation_is_refused() {
+        let (f, c) = m2_archive_fixture();
+        c.pragma_update(None, "foreign_keys", "OFF").unwrap();
+        c.execute_batch("UPDATE practice_test_versions SET source_material_id='missing'")
+            .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "archive with missing source foreign key was accepted"
+        );
+    }
+
+    #[test]
+    fn frozen_key_score_is_derived() {
+        let (f, c) = m2_archive_fixture();
+        let s = m2_start(&f, &c);
+        m2_response(&f, &c, &s, 0, "10000000-0000-4000-8000-000000000002");
+        c.execute_batch("UPDATE practice_responses SET is_correct=1")
+            .unwrap();
+        let result = crate::practice_sessions::save_practice_session_at(
+            &f.0,
+            &serde_json::json!({
+                "action": "complete_attempt",
+                "operationId": "10000000-0000-4000-8000-000000000003",
+                "attemptId": s["attemptId"],
+                "expectedRevision": 1
+            }),
+        )
+        .unwrap();
+        assert_eq!(result["scorePercent"], serde_json::json!(0.0));
+    }
+
+    #[test]
+    fn no_op_preserves_returned_answered_time() {
+        let (f, c) = m2_archive_fixture();
+        let s = m2_start(&f, &c);
+        let first = m2_response(&f, &c, &s, 0, "10000000-0000-4000-8000-000000000002");
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        let second = m2_response(&f, &c, &s, 1, "10000000-0000-4000-8000-000000000003");
+        assert_eq!(first["answeredAt"], second["answeredAt"]);
+    }
+
+    #[test]
+    fn receipt_empty_object_refused() {
+        let (f, c) = m2_archive_fixture();
+        m2_start(&f, &c);
+        c.execute_batch("UPDATE practice_session_operations SET result_json='{}'")
+            .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "empty-object result was accepted"
+        );
+    }
+
+    #[test]
+    fn out_of_range_stored_response_refused() {
+        let (f, c) = m2_archive_fixture();
+        let s = m2_start(&f, &c);
+        m2_response(&f, &c, &s, 0, "10000000-0000-4000-8000-000000000002");
+        c.execute_batch("UPDATE practice_responses SET selected_index=99")
+            .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "selected_index=99 for two options was accepted"
+        );
+    }
+
+    #[test]
+    fn cross_material_attempt_refused() {
+        let (f, c) = m2_archive_fixture();
+        m2_start(&f, &c);
+        c.execute_batch(
+            "INSERT INTO study_materials(id,title,created_at,updated_at) VALUES('other','Other synthetic','2026-10-04','2026-10-04');
+             UPDATE practice_attempts SET source_material_id='other';",
+        )
+        .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "cross-material attempt owner was accepted"
+        );
+    }
+
+    #[test]
+    fn counterfeit_unique_index_refused() {
+        let (f, c) = m2_archive_fixture();
+        c.execute_batch(
+            "DROP INDEX uq_single_in_progress_attempt;
+             CREATE INDEX uq_single_in_progress_attempt ON practice_attempts(source_material_id);",
+        )
+        .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "same-name nonunique replacement was accepted"
+        );
+    }
+
+    #[test]
+    fn missing_version_column_refused() {
+        let (f, c) = m2_archive_fixture();
+        c.execute_batch("ALTER TABLE practice_test_versions DROP COLUMN model")
+            .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "missing version model column was accepted"
+        );
+    }
+
+    #[test]
+    fn null_completed_score_refused() {
+        let (f, c) = m2_archive_fixture();
+        let s = m2_start(&f, &c);
+        m2_response(&f, &c, &s, 0, "10000000-0000-4000-8000-000000000002");
+        crate::practice_sessions::save_practice_session_at(
+            &f.0,
+            &serde_json::json!({
+                "action": "complete_attempt",
+                "operationId": "10000000-0000-4000-8000-000000000003",
+                "attemptId": s["attemptId"],
+                "expectedRevision": 1
+            }),
+        )
+        .unwrap();
+        c.execute_batch("UPDATE practice_attempts SET score_percent=NULL")
+            .unwrap();
+        assert!(
+            verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+            "null completed score was accepted"
+        );
+    }
+
+    #[test]
+    fn valid_schema_11_archive_round_trip() {
+        let (source_fixture, source_conn) = m2_archive_fixture();
+        let s = m2_start(&source_fixture, &source_conn);
+        m2_response(
+            &source_fixture,
+            &source_conn,
+            &s,
+            0,
+            "10000000-0000-4000-8000-000000000002",
+        );
+        drop(source_conn);
+
+        let backup_dir = scratch("schema-11-backup-out");
+        let archive = backup_dir.join("schema11.hfdbackup");
+        let info =
+            create_consistent_complete_backup_with_retry(&source_fixture.0, &archive, "0.5.3")
+                .unwrap();
+        assert!(info.files >= 1);
+        assert!(archive.is_file());
+
+        let target_root = scratch("schema-11-restore-target");
+        let staged = stage_complete_restore_in(&target_root, &archive, "0.5.3").unwrap();
+        assert!(staged.files >= 1);
+
+        apply_pending_restore_in(&target_root).unwrap();
+        let restored_db = target_root.join(DB_FILES[0]);
+        assert!(restored_db.is_file());
+        assert!(verify_application_database(&restored_db).is_ok());
+
+        let conn = Connection::open(&restored_db).unwrap();
+        let version_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_test_versions", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert!(version_count >= 1);
+        let attempt_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_attempts", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(attempt_count, 1);
+        let response_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_responses", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(response_count, 1);
+
+        let _ = std::fs::remove_dir_all(&backup_dir);
+        let _ = std::fs::remove_dir_all(&target_root);
+    }
+
+    #[test]
+    fn legacy_schema_10_archive_upgrade_round_trip() {
+        let source_root = scratch("schema-10-source");
+        let source_db = source_root.join(DB_FILES[0]);
+        let conn = Connection::open(&source_db).unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        for migration in crate::migrations().iter().filter(|m| m.version <= 10) {
+            conn.execute_batch(migration.sql).unwrap();
+        }
+        conn.execute_batch(
+            "CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);
+             INSERT INTO _sqlx_migrations (version) VALUES (10);
+             INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('mat-10', 'Mat 10', '2026-10-01', '2026-10-01');
+             INSERT INTO practice_tests (source_material_id, title, questions_json, provider, model, generated_at, updated_at)
+             VALUES ('mat-10', 'Title 10', '[{\"question\":\"Legacy Q\",\"options\":[\"A\",\"B\"],\"correctIndex\":0,\"explanation\":\"\",\"sourcePage\":null}]', 'local', 'synthetic', '2026-10-01', '2026-10-01');",
+        )
+        .unwrap();
+        drop(conn);
+
+        // Verify schema 10 source database passes validation
+        assert!(verify_application_database(&source_db).is_ok());
+
+        // Create backup of schema 10 database
+        let backup_dir = scratch("schema-10-backup-out");
+        let archive = backup_dir.join("schema10.hfdbackup");
+        create_consistent_complete_backup_with_retry(&source_root, &archive, "0.5.3").unwrap();
+        assert!(archive.is_file());
+
+        // Restore into a target root
+        let target_root = scratch("schema-10-upgrade-target");
+        stage_complete_restore_in(&target_root, &archive, "0.5.3").unwrap();
+        apply_pending_restore_in(&target_root).unwrap();
+
+        let restored_db = target_root.join(DB_FILES[0]);
+        assert!(verify_application_database(&restored_db).is_ok());
+
+        // Apply migration 11 on the restored database
+        let m11 = crate::migrations()
+            .into_iter()
+            .find(|m| m.version == 11)
+            .unwrap();
+        let conn = Connection::open(&restored_db).unwrap();
+        conn.execute_batch(m11.sql).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY);
+             INSERT INTO schema_migrations(version) VALUES (11);
+             UPDATE _sqlx_migrations SET version = 11;",
+        )
+        .unwrap();
+        drop(conn);
+
+        // Run legacy conversion
+        let converted = crate::practice_sessions::run_legacy_conversion_at(&target_root).unwrap();
+        assert_eq!(converted, 1);
+
+        // Now upgraded database must pass schema 11 invariant validation
+        assert!(verify_application_database(&restored_db).is_ok());
+
+        // Check active version created
+        let conn = Connection::open(&restored_db).unwrap();
+        let is_active: i64 = conn
+            .query_row(
+                "SELECT is_active FROM practice_test_versions WHERE source_material_id = 'mat-10'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(is_active, 1);
+
+        let _ = std::fs::remove_dir_all(&source_root);
+        let _ = std::fs::remove_dir_all(&backup_dir);
+        let _ = std::fs::remove_dir_all(&target_root);
+    }
+
+    #[test]
+    fn interrupted_conversion_preserves_state_and_safe_retry() {
+        let root = scratch("interrupted-conversion");
+        let db_path = root.join(DB_FILES[0]);
+        let conn = Connection::open(&db_path).unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        for migration in crate::migrations() {
+            conn.execute_batch(migration.sql).unwrap();
+        }
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY);
+             INSERT INTO schema_migrations(version) VALUES (11);
+             INSERT INTO study_materials(id, title, created_at, updated_at) VALUES('mat-retry', 'Retry Title', '2026-10-04', '2026-10-04');
+             INSERT INTO practice_tests(source_material_id, title, questions_json, provider, model, generated_at, updated_at)
+             VALUES('mat-retry', 'Retry Test', '[{\"question\":\"Retry Q\",\"options\":[\"A\",\"B\"],\"correctIndex\":0,\"explanation\":\"\",\"sourcePage\":null}]', 'local', 'synthetic', '2026-10-04', '2026-10-04');",
+        )
+        .unwrap();
+
+        // Inject trigger that aborts item insertion during conversion
+        conn.execute_batch(
+            "CREATE TRIGGER abort_conversion_items BEFORE INSERT ON practice_test_items
+             BEGIN
+                 SELECT RAISE(ABORT, 'synthetic interruption during conversion');
+             END;",
+        )
+        .unwrap();
+        drop(conn);
+
+        // Attempt conversion: must fail and rollback cleanly
+        let err = crate::practice_sessions::run_legacy_conversion_at(&root).unwrap_err();
+        assert!(err.contains("synthetic interruption"));
+
+        // Verify preserved prior state: nothing partially written into versions/items
+        let conn = Connection::open(&db_path).unwrap();
+        let ver_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_test_versions", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(
+            ver_count, 0,
+            "Versions must be rolled back on conversion interruption"
+        );
+        let item_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_test_items", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            item_count, 0,
+            "Items must be rolled back on conversion interruption"
+        );
+        let (migrated_at, legacy_err): (Option<String>, Option<String>) = conn
+            .query_row(
+                "SELECT legacy_migrated_at, legacy_error FROM practice_tests WHERE source_material_id = 'mat-retry'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert!(migrated_at.is_none());
+        assert!(legacy_err.is_none());
+
+        // Remove synthetic block and retry conversion safely
+        conn.execute_batch("DROP TRIGGER abort_conversion_items;")
+            .unwrap();
+        drop(conn);
+
+        let converted = crate::practice_sessions::run_legacy_conversion_at(&root).unwrap();
+        assert_eq!(converted, 1, "Retry must convert successfully");
+
+        // Verify safe retry completed
+        let conn = Connection::open(&db_path).unwrap();
+        let ver_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_test_versions", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(ver_count, 1);
+        let (migrated_at, legacy_err): (Option<String>, Option<String>) = conn
+            .query_row(
+                "SELECT legacy_migrated_at, legacy_error FROM practice_tests WHERE source_material_id = 'mat-retry'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert!(migrated_at.is_some());
+        assert!(legacy_err.is_none());
+        drop(conn);
+
+        // Complete database now passes schema 11 verification
+        assert!(verify_application_database(&db_path).is_ok());
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn interrupted_restore_preserves_prior_state_and_safe_retry() {
+        let (orig_fixture, orig_conn) = m2_archive_fixture();
+        drop(orig_conn);
+        let orig_hash = sha256_digest(&std::fs::read(orig_fixture.0.join(DB_FILES[0])).unwrap());
+
+        // Create a new backup archive to restore
+        let (new_fixture, new_conn) = m2_archive_fixture();
+        let s = m2_start(&new_fixture, &new_conn);
+        m2_response(
+            &new_fixture,
+            &new_conn,
+            &s,
+            0,
+            "10000000-0000-4000-8000-000000000002",
+        );
+        drop(new_conn);
+
+        let backup_dir = scratch("interrupted-restore-archive");
+        let archive = backup_dir.join("new.hfdbackup");
+        create_consistent_complete_backup_with_retry(&new_fixture.0, &archive, "0.5.3").unwrap();
+
+        // Stage restore into orig_fixture
+        stage_complete_restore_in(&orig_fixture.0, &archive, "0.5.3").unwrap();
+
+        // 1. Interrupted restore due to fault during install
+        {
+            let _guard = ScopedFault::set(InjectedFault::InstallDbRename(0));
+            let res = apply_pending_restore_in_internal(&orig_fixture.0, || Ok(())).unwrap();
+            assert!(
+                matches!(res, RestoreApplicationResult::Recovered(_)),
+                "Interrupted restore must rollback and recover: {res:?}"
+            );
+        }
+
+        // Verify original prior state is completely preserved
+        assert_eq!(
+            sha256_digest(&std::fs::read(orig_fixture.0.join(DB_FILES[0])).unwrap()),
+            orig_hash,
+            "Original database must be intact after interrupted restore"
+        );
+
+        // 2. Safe retry: stage again and apply without fault
+        stage_complete_restore_in(&orig_fixture.0, &archive, "0.5.3").unwrap();
+        let res_retry = apply_pending_restore_in_internal(&orig_fixture.0, || Ok(())).unwrap();
+        assert!(
+            matches!(res_retry, RestoreApplicationResult::Installed),
+            "Safe retry must succeed and install: {res_retry:?}"
+        );
+
+        // Restored database is valid schema 11 and has the restored response
+        let restored_db = orig_fixture.0.join(DB_FILES[0]);
+        assert!(verify_application_database(&restored_db).is_ok());
+        let conn = Connection::open(&restored_db).unwrap();
+        let response_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_responses", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(response_count, 1);
+
+        let _ = std::fs::remove_dir_all(&backup_dir);
+    }
+
+    mod codex_m2_final_review {
+        use super::*;
+        struct Fixture(PathBuf);
+        impl Drop for Fixture {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+        fn fixture() -> (Fixture, Connection) {
+            let seq = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let root = std::env::temp_dir().join(format!(
+                "m2-codex-rereview-{}-{}-{}",
+                std::process::id(),
+                seq,
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            std::fs::create_dir_all(&root).unwrap();
+            let c = Connection::open(root.join("her-flight-deck.db")).unwrap();
+            c.pragma_update(None, "foreign_keys", "ON").unwrap();
+            for m in crate::migrations() {
+                c.execute_batch(m.sql).unwrap();
+            }
+            c.execute_batch(
+                "CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY);INSERT INTO schema_migrations VALUES(11);INSERT INTO study_materials(id,title,created_at,updated_at) VALUES('mat','Synthetic','2026-10-04','2026-10-04');",
+            )
+            .unwrap();
+            crate::practice_sessions::mark_root_ready(&root);
+            crate::practice_sessions::save_practice_test_at(
+                &root,
+                "mat",
+                "Synthetic",
+                r#"[{"question":"Synthetic","options":["A","B"],"correctIndex":0,"explanation":"","sourcePage":null}]"#,
+                "synthetic",
+            )
+            .unwrap();
+            (Fixture(root), c)
+        }
+        fn start(f: &Fixture, c: &Connection) -> serde_json::Value {
+            let v: String = c
+                .query_row("SELECT id FROM practice_test_versions", [], |r| r.get(0))
+                .unwrap();
+            crate::practice_sessions::save_practice_session_at(
+                &f.0,
+                &serde_json::json!({"action":"start_or_resume","operationId":"20000000-0000-4000-8000-000000000001","materialId":"mat","versionId":v}),
+            )
+            .unwrap()
+        }
+        fn record(f: &Fixture, c: &Connection, s: &serde_json::Value) {
+            let i: String = c
+                .query_row("SELECT id FROM practice_test_items", [], |r| r.get(0))
+                .unwrap();
+            crate::practice_sessions::save_practice_session_at(
+                &f.0,
+                &serde_json::json!({"action":"record_response","operationId":"20000000-0000-4000-8000-000000000002","attemptId":s["attemptId"],"itemId":i,"expectedRevision":0,"selectedIndex":1,"isDontKnow":false}),
+            )
+            .unwrap();
+        }
+        #[test]
+        fn unique_index_wrong_key_refused() {
+            let (f, c) = fixture();
+            c.execute_batch("DROP INDEX uq_single_in_progress_attempt;CREATE UNIQUE INDEX uq_single_in_progress_attempt ON practice_attempts(id) WHERE status = 'in_progress' AND source_material_id IS NOT NULL").unwrap();
+            assert!(
+                verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+                "same-name UNIQUE index on id was accepted instead of material key"
+            );
+        }
+        #[test]
+        fn no_op_ownership_trigger_refused() {
+            let (f, c) = fixture();
+            c.execute_batch("DROP TRIGGER trg_enforce_response_item_version_insert;CREATE TRIGGER trg_enforce_response_item_version_insert BEFORE INSERT ON practice_responses BEGIN SELECT 1;END;").unwrap();
+            assert!(
+                verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+                "same-name no-op ownership trigger was accepted"
+            );
+        }
+        #[test]
+        fn receipt_wrong_frozen_version_refused() {
+            let (f, c) = fixture();
+            start(&f, &c);
+            c.execute_batch("UPDATE practice_session_operations SET result_json=json_set(result_json,'$.versionId','missing-version')").unwrap();
+            assert!(
+                verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+                "receipt result for wrong frozen version was accepted"
+            );
+        }
+        #[test]
+        fn in_progress_false_totals_refused() {
+            let (f, c) = fixture();
+            start(&f, &c);
+            c.execute_batch("UPDATE practice_attempts SET total_questions=99,answered_count=88")
+                .unwrap();
+            assert!(
+                verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
+                "one-question unfinished attempt with 99 total/88 answered was accepted"
+            );
+        }
+        #[test]
+        fn startup_conversion_and_native_write_refuse_invalid_state() {
+            let (f, c) = fixture();
+            let s = start(&f, &c);
+            record(&f, &c, &s);
+            c.execute_batch("UPDATE practice_responses SET selected_index=99")
+                .unwrap();
+            assert!(verify_application_database(&f.0.join("her-flight-deck.db")).is_err());
+            let conversion = crate::practice_sessions::run_legacy_conversion_at(&f.0);
+            let v: String = c
+                .query_row("SELECT id FROM practice_test_versions", [], |r| r.get(0))
+                .unwrap();
+            let write = crate::practice_sessions::save_practice_session_at(
+                &f.0,
+                &serde_json::json!({"action":"start_or_resume","operationId":"20000000-0000-4000-8000-000000000003","materialId":"mat","versionId":v}),
+            );
+            assert!(
+                conversion.is_err() || write.is_err(),
+                "startup conversion and direct session write both succeed for validator-refused state"
+            );
+        }
     }
 }

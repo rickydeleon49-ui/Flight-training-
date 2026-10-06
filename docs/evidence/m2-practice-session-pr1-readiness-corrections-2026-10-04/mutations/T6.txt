@@ -1,0 +1,175 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:80780) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/practiceStartupValidation.test.ts (10 tests | 5 failed) 783ms
+     × promoted browser-startup regression: reopen refuses persisted 99 total / 88 answered 42ms
+     × refuses a stored database whose schema lost a foreign key definition 54ms
+     × conversion plus validation is atomic: a failure stores nothing, and a repaired retry converts once 45ms
+     × refuses persisted false progress, and a valid file reopens 36ms
+     × rolls back conversion when validation fails, then a repaired retry converts once 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > promoted browser-startup regression: reopen refuses persisted 99 total / 88 answered
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:193:39
+    191|     await db.execute("UPDATE practice_attempts SET total_questions = 9…
+    192|     const before = stored.get(STORAGE_KEY);
+    193|     await expect(createSqlJsDatabase()).rejects.toBeInstanceOf(Practic…
+       |                                       ^
+    194|     // Refusal never rewrites the previous durable bytes; a retry refu…
+    195|     expect(stored.get(STORAGE_KEY)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > refuses a stored database whose schema lost a foreign key definition
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:213:39
+    211|     for (const byte of bytes) binary += String.fromCharCode(byte);
+    212|     stored.set(STORAGE_KEY, btoa(binary));
+    213|     await expect(createSqlJsDatabase()).rejects.toThrow("foreign keys …
+       |                                       ^
+    214|   });
+    215|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > conversion plus validation is atomic: a failure stores nothing, and a repaired retry converts once
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:226:39
+    224|     const before = stored.get(STORAGE_KEY);
+    225|
+    226|     await expect(createSqlJsDatabase()).rejects.toBeInstanceOf(Practic…
+       |                                       ^
+    227|     expect(stored.get(STORAGE_KEY)).toBe(before);
+    228|     const unchanged = await storedDatabase();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > node:sqlite test driver initialization > refuses persisted false progress, and a valid file reopens
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "close": [Function close],
++   "execute": [Function execute],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:332:48
+    330|     await reopened.execute("UPDATE practice_attempts SET total_questio…
+    331|     reopened.close();
+    332|     await expect(createNodeSqliteDatabase(path)).rejects.toBeInstanceO…
+       |                                                ^
+    333|   });
+    334|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > node:sqlite test driver initialization > rolls back conversion when validation fails, then a repaired retry converts once
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "close": [Function close],
++   "execute": [Function execute],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:346:48
+    344|     first.close();
+    345|
+    346|     await expect(createNodeSqliteDatabase(path)).rejects.toBeInstanceO…
+       |                                                ^
+    347|     const check = await raw(path);
+    348|     expect(check.prepare("SELECT COUNT(*) AS n FROM practice_test_vers…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 5 passed (10)
+   Start at  23:42:28
+   Duration  996ms (transform 93ms, setup 0ms, import 132ms, tests 783ms, environment 0ms)
+

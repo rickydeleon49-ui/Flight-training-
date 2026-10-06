@@ -927,10 +927,11 @@ mod tests {
         let dir = TestDir::new();
         let conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
         conn.pragma_update(None, "foreign_keys", "ON").unwrap();
-        let (shipped, new): (Vec<_>, Vec<_>) = crate::migrations()
+        let (shipped, rest): (Vec<_>, Vec<_>) = crate::migrations()
             .into_iter()
             .partition(|m| m.version <= 9);
-        assert_eq!(new.len(), 1, "D7 adds no migration beyond 10");
+        let new: Vec<_> = rest.into_iter().filter(|m| m.version == 10).collect();
+        assert_eq!(new.len(), 1, "D7 adds migration 10");
         for migration in &shipped {
             conn.execute_batch(migration.sql).unwrap();
         }

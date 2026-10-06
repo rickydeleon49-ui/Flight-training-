@@ -62,3 +62,37 @@ export class DatabaseDisabledError extends Error {
     this.name = "DatabaseDisabledError";
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Practice Sessions Errors (M2 PR 1)                                  */
+/* ------------------------------------------------------------------ */
+
+export type PracticeSessionErrorCode =
+  | "INVALID_ARGUMENT"
+  | "INVALID_STATE"
+  | "NOT_FOUND"
+  | "OPERATION_CONFLICT"
+  | "STORAGE_ERROR"
+  | "IPC_TRANSPORT_ERROR";
+
+export const PRACTICE_SESSION_ERROR_MESSAGES: Readonly<Record<PracticeSessionErrorCode, string>> = Object.freeze({
+  INVALID_ARGUMENT: "The request parameters are invalid.",
+  INVALID_STATE: "The requested operation cannot be performed in the current state.",
+  NOT_FOUND: "The requested resource was not found.",
+  OPERATION_CONFLICT: "The operation could not be completed due to a conflict.",
+  STORAGE_ERROR: "A storage error occurred while saving the practice session.",
+  IPC_TRANSPORT_ERROR: "Desktop communication failure during practice session operation.",
+});
+
+export function isPracticeSessionErrorCode(value: unknown): value is PracticeSessionErrorCode {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(PRACTICE_SESSION_ERROR_MESSAGES, value);
+}
+
+export class PracticeSessionError extends Error {
+  readonly code: PracticeSessionErrorCode;
+  constructor(code: PracticeSessionErrorCode, options?: { cause?: unknown }) {
+    super(PRACTICE_SESSION_ERROR_MESSAGES[code], options);
+    this.name = "PracticeSessionError";
+    this.code = code;
+  }
+}

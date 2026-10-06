@@ -290,6 +290,185 @@ export interface PracticeTest {
 }
 
 /* ------------------------------------------------------------------ */
+/* Practice Sessions & Attempt Persistence (M2 PR 1)                  */
+/* ------------------------------------------------------------------ */
+
+export interface PracticeTestVersion {
+  id: string;
+  sourceMaterialId: string | null;
+  historyKey: string;
+  sourceMaterialTitle: string;
+  versionNumber: number;
+  provider: StudyAidProvider;
+  model: string;
+  title: string;
+  contentHash: string;
+  createdAt: IsoDateTime;
+  isActive: boolean;
+}
+
+export interface PracticeTestItem {
+  id: string;
+  versionId: string;
+  ordinal: number;
+  questionText: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  sourcePage: number | null;
+}
+
+export type PracticeAttemptStatus = "in_progress" | "completed" | "abandoned";
+
+export interface PracticeAttempt {
+  id: string;
+  versionId: string;
+  sourceMaterialId: string | null;
+  sourceMaterialTitle: string;
+  startedAt: IsoDateTime;
+  completedAt: IsoDateTime | null;
+  status: PracticeAttemptStatus;
+  revision: number;
+  totalQuestions: number;
+  answeredCount: number;
+  correctCount: number;
+  incorrectCount: number;
+  dontKnowCount: number;
+  scorePercent: number | null;
+}
+
+export interface PracticeResponse {
+  id: string;
+  attemptId: string;
+  itemId: string;
+  selectedIndex: number | null;
+  isDontKnow: boolean;
+  isCorrect: boolean;
+  answeredAt: IsoDateTime;
+}
+
+export interface PracticeSessionResponseSummary {
+  itemId: string;
+  selectedIndex: number | null;
+  isDontKnow: boolean;
+  isCorrect: boolean;
+  answeredAt: IsoDateTime;
+}
+
+export interface PracticeSessionState {
+  attemptId: string;
+  versionId: string;
+  status: "in_progress";
+  startedAt: IsoDateTime;
+  completedAt: null;
+  totalQuestions: number;
+  answeredCount: number;
+  revision: number;
+  nextUnansweredOrdinal: number | null;
+  responses: PracticeSessionResponseSummary[];
+}
+
+export interface PracticeRecordResponseResult {
+  attemptId: string;
+  itemId: string;
+  answeredCount: number;
+  revision: number;
+  isCorrect: boolean;
+  answeredAt: IsoDateTime;
+}
+
+export interface PracticeCompletedResult {
+  attemptId: string;
+  status: "completed";
+  startedAt: IsoDateTime;
+  completedAt: IsoDateTime;
+  totalQuestions: number;
+  answeredCount: number;
+  revision: number;
+  correctCount: number;
+  incorrectCount: number;
+  dontKnowCount: number;
+  unansweredCount: number;
+  scorePercent: number;
+}
+
+export interface PracticeAbandonResult {
+  attemptId: string;
+  status: "abandoned";
+  revision: number;
+  completedAt: IsoDateTime;
+}
+
+export interface PracticeSessionStartOrResumeAction {
+  action: "start_or_resume";
+  operationId: string;
+  materialId: string;
+  versionId: string;
+}
+
+export interface PracticeSessionRecordResponseAction {
+  action: "record_response";
+  operationId: string;
+  attemptId: string;
+  itemId: string;
+  expectedRevision: number;
+  selectedIndex: number | null;
+  isDontKnow: boolean;
+}
+
+export interface PracticeSessionCompleteAttemptAction {
+  action: "complete_attempt";
+  operationId: string;
+  attemptId: string;
+  expectedRevision: number;
+}
+
+export interface PracticeSessionRetakeAttemptAction {
+  action: "retake_attempt";
+  operationId: string;
+  expectedAttemptId: string | null;
+  materialId: string;
+  versionId: string;
+}
+
+export interface PracticeSessionAbandonAttemptAction {
+  action: "abandon_attempt";
+  operationId: string;
+  attemptId: string;
+  expectedRevision: number;
+}
+
+export type PracticeSessionAction =
+  | PracticeSessionStartOrResumeAction
+  | PracticeSessionRecordResponseAction
+  | PracticeSessionCompleteAttemptAction
+  | PracticeSessionRetakeAttemptAction
+  | PracticeSessionAbandonAttemptAction;
+
+export type PracticeSessionActionResult =
+  | PracticeSessionState
+  | PracticeRecordResponseResult
+  | PracticeCompletedResult
+  | PracticeAbandonResult;
+
+export interface CompletedHistoryItem {
+  attemptId: string;
+  versionId: string;
+  versionNumber: number;
+  historyKey: string;
+  sourceMaterialTitle: string;
+  startedAt: IsoDateTime;
+  completedAt: IsoDateTime;
+  totalQuestions: number;
+  answeredCount: number;
+  correctCount: number;
+  incorrectCount: number;
+  dontKnowCount: number;
+  unansweredCount: number;
+  scorePercent: number;
+}
+
+/* ------------------------------------------------------------------ */
 /* Schedule                                                            */
 /* ------------------------------------------------------------------ */
 

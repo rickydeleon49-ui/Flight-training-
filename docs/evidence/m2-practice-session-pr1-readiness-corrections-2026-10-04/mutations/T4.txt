@@ -1,0 +1,71 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:80739) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/practiceStartupValidation.test.ts (10 tests | 2 failed) 899ms
+     × matches every native accept/refuse outcome 425ms
+     × refuses a stored database whose schema lost a foreign key definition 60ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > shared validation contract on the real sql.js engine > matches every native accept/refuse outcome
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "the removed source-material foreign key definition is refused: expected refuse, got accept",
++   "a changed foreign key delete action is refused: expected refuse, got accept",
++   "the removed attempt source-material foreign key definition is refused: expected refuse, got accept",
++ ]
+
+ ❯ src/data/practiceStartupValidation.test.ts:156:24
+    154|     }
+    155|     reference.close();
+    156|     expect(mismatches).toEqual([]);
+       |                        ^
+    157|     expect(CONTRACT.cases.length).toBeGreaterThanOrEqual(30);
+    158|     expect(new Set(CONTRACT.cases.map((c) => c.category))).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/data/practiceStartupValidation.test.ts > sql.js initialization > refuses a stored database whose schema lost a foreign key definition
+AssertionError: promise resolved "{ select: [Function select], …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "execute": [Function execute],
++   "persist": [Function persist],
++   "removePracticeTestAtomically": [Function removePracticeTestAtomically],
++   "saveDebriefAtomically": [Function saveDebriefAtomically],
++   "saveMaterialAtomically": [Function saveMaterialAtomically],
++   "saveMaterialsAtomically": [Function saveMaterialsAtomically],
++   "savePracticeSessionAtomically": [Function savePracticeSessionAtomically],
++   "savePracticeTestAtomically": [Function savePracticeTestAtomically],
++   "saveStructuredImportAtomically": [Function saveStructuredImportAtomically],
++   "select": [Function select],
+  }
+
+ ❯ src/data/practiceStartupValidation.test.ts:213:39
+    211|     for (const byte of bytes) binary += String.fromCharCode(byte);
+    212|     stored.set(STORAGE_KEY, btoa(binary));
+    213|     await expect(createSqlJsDatabase()).rejects.toThrow("foreign keys …
+       |                                       ^
+    214|   });
+    215|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  23:42:25
+   Duration  1.11s (transform 95ms, setup 0ms, import 135ms, tests 899ms, environment 0ms)
+
