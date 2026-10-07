@@ -1,8 +1,8 @@
 # M2-3 card review — scope, recommended defaults and scheduler evaluation (6 October 2026, corrected)
 
-**Status: independently accepted for planning; owner production approval remains pending.** See [acceptance](M2_CARD_REVIEW_SCOPE_ACCEPTANCE_2026-10-06.md). This revision closes CRS-R1 (version-owned due queue with exact boundaries) and CRS-R2 (a persistent reset generation) from the [independent review](M2_CARD_REVIEW_SCOPE_REVIEW_2026-10-06.md). The assignment is the [corrections prompt](M2_CARD_REVIEW_SCOPE_CORRECTIONS_PROMPT_2026-10-06.md).
+**Status: independently accepted; all eight defaults C-D1–C-D8 approved by the owner, and source slice C1 authorized.** See [owner approval](M2_CARD_REVIEW_OWNER_APPROVAL_2026-10-06.md), [planning acceptance](M2_CARD_REVIEW_SCOPE_ACCEPTANCE_2026-10-06.md) and the [active C1 assignment](M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md). This revision closes CRS-R1 (version-owned due queue with exact boundaries) and CRS-R2 (a persistent reset generation) from the [independent review](M2_CARD_REVIEW_SCOPE_REVIEW_2026-10-06.md). The earlier corrections prompt is completed and historical.
 
-This is still planning plus an isolated research proof. No application code, migration, dependency, lockfile, workflow or capability changed. Existing M2 practice approval does not cover card persistence, scheduling defaults, migration 12 or a new dependency.
+The scope and isolated proof contain no application implementation. The separate owner decision now authorizes C1 card persistence, the approved scheduling defaults and the next migration through the active assignment. No new production dependency is approved. Earlier evidence records the planning state at submission.
 
 Evidence:
 
@@ -13,7 +13,7 @@ Prepared on branch `codex/m2-card-review-scope` from main `df7a130` (PR #106, PR
 
 ## 1. Owner decision table (unchanged defaults; one approval)
 
-Approving every recommended default below, once this corrected scope passes re-review, is enough to activate source slice C1 (section 11). The corrections add engineering guards, the review generation and the exact query boundaries, needed to honor these defaults. They are not new product choices.
+The owner approved every recommended default below after corrected scope acceptance, activating source slice C1 (section 11). The corrections add engineering guards, the review generation and the exact query boundaries, needed to honor these defaults. They are not new product choices.
 
 | # | Decision | Recommended default | Main alternative |
 | --- | --- | --- | --- |
@@ -352,7 +352,7 @@ C1 must additionally prove the following on the real paths:
 
 ## 11. Proposed slices
 
-- **C1 (one active branch): card reviews in MaterialDetail, end to end.** Migration 0012, native module and command, browser and test transaction, validators, repository, pure scheduler and identity in `src/logic`, `useCardReview`, the review panel, and Reset. Conditional prompt: [M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md](M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md).
+- **C1 (one active branch): card reviews in MaterialDetail, end to end.** Migration 0012, native module and command, browser and test transaction, validators, repository, pure scheduler and identity in `src/logic`, `useCardReview`, the review panel, and Reset. Authorized implementation prompt: [M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md](M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md).
 - **C2 (later, M2-4):** cross-material Review due and History, the new-card backfill decision, and the 100 / 2,500 / 5,000-material and 10,000-review benchmarks. It depends on C1 being merged.
 
 **Narrow production files for C1:**
