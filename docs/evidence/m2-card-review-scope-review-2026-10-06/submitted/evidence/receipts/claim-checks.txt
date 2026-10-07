@@ -1,0 +1,12 @@
+$ grep -n "reschedule(" proof/node_modules/ts-fsrs/dist/index.d.ts
+466:    reschedule(current_card: CardInput | Card, reviews?: FSRSHistory[], options?: Partial<RescheduleOptions<RecordLogItem>>): IReschedule<RecordLogItem>;
+487:    reschedule(current_card: CardInput | Card, reviews?: FSRSHistory[], options?: Partial<RescheduleOptions<RecordLogItem>>): IReschedule<RecordLogItem>;
+$ sed -n 650,654p proof/node_modules/ts-fsrs/dist/index.mjs
+  return {
+    request_retention: props?.request_retention || default_request_retention,
+    maximum_interval: props?.maximum_interval || default_maximum_interval,
+    w,
+    enable_fuzz: props?.enable_fuzz ?? default_enable_fuzz,
+$ node -e generatorParameters({maximum_interval:0}).maximum_interval
+36500
+exit=0

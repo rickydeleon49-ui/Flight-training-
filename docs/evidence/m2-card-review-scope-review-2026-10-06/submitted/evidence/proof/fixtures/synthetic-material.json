@@ -1,0 +1,11 @@
+{
+  "description": "Synthetic imported material with three saved cards. Not aviation guidance; every value is invented for the proof.",
+  "materialId": "6f1c2a40-3b7e-4c11-9a52-0d4e8f7b1a23",
+  "title": "Synthetic airspace letters",
+  "provider": "import",
+  "flashcards": [
+    { "front": "Synthetic card one: which letter follows A?", "back": "B", "sourcePage": 1 },
+    { "front": "Synthetic card two: which letter follows B?", "back": "C", "sourcePage": 2 },
+    { "front": "Synthetic card three: which letter follows C?", "back": "D", "sourcePage": null }
+  ]
+}

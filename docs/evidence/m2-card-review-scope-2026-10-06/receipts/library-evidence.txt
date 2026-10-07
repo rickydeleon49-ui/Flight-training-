@@ -1,0 +1,113 @@
+# ts-fsrs primary-source evidence, retrieved 2026-10-07T05:20:09Z
+
+$ curl -s https://registry.npmjs.org/ts-fsrs  (extract)
+dist-tags: {'latest': '5.4.2', 'beta': '6.0.0-beta.13'}
+name: "ts-fsrs"
+version: "5.4.2"
+license: "MIT"
+repository: {"url": "git+https://github.com/open-spaced-repetition/ts-fsrs.git", "type": "git", "directory": "packages/fsrs"}
+engines: {"node": ">=20.0.0"}
+dependencies: null
+peerDependencies: null
+optionalDependencies: null
+exports: {".": {"umd": "./dist/index.umd.js", "types": "./dist/index.d.ts", "import": "./dist/index.mjs", "default": "./dist/index.mjs", "require": "./dist/index.cjs"}}
+type: "module"
+dist.tarball: https://registry.npmjs.org/ts-fsrs/-/ts-fsrs-5.4.2.tgz
+dist.integrity: sha512-z4qop4pzTcyTzuJ566d9EaX/4bZZzhYfeaPImfVr+xcYT65c5oBgFDijUhCE/D+C78eaolHIhKRZ04/RwF+v2g==
+dist.shasum: 7bd23da3d8a35368b813f4064eabe829a46f9901
+dist.fileCount: 13 unpackedSize: 706415
+provenance: {"url": "https://registry.npmjs.org/-/npm/v1/attestations/ts-fsrs@5.4.2", "provenance": {"predicateType": "https://slsa.dev/provenance/v1"}}
+published: 2026-09-01T02:23:24.171Z
+
+$ curl -s -o ts-fsrs-5.4.2.tgz <tarball>; openssl dgst -sha512 -binary | base64; shasum -a 1
+sha512-z4qop4pzTcyTzuJ566d9EaX/4bZZzhYfeaPImfVr+xcYT65c5oBgFDijUhCE/D+C78eaolHIhKRZ04/RwF+v2g==
+7bd23da3d8a35368b813f4064eabe829a46f9901
+bytes: 150324
+
+$ tar -tzf ts-fsrs-5.4.2.tgz
+package/LICENSE
+package/dist/index.cjs
+package/dist/index.umd.js
+package/package.json
+package/dist/index.cjs.map
+package/dist/index.mjs.map
+package/dist/index.umd.js.map
+package/CHANGELOG.md
+package/README_CN.md
+package/README_JA.md
+package/README.md
+package/dist/index.mjs
+package/dist/index.d.ts
+
+$ curl -s https://api.github.com/repos/open-spaced-repetition/ts-fsrs  (extract)
+full_name: open-spaced-repetition/ts-fsrs
+archived: False
+pushed_at: 2026-10-07T04:50:44Z
+stargazers_count: 809
+open_issues_count: 5
+default_branch: main
+license: MIT
+
+$ head -3 proof/node_modules/ts-fsrs/LICENSE
+MIT License
+
+Copyright (c) 2026 Open Spaced Repetition
+
+$ pattern counts in proof/node_modules/ts-fsrs/dist/index.mjs
+fetch(           0
+XMLHttpRequest   0
+WebSocket        0
+require(         0
+import(          0
+localStorage     0
+navigator        0
+eval(            0
+new Function     0
+Math\.random     0
+Date\.now        1
+process\.env     0
+$ grep -n "Date.now\|console\." (context)
+440:    if (seed == null) seed = Date.now();
+618:      console.debug("[FSRS-6]auto fill w from 19 to 21 length");
+633:      console.debug("[FSRS-6]auto fill w from 17 to 21 length");
+637:      console.warn("[FSRS]Invalid parameters length, using default parameters");
+1847:   * console.log(results_short)
+$ grep -n defaults
+const version="5.4.2";
+
+const default_request_retention = 0.9;
+const default_maximum_interval = 36500;
+const default_enable_fuzz = false;
+const default_enable_short_term = true;
+const default_learning_steps = Object.freeze([
+  "1m",
+  "10m"
+]);
+const default_relearning_steps = Object.freeze([
+  "10m"
+]);
+$ grep -n interval ordering after clamp
+    let hard_interval, good_interval;
+    hard_interval = this.algorithm.next_interval(next_hard.stability, interval);
+    good_interval = this.algorithm.next_interval(next_good.stability, interval);
+    hard_interval = Math.min(hard_interval, good_interval);
+    good_interval = Math.max(good_interval, hard_interval + 1);
+    const easy_interval = Math.max(
+      this.algorithm.next_interval(next_easy.stability, interval),
+      good_interval + 1
+    );
+    next_hard.scheduled_days = hard_interval;
+    next_hard.due = date_scheduler(this.review_time, hard_interval, true);
+    );
+    hard_interval = this.algorithm.next_interval(next_hard.stability, interval);
+    good_interval = this.algorithm.next_interval(next_good.stability, interval);
+    easy_interval = this.algorithm.next_interval(next_easy.stability, interval);
+    again_interval = Math.min(again_interval, hard_interval);
+    hard_interval = Math.max(hard_interval, again_interval + 1);
+    good_interval = Math.max(good_interval, hard_interval + 1);
+    easy_interval = Math.max(easy_interval, good_interval + 1);
+    next_again.scheduled_days = again_interval;
+
+$ node_modules/.bin/esbuild <entry> --bundle --minify --format=esm --platform=browser --target=safari15 (esbuild 0.28.2, repository toolchain)
+fsrs-bundle minified 21277 bytes, gzip -9 6721 bytes
+simple-bundle minified 1289 bytes, gzip -9 780 bytes
