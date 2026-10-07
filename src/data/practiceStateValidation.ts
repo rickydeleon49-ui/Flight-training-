@@ -40,7 +40,7 @@ const PRACTICE_TABLES = [
   "practice_tests",
 ] as const;
 
-const RECEIPT_ACTIONS = ["start_or_resume", "record_response", "complete_attempt", "abandon_attempt", "retake_attempt"];
+const RECEIPT_ACTIONS = ["start_or_resume", "record_response", "complete_attempt", "abandon_attempt", "retake_attempt", "erase_history"];
 
 const UUID_V4_ANY_CASE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -521,6 +521,30 @@ export async function validatePracticeState(query: ValidationQuery, reference: V
     if (typeof result !== "object" || Array.isArray(result)) refuse(`Operation receipt ${operationId} result must be an object.`);
     const obj = result as Record<string, unknown>;
     if (Object.keys(obj).length === 0) refuse(`Operation receipt ${operationId} has an empty result.`);
+
+    if (action === "erase_history") {
+      const hKey = obj["historyKey"];
+      if (typeof hKey !== "string" || hKey !== historyKey) {
+        refuse(`Operation receipt ${operationId} erase_history historyKey does not match receipt history_key.`);
+      }
+      if (obj["erased"] !== true) {
+        refuse(`Operation receipt ${operationId} erase_history missing erased flag.`);
+      }
+      for (const forbidden of [
+        "selectedIndex",
+        "responses",
+        "questions",
+        "scorePercent",
+        "correctIndex",
+        "isCorrect",
+      ]) {
+        if (Object.prototype.hasOwnProperty.call(obj, forbidden)) {
+          refuse("The database contains erased receipts that still retain result content.");
+        }
+      }
+      continue;
+    }
+
     if (typeof obj["attemptId"] !== "string") refuse(`Operation receipt ${operationId} result is missing attemptId.`);
     if (obj["attemptId"] !== attemptId) refuse(`Operation receipt ${operationId} result names another attempt.`);
     const revision = obj["revision"] !== undefined ? obj["revision"] : obj["currentRevision"];

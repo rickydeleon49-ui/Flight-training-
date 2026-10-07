@@ -11,6 +11,8 @@
  */
 
 import type {
+  EraseHistoryAction,
+  EraseHistoryResult,
   PracticeAbandonResult,
   PracticeCompletedResult,
   PracticeQuestion,
@@ -1036,6 +1038,104 @@ export async function executeRemovePracticeTest(
     await run("DELETE FROM practice_tests WHERE source_material_id = ?", [sourceMaterialId]);
 
     await exec("COMMIT");
+  } catch (error) {
+    try {
+      await exec("ROLLBACK");
+    } catch {
+      // rollback best effort
+    }
+    if (error instanceof PracticeSessionError) throw error;
+    throw new PracticeSessionError("STORAGE_ERROR", { cause: error });
+  }
+}
+
+/** Strictly validate and decode incoming erase history request. */
+export function decodeEraseHistoryAction(value: unknown): EraseHistoryAction {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    refuse("INVALID_ARGUMENT");
+  }
+  const jsonStr = JSON.stringify(value);
+  if (jsonStr.length > MAX_PAYLOAD_BYTES) refuse("INVALID_ARGUMENT");
+
+  exactObject(value, ["action", "operationId", "historyKey"]);
+  const obj = value as Record<string, unknown>;
+  const action = stringAt(obj, "action");
+  if (action !== "erase_history") refuse("INVALID_ARGUMENT");
+  const operationId = stringAt(obj, "operationId");
+  if (!isUuidV4(operationId)) refuse("INVALID_ARGUMENT");
+  const historyKey = stringAt(obj, "historyKey");
+  if (!isValidId(historyKey)) refuse("INVALID_ARGUMENT");
+
+  return { action: "erase_history", operationId, historyKey };
+}
+
+/** Single-connection atomic transaction for erasing history for a history key (M2 PR 2). */
+export async function executeEraseHistoryAction(
+  exec: (sql: string) => Promise<void> | void,
+  run: (sql: string, params: SqlValue[]) => Promise<void> | void,
+  query: Query,
+  actionInput: unknown,
+  timestamp: string = new Date().toISOString(),
+): Promise<EraseHistoryResult> {
+  const action = decodeEraseHistoryAction(actionInput);
+  const currentHash = await computeCanonicalHash(actionInput);
+  const operationId = action.operationId;
+  const historyKey = action.historyKey;
+
+  await exec("BEGIN IMMEDIATE");
+  try {
+    // 1. Inspect practice_session_operations for replay or conflict
+    const [receipt] = await query(
+      "SELECT request_hash, result_json, is_erased FROM practice_session_operations WHERE operation_id = ?",
+      [operationId],
+    );
+
+    if (receipt) {
+      if (receipt["request_hash"] !== currentHash) {
+        refuse("OPERATION_CONFLICT");
+      }
+      if (Number(receipt["is_erased"]) === 1) {
+        refuse("INVALID_STATE");
+      }
+      await exec("COMMIT");
+      return JSON.parse(String(receipt["result_json"])) as EraseHistoryResult;
+    }
+
+    // 2. Turn associated receipts into non-content tombstones sufficient to refuse old replay
+    await run(
+      "UPDATE practice_session_operations SET is_erased = 1, result_json = 'null' WHERE history_key = ?",
+      [historyKey],
+    );
+
+    // 3. Remove saved attempts/responses (including unfinished progress under that key)
+    await run(
+      "DELETE FROM practice_attempts WHERE version_id IN (SELECT id FROM practice_test_versions WHERE history_key = ?)",
+      [historyKey],
+    );
+
+    // 4. Remove unused inactive versions/items under that key
+    await run(
+      "DELETE FROM practice_test_versions WHERE history_key = ? AND is_active = 0",
+      [historyKey],
+    );
+
+    // 5. Store erasure receipt
+    const resultObj: EraseHistoryResult = {
+      action: "erase_history",
+      historyKey,
+      erased: true,
+    };
+    const resultJson = JSON.stringify(resultObj);
+
+    await run(
+      `INSERT INTO practice_session_operations (
+         operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased
+       ) VALUES (?, 'erase_history', ?, ?, ?, ?, ?, 0)`,
+      [operationId, currentHash, timestamp, resultJson, historyKey, historyKey],
+    );
+
+    await exec("COMMIT");
+    return resultObj;
   } catch (error) {
     try {
       await exec("ROLLBACK");

@@ -218,6 +218,37 @@ export async function invokeRemovePracticeTest(
   }
 }
 
+/**
+ * Invoke native practice history erasure.
+ */
+export async function invokeErasePracticeHistory(
+  action: import("@/domain/types").EraseHistoryAction,
+  call: typeof invoke = invoke,
+): Promise<import("@/domain/types").EraseHistoryResult> {
+  try {
+    const raw = await call("erase_practice_history_atomically", { action });
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+    }
+    const r = raw as Record<string, unknown>;
+    if (r.action !== "erase_history" || typeof r.historyKey !== "string" || typeof r.erased !== "boolean") {
+      throw new PracticeSessionError("IPC_TRANSPORT_ERROR");
+    }
+    return raw as import("@/domain/types").EraseHistoryResult;
+  } catch (rejection) {
+    if (rejection instanceof PracticeSessionError) throw rejection;
+    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (
+      isPracticeSessionErrorCode(code) &&
+      code !== "IPC_TRANSPORT_ERROR" &&
+      message === PRACTICE_SESSION_ERROR_MESSAGES[code]
+    ) {
+      throw new PracticeSessionError(code);
+    }
+    throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
+  }
+}
+
 export async function createTauriDatabase(): Promise<SqlDatabase> {
   // Migrations were registered in Rust and run as part of this load().
   const db = await Database.load(DB_URL);
@@ -287,6 +318,11 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
       sourceMaterialId: string,
     ): Promise<void> {
       return invokeRemovePracticeTest(sourceMaterialId);
+    },
+    erasePracticeHistoryAtomically(
+      action: import("@/domain/types").EraseHistoryAction,
+    ): Promise<import("@/domain/types").EraseHistoryResult> {
+      return invokeErasePracticeHistory(action);
     },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);

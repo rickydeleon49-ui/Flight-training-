@@ -1,0 +1,36 @@
+$ git diff --check HEAD  -> exit 0
+
+untracked files checked: 138; files with whitespace problems (counted): 0
+preserved earlier receipts with verbatim-log whitespace (not edited, not counted): 32
+  docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/finish-suite-with-controller-fixes.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/01-typecheck.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/02-npm-test.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/01-typecheck.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.attempt1-failed.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/03-build.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/04-cargo-test.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-attempt2-timeout.txt
+  docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-idle-retry-pass.txt
+  docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/01-typecheck.txt
+  docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/02-npm-test.txt
+  docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/03-build.txt
+  docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/04-cargo-test.txt
+  docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/submitted-report.md
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/frozen-rereview-verbatim.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/01-typecheck.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/02-npm-test.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/03-build.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/04-cargo-test.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-preregist.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-repeat.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-1.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-2.txt
+  docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-3.txt
+  docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/01-typecheck.txt
+  docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/02-npm-test.txt
+  docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/03-build.txt
+  docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/04-cargo-test.txt

@@ -525,6 +525,45 @@ pub fn decode_practice_action(value: &Value) -> ResultCheck<PracticeActionPayloa
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EraseHistoryPayload {
+    pub operation_id: String,
+    pub history_key: String,
+}
+
+/// Strictly decode and validate an incoming erase history request.
+pub fn decode_erase_history_action(value: &Value) -> ResultCheck<EraseHistoryPayload> {
+    let payload_str = value.to_string();
+    if payload_str.len() > MAX_REQUEST_PAYLOAD_BYTES {
+        return Err(PracticeSessionErrorCode::InvalidArgument);
+    }
+
+    let map = value
+        .as_object()
+        .ok_or(PracticeSessionErrorCode::InvalidArgument)?;
+    exact_keys_check(map, &["action", "operationId", "historyKey"])?;
+
+    let action = parse_string_field(map, "action")?;
+    if action != "erase_history" {
+        return Err(PracticeSessionErrorCode::InvalidArgument);
+    }
+
+    let operation_id = parse_string_field(map, "operationId")?;
+    if !is_uuid_v4(operation_id) {
+        return Err(PracticeSessionErrorCode::InvalidArgument);
+    }
+
+    let history_key = parse_string_field(map, "historyKey")?;
+    if !is_valid_id(history_key) {
+        return Err(PracticeSessionErrorCode::InvalidArgument);
+    }
+
+    Ok(EraseHistoryPayload {
+        operation_id: operation_id.to_string(),
+        history_key: history_key.to_string(),
+    })
+}
+
 /* ------------------------------------------------------------------ */
 /* Execution Engine & State Machine                                   */
 /* ------------------------------------------------------------------ */
@@ -1205,6 +1244,115 @@ pub fn save_practice_session_at(
     Ok(result)
 }
 
+/// Execute erase_practice_history_atomically at a specified database root.
+pub fn erase_practice_history_at(
+    root: &Path,
+    action_value: &Value,
+) -> Result<Value, PracticeSessionErrorWire> {
+    let payload = decode_erase_history_action(action_value).map_err(|c| c.error())?;
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        return Err(PracticeSessionErrorCode::StorageError.error());
+    }
+
+    if !is_root_ready(root) {
+        return Err(PracticeSessionErrorCode::InvalidState.error());
+    }
+
+    let mut connection =
+        Connection::open(&db_path).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+    connection
+        .busy_timeout(Duration::from_secs(5))
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+    connection
+        .pragma_update(None, "foreign_keys", "ON")
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    if let Err(e) = ensure_legacy_conversion_ready(&connection) {
+        unmark_root_ready(root);
+        return Err(e);
+    }
+
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    let current_hash = compute_canonical_hash(action_value);
+
+    // 1. Inspect practice_session_operations for replay or conflict
+    let receipt: Option<(String, String, i64)> = tx
+        .query_row(
+            "SELECT request_hash, result_json, is_erased FROM practice_session_operations WHERE operation_id = ?1",
+            [&payload.operation_id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    if let Some((stored_hash, result_json, is_erased)) = receipt {
+        if stored_hash != current_hash {
+            return Err(PracticeSessionErrorCode::OperationConflict.error());
+        }
+        if is_erased == 1 {
+            return Err(PracticeSessionErrorCode::InvalidState.error());
+        }
+        let parsed_result: Value = serde_json::from_str(&result_json)
+            .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+        return Ok(parsed_result);
+    }
+
+    // 2. Turn associated receipts into non-content tombstones sufficient to refuse old replay
+    tx.execute(
+        "UPDATE practice_session_operations SET is_erased = 1, result_json = 'null' WHERE history_key = ?1",
+        [&payload.history_key],
+    )
+    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    // 3. Remove saved attempts/responses (including unfinished progress under that key)
+    tx.execute(
+        "DELETE FROM practice_attempts WHERE version_id IN (SELECT id FROM practice_test_versions WHERE history_key = ?1)",
+        [&payload.history_key],
+    )
+    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    // 4. Remove unused inactive versions/items under that key
+    tx.execute(
+        "DELETE FROM practice_test_versions WHERE history_key = ?1 AND is_active = 0",
+        [&payload.history_key],
+    )
+    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    // 5. Store erasure receipt
+    let now = db_now_iso(&tx).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+    let result_val = serde_json::json!({
+        "action": "erase_history",
+        "historyKey": payload.history_key,
+        "erased": true,
+    });
+    let result_json = serde_json::to_string(&result_val)
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    tx.execute(
+        "INSERT INTO practice_session_operations (
+            operation_id, action, request_hash, applied_at, result_json, history_key, attempt_id, is_erased
+         ) VALUES (?1, 'erase_history', ?2, ?3, ?4, ?5, ?6, 0)",
+        params![
+            payload.operation_id,
+            current_hash,
+            now,
+            result_json,
+            payload.history_key,
+            payload.history_key,
+        ],
+    )
+    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    tx.commit()
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+
+    Ok(result_val)
+}
+
 /* ------------------------------------------------------------------ */
 /* Legacy Practice Tests Conversion                                    */
 /* ------------------------------------------------------------------ */
@@ -1808,6 +1956,17 @@ pub async fn save_practice_session_atomically(
 ) -> Result<Value, PracticeSessionErrorWire> {
     let root = app_root(&app).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
     tauri::async_runtime::spawn_blocking(move || save_practice_session_at(&root, &action))
+        .await
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?
+}
+
+#[tauri::command]
+pub async fn erase_practice_history_atomically(
+    app: AppHandle,
+    action: Value,
+) -> Result<Value, PracticeSessionErrorWire> {
+    let root = app_root(&app).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+    tauri::async_runtime::spawn_blocking(move || erase_practice_history_at(&root, &action))
         .await
         .map_err(|_| PracticeSessionErrorCode::StorageError.error())?
 }

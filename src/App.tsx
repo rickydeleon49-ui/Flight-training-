@@ -20,6 +20,7 @@ const EventDetail = lazy(() => import("@/pages/Schedule/EventDetail").then((m) =
 const Schedule = lazy(() => import("@/pages/Schedule/Schedule").then((m) => ({ default: m.Schedule })));
 const Settings = lazy(() => import("@/pages/Settings/Settings").then((m) => ({ default: m.Settings })));
 const MaterialDetail = lazy(() => import("@/pages/StudyLibrary/MaterialDetail").then((m) => ({ default: m.MaterialDetail })));
+const PracticeHistory = lazy(() => import("@/pages/StudyLibrary/PracticeHistory").then((m) => ({ default: m.PracticeHistory })));
 const StudyLibrary = lazy(() => import("@/pages/StudyLibrary/StudyLibrary").then((m) => ({ default: m.StudyLibrary })));
 
 /** Holds the shell back until the database is open, so no screen sees a
@@ -58,6 +59,9 @@ function Gate() {
           <Route index element={<FlightDeck />} />
           <Route path="flight-path" element={<FlightPath />} />
           <Route path="study" element={<StudyLibrary />} />
+          <Route path="study/history" element={<PracticeHistory />} />
+          <Route path="study/history/:historyKey" element={<PracticeHistory />} />
+          <Route path="study/history/:historyKey/:attemptId" element={<PracticeHistory />} />
           <Route path="study/:materialId" element={<MaterialDetail />} />
           <Route path="schedule" element={<Schedule />} />
           <Route path="schedule/:eventId" element={<EventDetail />} />

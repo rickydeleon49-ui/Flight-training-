@@ -267,3 +267,54 @@
   padding-top: var(--space-2);
   border-top: 1px dashed var(--border-subtle);
 }
+
+.practice-nav-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.practice-pill {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.practice-pill:disabled {
+  cursor: default;
+}
+
+.practice-pill--current {
+  border-color: var(--accent-primary);
+  background: var(--surface-sunken);
+  font-weight: 600;
+}
+
+.practice-pill--answered {
+  background: var(--category-complete-fill);
+  border-color: var(--category-complete-edge);
+}
+
+.practice-pill--dont-know {
+  background: var(--surface-sunken);
+  border-color: var(--border-strong);
+}
+
+.practice-history-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}

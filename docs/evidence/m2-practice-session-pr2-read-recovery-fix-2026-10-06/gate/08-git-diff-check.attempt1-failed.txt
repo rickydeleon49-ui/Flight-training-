@@ -1,0 +1,219 @@
+$ git diff --check HEAD  -> exit 0
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/finish-suite-with-controller-fixes.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/finish-suite-with-controller-fixes.txt:7: trailing whitespace.
++No routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/finish-suite-with-controller-fixes.txt:15: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:7: trailing whitespace.
++No routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:10: trailing whitespace.
++No routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:18: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/01-typecheck.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/01-typecheck.txt:4: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/02-npm-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/02-npm-test.txt:99: trailing whitespace.
++No routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/02-npm-test.txt:258: trailing whitespace.
++No routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-2026-10-06/gate/02-npm-test.txt:472: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:19: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:22: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:25: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:30: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt:38: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/01-typecheck.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/01-typecheck.txt:4: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.attempt1-failed.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.attempt1-failed.txt:136: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.attempt1-failed.txt:191: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.attempt1-failed.txt:459: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.txt:65: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.txt:136: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.txt:257: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/03-build.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/03-build.txt:22: trailing whitespace.
++[plugin vite:reporter] 
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/04-cargo-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/04-cargo-test.txt:410: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-attempt2-timeout.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-attempt2-timeout.txt:132: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-attempt2-timeout.txt:183: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-attempt2-timeout.txt:331: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-idle-retry-pass.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-idle-retry-pass.txt:74: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-idle-retry-pass.txt:139: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-idle-retry-pass.txt:268: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/01-typecheck.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/01-typecheck.txt:4: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/02-npm-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/02-npm-test.txt:150: trailing whitespace.
++No routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/02-npm-test.txt:273: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/03-build.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/03-build.txt:22: trailing whitespace.
++[plugin vite:reporter] 
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/04-cargo-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/gate/04-cargo-test.txt:409: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/submitted-report.md -> exit 3
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/submitted-report.md:2: trailing whitespace.
++**Date:** 5 October 2026  
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/submitted-report.md:3: trailing whitespace.
++**Branch:** `codex/m2-practice-session-ui`  
+docs/evidence/m2-practice-session-pr2-corrections-2026-10-05/submitted-report.md:4: trailing whitespace.
++**Base:** `61031d4c7143fdf181bba2cc18616c5345521c3e`  
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt:19: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt:22: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt:25: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt:28: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt:38: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/frozen-rereview-verbatim.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/frozen-rereview-verbatim.txt:17: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/frozen-rereview-verbatim.txt:20: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/frozen-rereview-verbatim.txt:23: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/frozen-rereview-verbatim.txt:33: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/01-typecheck.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/01-typecheck.txt:4: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/02-npm-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/02-npm-test.txt:65: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/02-npm-test.txt:115: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/02-npm-test.txt:231: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/03-build.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/03-build.txt:22: trailing whitespace.
++[plugin vite:reporter] 
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/04-cargo-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/gate/04-cargo-test.txt:410: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-preregist.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-preregist.txt:60: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-preregist.txt:131: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-preregist.txt:229: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-repeat.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-repeat.txt:61: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-repeat.txt:132: trailing whitespace.
++[22m[39mNo routes matched location "/study/history" 
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-repeat.txt:234: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-1.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-1.txt:12: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-2.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-2.txt:12: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-3.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-3.txt:12: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/fail-before/frozen-diagnostic.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/fail-before/frozen-diagnostic.txt:85: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/fail-before/permanent-r14-cases.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/fail-before/permanent-r14-cases.txt:1954: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/attempt1-before-test-strengthening/cli-timeout-case.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/attempt1-before-test-strengthening/cli-timeout-case.txt:10: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/attempt1-before-test-strengthening/joint-focused.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/attempt1-before-test-strengthening/joint-focused.txt:34: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/cli-timeout-case.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/cli-timeout-case.txt:10: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/joint-focused.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/focused/joint-focused.txt:34: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/01-typecheck.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/01-typecheck.txt:5: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/02-npm-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/02-npm-test.txt:96: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/03-build.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/03-build.txt:23: trailing whitespace.
++[plugin vite:reporter] 
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/04-cargo-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/gate/04-cargo-test.txt:411: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M1.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M1.txt:2007: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M2.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M2.txt:61: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M3.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M3.txt:39: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M4.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M4.txt:11: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M5.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M5.txt:35: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M6.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-read-recovery-fix-2026-10-06/mutations/M6.txt:1840: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/01-typecheck.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/01-typecheck.txt:4: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/02-npm-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/02-npm-test.txt:216: new blank line at EOF.
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/03-build.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/03-build.txt:22: trailing whitespace.
++[plugin vite:reporter] 
+
+$ git diff --no-index --check /dev/null docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/04-cargo-test.txt -> exit 3
+docs/evidence/m2-practice-session-pr2-ui-2026-10-05/gate/04-cargo-test.txt:410: new blank line at EOF.
+
+untracked files checked: 132; files with whitespace problems: 48

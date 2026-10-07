@@ -382,6 +382,16 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         }),
       );
     },
+    erasePracticeHistoryAtomically(
+      action: import("@/domain/types").EraseHistoryAction,
+    ): Promise<import("@/domain/types").EraseHistoryResult> {
+      return owner.exclusive(() =>
+        durableWrite(async () => {
+          const { executeEraseHistoryAction } = await import("./practiceSessionTransaction");
+          return executeEraseHistoryAction(exec, run, query, action);
+        }),
+      );
+    },
     /** Every acknowledged write is already stored; this re-stores and reports failure. */
     persist(): Promise<void> {
       return owner.exclusive(() => {

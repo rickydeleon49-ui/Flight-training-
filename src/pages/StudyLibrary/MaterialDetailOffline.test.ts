@@ -123,11 +123,16 @@ async function studySavedContent() {
 
   expect(screen.getByText("Saved question one?")).toBeTruthy();
   fireEvent.click(screen.getByRole("radio", { name: /Right choice/ }));
-  expect(within(screen.getByRole("region", { name: "Question result" })).getByText("Correct")).toBeTruthy();
+  expect(within(await screen.findByRole("region", { name: "Question result" })).getByText("Correct")).toBeTruthy();
   expect(screen.getByText("Saved explanation one.")).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  const continueBtn = screen.getByRole("button", { name: "Continue" });
+  await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
+  fireEvent.click(continueBtn);
   fireEvent.click(screen.getByRole("radio", { name: /Bravo/ }));
-  fireEvent.click(screen.getByRole("button", { name: "See score" }));
+  const scoreBtn = screen.getByRole("button", { name: "See score" });
+  await waitFor(() => expect(scoreBtn.hasAttribute("disabled")).toBe(false));
+  fireEvent.click(scoreBtn);
+  await screen.findByText("1 of 2 correct");
   expect(screen.getByText("1 of 2 correct")).toBeTruthy();
 }
 

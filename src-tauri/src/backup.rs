@@ -1497,6 +1497,7 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(), 
             "complete_attempt",
             "abandon_attempt",
             "retake_attempt",
+            "erase_history",
         ]
         .contains(&action.as_str())
         {
@@ -1531,142 +1532,183 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(), 
                 ));
             }
 
-            let res_attempt_id = obj
-                .get("attemptId")
-                .and_then(|v| v.as_str())
-                .ok_or_else(|| format!("Operation receipt {op_id} result is missing attemptId"))?;
-            if res_attempt_id != att_id {
-                return Err(format!(
-                    "Operation receipt {op_id} result attemptId ({res_attempt_id}) does not match receipt attempt_id ({att_id})"
-                ));
-            }
-
-            let res_rev = obj
-                .get("revision")
-                .or_else(|| obj.get("currentRevision"))
-                .and_then(|v| v.as_i64())
-                .ok_or_else(|| format!("Operation receipt {op_id} result is missing revision"))?;
-            if res_rev < 0 {
-                return Err(format!(
-                    "Operation receipt {op_id} result has negative revision"
-                ));
-            }
-
-            match action.as_str() {
-                "start_or_resume" | "retake_attempt" => {
-                    let v_id = obj
-                        .get("versionId")
+            if action == "erase_history" {
+                let h_key = obj
+                    .get("historyKey")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        format!("Operation receipt {op_id} erase_history missing historyKey")
+                    })?;
+                if h_key != hist_key {
+                    return Err(format!(
+                        "Operation receipt {op_id} erase_history historyKey ({h_key}) does not match receipt history_key ({hist_key})"
+                    ));
+                }
+                let erased_field = obj.get("erased").and_then(|v| v.as_bool());
+                if erased_field != Some(true) {
+                    return Err(format!(
+                        "Operation receipt {op_id} erase_history missing erased boolean flag"
+                    ));
+                }
+                for forbidden in [
+                    "selectedIndex",
+                    "responses",
+                    "questions",
+                    "scorePercent",
+                    "correctIndex",
+                    "isCorrect",
+                ] {
+                    if obj.contains_key(forbidden) {
+                        return Err("The backup contains erased operation receipts that still retain result content.".to_string());
+                    }
+                }
+            } else {
+                let res_attempt_id =
+                    obj.get("attemptId")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| {
-                            format!("Operation receipt {op_id} start result missing versionId")
+                            format!("Operation receipt {op_id} result is missing attemptId")
                         })?;
-                    if v_id.trim().is_empty() {
-                        return Err(format!(
-                            "Operation receipt {op_id} start result has empty versionId"
-                        ));
-                    }
-                    let attempt_version_id: Option<String> = connection
-                        .query_row(
-                            "SELECT version_id FROM practice_attempts WHERE id = ?1",
-                            [&att_id],
-                            |r| r.get(0),
-                        )
-                        .ok();
-                    if let Some(expected_ver) = attempt_version_id {
-                        if v_id != expected_ver {
+                if res_attempt_id != att_id {
+                    return Err(format!(
+                        "Operation receipt {op_id} result attemptId ({res_attempt_id}) does not match receipt attempt_id ({att_id})"
+                    ));
+                }
+
+                let res_rev = obj
+                    .get("revision")
+                    .or_else(|| obj.get("currentRevision"))
+                    .and_then(|v| v.as_i64())
+                    .ok_or_else(|| {
+                        format!("Operation receipt {op_id} result is missing revision")
+                    })?;
+                if res_rev < 0 {
+                    return Err(format!(
+                        "Operation receipt {op_id} result has negative revision"
+                    ));
+                }
+
+                match action.as_str() {
+                    "start_or_resume" | "retake_attempt" => {
+                        let v_id =
+                            obj.get("versionId")
+                                .and_then(|v| v.as_str())
+                                .ok_or_else(|| {
+                                    format!(
+                                        "Operation receipt {op_id} start result missing versionId"
+                                    )
+                                })?;
+                        if v_id.trim().is_empty() {
                             return Err(format!(
+                                "Operation receipt {op_id} start result has empty versionId"
+                            ));
+                        }
+                        let attempt_version_id: Option<String> = connection
+                            .query_row(
+                                "SELECT version_id FROM practice_attempts WHERE id = ?1",
+                                [&att_id],
+                                |r| r.get(0),
+                            )
+                            .ok();
+                        if let Some(expected_ver) = attempt_version_id {
+                            if v_id != expected_ver {
+                                return Err(format!(
                                 "Operation receipt {op_id} start result versionId ({v_id}) does not match attempt frozen version ({expected_ver})"
+                            ));
+                            }
+                        }
+                        let status =
+                            obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+                                format!("Operation receipt {op_id} start result missing status")
+                            })?;
+                        if status != "in_progress" {
+                            return Err(format!(
+                                "Operation receipt {op_id} start result status must be in_progress"
                             ));
                         }
                     }
-                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
-                        format!("Operation receipt {op_id} start result missing status")
-                    })?;
-                    if status != "in_progress" {
-                        return Err(format!(
-                            "Operation receipt {op_id} start result status must be in_progress"
-                        ));
-                    }
-                }
-                "record_response" => {
-                    let ans_at =
-                        obj.get("answeredAt")
-                            .and_then(|v| v.as_str())
-                            .ok_or_else(|| {
-                                format!(
+                    "record_response" => {
+                        let ans_at =
+                            obj.get("answeredAt")
+                                .and_then(|v| v.as_str())
+                                .ok_or_else(|| {
+                                    format!(
                                     "Operation receipt {op_id} response result missing answeredAt"
                                 )
-                            })?;
-                    if ans_at.trim().is_empty() {
-                        return Err(format!(
-                            "Operation receipt {op_id} response result has empty answeredAt"
-                        ));
+                                })?;
+                        if ans_at.trim().is_empty() {
+                            return Err(format!(
+                                "Operation receipt {op_id} response result has empty answeredAt"
+                            ));
+                        }
                     }
-                }
-                "complete_attempt" => {
-                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
-                        format!("Operation receipt {op_id} complete result missing status")
-                    })?;
-                    if status != "completed" {
-                        return Err(format!(
+                    "complete_attempt" => {
+                        let status =
+                            obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+                                format!("Operation receipt {op_id} complete result missing status")
+                            })?;
+                        if status != "completed" {
+                            return Err(format!(
                             "Operation receipt {op_id} complete result status must be completed"
                         ));
-                    }
-                    let comp_at =
-                        obj.get("completedAt")
-                            .and_then(|v| v.as_str())
-                            .ok_or_else(|| {
-                                format!(
+                        }
+                        let comp_at =
+                            obj.get("completedAt")
+                                .and_then(|v| v.as_str())
+                                .ok_or_else(|| {
+                                    format!(
                                     "Operation receipt {op_id} complete result missing completedAt"
                                 )
+                                })?;
+                        if comp_at.trim().is_empty() {
+                            return Err(format!(
+                                "Operation receipt {op_id} complete result has empty completedAt"
+                            ));
+                        }
+                        if obj.get("scorePercent").and_then(|v| v.as_f64()).is_none() {
+                            return Err(format!(
+                                "Operation receipt {op_id} complete result missing scorePercent"
+                            ));
+                        }
+                        if obj.get("correctCount").and_then(|v| v.as_i64()).is_none()
+                            || obj.get("incorrectCount").and_then(|v| v.as_i64()).is_none()
+                            || obj.get("dontKnowCount").and_then(|v| v.as_i64()).is_none()
+                            || obj
+                                .get("unansweredCount")
+                                .and_then(|v| v.as_i64())
+                                .is_none()
+                        {
+                            return Err(format!(
+                                "Operation receipt {op_id} complete result missing tallies"
+                            ));
+                        }
+                    }
+                    "abandon_attempt" => {
+                        let status =
+                            obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
+                                format!("Operation receipt {op_id} abandon result missing status")
                             })?;
-                    if comp_at.trim().is_empty() {
-                        return Err(format!(
-                            "Operation receipt {op_id} complete result has empty completedAt"
-                        ));
-                    }
-                    if obj.get("scorePercent").and_then(|v| v.as_f64()).is_none() {
-                        return Err(format!(
-                            "Operation receipt {op_id} complete result missing scorePercent"
-                        ));
-                    }
-                    if obj.get("correctCount").and_then(|v| v.as_i64()).is_none()
-                        || obj.get("incorrectCount").and_then(|v| v.as_i64()).is_none()
-                        || obj.get("dontKnowCount").and_then(|v| v.as_i64()).is_none()
-                        || obj
-                            .get("unansweredCount")
-                            .and_then(|v| v.as_i64())
-                            .is_none()
-                    {
-                        return Err(format!(
-                            "Operation receipt {op_id} complete result missing tallies"
-                        ));
-                    }
-                }
-                "abandon_attempt" => {
-                    let status = obj.get("status").and_then(|v| v.as_str()).ok_or_else(|| {
-                        format!("Operation receipt {op_id} abandon result missing status")
-                    })?;
-                    if status != "abandoned" {
-                        return Err(format!(
-                            "Operation receipt {op_id} abandon result status must be abandoned"
-                        ));
-                    }
-                    let comp_at =
-                        obj.get("completedAt")
-                            .and_then(|v| v.as_str())
-                            .ok_or_else(|| {
-                                format!(
+                        if status != "abandoned" {
+                            return Err(format!(
+                                "Operation receipt {op_id} abandon result status must be abandoned"
+                            ));
+                        }
+                        let comp_at =
+                            obj.get("completedAt")
+                                .and_then(|v| v.as_str())
+                                .ok_or_else(|| {
+                                    format!(
                                     "Operation receipt {op_id} abandon result missing completedAt"
                                 )
-                            })?;
-                    if comp_at.trim().is_empty() {
-                        return Err(format!(
-                            "Operation receipt {op_id} abandon result has empty completedAt"
-                        ));
+                                })?;
+                        if comp_at.trim().is_empty() {
+                            return Err(format!(
+                                "Operation receipt {op_id} abandon result has empty completedAt"
+                            ));
+                        }
                     }
+                    _ => {}
                 }
-                _ => {}
             }
         }
     }

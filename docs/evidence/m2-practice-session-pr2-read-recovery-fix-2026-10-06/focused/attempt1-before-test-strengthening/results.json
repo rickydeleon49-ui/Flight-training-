@@ -1,0 +1,13 @@
+{
+  "joint-focused": {
+    "exit": 0,
+    "tests": "155 passed (155)",
+    "unhandled_reported": false
+  },
+  "cli-timeout-case": {
+    "exit": 0,
+    "tests": "34 passed (34)",
+    "unhandled_reported": false
+  },
+  "temporary_diagnostic_removed": true
+}

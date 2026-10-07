@@ -128,6 +128,9 @@ export function StudyLibrary() {
         subtitle="Your training binder — notes, handouts, worksheets and what to do with them."
         action={
           <div className="row row--wrap">
+            <Link to="/study/history" className="button button--secondary">
+              Practice history
+            </Link>
             <Button onClick={() => setImporting(true)} disabled={importing}>
               <NoteIcon size={16} /> Import study packet…
             </Button>

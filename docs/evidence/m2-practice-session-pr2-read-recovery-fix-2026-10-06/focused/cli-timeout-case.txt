@@ -1,0 +1,10 @@
+$ npx vitest run src/logic/macReadinessPreflight.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  21:40:59
+   Duration  769ms (transform 41ms, setup 0ms, import 53ms, tests 635ms, environment 0ms)
+

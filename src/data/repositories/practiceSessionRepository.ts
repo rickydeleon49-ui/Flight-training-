@@ -11,6 +11,9 @@
  */
 import type {
   CompletedHistoryItem,
+  EraseHistoryAction,
+  EraseHistoryResult,
+  PracticeHistoryGroup,
   PracticeAttempt,
   PracticeAttemptStatus,
   PracticeResponse,
@@ -25,9 +28,11 @@ import type { SqlDatabase } from "../db";
 
 export interface PracticeSessionRepository {
   saveSessionAction(action: PracticeSessionAction): Promise<PracticeSessionActionResult>;
+  eraseHistory(action: EraseHistoryAction): Promise<EraseHistoryResult>;
   getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null>;
   getAttempt(attemptId: string): Promise<PracticeAttempt | null>;
   getCompletedHistory(historyKey: string): Promise<CompletedHistoryItem[]>;
+  getCompletedHistoryGroups(): Promise<PracticeHistoryGroup[]>;
   getActiveVersion(materialId: string): Promise<{ version: PracticeTestVersion; items: PracticeTestItem[] } | null>;
   getVersion(versionId: string): Promise<PracticeTestVersion | null>;
   getItems(versionId: string): Promise<PracticeTestItem[]>;
@@ -42,6 +47,60 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         throw new Error("Practice session mutations require a database driver with atomic transaction support.");
       }
       return db.savePracticeSessionAtomically(action);
+    },
+
+    async eraseHistory(action: EraseHistoryAction): Promise<EraseHistoryResult> {
+      if (typeof db.erasePracticeHistoryAtomically !== "function") {
+        throw new Error("Practice history erasure requires a database driver with atomic transaction support.");
+      }
+      return db.erasePracticeHistoryAtomically(action);
+    },
+
+    async getCompletedHistoryGroups(): Promise<PracticeHistoryGroup[]> {
+      const rows = await db.select<{
+        history_key: string;
+        source_material_title: string;
+        source_material_id: string | null;
+        completed_count: number;
+        latest_completed_at: string | null;
+        latest_score_percent: number | null;
+      }>(
+        `SELECT
+           v.history_key,
+           COALESCE(
+             (SELECT v2.source_material_title FROM practice_test_versions v2 WHERE v2.history_key = v.history_key ORDER BY v2.version_number DESC LIMIT 1),
+             v.source_material_title
+           ) AS source_material_title,
+           (SELECT v2.source_material_id FROM practice_test_versions v2 WHERE v2.history_key = v.history_key AND v2.source_material_id IS NOT NULL LIMIT 1) AS source_material_id,
+           COUNT(a.id) AS completed_count,
+           MAX(a.completed_at) AS latest_completed_at,
+           (
+             SELECT a2.score_percent
+             FROM practice_attempts a2
+             JOIN practice_test_versions v2 ON a2.version_id = v2.id
+             WHERE v2.history_key = v.history_key AND a2.status = 'completed'
+             ORDER BY a2.completed_at DESC, a2.id DESC
+             LIMIT 1
+           ) AS latest_score_percent
+         FROM practice_test_versions v
+         JOIN practice_attempts a ON a.version_id = v.id AND a.status = 'completed'
+         GROUP BY v.history_key
+         ORDER BY latest_completed_at DESC, v.history_key ASC`,
+      );
+
+      const activeMaterialIds = new Set(
+        (await db.select<{ id: string }>("SELECT id FROM study_materials")).map((m) => m.id),
+      );
+
+      return rows.map((r) => ({
+        historyKey: r.history_key,
+        sourceMaterialTitle: r.source_material_title,
+        sourceMaterialId: r.source_material_id,
+        completedCount: Number(r.completed_count),
+        latestCompletedAt: r.latest_completed_at,
+        latestScorePercent: r.latest_score_percent !== null && r.latest_score_percent !== undefined ? Number(r.latest_score_percent) : null,
+        hasActiveMaterial: r.source_material_id !== null && activeMaterialIds.has(r.history_key),
+      }));
     },
 
     async getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null> {

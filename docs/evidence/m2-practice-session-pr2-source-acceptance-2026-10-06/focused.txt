@@ -1,0 +1,30 @@
+$ npx vitest run src/pages/StudyLibrary/codex-pr2-material-read-review.test.ts src/pages/StudyLibrary/codex-pr2-completion-review.test.ts src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts src/pages/StudyLibrary/PracticeSessionPR2.test.ts src/pages/StudyLibrary/PracticeTestPanel.test.ts src/pages/StudyLibrary/MaterialDetailOffline.test.ts src/data/practiceSessionContract.test.ts src/data/practiceStartupValidation.test.ts src/data/practiceEraseDurability.test.ts src/components/ui/Dialog.fallback.test.ts src/components/ui/ImportStudyPacketDialog.test.ts src/logic/macReadinessPreflight.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:20144) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20139) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20143) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20140) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20137) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20142) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20235) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20236) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20237) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20141) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  13 passed (13)
+      Tests  208 passed (208)
+   Start at  21:55:36
+   Duration  4.42s (transform 2.53s, setup 0ms, import 4.98s, tests 15.12s, environment 4.99s)
+
