@@ -1,0 +1,26 @@
+$ npx vitest run src/pages/StudyLibrary/codex-pr2-completion-review.test.ts src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts src/pages/StudyLibrary/PracticeSessionPR2.test.ts src/pages/StudyLibrary/PracticeTestPanel.test.ts src/pages/StudyLibrary/MaterialDetailOffline.test.ts src/data/practiceSessionContract.test.ts src/data/practiceStartupValidation.test.ts src/data/practiceEraseDurability.test.ts src/components/ui/Dialog.fallback.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:16301) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16302) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16305) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16303) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16297) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16300) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16298) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16299) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  10 passed (10)
+      Tests  160 passed (160)
+   Start at  21:29:46
+   Duration  4.72s (transform 2.76s, setup 0ms, import 4.99s, tests 13.26s, environment 4.60s)
+

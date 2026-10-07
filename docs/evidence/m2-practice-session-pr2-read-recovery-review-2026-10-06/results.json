@@ -1,0 +1,31 @@
+{
+  "controller": {
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/pages/StudyLibrary/codex-pr2-completion-review.test.ts",
+      "src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts",
+      "src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts",
+      "src/pages/StudyLibrary/PracticeSessionPR2.test.ts",
+      "src/pages/StudyLibrary/PracticeTestPanel.test.ts",
+      "src/pages/StudyLibrary/MaterialDetailOffline.test.ts",
+      "src/data/practiceSessionContract.test.ts",
+      "src/data/practiceStartupValidation.test.ts",
+      "src/data/practiceEraseDurability.test.ts",
+      "src/components/ui/Dialog.fallback.test.ts"
+    ],
+    "exit": 0
+  },
+  "material-read": {
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/pages/StudyLibrary/codex-pr2-material-read-review.test.ts",
+      "--reporter=verbose"
+    ],
+    "exit": 1
+  },
+  "source_unchanged": true
+}
