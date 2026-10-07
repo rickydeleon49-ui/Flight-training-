@@ -1,0 +1,86 @@
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c1-review/Flight-training-
+
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts (4 tests | 4 failed) 444ms
+     × [C1-R1] navigating while a session queue read is held releases the new material start lock 169ms
+     × [C1-R1] two synchronous starts allocate only one session queue read 108ms
+     × [C1-R2] a history page held before reset cannot resurrect erased history after the acknowledged refresh 111ms
+     × [C1-R2] two synchronous history requests publish one copy of the next page 54ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewCodexReview.test.ts > Codex independent C1 navigation and paging diagnostics > [C1-R1] navigating while a session queue read is held releases the new material start lock
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts:36:40
+     34|   await waitFor(()=>expect(hook.result.current.read.phase==='ready' &&…
+     35|   await act(async()=>{queue.resolve([]);await start;});
+     36|   expect(hook.result.current.starting).toBe(false);
+       |                                        ^
+     37|   await act(async()=>{await hook.result.current.startSession();});
+     38|   expect(repo.getDueQueue).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewCodexReview.test.ts > Codex independent C1 navigation and paging diagnostics > [C1-R1] two synchronous starts allocate only one session queue read
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts:49:28
+     47|   await waitFor(()=>expect(repo.getDueQueue.mock.calls.length).toBeGre…
+     48|   await act(async()=>{queue.resolve([]);await Promise.all([one,two]);}…
+     49|   expect(repo.getDueQueue).toHaveBeenCalledTimes(1);
+       |                            ^
+     50|  });
+     51|  it('[C1-R2] a history page held before reset cannot resurrect erased …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewCodexReview.test.ts > Codex independent C1 navigation and paging diagnostics > [C1-R2] a history page held before reset cannot resurrect erased history after the acknowledged refresh
+AssertionError: expected [ { id: 'erased-event', …(5) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts:67:43
+     65|   await waitFor(()=>expect(hook.result.current.recent.rows).toHaveLeng…
+     66|   await act(async()=>{page.resolve({rows:[{...old,id:'erased-event'}],…
+     67|   expect(hook.result.current.recent.rows).toHaveLength(0);
+       |                                           ^
+     68|  });
+     69|  it('[C1-R2] two synchronous history requests publish one copy of the …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewCodexReview.test.ts > Codex independent C1 navigation and paging diagnostics > [C1-R2] two synchronous history requests publish one copy of the next page
+AssertionError: expected [ { id: 'event-0', …(5) }, …(21) ] to have a length of 21 but got 22
+
+- Expected
++ Received
+
+- 21
++ 22
+
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts:80:43
+     78|   const last={...rows[0]!,id:'event-20'};
+     79|   await act(async()=>{page.resolve({rows:[last],next:null});await Prom…
+     80|   expect(hook.result.current.recent.rows).toHaveLength(21);
+       |                                           ^
+     81|   expect(new Set(hook.result.current.recent.rows.map(r=>r.id)).size).t…
+     82|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  23:57:46
+   Duration  839ms (transform 34ms, setup 0ms, import 73ms, tests 444ms, environment 235ms)
+

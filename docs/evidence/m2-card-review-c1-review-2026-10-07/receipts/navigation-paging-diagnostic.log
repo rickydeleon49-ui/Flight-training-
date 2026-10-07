@@ -1,0 +1,53 @@
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c1-review/Flight-training-
+
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts (2 tests | 2 failed) 225ms
+     × [C1-R1] navigating while a session queue read is held releases the new material start lock 168ms
+     × [C1-R2] two synchronous history requests publish one copy of the next page 56ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewCodexReview.test.ts > Codex independent C1 navigation and paging diagnostics > [C1-R1] navigating while a session queue read is held releases the new material start lock
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts:36:40
+     34|   await waitFor(()=>expect(hook.result.current.read.phase==='ready' &&…
+     35|   await act(async()=>{queue.resolve([]);await start;});
+     36|   expect(hook.result.current.starting).toBe(false);
+       |                                        ^
+     37|   await act(async()=>{await hook.result.current.startSession();});
+     38|   expect(repo.getDueQueue).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewCodexReview.test.ts > Codex independent C1 navigation and paging diagnostics > [C1-R2] two synchronous history requests publish one copy of the next page
+AssertionError: expected [ { id: 'event-0', …(5) }, …(21) ] to have a length of 21 but got 22
+
+- Expected
++ Received
+
+- 21
++ 22
+
+ ❯ src/pages/StudyLibrary/CardReviewCodexReview.test.ts:51:43
+     49|   const last={...rows[0]!,id:'event-20'};
+     50|   await act(async()=>{page.resolve({rows:[last],next:null});await Prom…
+     51|   expect(hook.result.current.recent.rows).toHaveLength(21);
+       |                                           ^
+     52|   expect(new Set(hook.result.current.recent.rows.map(r=>r.id)).size).t…
+     53|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  23:56:40
+   Duration  762ms (transform 34ms, setup 0ms, import 94ms, tests 225ms, environment 354ms)
+
