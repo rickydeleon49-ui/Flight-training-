@@ -1,0 +1,46 @@
+$ xcode-select -p
+/Applications/Xcode.app/Contents/Developer
+exit=0
+
+$ xcodebuild -version
+Xcode 27.0
+Build version 27A266a
+exit=0
+
+$ xcrun --sdk macosx --show-sdk-path
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+exit=0
+
+$ xcrun clang --version
+Apple clang version 21.0.0 (clang-2100.3.34.2)
+Target: arm64-apple-darwin27.0.0
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+exit=0
+
+$ sw_vers
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+exit=0
+
+$ uname -m
+arm64
+exit=0
+
+$ file /private/tmp/her-flight-deck-c1-xcode27-review-target/debug/her-flight-deck
+/private/tmp/her-flight-deck-c1-xcode27-review-target/debug/her-flight-deck: Mach-O 64-bit executable arm64
+exit=0
+
+$ xcrun vtool -show-build /private/tmp/her-flight-deck-c1-xcode27-review-target/debug/her-flight-deck
+/private/tmp/her-flight-deck-c1-xcode27-review-target/debug/her-flight-deck:
+Load command 11
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform MACOS
+    minos 12.0
+      sdk 27.0
+   ntools 1
+     tool LD
+  version 27037.1
+exit=0
