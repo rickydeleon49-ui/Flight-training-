@@ -1,0 +1,11 @@
+$ git diff --check
+git diff --check exit=0
+
+$ per-new-file hygiene: no trailing whitespace, ends with a newline
+--- src/data/practiceEraseDurability.test.ts trailing_ws_lines=0 last_byte=\n
+--- src/pages/StudyLibrary/PracticeHistory.tsx trailing_ws_lines=0 last_byte=\n
+--- src/pages/StudyLibrary/PracticeSessionPR2.test.ts trailing_ws_lines=0 last_byte=\n
+--- src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts trailing_ws_lines=0 last_byte=\n
+--- src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts trailing_ws_lines=0 last_byte=\n
+
+tracked_check_exit=0 new_file_status=0
