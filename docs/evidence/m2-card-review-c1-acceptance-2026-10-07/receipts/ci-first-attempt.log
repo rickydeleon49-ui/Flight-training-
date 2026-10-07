@@ -1,0 +1,290 @@
+Tests, types, and the data-safety guards	Run npm test	﻿2026-10-07T08:06:50.8507577Z ##[group]Run npm test
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:50.8507928Z ^[[36;1mnpm test^[[0m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:50.8589901Z shell: /usr/bin/bash -e {0}
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:50.8590167Z ##[endgroup]
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:51.2719416Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:51.2720554Z > her-flight-deck@0.5.3 test
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:51.2739559Z > vitest run
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:51.2749229Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:51.5329531Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:51.5349588Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv4.1.11 ^[[39m^[[90m/home/runner/work/Flight-training-/Flight-training-^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:51.5369165Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:52.4402488Z (node:2087) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:06:52.4403204Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:23.3062872Z  ^[[32m✓^[[39m src/data/singleConnectionDrivers.test.ts ^[[2m(^[[22m^[[2m1385 tests^[[22m^[[2m)^[[22m^[[33m 31000^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:25.1006013Z (node:2107) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:25.1019921Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:30.2528439Z  ^[[32m✓^[[39m src/pages/FlightJournal/quickDebrief.test.ts ^[[2m(^[[22m^[[2m21 tests^[[22m^[[2m)^[[22m^[[33m 5333^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:30.2545884Z      ^[[33m^[[2m✓^[[22m^[[39m creates a quick debrief with reflections, confidence, and deliberate action and question, persisting to real SQLite ^[[33m 449^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:30.2547084Z      ^[[33m^[[2m✓^[[22m^[[39m supports full round trips: quick debrief save -> full editor update -> quick editor edit ^[[33m 391^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:30.2547813Z      ^[[33m^[[2m✓^[[22m^[[39m does not silently create unapproved actions or questions when deliberate checkboxes are unchecked ^[[33m 498^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:30.2548583Z      ^[[33m^[[2m✓^[[22m^[[39m regression 3: safe reconciliation of partial-save retries when action is unchecked, text changed, or leaving/reopening ^[[33m 331^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:30.2549928Z      ^[[33m^[[2m✓^[[22m^[[39m save safety 1: durable pre-write identity protects against interruption after journal commit, action commit, and question commit without duplicate records ^[[33m 398^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:31.8616011Z  ^[[32m✓^[[39m src/logic/releaseSafety.test.ts ^[[2m(^[[22m^[[2m52 tests^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[2m)^[[22m^[[33m 1453^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:31.8623219Z        ^[[33m^[[2m✓^[[22m^[[39m generates Fixture C (illustrated charts, 60 pages) deterministically matching accepted input metrics ^[[33m 393^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:32.6811100Z (node:2374) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:32.6812188Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:33.6887898Z ^[[90mstderr^[[2m | src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts^[[2m > ^[[22m^[[2mM2UI-R9: erasure identity, lock and route generation^[[2m > ^[[22m^[[2m[R9] rapid confirmation uses a synchronous lock and one erase identity
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:33.6892356Z ^[[22m^[[39mNo routes matched location "/study/history" 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:33.6892838Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:34.5709138Z  ^[[32m✓^[[39m src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts ^[[2m(^[[22m^[[2m34 tests^[[22m^[[2m)^[[22m^[[33m 1914^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:34.8019398Z (node:2386) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:34.8020101Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:36.3656232Z  ^[[32m✓^[[39m src/data/practiceSessionContract.test.ts ^[[2m(^[[22m^[[2m25 tests^[[22m^[[2m)^[[22m^[[33m 1589^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:36.3670656Z      ^[[33m^[[2m✓^[[22m^[[39m REQ-10: legacy conversion converts up to 200 questions without truncation, quarantines corrupt rows, and avoids duplicate conversion ^[[33m 490^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:36.3672050Z      ^[[33m^[[2m✓^[[22m^[[39m REQ-13: sqlJsDb browser storage refusal rolls back live state and preserves last stored bytes ^[[33m 311^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:37.4510176Z (node:2397) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:37.4529539Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.1786076Z  ^[[32m✓^[[39m src/pages/StudyLibrary/CardReviewPanel.test.ts ^[[2m(^[[22m^[[2m29 tests^[[22m^[[2m)^[[22m^[[33m 5846^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.1802827Z      ^[[33m^[[2m✓^[[22m^[[39m full session with keyboard, then done-for-now; no Gemini, network or practice write ^[[33m 800^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.1807593Z      ^[[33m^[[2m✓^[[22m^[[39m the Again card returns at minute ten, and day cards return the next local day, due cards first ^[[33m 717^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.1808988Z      ^[[33m^[[2m✓^[[22m^[[39m a lost acknowledgement offers Try again with the same request, counted once ^[[33m 309^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.1810264Z      ^[[33m^[[2m✓^[[22m^[[39m acknowledged, then refresh fails: the confirmation shows and conflicting actions stay locked until a read succeeds ^[[33m 355^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.1811421Z      ^[[33m^[[2m✓^[[22m^[[39m Reset: confirmation with Cancel focused, locked while pending, unknown outcome resolved by Try again ^[[33m 447^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.1812427Z      ^[[33m^[[2m✓^[[22m^[[39m all cards paused or flagged, damaged cards, no cards, and a read failure each show their own state ^[[33m 321^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.4987795Z (node:2411) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:43.5000098Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:59.8731043Z  ^[[32m✓^[[39m src/data/cardReviewContract.test.ts ^[[2m(^[[22m^[[2m60 tests^[[22m^[[2m)^[[22m^[[33m 16489^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:59.8740154Z        ^[[33m^[[2m✓^[[22m^[[39m order and limits apply after eligibility, even behind 200 ineligible older rows ^[[33m 1519^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:59.8759905Z        ^[[33m^[[2m✓^[[22m^[[39m a 500-card set queues correctly and 10,000 events page in 20s with earlier versions labelled ^[[33m 1207^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:59.8769834Z        ^[[33m^[[2m✓^[[22m^[[39m order and limits apply after eligibility, even behind 200 ineligible older rows ^[[33m 6038^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:07:59.8770849Z        ^[[33m^[[2m✓^[[22m^[[39m a 500-card set queues correctly and 10,000 events page in 20s with earlier versions labelled ^[[33m 2489^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:00.4170524Z  ^[[32m✓^[[39m src/logic/macReadinessPreflight.test.ts ^[[2m(^[[22m^[[2m34 tests^[[22m^[[2m)^[[22m^[[33m 361^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:01.3510597Z (node:2471) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:01.3511432Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:02.9502569Z  ^[[32m✓^[[39m src/pages/FlightJournal/debriefLinks.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 1721^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:02.9503963Z      ^[[33m^[[2m✓^[[22m^[[39m 1. deliberate workflow: turns improvement into action, links study material and upcoming lesson, and saves atomically ^[[33m 407^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:03.0945494Z  ^[[32m✓^[[39m src/logic/dailyPlan.test.ts ^[[2m(^[[22m^[[2m29 tests^[[22m^[[2m)^[[22m^[[32m 14^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:03.3094117Z  ^[[32m✓^[[39m src/logic/studyPacket/regressions.test.ts ^[[2m(^[[22m^[[2m41 tests^[[22m^[[2m)^[[22m^[[32m 74^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:04.6167058Z  ^[[32m✓^[[39m src/components/ui/Dialog.fallback.test.ts ^[[2m(^[[22m^[[2m30 tests^[[22m^[[2m)^[[22m^[[33m 636^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:04.7330739Z  ^[[32m✓^[[39m src/logic/recommendations.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:05.5328396Z (node:2508) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:05.5349851Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:07.8397785Z  ^[[32m✓^[[39m src/pages/StudyLibrary/MaterialDetailGemini.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 2339^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:07.8400726Z      ^[[33m^[[2m✓^[[22m^[[39m prevents duplicate Gemini study aid calls when activated repeatedly during in-flight generation ^[[33m 447^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:07.8418661Z      ^[[33m^[[2m✓^[[22m^[[39m starting study aid on material A blocks practice test on material B across navigation until A resolves ^[[33m 308^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:07.8425954Z      ^[[33m^[[2m✓^[[22m^[[39m starting practice test on material A blocks study aid on material B across navigation until A resolves ^[[33m 331^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:08.6077865Z (node:2520) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:08.6079567Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:09.5441904Z  ^[[32m✓^[[39m src/pages/StudyLibrary/PracticeSessionPR2.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 959^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:10.3414322Z (node:2532) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:10.3426233Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:13.0690228Z  ^[[32m✓^[[39m src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts ^[[2m(^[[22m^[[2m21 tests^[[22m^[[2m)^[[22m^[[33m 2766^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:13.0692061Z      ^[[33m^[[2m✓^[[22m^[[39m previews the packet, imports it as a new material and opens it ^[[33m 476^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:13.3050156Z (node:2545) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:13.3050874Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:15.8678141Z  ^[[32m✓^[[39m src/data/repositories/documentRepository.test.ts ^[[2m(^[[22m^[[2m25 tests^[[22m^[[2m)^[[22m^[[33m 2635^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:15.8680192Z      ^[[33m^[[2m✓^[[22m^[[39m gives up boundedly on saveMaterialsAtomically if the lock never clears ^[[33m 1110^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:15.8681650Z      ^[[33m^[[2m✓^[[22m^[[39m times out boundedly when material save encounters permanent lock ^[[33m 1109^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:16.7256051Z (node:2556) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:16.7257051Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:19.7313536Z  ^[[32m✓^[[39m src/components/dailyPlan/DailyPlanCard.test.ts ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[33m 3132^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:20.5001432Z (node:2564) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:20.5003044Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:25.6902720Z  ^[[32m✓^[[39m src/pages/Questions/Questions.drafts.test.ts ^[[2m(^[[22m^[[2m14 tests^[[22m^[[2m)^[[22m^[[33m 5225^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:25.6919968Z      ^[[33m^[[2m✓^[[22m^[[39m keep a draft when a new question pushes its row off the page, and restore it after Show more ^[[33m 1053^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:25.6921188Z      ^[[33m^[[2m✓^[[22m^[[39m keep a draft across filter changes and paging ^[[33m 1353^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:25.6925048Z      ^[[33m^[[2m✓^[[22m^[[39m returns to one page when switching away and back, before and after expanding the other filter ^[[33m 1620^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:25.6925972Z      ^[[33m^[[2m✓^[[22m^[[39m does not reset when the same filter is chosen again ^[[33m 661^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:25.9050051Z (node:2573) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:25.9056252Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:27.4165505Z  ^[[32m✓^[[39m src/data/structuredImport.test.ts ^[[2m(^[[22m^[[2m69 tests^[[22m^[[2m)^[[22m^[[33m 1541^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:28.2360706Z  ^[[2m^[[90m↓^[[39m^[[22m src/perf/appResponsiveness.bench.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[2m)^[[22m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:28.9720335Z (node:2593) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:28.9721242Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:30.5817854Z  ^[[32m✓^[[39m src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 1632^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:30.5819398Z      ^[[33m^[[2m✓^[[22m^[[39m [R14] a conversion read rejection shows sanitized, visible read-only recovery and no unhandled error ^[[33m 350^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:31.4938444Z (node:2605) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:31.4940164Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:32.5459567Z  ^[[32m✓^[[39m src/acceptance/m1Workflow.acceptance.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 1191^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:32.5479014Z      ^[[33m^[[2m✓^[[22m^[[39m runs the whole workflow, survives a restart, retries safely, and stays honest after deletions ^[[33m 953^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:33.4946811Z (node:2613) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:33.4947991Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:33.4960219Z  ^[[32m✓^[[39m src/logic/debriefCharacterization.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 773^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:33.4961296Z      ^[[33m^[[2m✓^[[22m^[[39m characterizes deletion: demonstrates foreign key ON DELETE SET NULL on question and dangling reference on action ^[[33m 533^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:35.3479593Z (node:2620) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:35.3482941Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:35.4872985Z  ^[[32m✓^[[39m src/data/practiceStartupValidation.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 1823^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:35.4874071Z      ^[[33m^[[2m✓^[[22m^[[39m matches every native accept/refuse outcome ^[[33m 895^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:36.2341668Z (node:2632) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:36.2342981Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2454481Z  ^[[32m✓^[[39m src/pages/StudyLibrary/MaterialDetailOffline.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[33m 4033^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2470203Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the saved guide, cards and practice test usable with Gemini disconnected ^[[33m 687^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2471290Z      ^[[33m^[[2m✓^[[22m^[[39m keeps saved content usable while the Gemini status is still loading ^[[33m 404^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2476622Z      ^[[33m^[[2m✓^[[22m^[[39m keeps saved content usable when the Gemini status check fails ^[[33m 379^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2477503Z      ^[[33m^[[2m✓^[[22m^[[39m explains a missing PDF and keeps saved content, with regeneration disabled ^[[33m 338^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2478287Z      ^[[33m^[[2m✓^[[22m^[[39m explains a replaced unsupported source and keeps saved content ^[[33m 323^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2479161Z      ^[[33m^[[2m✓^[[22m^[[39m explains a replaced oversized source and keeps saved content ^[[33m 334^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2479974Z      ^[[33m^[[2m✓^[[22m^[[39m keeps saved content when the material no longer has a file attached ^[[33m 333^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2480829Z      ^[[33m^[[2m✓^[[22m^[[39m offers regeneration for both saved items only when connected and the file is eligible ^[[33m 345^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:40.2481870Z      ^[[33m^[[2m✓^[[22m^[[39m keeps another material's saved content usable while a generation runs elsewhere, and a late result changes nothing ^[[33m 521^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:41.0319932Z (node:2645) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:08:41.0321176Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:11.0892212Z  ^[[32m✓^[[39m src/perf/studyLibraryScenarios.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[33m 30142^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:11.0911561Z      ^[[33m^[[2m✓^[[22m^[[39m lists exactly the answer key's ids and order on the real page for every scenario ^[[33m 9496^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:11.0930676Z      ^[[33m^[[2m✓^[[22m^[[39m measures a stated expanded display of 1,000 cards, and a query from it returns to 100 ^[[33m 17519^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:11.0949483Z      ^[[33m^[[2m✓^[[22m^[[39m fails the run when the final page result differs from the answer key ^[[33m 393^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:11.0952620Z      ^[[33m^[[2m✓^[[22m^[[39m fails the run on a wrong intermediate keystroke result even when the final result is correct ^[[33m 1262^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:11.0953772Z      ^[[33m^[[2m✓^[[22m^[[39m fails the run on a wrong intermediate count even when the final result is correct ^[[33m 1300^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:12.5950846Z (node:2718) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:12.5979929Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:13.2026019Z  ^[[32m✓^[[39m src/pages/FlightJournal/debriefContract.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 709^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:13.2027199Z      ^[[33m^[[2m✓^[[22m^[[39m create, lost-response retry, deliberate edit, and both withdrawals ^[[33m 696^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:13.3270893Z  ^[[32m✓^[[39m src/services/documents.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[32m 11^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:15.0335254Z  ^[[32m✓^[[39m src/pages/StudyLibrary/MaterialFormDialog.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 1051^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:15.7651297Z (node:2741) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:15.7652762Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:16.2176994Z ^[[90mstderr^[[2m | src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts^[[2m > ^[[22m^[[2mCodex PR2 review: actual UI and disposable persisted state^[[2m > ^[[22m^[[2m[R4] lost erase acknowledgement retries the same identity and preserves later progress
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:16.2178552Z ^[[22m^[[39mNo routes matched location "/study/history" 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:16.2179231Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:16.2280604Z  ^[[32m✓^[[39m src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 485^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:16.9129231Z (node:2753) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:16.9130749Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:17.4517715Z  ^[[32m✓^[[39m src/pages/StudyLibrary/PracticeTestPanel.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[33m 561^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:17.8511732Z (node:2765) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:17.8513231Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:17.8516534Z  ^[[32m✓^[[39m src/acceptance/m1Upgrade.acceptance.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 253^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:17.9504627Z  ^[[32m✓^[[39m src/logic/dataSafety.test.ts ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:18.8490504Z (node:2779) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:18.8491490Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:19.6815211Z  ^[[32m✓^[[39m src/state/editorSafety.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 864^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:19.6831178Z    ^[[33m^[[2m✓^[[22m^[[39m preserves actual material typing through refresh, navigation and database save ^[[33m 347^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:19.7817428Z  ^[[32m✓^[[39m src/logic/actions.test.ts ^[[2m(^[[22m^[[2m27 tests^[[22m^[[2m)^[[22m^[[32m 12^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:20.5411716Z (node:2794) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:20.5412754Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:21.2925941Z  ^[[32m✓^[[39m src/pages/StudyLibrary/materialSaveIntegration.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[33m 814^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:21.2940171Z    ^[[33m^[[2m✓^[[22m^[[39m a failed save leaves no rows and keeps the import; the retry commits once and keeps the file ^[[33m 423^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:21.4795974Z (node:2802) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:21.4797441Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:21.5882923Z  ^[[32m✓^[[39m src/data/repositories/importStudyPacket.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[32m 149^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:22.3420833Z (node:2813) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:22.3422437Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:22.7184278Z  ^[[32m✓^[[39m src/components/quickfind/QuickFind.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 422^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:23.6739341Z  ^[[32m✓^[[39m src/pages/PilotToolkit/PilotToolkit.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 290^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:23.9347955Z (node:2829) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:23.9349389Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:23.9353269Z  ^[[32m✓^[[39m src/logic/toolkitDefaults.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 114^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:24.6670161Z (node:2836) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:24.6671006Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.3750688Z  ^[[32m✓^[[39m src/pages/StudyLibrary/MaterialDetailImport.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 729^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.3752078Z      ^[[33m^[[2m✓^[[22m^[[39m TB-UI-REGEN-01: regenerating an imported guide or test warns that Gemini will replace it ^[[33m 395^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.4718474Z  ^[[32m✓^[[39m src/logic/progress.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.6223093Z  ^[[32m✓^[[39m src/logic/studyPacket/validator.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 14^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.8707334Z (node:2863) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.8708219Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.8711171Z  ^[[32m✓^[[39m src/data/repositories/financeRepository.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 109^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:25.9601679Z  ^[[32m✓^[[39m src/logic/cardIdentity.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 11^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.3931095Z  ^[[32m✓^[[39m src/data/practiceEraseDurability.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 320^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.3936542Z      ^[[33m^[[2m✓^[[22m^[[39m an erasure whose recovery fails disables the adapter and keeps every saved row ^[[33m 319^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.7101205Z (node:2892) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.7102123Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.7105004Z  ^[[32m✓^[[39m src/data/repositories/appRepository.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 180^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.7888624Z (node:2899) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.7895622Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:26.8197993Z  ^[[32m✓^[[39m src/data/migrations.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 22^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:27.4431302Z  ^[[32m✓^[[39m src/state/useMaterialNotes.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 28^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:27.5465899Z  ^[[32m✓^[[39m src/logic/finance.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:27.6297244Z  ^[[32m✓^[[39m src/logic/cardScheduler.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:28.3546346Z (node:2928) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:28.3549951Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:30.4297919Z  ^[[32m✓^[[39m src/pages/Questions/Questions.paging.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[33m 2117^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:30.4299987Z      ^[[33m^[[2m✓^[[22m^[[39m shows a page at a time, keeps every question reachable, and filters the whole list ^[[33m 2022^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:31.5290626Z (node:2936) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:31.5296615Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:36.9024157Z  ^[[31m❯^[[39m src/data/cardValidationParity.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m | ^[[22m^[[31m1 failed^[[39m^[[2m)^[[22m^[[33m 5860^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:36.9039329Z      ^[[32m✓^[[39m covers every required invariant category with at least thirty cases^[[32m 1^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:36.9051003Z      ^[[33m^[[2m✓^[[22m^[[39m sql.js gives the listed outcome for every case ^[[33m 840^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:36.9060113Z ^[[31m     ^[[31m×^[[31m node:sqlite gives the listed outcome for every case^[[39m^[[33m 5017^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.0514039Z  ^[[32m✓^[[39m src/logic/studyPacket/diagnostics.test.ts ^[[2m(^[[22m^[[2m14 tests^[[22m^[[2m)^[[22m^[[32m 14^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.1596488Z  ^[[32m✓^[[39m src/logic/preparation.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.3630260Z (node:2962) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.3631645Z  ^[[32m✓^[[39m src/lib/id.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 62^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.3634384Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.5000799Z  ^[[32m✓^[[39m src/services/studyPackets.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 14^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.5967027Z  ^[[32m✓^[[39m src/data/cardReviewTauri.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 7^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:37.7049522Z  ^[[32m✓^[[39m src/data/migrationSafety.test.ts ^[[2m(^[[22m^[[2m75 tests^[[22m^[[2m)^[[22m^[[32m 8^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:38.4493390Z (node:2994) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:38.4494757Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:38.4499624Z  ^[[32m✓^[[39m src/data/repositories/profileRepository.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[33m 596^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:38.4510039Z      ^[[33m^[[2m✓^[[22m^[[39m keeps every personal setting after the application is closed and reopened ^[[33m 542^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:39.0890883Z  ^[[32m✓^[[39m src/state/useLocalToday.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 34^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:39.2043580Z  ^[[32m✓^[[39m src/logic/dashboard.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:39.9380133Z (node:3016) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:39.9399380Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:40.2437413Z  ^[[32m✓^[[39m src/components/dailyPlan/DailyPlanStart.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[33m 345^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:40.3432540Z  ^[[32m✓^[[39m src/logic/aiLimits.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[32m 12^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:40.5288067Z  ^[[32m✓^[[39m src/logic/quickFind.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:41.3088553Z (node:3039) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:41.3089318Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:41.5347278Z  ^[[32m✓^[[39m src/state/legacyWebKitStartup.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 293^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.4610622Z  ^[[32m✓^[[39m src/pages/StudyLibrary/StudyLibrary.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 1253^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.4625238Z    ^[[33m^[[2m✓^[[22m^[[39m shows a bounded first page, loads more, and searches all materials ^[[33m 968^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.5501709Z  ^[[32m✓^[[39m src/logic/encouragement.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 3^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.7612058Z (node:3062) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.7613404Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.7617694Z  ^[[32m✓^[[39m src/data/repositories/noteRepository.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 68^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.8536288Z  ^[[32m✓^[[39m src/logic/feedback.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:43.9450842Z  ^[[32m✓^[[39m src/logic/localDay.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 12^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.1555091Z (node:3083) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.1556912Z  ^[[32m✓^[[39m src/data/starter.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 70^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.1557857Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.3145835Z (node:3090) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.3147567Z  ^[[32m✓^[[39m src/data/materialSaveContract.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 27^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.3148480Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.4065498Z  ^[[32m✓^[[39m src/logic/keyDates.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.4969294Z  ^[[32m✓^[[39m src/logic/flightLog.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.7970441Z  ^[[32m✓^[[39m src/logic/studyPacket/fixtures.test.ts ^[[2m(^[[22m^[[2m164 tests^[[22m^[[2m)^[[22m^[[32m 153^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:44.9213129Z  ^[[32m✓^[[39m src/logic/pendingDeletes.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 3^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:45.0081818Z  ^[[32m✓^[[39m src/logic/toolkit.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:45.2244452Z (node:3132) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:45.2250751Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:45.2252039Z  ^[[32m✓^[[39m src/data/repositories/toolkitRepository.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 57^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:45.3092163Z  ^[[32m✓^[[39m src/lib/drafts.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:46.0405241Z  ^[[32m✓^[[39m src/components/ui/Dialog.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 116^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:46.1328504Z  ^[[32m✓^[[39m src/logic/aiSafety.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:46.7502483Z  ^[[2m^[[90m↓^[[39m^[[22m src/pages/StudyLibrary/StudyLibrary.bench.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[2m)^[[22m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:46.8419886Z  ^[[32m✓^[[39m src/services/backups.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:46.9228299Z  ^[[32m✓^[[39m src/logic/notes.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 3^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:47.0470817Z  ^[[32m✓^[[39m src/logic/studyPacket/jitless.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 46^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:47.1432369Z  ^[[32m✓^[[39m src/lib/backups.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 11^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:47.2351336Z  ^[[32m✓^[[39m src/logic/library.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 7^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:47.3188273Z  ^[[32m✓^[[39m src/lib/platform.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 2^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:47.4785857Z (node:3212) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:47.4789647Z (Use `node --trace-warnings ...` to show where the warning was created)
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:47.4791972Z  ^[[32m✓^[[39m src/data/repositories/journalRepository.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 26^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.0814085Z  ^[[32m✓^[[39m src/state/useDraftRecovery.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 20^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.1680758Z  ^[[32m✓^[[39m src/lib/image.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 3^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.2504072Z  ^[[32m✓^[[39m src/logic/documentRecovery.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.3305689Z  ^[[2m^[[90m↓^[[39m^[[22m src/logic/quickFind.bench.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[2m)^[[22m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.4083640Z  ^[[32m✓^[[39m src/logic/studyPacket/notices.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 3^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.4850569Z  ^[[32m✓^[[39m src/components/layout/shell.css.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 2^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5661062Z  ^[[32m✓^[[39m src/logic/pdfParts.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 2^[[2mms^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5741172Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5742077Z ^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m^[[1m^[[41m Failed Tests 1 ^[[49m^[[22m^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5742689Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5744273Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/data/cardValidationParity.test.ts^[[2m > ^[[22mshared card-review validation contract^[[2m > ^[[22mnode:sqlite gives the listed outcome for every case
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5747965Z ^[[31m^[[1mError^[[22m: Test timed out in 5000ms.
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5749017Z If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5749985Z ^[[36m ^[[2m❯^[[22m src/data/cardValidationParity.test.ts:^[[2m78:3^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5772589Z     ^[[90m 76|^[[39m   })^[[33m;^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5773046Z     ^[[90m 77|^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5773647Z     ^[[90m 78|^[[39m   it("node:sqlite gives the listed outcome for every case", async () =…
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5774320Z     ^[[90m   |^[[39m   ^[[31m^^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5774929Z     ^[[90m 79|^[[39m     const { DatabaseSync } = await import(/* @vite-ignore */ "node:sql…
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5775852Z     ^[[90m 80|^[[39m     ^[[35mconst^[[39m { mkdtempSync^[[33m,^[[39m rmSync } ^[[33m=^[[39m ^[[35mawait^[[39m ^[[35mimport^[[39m(^[[32m"node:fs"^[[39m)^[[33m;^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5776438Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5776807Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯^[[22m^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5777030Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5777177Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5789994Z ^[[2m Test Files ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m94 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m3 skipped^[[39m^[[90m (98)^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5796462Z ^[[2m      Tests ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m2694 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m4 skipped^[[39m^[[90m (2699)^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5797174Z ^[[2m   Start at ^[[22m 08:06:51
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5797964Z ^[[2m   Duration ^[[22m 177.01s^[[2m (transform 4.02s, setup 0ms, import 12.05s, tests 143.13s, environment 13.70s)^[[22m
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5798972Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5859078Z 
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.5881086Z ##[error]Error: Test timed out in 5000ms.
+Tests, types, and the data-safety guards	Run npm test	If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+Tests, types, and the data-safety guards	Run npm test	 ❯ src/data/cardValidationParity.test.ts:78:3
+Tests, types, and the data-safety guards	Run npm test	
+Tests, types, and the data-safety guards	Run npm test	
+Tests, types, and the data-safety guards	Run npm test	2026-10-07T08:09:48.6321838Z ##[error]Process completed with exit code 1.

@@ -4,7 +4,7 @@
   "files": {
     "ROADMAP.md": "7b6a3ae1d8a864d89b386a1f429403c8ab9ca618bd965b10e0e128ad64d2d28d",
     "STATUS.md": "aa5a338ca1d68e8da3a0f7417aeabfb104e87cfc67e9a080268f9dd1276eb9f8",
-    "docs/M2_CARD_REVIEW_C1_ACCEPTANCE_2026-10-07.md": "e2fc0a35b8edb13727fce31e37de2c22ed93cf9f264629a50f1444356fa157c6",
+    "docs/M2_CARD_REVIEW_C1_ACCEPTANCE_2026-10-07.md": "a0529da33705e83cfbfd5ceb2576fbfc4e0217fb4694203e4b54e063fe766997",
     "docs/M2_CARD_REVIEW_C2_SCOPE_PROMPT_2026-10-07.md": "b857cae7ad1aca5cbe51cdf5f431cef719c6345035c90a1585027f7c0bcbd395",
     "docs/PROJECT_HANDOFF.md": "3de61b6c7c706f224a89c046336164286d571156f4d5a56a54661e8de5507b47",
     "src-tauri/fixtures/card-validation/cases.json": "791ab54c07180e4b3539f989c1955103d17468fba517bd86c1e3685562554616",
@@ -18,7 +18,7 @@
     "src/data/cardReviewContract.test.ts": "f6ef9bec80867ba6d4e297c9237127b14f279c97fd14a192e20c72ca10cf8086",
     "src/data/cardReviewTauri.test.ts": "d1afef2e7a984611277f405936d4ffcaa8ce942fa136872733a58b2b38e07512",
     "src/data/cardReviewTransaction.ts": "30c17f500187f8b89e9e40388cc8900bfd1da92293bc9aadc343bfdd6bd756da",
-    "src/data/cardValidationParity.test.ts": "2f0f2e83198ea713356a039e75842f057334acc5277deb93360c6a19cf91dd95",
+    "src/data/cardValidationParity.test.ts": "e8f94788ade7eb99eef163dc9da10128339ea671665dabef0df739cb76754851",
     "src/data/db.ts": "4351ea865c70ae1aff11ac07707207f69d397fb76f36d99f72e08a212a820acc",
     "src/data/migration-checksums.json": "b677431fb5ce18e19b0ba9c1fce0aa35a19b802b821ac399f5724a10c5e99a98",
     "src/data/migrations.ts": "01b3c3bb4827e3140d8acb49e65bb5d21f1f906e2283d66505347177fc989c4e",

@@ -9,3 +9,5 @@ Reused, not rerun: verified corrected full frontend receipt (2,695 passed/four s
 `published-source-hashes.json` hashes the final C1 source plus coordinator status/roadmap/acceptance/next-prompt documents. `SHA256SUMS` hashes this evidence pack except itself. Raw logs retain tool-generated whitespace; authored source/docs are checked separately.
 
 Publication hygiene found one extra EOF blank line in the permanent panel test. The coordinator removed only that blank line; executable source and verified behavior are unchanged. Final hashes include this cleanup.
+
+The first CI attempt's single fixture-loop timeout is retained in `receipts/ci-first-attempt.log`. The coordinator splits the 36 Node SQLite fixtures into separate named default-timeout tests, preserving validation and reopen assertions with robust cleanup. Independent corrected parity: 38 passes; typecheck: exit 0. Exact receipts: `ci-parity-correction.*` and `ci-correction-typecheck.*`. Production/native files remain unchanged by this CI correction. Final required CI is available on the containing PR.

@@ -75,37 +75,39 @@ describe("shared card-review validation contract", () => {
     expect(mismatches).toEqual([]);
   });
 
-  it("node:sqlite gives the listed outcome for every case", async () => {
+  it.each(CONTRACT.cases)("node:sqlite: $name gives $expect", async (testCase) => {
     const { DatabaseSync } = await import(/* @vite-ignore */ "node:sqlite");
     const { mkdtempSync, rmSync } = await import("node:fs");
     const { tmpdir } = await import("node:os");
     const { join } = await import("node:path");
     const reference = new DatabaseSync(":memory:");
-    await applyMigrations((sql) => reference.exec(sql), new Set());
     const dir = mkdtempSync(join(tmpdir(), "card-contract-"));
-    const mismatches: string[] = [];
     try {
-      for (const [index, testCase] of CONTRACT.cases.entries()) {
-        const path = join(dir, `case-${index}.db`);
-        const build = new DatabaseSync(path);
+      await applyMigrations((sql) => reference.exec(sql), new Set());
+      const path = join(dir, "case.db");
+      const build = new DatabaseSync(path);
+      try {
         build.exec("PRAGMA foreign_keys = ON");
         await applyMigrations((sql) => build.exec(sql), new Set());
         for (const statement of [...CONTRACT.baseline, ...testCase.sql]) build.exec(statement);
+      } finally {
         build.close();
-        const reopened = new DatabaseSync(path);
+      }
+      const reopened = new DatabaseSync(path);
+      try {
         const result = await outcome(() =>
           validateCardReviewState(
             (sql, params) => reopened.prepare(sql).all(...params) as Record<string, unknown>[],
             (sql, params) => reference.prepare(sql).all(...params) as Record<string, unknown>[],
           ),
         );
+        expect(result).toBe(testCase.expect);
+      } finally {
         reopened.close();
-        if (result !== testCase.expect) mismatches.push(`${testCase.name}: expected ${testCase.expect}, got ${result}`);
       }
     } finally {
       reference.close();
       rmSync(dir, { recursive: true, force: true });
     }
-    expect(mismatches).toEqual([]);
   });
 });
