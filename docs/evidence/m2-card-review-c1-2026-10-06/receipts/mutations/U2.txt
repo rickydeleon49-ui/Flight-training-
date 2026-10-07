@@ -1,0 +1,389 @@
+mutation U2: UI unlocks after an acknowledged write even when the refresh fails
+file src/pages/StudyLibrary/useCardReview.ts
+$ npx vitest run src/pages/StudyLibrary/CardReviewPanel.test.ts -t 'refresh fails'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ❯ src/pages/StudyLibrary/CardReviewPanel.test.ts (13 tests | 1 failed | 12 skipped) 1400ms
+     × acknowledged, then refresh fails: the confirmation shows and conflicting actions stay locked until a read succeeds 1399ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  23:50:10
+   Duration  2.28s (transform 370ms, setup 0ms, import 523ms, tests 1.40s, environment 271ms)
+
+(node:36642) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewPanel.test.ts > card reviews in MaterialDetail > acknowledged, then refresh fails: the confirmation shows and conflicting actions stay locked until a read succeeds
+TestingLibraryElementError: Unable to find an element with the text: /rating and other changes are paused until they are/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mSynthetic airspace letters[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mImported from a file you selected[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mImported study packet[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+              [33mstyle[39m=[32m"margin-bottom: var(--space-4);"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ai-disclaimer"[39m
+                [33mrole[39m=[32m"note"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3.8 21 19.5H3z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 10v4.2M12 17.2h.01"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0mThis material has no file attached, so there is nothing to send.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"stack stack--5"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ai-disclaimer"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3.8 21 19.5H3z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 10v4.2M12 17.2h.01"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0mImported from a file you selected. Its answers and source references have not been checked by Her Flight Deck. Verify against current FAA material, aircraft documents and your instructor.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"ai-guide-title"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"eyebrow"[39m
+                  [36m>[39m
+                    [0mStudy guide[0m
+                  [36m</p>[39m
+                  [36m<h3[39m
+                    [33mclass[39m=[32m"ai-guide__title"[39m
+                    [33mid[39m=[32m"ai-guide-title"[39m
+                  [36m>[39m
+                    [0mSynthetic guide[0m
+                  [36m</h3>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small ai-copy"[39m
+                [36m>[39m
+                  [0mA synthetic summary.[0m
+                [36m</p>[39m
+              [36m</section>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"flashcards-title"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between"[39m
+                [36m>[39m
+                  [36m<div>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"eyebrow"[39m
+                    [36m>[39m
+                      [0mFlashcards[0m
+                    [36m</p>[39m
+                    [36m<h3[39m
+                      [33mclass[39m=[32m"ai-guide__title"[39m
+                      [33mid[39m=[32m"flashc...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mSynthetic airspace letters[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mImported from a file you selected[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mImported study packet[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+              [33mstyle[39m=[32m"margin-bottom: var(--space-4);"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ai-disclaimer"[39m
+                [33mrole[39m=[32m"note"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3.8 21 19.5H3z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 10v4.2M12 17.2h.01"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0mThis material has no file attached, so there is nothing to send.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"stack stack--5"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ai-disclaimer"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3.8 21 19.5H3z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 10v4.2M12 17.2h.01"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0mImported from a file you selected. Its answers and source references have not been checked by Her Flight Deck. Verify against current FAA material, aircraft documents and your instructor.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"ai-guide-title"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"eyebrow"[39m
+                  [36m>[39m
+                    [0mStudy guide[0m
+                  [36m</p>[39m
+                  [36m<h3[39m
+                    [33mclass[39m=[32m"ai-guide__title"[39m
+                    [33mid[39m=[32m"ai-guide-title"[39m
+                  [36m>[39m
+                    [0mSynthetic guide[0m
+                  [36m</h3>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small ai-copy"[39m
+                [36m>[39m
+                  [0mA synthetic summary.[0m
+                [36m</p>[39m
+              [36m</section>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"flashcards-title"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between"[39m
+                [36m>[39m
+                  [36m<div>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"eyebrow"[39m
+                    [36m>[39m
+                      [0mFlashcards[0m
+                    [36m</p>[39m
+                    [36m<h3[39m
+                      [33mclass[39m=[32m"ai-guide__title"[39m
+                      [33mid[39m=[32m"flashc...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/CardReviewPanel.test.ts:281:25
+    279|     await revealAndRate("Good");
+    280|     expect(await screen.findByText("Saved: back tomorrow")).toBeTruthy…
+    281|     expect(await screen.findByText(/rating and other changes are pause…
+       |                         ^
+    282|     expect(sessionRegion().getByText(/^Card 1 of 3/)).toBeTruthy();
+    283|     for (const name of [/^Again: again in/, /^Good: again in/, /More o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit 1

@@ -1,0 +1,52 @@
+mutation Q1: Again cards use the end-of-day bound (CRS-R1 timing)
+file src/data/repositories/cardReviewRepository.ts
+$ npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 1'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ❯ src/data/cardReviewContract.test.ts (60 tests | 2 failed | 58 skipped) 132ms
+       × [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten 55ms
+       × [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten 76ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 58 skipped (60)
+   Start at  23:50:02
+   Duration  373ms (transform 120ms, setup 0ms, import 162ms, tests 132ms, environment 0ms)
+
+(node:36543) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on node > CRS-R1 version-owned due queue with exact boundaries > [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on sqljs > CRS-R1 version-owned due queue with exact boundaries > [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten
+AssertionError: expected [ [ …(2) ], [ …(2) ], [ …(2) ] ] to deeply equal [ [ …(2) ], [ …(2) ] ]
+
+- Expected
++ Received
+
+@@ -1,7 +1,11 @@
+  [
+    [
++     "716cc832d40f778c49bf43c5c8080d55006c8487e95d9d42c72f1186018c027a",
++     "again",
++   ],
++   [
+      "abba7cf167d65dcce05bdcc721d2b4927a3802b632a26166444b0f975203c5cf",
+      "new",
+    ],
+    [
+      "8f5d2e8c406c3131f2ba9a912e238e6f6289fa2c4b7f4b6a32c94ca633606a7d",
+
+ ❯ src/data/cardReviewContract.test.ts:208:51
+    206|       await rateAt(repo, M, 0, "again", T0);
+    207|       const nine = await queue(repo, M, at(T0, 9 * MINUTE), "UTC");
+    208|       expect(nine.map((c) => [c.itemId, c.kind])).toEqual([
+       |                                                   ^
+    209|         [A.items[1]!.itemId, "new"],
+    210|         [A.items[2]!.itemId, "new"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+exit 1

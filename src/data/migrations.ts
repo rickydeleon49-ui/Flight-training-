@@ -16,6 +16,7 @@ import notes from "../../src-tauri/migrations/0008_notes.sql?raw";
 import practiceTests from "../../src-tauri/migrations/0009_practice_tests.sql?raw";
 import debriefLinks from "../../src-tauri/migrations/0010_debrief_links.sql?raw";
 import practiceSessions from "../../src-tauri/migrations/0011_practice_sessions.sql?raw";
+import cardReviews from "../../src-tauri/migrations/0012_card_reviews.sql?raw";
 
 export interface Migration {
   version: number;
@@ -35,6 +36,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 9, description: "practice_tests", sql: practiceTests },
   { version: 10, description: "debrief_links", sql: debriefLinks },
   { version: 11, description: "practice_sessions", sql: practiceSessions },
+  { version: 12, description: "card_reviews", sql: cardReviews },
 ];
 
 /**

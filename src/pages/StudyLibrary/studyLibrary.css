@@ -318,3 +318,44 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
+
+/* Card reviews (M2-3 C1) */
+.card-review {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--category-study-edge);
+}
+.card-review__session {
+  padding: var(--space-4);
+  border: 1px solid var(--category-study-edge);
+  border-radius: var(--radius-lg);
+  outline: none;
+}
+.card-review__session:focus-visible { box-shadow: 0 0 0 2px var(--category-study-edge); }
+.card-review__answer { font-weight: 600; }
+.card-review__ratings {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+@media (max-width: 560px) {
+  .card-review__ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.card-review__options { position: relative; }
+.card-review__menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.card-review__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.card-review__browse-options { align-items: flex-start; gap: var(--space-2); }
+.card-review__reset { padding-top: var(--space-2); }
+.card-review__wait { color: inherit; opacity: 0.85; }

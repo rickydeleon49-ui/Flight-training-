@@ -1,0 +1,122 @@
+{
+  "assignment": "docs/M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md",
+  "branch": "codex/m2-card-review-c1",
+  "base": "73b15976343d2d2a1525e0426dbe6450e6afb850",
+  "migration": "0012_card_reviews.sql",
+  "state": "implemented, uncommitted, pending independent review",
+  "baseline": {
+    "npm_test": {
+      "passed": 2568,
+      "skipped": 4,
+      "exit": 0
+    }
+  },
+  "attempt1": {
+    "status": "failed",
+    "failed_steps": {
+      "npm-test": 1,
+      "clippy": 101,
+      "cargo-fmt": 1
+    },
+    "receipts": "receipts/attempt1/"
+  },
+  "attempt2": {
+    "status": "passed",
+    "receipts": "receipts/attempt2/",
+    "focused_vitest": {
+      "passed": 105
+    },
+    "focused_cargo": {
+      "passed": 24
+    },
+    "npm_test": {
+      "files_passed": 95,
+      "passed": 2679,
+      "skipped": 4,
+      "failed": 0,
+      "unhandled": 0
+    },
+    "cargo_test": {
+      "passed": 415,
+      "ignored": 6
+    },
+    "typecheck": 0,
+    "build": 0,
+    "clippy": 0,
+    "cargo_fmt": 0,
+    "cargo_lock": 0,
+    "hygiene": 0,
+    "migrations": 0
+  },
+  "mutations": [
+    {
+      "id": "Q1",
+      "defect": "Again cards use the end-of-day bound (CRS-R1 timing)",
+      "file": "src/data/repositories/cardReviewRepository.ts",
+      "command": "npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 1'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "13753d8a112ebd6f6de5edd96bad9e46190626b46ce64f49a2f220dc3f4b98a8"
+    },
+    {
+      "id": "Q2",
+      "defect": "due query filters by material only, not the current version (CRS-R1 ownership)",
+      "file": "src/data/repositories/cardReviewRepository.ts",
+      "command": "npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 2'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "13753d8a112ebd6f6de5edd96bad9e46190626b46ce64f49a2f220dc3f4b98a8"
+    },
+    {
+      "id": "G1",
+      "defect": "browser/test transaction without the generation barrier (CRS-R2)",
+      "file": "src/data/cardReviewTransaction.ts",
+      "command": "npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 3|promoted 4'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "30c17f500187f8b89e9e40388cc8900bfd1da92293bc9aadc343bfdd6bd756da"
+    },
+    {
+      "id": "G2",
+      "defect": "native transaction without the generation barrier (CRS-R2)",
+      "file": "src-tauri/src/card_reviews.rs",
+      "command": "cargo test \u2026 reset_racing_a_queued_rating; cargo test \u2026 a_pre_reset_revision_1_request",
+      "exit": 101,
+      "killed": true,
+      "restored": true,
+      "sha256": "0d8b7cb7f383aed5e2a1dba3861a4aefebb8fd74ebbe47d7f56e24e9de036403"
+    },
+    {
+      "id": "U1",
+      "defect": "UI forgets the pending payload after an unknown outcome (no same-request Try again)",
+      "file": "src/pages/StudyLibrary/useCardReview.ts",
+      "command": "npx vitest run src/pages/StudyLibrary/CardReviewPanel.test.ts -t 'lost acknowledgement'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "ca3ee6e8d33d7b8e0cef8289fb1fa157830e8337677c3277bad23eb3719527e9"
+    },
+    {
+      "id": "U2",
+      "defect": "UI unlocks after an acknowledged write even when the refresh fails",
+      "file": "src/pages/StudyLibrary/useCardReview.ts",
+      "command": "npx vitest run src/pages/StudyLibrary/CardReviewPanel.test.ts -t 'refresh fails'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "ca3ee6e8d33d7b8e0cef8289fb1fa157830e8337677c3277bad23eb3719527e9"
+    }
+  ],
+  "validation_fixture": {
+    "path": "src-tauri/fixtures/card-validation/cases.json",
+    "cases": 36,
+    "engines": [
+      "rusqlite",
+      "sql.js",
+      "node:sqlite"
+    ]
+  }
+}

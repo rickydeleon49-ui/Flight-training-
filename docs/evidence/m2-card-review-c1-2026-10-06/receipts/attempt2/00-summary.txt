@@ -1,0 +1,15 @@
+attempt attempt2  started 2026-10-07T06:47:33Z
+HEAD 73b15976343d2d2a1525e0426dbe6450e6afb850  branch codex/m2-card-review-c1
+node v22.23.3  npm 10.9.9  rustc 1.99.0 (b940084d7 2026-09-28)  cargo 1.99.0 (5f94df478 2026-08-27)  SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+01 focused-vitest: exit 0 (10s)
+02 focused-cargo: exit 0 (10s)
+03 typecheck: exit 0 (4s)
+04 npm-test: exit 0 (39s)
+05 build: exit 0 (4s)
+06 cargo-test: exit 0 (24s)
+07 clippy: exit 0 (1s)
+08 cargo-fmt: exit 0 (0s)
+09 cargo-lock: exit 0 (1s)
+10 hygiene: exit 0 (1s)
+11 migrations: exit 0 (0s)
+finished 2026-10-07T06:49:07Z

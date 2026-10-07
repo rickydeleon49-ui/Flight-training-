@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ✓ src/pages/StudyLibrary/CardReviewCodexReview.test.ts (6 tests) 507ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  00:55:45
+   Duration  889ms (transform 35ms, setup 0ms, import 73ms, tests 507ms, environment 227ms)
+

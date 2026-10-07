@@ -18,6 +18,7 @@ import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from 
 import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { executeStructuredImport } from "../structuredImportTransaction";
+import { executeCardReviewAction } from "../cardReviewTransaction";
 import {
   executeEraseHistoryAction,
   executeLegacyConversion,
@@ -160,6 +161,11 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
       action: import("@/domain/types").EraseHistoryAction,
     ): Promise<import("@/domain/types").EraseHistoryResult> {
       return owner.exclusive(() => executeEraseHistoryAction(exec, run, query, action));
+    },
+    saveCardReviewAtomically(
+      action: import("@/domain/types").CardReviewAction,
+    ): Promise<import("@/domain/types").CardReviewResult> {
+      return owner.exclusive(() => executeCardReviewAction(exec, run, query, action));
     },
     close() {
       db.close();

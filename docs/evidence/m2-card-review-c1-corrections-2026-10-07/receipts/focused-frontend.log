@@ -1,0 +1,30 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ✓ src/logic/cardScheduler.test.ts (11 tests) 4ms
+ ✓ src/logic/localDay.test.ts (5 tests) 12ms
+ ✓ src/data/cardReviewTauri.test.ts (3 tests) 3ms
+ ✓ src/logic/cardIdentity.test.ts (10 tests) 14ms
+(node:46507) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46509) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46508) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/cardValidationParity.test.ts (3 tests) 2180ms
+     ✓ sql.js gives the listed outcome for every case  493ms
+     ✓ node:sqlite gives the listed outcome for every case  1685ms
+ ✓ src/pages/StudyLibrary/CardReviewPanel.test.ts (29 tests) 4093ms
+     ✓ full session with keyboard, then done-for-now; no Gemini, network or practice write  483ms
+     ✓ the Again card returns at minute ten, and day cards return the next local day, due cards first  450ms
+ ✓ src/data/cardReviewContract.test.ts (60 tests) 8367ms
+       ✓ order and limits apply after eligibility, even behind 200 ineligible older rows  743ms
+       ✓ a 500-card set queues correctly and 10,000 events page in 20s with earlier versions labelled  932ms
+       ✓ order and limits apply after eligibility, even behind 200 ineligible older rows  2819ms
+       ✓ a 500-card set queues correctly and 10,000 events page in 20s with earlier versions labelled  1697ms
+
+ Test Files  7 passed (7)
+      Tests  121 passed (121)
+   Start at  00:53:57
+   Duration  8.65s (transform 611ms, setup 0ms, import 900ms, tests 14.67s, environment 272ms)
+

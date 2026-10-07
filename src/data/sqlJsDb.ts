@@ -392,6 +392,16 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         }),
       );
     },
+    saveCardReviewAtomically(
+      action: import("@/domain/types").CardReviewAction,
+    ): Promise<import("@/domain/types").CardReviewResult> {
+      return owner.exclusive(() =>
+        durableWrite(async () => {
+          const { executeCardReviewAction } = await import("./cardReviewTransaction");
+          return executeCardReviewAction(exec, run, query, action);
+        }),
+      );
+    },
     /** Every acknowledged write is already stored; this re-stores and reports failure. */
     persist(): Promise<void> {
       return owner.exclusive(() => {

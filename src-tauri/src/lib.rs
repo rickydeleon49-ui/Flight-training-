@@ -5,6 +5,7 @@
 //! repository abstractions.
 
 mod backup;
+mod card_reviews;
 mod debrief;
 mod documents;
 mod gemini;
@@ -22,7 +23,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 11;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 12;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -96,6 +97,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0011_practice_sessions.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 12,
+            description: "card_reviews",
+            sql: include_str!("../migrations/0012_card_reviews.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -149,6 +156,7 @@ pub fn run() {
             practice_sessions::save_practice_test_atomically,
             practice_sessions::remove_practice_test_atomically,
             practice_sessions::run_practice_legacy_conversion,
+            card_reviews::save_card_review_atomically,
             documents::save_material_operation,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "Q1",
+    "defect": "Again cards use the end-of-day bound (CRS-R1 timing)",
+    "file": "src/data/repositories/cardReviewRepository.ts",
+    "command": "npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 1'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "13753d8a112ebd6f6de5edd96bad9e46190626b46ce64f49a2f220dc3f4b98a8"
+  },
+  {
+    "id": "Q2",
+    "defect": "due query filters by material only, not the current version (CRS-R1 ownership)",
+    "file": "src/data/repositories/cardReviewRepository.ts",
+    "command": "npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 2'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "13753d8a112ebd6f6de5edd96bad9e46190626b46ce64f49a2f220dc3f4b98a8"
+  },
+  {
+    "id": "G1",
+    "defect": "browser/test transaction without the generation barrier (CRS-R2)",
+    "file": "src/data/cardReviewTransaction.ts",
+    "command": "npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 3|promoted 4'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "30c17f500187f8b89e9e40388cc8900bfd1da92293bc9aadc343bfdd6bd756da"
+  },
+  {
+    "id": "G2",
+    "defect": "native transaction without the generation barrier (CRS-R2)",
+    "file": "src-tauri/src/card_reviews.rs",
+    "command": "cargo test \u2026 reset_racing_a_queued_rating; cargo test \u2026 a_pre_reset_revision_1_request",
+    "exit": 101,
+    "killed": true,
+    "restored": true,
+    "sha256": "0d8b7cb7f383aed5e2a1dba3861a4aefebb8fd74ebbe47d7f56e24e9de036403"
+  },
+  {
+    "id": "U1",
+    "defect": "UI forgets the pending payload after an unknown outcome (no same-request Try again)",
+    "file": "src/pages/StudyLibrary/useCardReview.ts",
+    "command": "npx vitest run src/pages/StudyLibrary/CardReviewPanel.test.ts -t 'lost acknowledgement'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "ca3ee6e8d33d7b8e0cef8289fb1fa157830e8337677c3277bad23eb3719527e9"
+  },
+  {
+    "id": "U2",
+    "defect": "UI unlocks after an acknowledged write even when the refresh fails",
+    "file": "src/pages/StudyLibrary/useCardReview.ts",
+    "command": "npx vitest run src/pages/StudyLibrary/CardReviewPanel.test.ts -t 'refresh fails'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "ca3ee6e8d33d7b8e0cef8289fb1fa157830e8337677c3277bad23eb3719527e9"
+  }
+]

@@ -1,0 +1,9 @@
+$ git diff --exit-code 73b1597 -- src-tauri/migrations/0001_initial_schema.sql src-tauri/migrations/0002_profile_details.sql src-tauri/migrations/0003_personal_note.sql src-tauri/migrations/0004_app_metadata.sql src-tauri/migrations/0005_flight_log.sql src-tauri/migrations/0006_pilot_toolkit.sql src-tauri/migrations/0007_ai_study.sql src-tauri/migrations/0008_notes.sql src-tauri/migrations/0009_practice_tests.sql src-tauri/migrations/0010_debrief_links.sql src-tauri/migrations/0011_practice_sessions.sql && echo '0001-0011 byte-identical to main 73b1597' && shasum -a 256 src-tauri/migrations/0012_card_reviews.sql && grep -n '0012_card_reviews' src/data/migration-checksums.json src/data/migrations.ts src-tauri/src/lib.rs && python3 -c "import json,hashlib;d=json.load(open('src/data/migration-checksums.json'));h=hashlib.sha256(open('src-tauri/migrations/0012_card_reviews.sql','rb').read()).hexdigest();assert d['0012_card_reviews.sql']==h,(d['0012_card_reviews.sql'],h);print('0012 checksum registered and matching')" && grep -n 'CURRENT_SCHEMA_VERSION: i64 = 12' src-tauri/src/lib.rs
+0001-0011 byte-identical to main 73b1597
+55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e  src-tauri/migrations/0012_card_reviews.sql
+src/data/migration-checksums.json:13:  "0012_card_reviews.sql": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e"
+src/data/migrations.ts:19:import cardReviews from "../../src-tauri/migrations/0012_card_reviews.sql?raw";
+src-tauri/src/lib.rs:103:            sql: include_str!("../migrations/0012_card_reviews.sql"),
+0012 checksum registered and matching
+26:pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 12;
+exit 0

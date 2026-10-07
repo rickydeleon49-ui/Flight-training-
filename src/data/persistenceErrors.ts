@@ -96,3 +96,69 @@ export class PracticeSessionError extends Error {
     this.code = code;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Card review errors (M2-3 source slice C1)                           */
+/* ------------------------------------------------------------------ */
+
+export type CardReviewErrorCode =
+  | "INVALID_ARGUMENT"
+  | "OPERATION_CONFLICT"
+  | "OPERATION_ERASED"
+  | "STALE_GENERATION"
+  | "STALE_REVISION"
+  | "STALE_CONTENT"
+  | "MALFORMED_CARDS"
+  | "CARD_SUSPENDED"
+  | "CARD_FLAGGED"
+  | "CLOCK_BEHIND_LAST_REVIEW"
+  | "NOT_FOUND"
+  | "INVALID_STATE"
+  | "NOT_READY"
+  | "STORAGE_ERROR"
+  | "UNSUPPORTED_DRIVER"
+  | "IPC_TRANSPORT_ERROR";
+
+/**
+ * The fixed message for each card-review refusal. The first fourteen are
+ * also the native allowlist in `src-tauri/src/card_reviews.rs`, word for
+ * word; `UNSUPPORTED_DRIVER` and `IPC_TRANSPORT_ERROR` exist only here.
+ */
+export const CARD_REVIEW_ERROR_MESSAGES: Readonly<Record<CardReviewErrorCode, string>> = Object.freeze({
+  INVALID_ARGUMENT: "The card review request is invalid.",
+  OPERATION_CONFLICT: "This request was already used for a different card review action.",
+  OPERATION_ERASED: "This card review request belongs to history that has been erased.",
+  STALE_GENERATION: "Card reviews for this material were reset after this request was prepared.",
+  STALE_REVISION: "This card changed after this request was prepared.",
+  STALE_CONTENT: "These cards changed after this request was prepared.",
+  MALFORMED_CARDS: "These saved cards can't be reviewed because they're damaged.",
+  CARD_SUSPENDED: "This card is paused.",
+  CARD_FLAGGED: "This card is flagged.",
+  CLOCK_BEHIND_LAST_REVIEW: "The computer's clock is earlier than this card's last review.",
+  NOT_FOUND: "The card or material was not found.",
+  INVALID_STATE: "Saved card review data is not in a state this request can use.",
+  NOT_READY: "Card reviews are not ready yet.",
+  STORAGE_ERROR: "A storage error occurred while saving the card review.",
+  UNSUPPORTED_DRIVER: "Card reviews need a database that can save them in one step.",
+  IPC_TRANSPORT_ERROR: "Desktop communication failure during card review.",
+});
+
+/** Codes the native command may return; transport and driver codes are never native. */
+export function isNativeCardReviewErrorCode(value: unknown): value is CardReviewErrorCode {
+  return (
+    typeof value === "string" &&
+    value !== "UNSUPPORTED_DRIVER" &&
+    value !== "IPC_TRANSPORT_ERROR" &&
+    Object.prototype.hasOwnProperty.call(CARD_REVIEW_ERROR_MESSAGES, value)
+  );
+}
+
+/** A card-review refusal. Its message is always the allowlisted one. */
+export class CardReviewError extends Error {
+  readonly code: CardReviewErrorCode;
+  constructor(code: CardReviewErrorCode, options?: { cause?: unknown }) {
+    super(CARD_REVIEW_ERROR_MESSAGES[code], options);
+    this.name = "CardReviewError";
+    this.code = code;
+  }
+}

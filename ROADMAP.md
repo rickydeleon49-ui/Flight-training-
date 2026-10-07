@@ -1,5 +1,7 @@
 # Her Flight Deck — implementation roadmap
 
+**7 October M2 source update:** material-level card reviews C1 complete independent source review, with migration 0012 and approved `simple-v1` scheduling; the containing PR supplies final CI/merge. See [acceptance](docs/M2_CARD_REVIEW_C1_ACCEPTANCE_2026-10-07.md). Next: [C2 Study Library Review due/History scope and disposable query proof](docs/M2_CARD_REVIEW_C2_SCOPE_PROMPT_2026-10-07.md), before owner approval of new defaults. Installed/signing/release gates remain separate. Earlier dated milestone snapshots remain historical.
+
 **4 October current state:** Structured study import Slice B is [accepted for source integration](docs/STRUCTURED_STUDY_IMPORT_SLICE_B_ACCEPTANCE_2026-10-04.md). The real-user check-in has been waived; installed/release observations remain separate. The [next assignment](docs/M2_PRACTICE_SESSION_SCOPE_PROMPT_2026-10-04.md) prepares one bounded saved/resumable-practice-test scope using this existing M2 design. Remaining retention/versioning decisions and new migration/attempt implementation still require owner scope approval. Earlier check-in and pending-import descriptions below are historical where superseded.
 
 Prepared 24 September 2026. Planning document; no feature implementation or release authorization is implied.

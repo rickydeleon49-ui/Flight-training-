@@ -1,0 +1,52 @@
+mutation Q1: Again cards use the end-of-day bound (CRS-R1 timing)
+file src/data/repositories/cardReviewRepository.ts
+$ npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 1'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ❯ src/data/cardReviewContract.test.ts (60 tests | 2 failed | 58 skipped) 132ms
+       × [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten 54ms
+       × [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten 78ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 58 skipped (60)
+   Start at  23:49:33
+   Duration  376ms (transform 121ms, setup 0ms, import 165ms, tests 132ms, environment 0ms)
+
+(node:36400) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on node > CRS-R1 version-owned due queue with exact boundaries > [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten
+Error: datatype mismatch
+ ❯ query src/data/testing/nodeSqliteDb.ts:93:21
+     91|   };
+     92|   const query = (sql: string, params: SqlValue[]) =>
+     93|     db.prepare(sql).all(...params) as Record<string, unknown>[];
+       |                     ^
+     94|
+     95|   // Initialization: conversion plus validation on one transaction, be…
+ ❯ src/data/testing/nodeSqliteDb.ts:113:16
+ ❯ src/data/connectionOwner.ts:528:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on sqljs > CRS-R1 version-owned due queue with exact boundaries > [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten
+Error: datatype mismatch
+ ❯ e.handleError node_modules/sql.js/dist/sql-wasm.js:90:226
+ ❯ c.step node_modules/sql.js/dist/sql-wasm.js:80:405
+ ❯ query src/data/sqlJsDb.ts:147:24
+    145|       statement.bind(params as never);
+    146|       const rows: Record<string, unknown>[] = [];
+    147|       while (statement.step()) rows.push(statement.getAsObject());
+       |                        ^
+    148|       return rows;
+    149|     } finally {
+ ❯ src/data/sqlJsDb.ts:290:16
+ ❯ src/data/connectionOwner.ts:528:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit 1

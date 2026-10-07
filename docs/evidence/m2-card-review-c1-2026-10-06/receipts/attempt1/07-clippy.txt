@@ -1,0 +1,21 @@
+$ cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-pr70-integration/src-tauri)
+error: the following explicit lifetimes could be elided: 'a
+    --> src/backup.rs:1832:18
+     |
+1832 | fn card_json_str<'a>(value: Option<&'a serde_json::Value>) -> Option<&'a str> {
+     |                  ^^                 ^^                                ^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#needless_lifetimes
+     = note: `-D clippy::needless-lifetimes` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::needless_lifetimes)]`
+help: elide the lifetimes
+     |
+1832 - fn card_json_str<'a>(value: Option<&'a serde_json::Value>) -> Option<&'a str> {
+1832 + fn card_json_str(value: Option<&serde_json::Value>) -> Option<&str> {
+     |
+
+error: could not compile `her-flight-deck` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `her-flight-deck` (lib test) due to 1 previous error
+exit 101
