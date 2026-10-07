@@ -533,7 +533,10 @@ describe("Mac readiness preflight: CLI contract", () => {
     expect(() => parseArgs(["--bogus"])).toThrow(/unknown option/);
   });
 
-  it("documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt", () => {
+  // This functional contract launches three real Node subprocesses, which can
+  // exceed Vitest's default 5 s under CI or host contention. The bound is
+  // case-local; each subprocess keeps its own 60 s hard limit.
+  it("documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt", { timeout: 30_000 }, () => {
     const run = (args: string[]) => spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8", timeout: 60_000 });
     const usage = run(["--bogus-/Users/private-sentinel"]);
     expect(usage.status).toBe(2);

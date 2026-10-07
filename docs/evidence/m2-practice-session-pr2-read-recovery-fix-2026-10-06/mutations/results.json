@@ -1,0 +1,48 @@
+{
+  "all_killed": false,
+  "all_restored": true,
+  "mutations": [
+    {
+      "id": "M1",
+      "mutation": "rejection is not consumed (failure handler removed)",
+      "exit": 1,
+      "killed": true,
+      "restored": true
+    },
+    {
+      "id": "M2",
+      "mutation": "a stale success may publish (no request ownership on success)",
+      "exit": 1,
+      "killed": true,
+      "restored": true
+    },
+    {
+      "id": "M3",
+      "mutation": "a stale failure may publish (no request ownership on failure)",
+      "exit": 1,
+      "killed": true,
+      "restored": true
+    },
+    {
+      "id": "M4",
+      "mutation": "route change/unmount does not invalidate the request",
+      "exit": 0,
+      "killed": false,
+      "restored": true
+    },
+    {
+      "id": "M5",
+      "mutation": "Retry is not locked while a request is in flight",
+      "exit": 1,
+      "killed": true,
+      "restored": true
+    },
+    {
+      "id": "M6",
+      "mutation": "a failed read is shown as a loaded zero count",
+      "exit": 1,
+      "killed": true,
+      "restored": true
+    }
+  ]
+}

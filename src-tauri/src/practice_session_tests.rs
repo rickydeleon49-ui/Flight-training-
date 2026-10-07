@@ -1693,3 +1693,787 @@ fn restore_during_initialization_does_not_publish_stale_readiness() {
     assert_eq!(run_legacy_conversion_at(dir.path()).unwrap(), 0);
     assert!(is_root_ready(dir.path()));
 }
+
+#[test]
+fn req_erase_history_atomic_pruning_and_tombstones() {
+    let dir = TempDir::new("erase_history");
+    let conn = setup_test_db(dir.path());
+    let (v1_id, item_ids) = seed_material_and_v1(&conn, "mat-erase", "Erase History Test");
+    drop(conn);
+
+    // 1. Start and complete attempt on v1
+    let op1 = "11111111-1111-4111-8111-111111111111";
+    let start_res = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": op1,
+            "materialId": "mat-erase",
+            "versionId": v1_id,
+        }),
+    )
+    .unwrap();
+    let att1_id = start_res["attemptId"].as_str().unwrap().to_string();
+
+    let op2 = "22222222-2222-4222-8222-222222222222";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": op2,
+            "attemptId": att1_id,
+            "itemId": item_ids[0],
+            "expectedRevision": 0,
+            "selectedIndex": 1,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+
+    let op3 = "33333333-3333-4333-8333-333333333333";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "complete_attempt",
+            "operationId": op3,
+            "attemptId": att1_id,
+            "expectedRevision": 1,
+        }),
+    )
+    .unwrap();
+
+    // 2. Regenerate practice test: new active version v2, v1 becomes inactive
+    let new_questions = serde_json::json!([
+        {
+            "question": "New Question 1",
+            "options": ["Opt A", "Opt B", "Opt C"],
+            "correctIndex": 0,
+            "explanation": "Exp 1"
+        }
+    ]);
+    save_practice_test_at(
+        dir.path(),
+        "mat-erase",
+        "Erase History Test V2",
+        &new_questions.to_string(),
+        "gemini-1.5-pro",
+    )
+    .unwrap();
+
+    let conn2 = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+    let (v2_id,): (String,) = conn2
+        .query_row(
+            "SELECT id FROM practice_test_versions WHERE source_material_id = 'mat-erase' AND is_active = 1",
+            [],
+            |r| Ok((r.get(0)?,)),
+        )
+        .unwrap();
+    let v2_item_id: String = conn2
+        .query_row(
+            "SELECT id FROM practice_test_items WHERE version_id = ?1",
+            [&v2_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    drop(conn2);
+
+    // 3. Start attempt on v2
+    let op4 = "44444444-4444-4444-8444-444444444444";
+    let start_v2 = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": op4,
+            "materialId": "mat-erase",
+            "versionId": v2_id,
+        }),
+    )
+    .unwrap();
+    let att2_id = start_v2["attemptId"].as_str().unwrap().to_string();
+
+    let op5 = "55555555-5555-4555-8555-555555555555";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": op5,
+            "attemptId": att2_id,
+            "itemId": v2_item_id,
+            "expectedRevision": 0,
+            "selectedIndex": 0,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+
+    // Verify before erase: 2 versions, 2 attempts, 2 responses, 5 operations
+    let check_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+    let ver_count: i64 = check_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_test_versions WHERE history_key = 'mat-erase'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let att_count: i64 = check_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_attempts WHERE source_material_id = 'mat-erase'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let resp_count: i64 = check_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_responses WHERE attempt_id IN (?1, ?2)",
+            [&att1_id, &att2_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let op_count: i64 = check_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-erase'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(ver_count, 2);
+    assert_eq!(att_count, 2);
+    assert_eq!(resp_count, 2);
+    assert_eq!(op_count, 5);
+    drop(check_conn);
+
+    // 4. Execute atomic erase history
+    let erase_op = "66666666-6666-4666-8666-666666666666";
+    let erase_req = serde_json::json!({
+        "action": "erase_history",
+        "operationId": erase_op,
+        "historyKey": "mat-erase",
+    });
+    let erase_res = erase_practice_history_at(dir.path(), &erase_req).unwrap();
+    assert_eq!(erase_res["action"], "erase_history");
+    assert_eq!(erase_res["historyKey"], "mat-erase");
+    assert_eq!(erase_res["erased"], true);
+
+    // Verify after erase:
+    // - attempts removed (0)
+    // - responses removed (0)
+    // - inactive version v1 removed, active version v2 preserved (1)
+    // - practice_tests row preserved
+    // - previous 5 receipts are tombstones: is_erased = 1, result_json = 'null'
+    // - 1 new receipt for erase_history: is_erased = 0
+    let verify_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+    let after_att: i64 = verify_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_attempts WHERE source_material_id = 'mat-erase'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(after_att, 0);
+
+    let after_resp: i64 = verify_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_responses WHERE attempt_id IN (?1, ?2)",
+            [&att1_id, &att2_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(after_resp, 0);
+
+    let after_ver: Vec<(String, i64)> = {
+        let mut stmt = verify_conn
+            .prepare(
+                "SELECT id, is_active FROM practice_test_versions WHERE history_key = 'mat-erase'",
+            )
+            .unwrap();
+        stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect()
+    };
+    assert_eq!(after_ver.len(), 1);
+    assert_eq!(after_ver[0].0, v2_id);
+    assert_eq!(after_ver[0].1, 1);
+
+    let pt_count: i64 = verify_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_tests WHERE source_material_id = 'mat-erase'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(pt_count, 1);
+
+    let tombstoned_count: i64 = verify_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-erase' AND is_erased = 1 AND result_json = 'null'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(tombstoned_count, 5);
+
+    let erase_receipt_count: i64 = verify_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_session_operations WHERE operation_id = ?1 AND action = 'erase_history' AND is_erased = 0",
+            [erase_op],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(erase_receipt_count, 1);
+
+    drop(verify_conn);
+
+    // 5. Old replay on tombstoned receipt fails with InvalidState
+    let replay_old = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": op1,
+            "materialId": "mat-erase",
+            "versionId": v1_id,
+        }),
+    );
+    assert_eq!(
+        replay_old.unwrap_err().code,
+        PracticeSessionErrorCode::InvalidState
+    );
+
+    // 6. Idempotent replay of erase_history succeeds
+    let replay_erase = erase_practice_history_at(dir.path(), &erase_req).unwrap();
+    assert_eq!(replay_erase["action"], "erase_history");
+    assert_eq!(replay_erase["erased"], true);
+
+    // 7. Conflicting erase_history with same operationId but changed payload returns OperationConflict
+    let conflict_erase = erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_history",
+            "operationId": erase_op,
+            "historyKey": "different-key",
+        }),
+    );
+    assert_eq!(
+        conflict_erase.unwrap_err().code,
+        PracticeSessionErrorCode::OperationConflict
+    );
+}
+
+/// Row counts that describe everything a history erasure is allowed to touch
+/// for `mat-erase-mid`: (versions, active versions, attempts, responses,
+/// receipts, tombstoned receipts).
+fn erase_mid_write_counts(path: &std::path::Path) -> (i64, i64, i64, i64, i64, i64) {
+    let conn = Connection::open(path).unwrap();
+    let one = |sql: &str| -> i64 { conn.query_row(sql, [], |r| r.get(0)).unwrap() };
+    (
+        one("SELECT COUNT(*) FROM practice_test_versions WHERE history_key = 'mat-erase-mid'"),
+        one("SELECT COUNT(*) FROM practice_test_versions \
+             WHERE history_key = 'mat-erase-mid' AND is_active = 1"),
+        one("SELECT COUNT(*) FROM practice_attempts a \
+             JOIN practice_test_versions v ON a.version_id = v.id \
+             WHERE v.history_key = 'mat-erase-mid'"),
+        one("SELECT COUNT(*) FROM practice_responses r \
+             JOIN practice_attempts a ON r.attempt_id = a.id \
+             JOIN practice_test_versions v ON a.version_id = v.id \
+             WHERE v.history_key = 'mat-erase-mid'"),
+        one("SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-erase-mid'"),
+        one("SELECT COUNT(*) FROM practice_session_operations \
+             WHERE history_key = 'mat-erase-mid' AND is_erased = 1"),
+    )
+}
+
+#[test]
+fn req_erase_history_mid_write_failure_rolls_back_every_change() {
+    let dir = TempDir::new("erase_mid_write");
+    let conn = setup_test_db(dir.path());
+    let (v1_id, item_ids) = seed_material_and_v1(&conn, "mat-erase-mid", "Erase Mid Write");
+    drop(conn);
+    let db_path = dir.path().join("her-flight-deck.db");
+
+    // One completed attempt on v1, then a regeneration that leaves v1 inactive,
+    // then an unfinished attempt on v2. This is the full set the erasure would
+    // tombstone, prune and receipt in one transaction.
+    let start1 = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": "2a2a2a2a-2a2a-4a2a-8a2a-2a2a2a2a2a2a",
+            "materialId": "mat-erase-mid",
+            "versionId": v1_id,
+        }),
+    )
+    .unwrap();
+    let att1 = start1["attemptId"].as_str().unwrap().to_string();
+
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": "2b2b2b2b-2b2b-4b2b-8b2b-2b2b2b2b2b2b",
+            "attemptId": att1,
+            "itemId": item_ids[0],
+            "expectedRevision": 0,
+            "selectedIndex": 1,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "complete_attempt",
+            "operationId": "2c2c2c2c-2c2c-4c2c-8c2c-2c2c2c2c2c2c",
+            "attemptId": att1,
+            "expectedRevision": 1,
+        }),
+    )
+    .unwrap();
+
+    let new_questions = serde_json::json!([
+        {
+            "question": "Mid Write Question 1",
+            "options": ["Opt A", "Opt B"],
+            "correctIndex": 0,
+            "explanation": "Exp 1"
+        }
+    ]);
+    save_practice_test_at(
+        dir.path(),
+        "mat-erase-mid",
+        "Erase Mid Write V2",
+        &new_questions.to_string(),
+        "gemini-1.5-pro",
+    )
+    .unwrap();
+
+    let conn_v2 = Connection::open(&db_path).unwrap();
+    let v2_id: String = conn_v2
+        .query_row(
+            "SELECT id FROM practice_test_versions WHERE history_key = 'mat-erase-mid' AND is_active = 1",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let v2_item_id: String = conn_v2
+        .query_row(
+            "SELECT id FROM practice_test_items WHERE version_id = ?1",
+            [&v2_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    drop(conn_v2);
+
+    let start2 = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": "2d2d2d2d-2d2d-4d2d-8d2d-2d2d2d2d2d2d",
+            "materialId": "mat-erase-mid",
+            "versionId": v2_id,
+        }),
+    )
+    .unwrap();
+    let att2 = start2["attemptId"].as_str().unwrap().to_string();
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": "2e2e2e2e-2e2e-4e2e-8e2e-2e2e2e2e2e2e",
+            "attemptId": att2,
+            "itemId": v2_item_id,
+            "expectedRevision": 0,
+            "selectedIndex": 0,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+
+    let before = erase_mid_write_counts(&db_path);
+    assert_eq!(
+        before,
+        (2, 1, 2, 2, 5, 0),
+        "seeding must leave two versions, two attempts, two responses and five receipts"
+    );
+
+    // Synthetic mid-write failure: the erasure has already tombstoned receipts
+    // and deleted attempts, responses and the inactive version by the time its
+    // own receipt insert is refused.
+    let conn_trigger = Connection::open(&db_path).unwrap();
+    conn_trigger
+        .execute_batch(
+            "CREATE TRIGGER inject_mid_erase_failure
+             BEFORE INSERT ON practice_session_operations
+             WHEN NEW.action = 'erase_history'
+             BEGIN
+                 SELECT RAISE(FAIL, 'synthetic mid-erase receipt insert failure');
+             END;",
+        )
+        .unwrap();
+    drop(conn_trigger);
+
+    let refused = erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_history",
+            "operationId": "2f2f2f2f-2f2f-4f2f-8f2f-2f2f2f2f2f2f",
+            "historyKey": "mat-erase-mid",
+        }),
+    );
+    assert_eq!(
+        refused.unwrap_err().code,
+        PracticeSessionErrorCode::StorageError
+    );
+
+    // Nothing was kept from the aborted transaction: not a single row changed.
+    assert_eq!(
+        erase_mid_write_counts(&db_path),
+        before,
+        "a mid-write erasure failure must roll back tombstones, prunes and receipt"
+    );
+    let conn_absent = Connection::open(&db_path).unwrap();
+    let erase_receipts: i64 = conn_absent
+        .query_row(
+            "SELECT COUNT(*) FROM practice_session_operations WHERE action = 'erase_history'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(erase_receipts, 0, "a rolled-back erasure leaves no receipt");
+    conn_absent
+        .execute_batch("DROP TRIGGER inject_mid_erase_failure")
+        .unwrap();
+    drop(conn_absent);
+
+    // Safe new erasure with a fresh identity completes and prunes correctly.
+    let erased = erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_history",
+            "operationId": "30303030-3030-4330-8330-303030303030",
+            "historyKey": "mat-erase-mid",
+        }),
+    )
+    .unwrap();
+    assert_eq!(erased["erased"], true);
+    assert_eq!(
+        erase_mid_write_counts(&db_path),
+        (1, 1, 0, 0, 6, 5),
+        "the active version survives while saved attempts, responses and its \
+         inactive version are pruned and earlier receipts become tombstones"
+    );
+
+    let conn_final = Connection::open(&db_path).unwrap();
+    let saved_attempt: i64 = conn_final
+        .query_row("SELECT COUNT(*) FROM practice_attempts", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(
+        saved_attempt, 0,
+        "no attempt may remain under an erased key"
+    );
+    drop(conn_final);
+}
+
+#[test]
+fn req_erase_history_validation_checks() {
+    let dir = TempDir::new("erase_validation");
+    let conn = setup_test_db(dir.path());
+    let _ = seed_material_and_v1(&conn, "mat-val", "Val Test");
+    drop(conn);
+
+    // Non-uuid operationId
+    let bad_uuid = erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_history",
+            "operationId": "not-a-uuid",
+            "historyKey": "mat-val",
+        }),
+    );
+    assert_eq!(
+        bad_uuid.unwrap_err().code,
+        PracticeSessionErrorCode::InvalidArgument
+    );
+
+    // Bad action
+    let bad_action = erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_something_else",
+            "operationId": "11111111-1111-4111-8111-111111111111",
+            "historyKey": "mat-val",
+        }),
+    );
+    assert_eq!(
+        bad_action.unwrap_err().code,
+        PracticeSessionErrorCode::InvalidArgument
+    );
+
+    // Extra keys
+    let extra_keys = erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_history",
+            "operationId": "11111111-1111-4111-8111-111111111111",
+            "historyKey": "mat-val",
+            "extra": true,
+        }),
+    );
+    assert_eq!(
+        extra_keys.unwrap_err().code,
+        PracticeSessionErrorCode::InvalidArgument
+    );
+}
+
+#[test]
+fn req_erase_history_unrelated_isolation_and_safe_new_practice() {
+    let dir = TempDir::new("erase_isolation");
+    let conn = setup_test_db(dir.path());
+    let (v_a, items_a) = seed_material_and_v1(&conn, "mat-A", "Material A");
+    let (v_b, items_b) = seed_material_and_v1(&conn, "mat-B", "Material B");
+    drop(conn);
+
+    // Complete session on mat-A
+    let op_a1 = "aaaa0001-0000-4000-8000-000000000001";
+    let start_a = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": op_a1,
+            "materialId": "mat-A",
+            "versionId": v_a,
+        }),
+    )
+    .unwrap();
+    let att_a = start_a["attemptId"].as_str().unwrap().to_string();
+
+    let op_a2 = "aaaa0002-0000-4000-8000-000000000002";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": op_a2,
+            "attemptId": att_a,
+            "itemId": items_a[0],
+            "expectedRevision": 0,
+            "selectedIndex": 1,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+
+    let op_a3 = "aaaa0003-0000-4000-8000-000000000003";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "complete_attempt",
+            "operationId": op_a3,
+            "attemptId": att_a,
+            "expectedRevision": 1,
+        }),
+    )
+    .unwrap();
+
+    // Complete session on mat-B
+    let op_b1 = "bbbb0001-0000-4000-8000-000000000001";
+    let start_b = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": op_b1,
+            "materialId": "mat-B",
+            "versionId": v_b,
+        }),
+    )
+    .unwrap();
+    let att_b = start_b["attemptId"].as_str().unwrap().to_string();
+
+    let op_b2 = "bbbb0002-0000-4000-8000-000000000002";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": op_b2,
+            "attemptId": att_b,
+            "itemId": items_b[0],
+            "expectedRevision": 0,
+            "selectedIndex": 0,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+
+    let op_b3 = "bbbb0003-0000-4000-8000-000000000003";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "complete_attempt",
+            "operationId": op_b3,
+            "attemptId": att_b,
+            "expectedRevision": 1,
+        }),
+    )
+    .unwrap();
+
+    // Erase history for mat-A only
+    let erase_op = "eeee0001-0000-4000-8000-000000000001";
+    let erase_res = erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_history",
+            "operationId": erase_op,
+            "historyKey": "mat-A",
+        }),
+    )
+    .unwrap();
+    assert_eq!(erase_res["erased"], true);
+
+    // Verify mat-B is completely unaffected
+    let check_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+    let b_atts: i64 = check_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_attempts WHERE source_material_id = 'mat-B' AND status = 'completed'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(b_atts, 1);
+
+    let b_resps: i64 = check_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_responses WHERE attempt_id = ?1",
+            [&att_b],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(b_resps, 1);
+
+    let b_active_receipts: i64 = check_conn
+        .query_row(
+            "SELECT COUNT(*) FROM practice_session_operations WHERE history_key = 'mat-B' AND is_erased = 0",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(b_active_receipts, 3);
+
+    // Verify safe new practice on mat-A using preserved active version
+    drop(check_conn);
+    let new_start_op = "aaaa0004-0000-4000-8000-000000000004";
+    let new_start = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": new_start_op,
+            "materialId": "mat-A",
+            "versionId": v_a,
+        }),
+    )
+    .unwrap();
+    let new_att_a = new_start["attemptId"].as_str().unwrap().to_string();
+    assert_ne!(new_att_a, att_a);
+    assert_eq!(new_start["status"], "in_progress");
+
+    let new_ans_op = "aaaa0005-0000-4000-8000-000000000005";
+    let ans_res = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": new_ans_op,
+            "attemptId": new_att_a,
+            "itemId": items_a[0],
+            "expectedRevision": 0,
+            "selectedIndex": 2,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+    assert_eq!(ans_res["answeredCount"], 1);
+
+    let new_comp_op = "aaaa0006-0000-4000-8000-000000000006";
+    let comp_res = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "complete_attempt",
+            "operationId": new_comp_op,
+            "attemptId": new_att_a,
+            "expectedRevision": 1,
+        }),
+    )
+    .unwrap();
+    assert_eq!(comp_res["status"], "completed");
+}
+
+#[test]
+fn req_erase_history_restart_refusal_and_backup_validation() {
+    let dir = TempDir::new("erase_restart_backup");
+    let conn = setup_test_db(dir.path());
+    let (v1, items) = seed_material_and_v1(&conn, "mat-rst", "Restart Test");
+    drop(conn);
+
+    let op1 = "11112222-3333-4444-8888-000000000001";
+    let start_res = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": op1,
+            "materialId": "mat-rst",
+            "versionId": v1,
+        }),
+    )
+    .unwrap();
+    let att = start_res["attemptId"].as_str().unwrap().to_string();
+
+    let op2 = "11112222-3333-4444-8888-000000000002";
+    save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "record_response",
+            "operationId": op2,
+            "attemptId": att,
+            "itemId": items[0],
+            "expectedRevision": 0,
+            "selectedIndex": 0,
+            "isDontKnow": false,
+        }),
+    )
+    .unwrap();
+
+    let erase_op = "11112222-3333-4444-8888-000000000003";
+    erase_practice_history_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "erase_history",
+            "operationId": erase_op,
+            "historyKey": "mat-rst",
+        }),
+    )
+    .unwrap();
+
+    // Reopen database connection to simulate complete app restart
+    let restart_conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+
+    // Verify backup / startup schema-11 semantics validator passes on the erased DB
+    let validation_result = crate::backup::verify_schema_11_semantics(&restart_conn);
+    assert!(
+        validation_result.is_ok(),
+        "verify_schema_11_semantics must accept database with history erasure receipts: {:?}",
+        validation_result
+    );
+    drop(restart_conn);
+
+    // Replay of old operation after restart is refused
+    let late_replay = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action": "start_or_resume",
+            "operationId": op1,
+            "materialId": "mat-rst",
+            "versionId": v1,
+        }),
+    );
+    assert_eq!(
+        late_replay.unwrap_err().code,
+        PracticeSessionErrorCode::InvalidState
+    );
+}

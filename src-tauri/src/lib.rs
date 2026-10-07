@@ -145,6 +145,7 @@ pub fn run() {
             study_packet::pick_study_packet,
             study_packet::save_structured_study_material_atomically,
             practice_sessions::save_practice_session_atomically,
+            practice_sessions::erase_practice_history_atomically,
             practice_sessions::save_practice_test_atomically,
             practice_sessions::remove_practice_test_atomically,
             practice_sessions::run_practice_legacy_conversion,

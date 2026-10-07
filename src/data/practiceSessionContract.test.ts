@@ -1120,5 +1120,314 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       ).resolves.toBeUndefined();
       expect(removeCalledWith).toEqual({ sourceMaterialId: "mat" });
     });
+
+    it("PR2: atomic history erasure prunes attempts, responses, inactive versions, and tombstones receipts", async () => {
+      const repo = practiceSessionRepository(db);
+      const matId = "mat-erase-pr2";
+      await seedMaterial(matId, "Erase Test");
+
+      // Save v1 test
+      await db.savePracticeTestAtomically!({
+        sourceMaterialId: matId,
+        title: "Erase Test V1",
+        questions: [{ question: "Q1", options: ["A", "B"], correctIndex: 0, explanation: "E1", sourcePage: 1 }],
+        model: "m1",
+      });
+
+      const activeV1 = (await repo.getActiveVersion(matId))!;
+      const op1 = "11111111-1111-4111-8111-111111111111";
+      const startRes = await repo.saveSessionAction({
+        action: "start_or_resume",
+        operationId: op1,
+        materialId: matId,
+        versionId: activeV1.version.id,
+      });
+      assertSessionState(startRes);
+
+      const op2 = "22222222-2222-4222-8222-222222222222";
+      await repo.saveSessionAction({
+        action: "record_response",
+        operationId: op2,
+        attemptId: startRes.attemptId,
+        itemId: activeV1.items[0]!.id,
+        expectedRevision: 0,
+        selectedIndex: 0,
+        isDontKnow: false,
+      });
+
+      const op3 = "33333333-3333-4333-8333-333333333333";
+      await repo.saveSessionAction({
+        action: "complete_attempt",
+        operationId: op3,
+        attemptId: startRes.attemptId,
+        expectedRevision: 1,
+      });
+
+      // Regenerate test: creates v2, v1 becomes inactive
+      await db.savePracticeTestAtomically!({
+        sourceMaterialId: matId,
+        title: "Erase Test V2",
+        questions: [{ question: "Q2", options: ["C", "D"], correctIndex: 1, explanation: "E2", sourcePage: 2 }],
+        model: "m2",
+      });
+
+      const activeV2 = (await repo.getActiveVersion(matId))!;
+      expect(activeV2.version.id).not.toBe(activeV1.version.id);
+
+      // Start attempt on v2
+      const op4 = "44444444-4444-4444-8444-444444444444";
+      const startV2Res = await repo.saveSessionAction({
+        action: "start_or_resume",
+        operationId: op4,
+        materialId: matId,
+        versionId: activeV2.version.id,
+      });
+      assertSessionState(startV2Res);
+
+      // Verify counts before erasure
+      const attsBefore = await db.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
+      expect(attsBefore).toHaveLength(2);
+      const versBefore = await db.select("SELECT id FROM practice_test_versions WHERE history_key = ?", [matId]);
+      expect(versBefore).toHaveLength(2);
+      const opsBefore = await db.select("SELECT operation_id FROM practice_session_operations WHERE history_key = ?", [matId]);
+      expect(opsBefore).toHaveLength(4);
+
+      // Execute atomic history erasure
+      const eraseOp = "55555555-5555-4555-8555-555555555555";
+      const eraseRes = await repo.eraseHistory({
+        action: "erase_history",
+        operationId: eraseOp,
+        historyKey: matId,
+      });
+      expect(eraseRes).toEqual({
+        action: "erase_history",
+        historyKey: matId,
+        erased: true,
+      });
+
+      // Verify attempts and responses are removed
+      const attsAfter = await db.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
+      expect(attsAfter).toHaveLength(0);
+      const respsAfter = await db.select("SELECT id FROM practice_responses WHERE attempt_id IN (?, ?)", [startRes.attemptId, startV2Res.attemptId]);
+      expect(respsAfter).toHaveLength(0);
+
+      // Inactive v1 is pruned; active v2 is preserved
+      const versAfter = await db.select<{ id: string; is_active: number }>("SELECT id, is_active FROM practice_test_versions WHERE history_key = ?", [matId]);
+      expect(versAfter).toHaveLength(1);
+      expect(versAfter[0]?.id).toBe(activeV2.version.id);
+      expect(versAfter[0]?.is_active).toBe(1);
+
+      // practice_tests row is preserved
+      const ptAfter = await db.select("SELECT source_material_id FROM practice_tests WHERE source_material_id = ?", [matId]);
+      expect(ptAfter).toHaveLength(1);
+
+      // Previous receipts converted to tombstones (is_erased = 1, result_json = 'null')
+      const tombstones = await db.select<{ is_erased: number; result_json: string }>(
+        "SELECT is_erased, result_json FROM practice_session_operations WHERE history_key = ? AND is_erased = 1",
+        [matId],
+      );
+      expect(tombstones).toHaveLength(4);
+      for (const t of tombstones) {
+        expect(t.result_json).toBe("null");
+      }
+
+      // Replay of old tombstoned operation is refused with INVALID_STATE
+      await expect(
+        repo.saveSessionAction({
+          action: "start_or_resume",
+          operationId: op1,
+          materialId: matId,
+          versionId: activeV1.version.id,
+        }),
+      ).rejects.toMatchObject({ code: "INVALID_STATE" });
+
+      // Idempotent replay of erase succeeds
+      const replayErase = await repo.eraseHistory({
+        action: "erase_history",
+        operationId: eraseOp,
+        historyKey: matId,
+      });
+      expect(replayErase).toEqual({
+        action: "erase_history",
+        historyKey: matId,
+        erased: true,
+      });
+
+      // Conflicting erase with changed payload returns OPERATION_CONFLICT
+      await expect(
+        repo.eraseHistory({
+          action: "erase_history",
+          operationId: eraseOp,
+          historyKey: "other-key",
+        }),
+      ).rejects.toMatchObject({ code: "OPERATION_CONFLICT" });
+
+      // Preserved active version is usable for fresh practice session
+      const freshOp = "66666666-6666-4666-8666-666666666666";
+      const freshStart = await repo.saveSessionAction({
+        action: "start_or_resume",
+        operationId: freshOp,
+        materialId: matId,
+        versionId: activeV2.version.id,
+      });
+      assertSessionState(freshStart);
+      expect(freshStart.versionId).toBe(activeV2.version.id);
+    });
+
+    it("PR2: atomic history erasure on sqlJsDb with storage failure rolls back cleanly", async () => {
+      const { createSqlJsDatabase } = await import("./sqlJsDb");
+      const stored = new Map<string, string>();
+      let storageFails = false;
+
+      Object.defineProperty(globalThis, "localStorage", {
+        value: {
+          getItem: (key: string) => stored.get(key) ?? null,
+          setItem: (key: string, value: string) => {
+            if (storageFails) throw new Error("quota exceeded");
+            stored.set(key, value);
+          },
+        },
+        configurable: true,
+        writable: true,
+      });
+
+      const browserDb = await createSqlJsDatabase();
+      const matId = "mat-browser-erase";
+      await browserDb.execute(
+        `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority, created_at, updated_at)
+         VALUES ('${matId}', 'Browser Erase', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}')`,
+      );
+      await browserDb.savePracticeTestAtomically!({
+        sourceMaterialId: matId,
+        title: "Browser Erase Test",
+        questions: [{ question: "Q1", options: ["A", "B"], correctIndex: 0, explanation: "", sourcePage: null }],
+        model: "test-model",
+      });
+
+      const repo = practiceSessionRepository(browserDb);
+      const active = (await repo.getActiveVersion(matId))!;
+      const startRes = await repo.saveSessionAction({
+        action: "start_or_resume",
+        operationId: "11111111-2222-4333-8444-555555555555",
+        materialId: matId,
+        versionId: active.version.id,
+      });
+      assertSessionState(startRes);
+
+      // Trigger storage failure during erase
+      storageFails = true;
+      await expect(
+        repo.eraseHistory({
+          action: "erase_history",
+          operationId: "99999999-9999-4999-8999-999999999999",
+          historyKey: matId,
+        }),
+      ).rejects.toThrow("Browser storage refused");
+      storageFails = false;
+
+      // Rolled back: attempt still exists
+      const attemptsAfterFail = await browserDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
+      expect(attemptsAfterFail).toHaveLength(1);
+
+      // Successful erase
+      const eraseRes = await repo.eraseHistory({
+        action: "erase_history",
+        operationId: "88888888-8888-4888-8888-888888888888",
+        historyKey: matId,
+      });
+      expect(eraseRes.erased).toBe(true);
+
+      const attemptsAfterSuccess = await browserDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matId]);
+      expect(attemptsAfterSuccess).toHaveLength(0);
+    });
+
+    it("PR2: sqlJsDb unrelated-history isolation and restart refusal of late old replay", async () => {
+      const { createSqlJsDatabase } = await import("./sqlJsDb");
+      const stored = new Map<string, string>();
+
+      Object.defineProperty(globalThis, "localStorage", {
+        value: {
+          getItem: (key: string) => stored.get(key) ?? null,
+          setItem: (key: string, value: string) => stored.set(key, value),
+        },
+        configurable: true,
+        writable: true,
+      });
+
+      const browserDb = await createSqlJsDatabase();
+      const matA = "mat-browser-a";
+      const matB = "mat-browser-b";
+
+      await browserDb.execute(
+        `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority, created_at, updated_at)
+         VALUES ('${matA}', 'Browser A', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}'),
+                ('${matB}', 'Browser B', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}')`,
+      );
+
+      await browserDb.savePracticeTestAtomically!({
+        sourceMaterialId: matA,
+        title: "Test A",
+        questions: [{ question: "QA", options: ["1", "2"], correctIndex: 0, explanation: "", sourcePage: null }],
+        model: "test-model",
+      });
+
+      await browserDb.savePracticeTestAtomically!({
+        sourceMaterialId: matB,
+        title: "Test B",
+        questions: [{ question: "QB", options: ["3", "4"], correctIndex: 1, explanation: "", sourcePage: null }],
+        model: "test-model",
+      });
+
+      const repoA = practiceSessionRepository(browserDb);
+      const activeA = (await repoA.getActiveVersion(matA))!;
+      const opA1 = "aaaa1111-2222-4333-8444-555555555555";
+      const startA = await repoA.saveSessionAction({
+        action: "start_or_resume",
+        operationId: opA1,
+        materialId: matA,
+        versionId: activeA.version.id,
+      });
+      assertSessionState(startA);
+
+      const activeB = (await repoA.getActiveVersion(matB))!;
+      const opB1 = "bbbb1111-2222-4333-8444-555555555555";
+      const startB = await repoA.saveSessionAction({
+        action: "start_or_resume",
+        operationId: opB1,
+        materialId: matB,
+        versionId: activeB.version.id,
+      });
+      assertSessionState(startB);
+
+      // Erase only matA
+      const eraseOp = "eeee1111-2222-4333-8444-555555555555";
+      await repoA.eraseHistory({
+        action: "erase_history",
+        operationId: eraseOp,
+        historyKey: matA,
+      });
+
+      // matB attempts are untouched
+      const bAttempts = await browserDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matB]);
+      expect(bAttempts).toHaveLength(1);
+
+      // Simulate browser restart by creating new database from stored localStorage
+      const restartedDb = await createSqlJsDatabase();
+      const restartedRepo = practiceSessionRepository(restartedDb);
+
+      // Replay of old opA1 is refused with INVALID_STATE
+      await expect(
+        restartedRepo.saveSessionAction({
+          action: "start_or_resume",
+          operationId: opA1,
+          materialId: matA,
+          versionId: activeA.version.id,
+        }),
+      ).rejects.toMatchObject({ code: "INVALID_STATE" });
+
+      // matB still has attempt after restart
+      const bAttemptsAfterRestart = await restartedDb.select("SELECT id FROM practice_attempts WHERE source_material_id = ?", [matB]);
+      expect(bAttemptsAfterRestart).toHaveLength(1);
+    });
   });
 });

@@ -1,14 +1,18 @@
 // @vitest-environment jsdom
-import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { createElement as h, type ContextType } from "react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { createRepositories, type Repositories } from "@/data/repositories";
+import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import type { PracticeTest } from "@/domain/types";
 import { PracticeTestPanel } from "./PracticeTestPanel";
-
-afterEach(cleanup);
+import { AppDataContext, EMPTY_DATA } from "@/state/AppDataContext";
 
 describe("PracticeTestPanel", () => {
+  let db: TestDatabase;
+  let repos: Repositories;
+
   const sampleTest: PracticeTest = {
     sourceMaterialId: "mat-1",
     title: "Traffic Pattern Operations",
@@ -34,8 +38,38 @@ describe("PracticeTestPanel", () => {
     updatedAt: "2026-09-01T12:00:00.000Z",
   };
 
-  it("renders the first question with options in radiogroup", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  beforeEach(async () => {
+    db = await createNodeSqliteDatabase();
+    repos = createRepositories(db);
+    await repos.documents.create({ id: sampleTest.sourceMaterialId, title: sampleTest.title });
+    await repos.documents.savePracticeTest(sampleTest);
+    HTMLDialogElement.prototype.showModal = function () {
+      this.setAttribute("open", "");
+    };
+    HTMLDialogElement.prototype.close = function () {
+      this.removeAttribute("open");
+    };
+  });
+
+  afterEach(() => {
+    cleanup();
+    db?.close();
+  });
+
+  async function renderPanel(ui: React.ReactElement) {
+    const value = {
+      repositories: repos,
+      data: EMPTY_DATA,
+      status: "ready",
+      error: null,
+    } as ContextType<typeof AppDataContext>;
+    const view = render(h(AppDataContext.Provider, { value }, ui));
+    await screen.findByText("Question 1 of 2");
+    return view;
+  }
+
+  it("renders the first question with options in radiogroup", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     expect(screen.getByText("Question 1 of 2")).toBeTruthy();
     expect(screen.getByText("Source p. 42")).toBeTruthy();
@@ -48,62 +82,68 @@ describe("PracticeTestPanel", () => {
     expect(options[2]?.textContent).toContain("1,500 feet AGL");
   });
 
-  it("reveals explanation and marks answer as correct when choosing correct option", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  it("reveals explanation and marks answer as correct when choosing correct option", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
     fireEvent.click(options[1]!); // 1,000 feet AGL is correct
 
-    expect(screen.getByText("Correct")).toBeTruthy();
+    await screen.findByText("Correct");
     expect(screen.getByText(/Standard pattern altitude is 1,000 feet AGL/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Continue" })).toBeTruthy();
+    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
 
     // Radio buttons should be disabled once revealed
-    for (const opt of options) {
+    for (const opt of screen.getAllByRole("radio")) {
       expect(opt.hasAttribute("disabled")).toBe(true);
     }
   });
 
-  it("reveals explanation and marks answer as incorrect when choosing wrong option", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  it("reveals explanation and marks answer as incorrect when choosing wrong option", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
     fireEvent.click(options[0]!); // 800 feet AGL is wrong
 
-    expect(screen.getByText("Not quite")).toBeTruthy();
+    await screen.findByText("Not quite");
     expect(screen.getByText(/Standard pattern altitude is 1,000 feet AGL/)).toBeTruthy();
   });
 
-  it("navigates through questions and calculates final score, allowing retake", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  it("navigates through questions and calculates final score, allowing retake", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     // Q1: answer correctly
     fireEvent.click(screen.getAllByRole("radio")[1]!);
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await screen.findByText("Correct");
+    const cont1 = screen.getByRole("button", { name: "Continue" });
+    await waitFor(() => expect(cont1.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(cont1);
 
     // Q2: answer incorrectly
-    expect(screen.getByText("Question 2 of 2")).toBeTruthy();
-    expect(screen.getByText("Check source")).toBeTruthy(); // sourcePage is null
+    await screen.findByText("Question 2 of 2");
+    expect(screen.getByText("Check source")).toBeTruthy();
     fireEvent.click(screen.getAllByRole("radio")[0]!); // Crosswind is wrong
 
-    expect(screen.getByText("Not quite")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "See score" })).toBeTruthy();
+    await screen.findByText("Not quite");
+    const scoreBtn = screen.getByRole("button", { name: "See score" });
+    await waitFor(() => expect(scoreBtn.hasAttribute("disabled")).toBe(false));
 
     // Finish test
-    fireEvent.click(screen.getByRole("button", { name: "See score" }));
+    fireEvent.click(scoreBtn);
 
-    expect(screen.getByText("Practice test complete")).toBeTruthy();
+    await screen.findByText("Practice test complete");
     expect(screen.getByText("1 of 2 correct")).toBeTruthy();
 
     // Retake
     const retakeButton = screen.getByRole("button", { name: "Retake this test" });
+    await waitFor(() => expect(retakeButton.hasAttribute("disabled")).toBe(false));
     fireEvent.click(retakeButton);
 
-    expect(screen.getByText("Question 1 of 2")).toBeTruthy();
+    await screen.findByText("Question 1 of 2");
   });
 
-  it("supports keyboard navigation with arrows, Home, End, Space and Enter", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  it("supports keyboard navigation with arrows, Home, End, Space and Enter", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
     // Only one option in tab order initially
@@ -142,64 +182,72 @@ describe("PracticeTestPanel", () => {
     fireEvent.keyDown(options[1]!, { key: "Enter" });
 
     // Answer should now be revealed and focus moved to Continue
-    expect(screen.getByText("Correct")).toBeTruthy();
-    expect(options[1]?.getAttribute("aria-label")).toContain("Correct answer");
+    await screen.findByText("Correct");
+    expect(screen.getAllByRole("radio")[1]?.getAttribute("aria-label")).toContain("Correct answer");
     const continueBtn = screen.getByRole("button", { name: "Continue" });
     expect(document.activeElement).toBe(continueBtn);
   });
 
-  it("moves focus to Continue on mouse click, and to first option of next question on Continue", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  it("moves focus to Continue on mouse click, and to first option of next question on Continue", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
     fireEvent.click(options[0]!);
 
-    expect(screen.getByText("Not quite")).toBeTruthy();
+    await screen.findByText("Not quite");
     const continueBtn = screen.getByRole("button", { name: "Continue" });
     expect(document.activeElement).toBe(continueBtn);
 
     // Click Continue and verify focus moves to first option of Question 2
+    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
     fireEvent.click(continueBtn);
-    expect(screen.getByText("Question 2 of 2")).toBeTruthy();
+    await screen.findByText("Question 2 of 2");
     const nextOptions = screen.getAllByRole("radio");
     expect(document.activeElement).toBe(nextOptions[0]);
     expect(nextOptions[0]?.getAttribute("tabindex")).toBe("0");
   });
 
-  it("moves focus to Continue on Space, and to See score after final question answer selection", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  it("moves focus to Continue on Space, and to See score after final question answer selection", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
     // Press Space on option 1 (Question 1)
     fireEvent.keyDown(options[1]!, { key: " " });
 
-    expect(screen.getByText("Correct")).toBeTruthy();
+    await screen.findByText("Correct");
     const continueBtn = screen.getByRole("button", { name: "Continue" });
     expect(document.activeElement).toBe(continueBtn);
 
     // Advance to Question 2 (final question)
+    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
     fireEvent.click(continueBtn);
-    expect(screen.getByText("Question 2 of 2")).toBeTruthy();
+    await screen.findByText("Question 2 of 2");
     const q2Options = screen.getAllByRole("radio");
     expect(document.activeElement).toBe(q2Options[0]);
 
     // Select final question answer with Enter
     fireEvent.keyDown(q2Options[1]!, { key: "Enter" });
+    await screen.findByText("Correct");
     const seeScoreBtn = screen.getByRole("button", { name: "See score" });
     expect(document.activeElement).toBe(seeScoreBtn);
   });
 
-  it("moves focus to See score when final question is selected via mouse click or Space", () => {
-    render(h(PracticeTestPanel, { practiceTest: sampleTest }));
+  it("moves focus to See score when final question is selected via mouse click or Space", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     // Advance to final question
     fireEvent.click(screen.getAllByRole("radio")[0]!);
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await screen.findByText("Not quite");
+    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(continueBtn);
 
     // Click final question option
+    await screen.findByText("Question 2 of 2");
     const finalOptions = screen.getAllByRole("radio");
     fireEvent.click(finalOptions[0]!);
 
+    await screen.findByText("Not quite");
     const seeScoreBtn = screen.getByRole("button", { name: "See score" });
     expect(document.activeElement).toBe(seeScoreBtn);
   });

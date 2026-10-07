@@ -1,0 +1,4 @@
+$ git diff --check HEAD  -> exit 0
+
+untracked files checked: 162; files with whitespace problems (counted): 0
+preserved earlier receipts with verbatim-log whitespace (not edited, not counted): 0

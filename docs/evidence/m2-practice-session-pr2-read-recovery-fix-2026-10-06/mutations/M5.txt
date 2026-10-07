@@ -1,0 +1,35 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:18073) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts (12 tests | 1 failed) 839ms
+     × a second Retry while one is in flight sends no extra reads, and the held result still publishes 62ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts > M2UI-R14 MaterialDetail practice metadata reads > a second Retry while one is in flight sends no extra reads, and the held result still publishes
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts:266:29
+    264|       fireEvent.click(retry);
+    265|     });
+    266|     expect(conversionReads).toBe(2);
+       |                             ^
+    267|     await act(async () => {
+    268|       held!.resolveWith([{ legacy_migrated_at: "2026-10-06T10:00:00.00…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  21:40:32
+   Duration  1.49s (transform 226ms, setup 0ms, import 327ms, tests 839ms, environment 237ms)
+

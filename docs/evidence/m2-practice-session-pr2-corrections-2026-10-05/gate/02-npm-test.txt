@@ -1,0 +1,273 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:15626) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15620) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15627) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15621) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15624) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15625) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15622) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15619) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/repositories/documentRepository.test.ts (25 tests) 2700ms
+     ✓ gives up boundedly on saveMaterialsAtomically if the lock never clears  1122ms
+     ✓ times out boundedly when material save encounters permanent lock  1114ms
+ ✓ src/pages/Questions/Questions.paging.test.ts (3 tests) 2495ms
+     ✓ shows a page at a time, keeps every question reachable, and filters the whole list  2384ms
+ ✓ src/logic/releaseSafety.test.ts (52 tests | 1 skipped) 3128ms
+     ✓ rejects malformed versions via CLI  399ms
+       ✓ reports inspection error (status 2) on inconsistent declared directory size, truncated variable fields, malformed EOCD bounds, and unsupported layouts  392ms
+       ✓ generates Fixture C (illustrated charts, 60 pages) deterministically matching accepted input metrics  402ms
+       ✓ executes generate-pdf-fixtures CLI script producing exact fixture output  307ms
+(node:15877) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/StudyLibrary/MaterialDetailGemini.test.ts (10 tests) 2765ms
+     ✓ prevents duplicate Gemini study aid calls when activated repeatedly during in-flight generation  423ms
+     ✓ starting study aid on material A blocks practice test on material B across navigation until A resolves  403ms
+     ✓ starting practice test on material A blocks study aid on material B across navigation until A resolves  353ms
+ ✓ src/pages/FlightJournal/quickDebrief.test.ts (21 tests) 2975ms
+     ✓ creates a quick debrief with reflections, confidence, and deliberate action and question, persisting to real SQLite  313ms
+     ✓ save safety 1: durable pre-write identity protects against interruption after journal commit, action commit, and question commit without duplicate records  304ms
+(node:15874) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15879) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts (21 tests) 3287ms
+     ✓ previews the packet, imports it as a new material and opens it  433ms
+(node:15878) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceSessionContract.test.ts (25 tests) 978ms
+ ✓ src/data/structuredImport.test.ts (69 tests) 1638ms
+(node:15876) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/practiceStartupValidation.test.ts (10 tests) 1990ms
+     ✓ matches every native accept/refuse outcome  964ms
+(node:15885) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/components/dailyPlan/DailyPlanCard.test.ts (20 tests) 1663ms
+ ✓ src/pages/StudyLibrary/StudyLibrary.test.ts (2 tests) 1509ms
+   ✓ shows a bounded first page, loads more, and searches all materials  1016ms
+   ✓ opens add material dialog and closes it when creation succeeds  492ms
+ ✓ src/logic/macReadinessPreflight.test.ts (34 tests) 1090ms
+     ✓ the real runner enforces its timeout, output cap and missing-command result  319ms
+     ✓ documents its exit codes through the real script: usage 2, help 0, a FAIL 1 with a parseable receipt  625ms
+(node:15889) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/FlightJournal/debriefLinks.test.ts (12 tests) 1033ms
+     ✓ 1. deliberate workflow: turns improvement into action, links study material and upcoming lesson, and saves atomically  384ms
+(node:15930) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/acceptance/m1Workflow.acceptance.test.ts (2 tests) 1086ms
+     ✓ runs the whole workflow, survives a restart, retries safely, and stays honest after deletions  909ms
+(node:15927) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15931) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/StudyLibrary/MaterialFormDialog.test.ts (12 tests) 1094ms
+ ✓ src/state/editorSafety.test.ts (10 tests) 967ms
+   ✓ preserves actual material typing through refresh, navigation and database save  324ms
+ ✓ src/pages/StudyLibrary/materialSaveIntegration.test.ts (3 tests) 1015ms
+   ✓ a failed save leaves no rows and keeps the import; the retry commits once and keeps the file  433ms
+   ✓ cancelling after a failed save discards only that new, never-committed import  362ms
+ ✓ src/pages/StudyLibrary/MaterialDetailImport.test.ts (4 tests) 810ms
+     ✓ TB-UI-REGEN-01: regenerating an imported guide or test warns that Gemini will replace it  412ms
+ ✓ src/components/ui/Dialog.fallback.test.ts (30 tests) 625ms
+ ✓ src/pages/Questions/Questions.drafts.test.ts (14 tests) 8118ms
+     ✓ keep a draft when a new question pushes its row off the page, and restore it after Show more  1219ms
+     ✓ keep a draft across filter changes and paging  1768ms
+     ✓ returns to one page when switching away and back, before and after expanding the other filter  3188ms
+     ✓ does not reset when the same filter is chosen again  1194ms
+(node:15933) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15935) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15934) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/FlightJournal/debriefContract.test.ts (2 tests) 504ms
+     ✓ create, lost-response retry, deliberate edit, and both withdrawals  489ms
+ ✓ src/pages/StudyLibrary/MaterialDetailOffline.test.ts (11 tests) 5619ms
+     ✓ keeps the saved guide, cards and practice test usable with Gemini disconnected  802ms
+     ✓ keeps saved content usable while the Gemini status is still loading  594ms
+     ✓ keeps saved content usable when the Gemini status check fails  543ms
+     ✓ explains a missing PDF and keeps saved content, with regeneration disabled  545ms
+     ✓ explains a replaced unsupported source and keeps saved content  524ms
+     ✓ explains a replaced oversized source and keeps saved content  507ms
+     ✓ keeps saved content when the material no longer has a file attached  396ms
+     ✓ offers regeneration for both saved items only when connected and the file is eligible  427ms
+     ✓ keeps another material's saved content usable while a generation runs elsewhere, and a late result changes nothing  780ms
+(node:15936) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15938) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/state/legacyWebKitStartup.test.ts (1 test) 410ms
+   ✓ starts fresh and adds a material without structuredClone, randomUUID or modal dialogs  409ms
+ ✓ src/components/quickfind/QuickFind.test.ts (4 tests) 494ms
+(node:15937) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15941) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/components/dailyPlan/DailyPlanStart.test.ts (3 tests) 416ms
+(node:15942) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/logic/debriefCharacterization.test.ts (4 tests) 169ms
+ ✓ src/data/repositories/importStudyPacket.test.ts (15 tests) 241ms
+(node:15940) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/StudyLibrary/PracticeTestPanel.test.ts (8 tests) 709ms
+ ✓ src/pages/PilotToolkit/PilotToolkit.test.ts (6 tests) 306ms
+ ✓ src/logic/studyPacket/fixtures.test.ts (164 tests) 182ms
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2.test.ts (10 tests) 1317ms
+     ✓ resumes in-progress attempt at nextUnansweredOrdinal across remount  333ms
+(node:15946) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/logic/toolkitDefaults.test.ts (11 tests) 151ms
+(node:15947) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/repositories/financeRepository.test.ts (10 tests) 109ms
+(node:15948) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/repositories/appRepository.test.ts (5 tests) 126ms
+(node:15950) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/repositories/noteRepository.test.ts (5 tests) 82ms
+(node:15949) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/acceptance/m1Upgrade.acceptance.test.ts (2 tests) 122ms
+ ✓ src/logic/studyPacket/regressions.test.ts (41 tests) 95ms
+stderr | src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+ ✓ src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts (10 tests) 612ms
+ ✓ src/components/ui/Dialog.test.ts (3 tests) 113ms
+(node:15952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/repositories/profileRepository.test.ts (5 tests) 116ms
+ ✓ src/logic/studyPacket/jitless.test.ts (2 tests) 61ms
+(node:15953) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/starter.test.ts (4 tests) 78ms
+(node:15954) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/repositories/toolkitRepository.test.ts (4 tests) 70ms
+(node:15958) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15955) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/lib/id.test.ts (7 tests) 90ms
+ ✓ src/data/migrations.test.ts (5 tests) 32ms
+ ✓ src/logic/actions.test.ts (27 tests) 20ms
+ ✓ src/logic/dailyPlan.test.ts (29 tests) 17ms
+(node:15961) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/materialSaveContract.test.ts (1 test) 33ms
+ ✓ src/logic/recommendations.test.ts (18 tests) 23ms
+(node:15959) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/data/repositories/journalRepository.test.ts (1 test) 38ms
+ ✓ src/logic/finance.test.ts (16 tests) 17ms
+ ✓ src/logic/aiLimits.test.ts (12 tests) 18ms
+ ✓ src/services/studyPackets.test.ts (13 tests) 24ms
+ ✓ src/lib/backups.test.ts (8 tests) 22ms
+ ✓ src/state/useMaterialNotes.test.ts (8 tests) 46ms
+ ✓ src/logic/toolkit.test.ts (5 tests) 14ms
+ ✓ src/logic/feedback.test.ts (5 tests) 14ms
+ ✓ src/logic/quickFind.test.ts (11 tests) 19ms
+ ✓ src/logic/studyPacket/diagnostics.test.ts (14 tests) 14ms
+ ✓ src/state/useLocalToday.test.ts (5 tests) 34ms
+ ✓ src/logic/studyPacket/validator.test.ts (8 tests) 13ms
+ ✓ src/logic/dataSafety.test.ts (20 tests) 10ms
+ ✓ src/logic/library.test.ts (5 tests) 14ms
+ ✓ src/state/useDraftRecovery.test.ts (3 tests) 18ms
+ ✓ src/logic/keyDates.test.ts (7 tests) 16ms
+ ✓ src/logic/preparation.test.ts (12 tests) 13ms
+ ✓ src/logic/dashboard.test.ts (10 tests) 9ms
+ ✓ src/logic/progress.test.ts (16 tests) 10ms
+ ✓ src/logic/flightLog.test.ts (5 tests) 8ms
+ ✓ src/services/documents.test.ts (18 tests) 10ms
+ ✓ src/services/backups.test.ts (5 tests) 5ms
+ ✓ src/logic/aiSafety.test.ts (6 tests) 10ms
+ ✓ src/data/migrationSafety.test.ts (69 tests) 7ms
+ ✓ src/logic/encouragement.test.ts (9 tests) 5ms
+ ✓ src/logic/documentRecovery.test.ts (3 tests) 5ms
+ ✓ src/lib/image.test.ts (7 tests) 3ms
+ ✓ src/lib/drafts.test.ts (7 tests) 5ms
+ ✓ src/lib/platform.test.ts (2 tests) 2ms
+ ✓ src/logic/notes.test.ts (8 tests) 4ms
+ ✓ src/logic/studyPacket/notices.test.ts (2 tests) 3ms
+ ✓ src/logic/pendingDeletes.test.ts (7 tests) 4ms
+ ✓ src/logic/pdfParts.test.ts (2 tests) 2ms
+ ✓ src/components/layout/shell.css.test.ts (1 test) 1ms
+ ↓ src/logic/quickFind.bench.test.ts (1 test | 1 skipped)
+ ↓ src/pages/StudyLibrary/StudyLibrary.bench.test.ts (1 test | 1 skipped)
+ ↓ src/perf/appResponsiveness.bench.test.ts (1 test | 1 skipped)
+ ✓ src/data/singleConnectionDrivers.test.ts (1385 tests) 24745ms
+ ✓ src/perf/studyLibraryScenarios.test.ts (11 tests) 25826ms
+     ✓ lists exactly the answer key's ids and order on the real page for every scenario  12744ms
+     ✓ measures a stated expanded display of 1,000 cards, and a query from it returns to 100  11258ms
+     ✓ fails the run on a wrong intermediate keystroke result even when the final result is correct  764ms
+     ✓ fails the run on a wrong intermediate count even when the final result is correct  719ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+DatabaseDisabledError: The local database connection could not be returned to a safe state. Reload the app before making more changes.
+ ❯ src/data/connectionOwner.ts:533:22
+    531|             releaseAfterFailure();
+    532|           } catch (releaseError) {
+    533|             broken = new DatabaseDisabledError({ cause: releaseError }…
+       |                      ^
+    534|           }
+    535|           throw error;
+
+This error originated in "src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+Caused by: Error: database is not open
+ ❯ exec src/data/testing/nodeSqliteDb.ts:85:8
+ ❯ rollbackIfOpen src/data/connectionOwner.ts:505:5
+ ❯ src/data/testing/nodeSqliteDb.ts:106:45
+ ❯ src/data/connectionOwner.ts:531:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_INVALID_STATE' }
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+DatabaseDisabledError: The local database connection could not be returned to a safe state. Reload the app before making more changes.
+ ❯ src/data/connectionOwner.ts:533:22
+    531|             releaseAfterFailure();
+    532|           } catch (releaseError) {
+    533|             broken = new DatabaseDisabledError({ cause: releaseError }…
+       |                      ^
+    534|           }
+    535|           throw error;
+
+This error originated in "src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+Caused by: Error: database is not open
+ ❯ exec src/data/testing/nodeSqliteDb.ts:85:8
+ ❯ rollbackIfOpen src/data/connectionOwner.ts:505:5
+ ❯ src/data/testing/nodeSqliteDb.ts:106:45
+ ❯ src/data/connectionOwner.ts:531:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_INVALID_STATE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  85 passed | 3 skipped (88)
+      Tests  2521 passed | 4 skipped (2525)
+     Errors  2 errors
+   Start at  22:44:05
+   Duration  26.88s (transform 3.63s, setup 0ms, import 11.46s, tests 104.29s, environment 13.87s)
+

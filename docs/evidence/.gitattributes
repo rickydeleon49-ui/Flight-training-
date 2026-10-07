@@ -1,0 +1,34 @@
+
+# Verbatim M2 PR2 historical receipts; original bytes are preserved.
+m2-practice-session-pr2-corrections-2026-10-05/submitted-report.md whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-corrections-2026-10-05/gate/04-cargo-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-corrections-2026-10-05/gate/02-npm-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-corrections-2026-10-05/gate/01-typecheck.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-corrections-2026-10-05/gate/03-build.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/finish-suite-with-controller-fixes.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-2026-10-06/gate/02-npm-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-2026-10-06/gate/01-typecheck.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-idle-retry-pass.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/load-investigation/full-run-attempt2-timeout.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/diagnostics/frozen-controller-review-verbatim.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/04-cargo-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/02-npm-test.attempt1-failed.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/01-typecheck.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-controller-fix-completion-2026-10-06/gate/03-build.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-ui-2026-10-05/gate/04-cargo-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-ui-2026-10-05/gate/02-npm-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-ui-2026-10-05/gate/01-typecheck.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-ui-2026-10-05/gate/03-build.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/finish-suite-with-frozen.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/diagnostics/frozen-rereview-verbatim.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/gate/04-cargo-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/gate/02-npm-test.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/gate/01-typecheck.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/gate/03-build.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-preregist.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/full-run-repeat.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-2.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-3.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+m2-practice-session-pr2-finish-corrections-2026-10-05/validation-r10/import-repeat-1.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol

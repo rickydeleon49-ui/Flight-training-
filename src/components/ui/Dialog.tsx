@@ -100,6 +100,13 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   destructive?: boolean;
+  /**
+   * A confirmed action whose outcome is not settled yet. While pending, the
+   * dialog cannot be dismissed — Escape, backdrop, the close button and
+   * Cancel all stay put, so the caller keeps exactly one intent in flight.
+   */
+  pending?: boolean;
+  pendingLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -111,6 +118,8 @@ export function ConfirmDialog({
   message,
   confirmLabel = "Delete",
   destructive = true,
+  pending = false,
+  pendingLabel,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -120,16 +129,28 @@ export function ConfirmDialog({
       onClose={onCancel}
       title={title}
       narrow
+      dismissible={!pending}
       footer={
         <>
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button variant={destructive ? "danger" : "primary"} onClick={onConfirm}>
-            {confirmLabel}
+          <Button onClick={onCancel} disabled={pending}>
+            Cancel
+          </Button>
+          <Button
+            variant={destructive ? "danger" : "primary"}
+            onClick={onConfirm}
+            disabled={pending}
+          >
+            {pending && pendingLabel ? pendingLabel : confirmLabel}
           </Button>
         </>
       }
     >
       <p className="muted">{message}</p>
+      {pending ? (
+        <p className="tiny muted" role="status">
+          Waiting for the result. This stays open until the outcome is known.
+        </p>
+      ) : null}
     </Dialog>
   );
 }

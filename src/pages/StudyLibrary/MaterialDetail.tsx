@@ -61,6 +61,7 @@ import { canSplitPdfs } from "@/services/pdf";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
 import { PracticeTestPanel } from "./PracticeTestPanel";
+import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import "./studyLibrary.css";
@@ -104,7 +105,7 @@ function MaterialDetailPage({
 }: MaterialDetailPageProps) {
   const { materialId } = useParams();
   const navigate = useNavigate();
-  const { data, mutate, deleteWithUndo } = useAppData();
+  const { data, mutate, deleteWithUndo, repositories } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
 
@@ -189,6 +190,13 @@ function MaterialDetailPage({
         activeGeminiOp?.kind === "practice-test",
     );
   }, [materialId, activeGeminiOp]);
+
+  const { metadata: practiceMetadata, retry: retryPracticeMetadata } = usePracticeMetadata(
+    materialId,
+    repositories?.practiceSessions,
+  );
+  const conversionStatus = practiceMetadata.phase === "loaded" ? practiceMetadata.conversionStatus : null;
+  const completedCount = practiceMetadata.phase === "loaded" ? practiceMetadata.completedCount : 0;
   const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
@@ -864,17 +872,68 @@ function MaterialDetailPage({
                     </div>
                   </div>
                 ) : null}
-                {practiceTest ? (
-                  <div className="stack stack--4">
-                    <div className="ai-disclaimer">
+                {practiceMetadata.phase === "failed" ? (
+                  <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
+                    <div className="ai-disclaimer" role="alert">
                       <AlertIcon size={16} />
                       <p className="tiny">
-                        {importedTest
-                          ? IMPORTED_CONTENT_DISCLAIMER
-                          : "AI-generated practice test. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it."}
+                        Practice status couldn’t be checked just now, so your history count isn’t shown. Your saved study guide and cards are still here.
                       </p>
                     </div>
-                    <PracticeTestPanel practiceTest={practiceTest} key={practiceTest.updatedAt} />
+                    <div className="row row--wrap">
+                      <Button size="small" variant="secondary" onClick={retryPracticeMetadata}>
+                        Retry practice status
+                      </Button>
+                      <Link
+                        to={`/study/history/${encodeURIComponent(material.id)}`}
+                        className="button button--secondary button--small"
+                      >
+                        View practice history
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+                {conversionStatus?.legacyError === "MALFORMED_QUESTION" ? (
+                  <div className="stack stack--3">
+                    <div className="ai-disclaimer" role="alert">
+                      <AlertIcon size={16} />
+                      <p className="tiny">
+                        This practice test contains malformed questions from an earlier version and cannot be started. Please regenerate the practice test.
+                      </p>
+                    </div>
+                    {completedCount > 0 ? (
+                      <div>
+                        <Link
+                          to={`/study/history/${encodeURIComponent(material.id)}`}
+                          className="button button--secondary button--small"
+                        >
+                          View practice history ({completedCount})
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : practiceTest ? (
+                  <div className="stack stack--4">
+                    <div className="row row--between" style={{ alignItems: "center" }}>
+                      <div className="ai-disclaimer" style={{ flex: 1, margin: 0 }}>
+                        <AlertIcon size={16} />
+                        <p className="tiny">
+                          {importedTest
+                            ? IMPORTED_CONTENT_DISCLAIMER
+                            : "AI-generated practice test. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it."}
+                        </p>
+                      </div>
+                      {completedCount > 0 ? (
+                        <Link
+                          to={`/study/history/${encodeURIComponent(material.id)}`}
+                          className="button button--secondary button--small"
+                          style={{ marginLeft: "var(--space-3)", flexShrink: 0 }}
+                        >
+                          View practice history ({completedCount})
+                        </Link>
+                      ) : null}
+                    </div>
+                    <PracticeTestPanel practiceTest={practiceTest} materialId={material.id} key={practiceTest.updatedAt} />
                   </div>
                 ) : !generatingPractice && !hasImported ? (
                   <p className="small muted">
@@ -1135,7 +1194,11 @@ function MaterialDetailPage({
       <ConfirmDialog
         open={confirmingPracticeTest && !isGeneratingAny}
         title="Send this file to Google?"
-        message={importedTest ? `${IMPORT_TEST_REGENERATE_WARNING} ${aiCheck.reason}` : aiCheck.reason}
+        message={
+          practiceTest
+            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason}`
+            : aiCheck.reason
+        }
         confirmLabel="Send to Gemini"
         destructive={false}
         onConfirm={() => {

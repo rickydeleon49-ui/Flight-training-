@@ -1,0 +1,18 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:4528) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 review: actual UI and disposable persisted state > [R4] lost erase acknowledgement retries the same identity and preserves later progress
+No routes matched location "/study/history" 
+
+stderr | src/pages/StudyLibrary/codex-pr2-finalreview.test.ts > Codex PR2 correction review: unresolved transitions > [R9] rapid confirmation uses a synchronous lock and one erase identity
+No routes matched location "/study/history" 
+
+ ✓ src/pages/StudyLibrary/codex-pr2-finalreview.test.ts (21 tests) 582ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  20:11:44
+   Duration  1.14s (transform 162ms, setup 0ms, import 250ms, tests 582ms, environment 229ms)
+

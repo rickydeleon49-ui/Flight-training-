@@ -1,0 +1,39 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:18027) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts (12 tests | 1 failed) 854ms
+     × an older request's late failure cannot replace the newer request's result 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts > usePracticeMetadata request ownership within one mounted page > an older request's late failure cannot replace the newer request's result
+AssertionError: expected { phase: 'failed', materialId: 'mat' } to match object { phase: 'loaded', completedCount: +0 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "completedCount": 0,
+-   "phase": "loaded",
++   "phase": "failed",
+  }
+
+ ❯ src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts:398:37
+    396|       first.conversion.reject(new Error("Synthetic late failure"));
+    397|     });
+    398|     expect(result.current.metadata).toMatchObject({ phase: "loaded", c…
+       |                                     ^
+    399|   });
+    400|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  21:40:28
+   Duration  1.49s (transform 221ms, setup 0ms, import 319ms, tests 854ms, environment 234ms)
+

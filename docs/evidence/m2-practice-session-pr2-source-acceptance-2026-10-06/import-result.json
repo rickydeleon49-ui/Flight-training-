@@ -1,0 +1,8 @@
+{
+  "command": "npx vitest run src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts",
+  "exit": 0,
+  "passed": 21,
+  "failed": 0,
+  "unhandled_reported": false,
+  "receipt_kind": "observed tool output, separate integration run"
+}

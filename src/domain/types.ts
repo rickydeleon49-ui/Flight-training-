@@ -468,6 +468,28 @@ export interface CompletedHistoryItem {
   scorePercent: number;
 }
 
+export interface EraseHistoryAction {
+  action: "erase_history";
+  operationId: string;
+  historyKey: string;
+}
+
+export interface EraseHistoryResult {
+  action: "erase_history";
+  historyKey: string;
+  erased: boolean;
+}
+
+export interface PracticeHistoryGroup {
+  historyKey: string;
+  sourceMaterialTitle: string;
+  sourceMaterialId: string | null;
+  completedCount: number;
+  latestCompletedAt: IsoDateTime | null;
+  latestScorePercent: number | null;
+  hasActiveMaterial: boolean;
+}
+
 /* ------------------------------------------------------------------ */
 /* Schedule                                                            */
 /* ------------------------------------------------------------------ */

@@ -1,0 +1,92 @@
+{
+  "attempts": [
+    {
+      "step": "01-typecheck",
+      "command": "npm run typecheck",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 2.9,
+      "finished_utc": "2026-10-07T04:41:29+00:00"
+    },
+    {
+      "step": "02-npm-test",
+      "command": "npm test",
+      "exit": 0,
+      "unhandled_reported": false,
+      "seconds": 30.3,
+      "finished_utc": "2026-10-07T04:42:00+00:00"
+    },
+    {
+      "step": "03-build",
+      "command": "npm run build",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 4.5,
+      "finished_utc": "2026-10-07T04:42:04+00:00"
+    },
+    {
+      "step": "04-cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --locked --all-targets",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 22.7,
+      "finished_utc": "2026-10-07T04:42:27+00:00"
+    },
+    {
+      "step": "05-clippy",
+      "command": "cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 0.4,
+      "finished_utc": "2026-10-07T04:42:27+00:00"
+    },
+    {
+      "step": "06-fmt",
+      "command": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 0.2,
+      "finished_utc": "2026-10-07T04:42:27+00:00"
+    },
+    {
+      "step": "07-test-cargo-lock",
+      "command": "npm run test:cargo-lock",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 0.3,
+      "finished_utc": "2026-10-07T04:42:28+00:00"
+    },
+    {
+      "step": "08-git-diff-check",
+      "command": "whitespace_check",
+      "exit": 1,
+      "unhandled_reported": null,
+      "seconds": 0.9,
+      "finished_utc": "2026-10-07T04:42:29+00:00"
+    },
+    {
+      "step": "09-migration-consistency",
+      "command": "migration_consistency",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 0.0,
+      "finished_utc": "2026-10-07T04:42:29+00:00"
+    },
+    {
+      "step": "08-git-diff-check",
+      "command": "whitespace_check",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 0.8,
+      "finished_utc": "2026-10-07T04:43:08+00:00"
+    },
+    {
+      "step": "08-git-diff-check",
+      "command": "whitespace_check",
+      "exit": 0,
+      "unhandled_reported": null,
+      "seconds": 0.8,
+      "finished_utc": "2026-10-07T04:44:38+00:00"
+    }
+  ]
+}

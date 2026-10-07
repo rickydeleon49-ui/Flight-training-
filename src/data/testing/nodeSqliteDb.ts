@@ -19,6 +19,7 @@ import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { executeStructuredImport } from "../structuredImportTransaction";
 import {
+  executeEraseHistoryAction,
   executeLegacyConversion,
   executePracticeSessionAction,
   executeRemovePracticeTest,
@@ -154,6 +155,11 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
       sourceMaterialId: string,
     ): Promise<void> {
       return owner.exclusive(() => executeRemovePracticeTest(exec, run, query, sourceMaterialId));
+    },
+    erasePracticeHistoryAtomically(
+      action: import("@/domain/types").EraseHistoryAction,
+    ): Promise<import("@/domain/types").EraseHistoryResult> {
+      return owner.exclusive(() => executeEraseHistoryAction(exec, run, query, action));
     },
     close() {
       db.close();

@@ -1,0 +1,61 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+(node:18006) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts (12 tests | 2 failed) 874ms
+     × an older request's late success cannot overwrite the newer request's result 11ms
+     × Retry is available again once the newer request settles, even if an older one is still held 114ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts > usePracticeMetadata request ownership within one mounted page > an older request's late success cannot overwrite the newer request's result
+AssertionError: expected { phase: 'loaded', …(3) } to deeply equal { phase: 'loaded', …(3) }
+
+- Expected
++ Received
+
+  {
+-   "completedCount": 1,
+-   "conversionStatus": null,
++   "completedCount": 3,
++   "conversionStatus": {
++     "legacyError": "MALFORMED_QUESTION",
++     "legacyMigratedAt": null,
++   },
+    "materialId": "mat",
+    "phase": "loaded",
+  }
+
+ ❯ src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts:381:37
+    379|       first.history.resolveWith([{}, {}, {}]);
+    380|     });
+    381|     expect(result.current.metadata).toEqual({ phase: "loaded", materia…
+       |                                     ^
+    382|   });
+    383|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts > usePracticeMetadata request ownership within one mounted page > Retry is available again once the newer request settles, even if an older one is still held
+AssertionError: expected 'loaded' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "loaded"
+
+ ❯ src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts:420:43
+    418|       first.history.resolveWith([]);
+    419|     });
+    420|     expect(result.current.metadata.phase).toBe("failed");
+       |                                           ^
+    421|   });
+    422| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  21:40:26
+   Duration  1.52s (transform 223ms, setup 0ms, import 327ms, tests 874ms, environment 235ms)
+
