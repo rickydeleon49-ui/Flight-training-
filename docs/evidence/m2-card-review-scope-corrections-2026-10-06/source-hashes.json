@@ -1,0 +1,16 @@
+{
+  "root": "repository root /Users/rickymac/code/Flight-training-pr70-integration (branch codex/m2-card-review-scope, base df7a130f595abda787b4377850ab7095bde33824)",
+  "application_source_changed": false,
+  "pre_correction_submitted_sha256": {
+    "docs/M2_CARD_REVIEW_SCOPE_2026-10-06.md": "949e809dfb96f2c17026bfe542284d692d2afd0b1aded45af5c2ef343f1c9b98",
+    "docs/M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md": "605a0ed27ff35ef30b3e1d50bca3b796f3febc2eddc2b34a042f76c5f604818e",
+    "STATUS.md": "1d3a867ab41f4436cafae91511004f6186669612b8b08828f45aaef6a99bceb4",
+    "docs/PROJECT_HANDOFF.md": "ae61375e4c0ffdde7235ca779f4a6b05ee2c69224c0e27fc9316d976afa42f51"
+  },
+  "sha256": {
+    "docs/M2_CARD_REVIEW_SCOPE_2026-10-06.md": "3390d1ac8dbcf08aeac683cdedf24c058eb661d24e7e8f41c0edcb5ea0081a6d",
+    "docs/M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md": "308e16fe7a768cc657fc1578ecccb8d575b34f5bd2189fc411d39864239b73ee",
+    "STATUS.md": "7abee4fedd1aace3991da35f3ec998754c9e67284e97ae1cf98b6fecbaf0b32a",
+    "docs/PROJECT_HANDOFF.md": "e77b16802cce18131ba21afdaf61ca3169ea4cd3b814d3f326351d1655a081fc"
+  }
+}

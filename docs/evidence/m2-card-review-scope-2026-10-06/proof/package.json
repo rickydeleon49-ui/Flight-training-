@@ -5,7 +5,7 @@
   "description": "Isolated research proof only. Not an application dependency.",
   "type": "module",
   "scripts": {
-    "proof": "node --test --test-reporter=spec proof.test.mjs"
+    "proof": "node --test --test-reporter=spec proof.test.mjs corrections.test.mjs"
   },
   "dependencies": {
     "ts-fsrs": "5.4.2"

@@ -1,0 +1,41 @@
+{
+  "base": "df7a130f595abda787b4377850ab7095bde33824",
+  "branch": "codex/m2-card-review-scope",
+  "pre_edit_verification": {
+    "proposal_status_hashes_matched": 4,
+    "original_evidence_checksums_matched": 16
+  },
+  "corrected_proof": {
+    "command": "cd docs/evidence/m2-card-review-scope-2026-10-06/proof && node --test --test-reporter=spec proof.test.mjs corrections.test.mjs",
+    "node": "v22.23.3",
+    "exit": 0,
+    "tests": 48,
+    "suites": 8,
+    "pass": 48,
+    "fail": 0,
+    "breakdown": {
+      "original_27_adapted_where_shapes_changed": 27,
+      "sqlite_CRS_R1": 9,
+      "model_CRS_R2": 9,
+      "model_handoff": 3
+    }
+  },
+  "promoted_reviewer_diagnostics": 5,
+  "sensitivity_mutations": {
+    "all_killed": true,
+    "all_restored": true,
+    "ids": [
+      "Q1",
+      "Q2",
+      "G1",
+      "G2"
+    ]
+  },
+  "hygiene": {
+    "attempt1": "failed: one raw mutation log had trailing whitespace (preserved as receipts/hygiene-and-production-unchanged.attempt1-failed.txt)",
+    "attempt2": "0 problems after local receipts/*.txt allowance"
+  },
+  "production_source_changed_vs_base": false,
+  "labels": "pure scheduler = arithmetic; sqlite = disposable node:sqlite query proof on a representative schema (not migration 12); model = in-memory operation simulation. None establishes native/browser durability or installed behavior.",
+  "not_run": "no full application test/build/Rust matrix (preparation task), no dependency install, no FSRS re-survey"
+}

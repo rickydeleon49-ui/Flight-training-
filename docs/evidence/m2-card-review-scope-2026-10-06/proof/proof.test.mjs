@@ -10,7 +10,7 @@ import { describe, it } from "node:test";
 
 import { createEmptyCard, fsrs, generatorParameters, Rating, State } from "ts-fsrs";
 
-import { apply, cardVersion, ContractRefusal, createStore, dueItems, erase } from "./contractModel.mjs";
+import { apply, cardVersion, ContractRefusal, counts, createStore, dueItems, generationOf } from "./contractModel.mjs";
 import {
   DAY,
   isDue,
@@ -153,11 +153,19 @@ describe("[model] content-addressed card identity", () => {
 });
 
 describe("[model] operation contract at the proposed boundary", () => {
-  const [first] = cardVersion(material.materialId, material.flashcards).items;
-  const rate = (id, rating, expectedRevision = 0) => ({ action: "rate", operationId: id, itemId: first.itemId, rating, expectedRevision });
+  // Adapted 6 October 2026 to the corrected typed shapes (CRS-R2): every item
+  // action names its material, current content hash and captured generation.
+  const version = cardVersion(material.materialId, material.flashcards);
+  const [first] = version.items;
+  const store0 = () => createStore({ [material.materialId]: material.flashcards });
+  const item = (action, id, expectedRevision = 0, extra = {}, expectedGeneration = 0) => ({
+    action, operationId: id, materialId: material.materialId, versionContentHash: version.contentHash,
+    itemId: first.itemId, expectedGeneration, expectedRevision, ...extra,
+  });
+  const rate = (id, rating, expectedRevision = 0) => item("rate", id, expectedRevision, { rating });
 
   it("same operation ID and payload applies once and replays the stored result", () => {
-    const store = createStore();
+    const store = store0();
     const once = apply(store, rate("a1000000-0000-4000-8000-000000000001", "good"), T0);
     const replay = apply(store, rate("a1000000-0000-4000-8000-000000000001", "good"), at(T0, 5 * MINUTE));
     assert.deepEqual(replay, once);
@@ -166,14 +174,15 @@ describe("[model] operation contract at the proposed boundary", () => {
   });
 
   it("reusing an operation ID with a changed payload conflicts without writing", () => {
-    const store = createStore();
+    const store = store0();
     apply(store, rate("a1000000-0000-4000-8000-000000000002", "good"), T0);
+    const before = counts(store);
     assert.throws(() => apply(store, rate("a1000000-0000-4000-8000-000000000002", "easy"), T0), (e) => e.code === "OPERATION_CONFLICT");
-    assert.equal(store.events.length, 1);
+    assert.deepEqual(counts(store), before);
   });
 
   it("a stale expected revision is refused; a new deliberate action with the current revision applies", () => {
-    const store = createStore();
+    const store = store0();
     apply(store, rate("a1000000-0000-4000-8000-000000000003", "good", 0), T0);
     assert.throws(() => apply(store, rate("a1000000-0000-4000-8000-000000000004", "again", 0), at(T0, DAY)), (e) => e.code === "STALE_REVISION");
     assert.equal(store.events.length, 1);
@@ -182,30 +191,31 @@ describe("[model] operation contract at the proposed boundary", () => {
   });
 
   it("suspension removes a card from due work, refuses ratings and keeps history; resumption restores it", () => {
-    const store = createStore();
+    const store = store0();
     apply(store, rate("a1000000-0000-4000-8000-000000000006", "good"), T0);
     const due = (s) => isDue(s, at(T0, 2 * DAY), "UTC");
-    assert.deepEqual(dueItems(store, due), [first.itemId]);
-    apply(store, { action: "suspend", operationId: "a1000000-0000-4000-8000-000000000007", itemId: first.itemId, expectedRevision: 1 }, at(T0, DAY));
-    assert.deepEqual(dueItems(store, due), []);
+    assert.deepEqual(dueItems(store, material.materialId, due), [first.itemId]);
+    apply(store, item("suspend", "a1000000-0000-4000-8000-000000000007", 1), at(T0, DAY));
+    assert.deepEqual(dueItems(store, material.materialId, due), []);
     assert.throws(() => apply(store, rate("a1000000-0000-4000-8000-000000000008", "good", 2), at(T0, 2 * DAY)), (e) => e.code === "CARD_SUSPENDED");
     assert.equal(store.events.length, 1);
-    apply(store, { action: "resume", operationId: "a1000000-0000-4000-8000-000000000009", itemId: first.itemId, expectedRevision: 2 }, at(T0, 2 * DAY));
-    assert.deepEqual(dueItems(store, due), [first.itemId]);
+    apply(store, item("resume", "a1000000-0000-4000-8000-000000000009", 2), at(T0, 2 * DAY));
+    assert.deepEqual(dueItems(store, material.materialId, due), [first.itemId]);
   });
 
-  it("explicit erasure leaves non-content tombstones, so a late replay cannot restore erased state", () => {
-    const store = createStore();
+  it("explicit reset leaves non-content tombstones, so a late replay cannot restore erased state", () => {
+    const store = store0();
     const op = rate("a1000000-0000-4000-8000-00000000000a", "good");
     apply(store, op, T0);
-    erase(store, [first.itemId]);
-    assert.throws(() => apply(store, op, at(T0, MINUTE)), (e) => e.code === "OPERATION_ERASED");
+    apply(store, { action: "reset", operationId: "a1000000-0000-4000-8000-0000000000aa", materialId: material.materialId, expectedGeneration: 0 }, at(T0, MINUTE));
+    assert.throws(() => apply(store, op, at(T0, 2 * MINUTE)), (e) => e.code === "OPERATION_ERASED");
     assert.equal(store.state.has(first.itemId), false);
     assert.equal(store.events.length, 0);
+    assert.equal(generationOf(store, material.materialId), 1);
   });
 
   it("a rating whose clock is behind the last review is refused without an event", () => {
-    const store = createStore();
+    const store = store0();
     apply(store, rate("a1000000-0000-4000-8000-00000000000b", "good"), T0);
     assert.throws(() => apply(store, rate("a1000000-0000-4000-8000-00000000000c", "good", 1), at(T0, -DAY)), (e) => e instanceof ContractRefusal && e.code === "CLOCK_BEHIND_LAST_REVIEW");
     assert.equal(store.events.length, 1);

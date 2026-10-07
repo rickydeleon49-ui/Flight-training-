@@ -1,0 +1,62 @@
+{
+  "all_killed": true,
+  "all_restored": true,
+  "mutations": [
+    {
+      "id": "Q1",
+      "mutation": "reviewed SQL: every card compared with the end-of-day bound",
+      "file": "cardQuery.mjs",
+      "exit": 1,
+      "killed": true,
+      "failing_cases": [
+        "✖ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (9.616417ms)",
+        "✖ [promoted 2] with old A and current materialized B both due, only B is current due work (0.7955ms)",
+        "✖ [sqlite] CRS-R1 version-owned due queue with exact boundaries (21.52525ms)",
+        "✖ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (9.616417ms)",
+        "✖ [promoted 2] with old A and current materialized B both due, only B is current due work (0.7955ms)"
+      ],
+      "restored": true
+    },
+    {
+      "id": "Q2",
+      "mutation": "reviewed SQL: material-only filter (no current-version binding)",
+      "file": "cardQuery.mjs",
+      "exit": 1,
+      "killed": true,
+      "failing_cases": [
+        "✖ [promoted 2] with old A and current materialized B both due, only B is current due work (1.806666ms)",
+        "✖ [sqlite] CRS-R1 version-owned due queue with exact boundaries (23.942875ms)",
+        "✖ [promoted 2] with old A and current materialized B both due, only B is current due work (1.806666ms)"
+      ],
+      "restored": true
+    },
+    {
+      "id": "G1",
+      "mutation": "no generation barrier",
+      "file": "contractModel.mjs",
+      "exit": 1,
+      "killed": true,
+      "failing_cases": [
+        "✖ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.635042ms)",
+        "✖ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.1785ms)",
+        "✖ [model] CRS-R2 persistent reset generation (2.127584ms)",
+        "✖ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.635042ms)",
+        "✖ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.1785ms)"
+      ],
+      "restored": true
+    },
+    {
+      "id": "G2",
+      "mutation": "erasure dereferences already tombstoned results",
+      "file": "contractModel.mjs",
+      "exit": 1,
+      "killed": true,
+      "failing_cases": [
+        "✖ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.411833ms)",
+        "✖ [model] CRS-R2 persistent reset generation (2.051125ms)",
+        "✖ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.411833ms)"
+      ],
+      "restored": true
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+(node:27606) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ [sqlite] CRS-R1 version-owned due queue with exact boundaries
+  ✔ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (10.198875ms)
+  ✔ a day-ladder card due exactly at next local midnight is excluded; one millisecond earlier is included (1.749375ms)
+  ✔ [promoted 2] with old A and current materialized B both due, only B is current due work (0.9875ms)
+  ✔ before B's first materialization, B's cards are new and A's retained due rows are not current work (1.233292ms)
+  ✔ A -> B -> A: when the raw cards return to A, A's retained schedule is current again (1.122125ms)
+  ✔ never-rated suspended and flagged cards are excluded from new work before the caps (0.93925ms)
+  ✔ order and limits apply after eligibility, even behind many ineligible older rows (3.579417ms)
+  ✔ daylight saving: the 25-hour local day in Chicago (1 November 2026) gets the exact exclusive boundary (2.138125ms)
+  ✔ session membership counts unique presented cards; a replayed acknowledgement does not advance twice (0.146209ms)
+✔ [sqlite] CRS-R1 version-owned due queue with exact boundaries (22.815792ms)
+▶ [model] CRS-R2 persistent reset generation
+  ✔ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.361ms)
+  ✔ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.219041ms)
+  ✖ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.411833ms)
+  ✔ an identical committed-reset replay after new work returns its stored result and erases nothing (0.086458ms)
+  ✔ reusing a reset operation ID with a changed payload conflicts; a stale-generation reset is refused (0.068041ms)
+  ✔ fresh work after refresh with the current generation is accepted, and a new intentional reset applies again (0.122958ms)
+  ✔ reset touches only its material: another material's state, events, receipts and generation remain (0.386417ms)
+  ✔ reset is strictly typed: item fields on a reset, or a missing generation on an item action, are invalid (0.065667ms)
+  ✔ reset keeps the snapshot of the current raw cards and prunes retained older versions (0.195959ms)
+✖ [model] CRS-R2 persistent reset generation (2.051125ms)
+▶ [model] handoff details
+  ✔ first suspend works on a never-rated card: the snapshot is created without a review time or fabricated event (0.120833ms)
+  ✔ a flagged card refuses ratings until unflagged, without changing its schedule (0.096958ms)
+  ✔ an item action against changed raw cards is refused as stale content (0.050125ms)
+✔ [model] handoff details (0.2945ms)
+ℹ tests 21
+ℹ suites 3
+ℹ pass 20
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 95.704708
+
+✖ failing tests:
+
+test at corrections.test.mjs:235:3
+✖ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.411833ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "Cannot read properties of null (reading 'itemId')"
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:239:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: Cannot read properties of null (reading 'itemId')
+        at applyReset (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/contractModel.mjs:162:22)
+        at apply (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/contractModel.mjs:139:7)
+        at file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:239:31
+        at getActual (node:assert:609:5)
+        at Function.doesNotThrow (node:assert:777:32)
+        at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:239:12)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1047:25)
+        at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        at Test.postRun (node:internal/test_runner/test:1173:19),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }

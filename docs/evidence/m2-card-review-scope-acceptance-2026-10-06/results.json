@@ -1,0 +1,21 @@
+{
+  "focused": {
+    "passed": 48,
+    "failed": 0,
+    "exit": 0
+  },
+  "semantic_q1": {
+    "passed": 19,
+    "failed": 2,
+    "exit": 1,
+    "binding_error": false
+  },
+  "hashes_verified": {
+    "proposal": 4,
+    "correction_evidence": 18,
+    "current_proof": 10
+  },
+  "planning_accepted": true,
+  "owner_production_approval_recorded": false,
+  "application_source_changed": false
+}
