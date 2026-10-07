@@ -1,0 +1,10 @@
+{
+  "canonicalJson": "[{\"back\":\"B\",\"front\":\"Synthetic card one: which letter follows A?\",\"sourcePage\":1},{\"back\":\"C\",\"front\":\"Synthetic card two: which letter follows B?\",\"sourcePage\":2},{\"back\":\"D\",\"front\":\"Synthetic card three: which letter follows C?\",\"sourcePage\":null}]",
+  "contentHash": "0ccc4c5f05dfae9ea2e46db43a59cc66a55aabc77a51d62da861c77b614eeba8",
+  "versionId": "907e9965dcb85f9b7790750ccd1070928e1f7f3c907c8c73e82cc1835b090c53",
+  "itemIds": [
+    "12330caa14842486f53ce82250c89f3736b05e4f11e2b7b8b1a26702246e439a",
+    "1533ed83f173f06d5caca53a76638e992e7745fe49f3b7007d91ccadf854f97a",
+    "1cb977774e29baa677572f6fbcb7af87e2babad6800f6d7befa754193ba49c66"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "version": "5.4.2",
+  "integrity_matches": true,
+  "integrity": "sha512-z4qop4pzTcyTzuJ566d9EaX/4bZZzhYfeaPImfVr+xcYT65c5oBgFDijUhCE/D+C78eaolHIhKRZ04/RwF+v2g==",
+  "tarball_bytes": 150324,
+  "dependencies": {},
+  "license": "MIT",
+  "primary_url": "https://registry.npmjs.org/ts-fsrs/5.4.2"
+}

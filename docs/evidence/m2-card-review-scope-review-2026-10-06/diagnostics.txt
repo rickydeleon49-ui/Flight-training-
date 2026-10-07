@@ -1,0 +1,128 @@
+(node:26377) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ [CRS-R1] the documented end-of-day SQL must not return an Again card at minute nine (4.8395ms)
+✖ [CRS-R1] the documented material-only SQL must exclude an inactive content version (0.281375ms)
+✖ [CRS-R2] reset must refuse a revision-zero request created before reset but never applied (0.168833ms)
+✖ [CRS-R2] a stale revision-one request must not become valid after reset and one new rating (0.159333ms)
+✖ [CRS-R2] erasing again must tolerate an already tombstoned receipt (0.084458ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 68.8455
+
+✖ failing tests:
+
+test at ../../../../private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:20:1
+✖ [CRS-R1] the documented end-of-day SQL must not return an Again card at minute nine (4.8395ms)
+  AssertionError [ERR_ASSERTION]: documented SQL disagrees with correct pure isDue
+  + actual - expected
+  
+  + [
+  +   'again'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:25:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.start (node:internal/test_runner/test:944:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'again' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:28:1
+✖ [CRS-R1] the documented material-only SQL must exclude an inactive content version (0.281375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      '2e0db91aa18d10dd844b6398a138a088f9d00c7dbba31e98e48aa3c0a4d7f0e8',
+  +   '5501ee07f7768445809f5a8b251a8fe0e7b0def5b14f6def13a21957732757f3'
+    ]
+  
+      at TestContext.<anonymous> (file:///private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:35:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '2e0db91aa18d10dd844b6398a138a088f9d00c7dbba31e98e48aa3c0a4d7f0e8', '5501ee07f7768445809f5a8b251a8fe0e7b0def5b14f6def13a21957732757f3' ],
+    expected: [ '2e0db91aa18d10dd844b6398a138a088f9d00c7dbba31e98e48aa3c0a4d7f0e8' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:38:1
+✖ [CRS-R2] reset must refuse a revision-zero request created before reset but never applied (0.168833ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:41:9)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../../../../private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:43:1
+✖ [CRS-R2] a stale revision-one request must not become valid after reset and one new rating (0.159333ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:47:9)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../../../../private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:49:1
+✖ [CRS-R2] erasing again must tolerate an already tombstoned receipt (0.084458ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "Cannot read properties of null (reading 'itemId')"
+      at TestContext.<anonymous> (file:///private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:51:42)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: Cannot read properties of null (reading 'itemId')
+        at erase (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/contractModel.mjs:102:41)
+        at file:///private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:51:59
+        at getActual (node:assert:609:5)
+        at Function.doesNotThrow (node:assert:777:32)
+        at TestContext.<anonymous> (file:///private/tmp/m2-card-review-independent-20261006/card-scope-review.test.mjs:51:42)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1047:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+        at Test.postRun (node:internal/test_runner/test:1173:19)
+        at Test.run (node:internal/test_runner/test:1101:12),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }

@@ -1,0 +1,45 @@
+{
+  "proof_command": "cd proof && node --test --test-reporter=spec proof.test.mjs",
+  "node": "v22.23.3",
+  "npm": "10.9.9",
+  "exit": 0,
+  "tests": 27,
+  "suites": 5,
+  "pass": 27,
+  "fail": 0,
+  "groups": {
+    "[pure] simple-v1 scheduler": 7,
+    "[pure] stored instants versus local calendar display": 3,
+    "[model] content-addressed card identity": 5,
+    "[model] operation contract at the proposed boundary": 6,
+    "[fsrs] pinned ts-fsrs 5.4.2 behavior": 6
+  },
+  "fsrs_observations": {
+    "first_exposure_minutes": {
+      "again": 1,
+      "hard": 6,
+      "good": 10
+    },
+    "easy_first": "Review, 8 days",
+    "max_interval_180_observed_longest_days": 182,
+    "overdue_good_days": {
+      "on_time": 11,
+      "late_20_days": 34
+    },
+    "clock_rollback": "throws Invalid delta_t",
+    "fuzz_on_reproducible": true,
+    "maximum_interval_0_falls_back_to": 36500
+  },
+  "bundle_bytes_safari15": {
+    "ts-fsrs": {
+      "minified": 21277,
+      "gzip": 6721
+    },
+    "simple-v1": {
+      "minified": 1289,
+      "gzip": 780
+    }
+  },
+  "labels": "pure = scheduler arithmetic; model = in-memory contract simulation (not SQLite/native/browser persistence); fsrs = observed package behavior. No installed-app behavior established.",
+  "failed_attempts": "none recorded (one unrecorded dry run of the same suite before the golden-vector case was added passed 26/26)"
+}

@@ -1,0 +1,20 @@
+{
+  "submitted_proof": {
+    "passed": 27,
+    "failed": 0,
+    "exit": 0
+  },
+  "review_diagnostic": {
+    "passed": 0,
+    "failed": 5,
+    "exit": 1
+  },
+  "portable_baseline": {
+    "passed": 0,
+    "failed": 5,
+    "exit": 1
+  },
+  "proposal_paths_verified": 4,
+  "submitted_evidence_verified": 16,
+  "application_source_changed": false
+}

@@ -1,0 +1,48 @@
+$ cd proof && node --test --test-reporter=spec proof.test.mjs
+# node v22.23.3, npm 10.9.9, 2026-10-07T05:19:52Z
+▶ [pure] simple-v1 scheduler
+  ✔ first exposure: Again 10 minutes; Hard and Good 1 day; Easy 3 days (1.520875ms)
+  ✔ intervals are bounded: nonzero minimum, and repeated Easy never passes 180 days (0.159833ms)
+  ✔ repeat failure: Again on a ladder card counts one lapse, a second Again does not count again (0.061375ms)
+  ✔ overdue: a card reviewed 20 days late moves one rung, counted from the review time (0.097375ms)
+  ✔ clock rollback: a review earlier than the last saved review is refused (0.157875ms)
+  ✔ deterministic: identical prior state, rating and time give identical, serializable output (0.060542ms)
+  ✔ refuses state from an unknown scheduler version instead of guessing (0.07225ms)
+✔ [pure] simple-v1 scheduler (2.573459ms)
+▶ [pure] stored instants versus local calendar display
+  ✔ local midnight: a 1-day card reviewed late evening is due all of the next local day, not before (7.089542ms)
+  ✔ time zone change: the same stored instant is judged by the zone the computer is in now; nothing is rewritten (0.399292ms)
+  ✔ a card waiting after Again is not due until its exact instant, even on the same local day (0.150666ms)
+✔ [pure] stored instants versus local calendar display (7.821792ms)
+▶ [model] content-addressed card identity
+  ✔ is stable across calls and gives each of the three synthetic cards a distinct item ID (0.628917ms)
+  ✔ changing one card's text creates a new version whose items share no ID with the old one (0.093208ms)
+  ✔ reordering creates a new version; A -> B -> A returns to the original version and history (0.046791ms)
+  ✔ matches the golden vectors computed independently in Python (fixtures/identity-golden.json) (0.168542ms)
+  ✔ the same cards under another material are a different version (0.034625ms)
+✔ [model] content-addressed card identity (1.025833ms)
+▶ [model] operation contract at the proposed boundary
+  ✔ same operation ID and payload applies once and replays the stored result (0.110542ms)
+  ✔ reusing an operation ID with a changed payload conflicts without writing (0.066458ms)
+  ✔ a stale expected revision is refused; a new deliberate action with the current revision applies (0.057166ms)
+  ✔ suspension removes a card from due work, refuses ratings and keeps history; resumption restores it (0.259667ms)
+  ✔ explicit erasure leaves non-content tombstones, so a late replay cannot restore erased state (0.131833ms)
+  ✔ a rating whose clock is behind the last review is refused without an event (0.057375ms)
+✔ [model] operation contract at the proposed boundary (0.72525ms)
+▶ [fsrs] pinned ts-fsrs 5.4.2 behavior with injected time
+  ✔ first exposure uses minute learning steps: Again 1, Hard 6, Good 10 minutes; Easy goes straight to review (0.436125ms)
+  ✔ is deterministic with fuzz off, and its parameters round-trip through JSON (0.098417ms)
+  ✔ maximum_interval is not a hard ceiling: ordering rules push repeated Easy past the configured 180 days (0.549708ms)
+  ✔ rewards an overdue successful review with a longer interval than an on-time one (0.080541ms)
+  ✔ throws on a clock earlier than the last review rather than scheduling (0.062792ms)
+  ✔ with fuzz on, an identical card and review time reproduce the same interval (seeded, not Math.random) (0.242708ms)
+✔ [fsrs] pinned ts-fsrs 5.4.2 behavior with injected time (1.519833ms)
+ℹ tests 27
+ℹ suites 5
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 84.282584
+exit=0

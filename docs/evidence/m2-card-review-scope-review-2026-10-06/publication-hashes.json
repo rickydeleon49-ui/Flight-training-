@@ -1,0 +1,11 @@
+{
+  "root": "published repository root; paths repository-relative",
+  "sha256": {
+    "STATUS.md": "15b24b7e9dd3723bc47ec6074cbf3399f47603bd2e333735c58b6176d02fed87",
+    "docs/PROJECT_HANDOFF.md": "5e5354a2beb8980dc66e44068cf2f654acce1bb89c1cada6e099a095e9feebcd",
+    "docs/M2_CARD_REVIEW_SCOPE_2026-10-06.md": "949e809dfb96f2c17026bfe542284d692d2afd0b1aded45af5c2ef343f1c9b98",
+    "docs/M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md": "605a0ed27ff35ef30b3e1d50bca3b796f3febc2eddc2b34a042f76c5f604818e",
+    "docs/M2_CARD_REVIEW_SCOPE_REVIEW_2026-10-06.md": "3bdc9e48af9b03ef910ac5027e73b3446a3d7dc9ae7287e550fd0fc61ef5fd45",
+    "docs/M2_CARD_REVIEW_SCOPE_CORRECTIONS_PROMPT_2026-10-06.md": "7c819a021e69f225900649c406ee969c59beccaa0b35a20559a6943016b276de"
+  }
+}
