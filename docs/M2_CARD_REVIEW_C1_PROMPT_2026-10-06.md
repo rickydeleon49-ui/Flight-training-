@@ -1,8 +1,8 @@
-# M2-3 card reviews, source slice C1 — conditional model-neutral implementation assignment (corrected)
+# M2-3 card reviews, source slice C1 — authorized model-neutral implementation assignment
 
-**Activation condition: do not start until (1) the corrected [card review scope](M2_CARD_REVIEW_SCOPE_2026-10-06.md) has passed independent re-review, and (2) the owner has explicitly approved defaults C-D1–C-D8 (or recorded changes) in a dated approval note.** If either is missing, stop and report. Do not ask again for anything that approval already covers. The real-user check-in waiver remains in effect. Any model can execute this prompt. Codex remains independent reviewer and Git coordinator.
+**Authorized: begin source slice C1.** The corrected [card review scope](M2_CARD_REVIEW_SCOPE_2026-10-06.md) passed independent re-review, and the owner [explicitly approved all eight defaults C-D1–C-D8](M2_CARD_REVIEW_OWNER_APPROVAL_2026-10-06.md). Do not ask again for this scope approval. The real-user check-in waiver remains in effect. Any owner-selected model can execute this prompt. Codex remains independent reviewer and Git coordinator.
 
-[Independent planning acceptance](M2_CARD_REVIEW_SCOPE_ACCEPTANCE_2026-10-06.md) closes CRS-R1/R2. The owner approval condition above still applies; no production approval is inferred from this acceptance.
+[Independent planning acceptance](M2_CARD_REVIEW_SCOPE_ACCEPTANCE_2026-10-06.md) closes CRS-R1/R2. The separate dated owner approval activates this assignment; source acceptance follows implementation and independent review.
 
 ## Outcome
 
