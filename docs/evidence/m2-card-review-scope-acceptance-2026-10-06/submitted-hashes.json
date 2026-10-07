@@ -1,0 +1,11 @@
+{
+  "root": "submitted/repository, original repository-relative proposal/status paths",
+  "sha256": {
+    "docs/M2_CARD_REVIEW_SCOPE_2026-10-06.md": "3390d1ac8dbcf08aeac683cdedf24c058eb661d24e7e8f41c0edcb5ea0081a6d",
+    "docs/M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md": "308e16fe7a768cc657fc1578ecccb8d575b34f5bd2189fc411d39864239b73ee",
+    "STATUS.md": "7abee4fedd1aace3991da35f3ec998754c9e67284e97ae1cf98b6fecbaf0b32a",
+    "docs/PROJECT_HANDOFF.md": "e77b16802cce18131ba21afdaf61ca3169ea4cd3b814d3f326351d1655a081fc"
+  },
+  "source_base": "df7a130f595abda787b4377850ab7095bde33824",
+  "integration_main": "c66e3a58a806f9fb7f9e976ab71206fbdbfb85f2"
+}

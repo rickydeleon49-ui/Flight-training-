@@ -1,0 +1,95 @@
+(node:27604) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ [sqlite] CRS-R1 version-owned due queue with exact boundaries
+  ✔ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (10.891125ms)
+  ✔ a day-ladder card due exactly at next local midnight is excluded; one millisecond earlier is included (1.761209ms)
+  ✔ [promoted 2] with old A and current materialized B both due, only B is current due work (1.100833ms)
+  ✔ before B's first materialization, B's cards are new and A's retained due rows are not current work (1.140958ms)
+  ✔ A -> B -> A: when the raw cards return to A, A's retained schedule is current again (1.039792ms)
+  ✔ never-rated suspended and flagged cards are excluded from new work before the caps (0.8525ms)
+  ✔ order and limits apply after eligibility, even behind many ineligible older rows (4.048417ms)
+  ✔ daylight saving: the 25-hour local day in Chicago (1 November 2026) gets the exact exclusive boundary (2.537ms)
+  ✔ session membership counts unique presented cards; a replayed acknowledgement does not advance twice (0.1935ms)
+✔ [sqlite] CRS-R1 version-owned due queue with exact boundaries (24.347416ms)
+▶ [model] CRS-R2 persistent reset generation
+  ✖ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.635042ms)
+  ✖ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.1785ms)
+  ✔ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.270875ms)
+  ✔ an identical committed-reset replay after new work returns its stored result and erases nothing (0.077667ms)
+  ✖ reusing a reset operation ID with a changed payload conflicts; a stale-generation reset is refused (0.129666ms)
+  ✔ fresh work after refresh with the current generation is accepted, and a new intentional reset applies again (0.369083ms)
+  ✔ reset touches only its material: another material's state, events, receipts and generation remain (0.170667ms)
+  ✔ reset is strictly typed: item fields on a reset, or a missing generation on an item action, are invalid (0.061417ms)
+  ✔ reset keeps the snapshot of the current raw cards and prunes retained older versions (0.1ms)
+✖ [model] CRS-R2 persistent reset generation (2.127584ms)
+▶ [model] handoff details
+  ✔ first suspend works on a never-rated card: the snapshot is created without a review time or fabricated event (0.11375ms)
+  ✔ a flagged card refuses ratings until unflagged, without changing its schedule (0.107167ms)
+  ✔ an item action against changed raw cards is refused as stale content (0.101458ms)
+✔ [model] handoff details (0.358584ms)
+ℹ tests 21
+ℹ suites 3
+ℹ pass 18
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.512958
+
+✖ failing tests:
+
+test at corrections.test.mjs:214:3
+✖ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.635042ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:219:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.start (node:internal/test_runner/test:944:17)
+      at node:internal/test_runner/test:1440:71
+      at node:internal/per_context/primordials:466:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:435:3)
+      at node:internal/per_context/primordials:466:9
+      at Array.map (<anonymous>) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at corrections.test.mjs:223:3
+✖ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.1785ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:231:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1442:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at corrections.test.mjs:263:3
+✖ reusing a reset operation ID with a changed payload conflicts; a stale-generation reset is refused (0.129666ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:268:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }

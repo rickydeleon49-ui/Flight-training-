@@ -1,0 +1,155 @@
+(node:27600) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ [sqlite] CRS-R1 version-owned due queue with exact boundaries
+  ✖ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (9.616417ms)
+  ✖ a day-ladder card due exactly at next local midnight is excluded; one millisecond earlier is included (1.525ms)
+  ✖ [promoted 2] with old A and current materialized B both due, only B is current due work (0.7955ms)
+  ✖ before B's first materialization, B's cards are new and A's retained due rows are not current work (0.780375ms)
+  ✖ A -> B -> A: when the raw cards return to A, A's retained schedule is current again (0.885625ms)
+  ✖ never-rated suspended and flagged cards are excluded from new work before the caps (0.763042ms)
+  ✖ order and limits apply after eligibility, even behind many ineligible older rows (3.598375ms)
+  ✖ daylight saving: the 25-hour local day in Chicago (1 November 2026) gets the exact exclusive boundary (2.199625ms)
+  ✔ session membership counts unique presented cards; a replayed acknowledgement does not advance twice (0.610792ms)
+✖ [sqlite] CRS-R1 version-owned due queue with exact boundaries (21.52525ms)
+▶ [model] CRS-R2 persistent reset generation
+  ✔ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.347041ms)
+  ✔ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.209209ms)
+  ✔ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.197916ms)
+  ✔ an identical committed-reset replay after new work returns its stored result and erases nothing (0.116834ms)
+  ✔ reusing a reset operation ID with a changed payload conflicts; a stale-generation reset is refused (0.081ms)
+  ✔ fresh work after refresh with the current generation is accepted, and a new intentional reset applies again (0.222875ms)
+  ✔ reset touches only its material: another material's state, events, receipts and generation remain (0.122667ms)
+  ✔ reset is strictly typed: item fields on a reset, or a missing generation on an item action, are invalid (0.0775ms)
+  ✔ reset keeps the snapshot of the current raw cards and prunes retained older versions (0.220625ms)
+✔ [model] CRS-R2 persistent reset generation (1.750083ms)
+▶ [model] handoff details
+  ✔ first suspend works on a never-rated card: the snapshot is created without a review time or fabricated event (0.121625ms)
+  ✔ a flagged card refuses ratings until unflagged, without changing its schedule (0.098042ms)
+  ✔ an item action against changed raw cards is refused as stale content (0.112ms)
+✔ [model] handoff details (0.677625ms)
+ℹ tests 21
+ℹ suites 3
+ℹ pass 13
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 98.762042
+
+✖ failing tests:
+
+test at corrections.test.mjs:49:3
+✖ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (9.616417ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:55:20)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.start (node:internal/test_runner/test:944:17)
+      at node:internal/test_runner/test:1440:71
+      at node:internal/per_context/primordials:466:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:435:3)
+      at node:internal/per_context/primordials:466:9 {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at corrections.test.mjs:68:3
+✖ a day-ladder card due exactly at next local midnight is excluded; one millisecond earlier is included (1.525ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:78:21)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1442:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at corrections.test.mjs:85:3
+✖ [promoted 2] with old A and current materialized B both due, only B is current due work (0.7955ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:92:21)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at corrections.test.mjs:100:3
+✖ before B's first materialization, B's cards are new and A's retained due rows are not current work (0.780375ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:106:21)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at corrections.test.mjs:113:3
+✖ A -> B -> A: when the raw cards return to A, A's retained schedule is current again (0.885625ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:120:21)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at corrections.test.mjs:127:3
+✖ never-rated suspended and flagged cards are excluded from new work before the caps (0.763042ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:133:21)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at corrections.test.mjs:140:3
+✖ order and limits apply after eligibility, even behind many ineligible older rows (3.598375ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:162:21)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at corrections.test.mjs:179:3
+✖ daylight saving: the 25-hour local day in Chicago (1 November 2026) gets the exact exclusive boundary (2.199625ms)
+  Error: Unknown named parameter 'nowUtc'
+      at dueQueue (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/cardQuery.mjs:86:6)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-scope-2026-10-06/proof/corrections.test.mjs:189:28)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    code: 'ERR_INVALID_STATE'
+  }

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=spec",
+    "corrections.test.mjs"
+  ],
+  "scratch_mutation": "end-of-day for all cards, retaining nowUtc binding with non-null guard",
+  "exit": 1,
+  "binding_error": false,
+  "targeted_case": "[promoted 1] an Again card is not returned at minute nine and is returned first at minute ten"
+}

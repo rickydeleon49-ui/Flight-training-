@@ -1,0 +1,89 @@
+(node:28626) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ [sqlite] CRS-R1 version-owned due queue with exact boundaries
+  ✖ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (10.197542ms)
+  ✔ a day-ladder card due exactly at next local midnight is excluded; one millisecond earlier is included (1.853459ms)
+  ✔ [promoted 2] with old A and current materialized B both due, only B is current due work (0.9115ms)
+  ✔ before B's first materialization, B's cards are new and A's retained due rows are not current work (1.044417ms)
+  ✔ A -> B -> A: when the raw cards return to A, A's retained schedule is current again (0.959709ms)
+  ✔ never-rated suspended and flagged cards are excluded from new work before the caps (0.874125ms)
+  ✖ order and limits apply after eligibility, even behind many ineligible older rows (3.639583ms)
+  ✔ daylight saving: the 25-hour local day in Chicago (1 November 2026) gets the exact exclusive boundary (2.153834ms)
+  ✔ session membership counts unique presented cards; a replayed acknowledgement does not advance twice (0.175625ms)
+✖ [sqlite] CRS-R1 version-owned due queue with exact boundaries (22.555166ms)
+▶ [model] CRS-R2 persistent reset generation
+  ✔ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.368875ms)
+  ✔ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.223875ms)
+  ✔ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.20125ms)
+  ✔ an identical committed-reset replay after new work returns its stored result and erases nothing (0.0755ms)
+  ✔ reusing a reset operation ID with a changed payload conflicts; a stale-generation reset is refused (0.07225ms)
+  ✔ fresh work after refresh with the current generation is accepted, and a new intentional reset applies again (0.138209ms)
+  ✔ reset touches only its material: another material's state, events, receipts and generation remain (0.107333ms)
+  ✔ reset is strictly typed: item fields on a reset, or a missing generation on an item action, are invalid (0.359833ms)
+  ✔ reset keeps the snapshot of the current raw cards and prunes retained older versions (0.20375ms)
+✔ [model] CRS-R2 persistent reset generation (1.890458ms)
+▶ [model] handoff details
+  ✔ first suspend works on a never-rated card: the snapshot is created without a review time or fabricated event (0.12025ms)
+  ✔ a flagged card refuses ratings until unflagged, without changing its schedule (0.104209ms)
+  ✔ an item action against changed raw cards is refused as stale content (0.09725ms)
+✔ [model] handoff details (0.348791ms)
+ℹ tests 21
+ℹ suites 3
+ℹ pass 19
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.123292
+
+✖ failing tests:
+
+test at corrections.test.mjs:49:3
+✖ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (10.197542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   '12330caa14842486f53ce82250c89f3736b05e4f11e2b7b8b1a26702246e439a',
+      '1533ed83f173f06d5caca53a76638e992e7745fe49f3b7007d91ccadf854f97a',
+      '1cb977774e29baa677572f6fbcb7af87e2babad6800f6d7befa754193ba49c66'
+    ]
+  
+      at TestContext.<anonymous> (file:///private/tmp/m2-card-scope-rereview-20261006/semantic-q1/corrections.test.mjs:56:14)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.start (node:internal/test_runner/test:944:17)
+      at node:internal/test_runner/test:1440:71
+      at node:internal/per_context/primordials:466:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:435:3)
+      at node:internal/per_context/primordials:466:9
+      at Array.map (<anonymous>) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '12330caa14842486f53ce82250c89f3736b05e4f11e2b7b8b1a26702246e439a', '1533ed83f173f06d5caca53a76638e992e7745fe49f3b7007d91ccadf854f97a', '1cb977774e29baa677572f6fbcb7af87e2babad6800f6d7befa754193ba49c66' ],
+    expected: [ '1533ed83f173f06d5caca53a76638e992e7745fe49f3b7007d91ccadf854f97a', '1cb977774e29baa677572f6fbcb7af87e2babad6800f6d7befa754193ba49c66' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at corrections.test.mjs:140:3
+✖ order and limits apply after eligibility, even behind many ineligible older rows (3.639583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  5 !== 6
+  
+      at TestContext.<anonymous> (file:///private/tmp/m2-card-scope-rereview-20261006/semantic-q1/corrections.test.mjs:168:14)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 6,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

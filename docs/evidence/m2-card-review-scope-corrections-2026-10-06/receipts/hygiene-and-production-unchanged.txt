@@ -1,0 +1,11 @@
+$ git diff --check HEAD
+exit=0
+$ git diff --no-index --check /dev/null <each untracked file>  (exit 1 with no output = clean; honours local .gitattributes)
+untracked files checked: 36; with problems: 0
+
+$ git diff --stat df7a130f595abda787b4377850ab7095bde33824 -- src src-tauri package.json package-lock.json vite.config.ts tsconfig.json .github
+exit=0 (empty output = production source unchanged)
+$ git ls-files --others --exclude-standard -- src src-tauri .github
+(empty = no new production files)
+$ git rev-parse HEAD
+df7a130f595abda787b4377850ab7095bde33824

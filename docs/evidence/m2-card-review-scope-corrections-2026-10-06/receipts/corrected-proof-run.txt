@@ -1,0 +1,77 @@
+$ cd docs/evidence/m2-card-review-scope-2026-10-06/proof && node --test --test-reporter=spec proof.test.mjs corrections.test.mjs
+# node v22.23.3, 2026-10-07T05:47:27Z
+(node:27824) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ [sqlite] CRS-R1 version-owned due queue with exact boundaries
+  ✔ [promoted 1] an Again card is not returned at minute nine and is returned first at minute ten (11.188542ms)
+  ✔ a day-ladder card due exactly at next local midnight is excluded; one millisecond earlier is included (1.800542ms)
+  ✔ [promoted 2] with old A and current materialized B both due, only B is current due work (0.963625ms)
+  ✔ before B's first materialization, B's cards are new and A's retained due rows are not current work (0.942833ms)
+  ✔ A -> B -> A: when the raw cards return to A, A's retained schedule is current again (0.954708ms)
+  ✔ never-rated suspended and flagged cards are excluded from new work before the caps (0.832375ms)
+  ✔ order and limits apply after eligibility, even behind many ineligible older rows (4.061333ms)
+  ✔ daylight saving: the 25-hour local day in Chicago (1 November 2026) gets the exact exclusive boundary (2.540417ms)
+  ✔ session membership counts unique presented cards; a replayed acknowledgement does not advance twice (0.187208ms)
+✔ [sqlite] CRS-R1 version-owned due queue with exact boundaries (24.25925ms)
+▶ [model] CRS-R2 persistent reset generation
+  ✔ [promoted 3] an uncommitted pre-reset revision-0 rating is refused after reset, with nothing written (0.393458ms)
+  ✔ [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 (0.21475ms)
+  ✔ [promoted 5] repeated resets succeed; already tombstoned receipts are skipped safely and keep routing metadata (0.209958ms)
+  ✔ an identical committed-reset replay after new work returns its stored result and erases nothing (0.082542ms)
+  ✔ reusing a reset operation ID with a changed payload conflicts; a stale-generation reset is refused (0.067042ms)
+  ✔ fresh work after refresh with the current generation is accepted, and a new intentional reset applies again (0.137084ms)
+  ✔ reset touches only its material: another material's state, events, receipts and generation remain (0.398958ms)
+  ✔ reset is strictly typed: item fields on a reset, or a missing generation on an item action, are invalid (0.091042ms)
+  ✔ reset keeps the snapshot of the current raw cards and prunes retained older versions (0.229042ms)
+✔ [model] CRS-R2 persistent reset generation (1.956208ms)
+▶ [model] handoff details
+  ✔ first suspend works on a never-rated card: the snapshot is created without a review time or fabricated event (0.1315ms)
+  ✔ a flagged card refuses ratings until unflagged, without changing its schedule (0.105041ms)
+  ✔ an item action against changed raw cards is refused as stale content (0.105125ms)
+✔ [model] handoff details (0.37125ms)
+▶ [pure] simple-v1 scheduler
+  ✔ first exposure: Again 10 minutes; Hard and Good 1 day; Easy 3 days (1.439333ms)
+  ✔ intervals are bounded: nonzero minimum, and repeated Easy never passes 180 days (0.147708ms)
+  ✔ repeat failure: Again on a ladder card counts one lapse, a second Again does not count again (0.059958ms)
+  ✔ overdue: a card reviewed 20 days late moves one rung, counted from the review time (0.096417ms)
+  ✔ clock rollback: a review earlier than the last saved review is refused (0.19375ms)
+  ✔ deterministic: identical prior state, rating and time give identical, serializable output (0.097625ms)
+  ✔ refuses state from an unknown scheduler version instead of guessing (0.093292ms)
+✔ [pure] simple-v1 scheduler (2.641833ms)
+▶ [pure] stored instants versus local calendar display
+  ✔ local midnight: a 1-day card reviewed late evening is due all of the next local day, not before (7.375333ms)
+  ✔ time zone change: the same stored instant is judged by the zone the computer is in now; nothing is rewritten (0.435834ms)
+  ✔ a card waiting after Again is not due until its exact instant, even on the same local day (0.136958ms)
+✔ [pure] stored instants versus local calendar display (8.198583ms)
+▶ [model] content-addressed card identity
+  ✔ is stable across calls and gives each of the three synthetic cards a distinct item ID (0.262083ms)
+  ✔ changing one card's text creates a new version whose items share no ID with the old one (0.707416ms)
+  ✔ reordering creates a new version; A -> B -> A returns to the original version and history (0.08225ms)
+  ✔ matches the golden vectors computed independently in Python (fixtures/identity-golden.json) (0.194375ms)
+  ✔ the same cards under another material are a different version (0.044583ms)
+✔ [model] content-addressed card identity (1.366125ms)
+▶ [model] operation contract at the proposed boundary
+  ✔ same operation ID and payload applies once and replays the stored result (0.217459ms)
+  ✔ reusing an operation ID with a changed payload conflicts without writing (0.081375ms)
+  ✔ a stale expected revision is refused; a new deliberate action with the current revision applies (0.091167ms)
+  ✔ suspension removes a card from due work, refuses ratings and keeps history; resumption restores it (0.380459ms)
+  ✔ explicit reset leaves non-content tombstones, so a late replay cannot restore erased state (0.122792ms)
+  ✔ a rating whose clock is behind the last review is refused without an event (0.170208ms)
+✔ [model] operation contract at the proposed boundary (1.112834ms)
+▶ [fsrs] pinned ts-fsrs 5.4.2 behavior with injected time
+  ✔ first exposure uses minute learning steps: Again 1, Hard 6, Good 10 minutes; Easy goes straight to review (0.470334ms)
+  ✔ is deterministic with fuzz off, and its parameters round-trip through JSON (0.10025ms)
+  ✔ maximum_interval is not a hard ceiling: ordering rules push repeated Easy past the configured 180 days (0.516834ms)
+  ✔ rewards an overdue successful review with a longer interval than an on-time one (0.080292ms)
+  ✔ throws on a clock earlier than the last review rather than scheduling (0.072125ms)
+  ✔ with fuzz on, an identical card and review time reproduce the same interval (seeded, not Math.random) (0.25375ms)
+✔ [fsrs] pinned ts-fsrs 5.4.2 behavior with injected time (1.551333ms)
+ℹ tests 48
+ℹ suites 8
+ℹ pass 48
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.256916
+exit=0

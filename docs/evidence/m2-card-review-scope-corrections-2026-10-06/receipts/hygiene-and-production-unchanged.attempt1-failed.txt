@@ -1,0 +1,30 @@
+$ git diff --check HEAD
+exit=0
+$ git diff --no-index --check /dev/null <each untracked file>  (exit 1 with no output = clean)
+WHITESPACE: docs/evidence/m2-card-review-scope-corrections-2026-10-06/receipts/mutation-Q2.txt
+docs/evidence/m2-card-review-scope-corrections-2026-10-06/receipts/mutation-Q2.txt:45: trailing whitespace.
++  
+docs/evidence/m2-card-review-scope-corrections-2026-10-06/receipts/mutation-Q2.txt:52: trailing whitespace.
++  
+docs/evidence/m2-card-review-scope-corrections-2026-10-06/receipts/mutation-Q2.txt:72: trailing whitespace.
++  
+docs/evidence/m2-card-review-scope-corrections-2026-10-06/receipts/mutation-Q2.txt:92: trailing whitespace.
++  
+docs/evidence/m2-card-review-scope-corrections-2026-10-06/receipts/mutation-Q2.txt:111: trailing whitespace.
++  
+docs/evidence/m2-card-review-scope-corrections-2026-10-06/receipts/mutation-Q2.txt:113: trailing whitespace.
++  
+untracked files checked: 34; with problems: 1
+
+$ git diff --stat df7a130f595abda787b4377850ab7095bde33824 -- src src-tauri package.json package-lock.json vite.config.ts tsconfig.json .github
+exit=0 (empty output = production source unchanged)
+$ git ls-files --others --exclude-standard -- src src-tauri .github
+(empty = no new production files)
+$ git rev-parse HEAD; git status --short
+df7a130f595abda787b4377850ab7095bde33824
+ M STATUS.md
+ M docs/PROJECT_HANDOFF.md
+?? docs/M2_CARD_REVIEW_C1_PROMPT_2026-10-06.md
+?? docs/M2_CARD_REVIEW_SCOPE_2026-10-06.md
+?? docs/evidence/m2-card-review-scope-2026-10-06/
+?? docs/evidence/m2-card-review-scope-corrections-2026-10-06/
