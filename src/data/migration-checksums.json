@@ -9,5 +9,6 @@
   "0008_notes.sql": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761",
   "0009_practice_tests.sql": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
   "0010_debrief_links.sql": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971",
-  "0011_practice_sessions.sql": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de"
+  "0011_practice_sessions.sql": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+  "0012_card_reviews.sql": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e"
 }

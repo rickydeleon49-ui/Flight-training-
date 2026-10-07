@@ -17,6 +17,7 @@ import { questionRepository } from "./questionRepository";
 import { scheduleRepository } from "./scheduleRepository";
 import { toolkitRepository } from "./toolkitRepository";
 import { practiceSessionRepository } from "./practiceSessionRepository";
+import { cardReviewRepository } from "./cardReviewRepository";
 
 export interface Repositories {
   app: ReturnType<typeof appRepository>;
@@ -32,6 +33,7 @@ export interface Repositories {
   finance: ReturnType<typeof financeRepository>;
   toolkit: ReturnType<typeof toolkitRepository>;
   practiceSessions: ReturnType<typeof practiceSessionRepository>;
+  cardReviews: ReturnType<typeof cardReviewRepository>;
 }
 
 export function createRepositories(db: SqlDatabase): Repositories {
@@ -49,8 +51,10 @@ export function createRepositories(db: SqlDatabase): Repositories {
     finance: financeRepository(db),
     toolkit: toolkitRepository(db),
     practiceSessions: practiceSessionRepository(db),
+    cardReviews: cardReviewRepository(db),
   };
 }
 
 export { practiceSessionRepository } from "./practiceSessionRepository";
+export { cardReviewRepository } from "./cardReviewRepository";
 export { DuplicateLessonCostError } from "./financeRepository";

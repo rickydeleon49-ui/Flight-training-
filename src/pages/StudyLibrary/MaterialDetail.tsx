@@ -60,6 +60,7 @@ import { canSplitPdfs } from "@/services/pdf";
 
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
+import { CardReviewPanel } from "./CardReviewPanel";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
@@ -809,6 +810,22 @@ function MaterialDetailPage({
                         </div>
                       </section>
                     ) : null}
+
+                    <CardReviewPanel
+                      materialId={material.id}
+                      materialTitle={material.title}
+                      repository={repositories?.cardReviews}
+                      contentKey={studySet.updatedAt}
+                      browseCard={
+                        studySet.flashcards[cardIndex]
+                          ? {
+                              index: cardIndex,
+                              front: studySet.flashcards[cardIndex]!.front,
+                              back: studySet.flashcards[cardIndex]!.back,
+                            }
+                          : null
+                      }
+                    />
                   </div>
                 ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
                   <p className="small muted">
@@ -1212,7 +1229,7 @@ function MaterialDetailPage({
       <ConfirmDialog
         open={confirmingDelete}
         title="Delete this material?"
-        message="Its notes, tags and links are removed. The file is deleted from this application's private storage."
+        message="Its notes, tags and links are removed. The file is deleted from this application's private storage. This also removes its card review history."
         onConfirm={() => {
           setConfirmingDelete(false);
           // Unmount flushes notes so Undo restores the latest typing too.

@@ -1,0 +1,84 @@
+mutation G1: browser/test transaction without the generation barrier (CRS-R2)
+file src/data/cardReviewTransaction.ts
+$ npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 3|promoted 4'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ❯ src/data/cardReviewContract.test.ts (60 tests | 4 failed | 56 skipped) 226ms
+       × [promoted 3] reset racing a queued rating: the pre-reset revision-0 rating is refused, nothing written 57ms
+       × [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 40ms
+       × [promoted 3] reset racing a queued rating: the pre-reset revision-0 rating is refused, nothing written 75ms
+       × [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1 53ms
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 56 skipped (60)
+   Start at  23:49:34
+   Duration  491ms (transform 134ms, setup 0ms, import 180ms, tests 226ms, environment 0ms)
+
+(node:36441) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on node > CRS-R2 persistent reset generation on real transactions > [promoted 3] reset racing a queued rating: the pre-reset revision-0 rating is refused, nothing written
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on sqljs > CRS-R2 persistent reset generation on real transactions > [promoted 3] reset racing a queued rating: the pre-reset revision-0 rating is refused, nothing written
+AssertionError: promise resolved "{ action: 'rate', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "action": "rate",
++   "dueAt": "2026-10-07T15:00:00.000Z",
++   "flag": null,
++   "generation": 1,
++   "itemId": "716cc832d40f778c49bf43c5c8080d55006c8487e95d9d42c72f1186018c027a",
++   "reviewedAt": "2026-10-06T15:00:00.000Z",
++   "revision": 1,
++   "suspended": false,
+  }
+
+ ❯ src/data/cardReviewContract.test.ts:354:45
+    352|       await repo.saveAction(reset(await repo.getCardReviewSnapshot(M))…
+    353|       const before = await counts(db);
+    354|       await expect(repo.saveAction(captured)).rejects.toSatisfy(refuse…
+       |                                             ^
+    355|       expect(await counts(db)).toEqual(before);
+    356|       expect(before.generation).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on node > CRS-R2 persistent reset generation on real transactions > [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on sqljs > CRS-R2 persistent reset generation on real transactions > [promoted 4] a pre-reset revision-1 request stays refused after a new-generation rating reaches revision 1
+AssertionError: promise resolved "{ action: 'rate', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "action": "rate",
++   "dueAt": "2026-10-13T15:01:00.000Z",
++   "flag": null,
++   "generation": 1,
++   "itemId": "716cc832d40f778c49bf43c5c8080d55006c8487e95d9d42c72f1186018c027a",
++   "reviewedAt": "2026-10-06T15:01:00.000Z",
++   "revision": 2,
++   "suspended": false,
+  }
+
+ ❯ src/data/cardReviewContract.test.ts:372:45
+    370|       expect(snapshot.states[snapshot.current.items[0]!.itemId]!.revis…
+    371|       const before = await counts(db);
+    372|       await expect(repo.saveAction(captured)).rejects.toSatisfy(refuse…
+       |                                             ^
+    373|       expect(await counts(db)).toEqual(before);
+    374|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+exit 1

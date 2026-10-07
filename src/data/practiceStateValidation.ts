@@ -11,6 +11,9 @@
  * migrations. Native and browser outcomes are held equal by the shared
  * contract in `src-tauri/fixtures/practice-validation/cases.json`.
  */
+import { canonicalJson, isValidCardText, MAX_BACK_CHARS, MAX_FRONT_CHARS, MAX_SOURCE_PAGE, sha256Hex } from "@/logic/cardIdentity";
+import { isIsoInstant, SCHEDULER_VERSION, stepDelayMs } from "@/logic/cardScheduler";
+
 import type { SqlValue } from "./db";
 import { MIGRATIONS } from "./migrations";
 import { codePointLength } from "./practiceSessionTransaction";
@@ -223,6 +226,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   const supported = Math.max(...MIGRATIONS.map((migration) => migration.version));
   if (newest > supported) refuse("The database was created by a newer format.");
   if (newest >= 11) await validatePracticeState(query, reference);
+  if (newest >= 12) await validateCardReviewState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -608,4 +612,326 @@ function parseOptions(json: string, owner: string): unknown[] {
   }
   if (!Array.isArray(options)) refuse(`${owner} has invalid options JSON.`);
   return options;
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 12: card reviews (native `verify_schema_12_card_semantics`)  */
+/* ------------------------------------------------------------------ */
+
+const CARD_TABLES = [
+  "card_review_generations",
+  "card_versions",
+  "card_items",
+  "card_review_state",
+  "card_review_events",
+  "card_review_operations",
+] as const;
+
+const CARD_ITEM_ACTIONS = ["rate", "suspend", "resume", "flag", "unflag"];
+const CARD_FLAGS = ["wrong_answer", "unclear", "not_in_source"];
+const UUID_V4_LOWER = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const HEX_64_LOWER = /^[0-9a-f]{64}$/;
+const SCHEDULE_KEYS = ["dueAt", "lapses", "lastReviewedAt", "reps", "schedulerVersion", "step"];
+const ITEM_RESULT_KEYS = ["action", "dueAt", "flag", "generation", "itemId", "reviewedAt", "revision", "suspended"];
+const RESET_RESULT_KEYS = ["action", "generation", "materialId"];
+
+function timestamp(value: unknown, owner: string): string {
+  if (!isIsoInstant(value)) refuse(`${owner} has a malformed timestamp.`);
+  return value;
+}
+
+function jsonObject(json: string, owner: string): Record<string, unknown> {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch {
+    refuse(`${owner} has malformed JSON.`);
+  }
+  if (value === null || typeof value !== "object" || Array.isArray(value)) refuse(`${owner} must be a JSON object.`);
+  return value as Record<string, unknown>;
+}
+
+function exactJsonKeys(object: Record<string, unknown>, keys: readonly string[], owner: string): void {
+  const own = Object.keys(object).sort();
+  if (own.length !== keys.length || own.some((key, i) => key !== keys[i])) refuse(`${owner} has unexpected fields.`);
+}
+
+const isNonNegativeInteger = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+
+/** A stored `simple-v1` schedule: exact fields, the step's delay from the review time. */
+function checkSchedule(value: Record<string, unknown>, owner: string): void {
+  exactJsonKeys(value, SCHEDULE_KEYS, owner);
+  if (value.schedulerVersion !== SCHEDULER_VERSION) refuse(`${owner} has an unknown scheduler version.`);
+  const step = value.step;
+  if (typeof step !== "number" || !Number.isInteger(step) || step < -1 || step > 7) refuse(`${owner} has an invalid step.`);
+  if (!isNonNegativeInteger(value.reps) || value.reps < 1 || !isNonNegativeInteger(value.lapses)) refuse(`${owner} has invalid counts.`);
+  const last = timestamp(value.lastReviewedAt, owner);
+  const due = timestamp(value.dueAt, owner);
+  if (Date.parse(due) - Date.parse(last) !== stepDelayMs(step)) refuse(`${owner} has a due time inconsistent with its step.`);
+}
+
+/** The schema-12 card-review contract (native `verify_schema_12_card_semantics`). */
+export async function validateCardReviewState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  if ((await query("PRAGMA foreign_key_check", [])).length > 0) refuse("The database violates foreign key constraints.");
+
+  // 1. Tables, columns, foreign keys and CHECK constraints against the reference.
+  for (const table of CARD_TABLES) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])) !== 1) {
+      refuse(`The database is missing required table: ${table}`);
+    }
+    const columnsSql = `SELECT name, type, "notnull" AS required, pk FROM pragma_table_info('${table}')`;
+    const actual = await query(columnsSql, []);
+    const expected = await reference(columnsSql, []);
+    const byName = new Map(actual.map((row) => [text(row, "name"), row]));
+    if (actual.length !== expected.length) refuse(`Table ${table} columns do not match the registered migration contract.`);
+    for (const ref of expected) {
+      const name = text(ref, "name");
+      const column = byName.get(name);
+      if (!column) refuse(`Table ${table} is missing required column: ${name}`);
+      if (
+        text(column, "type").toLowerCase() !== text(ref, "type").toLowerCase() ||
+        int(column, "required") !== int(ref, "required") ||
+        int(column, "pk") !== int(ref, "pk")
+      ) {
+        refuse(`Table ${table} column ${name} does not match the registered migration contract.`);
+      }
+    }
+    if (!same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table))) {
+      refuse(`Table ${table} foreign keys do not match the registered migration contract.`);
+    }
+    if (!same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table)))) {
+      refuse(`Table ${table} CHECK constraints do not match the registered migration contract.`);
+    }
+  }
+
+  // 2. Uniqueness and indexes.
+  for (const [table, columns] of [
+    ["card_versions", ["source_material_id", "content_hash"]],
+    ["card_items", ["version_id", "ordinal"]],
+  ] as const) {
+    let found = false;
+    for (const index of await query(`SELECT name, "unique" AS is_unique, partial FROM pragma_index_list('${table}')`, [])) {
+      if (int(index, "is_unique") === 1 && int(index, "partial") === 0 && same(await indexColumns(query, text(index, "name")), columns)) {
+        found = true;
+      }
+    }
+    if (!found) refuse(`Table ${table} is missing compound UNIQUE constraint on (${columns.join(", ")}).`);
+  }
+  const [active] = await query(`SELECT "unique" AS is_unique FROM pragma_index_list('card_versions') WHERE name = ?`, ["uq_active_card_version"]);
+  if (!active || int(active, "is_unique") !== 1) refuse("The database is missing required unique index: uq_active_card_version");
+  for (const [table, index] of [
+    ["card_versions", "uq_active_card_version"],
+    ["card_review_state", "idx_card_state_due"],
+    ["card_review_events", "idx_card_events_item"],
+    ["card_review_operations", "idx_card_ops_material"],
+  ] as const) {
+    if ((await query(`SELECT 1 FROM pragma_index_list('${table}') WHERE name = ?`, [index])).length === 0) {
+      refuse(`The database is missing required index: ${index}`);
+    }
+    const indexSql = "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?";
+    const [mine] = await query(indexSql, [index]);
+    const [ref] = await reference(indexSql, [index]);
+    if (!mine || !ref || normalizeSql(text(mine, "sql")) !== normalizeSql(text(ref, "sql"))) {
+      refuse(`Index ${index} does not match the registered migration contract.`);
+    }
+  }
+
+  // 3. The deletion trigger.
+  {
+    const triggerSql = "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?";
+    const [mine] = await query(triggerSql, ["trg_card_ops_material_delete"]);
+    if (!mine) refuse("The database is missing required trigger: trg_card_ops_material_delete");
+    const [ref] = await reference(triggerSql, ["trg_card_ops_material_delete"]);
+    if (!ref || normalizeSql(text(mine, "sql")) !== normalizeSql(text(ref, "sql"))) {
+      refuse("The trigger trg_card_ops_material_delete does not match the registered migration contract.");
+    }
+  }
+
+  // 4. Ownership.
+  for (const [sql, problem] of [
+    [
+      `SELECT COUNT(*) AS n FROM card_review_state s
+       JOIN card_items i ON i.id = s.item_id JOIN card_versions v ON v.id = i.version_id
+       WHERE s.source_material_id != v.source_material_id`,
+      "card review state owned by a material other than its card's",
+    ],
+    [
+      `SELECT COUNT(*) AS n FROM (SELECT source_material_id FROM card_versions WHERE is_active = 1
+       GROUP BY source_material_id HAVING COUNT(*) > 1)`,
+      "more than one active card version for a material",
+    ],
+  ] as const) {
+    if ((await count(query, sql)) > 0) refuse(`The database contains ${problem}.`);
+  }
+
+  // 5. Identity: every snapshot is recomputable from its stored text.
+  for (const version of await query(
+    "SELECT id, source_material_id, content_hash, card_count, created_at, first_reviewed_at FROM card_versions",
+    [],
+  )) {
+    const versionId = text(version, "id");
+    const owner = `Card version ${versionId}`;
+    timestamp(text(version, "created_at"), owner);
+    const firstReviewed = optText(version, "first_reviewed_at");
+    if (firstReviewed !== null) timestamp(firstReviewed, owner);
+    const contentHash = text(version, "content_hash");
+    if ((await sha256Hex(`${text(version, "source_material_id")}\u0000${contentHash}`)) !== versionId) {
+      refuse(`${owner} cannot be recomputed from its material and content.`);
+    }
+    const items = await query(
+      "SELECT id, ordinal, front, back, source_page FROM card_items WHERE version_id = ? ORDER BY ordinal ASC",
+      [versionId],
+    );
+    if (items.length !== int(version, "card_count")) refuse(`${owner} card_count does not match its cards.`);
+    const cards: { front: string; back: string; sourcePage: number | null }[] = [];
+    for (const [expected, item] of items.entries()) {
+      const itemId = text(item, "id");
+      if (int(item, "ordinal") !== expected) refuse(`Card ${itemId} has a non-contiguous ordinal.`);
+      if ((await sha256Hex(`${versionId}\u0000${expected}`)) !== itemId) refuse(`Card ${itemId} cannot be recomputed.`);
+      const front = text(item, "front");
+      const back = text(item, "back");
+      const sourcePage = optInt(item, "source_page");
+      if (!isValidCardText(front, MAX_FRONT_CHARS) || !isValidCardText(back, MAX_BACK_CHARS)) refuse(`Card ${itemId} has invalid text.`);
+      if (sourcePage !== null && (sourcePage < 1 || sourcePage > MAX_SOURCE_PAGE)) refuse(`Card ${itemId} has an out-of-bounds source page.`);
+      cards.push({ front, back, sourcePage });
+    }
+    if ((await sha256Hex(canonicalJson(cards))) !== contentHash) refuse(`${owner} content hash does not match its cards.`);
+  }
+
+  // 6. Generations of existing materials (a missing row is generation 0).
+  const generations = new Map<string, number>();
+  for (const row of await query("SELECT source_material_id, generation FROM card_review_generations", [])) {
+    generations.set(text(row, "source_material_id"), int(row, "generation"));
+  }
+  const generationOf = (materialId: string) => generations.get(materialId) ?? 0;
+
+  // 7. Receipts: typed by action; tombstones keep routing metadata only.
+  const liveRates = new Map<string, string>();
+  for (const receipt of await query(
+    `SELECT operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json
+     FROM card_review_operations`,
+    [],
+  )) {
+    const operationId = text(receipt, "operation_id");
+    const owner = `Card review receipt ${operationId}`;
+    if (!UUID_V4_LOWER.test(operationId)) refuse(`${owner} is not a valid UUIDv4.`);
+    if (!HEX_64_LOWER.test(text(receipt, "request_hash"))) refuse(`${owner} has an invalid request hash.`);
+    timestamp(text(receipt, "applied_at"), owner);
+    const action = text(receipt, "action");
+    const materialId = text(receipt, "source_material_id");
+    const generation = int(receipt, "generation");
+    if (materialId.trim() === "") refuse(`${owner} has no material.`);
+    if (int(receipt, "is_erased") === 1) {
+      if (optText(receipt, "result_json") !== null) refuse(`${owner} is erased but still holds a result.`);
+      continue;
+    }
+    const resultJson = optText(receipt, "result_json");
+    if (resultJson === null) refuse(`${owner} is live but has no result.`);
+    const result = jsonObject(resultJson, owner);
+    const current = generationOf(materialId);
+    if (action === "reset") {
+      exactJsonKeys(result, RESET_RESULT_KEYS, owner);
+      if (result.action !== "reset" || result.materialId !== materialId) refuse(`${owner} result does not match its receipt.`);
+      if (result.generation !== generation + 1) refuse(`${owner} result generation is not the captured generation plus one.`);
+      if (generation + 1 !== current) refuse(`${owner} is a live reset older than the current generation.`);
+      continue;
+    }
+    if (!CARD_ITEM_ACTIONS.includes(action)) refuse(`${owner} has an unknown action.`);
+    exactJsonKeys(result, ITEM_RESULT_KEYS, owner);
+    if (result.action !== action || result.generation !== generation) refuse(`${owner} result does not match its receipt.`);
+    if (generation > current) refuse(`${owner} has a generation above its material's current generation.`);
+    if (generation < current) refuse(`${owner} is a live item receipt from before the latest reset.`);
+    const itemId = result.itemId;
+    if (typeof itemId !== "string" || !HEX_64_LOWER.test(itemId)) refuse(`${owner} result names no card.`);
+    const owned = await count(
+      query,
+      `SELECT COUNT(*) AS n FROM card_items i JOIN card_versions v ON v.id = i.version_id
+       WHERE i.id = ? AND v.source_material_id = ?`,
+      [itemId, materialId],
+    );
+    if (owned !== 1) refuse(`${owner} result names a card that is not this material's.`);
+    if (typeof result.revision !== "number" || !Number.isInteger(result.revision) || result.revision < 1) {
+      refuse(`${owner} result has an invalid revision.`);
+    }
+    if (result.dueAt !== null) timestamp(result.dueAt, owner);
+    if (result.reviewedAt !== null) timestamp(result.reviewedAt, owner);
+    if (typeof result.suspended !== "boolean") refuse(`${owner} result has an invalid paused flag.`);
+    if (result.flag !== null && !CARD_FLAGS.includes(result.flag as string)) refuse(`${owner} result has an invalid flag.`);
+    if (action === "rate") {
+      if (result.reviewedAt === null || result.dueAt === null) refuse(`${owner} rating result has no review time.`);
+      liveRates.set(operationId, itemId);
+    } else if (result.reviewedAt !== null) {
+      refuse(`${owner} non-rating result has a review time.`);
+    }
+  }
+
+  // 8. Events: immutable ratings of the current generation, each with its receipt.
+  const eventsByItem = new Map<string, Record<string, unknown>[]>();
+  for (const event of await query(
+    `SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json,
+            v.source_material_id
+     FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id`,
+    [],
+  )) {
+    const id = text(event, "id");
+    const owner = `Card review event ${id}`;
+    if (!UUID_V4_LOWER.test(id)) refuse(`${owner} is not a valid UUIDv4.`);
+    const itemId = text(event, "item_id");
+    const generation = int(event, "generation");
+    const current = generationOf(text(event, "source_material_id"));
+    if (generation > current) refuse(`${owner} has a generation above its material's current generation.`);
+    if (generation < current) refuse(`${owner} is from before the latest reset.`);
+    if (liveRates.get(id) !== itemId) refuse(`${owner} has no matching live rating receipt.`);
+    if (text(event, "scheduler_version") !== SCHEDULER_VERSION) refuse(`${owner} has an unknown scheduler version.`);
+    const reviewedAt = timestamp(text(event, "reviewed_at"), owner);
+    const next = jsonObject(text(event, "next_state_json"), owner);
+    checkSchedule(next, owner);
+    if (next.lastReviewedAt !== reviewedAt) refuse(`${owner} next state does not match its review time.`);
+    const priorJson = text(event, "prior_state_json");
+    if (priorJson !== "null") checkSchedule(jsonObject(priorJson, owner), owner);
+    const list = eventsByItem.get(itemId) ?? [];
+    list.push(next);
+    eventsByItem.set(itemId, list);
+  }
+
+  // 9. Projection against its events.
+  for (const state of await query(
+    `SELECT item_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, revision FROM card_review_state`,
+    [],
+  )) {
+    const itemId = text(state, "item_id");
+    const owner = `Card review state ${itemId}`;
+    if (text(state, "scheduler_version") !== SCHEDULER_VERSION) refuse(`${owner} has an unknown scheduler version.`);
+    const events = eventsByItem.get(itemId) ?? [];
+    const dueAt = optText(state, "due_at");
+    const lastReviewedAt = optText(state, "last_reviewed_at");
+    const reps = int(state, "reps");
+    if (dueAt === null || lastReviewedAt === null) {
+      if (events.length > 0) refuse(`${owner} is never rated but has rating events.`);
+      if (dueAt !== lastReviewedAt) refuse(`${owner} has a due time without a review time.`);
+      continue;
+    }
+    const step = int(state, "step");
+    timestamp(dueAt, owner);
+    timestamp(lastReviewedAt, owner);
+    if (Date.parse(dueAt) - Date.parse(lastReviewedAt) !== stepDelayMs(step)) refuse(`${owner} has a due time inconsistent with its step.`);
+    if (events.length !== reps) refuse(`${owner} reps does not match its rating events.`);
+    if (int(state, "revision") < events.length) refuse(`${owner} revision is below its rating count.`);
+    const repsSeen = events.map((next) => next.reps as number).sort((a, b) => a - b);
+    if (repsSeen.some((value, i) => value !== i + 1)) refuse(`${owner} rating events do not form one history.`);
+    const latest = events.find((next) => next.reps === reps)!;
+    if (
+      latest.step !== step ||
+      latest.dueAt !== dueAt ||
+      latest.lastReviewedAt !== lastReviewedAt ||
+      latest.lapses !== int(state, "lapses")
+    ) {
+      refuse(`${owner} does not match its latest rating event.`);
+    }
+  }
+  for (const itemId of eventsByItem.keys()) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM card_review_state WHERE item_id = ?", [itemId])) !== 1) {
+      refuse(`Card ${itemId} has rating events but no review state.`);
+    }
+  }
 }

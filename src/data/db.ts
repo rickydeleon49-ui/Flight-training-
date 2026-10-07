@@ -53,6 +53,14 @@ export interface SqlDatabase {
   erasePracticeHistoryAtomically?(
     action: import("@/domain/types").EraseHistoryAction,
   ): Promise<import("@/domain/types").EraseHistoryResult>;
+  /**
+   * Single-connection atomic transaction for one card-review action (M2-3
+   * C1). There is deliberately no fallback: without it, card writes refuse
+   * with `UNSUPPORTED_DRIVER`.
+   */
+  saveCardReviewAtomically?(
+    action: import("@/domain/types").CardReviewAction,
+  ): Promise<import("@/domain/types").CardReviewResult>;
 }
 
 export interface PracticeTestSaveOperation {

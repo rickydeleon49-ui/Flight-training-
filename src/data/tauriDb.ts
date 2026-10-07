@@ -17,8 +17,11 @@ import {
   type StructuredImportSaveOperation,
 } from "./db";
 import {
+  CARD_REVIEW_ERROR_MESSAGES,
+  CardReviewError,
   IMPORT_SAVE_MESSAGES,
   isImportSaveErrorCode,
+  isNativeCardReviewErrorCode,
   isPracticeSessionErrorCode,
   PRACTICE_SESSION_ERROR_MESSAGES,
   PracticeSessionError,
@@ -249,6 +252,60 @@ export async function invokeErasePracticeHistory(
   }
 }
 
+/**
+ * Invoke the native card-review save and accept only its allowlisted
+ * outcomes: exactly one native code with its fixed message, or a result whose
+ * shape matches the action sent. Anything else becomes `IPC_TRANSPORT_ERROR`
+ * and is never shown raw.
+ */
+export async function invokeCardReviewSave(
+  action: import("@/domain/types").CardReviewAction,
+  call: typeof invoke = invoke,
+): Promise<import("@/domain/types").CardReviewResult> {
+  let result: unknown;
+  try {
+    result = await call("save_card_review_atomically", { operation: action });
+  } catch (rejection) {
+    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (isNativeCardReviewErrorCode(code) && message === CARD_REVIEW_ERROR_MESSAGES[code]) {
+      throw new CardReviewError(code);
+    }
+    throw new CardReviewError("IPC_TRANSPORT_ERROR", { cause: rejection });
+  }
+  if (!isCardReviewResultFor(action, result)) throw new CardReviewError("IPC_TRANSPORT_ERROR");
+  return result;
+}
+
+const isNullableText = (value: unknown) => value === null || typeof value === "string";
+const isCount = (value: unknown) => typeof value === "number" && Number.isInteger(value) && value >= 0;
+
+function isCardReviewResultFor(
+  action: import("@/domain/types").CardReviewAction,
+  value: unknown,
+): value is import("@/domain/types").CardReviewResult {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const r = value as Record<string, unknown>;
+  if (action.action === "reset") {
+    return (
+      Object.keys(r).length === 3 &&
+      r.action === "reset" &&
+      r.materialId === action.materialId &&
+      isCount(r.generation)
+    );
+  }
+  return (
+    Object.keys(r).length === 8 &&
+    r.action === action.action &&
+    r.itemId === action.itemId &&
+    isCount(r.generation) &&
+    isCount(r.revision) &&
+    isNullableText(r.dueAt) &&
+    isNullableText(r.reviewedAt) &&
+    typeof r.suspended === "boolean" &&
+    (r.flag === null || r.flag === "wrong_answer" || r.flag === "unclear" || r.flag === "not_in_source")
+  );
+}
+
 export async function createTauriDatabase(): Promise<SqlDatabase> {
   // Migrations were registered in Rust and run as part of this load().
   const db = await Database.load(DB_URL);
@@ -323,6 +380,11 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
       action: import("@/domain/types").EraseHistoryAction,
     ): Promise<import("@/domain/types").EraseHistoryResult> {
       return invokeErasePracticeHistory(action);
+    },
+    saveCardReviewAtomically(
+      action: import("@/domain/types").CardReviewAction,
+    ): Promise<import("@/domain/types").CardReviewResult> {
+      return invokeCardReviewSave(action);
     },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);

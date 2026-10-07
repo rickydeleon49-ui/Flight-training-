@@ -636,6 +636,9 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 11 {
         verify_schema_11_semantics(connection)?;
     }
+    if newest_migration >= 12 {
+        verify_schema_12_card_semantics(connection)?;
+    }
     Ok(())
 }
 
@@ -1768,6 +1771,778 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(), 
         }
     }
 
+    Ok(())
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 12: card reviews (TS twin: `validateCardReviewState`)        */
+/* ------------------------------------------------------------------ */
+
+const CARD_TABLES: [&str; 6] = [
+    "card_review_generations",
+    "card_versions",
+    "card_items",
+    "card_review_state",
+    "card_review_events",
+    "card_review_operations",
+];
+
+fn card_count(
+    connection: &Connection,
+    sql: &str,
+    params: &[&dyn rusqlite::ToSql],
+) -> Result<i64, String> {
+    connection
+        .query_row(sql, params, |r| r.get(0))
+        .map_err(|e| format!("Could not check card reviews: {e}"))
+}
+
+fn card_timestamp(value: &str, owner: &str) -> Result<i64, String> {
+    crate::card_reviews::parse_iso_ms(value)
+        .ok_or_else(|| format!("{owner} has a malformed timestamp."))
+}
+
+fn card_json_object(
+    text: &str,
+    owner: &str,
+) -> Result<serde_json::Map<String, serde_json::Value>, String> {
+    match serde_json::from_str::<serde_json::Value>(text) {
+        Ok(serde_json::Value::Object(map)) => Ok(map),
+        Ok(_) => Err(format!("{owner} must be a JSON object.")),
+        Err(_) => Err(format!("{owner} has malformed JSON.")),
+    }
+}
+
+fn card_exact_keys(
+    map: &serde_json::Map<String, serde_json::Value>,
+    keys: &[&str],
+    owner: &str,
+) -> Result<(), String> {
+    if map.len() == keys.len() && keys.iter().all(|key| map.contains_key(*key)) {
+        Ok(())
+    } else {
+        Err(format!("{owner} has unexpected fields."))
+    }
+}
+
+/// A JSON value that JavaScript's `Number.isInteger` accepts, as an i64.
+fn card_json_int(value: Option<&serde_json::Value>) -> Option<i64> {
+    match value {
+        Some(serde_json::Value::Number(n)) => n.as_i64().or_else(|| {
+            n.as_f64()
+                .filter(|f| f.fract() == 0.0 && f.abs() < 9.0e15)
+                .map(|f| f as i64)
+        }),
+        _ => None,
+    }
+}
+
+fn card_json_str(value: Option<&serde_json::Value>) -> Option<&str> {
+    match value {
+        Some(serde_json::Value::String(s)) => Some(s),
+        _ => None,
+    }
+}
+
+/// A stored `simple-v1` schedule: exact fields, the step's delay from the review time.
+fn card_check_schedule(
+    map: &serde_json::Map<String, serde_json::Value>,
+    owner: &str,
+) -> Result<(), String> {
+    card_exact_keys(
+        map,
+        &[
+            "dueAt",
+            "lapses",
+            "lastReviewedAt",
+            "reps",
+            "schedulerVersion",
+            "step",
+        ],
+        owner,
+    )?;
+    if card_json_str(map.get("schedulerVersion")) != Some(crate::card_reviews::SCHEDULER_VERSION) {
+        return Err(format!("{owner} has an unknown scheduler version."));
+    }
+    let step = card_json_int(map.get("step"))
+        .filter(|s| (-1..=7).contains(s))
+        .ok_or_else(|| format!("{owner} has an invalid step."))?;
+    let reps = card_json_int(map.get("reps"));
+    let lapses = card_json_int(map.get("lapses"));
+    if !matches!((reps, lapses), (Some(r), Some(l)) if r >= 1 && l >= 0) {
+        return Err(format!("{owner} has invalid counts."));
+    }
+    let last = card_timestamp(
+        card_json_str(map.get("lastReviewedAt")).unwrap_or(""),
+        owner,
+    )?;
+    let due = card_timestamp(card_json_str(map.get("dueAt")).unwrap_or(""), owner)?;
+    if Some(due - last) != crate::card_reviews::step_delay_ms(step) {
+        return Err(format!(
+            "{owner} has a due time inconsistent with its step."
+        ));
+    }
+    Ok(())
+}
+
+fn card_index_sql(connection: &Connection, index: &str) -> Option<String> {
+    connection
+        .query_row(
+            "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?1",
+            [index],
+            |r| r.get::<_, Option<String>>(0),
+        )
+        .ok()
+        .flatten()
+}
+
+fn card_index_columns(connection: &Connection, index: &str) -> Result<Vec<String>, String> {
+    let mut statement = connection
+        .prepare(&format!(
+            "SELECT name FROM pragma_index_info('{index}') ORDER BY seqno ASC"
+        ))
+        .map_err(|e| format!("Could not inspect index {index}: {e}"))?;
+    let columns = statement
+        .query_map([], |r| r.get(0))
+        .map_err(|e| format!("Could not inspect index {index}: {e}"))?
+        .collect::<Result<Vec<String>, _>>()
+        .map_err(|e| format!("Could not inspect index {index}: {e}"));
+    columns
+}
+
+/// The schema-12 card-review contract, run by startup initialization and
+/// archive inspection. Every rule matches `validateCardReviewState` in
+/// `src/data/practiceStateValidation.ts`; the shared accept/refuse fixture is
+/// `src-tauri/fixtures/card-validation/cases.json`.
+pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result<(), String> {
+    use crate::card_reviews::{
+        canonical_cards_json, is_lower_hex_64, is_valid_card_text, sha256_hex, step_delay_ms,
+        CanonicalCard, FLAG_REASONS, ITEM_ACTIONS, MAX_BACK_CHARS, MAX_FRONT_CHARS,
+        MAX_SOURCE_PAGE, SCHEDULER_VERSION,
+    };
+    let uuid_v4 =
+        |value: &str| is_valid_uuid_v4(value) && !value.bytes().any(|b| b.is_ascii_uppercase());
+
+    {
+        let mut fk = connection
+            .prepare("PRAGMA foreign_key_check")
+            .map_err(|e| format!("Could not check foreign keys: {e}"))?;
+        let mut rows = fk
+            .query([])
+            .map_err(|e| format!("Could not check foreign keys: {e}"))?;
+        if rows
+            .next()
+            .map_err(|e| format!("Could not check foreign keys: {e}"))?
+            .is_some()
+        {
+            return Err("The database violates foreign key constraints.".to_string());
+        }
+    }
+    let reference = get_reference_schema_connection()?;
+
+    // 1. Tables, columns, foreign keys and CHECK constraints against the reference.
+    for table in CARD_TABLES {
+        if card_count(
+            connection,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )? != 1
+        {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        let columns = |c: &Connection| -> Result<Vec<(String, String, i64, i64)>, String> {
+            let mut statement = c
+                .prepare(&format!(
+                    "SELECT name, type, [notnull], pk FROM pragma_table_info('{table}') ORDER BY name"
+                ))
+                .map_err(|e| format!("Could not inspect {table}: {e}"))?;
+            let rows = statement
+                .query_map([], |r| {
+                    Ok((
+                        r.get::<_, String>(0)?,
+                        r.get::<_, String>(1)?.to_ascii_lowercase(),
+                        r.get(2)?,
+                        r.get(3)?,
+                    ))
+                })
+                .map_err(|e| format!("Could not inspect {table}: {e}"))?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Could not inspect {table}: {e}"));
+            rows
+        };
+        if columns(connection)? != columns(&reference)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+    }
+
+    // 2. Uniqueness and indexes.
+    for (table, expected) in [
+        ("card_versions", ["source_material_id", "content_hash"]),
+        ("card_items", ["version_id", "ordinal"]),
+    ] {
+        let mut statement = connection
+            .prepare(&format!(
+                "SELECT name, [unique], partial FROM pragma_index_list('{table}')"
+            ))
+            .map_err(|e| format!("Could not inspect indexes of {table}: {e}"))?;
+        let indexes = statement
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, i64>(1)?,
+                    r.get::<_, i64>(2)?,
+                ))
+            })
+            .map_err(|e| format!("Could not inspect indexes of {table}: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Could not inspect indexes of {table}: {e}"))?;
+        let mut found = false;
+        for (name, unique, partial) in indexes {
+            if unique == 1 && partial == 0 && card_index_columns(connection, &name)? == expected {
+                found = true;
+            }
+        }
+        if !found {
+            return Err(format!(
+                "Table {table} is missing compound UNIQUE constraint on ({}).",
+                expected.join(", ")
+            ));
+        }
+    }
+    let active_unique: Option<i64> = connection
+        .query_row(
+            "SELECT [unique] FROM pragma_index_list('card_versions') WHERE name = 'uq_active_card_version'",
+            [],
+            |r| r.get(0),
+        )
+        .ok();
+    if active_unique != Some(1) {
+        return Err(
+            "The database is missing required unique index: uq_active_card_version".to_string(),
+        );
+    }
+    for (table, index) in [
+        ("card_versions", "uq_active_card_version"),
+        ("card_review_state", "idx_card_state_due"),
+        ("card_review_events", "idx_card_events_item"),
+        ("card_review_operations", "idx_card_ops_material"),
+    ] {
+        if card_count(
+            connection,
+            &format!("SELECT COUNT(*) FROM pragma_index_list('{table}') WHERE name = ?1"),
+            &[&index],
+        )? == 0
+        {
+            return Err(format!("The database is missing required index: {index}"));
+        }
+        match (
+            card_index_sql(connection, index),
+            card_index_sql(&reference, index),
+        ) {
+            (Some(mine), Some(theirs)) if normalize_sql(&mine) == normalize_sql(&theirs) => {}
+            _ => {
+                return Err(format!(
+                    "Index {index} does not match the registered migration contract."
+                ))
+            }
+        }
+    }
+
+    // 3. The deletion trigger.
+    {
+        let trigger = |c: &Connection| -> Option<String> {
+            c.query_row(
+                "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_card_ops_material_delete'",
+                [],
+                |r| r.get(0),
+            )
+            .ok()
+        };
+        let Some(mine) = trigger(connection) else {
+            return Err(
+                "The database is missing required trigger: trg_card_ops_material_delete"
+                    .to_string(),
+            );
+        };
+        if trigger(&reference).map(|s| normalize_sql(&s)) != Some(normalize_sql(&mine)) {
+            return Err(
+                "The trigger trg_card_ops_material_delete does not match the registered migration contract."
+                    .to_string(),
+            );
+        }
+    }
+
+    // 4. Ownership.
+    for (sql, problem) in [
+        (
+            "SELECT COUNT(*) FROM card_review_state s
+             JOIN card_items i ON i.id = s.item_id JOIN card_versions v ON v.id = i.version_id
+             WHERE s.source_material_id != v.source_material_id",
+            "card review state owned by a material other than its card's",
+        ),
+        (
+            "SELECT COUNT(*) FROM (SELECT source_material_id FROM card_versions WHERE is_active = 1
+             GROUP BY source_material_id HAVING COUNT(*) > 1)",
+            "more than one active card version for a material",
+        ),
+    ] {
+        if card_count(connection, sql, &[])? > 0 {
+            return Err(format!("The database contains {problem}."));
+        }
+    }
+
+    // 5. Identity: every snapshot is recomputable from its stored text.
+    type VersionRow = (String, String, String, i64, String, Option<String>);
+    let versions: Vec<VersionRow> = {
+        let mut statement = connection
+            .prepare("SELECT id, source_material_id, content_hash, card_count, created_at, first_reviewed_at FROM card_versions")
+            .map_err(|e| format!("Could not read card versions: {e}"))?;
+        let rows = statement
+            .query_map([], |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                ))
+            })
+            .map_err(|e| format!("Could not read card versions: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Could not read card versions: {e}"))?;
+        rows
+    };
+    for (version_id, material_id, content_hash, card_count_value, created_at, first_reviewed_at) in
+        versions
+    {
+        let owner = format!("Card version {version_id}");
+        card_timestamp(&created_at, &owner)?;
+        if let Some(first) = &first_reviewed_at {
+            card_timestamp(first, &owner)?;
+        }
+        if sha256_hex(&format!("{material_id}\u{0}{content_hash}")) != version_id {
+            return Err(format!(
+                "{owner} cannot be recomputed from its material and content."
+            ));
+        }
+        let mut statement = connection
+            .prepare("SELECT id, ordinal, front, back, source_page FROM card_items WHERE version_id = ?1 ORDER BY ordinal ASC")
+            .map_err(|e| format!("Could not read cards: {e}"))?;
+        let items = statement
+            .query_map([&version_id], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, i64>(1)?,
+                    r.get::<_, String>(2)?,
+                    r.get::<_, String>(3)?,
+                    r.get::<_, Option<i64>>(4)?,
+                ))
+            })
+            .map_err(|e| format!("Could not read cards: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Could not read cards: {e}"))?;
+        if items.len() as i64 != card_count_value {
+            return Err(format!("{owner} card_count does not match its cards."));
+        }
+        let mut cards = Vec::with_capacity(items.len());
+        for (expected, (item_id, ordinal, front, back, source_page)) in
+            items.into_iter().enumerate()
+        {
+            if ordinal != expected as i64 {
+                return Err(format!("Card {item_id} has a non-contiguous ordinal."));
+            }
+            if sha256_hex(&format!("{version_id}\u{0}{expected}")) != item_id {
+                return Err(format!("Card {item_id} cannot be recomputed."));
+            }
+            if !is_valid_card_text(&front, MAX_FRONT_CHARS)
+                || !is_valid_card_text(&back, MAX_BACK_CHARS)
+            {
+                return Err(format!("Card {item_id} has invalid text."));
+            }
+            if source_page.is_some_and(|p| !(1..=MAX_SOURCE_PAGE).contains(&p)) {
+                return Err(format!("Card {item_id} has an out-of-bounds source page."));
+            }
+            cards.push(CanonicalCard {
+                front,
+                back,
+                source_page,
+            });
+        }
+        if sha256_hex(&canonical_cards_json(&cards)) != content_hash {
+            return Err(format!("{owner} content hash does not match its cards."));
+        }
+    }
+
+    // 6. Generations of existing materials (a missing row is generation 0).
+    let generations: HashMap<String, i64> = {
+        let mut statement = connection
+            .prepare("SELECT source_material_id, generation FROM card_review_generations")
+            .map_err(|e| format!("Could not read review generations: {e}"))?;
+        let rows = statement
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .map_err(|e| format!("Could not read review generations: {e}"))?
+            .collect::<Result<HashMap<_, _>, _>>()
+            .map_err(|e| format!("Could not read review generations: {e}"))?;
+        rows
+    };
+    let generation_of = |material: &str| generations.get(material).copied().unwrap_or(0);
+
+    // 7. Receipts: typed by action; tombstones keep routing metadata only.
+    let mut live_rates: HashMap<String, String> = HashMap::new();
+    type ReceiptRow = (
+        String,
+        String,
+        String,
+        i64,
+        String,
+        String,
+        i64,
+        Option<String>,
+    );
+    let receipts: Vec<ReceiptRow> = {
+        let mut statement = connection
+            .prepare("SELECT operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json FROM card_review_operations")
+            .map_err(|e| format!("Could not read card receipts: {e}"))?;
+        let rows = statement
+            .query_map([], |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                ))
+            })
+            .map_err(|e| format!("Could not read card receipts: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Could not read card receipts: {e}"))?;
+        rows
+    };
+    for (
+        operation_id,
+        action,
+        material_id,
+        generation,
+        request_hash,
+        applied_at,
+        is_erased,
+        result_json,
+    ) in receipts
+    {
+        let owner = format!("Card review receipt {operation_id}");
+        if !uuid_v4(&operation_id) {
+            return Err(format!("{owner} is not a valid UUIDv4."));
+        }
+        if !is_lower_hex_64(&request_hash) {
+            return Err(format!("{owner} has an invalid request hash."));
+        }
+        card_timestamp(&applied_at, &owner)?;
+        if crate::card_reviews::js_trim(&material_id).is_empty() {
+            return Err(format!("{owner} has no material."));
+        }
+        if is_erased == 1 {
+            if result_json.is_some() {
+                return Err(format!("{owner} is erased but still holds a result."));
+            }
+            continue;
+        }
+        let Some(result_json) = result_json else {
+            return Err(format!("{owner} is live but has no result."));
+        };
+        let result = card_json_object(&result_json, &owner)?;
+        let current = generation_of(&material_id);
+        if action == "reset" {
+            card_exact_keys(&result, &["action", "generation", "materialId"], &owner)?;
+            if card_json_str(result.get("action")) != Some("reset")
+                || card_json_str(result.get("materialId")) != Some(material_id.as_str())
+            {
+                return Err(format!("{owner} result does not match its receipt."));
+            }
+            if card_json_int(result.get("generation")) != Some(generation + 1) {
+                return Err(format!(
+                    "{owner} result generation is not the captured generation plus one."
+                ));
+            }
+            if generation + 1 != current {
+                return Err(format!(
+                    "{owner} is a live reset older than the current generation."
+                ));
+            }
+            continue;
+        }
+        if !ITEM_ACTIONS.contains(&action.as_str()) {
+            return Err(format!("{owner} has an unknown action."));
+        }
+        card_exact_keys(
+            &result,
+            &[
+                "action",
+                "dueAt",
+                "flag",
+                "generation",
+                "itemId",
+                "reviewedAt",
+                "revision",
+                "suspended",
+            ],
+            &owner,
+        )?;
+        if card_json_str(result.get("action")) != Some(action.as_str())
+            || card_json_int(result.get("generation")) != Some(generation)
+        {
+            return Err(format!("{owner} result does not match its receipt."));
+        }
+        if generation > current {
+            return Err(format!(
+                "{owner} has a generation above its material's current generation."
+            ));
+        }
+        if generation < current {
+            return Err(format!(
+                "{owner} is a live item receipt from before the latest reset."
+            ));
+        }
+        let Some(item_id) = card_json_str(result.get("itemId")).filter(|id| is_lower_hex_64(id))
+        else {
+            return Err(format!("{owner} result names no card."));
+        };
+        if card_count(
+            connection,
+            "SELECT COUNT(*) FROM card_items i JOIN card_versions v ON v.id = i.version_id
+             WHERE i.id = ?1 AND v.source_material_id = ?2",
+            &[&item_id, &material_id],
+        )? != 1
+        {
+            return Err(format!(
+                "{owner} result names a card that is not this material's."
+            ));
+        }
+        if !card_json_int(result.get("revision")).is_some_and(|r| r >= 1)
+            || matches!(result.get("revision"), Some(serde_json::Value::Bool(_)))
+        {
+            return Err(format!("{owner} result has an invalid revision."));
+        }
+        let nullable_instant = |key: &str| -> Result<bool, String> {
+            match result.get(key) {
+                Some(serde_json::Value::Null) => Ok(false),
+                Some(serde_json::Value::String(s)) => card_timestamp(s, &owner).map(|_| true),
+                _ => Err(format!("{owner} has a malformed timestamp.")),
+            }
+        };
+        let has_due = nullable_instant("dueAt")?;
+        let has_review = nullable_instant("reviewedAt")?;
+        if !matches!(result.get("suspended"), Some(serde_json::Value::Bool(_))) {
+            return Err(format!("{owner} result has an invalid paused flag."));
+        }
+        match result.get("flag") {
+            Some(serde_json::Value::Null) => {}
+            Some(serde_json::Value::String(flag)) if FLAG_REASONS.contains(&flag.as_str()) => {}
+            _ => return Err(format!("{owner} result has an invalid flag.")),
+        }
+        if action == "rate" {
+            if !has_review || !has_due {
+                return Err(format!("{owner} rating result has no review time."));
+            }
+            live_rates.insert(operation_id.clone(), item_id.to_string());
+        } else if has_review {
+            return Err(format!("{owner} non-rating result has a review time."));
+        }
+    }
+
+    // 8. Events: immutable ratings of the current generation, each with its receipt.
+    let mut events_by_item: HashMap<String, Vec<serde_json::Map<String, serde_json::Value>>> =
+        HashMap::new();
+    type EventRow = (String, String, i64, String, String, String, String, String);
+    let events: Vec<EventRow> = {
+        let mut statement = connection
+            .prepare(
+                "SELECT e.id, e.item_id, e.generation, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json, v.source_material_id
+                 FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id",
+            )
+            .map_err(|e| format!("Could not read rating events: {e}"))?;
+        let rows = statement
+            .query_map([], |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                ))
+            })
+            .map_err(|e| format!("Could not read rating events: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Could not read rating events: {e}"))?;
+        rows
+    };
+    for (
+        id,
+        item_id,
+        generation,
+        reviewed_at,
+        scheduler_version,
+        prior_json,
+        next_json,
+        material_id,
+    ) in events
+    {
+        let owner = format!("Card review event {id}");
+        if !uuid_v4(&id) {
+            return Err(format!("{owner} is not a valid UUIDv4."));
+        }
+        let current = generation_of(&material_id);
+        if generation > current {
+            return Err(format!(
+                "{owner} has a generation above its material's current generation."
+            ));
+        }
+        if generation < current {
+            return Err(format!("{owner} is from before the latest reset."));
+        }
+        if live_rates.get(&id) != Some(&item_id) {
+            return Err(format!("{owner} has no matching live rating receipt."));
+        }
+        if scheduler_version != SCHEDULER_VERSION {
+            return Err(format!("{owner} has an unknown scheduler version."));
+        }
+        card_timestamp(&reviewed_at, &owner)?;
+        let next = card_json_object(&next_json, &owner)?;
+        card_check_schedule(&next, &owner)?;
+        if card_json_str(next.get("lastReviewedAt")) != Some(reviewed_at.as_str()) {
+            return Err(format!(
+                "{owner} next state does not match its review time."
+            ));
+        }
+        if prior_json != "null" {
+            card_check_schedule(&card_json_object(&prior_json, &owner)?, &owner)?;
+        }
+        events_by_item.entry(item_id).or_default().push(next);
+    }
+
+    // 9. Projection against its events.
+    type StateRow = (
+        String,
+        String,
+        i64,
+        Option<String>,
+        Option<String>,
+        i64,
+        i64,
+        i64,
+    );
+    let states: Vec<StateRow> = {
+        let mut statement = connection
+            .prepare("SELECT item_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, revision FROM card_review_state")
+            .map_err(|e| format!("Could not read review state: {e}"))?;
+        let rows = statement
+            .query_map([], |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                ))
+            })
+            .map_err(|e| format!("Could not read review state: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Could not read review state: {e}"))?;
+        rows
+    };
+    let mut with_state: HashSet<String> = HashSet::new();
+    for (item_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, revision) in
+        states
+    {
+        let owner = format!("Card review state {item_id}");
+        if scheduler_version != SCHEDULER_VERSION {
+            return Err(format!("{owner} has an unknown scheduler version."));
+        }
+        let events = events_by_item
+            .get(&item_id)
+            .map(Vec::as_slice)
+            .unwrap_or(&[]);
+        with_state.insert(item_id.clone());
+        let (Some(due_at), Some(last_reviewed_at)) = (due_at.as_ref(), last_reviewed_at.as_ref())
+        else {
+            if !events.is_empty() {
+                return Err(format!("{owner} is never rated but has rating events."));
+            }
+            if due_at.is_some() != last_reviewed_at.is_some() {
+                return Err(format!("{owner} has a due time without a review time."));
+            }
+            continue;
+        };
+        let due_ms = card_timestamp(due_at, &owner)?;
+        let last_ms = card_timestamp(last_reviewed_at, &owner)?;
+        if Some(due_ms - last_ms) != step_delay_ms(step) {
+            return Err(format!(
+                "{owner} has a due time inconsistent with its step."
+            ));
+        }
+        if events.len() as i64 != reps {
+            return Err(format!("{owner} reps does not match its rating events."));
+        }
+        if revision < events.len() as i64 {
+            return Err(format!("{owner} revision is below its rating count."));
+        }
+        let mut reps_seen: Vec<i64> = events
+            .iter()
+            .filter_map(|n| card_json_int(n.get("reps")))
+            .collect();
+        reps_seen.sort_unstable();
+        if reps_seen.len() != events.len()
+            || reps_seen
+                .iter()
+                .enumerate()
+                .any(|(i, r)| *r != i as i64 + 1)
+        {
+            return Err(format!("{owner} rating events do not form one history."));
+        }
+        let Some(latest) = events
+            .iter()
+            .find(|n| card_json_int(n.get("reps")) == Some(reps))
+        else {
+            return Err(format!("{owner} does not match its latest rating event."));
+        };
+        if card_json_int(latest.get("step")) != Some(step)
+            || card_json_str(latest.get("dueAt")) != Some(due_at.as_str())
+            || card_json_str(latest.get("lastReviewedAt")) != Some(last_reviewed_at.as_str())
+            || card_json_int(latest.get("lapses")) != Some(lapses)
+        {
+            return Err(format!("{owner} does not match its latest rating event."));
+        }
+    }
+    for item_id in events_by_item.keys() {
+        if !with_state.contains(item_id) {
+            return Err(format!(
+                "Card {item_id} has rating events but no review state."
+            ));
+        }
+    }
     Ok(())
 }
 

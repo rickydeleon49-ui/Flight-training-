@@ -1,0 +1,1373 @@
+$ cargo fmt --manifest-path src-tauri/Cargo.toml --check
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1787:
+     "card_review_operations",
+ ];
+ 
+-fn card_count(connection: &Connection, sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<i64, String> {
++fn card_count(
++    connection: &Connection,
++    sql: &str,
++    params: &[&dyn rusqlite::ToSql],
++) -> Result<i64, String> {
+     connection
+         .query_row(sql, params, |r| r.get(0))
+         .map_err(|e| format!("Could not check card reviews: {e}"))
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1794:
+ }
+ 
+ fn card_timestamp(value: &str, owner: &str) -> Result<i64, String> {
+-    crate::card_reviews::parse_iso_ms(value).ok_or_else(|| format!("{owner} has a malformed timestamp."))
++    crate::card_reviews::parse_iso_ms(value)
++        .ok_or_else(|| format!("{owner} has a malformed timestamp."))
+ }
+ 
+-fn card_json_object(text: &str, owner: &str) -> Result<serde_json::Map<String, serde_json::Value>, String> {
++fn card_json_object(
++    text: &str,
++    owner: &str,
++) -> Result<serde_json::Map<String, serde_json::Value>, String> {
+     match serde_json::from_str::<serde_json::Value>(text) {
+         Ok(serde_json::Value::Object(map)) => Ok(map),
+         Ok(_) => Err(format!("{owner} must be a JSON object.")),
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1837:
+ }
+ 
+ /// A stored `simple-v1` schedule: exact fields, the step's delay from the review time.
+-fn card_check_schedule(map: &serde_json::Map<String, serde_json::Value>, owner: &str) -> Result<(), String> {
++fn card_check_schedule(
++    map: &serde_json::Map<String, serde_json::Value>,
++    owner: &str,
++) -> Result<(), String> {
+     card_exact_keys(
+         map,
+-        &["dueAt", "lapses", "lastReviewedAt", "reps", "schedulerVersion", "step"],
++        &[
++            "dueAt",
++            "lapses",
++            "lastReviewedAt",
++            "reps",
++            "schedulerVersion",
++            "step",
++        ],
+         owner,
+     )?;
+     if card_json_str(map.get("schedulerVersion")) != Some(crate::card_reviews::SCHEDULER_VERSION) {
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1854:
+     if !matches!((reps, lapses), (Some(r), Some(l)) if r >= 1 && l >= 0) {
+         return Err(format!("{owner} has invalid counts."));
+     }
+-    let last = card_timestamp(card_json_str(map.get("lastReviewedAt")).unwrap_or(""), owner)?;
++    let last = card_timestamp(
++        card_json_str(map.get("lastReviewedAt")).unwrap_or(""),
++        owner,
++    )?;
+     let due = card_timestamp(card_json_str(map.get("dueAt")).unwrap_or(""), owner)?;
+     if Some(due - last) != crate::card_reviews::step_delay_ms(step) {
+-        return Err(format!("{owner} has a due time inconsistent with its step."));
++        return Err(format!(
++            "{owner} has a due time inconsistent with its step."
++        ));
+     }
+     Ok(())
+ }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1875:
+ 
+ fn card_index_columns(connection: &Connection, index: &str) -> Result<Vec<String>, String> {
+     let mut statement = connection
+-        .prepare(&format!("SELECT name FROM pragma_index_info('{index}') ORDER BY seqno ASC"))
++        .prepare(&format!(
++            "SELECT name FROM pragma_index_info('{index}') ORDER BY seqno ASC"
++        ))
+         .map_err(|e| format!("Could not inspect index {index}: {e}"))?;
+     let columns = statement
+         .query_map([], |r| r.get(0))
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1895:
+         CanonicalCard, FLAG_REASONS, ITEM_ACTIONS, MAX_BACK_CHARS, MAX_FRONT_CHARS,
+         MAX_SOURCE_PAGE, SCHEDULER_VERSION,
+     };
+-    let uuid_v4 = |value: &str| is_valid_uuid_v4(value) && !value.bytes().any(|b| b.is_ascii_uppercase());
++    let uuid_v4 =
++        |value: &str| is_valid_uuid_v4(value) && !value.bytes().any(|b| b.is_ascii_uppercase());
+ 
+     {
+         let mut fk = connection
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1902:
+             .prepare("PRAGMA foreign_key_check")
+             .map_err(|e| format!("Could not check foreign keys: {e}"))?;
+-        let mut rows = fk.query([]).map_err(|e| format!("Could not check foreign keys: {e}"))?;
+-        if rows.next().map_err(|e| format!("Could not check foreign keys: {e}"))?.is_some() {
++        let mut rows = fk
++            .query([])
++            .map_err(|e| format!("Could not check foreign keys: {e}"))?;
++        if rows
++            .next()
++            .map_err(|e| format!("Could not check foreign keys: {e}"))?
++            .is_some()
++        {
+             return Err("The database violates foreign key constraints.".to_string());
+         }
+     }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1963:
+         ("card_items", ["version_id", "ordinal"]),
+     ] {
+         let mut statement = connection
+-            .prepare(&format!("SELECT name, [unique], partial FROM pragma_index_list('{table}')"))
++            .prepare(&format!(
++                "SELECT name, [unique], partial FROM pragma_index_list('{table}')"
++            ))
+             .map_err(|e| format!("Could not inspect indexes of {table}: {e}"))?;
+         let indexes = statement
+-            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?, r.get::<_, i64>(2)?)))
++            .query_map([], |r| {
++                Ok((
++                    r.get::<_, String>(0)?,
++                    r.get::<_, i64>(1)?,
++                    r.get::<_, i64>(2)?,
++                ))
++            })
+             .map_err(|e| format!("Could not inspect indexes of {table}: {e}"))?
+             .collect::<Result<Vec<_>, _>>()
+             .map_err(|e| format!("Could not inspect indexes of {table}: {e}"))?;
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:1991:
+         )
+         .ok();
+     if active_unique != Some(1) {
+-        return Err("The database is missing required unique index: uq_active_card_version".to_string());
++        return Err(
++            "The database is missing required unique index: uq_active_card_version".to_string(),
++        );
+     }
+     for (table, index) in [
+         ("card_versions", "uq_active_card_version"),
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2007:
+         {
+             return Err(format!("The database is missing required index: {index}"));
+         }
+-        match (card_index_sql(connection, index), card_index_sql(&reference, index)) {
++        match (
++            card_index_sql(connection, index),
++            card_index_sql(&reference, index),
++        ) {
+             (Some(mine), Some(theirs)) if normalize_sql(&mine) == normalize_sql(&theirs) => {}
+             _ => {
+                 return Err(format!(
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2028:
+             .ok()
+         };
+         let Some(mine) = trigger(connection) else {
+-            return Err("The database is missing required trigger: trg_card_ops_material_delete".to_string());
++            return Err(
++                "The database is missing required trigger: trg_card_ops_material_delete"
++                    .to_string(),
++            );
+         };
+         if trigger(&reference).map(|s| normalize_sql(&s)) != Some(normalize_sql(&mine)) {
+             return Err(
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2064:
+             .prepare("SELECT id, source_material_id, content_hash, card_count, created_at, first_reviewed_at FROM card_versions")
+             .map_err(|e| format!("Could not read card versions: {e}"))?;
+         let rows = statement
+-            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)))
++            .query_map([], |r| {
++                Ok((
++                    r.get(0)?,
++                    r.get(1)?,
++                    r.get(2)?,
++                    r.get(3)?,
++                    r.get(4)?,
++                    r.get(5)?,
++                ))
++            })
+             .map_err(|e| format!("Could not read card versions: {e}"))?
+             .collect::<Result<Vec<_>, _>>()
+             .map_err(|e| format!("Could not read card versions: {e}"))?;
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2071:
+         rows
+     };
+-    for (version_id, material_id, content_hash, card_count_value, created_at, first_reviewed_at) in versions {
++    for (version_id, material_id, content_hash, card_count_value, created_at, first_reviewed_at) in
++        versions
++    {
+         let owner = format!("Card version {version_id}");
+         card_timestamp(&created_at, &owner)?;
+         if let Some(first) = &first_reviewed_at {
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2077:
+             card_timestamp(first, &owner)?;
+         }
+         if sha256_hex(&format!("{material_id}\u{0}{content_hash}")) != version_id {
+-            return Err(format!("{owner} cannot be recomputed from its material and content."));
++            return Err(format!(
++                "{owner} cannot be recomputed from its material and content."
++            ));
+         }
+         let mut statement = connection
+             .prepare("SELECT id, ordinal, front, back, source_page FROM card_items WHERE version_id = ?1 ORDER BY ordinal ASC")
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2099:
+             return Err(format!("{owner} card_count does not match its cards."));
+         }
+         let mut cards = Vec::with_capacity(items.len());
+-        for (expected, (item_id, ordinal, front, back, source_page)) in items.into_iter().enumerate() {
++        for (expected, (item_id, ordinal, front, back, source_page)) in
++            items.into_iter().enumerate()
++        {
+             if ordinal != expected as i64 {
+                 return Err(format!("Card {item_id} has a non-contiguous ordinal."));
+             }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2106:
+             if sha256_hex(&format!("{version_id}\u{0}{expected}")) != item_id {
+                 return Err(format!("Card {item_id} cannot be recomputed."));
+             }
+-            if !is_valid_card_text(&front, MAX_FRONT_CHARS) || !is_valid_card_text(&back, MAX_BACK_CHARS) {
++            if !is_valid_card_text(&front, MAX_FRONT_CHARS)
++                || !is_valid_card_text(&back, MAX_BACK_CHARS)
++            {
+                 return Err(format!("Card {item_id} has invalid text."));
+             }
+             if source_page.is_some_and(|p| !(1..=MAX_SOURCE_PAGE).contains(&p)) {
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2113:
+                 return Err(format!("Card {item_id} has an out-of-bounds source page."));
+             }
+-            cards.push(CanonicalCard { front, back, source_page });
++            cards.push(CanonicalCard {
++                front,
++                back,
++                source_page,
++            });
+         }
+         if sha256_hex(&canonical_cards_json(&cards)) != content_hash {
+             return Err(format!("{owner} content hash does not match its cards."));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2135:
+ 
+     // 7. Receipts: typed by action; tombstones keep routing metadata only.
+     let mut live_rates: HashMap<String, String> = HashMap::new();
+-    type ReceiptRow = (String, String, String, i64, String, String, i64, Option<String>);
++    type ReceiptRow = (
++        String,
++        String,
++        String,
++        i64,
++        String,
++        String,
++        i64,
++        Option<String>,
++    );
+     let receipts: Vec<ReceiptRow> = {
+         let mut statement = connection
+             .prepare("SELECT operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json FROM card_review_operations")
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2142:
+             .map_err(|e| format!("Could not read card receipts: {e}"))?;
+         let rows = statement
+-            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?, r.get(6)?, r.get(7)?)))
++            .query_map([], |r| {
++                Ok((
++                    r.get(0)?,
++                    r.get(1)?,
++                    r.get(2)?,
++                    r.get(3)?,
++                    r.get(4)?,
++                    r.get(5)?,
++                    r.get(6)?,
++                    r.get(7)?,
++                ))
++            })
+             .map_err(|e| format!("Could not read card receipts: {e}"))?
+             .collect::<Result<Vec<_>, _>>()
+             .map_err(|e| format!("Could not read card receipts: {e}"))?;
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2148:
+         rows
+     };
+-    for (operation_id, action, material_id, generation, request_hash, applied_at, is_erased, result_json) in receipts {
++    for (
++        operation_id,
++        action,
++        material_id,
++        generation,
++        request_hash,
++        applied_at,
++        is_erased,
++        result_json,
++    ) in receipts
++    {
+         let owner = format!("Card review receipt {operation_id}");
+         if !uuid_v4(&operation_id) {
+             return Err(format!("{owner} is not a valid UUIDv4."));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2178:
+                 return Err(format!("{owner} result does not match its receipt."));
+             }
+             if card_json_int(result.get("generation")) != Some(generation + 1) {
+-                return Err(format!("{owner} result generation is not the captured generation plus one."));
++                return Err(format!(
++                    "{owner} result generation is not the captured generation plus one."
++                ));
+             }
+             if generation + 1 != current {
+-                return Err(format!("{owner} is a live reset older than the current generation."));
++                return Err(format!(
++                    "{owner} is a live reset older than the current generation."
++                ));
+             }
+             continue;
+         }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2190:
+         }
+         card_exact_keys(
+             &result,
+-            &["action", "dueAt", "flag", "generation", "itemId", "reviewedAt", "revision", "suspended"],
++            &[
++                "action",
++                "dueAt",
++                "flag",
++                "generation",
++                "itemId",
++                "reviewedAt",
++                "revision",
++                "suspended",
++            ],
+             &owner,
+         )?;
+         if card_json_str(result.get("action")) != Some(action.as_str())
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2199:
+             return Err(format!("{owner} result does not match its receipt."));
+         }
+         if generation > current {
+-            return Err(format!("{owner} has a generation above its material's current generation."));
++            return Err(format!(
++                "{owner} has a generation above its material's current generation."
++            ));
+         }
+         if generation < current {
+-            return Err(format!("{owner} is a live item receipt from before the latest reset."));
++            return Err(format!(
++                "{owner} is a live item receipt from before the latest reset."
++            ));
+         }
+-        let Some(item_id) = card_json_str(result.get("itemId")).filter(|id| is_lower_hex_64(id)) else {
++        let Some(item_id) = card_json_str(result.get("itemId")).filter(|id| is_lower_hex_64(id))
++        else {
+             return Err(format!("{owner} result names no card."));
+         };
+         if card_count(
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2214:
+             &[&item_id, &material_id],
+         )? != 1
+         {
+-            return Err(format!("{owner} result names a card that is not this material's."));
++            return Err(format!(
++                "{owner} result names a card that is not this material's."
++            ));
+         }
+         if !card_json_int(result.get("revision")).is_some_and(|r| r >= 1)
+             || matches!(result.get("revision"), Some(serde_json::Value::Bool(_)))
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2249:
+     }
+ 
+     // 8. Events: immutable ratings of the current generation, each with its receipt.
+-    let mut events_by_item: HashMap<String, Vec<serde_json::Map<String, serde_json::Value>>> = HashMap::new();
++    let mut events_by_item: HashMap<String, Vec<serde_json::Map<String, serde_json::Value>>> =
++        HashMap::new();
+     type EventRow = (String, String, i64, String, String, String, String, String);
+     let events: Vec<EventRow> = {
+         let mut statement = connection
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2259:
+             )
+             .map_err(|e| format!("Could not read rating events: {e}"))?;
+         let rows = statement
+-            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?, r.get(6)?, r.get(7)?)))
++            .query_map([], |r| {
++                Ok((
++                    r.get(0)?,
++                    r.get(1)?,
++                    r.get(2)?,
++                    r.get(3)?,
++                    r.get(4)?,
++                    r.get(5)?,
++                    r.get(6)?,
++                    r.get(7)?,
++                ))
++            })
+             .map_err(|e| format!("Could not read rating events: {e}"))?
+             .collect::<Result<Vec<_>, _>>()
+             .map_err(|e| format!("Could not read rating events: {e}"))?;
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2266:
+         rows
+     };
+-    for (id, item_id, generation, reviewed_at, scheduler_version, prior_json, next_json, material_id) in events {
++    for (
++        id,
++        item_id,
++        generation,
++        reviewed_at,
++        scheduler_version,
++        prior_json,
++        next_json,
++        material_id,
++    ) in events
++    {
+         let owner = format!("Card review event {id}");
+         if !uuid_v4(&id) {
+             return Err(format!("{owner} is not a valid UUIDv4."));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2272:
+         }
+         let current = generation_of(&material_id);
+         if generation > current {
+-            return Err(format!("{owner} has a generation above its material's current generation."));
++            return Err(format!(
++                "{owner} has a generation above its material's current generation."
++            ));
+         }
+         if generation < current {
+             return Err(format!("{owner} is from before the latest reset."));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2287:
+         let next = card_json_object(&next_json, &owner)?;
+         card_check_schedule(&next, &owner)?;
+         if card_json_str(next.get("lastReviewedAt")) != Some(reviewed_at.as_str()) {
+-            return Err(format!("{owner} next state does not match its review time."));
++            return Err(format!(
++                "{owner} next state does not match its review time."
++            ));
+         }
+         if prior_json != "null" {
+             card_check_schedule(&card_json_object(&prior_json, &owner)?, &owner)?;
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2296:
+     }
+ 
+     // 9. Projection against its events.
+-    type StateRow = (String, String, i64, Option<String>, Option<String>, i64, i64, i64);
++    type StateRow = (
++        String,
++        String,
++        i64,
++        Option<String>,
++        Option<String>,
++        i64,
++        i64,
++        i64,
++    );
+     let states: Vec<StateRow> = {
+         let mut statement = connection
+             .prepare("SELECT item_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, revision FROM card_review_state")
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2303:
+             .map_err(|e| format!("Could not read review state: {e}"))?;
+         let rows = statement
+-            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?, r.get(6)?, r.get(7)?)))
++            .query_map([], |r| {
++                Ok((
++                    r.get(0)?,
++                    r.get(1)?,
++                    r.get(2)?,
++                    r.get(3)?,
++                    r.get(4)?,
++                    r.get(5)?,
++                    r.get(6)?,
++                    r.get(7)?,
++                ))
++            })
+             .map_err(|e| format!("Could not read review state: {e}"))?
+             .collect::<Result<Vec<_>, _>>()
+             .map_err(|e| format!("Could not read review state: {e}"))?;
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2309:
+         rows
+     };
+     let mut with_state: HashSet<String> = HashSet::new();
+-    for (item_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, revision) in states {
++    for (item_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, revision) in
++        states
++    {
+         let owner = format!("Card review state {item_id}");
+         if scheduler_version != SCHEDULER_VERSION {
+             return Err(format!("{owner} has an unknown scheduler version."));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2316:
+         }
+-        let events = events_by_item.get(&item_id).map(Vec::as_slice).unwrap_or(&[]);
++        let events = events_by_item
++            .get(&item_id)
++            .map(Vec::as_slice)
++            .unwrap_or(&[]);
+         with_state.insert(item_id.clone());
+-        let (Some(due_at), Some(last_reviewed_at)) = (due_at.as_ref(), last_reviewed_at.as_ref()) else {
++        let (Some(due_at), Some(last_reviewed_at)) = (due_at.as_ref(), last_reviewed_at.as_ref())
++        else {
+             if !events.is_empty() {
+                 return Err(format!("{owner} is never rated but has rating events."));
+             }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2328:
+         let due_ms = card_timestamp(due_at, &owner)?;
+         let last_ms = card_timestamp(last_reviewed_at, &owner)?;
+         if Some(due_ms - last_ms) != step_delay_ms(step) {
+-            return Err(format!("{owner} has a due time inconsistent with its step."));
++            return Err(format!(
++                "{owner} has a due time inconsistent with its step."
++            ));
+         }
+         if events.len() as i64 != reps {
+             return Err(format!("{owner} reps does not match its rating events."));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2336:
+         if revision < events.len() as i64 {
+             return Err(format!("{owner} revision is below its rating count."));
+         }
+-        let mut reps_seen: Vec<i64> = events.iter().filter_map(|n| card_json_int(n.get("reps"))).collect();
++        let mut reps_seen: Vec<i64> = events
++            .iter()
++            .filter_map(|n| card_json_int(n.get("reps")))
++            .collect();
+         reps_seen.sort_unstable();
+-        if reps_seen.len() != events.len() || reps_seen.iter().enumerate().any(|(i, r)| *r != i as i64 + 1) {
++        if reps_seen.len() != events.len()
++            || reps_seen
++                .iter()
++                .enumerate()
++                .any(|(i, r)| *r != i as i64 + 1)
++        {
+             return Err(format!("{owner} rating events do not form one history."));
+         }
+-        let Some(latest) = events.iter().find(|n| card_json_int(n.get("reps")) == Some(reps)) else {
++        let Some(latest) = events
++            .iter()
++            .find(|n| card_json_int(n.get("reps")) == Some(reps))
++        else {
+             return Err(format!("{owner} does not match its latest rating event."));
+         };
+         if card_json_int(latest.get("step")) != Some(step)
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/backup.rs:2354:
+     }
+     for item_id in events_by_item.keys() {
+         if !with_state.contains(item_id) {
+-            return Err(format!("Card {item_id} has rating events but no review state."));
++            return Err(format!(
++                "Card {item_id} has rating events but no review state."
++            ));
+         }
+     }
+     Ok(())
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews.rs:510:
+ }
+ 
+ pub fn is_lower_hex_64(value: &str) -> bool {
+-    value.len() == 64 && value.bytes().all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
++    value.len() == 64
++        && value
++            .bytes()
++            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+ }
+ 
+ fn is_material_id(value: &str) -> bool {
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews.rs:592:
+         });
+     }
+     let kind = match action {
+-        "rate" => ItemKind::Rate(
+-            string_field(map, "rating", |r| RATINGS.contains(&r))?.to_string(),
+-        ),
+-        "flag" => ItemKind::Flag(
+-            string_field(map, "reason", |r| FLAG_REASONS.contains(&r))?.to_string(),
+-        ),
++        "rate" => {
++            ItemKind::Rate(string_field(map, "rating", |r| RATINGS.contains(&r))?.to_string())
++        }
++        "flag" => {
++            ItemKind::Flag(string_field(map, "reason", |r| FLAG_REASONS.contains(&r))?.to_string())
++        }
+         "suspend" => ItemKind::Suspend,
+         "resume" => ItemKind::Resume,
+         _ => ItemKind::Unflag,
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews.rs:605:
+     Ok(CardAction::Item {
+         operation_id,
+         material_id,
+-        version_content_hash: string_field(map, "versionContentHash", is_lower_hex_64)?
+-            .to_string(),
++        version_content_hash: string_field(map, "versionContentHash", is_lower_hex_64)?.to_string(),
+         item_id: string_field(map, "itemId", is_lower_hex_64)?.to_string(),
+         expected_generation,
+         expected_revision: counter_field(map, "expectedRevision")?,
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews.rs:1055:
+             operation_id,
+             material_id,
+             ..
+-        } => apply_reset(tx, operation_id, material_id, generation, &request_hash, &now),
++        } => apply_reset(
++            tx,
++            operation_id,
++            material_id,
++            generation,
++            &request_hash,
++            &now,
++        ),
+         CardAction::Item {
+             operation_id,
+             material_id,
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews.rs:1082:
+ /// `save_card_review_atomically` at a database root: decode, readiness, one
+ /// dedicated connection (5 s busy timeout, foreign keys on), `BEGIN IMMEDIATE`,
+ /// commit only when the whole action applies.
+-pub fn save_card_review_at(
+-    root: &Path,
+-    operation: &Value,
+-) -> Result<Value, CardReviewErrorWire> {
++pub fn save_card_review_at(root: &Path, operation: &Value) -> Result<Value, CardReviewErrorWire> {
+     let action = decode_card_action(operation).map_err(CardReviewErrorCode::error)?;
+     let db_path = root.join("her-flight-deck.db");
+     if !db_path.is_file() {
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:82:
+ fn setup(root: &Path) -> Connection {
+     let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+     conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+-    conn.execute_batch("CREATE TABLE IF NOT EXISTS _sqlx_migrations (version INTEGER PRIMARY KEY);")
+-        .unwrap();
++    conn.execute_batch(
++        "CREATE TABLE IF NOT EXISTS _sqlx_migrations (version INTEGER PRIMARY KEY);",
++    )
++    .unwrap();
+     for m in crate::migrations() {
+         conn.execute_batch(m.sql).unwrap();
+-        conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (?1)", [m.version])
+-            .unwrap();
++        conn.execute(
++            "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
++            [m.version],
++        )
++        .unwrap();
+     }
+     mark_root_ready(root);
+     conn
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:163:
+ }
+ 
+ /// A deliberate item action built from the current authoritative state.
+-fn item(conn: &Connection, material: &str, cards: &[CanonicalCard], ordinal: usize, kind: Value) -> Value {
++fn item(
++    conn: &Connection,
++    material: &str,
++    cards: &[CanonicalCard],
++    ordinal: usize,
++    kind: Value,
++) -> Value {
+     let version = card_version(material, cards);
+     let item_id = &version.items[ordinal].item_id;
+     let mut action = json!({
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:180:
+     action
+ }
+ 
+-fn rate(conn: &Connection, material: &str, cards: &[CanonicalCard], ordinal: usize, rating: &str) -> Value {
+-    item(conn, material, cards, ordinal, json!({"action": "rate", "rating": rating}))
++fn rate(
++    conn: &Connection,
++    material: &str,
++    cards: &[CanonicalCard],
++    ordinal: usize,
++    rating: &str,
++) -> Value {
++    item(
++        conn,
++        material,
++        cards,
++        ordinal,
++        json!({"action": "rate", "rating": rating}),
++    )
+ }
+ 
+ fn reset(conn: &Connection, material: &str) -> Value {
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:211:
+     )
+     .unwrap();
+     let next: String = conn
+-        .query_row("SELECT next_state_json FROM card_review_events WHERE id = ?1", [&event_id], |r| r.get(0))
++        .query_row(
++            "SELECT next_state_json FROM card_review_events WHERE id = ?1",
++            [&event_id],
++            |r| r.get(0),
++        )
+         .unwrap();
+     let mut next: Value = serde_json::from_str(&next).unwrap();
+     next["lastReviewedAt"] = json!(last_reviewed_at);
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:222:
+     )
+     .unwrap();
+     let receipt: String = conn
+-        .query_row("SELECT result_json FROM card_review_operations WHERE operation_id = ?1", [&event_id], |r| r.get(0))
++        .query_row(
++            "SELECT result_json FROM card_review_operations WHERE operation_id = ?1",
++            [&event_id],
++            |r| r.get(0),
++        )
+         .unwrap();
+     let mut receipt: Value = serde_json::from_str(&receipt).unwrap();
+     receipt["reviewedAt"] = json!(last_reviewed_at);
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:251:
+     let SavedCards::Ok(cards) = parse_saved_cards(Some(&material["flashcards"].to_string())) else {
+         panic!("synthetic cards must validate");
+     };
+-    assert_eq!(canonical_cards_json(&cards), golden["canonicalJson"].as_str().unwrap());
++    assert_eq!(
++        canonical_cards_json(&cards),
++        golden["canonicalJson"].as_str().unwrap()
++    );
+     let version = card_version(material["materialId"].as_str().unwrap(), &cards);
+-    assert_eq!(version.content_hash, golden["contentHash"].as_str().unwrap());
++    assert_eq!(
++        version.content_hash,
++        golden["contentHash"].as_str().unwrap()
++    );
+     assert_eq!(version.version_id, golden["versionId"].as_str().unwrap());
+     let items: Vec<&str> = version.items.iter().map(|i| i.item_id.as_str()).collect();
+-    let expected: Vec<&str> = golden["itemIds"].as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect();
++    let expected: Vec<&str> = golden["itemIds"]
++        .as_array()
++        .unwrap()
++        .iter()
++        .map(|v| v.as_str().unwrap())
++        .collect();
+     assert_eq!(items, expected);
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:266:
+     let card = |front: &str, back: &str, page: Value| json!({"front": front, "back": back, "sourcePage": page});
+     assert_eq!(parse_saved_cards(None), SavedCards::None);
+     assert_eq!(set(json!([])), SavedCards::None);
+-    assert!(matches!(set(json!([card("F", "B", Value::Null)])), SavedCards::Ok(_)));
+-    assert!(matches!(set(json!(vec![card("F", "B", Value::Null); 500])), SavedCards::Ok(_)));
+-    assert_eq!(set(json!(vec![card("F", "B", Value::Null); 501])), SavedCards::Malformed);
+-    assert!(matches!(set(json!([card(&"x".repeat(1_000), "B", Value::Null)])), SavedCards::Ok(_)));
+-    assert_eq!(set(json!([card(&"x".repeat(1_001), "B", Value::Null)])), SavedCards::Malformed);
+-    assert!(matches!(set(json!([card("F", &"😀".repeat(2_000), Value::Null)])), SavedCards::Ok(_)));
+-    assert_eq!(set(json!([card("F", &"😀".repeat(2_001), Value::Null)])), SavedCards::Malformed);
+-    assert!(matches!(set(json!([card(&format!("  {}\n", "x".repeat(1_000)), "B", Value::Null)])), SavedCards::Ok(_)));
++    assert!(matches!(
++        set(json!([card("F", "B", Value::Null)])),
++        SavedCards::Ok(_)
++    ));
++    assert!(matches!(
++        set(json!(vec![card("F", "B", Value::Null); 500])),
++        SavedCards::Ok(_)
++    ));
++    assert_eq!(
++        set(json!(vec![card("F", "B", Value::Null); 501])),
++        SavedCards::Malformed
++    );
++    assert!(matches!(
++        set(json!([card(&"x".repeat(1_000), "B", Value::Null)])),
++        SavedCards::Ok(_)
++    ));
++    assert_eq!(
++        set(json!([card(&"x".repeat(1_001), "B", Value::Null)])),
++        SavedCards::Malformed
++    );
++    assert!(matches!(
++        set(json!([card("F", &"😀".repeat(2_000), Value::Null)])),
++        SavedCards::Ok(_)
++    ));
++    assert_eq!(
++        set(json!([card("F", &"😀".repeat(2_001), Value::Null)])),
++        SavedCards::Malformed
++    );
++    assert!(matches!(
++        set(json!([card(
++            &format!("  {}\n", "x".repeat(1_000)),
++            "B",
++            Value::Null
++        )])),
++        SavedCards::Ok(_)
++    ));
+     for damaged in [
+         json!({}),
+         json!([card("F", "B", Value::Null), "text"]),
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:289:
+         assert_eq!(set(damaged.clone()), SavedCards::Malformed, "{damaged}");
+     }
+     assert_eq!(parse_saved_cards(Some("{not json")), SavedCards::Malformed);
+-    assert_eq!(parse_saved_cards(Some(r#"[{"front":"\ud800","back":"B","sourcePage":null}]"#)), SavedCards::Malformed);
+-    assert!(matches!(set(json!([card("\u{85}", "B", Value::Null)])), SavedCards::Ok(_)));
+-    assert!(matches!(parse_saved_cards(Some(r#"[{"front":"F","back":"B","sourcePage":2.0}]"#)), SavedCards::Ok(c) if c[0].source_page == Some(2)));
++    assert_eq!(
++        parse_saved_cards(Some(r#"[{"front":"\ud800","back":"B","sourcePage":null}]"#)),
++        SavedCards::Malformed
++    );
++    assert!(matches!(
++        set(json!([card("\u{85}", "B", Value::Null)])),
++        SavedCards::Ok(_)
++    ));
++    assert!(
++        matches!(parse_saved_cards(Some(r#"[{"front":"F","back":"B","sourcePage":2.0}]"#)), SavedCards::Ok(c) if c[0].source_page == Some(2))
++    );
+ }
+ 
+ #[test]
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:314:
+     ] {
+         assert_eq!(parse_iso_ms(bad), None, "{bad}");
+     }
+-    assert_eq!(parse_iso_ms("2026-10-06T15:00:00.000Z"), Some(1_791_298_800_000));
++    assert_eq!(
++        parse_iso_ms("2026-10-06T15:00:00.000Z"),
++        Some(1_791_298_800_000)
++    );
+ }
+ 
+ #[test]
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:321:
+ fn simple_v1_matches_the_typescript_arithmetic() {
+     let t0 = "2026-10-06T15:00:00.000Z";
+-    let gap = |s: &CardSchedule| parse_iso_ms(&s.due_at).unwrap() - parse_iso_ms(&s.last_reviewed_at).unwrap();
+-    let first: Vec<i64> = RATINGS.iter().map(|r| gap(&schedule_card(None, r, t0).unwrap())).collect();
++    let gap = |s: &CardSchedule| {
++        parse_iso_ms(&s.due_at).unwrap() - parse_iso_ms(&s.last_reviewed_at).unwrap()
++    };
++    let first: Vec<i64> = RATINGS
++        .iter()
++        .map(|r| gap(&schedule_card(None, r, t0).unwrap()))
++        .collect();
+     assert_eq!(first, vec![10 * MINUTE_MS, DAY_MS, DAY_MS, 3 * DAY_MS]);
+     let mut state: Option<CardSchedule> = None;
+     let mut now = t0.to_string();
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:333:
+         state = Some(next);
+     }
+     assert_eq!(longest, 180 * DAY_MS);
+-    let ladder = schedule_card(Some(&schedule_card(None, "good", t0).unwrap()), "good", "2026-10-07T15:00:00.000Z").unwrap();
++    let ladder = schedule_card(
++        Some(&schedule_card(None, "good", t0).unwrap()),
++        "good",
++        "2026-10-07T15:00:00.000Z",
++    )
++    .unwrap();
+     let failed = schedule_card(Some(&ladder), "again", "2026-10-10T15:00:00.000Z").unwrap();
+     assert_eq!((failed.step, failed.lapses, failed.reps), (-1, 1, 3));
+     let again = schedule_card(Some(&failed), "again", "2026-10-10T15:10:00.000Z").unwrap();
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:381:
+     with("materialId", json!("has space"));
+     with("extra", json!(1));
+     let mut missing = good.clone();
+-    missing.as_object_mut().unwrap().remove("expectedGeneration");
++    missing
++        .as_object_mut()
++        .unwrap()
++        .remove("expectedGeneration");
+     cases.push(missing);
+     let mut reset_with_item = reset(&conn, M);
+     reset_with_item["itemId"] = good["itemId"].clone();
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:395:
+     cases.push(json!(["not", "an", "object"]));
+     cases.push(json!({"action": "erase", "operationId": op_id(), "materialId": M, "expectedGeneration": 0}));
+     for case in cases {
+-        assert_eq!(refused(save_card_review_at(dir.path(), &case)), CardReviewErrorCode::InvalidArgument, "{case}");
++        assert_eq!(
++            refused(save_card_review_at(dir.path(), &case)),
++            CardReviewErrorCode::InvalidArgument,
++            "{case}"
++        );
+     }
+-    assert_eq!(counts(&conn, M), Counts { states: 0, events: 0, receipts: 0, tombstones: 0, versions: 0, generation: 0 });
++    assert_eq!(
++        counts(&conn, M),
++        Counts {
++            states: 0,
++            events: 0,
++            receipts: 0,
++            tombstones: 0,
++            versions: 0,
++            generation: 0
++        }
++    );
+ }
+ 
+ #[test]
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:406:
+     let conn = setup(dir.path());
+     seed(&conn, M, &cards_json(&cards_a()));
+     unmark_root_ready(dir.path());
+-    assert_eq!(refused(save_card_review_at(dir.path(), &reset(&conn, M))), CardReviewErrorCode::NotReady);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &reset(&conn, M))),
++        CardReviewErrorCode::NotReady
++    );
+     assert_eq!(counts(&conn, M).receipts, 0);
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:422:
+     let captured = rate(&conn, M, &cards_a(), 0, "good");
+     save_card_review_at(dir.path(), &reset(&conn, M)).unwrap();
+     let before = counts(&conn, M);
+-    assert_eq!(refused(save_card_review_at(dir.path(), &captured)), CardReviewErrorCode::StaleGeneration);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &captured)),
++        CardReviewErrorCode::StaleGeneration
++    );
+     assert_eq!(counts(&conn, M), before);
+     assert_eq!(before.generation, 1);
+ }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:437:
+     assert_eq!(captured["expectedRevision"], json!(1));
+     save_card_review_at(dir.path(), &reset(&conn, M)).unwrap();
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good")).unwrap();
+-    assert_eq!(revision(&conn, &card_version(M, &cards_a()).items[0].item_id), 1);
++    assert_eq!(
++        revision(&conn, &card_version(M, &cards_a()).items[0].item_id),
++        1
++    );
+     let before = counts(&conn, M);
+-    assert_eq!(refused(save_card_review_at(dir.path(), &captured)), CardReviewErrorCode::StaleGeneration);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &captured)),
++        CardReviewErrorCode::StaleGeneration
++    );
+     assert_eq!(counts(&conn, M), before);
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:450:
+     seed(&conn, M, &cards_json(&cards_a()));
+     let reset_action = reset(&conn, M);
+     let first = save_card_review_at(dir.path(), &reset_action).unwrap();
+-    assert_eq!(first, json!({"action": "reset", "materialId": M, "generation": 1}));
++    assert_eq!(
++        first,
++        json!({"action": "reset", "materialId": M, "generation": 1})
++    );
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good")).unwrap();
+     drop(conn);
+     let conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:457:
+     let before = counts(&conn, M);
+-    assert_eq!(save_card_review_at(dir.path(), &reset_action).unwrap(), first);
++    assert_eq!(
++        save_card_review_at(dir.path(), &reset_action).unwrap(),
++        first
++    );
+     assert_eq!(counts(&conn, M), before);
+     assert_eq!((before.generation, before.events, before.states), (1, 1, 1));
+ }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:477:
+             |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)),
+         )
+         .unwrap();
+-    assert_eq!((tomb.0.as_str(), tomb.1.as_str(), tomb.2, tomb.4, tomb.5), ("rate", M, 0, 1, None));
++    assert_eq!(
++        (tomb.0.as_str(), tomb.1.as_str(), tomb.2, tomb.4, tomb.5),
++        ("rate", M, 0, 1, None)
++    );
+     assert!(is_lower_hex_64(&tomb.3));
+-    assert_eq!(refused(save_card_review_at(dir.path(), &first_reset)), CardReviewErrorCode::OperationErased);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &first_reset)),
++        CardReviewErrorCode::OperationErased
++    );
+     assert_eq!(generation(&conn, M), 2);
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:516:
+     let before = counts(&conn, M);
+     let mut changed = reset_action.clone();
+     changed["expectedGeneration"] = json!(1);
+-    assert_eq!(refused(save_card_review_at(dir.path(), &changed)), CardReviewErrorCode::OperationConflict);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &changed)),
++        CardReviewErrorCode::OperationConflict
++    );
+     let mut stale = reset_action.clone();
+     stale["operationId"] = json!(op_id());
+-    assert_eq!(refused(save_card_review_at(dir.path(), &stale)), CardReviewErrorCode::StaleGeneration);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &stale)),
++        CardReviewErrorCode::StaleGeneration
++    );
+     assert_eq!(counts(&conn, M), before);
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:539:
+         .unwrap()
+         .collect::<Result<_, _>>()
+         .unwrap();
+-    assert_eq!(rows, vec![(card_version(M, &cards_b()).version_id, None, 1)]);
++    assert_eq!(
++        rows,
++        vec![(card_version(M, &cards_b()).version_id, None, 1)]
++    );
+     // Damaged saved cards: reset prunes every snapshot.
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_b(), 1, "good")).unwrap();
+     set_cards(&conn, M, "{not json");
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:556:
+     let dir = TempDir::new("first-suspend");
+     let conn = setup(dir.path());
+     seed(&conn, M, &cards_json(&cards_a()));
+-    let result = save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 1, json!({"action": "suspend"}))).unwrap();
++    let result = save_card_review_at(
++        dir.path(),
++        &item(&conn, M, &cards_a(), 1, json!({"action": "suspend"})),
++    )
++    .unwrap();
+     assert_eq!(result["dueAt"], Value::Null);
+     assert_eq!(result["reviewedAt"], Value::Null);
+     assert_eq!(result["suspended"], json!(true));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:563:
+     let (created_at, first_reviewed_at, active, count): (String, Option<String>, i64, i64) = conn
+-        .query_row("SELECT created_at, first_reviewed_at, is_active, card_count FROM card_versions", [], |r| {
+-            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?))
+-        })
++        .query_row(
++            "SELECT created_at, first_reviewed_at, is_active, card_count FROM card_versions",
++            [],
++            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
++        )
+         .unwrap();
+     assert!(parse_iso_ms(&created_at).is_some());
+     assert_eq!((first_reviewed_at, active, count), (None, 1, 3));
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:570:
+     assert_eq!(counts(&conn, M).events, 0);
+-    save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 1, json!({"action": "resume"}))).unwrap();
++    save_card_review_at(
++        dir.path(),
++        &item(&conn, M, &cards_a(), 1, json!({"action": "resume"})),
++    )
++    .unwrap();
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 1, "easy")).unwrap();
+-    let first: Option<String> = conn.query_row("SELECT first_reviewed_at FROM card_versions", [], |r| r.get(0)).unwrap();
++    let first: Option<String> = conn
++        .query_row("SELECT first_reviewed_at FROM card_versions", [], |r| {
++            r.get(0)
++        })
++        .unwrap();
+     assert!(first.is_some());
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:580:
+     let conn = setup(dir.path());
+     seed(&conn, M, &cards_json(&cards_a()));
+     let rated = save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good")).unwrap();
+-    save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 0, json!({"action": "flag", "reason": "not_in_source"}))).unwrap();
+-    assert_eq!(refused(save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good"))), CardReviewErrorCode::CardFlagged);
+-    let unflagged = save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 0, json!({"action": "unflag"}))).unwrap();
++    save_card_review_at(
++        dir.path(),
++        &item(
++            &conn,
++            M,
++            &cards_a(),
++            0,
++            json!({"action": "flag", "reason": "not_in_source"}),
++        ),
++    )
++    .unwrap();
++    assert_eq!(
++        refused(save_card_review_at(
++            dir.path(),
++            &rate(&conn, M, &cards_a(), 0, "good")
++        )),
++        CardReviewErrorCode::CardFlagged
++    );
++    let unflagged = save_card_review_at(
++        dir.path(),
++        &item(&conn, M, &cards_a(), 0, json!({"action": "unflag"})),
++    )
++    .unwrap();
+     assert_eq!(unflagged["dueAt"], rated["dueAt"]);
+-    save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 0, json!({"action": "suspend"}))).unwrap();
+-    assert_eq!(refused(save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good"))), CardReviewErrorCode::CardSuspended);
++    save_card_review_at(
++        dir.path(),
++        &item(&conn, M, &cards_a(), 0, json!({"action": "suspend"})),
++    )
++    .unwrap();
++    assert_eq!(
++        refused(save_card_review_at(
++            dir.path(),
++            &rate(&conn, M, &cards_a(), 0, "good")
++        )),
++        CardReviewErrorCode::CardSuspended
++    );
+     assert_eq!(counts(&conn, M).events, 1);
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:602:
+     assert_eq!((counts(&conn, M).events, counts(&conn, M).receipts), (1, 1));
+     let mut changed = action.clone();
+     changed["rating"] = json!("easy");
+-    assert_eq!(refused(save_card_review_at(dir.path(), &changed)), CardReviewErrorCode::OperationConflict);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &changed)),
++        CardReviewErrorCode::OperationConflict
++    );
+ }
+ 
+ #[test]
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:613:
+     let stale = rate(&conn, M, &cards_a(), 0, "good");
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good")).unwrap();
+     let before = counts(&conn, M);
+-    assert_eq!(refused(save_card_review_at(dir.path(), &stale)), CardReviewErrorCode::StaleRevision);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &stale)),
++        CardReviewErrorCode::StaleRevision
++    );
+     let old = rate(&conn, M, &cards_a(), 1, "good");
+     set_cards(&conn, M, &cards_json(&cards_b()));
+-    assert_eq!(refused(save_card_review_at(dir.path(), &old)), CardReviewErrorCode::StaleContent);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &old)),
++        CardReviewErrorCode::StaleContent
++    );
+     set_cards(&conn, M, r#"[{"front":"","back":"B","sourcePage":null}]"#);
+     let mut again = old.clone();
+     again["operationId"] = json!(op_id());
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:623:
+-    assert_eq!(refused(save_card_review_at(dir.path(), &again)), CardReviewErrorCode::MalformedCards);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &again)),
++        CardReviewErrorCode::MalformedCards
++    );
+     set_cards(&conn, M, "[]");
+     again["operationId"] = json!(op_id());
+-    assert_eq!(refused(save_card_review_at(dir.path(), &again)), CardReviewErrorCode::NotFound);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &again)),
++        CardReviewErrorCode::NotFound
++    );
+     assert_eq!(counts(&conn, M), before);
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:639:
+     shift_review(&conn, &item_id, &ahead);
+     let before = counts(&conn, M);
+     assert_eq!(
+-        refused(save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good"))),
++        refused(save_card_review_at(
++            dir.path(),
++            &rate(&conn, M, &cards_a(), 0, "good")
++        )),
+         CardReviewErrorCode::ClockBehindLastReview
+     );
+     assert_eq!(counts(&conn, M), before);
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:653:
+     let rated = rate(&conn, M, &cards_a(), 0, "good");
+     save_card_review_at(dir.path(), &rated).unwrap();
+     save_card_review_at(dir.path(), &reset(&conn, M)).unwrap();
+-    save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 1, json!({"action": "flag", "reason": "unclear"}))).unwrap();
+-    conn.execute("DELETE FROM study_materials WHERE id = ?1", [M]).unwrap();
+-    assert_eq!(counts(&conn, M), Counts { states: 0, events: 0, receipts: 3, tombstones: 3, versions: 0, generation: 0 });
+-    let items: i64 = conn.query_row("SELECT COUNT(*) FROM card_items", [], |r| r.get(0)).unwrap();
++    save_card_review_at(
++        dir.path(),
++        &item(
++            &conn,
++            M,
++            &cards_a(),
++            1,
++            json!({"action": "flag", "reason": "unclear"}),
++        ),
++    )
++    .unwrap();
++    conn.execute("DELETE FROM study_materials WHERE id = ?1", [M])
++        .unwrap();
++    assert_eq!(
++        counts(&conn, M),
++        Counts {
++            states: 0,
++            events: 0,
++            receipts: 3,
++            tombstones: 3,
++            versions: 0,
++            generation: 0
++        }
++    );
++    let items: i64 = conn
++        .query_row("SELECT COUNT(*) FROM card_items", [], |r| r.get(0))
++        .unwrap();
+     assert_eq!(items, 0);
+-    assert_eq!(refused(save_card_review_at(dir.path(), &rated)), CardReviewErrorCode::OperationErased);
++    assert_eq!(
++        refused(save_card_review_at(dir.path(), &rated)),
++        CardReviewErrorCode::OperationErased
++    );
+     crate::backup::verify_schema_12_card_semantics(&conn).unwrap();
+ }
+ 
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:679:
+         ("event", "BEFORE INSERT ON card_review_events", false),
+         ("receipt", "BEFORE INSERT ON card_review_operations", false),
+         ("state", "BEFORE INSERT ON card_review_state", false),
+-        ("generation", "BEFORE INSERT ON card_review_generations", true),
+-        ("reset_receipt", "BEFORE INSERT ON card_review_operations", true),
++        (
++            "generation",
++            "BEFORE INSERT ON card_review_generations",
++            true,
++        ),
++        (
++            "reset_receipt",
++            "BEFORE INSERT ON card_review_operations",
++            true,
++        ),
+     ] {
+         let dir = TempDir::new(name);
+         let conn = setup(dir.path());
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:689:
+             save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good")).unwrap();
+         }
+         let before = counts(&conn, M);
+-        let items_before: i64 = conn.query_row("SELECT COUNT(*) FROM card_items", [], |r| r.get(0)).unwrap();
++        let items_before: i64 = conn
++            .query_row("SELECT COUNT(*) FROM card_items", [], |r| r.get(0))
++            .unwrap();
+         inject(&conn, name, timing);
+-        let action = if use_reset { reset(&conn, M) } else { rate(&conn, M, &cards_a(), 0, "good") };
+-        assert_eq!(refused(save_card_review_at(dir.path(), &action)), CardReviewErrorCode::StorageError, "{name}");
++        let action = if use_reset {
++            reset(&conn, M)
++        } else {
++            rate(&conn, M, &cards_a(), 0, "good")
++        };
++        assert_eq!(
++            refused(save_card_review_at(dir.path(), &action)),
++            CardReviewErrorCode::StorageError,
++            "{name}"
++        );
+         assert_eq!(counts(&conn, M), before, "{name}");
+-        let items_after: i64 = conn.query_row("SELECT COUNT(*) FROM card_items", [], |r| r.get(0)).unwrap();
++        let items_after: i64 = conn
++            .query_row("SELECT COUNT(*) FROM card_items", [], |r| r.get(0))
++            .unwrap();
+         assert_eq!(items_after, items_before, "{name}: no partial snapshot");
+-        conn.execute_batch(&format!("DROP TRIGGER inject_{name};")).unwrap();
++        conn.execute_batch(&format!("DROP TRIGGER inject_{name};"))
++            .unwrap();
+         // The same request identity then applies for real.
+         save_card_review_at(dir.path(), &action).unwrap();
+         crate::backup::verify_schema_12_card_semantics(&conn).unwrap();
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:710:
+ /// The exact due SQL the TypeScript repository runs (shared text, not a copy).
+ fn due_states_sql() -> &'static str {
+     let source = include_str!("../../src/data/repositories/cardReviewRepository.ts");
+-    let start = source.find("export const DUE_STATES_SQL = `").unwrap() + "export const DUE_STATES_SQL = `".len();
++    let start = source.find("export const DUE_STATES_SQL = `").unwrap()
++        + "export const DUE_STATES_SQL = `".len();
+     let end = start + source[start..].find('`').unwrap();
+     &source[start..end]
+ }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:733:
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "again")).unwrap();
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 1, "good")).unwrap();
+     let due_of = |item_id: &str| -> String {
+-        conn.query_row("SELECT due_at FROM card_review_state WHERE item_id = ?1", [item_id], |r| r.get(0)).unwrap()
++        conn.query_row(
++            "SELECT due_at FROM card_review_state WHERE item_id = ?1",
++            [item_id],
++            |r| r.get(0),
++        )
++        .unwrap()
+     };
+     let again_due = due_of(&a.items[0].item_id);
+     let day_due = due_of(&a.items[1].item_id);
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:740:
+     let far = "2099-01-01T00:00:00.000Z";
+     let minute_nine = format_iso_ms(parse_iso_ms(&again_due).unwrap() - MINUTE_MS);
+     // Again: exact instant, never the end of the day.
+-    assert!(!due_ids(&conn, &a.version_id, &minute_nine, &minute_nine).contains(&a.items[0].item_id));
+-    assert_eq!(due_ids(&conn, &a.version_id, &again_due, &again_due)[0], a.items[0].item_id);
++    assert!(
++        !due_ids(&conn, &a.version_id, &minute_nine, &minute_nine).contains(&a.items[0].item_id)
++    );
++    assert_eq!(
++        due_ids(&conn, &a.version_id, &again_due, &again_due)[0],
++        a.items[0].item_id
++    );
+     // Day step: the next local midnight is exclusive.
+     assert!(!due_ids(&conn, &a.version_id, &again_due, &day_due).contains(&a.items[1].item_id));
+     let just_after = format_iso_ms(parse_iso_ms(&day_due).unwrap() + 1);
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:750:
+     set_cards(&conn, M, &cards_json(&cards_b()));
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_b(), 0, "good")).unwrap();
+     let b = card_version(M, &cards_b());
+-    assert_eq!(due_ids(&conn, &b.version_id, far, far), vec![b.items[0].item_id.clone()]);
++    assert_eq!(
++        due_ids(&conn, &b.version_id, far, far),
++        vec![b.items[0].item_id.clone()]
++    );
+     // Suspended and flagged rows are excluded before the limit.
+-    save_card_review_at(dir.path(), &item(&conn, M, &cards_b(), 0, json!({"action": "suspend"}))).unwrap();
++    save_card_review_at(
++        dir.path(),
++        &item(&conn, M, &cards_b(), 0, json!({"action": "suspend"})),
++    )
++    .unwrap();
+     assert!(due_ids(&conn, &b.version_id, far, far).is_empty());
+     crate::backup::verify_schema_12_card_semantics(&conn).unwrap();
+ }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:770:
+     for rating in ["good", "again", "good", "hard", "easy"] {
+         save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, rating)).unwrap();
+     }
+-    save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 1, json!({"action": "flag", "reason": "unclear"}))).unwrap();
+-    save_card_review_at(dir.path(), &item(&conn, M, &cards_a(), 2, json!({"action": "suspend"}))).unwrap();
++    save_card_review_at(
++        dir.path(),
++        &item(
++            &conn,
++            M,
++            &cards_a(),
++            1,
++            json!({"action": "flag", "reason": "unclear"}),
++        ),
++    )
++    .unwrap();
++    save_card_review_at(
++        dir.path(),
++        &item(&conn, M, &cards_a(), 2, json!({"action": "suspend"})),
++    )
++    .unwrap();
+     set_cards(&conn, M, &cards_json(&cards_b()));
+     save_card_review_at(dir.path(), &rate(&conn, M, &cards_b(), 0, "good")).unwrap();
+     save_card_review_at(dir.path(), &rate(&conn, OTHER, &cards_b(), 2, "good")).unwrap();
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:785:
+     let dir = TempDir::new("ceiling");
+     let path = dir.path().join("eleven.db");
+     let conn = Connection::open(&path).unwrap();
+-    conn.execute_batch("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);").unwrap();
++    conn.execute_batch("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);")
++        .unwrap();
+     for m in crate::migrations().into_iter().filter(|m| m.version <= 11) {
+         conn.execute_batch(m.sql).unwrap();
+-        conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (?1)", [m.version]).unwrap();
++        conn.execute(
++            "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
++            [m.version],
++        )
++        .unwrap();
+     }
+     crate::backup::verify_application_connection(&conn).unwrap();
+     // Migration 12 applies to it with empty tables, and it still validates.
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:795:
+     conn.execute_batch(crate::migrations()[11].sql).unwrap();
+-    conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (12)", []).unwrap();
++    conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (12)", [])
++        .unwrap();
+     crate::backup::verify_application_connection(&conn).unwrap();
+-    conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (13)", []).unwrap();
++    conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (13)", [])
++        .unwrap();
+     let error = crate::backup::verify_application_connection(&conn).unwrap_err();
+     assert!(error.contains("newer database format"), "{error}");
+ }
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:841:
+         let result = crate::backup::verify_schema_12_card_semantics(&conn);
+         let outcome = if result.is_ok() { "accept" } else { "refuse" };
+         if outcome != case.expect {
+-            mismatches.push(format!("{} [{}]: expected {}, got {result:?}", case.name, case.category, case.expect));
++            mismatches.push(format!(
++                "{} [{}]: expected {}, got {result:?}",
++                case.name, case.category, case.expect
++            ));
+         }
+     }
+     assert!(mismatches.is_empty(), "{mismatches:#?}");
+Diff in /Users/rickymac/code/Flight-training-pr70-integration/src-tauri/src/card_reviews_tests.rs:870:
+         let wire = serde_json::to_value(code.error()).unwrap();
+         let name = wire["code"].as_str().unwrap();
+         let entry = format!("{name}: {}", serde_json::to_string(code.message()).unwrap());
+-        assert!(typescript.contains(&entry), "missing TypeScript entry: {entry}");
++        assert!(
++            typescript.contains(&entry),
++            "missing TypeScript entry: {entry}"
++        );
+     }
+ }
+ 
+exit 1

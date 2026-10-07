@@ -480,6 +480,117 @@ export interface EraseHistoryResult {
   erased: boolean;
 }
 
+/* ------------------------------------------------------------------ */
+/* Card reviews (M2-3 source slice C1)                                 */
+/* ------------------------------------------------------------------ */
+
+/** A rating only decides when a card comes back; it is never a score. */
+export type CardRating = "again" | "hard" | "good" | "easy";
+export type CardFlagReason = "wrong_answer" | "unclear" | "not_in_source";
+export type CardItemActionName = "rate" | "suspend" | "resume" | "flag" | "unflag";
+
+interface CardItemActionBase {
+  operationId: string;
+  materialId: string;
+  /** The current saved cards' content hash, from the snapshot. */
+  versionContentHash: string;
+  itemId: string;
+  /** The material's review generation, from the snapshot. */
+  expectedGeneration: number;
+  /** The card's revision, from the snapshot; 0 when untouched. */
+  expectedRevision: number;
+}
+
+/** One card action. Exact keys per branch; anything else is refused. */
+export type CardItemAction =
+  | (CardItemActionBase & { action: "rate"; rating: CardRating })
+  | (CardItemActionBase & { action: "suspend" | "resume" | "unflag" })
+  | (CardItemActionBase & { action: "flag"; reason: CardFlagReason });
+
+/** Reset a material's card reviews. It carries no item fields. */
+export interface CardResetAction {
+  action: "reset";
+  operationId: string;
+  materialId: string;
+  expectedGeneration: number;
+}
+
+export type CardReviewAction = CardItemAction | CardResetAction;
+
+export interface CardItemResult {
+  action: CardItemActionName;
+  itemId: string;
+  generation: number;
+  revision: number;
+  dueAt: string | null;
+  reviewedAt: string | null;
+  suspended: boolean;
+  flag: CardFlagReason | null;
+}
+
+export interface CardResetResult {
+  action: "reset";
+  materialId: string;
+  /** The new generation. */
+  generation: number;
+}
+
+export type CardReviewResult = CardItemResult | CardResetResult;
+
+export interface CardReviewItemState {
+  revision: number;
+  step: number;
+  dueAt: string | null;
+  lastReviewedAt: string | null;
+  reps: number;
+  lapses: number;
+  suspended: boolean;
+  flag: CardFlagReason | null;
+}
+
+export interface CardReviewSnapshotItem {
+  itemId: string;
+  ordinal: number;
+  front: string;
+  back: string;
+  sourcePage: number | null;
+}
+
+/** One authoritative read of a material's card reviews. Reads never write. */
+export interface CardReviewSnapshot {
+  materialId: string;
+  /** 0 when no generation row exists. */
+  generation: number;
+  current:
+    | { status: "ok"; versionId: string; contentHash: string; items: CardReviewSnapshotItem[] }
+    | { status: "none" }
+    | { status: "malformed" };
+  /** Keyed by current item ID; absent means untouched (revision 0). */
+  states: Record<string, CardReviewItemState>;
+}
+
+export interface CardQueueEntry {
+  itemId: string;
+  kind: "again" | "due" | "new";
+  dueAt: string | null;
+  ordinal: number;
+}
+
+export interface CardRecentReview {
+  id: string;
+  itemId: string;
+  front: string;
+  rating: CardRating;
+  reviewedAt: string;
+  /** True when the card belongs to an earlier version of this material's cards. */
+  earlierVersion: boolean;
+}
+
+export interface CardRecentReviewCursor {
+  reviewedAt: string;
+  id: string;
+}
+
 export interface PracticeHistoryGroup {
   historyKey: string;
   sourceMaterialTitle: string;

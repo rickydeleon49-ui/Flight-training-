@@ -1,0 +1,52 @@
+mutation Q2: due query filters by material only, not the current version (CRS-R1 ownership)
+file src/data/repositories/cardReviewRepository.ts
+$ npx vitest run src/data/cardReviewContract.test.ts -t 'promoted 2'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr70-integration
+
+ ❯ src/data/cardReviewContract.test.ts (60 tests | 2 failed | 58 skipped) 132ms
+       × [promoted 2] with old A and current materialized B both due, only B is current due work 57ms
+       × [promoted 2] with old A and current materialized B both due, only B is current due work 75ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 58 skipped (60)
+   Start at  23:49:33
+   Duration  381ms (transform 127ms, setup 0ms, import 170ms, tests 132ms, environment 0ms)
+
+(node:36420) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on node > CRS-R1 version-owned due queue with exact boundaries > [promoted 2] with old A and current materialized B both due, only B is current due work
+ FAIL  src/data/cardReviewContract.test.ts > card review contract on sqljs > CRS-R1 version-owned due queue with exact boundaries > [promoted 2] with old A and current materialized B both due, only B is current due work
+AssertionError: expected [ [ …(2) ], [ …(2) ], [ …(2) ], …(1) ] to deeply equal [ [ …(2) ], [ …(2) ], [ …(2) ] ]
+
+- Expected
++ Received
+
+@@ -1,7 +1,11 @@
+  [
+    [
++     "716cc832d40f778c49bf43c5c8080d55006c8487e95d9d42c72f1186018c027a",
++     "due",
++   ],
++   [
+      "80878a7f43889709bb880947ad3e08ab3b1e9e6444bd0a1bbbd0d8f9c04238d0",
+      "due",
+    ],
+    [
+      "e188e083c124ce330a2afe027e59fb034759155682b4f803dfcd56831ddd9f48",
+
+ ❯ src/data/cardReviewContract.test.ts:259:50
+    257|       vi.setSystemTime(new Date(T0));
+    258|       const due = await queue(repo, M, T0, "UTC");
+    259|       expect(due.map((c) => [c.itemId, c.kind])).toEqual([
+       |                                                  ^
+    260|         [B.items[0]!.itemId, "due"],
+    261|         [B.items[1]!.itemId, "new"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+exit 1

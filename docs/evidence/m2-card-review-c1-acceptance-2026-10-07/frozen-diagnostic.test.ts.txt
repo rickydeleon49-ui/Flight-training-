@@ -1,0 +1,100 @@
+// @vitest-environment jsdom
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { useCardReview } from './useCardReview';
+import type { CardReviewRepository } from '@/data/repositories/cardReviewRepository';
+import type { CardReviewSnapshot, CardRecentReview } from '@/domain/types';
+
+function held<T>() {
+ let resolve!: (value:T)=>void;
+ const promise=new Promise<T>(res=>{resolve=res;});
+ return {promise,resolve};
+}
+const snapshot=(materialId:string):CardReviewSnapshot=>({materialId,generation:0,current:{status:'ok',versionId:materialId,contentHash:materialId,items:[{itemId:materialId,ordinal:0,front:'Synthetic question',back:'Synthetic answer',sourcePage:null}]},states:{}});
+const clock={now:()=> '2026-10-07T10:00:00.000Z',timeZone:()=> 'UTC',newOperationId:()=>crypto.randomUUID()};
+function repository() {
+ return {
+ getCardReviewSnapshot:vi.fn(async (id:string)=>snapshot(id)),
+ getDueQueue:vi.fn(async()=>[]),
+ getRecentReviews:vi.fn(async()=>({rows:[] as CardRecentReview[],next:null as {id:string;reviewedAt:string}|null})),
+ saveAction:vi.fn(), getOperationStatus:vi.fn(),
+ } satisfies CardReviewRepository;
+}
+afterEach(cleanup);
+describe('Codex independent C1 navigation and paging diagnostics',()=>{
+ it('control: an ordinary session start settles and unlocks',async()=>{
+  const repo=repository();const hook=renderHook(()=>useCardReview('A',repo,{clock}));
+  await waitFor(()=>expect(hook.result.current.read.phase).toBe('ready'));
+  await act(async()=>{await hook.result.current.startSession();});
+  expect(hook.result.current.starting).toBe(false);
+  expect(repo.getDueQueue).toHaveBeenCalledTimes(1);
+ });
+ it('control: one history request appends the next page once',async()=>{
+  const repo=repository();const old={id:'event-0',itemId:'A',front:'Synthetic question',rating:'good' as const,reviewedAt:'2026-10-07T10:00:00.000Z',earlierVersion:false};
+  repo.getRecentReviews.mockResolvedValueOnce({rows:[old],next:{id:old.id,reviewedAt:old.reviewedAt}});
+  const hook=renderHook(()=>useCardReview('A',repo,{clock}));
+  await waitFor(()=>expect(hook.result.current.recent.rows).toHaveLength(1));
+  repo.getRecentReviews.mockResolvedValue({rows:[{...old,id:'event-1'}],next:null});
+  await act(async()=>{await hook.result.current.loadMoreRecent();});
+  expect(hook.result.current.recent.rows).toHaveLength(2);
+ });
+
+ it('[C1-R1] replacing cards while a session queue read is held releases the current material start lock',async()=>{
+  const repo=repository(); const queue=held<[]>();
+  repo.getDueQueue.mockImplementationOnce(()=>queue.promise);
+  const hook=renderHook(({contentKey})=>useCardReview('A',repo,{clock,contentKey}),{initialProps:{contentKey:'v1'}});
+  await waitFor(()=>expect(hook.result.current.read.phase).toBe('ready'));
+  let start!:Promise<void>;
+  act(()=>{start=hook.result.current.startSession();});
+  await waitFor(()=>expect(repo.getDueQueue).toHaveBeenCalledTimes(1));
+  hook.rerender({contentKey:'v2'});
+  await waitFor(()=>expect(hook.result.current.read.phase==='ready' && hook.result.current.read.snapshot.materialId).toBe('A'));
+  await act(async()=>{queue.resolve([]);await start;});
+  expect(hook.result.current.starting).toBe(false);
+  await act(async()=>{await hook.result.current.startSession();});
+  expect(repo.getDueQueue).toHaveBeenCalledTimes(2);
+ });
+ it('[C1-R1] two synchronous starts allocate only one session queue read',async()=>{
+  const repo=repository();const queue=held<[]>();
+  repo.getDueQueue.mockImplementation(()=>queue.promise);
+  const hook=renderHook(()=>useCardReview('A',repo,{clock}));
+  await waitFor(()=>expect(hook.result.current.read.phase).toBe('ready'));
+  let one!:Promise<void>,two!:Promise<void>;
+  act(()=>{one=hook.result.current.startSession();two=hook.result.current.startSession();});
+  await waitFor(()=>expect(repo.getDueQueue.mock.calls.length).toBeGreaterThan(0));
+  await act(async()=>{queue.resolve([]);await Promise.all([one,two]);});
+  expect(repo.getDueQueue).toHaveBeenCalledTimes(1);
+ });
+ it('[C1-R2] a history page held before reset cannot resurrect erased history after the acknowledged refresh',async()=>{
+  const repo=repository();const page=held<{rows:CardRecentReview[];next:null}>();
+  const old={id:'old-event',itemId:'A',front:'Synthetic old card',rating:'good' as const,reviewedAt:'2026-10-07T10:00:00.000Z',earlierVersion:false};
+  repo.getRecentReviews.mockResolvedValueOnce({rows:[old],next:{id:old.id,reviewedAt:old.reviewedAt}});
+  repo.getRecentReviews.mockImplementationOnce(()=>page.promise);
+  repo.getRecentReviews.mockResolvedValue({rows:[],next:null});
+  repo.saveAction.mockResolvedValue({action:'reset',materialId:'A',generation:1});
+  const hook=renderHook(()=>useCardReview('A',repo,{clock}));
+  await waitFor(()=>expect(hook.result.current.recent.rows).toHaveLength(1));
+  let loading!:Promise<void>;
+  act(()=>{loading=hook.result.current.loadMoreRecent();});
+  repo.getCardReviewSnapshot.mockResolvedValue({...snapshot('A'),generation:1});
+  act(()=>{hook.result.current.confirmReset();});
+  await waitFor(()=>expect(hook.result.current.notice?.kind).toBe('reset-done'));
+  await waitFor(()=>expect(hook.result.current.recent.rows).toHaveLength(0));
+  await act(async()=>{page.resolve({rows:[{...old,id:'erased-event'}],next:null});await loading;});
+  expect(hook.result.current.recent.rows).toHaveLength(0);
+ });
+ it('[C1-R2] two synchronous history requests publish one copy of the next page',async()=>{
+  const repo=repository();const page=held<{rows:CardRecentReview[];next:null}>();
+  const rows=Array.from({length:20},(_,i)=>({id:'event-'+i,itemId:'A',front:'Synthetic question',rating:'good' as const,reviewedAt:'2026-10-07T10:00:00.000Z',earlierVersion:false}));
+  repo.getRecentReviews.mockResolvedValueOnce({rows,next:{id:'event-19',reviewedAt:rows[0]!.reviewedAt}});
+  repo.getRecentReviews.mockImplementation(()=>page.promise);
+  const hook=renderHook(()=>useCardReview('A',repo,{clock}));
+  await waitFor(()=>expect(hook.result.current.recent.rows).toHaveLength(20));
+  let one!:Promise<void>,two!:Promise<void>;
+  act(()=>{one=hook.result.current.loadMoreRecent();two=hook.result.current.loadMoreRecent();});
+  const last={...rows[0]!,id:'event-20'};
+  await act(async()=>{page.resolve({rows:[last],next:null});await Promise.all([one,two]);});
+  expect(hook.result.current.recent.rows).toHaveLength(21);
+  expect(new Set(hook.result.current.recent.rows.map(r=>r.id)).size).toBe(21);
+ });
+});

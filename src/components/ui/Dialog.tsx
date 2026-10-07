@@ -15,6 +15,8 @@ interface DialogProps {
   footer?: ReactNode;
   narrow?: boolean;
   dismissible?: boolean;
+  /** Where focus goes on opening; defaults to the first focusable element. */
+  initialFocus?: () => HTMLElement | null;
 }
 
 /**
@@ -34,6 +36,7 @@ export function Dialog({
   footer,
   narrow = false,
   dismissible = true,
+  initialFocus,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -41,7 +44,7 @@ export function Dialog({
   const requestClose = () => {
     if (dismissible) onClose();
   };
-  const modal = useModalDialog(ref, open, { onEscape: requestClose });
+  const modal = useModalDialog(ref, open, { onEscape: requestClose, initialFocus });
 
   const presentation = (
     <>

@@ -1,0 +1,8 @@
+final checks after documentation, 2026-10-07T06:51:20Z
+$ check_hygiene.sh
+new files checked: 28; problems: none
+exit 0
+$ git diff --exit-code 73b1597 -- src-tauri/migrations/0001..0011
+exit 0
+$ tracked diff stat
+ 18 files changed, 1449 insertions(+), 5 deletions(-)
