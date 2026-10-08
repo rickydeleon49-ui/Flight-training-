@@ -1,0 +1,87 @@
+Running Baseline Behavioral Assertions in isolated child process...
+  -> Baseline passed successfully (exit 0).
+
+Running Mutant: mutant_wrong_version (Wrong version reliance (ignores unmaterialized raw card changes))...
+  -> Killed as expected: failed with AssertionError (exit 1).
+
+Running Mutant: mutant_time_boundary (Broken time boundary (drops Day due cards before local midnight))...
+  -> Killed as expected: failed with AssertionError (exit 1).
+
+Running Mutant: mutant_cursor_tie (Broken keyset cursor (drops tied timestamp items without id tiebreaker))...
+  -> Killed as expected: failed with AssertionError (exit 1).
+
+Running Mutant: mutant_owner_lock (Broken lock ownership (stale resolution drops held active read lock))...
+  -> Killed as expected: failed with AssertionError (exit 1).
+
+▶ [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+  ✔ discovers unmaterialized material with new cards and zero due cards (22.018333ms)
+  ✔ excludes old A's due rows when content changes to unmaterialized B; B cards are new (12.116709ms)
+  ✔ reuses retained schedule when content returns to identical A (A -> B -> A) without writes (12.308834ms)
+  ✔ retired A state rows cannot reduce current B new-card count (4.123166ms)
+  ✔ distinguishes valid-empty guide-only sets from malformed sets (11.691958ms)
+✔ [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement (62.716958ms)
+▶ [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+  ✔ includes Again card at exact instant and Day card before next local midnight (12.1625ms)
+  ✔ applies within-batch urgency ranking: Again due before Day due before New cards (4.383917ms)
+✔ [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries (16.638792ms)
+▶ [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+  ✔ consumes tied history events without dropping rows or duplicating (19.284541ms)
+  ✔ enriches history rows with contentStatus, interval, step, and card sides (9.329625ms)
+  ✔ enforces maximum 250 candidate budget cap and returns page-local summary (8.812166ms)
+✔ [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps (37.537584ms)
+▶ [C2 Proof] Assertion 4: Filters (C2-R7)
+  ✔ statusFilter due_today excludes new-only materials and includes mixed (4.219291ms)
+  ✔ filters history by materialId and topic in SQL before keyset limit (8.36725ms)
+✔ [C2 Proof] Assertion 4: Filters (C2-R7) (12.635375ms)
+▶ [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8)
+  ✔ rejects cursor with mismatched filter as STALE_CURSOR (9.278917ms)
+  ✔ rejects cursor with mismatched clock/midnight as STALE_CURSOR (11.002292ms)
+  ✔ continuation re-evaluates pending item and drops deleted material (4.148042ms)
+  ✔ supports consuming same-query stream with larger or smaller page size (11.199625ms)
+✔ [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8) (35.701875ms)
+▶ [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9)
+  ✔ synchronous reader throw releases lock and allows immediate retry (3.956292ms)
+  ✔ asynchronous rejection at non-null cursor allows successful retry with preserved cursor (10.919ms)
+  ✔ preserves multiple distinct history events for the same material (3.770709ms)
+✔ [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9) (18.707375ms)
+▶ [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10)
+  ✔ exact roundtrip discovery and history across file-backed db close and reopen (29.934584ms)
+  ✔ proves schema-11 database gains shipped schema 12 and discovers cards without backfill (3.929916ms)
+✔ [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10) (33.914166ms)
+▶ [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11)
+  ✔ verifies all semantic mutants are reliably killed by assertions in isolated processes (524.402042ms)
+✔ [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11) (524.446792ms)
+▶ [C2 Proof] Assertion 9: Full Traversal Completeness across Stream Mutations (R8)
+  ✔ deleted pending prefix does not repeat subsequent live rows over full traversal (4.385583ms)
+  ✔ empty-content pending prefix does not repeat subsequent live rows over full traversal (3.971708ms)
+  ✔ history cursor enforces filter context ownership and rejects cross-stream usage (4.247708ms)
+  ✔ due cursor missing mandatory ownership context is rejected (3.7795ms)
+✔ [C2 Proof] Assertion 9: Full Traversal Completeness across Stream Mutations (R8) (16.458625ms)
+▶ [C2 Proof] Assertion 10: Authoritative Refresh Invalidation & Operation Lock (R9)
+  ✔ fresh reset traversal removes surviving no-longer-actionable summaries (0.092ms)
+  ✔ fresh reset traversal adopts authoritative urgency order (0.061083ms)
+  ✔ obsolete synchronous throw cannot clear a new held operation lock (reviewer boundary) (0.075916ms)
+✔ [C2 Proof] Assertion 10: Authoritative Refresh Invalidation & Operation Lock (R9) (0.277958ms)
+▶ [C2 Proof] Assertion 11: Executable Resource Budgets & Work Counters (R4)
+  ✔ requested 2500-card work budget bounds delivered candidate batch and preserves continuation (7.000333ms)
+  ✔ raw-card SQL reads respect proposed 2 MiB batch ceiling via preflight (12.087ms)
+  ✔ oversize single-set lane admits single large set to prevent livelock (4.948ms)
+✔ [C2 Proof] Assertion 11: Executable Resource Budgets & Work Counters (R4) (24.091667ms)
+▶ [C2 Proof] Assertion 12: Bounded Read Pipeline, Strict Cursors, and Legacy Inspection (C2-R4, C2-R8)
+  ✔ malformed discovery and pending prefixes obey byte budget and retain unvisited candidates (5.112917ms)
+  ✔ card budget stop counts already-read candidate in counters and retains candidate for next page (5.013583ms)
+  ✔ maximum candidate cursor (250 IDs) roundtrips through strict decoder; rejects > 32KB cursor (11.190459ms)
+  ✔ strict cursor validation rejects missing version, wrong kind, malformed keys, and arrays before SQL (3.960542ms)
+  ✔ history enrichment respects raw byte budget and marks unread sets as pending without guessing provenance (14.156292ms)
+  ✔ legacy review schedule inspection validates C1 simple-v1 ladder, produces typed intervals, and falls back cleanly for malformed/unsupported state (0.124458ms)
+  ✔ genuinely 500-card / 1000-front / 2000-back Unicode fixture is production-valid under C1 parser and accurately measured (16.224792ms)
+  ✔ absolute oversize single-set policy bounds giant payloads (> 8 MiB) and prevents livelock (7.256875ms)
+✔ [C2 Proof] Assertion 12: Bounded Read Pipeline, Strict Cursors, and Legacy Inspection (C2-R4, C2-R8) (63.1915ms)
+ℹ tests 40
+ℹ suites 12
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 953.363375

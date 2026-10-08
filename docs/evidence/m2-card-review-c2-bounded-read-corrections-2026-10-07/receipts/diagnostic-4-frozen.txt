@@ -1,0 +1,19 @@
+✔ [R8 continued] deleted pending prefix does not repeat the next live row (10.032167ms)
+✔ [R8 continued] empty-content pending prefix does not repeat the next live row (4.632125ms)
+✔ [R8 continued] history cursor cannot silently skip another filter stream (4.418292ms)
+✔ [R8 continued] due cursor missing mandatory ownership context is rejected (4.183667ms)
+✔ [R9 continued] fresh reset traversal removes surviving no-longer-actionable summaries (0.176ms)
+✔ [R9 continued] fresh reset traversal adopts authoritative urgency order (0.065584ms)
+✔ [R9 continued] obsolete synchronous throw cannot clear a new held operation lock (0.119625ms)
+✔ [R4 continued] requested 2500-card work budget bounds the delivered candidate batch (10.5775ms)
+✔ [R4 continued] raw-card SQL reads respect proposed 2 MiB batch ceiling (21.471084ms)
+✔ [control] unchanged pending traversal remains complete and unique (4.521791ms)
+✔ [control] live synchronous throw still releases lock for Retry (0.147458ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 159.974917

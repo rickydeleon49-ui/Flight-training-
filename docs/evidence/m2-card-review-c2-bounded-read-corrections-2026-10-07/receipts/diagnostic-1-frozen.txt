@@ -1,0 +1,17 @@
+✔ [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates (19.660583ms)
+✔ [C2-R1] returned due cursor actually advances to a different material (7.935042ms)
+✔ [C2-R1] 400 due materials do not bypass the stated 250 discovery bound (21.741834ms)
+✔ [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active (4.37075ms)
+✔ [C2-R2] retired A state cannot consume current B new-card count (3.95725ms)
+✔ [C2-R3] history marks old A earlier after raw B replacement without writes (4.052542ms)
+✔ [C2-R3] history marks retained A current after raw A reversion without writes (3.860625ms)
+✔ [control] ordinary active current content returns due and new counts (4.026ms)
+✔ [control] history consumes all 35 tied events without loss or duplicates (5.065625ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 174.598792

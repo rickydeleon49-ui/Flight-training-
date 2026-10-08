@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **CONDITIONAL ASSIGNMENT — DO NOT IMPLEMENT BEFORE APPROVAL.**
 > Production execution of this prompt requires:
-> 1. Independent scope acceptance of the completed [`docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md`](file:///Users/rickymac/code/Flight-training-pr70-integration/docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md) and its verification evidence.
+> 1. Independent scope acceptance of the completed [`docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md`](docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md) and its verification evidence.
 > 2. Recorded owner approval of proposed defaults **C2-D1 through C2-D9**.
 > Any owner-selected model can execute this prompt once activated; Codex remains independent reviewer and Git coordinator. The real-user check-in waiver persists.
 
@@ -87,10 +87,23 @@ export interface LibraryReviewDueResult {
 }
 
 export interface LibraryRecentReviewsInput {
-  cursor?: string | null; // opaque base64 keyset cursor { t, id, ctx }
+  cursor?: string | null; // opaque base64 keyset cursor { v: 1, type: "history", t, id, ctx }
   limit?: number; // default: 20, hard-capped at 100
   topic?: string | null;
   materialId?: string | null;
+  maxBatchRawJsonBytesBudget?: number; // default: 2097152 (2 MiB)
+}
+
+export interface ValidatedCardSchedule {
+  schedulerVersion: "simple-v1";
+  step: number; // -1 to 7
+  dueAt: string | null;
+  lastReviewedAt: string | null;
+  reps: number | null;
+  lapses: number | null;
+  intervalDays: number | null;
+  intervalMinutes: number | null;
+  intervalLabel: string | null;
 }
 
 export interface LibraryRecentReviewEntry {
@@ -108,12 +121,19 @@ export interface LibraryRecentReviewEntry {
   rating: "again" | "hard" | "good" | "easy";
   reviewedAt: string;
   schedulerVersion: string;
-  priorState: { step: number; dueAt: string | null; reps?: number } | null;
-  nextState: { step: number; dueAt: string | null; reps?: number } | null;
+  priorStateRaw: string | null;
+  nextStateRaw: string | null;
+  priorState: Record<string, unknown> | null;
+  nextState: Record<string, unknown> | null;
+  priorSchedule: ValidatedCardSchedule | null;
+  nextSchedule: ValidatedCardSchedule | null;
   step: number | null;
   dueAt: string | null;
-  isEarlierVersion: boolean;
-  contentStatus: "current" | "earlier" | "valid_empty" | "unavailable" | "malformed";
+  intervalDays: number | null;
+  intervalMinutes: number | null;
+  intervalLabel: string | null;
+  isEarlierVersion: boolean | null; // null if raw set unread under budget cap
+  contentStatus: "current" | "earlier" | "valid_empty" | "unavailable" | "malformed" | "pending";
 }
 
 export interface LibraryRecentReviewsResult {
@@ -135,8 +155,9 @@ export interface ReadOnlyCardInspectionTarget {
   reviewedAt: string;
   step: number | null;
   dueAt: string | null;
-  contentStatus: "current" | "earlier" | "valid_empty" | "unavailable" | "malformed";
-  isEarlierVersion: boolean;
+  intervalLabel: string | null;
+  contentStatus: "current" | "earlier" | "valid_empty" | "unavailable" | "malformed" | "pending";
+  isEarlierVersion: boolean | null;
 }
 ```
 
@@ -189,13 +210,16 @@ Implement `DeferredReadController` pattern:
 
 ## 4. Verification & Acceptance Criteria
 
-1. **All Four Reviewer Diagnostics Must Pass Unchanged:**
+1. **All Five Reviewer Diagnostics Must Pass Unchanged (56 / 56 total):**
    - Diagnostic 1 (`docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs`): 9/9 pass.
    - Diagnostic 2 (`docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs`): 12/12 pass.
    - Diagnostic 3 (`docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs`): 16/16 pass.
    - Diagnostic 4 (`docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs`): 11/11 pass.
-2. **Reliable Mutation Verification:**
+   - Diagnostic 5 (`docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs`): 8/8 pass.
+2. **Comprehensive Proof Test Suite (`proof.test.mjs`):** 40 / 40 pass across 12 test suites.
+3. **Reliable Mutation Verification:**
    - Isolated child process runs kill all 4 semantic mutants with `AssertionError`.
    - Survival control confirms verifier fails when mutant assertions are disabled.
-3. **Resource Limit Verification:** Card budget (2,500) and byte ceiling (2 MiB) strictly enforced via preflight.
-4. **Offline & Invariant Integrity:** Zero provider/network calls; Schema 12 preserved without migrations; reads remain strictly read-only.
+4. **Resource Limit Verification:** Card budget (2,500), byte ceiling (2 MiB), and absolute single-set bound (8 MiB) strictly enforced via preflight.
+5. **Cursor Bounds & Validation:** 32 KiB maximum cursor length supporting 250 candidate IDs; strict `v: 1` versioning and mandatory context ownership enforced before SQL.
+6. **Offline & Invariant Integrity:** Zero provider/network calls; Schema 12 preserved without migrations; reads remain strictly read-only.

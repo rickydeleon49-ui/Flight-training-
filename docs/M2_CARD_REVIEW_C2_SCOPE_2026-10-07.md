@@ -140,33 +140,37 @@ The UI controller manages page streaming, held requests, and lifecycle events:
 
 ## 6. Worst-Case Budgets & Safety Caps
 
-- **Theoretical Worst-Case Analysis:**
-  - 250 candidate materials × up to 500 cards per material = up to **125,000 cards**.
-  - 250 candidates × 500 cards × ~250 bytes/card = ~31.25 MB raw JSON (theoretical unmeasured upper bound without caps).
+- **Theoretical Worst-Case Analysis & Honest Code-Point Arithmetic:**
+  - C1 allows up to 500 cards per material, with up to 1,000 front code points and 2,000 back code points (3,000 code points per card).
+  - In ASCII (1 byte/character): 3,000 bytes/card × 500 cards = ~1.5 MB raw JSON per study set. For 250 candidates without caps, this would transfer **~375 MB**.
+  - In astral multi-byte Unicode (up to 3–4 bytes/character): up to ~11,000 bytes/card × 500 cards = ~5.5 MB raw JSON per study set (measured fixture: **5.26 MB**). For 250 candidates without caps, this would transfer **~1,375 MB (1.37 GB)**.
+  - *Correction of prior estimate:* The previously cited 31.25 MB figure was based on an arbitrary small-card example of 250 bytes/card, which severely understates worst-case storage and wire transfer. Executable budgets bound work safely regardless of card text length.
 - **Enforced Executable Safety Caps:**
   - `candidateBatchBudget`: 250 materials.
   - `maxBatchCardsBudget`: 2,500 cards.
   - `maxBatchRawJsonBytesBudget`: 2,097,152 bytes (2 MiB).
-  - Single-set lane: ensures terminating forward progress without empty-page livelock if candidate exceeds normal budget.
+  - `ABSOLUTE_MAX_SINGLE_SET_RAW_JSON_BYTES`: 8,388,608 bytes (8 MiB).
+  - Single-set admission lane: admits a single oversize set (<= 8 MiB) if budget is exceeded on item 0, ensuring terminating forward progress without empty-page livelock.
 - **IPC & WebKit Rendering:** Explicitly marked **UNMEASURED**. Node/SQLite in-process measurements do not establish Desktop Tauri IPC or WebKit render latency.
 
 ---
 
 ## 7. Verified Proof, Diagnostics & Gate
 
-The complete planning proof package in `docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/` proves all contracts:
+The complete planning proof package in `docs/evidence/m2-card-review-c2-bounded-read-corrections-2026-10-07/` proves all contracts:
 
-1. **All Four Frozen Reviewer Diagnostics Pass Unchanged:**
+1. **All Five Frozen Reviewer Diagnostics Pass Unchanged (56 / 56 total):**
    - Diagnostic 1 (`docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs`): **9 / 9 passed (exit 0)**.
    - Diagnostic 2 (`docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs`): **12 / 12 passed (exit 0)**.
    - Diagnostic 3 (`docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs`): **16 / 16 passed (exit 0)**.
    - Diagnostic 4 (`docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs`): **11 / 11 passed (exit 0)**.
-2. **Comprehensive Proof Suite (`proof.test.mjs`):** **32 / 32 passed (exit 0)** across 11 test suites.
+   - Diagnostic 5 (`docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs`): **8 / 8 passed (exit 0)**.
+2. **Comprehensive Proof Suite (`proof.test.mjs`):** **40 / 40 passed (exit 0)** across 12 test suites.
 3. **Reliable Semantic Mutation Verifier (`runMutants.mjs` & `mutantSurvivalControl.mjs`):** Shared independently held A/B fixture verifies baseline passes (exit 0) and 4 mutants are killed with `AssertionError` (exit 1). Survival control confirms verifier fails if assertions are disabled (exit 0).
 4. **SQL Pipeline Audit (`query-audit.mjs`):** Confirms preflighted bounded batching across pages and filters on a 5,000-material / 10,000-event fixture.
 5. **Latency Budget Status:**
-   - **Review Due Page 1 p50:** **7.31 ms** at 5,000 materials (budget target: 10 ms) -> **PASS** in SQLite/Node.
-   - **History Page 1 p50:** **9.93 ms** at 5,000 materials / 10,000 events (budget target: 15 ms) -> **PASS** in SQLite/Node.
+   - **Review Due Page 1 p50:** **6.76 ms** at 5,000 materials (budget target: 10 ms) -> **PASS** in SQLite/Node.
+   - **History Page 1 p50:** **9.52 ms** at 5,000 materials / 10,000 events (budget target: 15 ms) -> **PASS** in SQLite/Node.
    - **Desktop Tauri IPC & WebKit Rendering:** **UNMEASURED**.
 
 ---
@@ -176,4 +180,4 @@ The complete planning proof package in `docs/evidence/m2-card-review-c2-read-pip
 Production implementation of C2 requires:
 1. Independent scope acceptance of this completed proposal and evidence.
 2. Owner approval of the recommended product defaults (**C2-D1 through C2-D9**).
-3. Execution of the conditional implementation prompt ([`docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md`](file:///Users/rickymac/code/Flight-training-pr70-integration/docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md)).
+3. Execution of the conditional implementation prompt ([`docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md`](docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md)).

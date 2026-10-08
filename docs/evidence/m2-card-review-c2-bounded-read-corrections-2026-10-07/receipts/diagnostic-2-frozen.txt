@@ -1,0 +1,20 @@
+✔ [C2-R6] production parser parity: overlong front (0.57125ms)
+✔ [C2-R6] production parser parity: overlong back and page (0.049334ms)
+✔ [C2-R6] production parser parity: lone surrogate (0.050875ms)
+✔ [C2-R6] production parser parity: empty string (0.037792ms)
+✔ [C2-R6] production parser parity: accepted control character (0.048208ms)
+✔ [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval (0.64425ms)
+✔ [C2-R4] no-migration baseline does not add an index absent from shipped schema (8.610375ms)
+✔ [C2-R1] urgency ranking actually applies inside one candidate batch (4.832292ms)
+✔ [C2-R1] caller input cannot bypass the maximum 250-candidate request budget (13.446083ms)
+✔ [C2-R5] filter change clears the prior filter rows before next publication (4.22225ms)
+✔ [C2-R5] two same-turn activations do not duplicate the complete page (3.92925ms)
+✔ [control] ordinary ASCII cards retain identical content identity (2.512125ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.198292
