@@ -1,0 +1,481 @@
+{
+  "timestamp": "2026-10-08T04:55:17.238Z",
+  "nodeVersion": "v22.23.3",
+  "sqliteVersion": "3.53.4",
+  "platform": "darwin arm64",
+  "scales": {
+    "100_materials_scale": {
+      "dataset": {
+        "materials": 100,
+        "versions": 41,
+        "items": 976,
+        "states": 202,
+        "events": 200
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 2.51,
+        "max": 5.393,
+        "p50": 2.888,
+        "p95": 5.393,
+        "p99": 5.393,
+        "mean": 3.051,
+        "count": 20
+      },
+      "reviewDue_page2_continuation": {
+        "min": 0.871,
+        "max": 1.289,
+        "p50": 0.906,
+        "p95": 1.289,
+        "p99": 1.289,
+        "mean": 0.973,
+        "count": 20
+      },
+      "fullDiscovery_all_pages": {
+        "min": 3.619,
+        "max": 5.006,
+        "p50": 3.855,
+        "p95": 5.006,
+        "p99": 5.006,
+        "mean": 4.013,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 2,
+      "fullDiscovery_materials_found": 81,
+      "pipeline_breakdown_approximate_microbenchmarks": {
+        "sql_candidate_query": {
+          "min": 0.085,
+          "max": 0.115,
+          "p50": 0.089,
+          "p95": 0.115,
+          "p99": 0.115,
+          "mean": 0.093,
+          "count": 20
+        },
+        "sql_preflight_byte_check": {
+          "min": 0.066,
+          "max": 0.107,
+          "p50": 0.07,
+          "p95": 0.107,
+          "p99": 0.107,
+          "mean": 0.072,
+          "count": 20
+        },
+        "sql_raw_card_reads_budgeted": {
+          "min": 1.746,
+          "max": 2.588,
+          "p50": 2.029,
+          "p95": 2.588,
+          "p99": 2.588,
+          "mean": 2.068,
+          "count": 20
+        },
+        "json_parse_canonical_hash": {
+          "min": 1.746,
+          "max": 2.588,
+          "p50": 2.029,
+          "p95": 2.588,
+          "p99": 2.588,
+          "mean": 2.068,
+          "count": 20
+        },
+        "sql_batched_state_read": {
+          "min": 0.237,
+          "max": 0.279,
+          "p50": 0.247,
+          "p95": 0.279,
+          "p99": 0.279,
+          "mean": 0.251,
+          "count": 20
+        },
+        "urgency_ranking_approximate": {
+          "min": 0.082,
+          "max": 0.988,
+          "p50": 0.101,
+          "p95": 0.988,
+          "p99": 0.988,
+          "mean": 0.143,
+          "count": 20
+        },
+        "sample_bytes_transferred": 224538,
+        "note": "Approximate synthetic component microbenchmarks. Actual full reader performance is reflected in reviewDue and history metrics above."
+      },
+      "topic_filter_aerodynamics": {
+        "min": 0.293,
+        "max": 0.788,
+        "p50": 0.308,
+        "p95": 0.788,
+        "p99": 0.788,
+        "mean": 0.338,
+        "count": 20
+      },
+      "history_page1_20_limit": {
+        "min": 1.033,
+        "max": 1.769,
+        "p50": 1.166,
+        "p95": 1.769,
+        "p99": 1.769,
+        "mean": 1.186,
+        "count": 20
+      },
+      "history_page2_20_limit": {
+        "min": 0.965,
+        "max": 1.747,
+        "p50": 1.067,
+        "p95": 1.747,
+        "p99": 1.747,
+        "mean": 1.127,
+        "count": 20
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "PASS",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "PASS",
+        "desktop_ipc_status": "UNMEASURED (Desktop Tauri WebKit runtime separate from Node/SQLite engine)",
+        "webkit_render_status": "UNMEASURED"
+      }
+    },
+    "2500_materials_scale": {
+      "dataset": {
+        "materials": 2500,
+        "versions": 1001,
+        "items": 12976,
+        "states": 5002,
+        "events": 5000
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 4.833,
+        "max": 5.948,
+        "p50": 5.181,
+        "p95": 5.948,
+        "p99": 5.948,
+        "mean": 5.156,
+        "count": 10
+      },
+      "reviewDue_page2_continuation": {
+        "min": 1.513,
+        "max": 2.067,
+        "p50": 1.628,
+        "p95": 2.067,
+        "p99": 2.067,
+        "mean": 1.666,
+        "count": 10
+      },
+      "fullDiscovery_all_pages": {
+        "min": 109.701,
+        "max": 114.433,
+        "p50": 111.239,
+        "p95": 114.433,
+        "p99": 114.433,
+        "mean": 111.556,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 52,
+      "fullDiscovery_materials_found": 2081,
+      "pipeline_breakdown_approximate_microbenchmarks": {
+        "sql_candidate_query": {
+          "min": 0.991,
+          "max": 1.147,
+          "p50": 1.042,
+          "p95": 1.147,
+          "p99": 1.147,
+          "mean": 1.041,
+          "count": 10
+        },
+        "sql_preflight_byte_check": {
+          "min": 0.213,
+          "max": 0.271,
+          "p50": 0.226,
+          "p95": 0.271,
+          "p99": 0.271,
+          "mean": 0.23,
+          "count": 10
+        },
+        "sql_raw_card_reads_budgeted": {
+          "min": 2.565,
+          "max": 3.163,
+          "p50": 2.962,
+          "p95": 3.163,
+          "p99": 3.163,
+          "mean": 2.824,
+          "count": 10
+        },
+        "json_parse_canonical_hash": {
+          "min": 2.565,
+          "max": 3.163,
+          "p50": 2.962,
+          "p95": 3.163,
+          "p99": 3.163,
+          "mean": 2.824,
+          "count": 10
+        },
+        "sql_batched_state_read": {
+          "min": 0.483,
+          "max": 1.05,
+          "p50": 0.496,
+          "p95": 1.05,
+          "p99": 1.05,
+          "mean": 0.567,
+          "count": 10
+        },
+        "urgency_ranking_approximate": {
+          "min": 0.182,
+          "max": 0.198,
+          "p50": 0.19,
+          "p95": 0.198,
+          "p99": 0.198,
+          "mean": 0.19,
+          "count": 10
+        },
+        "sample_bytes_transferred": 311304,
+        "note": "Approximate synthetic component microbenchmarks. Actual full reader performance is reflected in reviewDue and history metrics above."
+      },
+      "topic_filter_aerodynamics": {
+        "min": 4.037,
+        "max": 4.858,
+        "p50": 4.447,
+        "p95": 4.858,
+        "p99": 4.858,
+        "mean": 4.399,
+        "count": 10
+      },
+      "history_page1_20_limit": {
+        "min": 4.591,
+        "max": 5.574,
+        "p50": 4.665,
+        "p95": 5.574,
+        "p99": 5.574,
+        "mean": 4.756,
+        "count": 10
+      },
+      "history_page2_20_limit": {
+        "min": 3.188,
+        "max": 3.738,
+        "p50": 3.227,
+        "p95": 3.738,
+        "p99": 3.738,
+        "mean": 3.308,
+        "count": 10
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "PASS",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "PASS",
+        "desktop_ipc_status": "UNMEASURED (Desktop Tauri WebKit runtime separate from Node/SQLite engine)",
+        "webkit_render_status": "UNMEASURED"
+      }
+    },
+    "5000_materials_scale": {
+      "dataset": {
+        "materials": 5000,
+        "versions": 2001,
+        "items": 25476,
+        "states": 10002,
+        "events": 10000
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 5.677,
+        "max": 7.038,
+        "p50": 6.218,
+        "p95": 7.038,
+        "p99": 7.038,
+        "mean": 6.17,
+        "count": 10
+      },
+      "reviewDue_page2_continuation": {
+        "min": 1.473,
+        "max": 2.153,
+        "p50": 1.531,
+        "p95": 2.153,
+        "p99": 2.153,
+        "mean": 1.634,
+        "count": 10
+      },
+      "fullDiscovery_all_pages": {
+        "min": 250.261,
+        "max": 260.395,
+        "p50": 252.764,
+        "p95": 260.395,
+        "p99": 260.395,
+        "mean": 254.148,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 103,
+      "fullDiscovery_materials_found": 4165,
+      "pipeline_breakdown_approximate_microbenchmarks": {
+        "sql_candidate_query": {
+          "min": 1.8,
+          "max": 1.921,
+          "p50": 1.87,
+          "p95": 1.921,
+          "p99": 1.921,
+          "mean": 1.865,
+          "count": 10
+        },
+        "sql_preflight_byte_check": {
+          "min": 0.218,
+          "max": 0.28,
+          "p50": 0.229,
+          "p95": 0.28,
+          "p99": 0.28,
+          "mean": 0.234,
+          "count": 10
+        },
+        "sql_raw_card_reads_budgeted": {
+          "min": 2.53,
+          "max": 3.071,
+          "p50": 2.722,
+          "p95": 3.071,
+          "p99": 3.071,
+          "mean": 2.795,
+          "count": 10
+        },
+        "json_parse_canonical_hash": {
+          "min": 2.53,
+          "max": 3.071,
+          "p50": 2.722,
+          "p95": 3.071,
+          "p99": 3.071,
+          "mean": 2.795,
+          "count": 10
+        },
+        "sql_batched_state_read": {
+          "min": 0.504,
+          "max": 0.619,
+          "p50": 0.525,
+          "p95": 0.619,
+          "p99": 0.619,
+          "mean": 0.534,
+          "count": 10
+        },
+        "urgency_ranking_approximate": {
+          "min": 0.188,
+          "max": 0.71,
+          "p50": 0.203,
+          "p95": 0.71,
+          "p99": 0.71,
+          "mean": 0.291,
+          "count": 10
+        },
+        "sample_bytes_transferred": 312314,
+        "note": "Approximate synthetic component microbenchmarks. Actual full reader performance is reflected in reviewDue and history metrics above."
+      },
+      "topic_filter_aerodynamics": {
+        "min": 4.259,
+        "max": 5.139,
+        "p50": 4.783,
+        "p95": 5.139,
+        "p99": 5.139,
+        "mean": 4.737,
+        "count": 10
+      },
+      "history_page1_20_limit": {
+        "min": 9.326,
+        "max": 11.883,
+        "p50": 9.627,
+        "p95": 11.883,
+        "p99": 11.883,
+        "mean": 9.821,
+        "count": 10
+      },
+      "history_page2_20_limit": {
+        "min": 6.14,
+        "max": 6.882,
+        "p50": 6.27,
+        "p95": 6.882,
+        "p99": 6.882,
+        "mean": 6.347,
+        "count": 10
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "PASS",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "PASS",
+        "desktop_ipc_status": "UNMEASURED (Desktop Tauri WebKit runtime separate from Node/SQLite engine)",
+        "webkit_render_status": "UNMEASURED"
+      }
+    }
+  },
+  "stress_measurements": {
+    "standard_500_cards": {
+      "cardCount": 500,
+      "jsonBytes": 74069,
+      "stats": {
+        "min": 0.499,
+        "max": 0.985,
+        "p50": 0.519,
+        "p95": 0.985,
+        "p99": 0.985,
+        "mean": 0.576,
+        "count": 20
+      }
+    },
+    "unicode_sample_text_500_cards": {
+      "cardCount": 500,
+      "jsonBytes": 187131,
+      "stats": {
+        "min": 1.102,
+        "max": 1.469,
+        "p50": 1.16,
+        "p95": 1.469,
+        "p99": 1.469,
+        "mean": 1.202,
+        "count": 20
+      }
+    },
+    "genuine_max_unicode_500_cards": {
+      "cardCount": 500,
+      "frontCodePoints": 1000,
+      "backCodePoints": 2000,
+      "jsonBytes": 5519893,
+      "isProductionValid": true,
+      "stats": {
+        "min": 10.083,
+        "max": 10.945,
+        "p50": 10.517,
+        "p95": 10.945,
+        "p99": 10.945,
+        "mean": 10.463,
+        "count": 10
+      }
+    },
+    "json_escaped_control_chars_500_cards": {
+      "cardCount": 500,
+      "frontCodePoints": 1000,
+      "backCodePoints": 2000,
+      "jsonBytes": 9020501,
+      "exceedsPreflightCap": true,
+      "isProductionValidInC1": true
+    },
+    "worst_case_budget_analysis": {
+      "c1_max_cards_per_material": 500,
+      "c1_max_front_code_points": 1000,
+      "c1_max_back_code_points": 2000,
+      "theoretical_candidates_per_batch": 250,
+      "theoretical_max_cards_per_batch": 125000,
+      "honest_code_point_utf8_arithmetic": {
+        "ascii_text_per_card_bytes": "~3,000 bytes (1,000 front + 2,000 back @ 1 byte/char)",
+        "ascii_set_500_cards_bytes": "~1.5 MB raw JSON per study set",
+        "ascii_250_candidates_batch_bytes": "~375 MB unbudgeted raw database transfer",
+        "astral_unicode_per_card_bytes": "~11,000 bytes (1,000 front @ 3 bytes + 2,000 back @ 4 bytes)",
+        "astral_unicode_set_500_cards_bytes": "~5.5 MB raw JSON per study set (measured fixture: 5.26 MB)",
+        "astral_unicode_250_candidates_batch_bytes": "~1,375 MB (1.37 GB) theoretical unbudgeted raw database transfer",
+        "prior_false_statement_correction": "The previously cited 31.25 MB was derived from an arbitrary 250 bytes/card small-card example, which severely understates worst-case storage and wire transfer. Executable budgets bound work safely regardless of card text length."
+      },
+      "honest_json_escaping_expansion": {
+        "code_point_vs_json_bytes": "Code point counts and UTF-8 memory byte counts do NOT bound serialized JSON length. In JSON, control characters (\\u0000-\\u001F) expand from 1 byte to 6 serialized ASCII bytes (\\uXXXX).",
+        "escaped_control_char_set_bytes": "9020501 bytes (~8.60 MB), which exceeds the 8 MiB (8,388,608 bytes) preflight cap despite passing C1 parse validation with 500 cards.",
+        "whitespace_and_custom_keys": "Formatting whitespace, indentation, or extra unindexed properties further expand raw serialized byte size, proving that LENGTH(CAST(flashcards_json AS BLOB)) preflight checks are strictly required before SQLite wire transfer and JSON parsing."
+      },
+      "enforced_executable_caps": {
+        "candidateBatchBudget": 250,
+        "maxBatchCardsBudget": 2500,
+        "maxBatchRawJsonBytesBudget": 2097152,
+        "absoluteMaxSingleSetRawBytes": 8388608,
+        "singleSetAdmissionLane": "Single-set admission lane admits a single oversize set (<= 8 MiB) if budget is exceeded on item 0, ensuring terminating forward progress without empty-page livelock."
+      }
+    }
+  }
+}

@@ -1,0 +1,572 @@
+================================================================================
+=== Running Frozen Diagnostic: review ===
+================================================================================
+TAP version 13
+# (node:20029) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+ok 1 - [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+  ---
+  duration_ms: 20.991334
+  type: 'test'
+  ...
+# Subtest: [C2-R1] returned due cursor actually advances to a different material
+ok 2 - [C2-R1] returned due cursor actually advances to a different material
+  ---
+  duration_ms: 8.361959
+  type: 'test'
+  ...
+# Subtest: [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+ok 3 - [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+  ---
+  duration_ms: 24.218
+  type: 'test'
+  ...
+# Subtest: [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+ok 4 - [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+  ---
+  duration_ms: 4.441125
+  type: 'test'
+  ...
+# Subtest: [C2-R2] retired A state cannot consume current B new-card count
+ok 5 - [C2-R2] retired A state cannot consume current B new-card count
+  ---
+  duration_ms: 3.960292
+  type: 'test'
+  ...
+# Subtest: [C2-R3] history marks old A earlier after raw B replacement without writes
+ok 6 - [C2-R3] history marks old A earlier after raw B replacement without writes
+  ---
+  duration_ms: 4.101583
+  type: 'test'
+  ...
+# Subtest: [C2-R3] history marks retained A current after raw A reversion without writes
+ok 7 - [C2-R3] history marks retained A current after raw A reversion without writes
+  ---
+  duration_ms: 4.29875
+  type: 'test'
+  ...
+# Subtest: [control] ordinary active current content returns due and new counts
+ok 8 - [control] ordinary active current content returns due and new counts
+  ---
+  duration_ms: 3.819292
+  type: 'test'
+  ...
+# Subtest: [control] history consumes all 35 tied events without loss or duplicates
+ok 9 - [control] history consumes all 35 tied events without loss or duplicates
+  ---
+  duration_ms: 5.958208
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 173.023167
+Exit code: 0
+
+================================================================================
+=== Running Frozen Diagnostic: rereview ===
+================================================================================
+TAP version 13
+# (node:20031) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R6] production parser parity: overlong front
+ok 1 - [C2-R6] production parser parity: overlong front
+  ---
+  duration_ms: 1.022625
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: overlong back and page
+ok 2 - [C2-R6] production parser parity: overlong back and page
+  ---
+  duration_ms: 0.051042
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: lone surrogate
+ok 3 - [C2-R6] production parser parity: lone surrogate
+  ---
+  duration_ms: 0.0465
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: empty string
+ok 4 - [C2-R6] production parser parity: empty string
+  ---
+  duration_ms: 0.031125
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: accepted control character
+ok 5 - [C2-R6] production parser parity: accepted control character
+  ---
+  duration_ms: 0.113375
+  type: 'test'
+  ...
+# Subtest: [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+ok 6 - [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+  ---
+  duration_ms: 0.630125
+  type: 'test'
+  ...
+# Subtest: [C2-R4] no-migration baseline does not add an index absent from shipped schema
+ok 7 - [C2-R4] no-migration baseline does not add an index absent from shipped schema
+  ---
+  duration_ms: 8.65225
+  type: 'test'
+  ...
+# Subtest: [C2-R1] urgency ranking actually applies inside one candidate batch
+ok 8 - [C2-R1] urgency ranking actually applies inside one candidate batch
+  ---
+  duration_ms: 5.251125
+  type: 'test'
+  ...
+# Subtest: [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+ok 9 - [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+  ---
+  duration_ms: 13.793
+  type: 'test'
+  ...
+# Subtest: [C2-R5] filter change clears the prior filter rows before next publication
+ok 10 - [C2-R5] filter change clears the prior filter rows before next publication
+  ---
+  duration_ms: 4.343334
+  type: 'test'
+  ...
+# Subtest: [C2-R5] two same-turn activations do not duplicate the complete page
+ok 11 - [C2-R5] two same-turn activations do not duplicate the complete page
+  ---
+  duration_ms: 4.111125
+  type: 'test'
+  ...
+# Subtest: [control] ordinary ASCII cards retain identical content identity
+ok 12 - [control] ordinary ASCII cards retain identical content identity
+  ---
+  duration_ms: 3.315209
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128.449583
+Exit code: 0
+
+================================================================================
+=== Running Frozen Diagnostic: completion-review ===
+================================================================================
+TAP version 13
+# (node:20034) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R7] due_today excludes new-only materials
+ok 1 - [C2-R7] due_today excludes new-only materials
+  ---
+  duration_ms: 7.033792
+  type: 'test'
+  ...
+# Subtest: [C2-R7] new_only excludes due materials
+ok 2 - [C2-R7] new_only excludes due materials
+  ---
+  duration_ms: 4.364166
+  type: 'test'
+  ...
+# Subtest: [C2-R7] history materialId filter is applied before pagination
+ok 3 - [C2-R7] history materialId filter is applied before pagination
+  ---
+  duration_ms: 4.522667
+  type: 'test'
+  ...
+# Subtest: [C2-R7] history topic filter is applied before pagination
+ok 4 - [C2-R7] history topic filter is applied before pagination
+  ---
+  duration_ms: 4.474917
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor cannot cross a topic filter
+ok 5 - [C2-R8] pending cursor cannot cross a topic filter
+  ---
+  duration_ms: 8.097833
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor does not return a deleted material
+ok 6 - [C2-R8] pending cursor does not return a deleted material
+  ---
+  duration_ms: 4.500917
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor recomputes changed current raw cards or rejects
+ok 7 - [C2-R8] pending cursor recomputes changed current raw cards or rejects
+  ---
+  duration_ms: 4.203459
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor is owned by the clock boundary
+ok 8 - [C2-R8] pending cursor is owned by the clock boundary
+  ---
+  duration_ms: 4.356042
+  type: 'test'
+  ...
+# Subtest: [C2-R9] controller preserves distinct history event IDs from one material
+ok 9 - [C2-R9] controller preserves distinct history event IDs from one material
+  ---
+  duration_ms: 4.264709
+  type: 'test'
+  ...
+# Subtest: [C2-R9] synchronous reader rejection releases its lock and retry works
+ok 10 - [C2-R9] synchronous reader rejection releases its lock and retry works
+  ---
+  duration_ms: 0.396709
+  type: 'test'
+  ...
+# Subtest: [C2-R9] reset fresh traversal replaces surviving stale summaries
+ok 11 - [C2-R9] reset fresh traversal replaces surviving stale summaries
+  ---
+  duration_ms: 0.105625
+  type: 'test'
+  ...
+# Subtest: [C2-R9] invalidation clears loading when old read is held
+ok 12 - [C2-R9] invalidation clears loading when old read is held
+  ---
+  duration_ms: 0.050084
+  type: 'test'
+  ...
+# Subtest: [C2-R10] valid-empty history context is distinct from unavailable
+ok 13 - [C2-R10] valid-empty history context is distinct from unavailable
+  ---
+  duration_ms: 4.029583
+  type: 'test'
+  ...
+# Subtest: [C2-R10] event payload retains prior and next interval/state context
+ok 14 - [C2-R10] event payload retains prior and next interval/state context
+  ---
+  duration_ms: 3.938667
+  type: 'test'
+  ...
+# Subtest: [control] stale A settling cannot release held B lock
+ok 15 - [control] stale A settling cannot release held B lock
+  ---
+  duration_ms: 0.147042
+  type: 'test'
+  ...
+# Subtest: [control] fixture card shape is accepted by production parser
+ok 16 - [control] fixture card shape is accepted by production parser
+  ---
+  duration_ms: 3.798166
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 147.777791
+Exit code: 0
+
+================================================================================
+=== Running Frozen Diagnostic: final-review ===
+================================================================================
+TAP version 13
+# (node:20036) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R8 continued] deleted pending prefix does not repeat the next live row
+ok 1 - [R8 continued] deleted pending prefix does not repeat the next live row
+  ---
+  duration_ms: 11.567208
+  type: 'test'
+  ...
+# Subtest: [R8 continued] empty-content pending prefix does not repeat the next live row
+ok 2 - [R8 continued] empty-content pending prefix does not repeat the next live row
+  ---
+  duration_ms: 4.808167
+  type: 'test'
+  ...
+# Subtest: [R8 continued] history cursor cannot silently skip another filter stream
+ok 3 - [R8 continued] history cursor cannot silently skip another filter stream
+  ---
+  duration_ms: 4.863292
+  type: 'test'
+  ...
+# Subtest: [R8 continued] due cursor missing mandatory ownership context is rejected
+ok 4 - [R8 continued] due cursor missing mandatory ownership context is rejected
+  ---
+  duration_ms: 4.108125
+  type: 'test'
+  ...
+# Subtest: [R9 continued] fresh reset traversal removes surviving no-longer-actionable summaries
+ok 5 - [R9 continued] fresh reset traversal removes surviving no-longer-actionable summaries
+  ---
+  duration_ms: 0.19725
+  type: 'test'
+  ...
+# Subtest: [R9 continued] fresh reset traversal adopts authoritative urgency order
+ok 6 - [R9 continued] fresh reset traversal adopts authoritative urgency order
+  ---
+  duration_ms: 0.063333
+  type: 'test'
+  ...
+# Subtest: [R9 continued] obsolete synchronous throw cannot clear a new held operation lock
+ok 7 - [R9 continued] obsolete synchronous throw cannot clear a new held operation lock
+  ---
+  duration_ms: 0.164541
+  type: 'test'
+  ...
+# Subtest: [R4 continued] requested 2500-card work budget bounds the delivered candidate batch
+ok 8 - [R4 continued] requested 2500-card work budget bounds the delivered candidate batch
+  ---
+  duration_ms: 12.698
+  type: 'test'
+  ...
+# Subtest: [R4 continued] raw-card SQL reads respect proposed 2 MiB batch ceiling
+ok 9 - [R4 continued] raw-card SQL reads respect proposed 2 MiB batch ceiling
+  ---
+  duration_ms: 36.291792
+  type: 'test'
+  ...
+# Subtest: [control] unchanged pending traversal remains complete and unique
+ok 10 - [control] unchanged pending traversal remains complete and unique
+  ---
+  duration_ms: 4.586834
+  type: 'test'
+  ...
+# Subtest: [control] live synchronous throw still releases lock for Retry
+ok 11 - [control] live synchronous throw still releases lock for Retry
+  ---
+  duration_ms: 0.157
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 168.495625
+Exit code: 0
+
+================================================================================
+=== Running Frozen Diagnostic: pipeline-review ===
+================================================================================
+TAP version 13
+# discovery malformed bytes 1400000 reported 1400000
+# pending malformed bytes 1400000 reported 1400000
+# card boundary bytes 24281 reported 24281 raw reads 1
+# issued cursor bytes 13296
+# history bytes 1520501
+# (node:20038) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [resource] malformed discovery prefix still obeys actual raw-transfer ceiling
+ok 1 - [resource] malformed discovery prefix still obeys actual raw-transfer ceiling
+  ---
+  duration_ms: 10.360417
+  type: 'test'
+  ...
+# Subtest: [resource] pending malformed work is counted and bounded even when no rows are emitted
+ok 2 - [resource] pending malformed work is counted and bounded even when no rows are emitted
+  ---
+  duration_ms: 12.144
+  type: 'test'
+  ...
+# Subtest: [resource] card budget stop cannot hide the extra raw read from counters
+ok 3 - [resource] card budget stop cannot hide the extra raw read from counters
+  ---
+  duration_ms: 5.264417
+  type: 'test'
+  ...
+# Subtest: [cursor] reader-issued maximum candidate cursor can be consumed
+ok 4 - [cursor] reader-issued maximum candidate cursor can be consumed
+  ---
+  duration_ms: 14.742333
+  type: 'test'
+  ...
+# Subtest: [cursor] due token requires a version and bounded typed pending IDs
+ok 5 - [cursor] due token requires a version and bounded typed pending IDs
+  ---
+  duration_ms: 4.188667
+  type: 'test'
+  ...
+# Subtest: [cursor] history token requires the complete keyset shape
+ok 6 - [cursor] history token requires the complete keyset shape
+  ---
+  duration_ms: 4.064041
+  type: 'test'
+  ...
+# Subtest: [resource] history current-provenance reads obey declared applicable raw budget
+ok 7 - [resource] history current-provenance reads obey declared applicable raw budget
+  ---
+  duration_ms: 27.182417
+  type: 'test'
+  ...
+# Subtest: [control] fresh controller generation preserves authoritative replacement
+ok 8 - [control] fresh controller generation preserves authoritative replacement
+  ---
+  duration_ms: 0.626459
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 167.485209
+Exit code: 0
+
+================================================================================
+=== Running Frozen Diagnostic: bounds-rereview ===
+================================================================================
+TAP version 13
+# history first set bytes 0 absolute cap 8388608
+# mixed discovery parsed 400 reported evaluated 400
+# mixed pending parsed 400 reported evaluated 400
+# (node:20040) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R4] first valid oversize material is reported explicitly instead of silently completing
+ok 1 - [R4] first valid oversize material is reported explicitly instead of silently completing
+  ---
+  duration_ms: 17.229042
+  type: 'test'
+  ...
+# Subtest: [R4] pending valid oversize material is reported explicitly instead of discarded
+ok 2 - [R4] pending valid oversize material is reported explicitly instead of discarded
+  ---
+  duration_ms: 14.256416
+  type: 'test'
+  ...
+# Subtest: [R4] history first-set enrichment obeys the absolute 8 MiB bound
+ok 3 - [R4] history first-set enrichment obeys the absolute 8 MiB bound
+  ---
+  duration_ms: 42.642875
+  type: 'test'
+  ...
+# Subtest: [R4] mixed-size discovery reserves card work before parsing the next set
+ok 4 - [R4] mixed-size discovery reserves card work before parsing the next set
+  ---
+  duration_ms: 5.484542
+  type: 'test'
+  ...
+# Subtest: [R4] mixed-size pending traversal reserves card work before parsing the next set
+ok 5 - [R4] mixed-size pending traversal reserves card work before parsing the next set
+  ---
+  duration_ms: 6.389708
+  type: 'test'
+  ...
+# Subtest: [R8] due continuation requires a complete typed candidate key before SQL
+ok 6 - [R8] due continuation requires a complete typed candidate key before SQL
+  ---
+  duration_ms: 4.062041
+  type: 'test'
+  ...
+# Subtest: [R8] duplicate pending identities are rejected before SQL
+ok 7 - [R8] duplicate pending identities are rejected before SQL
+  ---
+  duration_ms: 3.933125
+  type: 'test'
+  ...
+# Subtest: [R8] history continuation enforces canonical time and bounded ID before SQL
+ok 8 - [R8] history continuation enforces canonical time and bounded ID before SQL
+  ---
+  duration_ms: 3.955166
+  type: 'test'
+  ...
+# Subtest: [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+ok 9 - [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+  ---
+  duration_ms: 4.085583
+  type: 'test'
+  ...
+# Subtest: [inspection] invalid calendar and negative count cannot be valid C1 state
+ok 10 - [inspection] invalid calendar and negative count cannot be valid C1 state
+  ---
+  duration_ms: 0.244666
+  type: 'test'
+  ...
+# Subtest: [control] supported C1 state retains its verified interval
+ok 11 - [control] supported C1 state retains its verified interval
+  ---
+  duration_ms: 0.071042
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 215.590959
+Exit code: 0
+
+================================================================================
+=== Running Frozen Diagnostic: contract-review ===
+================================================================================
+TAP version 13
+# invalid raw reads 1 reported evaluated cards 0
+# (node:20042) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R4] invalid arrays spend conservative reservations and retain unread discovery candidates
+ok 1 - [R4] invalid arrays spend conservative reservations and retain unread discovery candidates
+  ---
+  duration_ms: 7.192
+  type: 'test'
+  ...
+# Subtest: [R9/R4] reader issues survive the controller publication path
+ok 2 - [R9/R4] reader issues survive the controller publication path
+  ---
+  duration_ms: 0.569375
+  type: 'test'
+  ...
+# Subtest: [R4] oversize inspection target points at the existing Study material route
+ok 3 - [R4] oversize inspection target points at the existing Study material route
+  ---
+  duration_ms: 13.178708
+  type: 'test'
+  ...
+# Subtest: [R8] priority rank is restricted to the actual candidate key domain before SQL
+ok 4 - [R8] priority rank is restricted to the actual candidate key domain before SQL
+  ---
+  duration_ms: 4.886417
+  type: 'test'
+  ...
+# Subtest: [history] targeted enrichment can reach a deferred material after its event page advances
+ok 5 - [history] targeted enrichment can reach a deferred material after its event page advances
+  ---
+  duration_ms: 38.637875
+  type: 'test'
+  ...
+# Subtest: [history] targeted refresh does not downgrade already resolved untargeted provenance
+ok 6 - [history] targeted refresh does not downgrade already resolved untargeted provenance
+  ---
+  duration_ms: 35.302792
+  type: 'test'
+  ...
+# Subtest: [control] supported canonical schedule keeps its interval
+ok 7 - [control] supported canonical schedule keeps its interval
+  ---
+  duration_ms: 0.07325
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 188.724666
+Exit code: 0
+
