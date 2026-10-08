@@ -77,12 +77,16 @@ Rather than looping unbounded queries or transferring excessive JSON strings, th
 
 1. **Review Due Pipeline:**
    - **Query 1 (Candidate Headers Scan):** Selects up to `candidateBatchBudget + 1` materials (capped at 250) ordered by `CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC` using keyset continuation.
-   - **Query 2 (SQLite Byte Preflight):** Selects `source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len` for candidates in the batch. Candidates are admitted in order until `maxBatchRawJsonBytesBudget` (2 MiB) is reached. If the very first set exceeds the budget, it is admitted under the single-set lane to ensure terminating forward progress without empty-page livelock.
-   - **Query 3 (Admitted Raw Cards Fetch):** Queries `flashcards_json` only for admitted candidates. Card derivation parsing stops if adding the next candidate would exceed `maxBatchCardsBudget` (2,500 cards).
+   - **Query 2 (SQLite Byte Preflight):** Selects `source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len` for candidates in the batch.
+     - **Explicit Oversize Admission Check:** If `byte_len > ABSOLUTE_MAX_SINGLE_SET_RAW_JSON_BYTES` (8 MiB), the raw set is **not** transferred. Instead, an explicit issue `{ materialId, title, code: 'PAYLOAD_TOO_LARGE', rawBytes: byte_len, allowedBytes: 8388608, inspectionTarget }` is emitted in `issues`. The keyset boundary advances past this reported candidate, ensuring subsequent normal materials remain discoverable without livelock or silent drop.
+     - **Conservative Card Reservation:** When exact card counts are unindexed, the reader conservatively reserves `MAX_CARDS_PER_SET = 500` before querying raw JSON for any candidate beyond candidate 0 (`if (scannedCandidates > 0 && cumulativeCards + MAX_CARDS_PER_SET > maxBatchCardsBudget) break;`). Candidates exceeding budget are retained in candidate keyset continuation.
+   - **Query 3 (Admitted Raw Cards Fetch):** Queries `flashcards_json` only for admitted candidates passing preflight and card reservation: `SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?`.
    - **Query 4 (Batched Review State):** For all derived versions with cards, reads review state rows via `SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (...)`.
 2. **Recent Reviews History Pipeline:**
    - **Query 1 (Event Keyset Query):** Selects up to `limit + 1` events joined with card items, versions, and study materials, filtered by `materialId` and `topic` in SQL before LIMIT, ordered by `e.reviewed_at DESC, e.id DESC`.
-   - **Query 2 (Batched Distinct Raw Cards):** Reads raw flashcards for all distinct materials on the page via `WHERE source_material_id IN (...)`.
+   - **Query 2 (Preflight Byte Check):** Selects `source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len` for distinct material IDs on this page before reading raw JSON blobs.
+   - **Query 3 (Bounded Per-Set Raw Card Fetches):** Enforces `ABSOLUTE_MAX_SINGLE_SET_RAW_JSON_BYTES` (8 MiB) and `maxBatchRawJsonBytesBudget` (2 MiB). Oversize or unbudgeted materials are deferred with honest unread provenance (`contentStatus: "pending"`, `isEarlierVersion: null`) without transferring megabytes.
+   - **History Pending Resolution:** Supports targeted `enrichMaterialIds` option on subsequent reads, allowing deferred materials to be enriched individually without losing, reordering, or duplicating event stream pagination.
 
 ### B. Urgency Ranking within Evaluated Batches
 Within each evaluated batch of candidates:
@@ -101,10 +105,12 @@ Within each evaluated batch of candidates:
    - Materials whose flashcards were cleared to `[]` produce 0 due/new cards and are discarded cleanly.
    - Clock shifts across midnight re-evaluate due eligibility accurately.
    - Page-size adjustments consume the stream without item loss or duplication.
+   - Strict Cursor Schema: validated before SQL; continuation requires `v === 1`, `type === 'due'`, `ctx`, boolean `isExhausted`, unique bounded `remIds` array $\le 250$, and complete keyset boundary `lc`, `lp`, `lu`. Rejects malformed or incomplete cursor tokens with `INVALID_CURSOR`.
 
 ### C. Page-Local Summaries vs. Library Cumulative Totals
 - The summary returned by a single page query is explicitly defined as **page-local** (`isPageLocal: true`).
 - An `isComplete: true` flag on a terminal page indicates candidate stream exhaustion (caught up), but does not convert page-local counts into whole-library totals. Cumulative totals across loaded pages are maintained exclusively by the UI state controller.
+- Exposes typed work counters: `scannedCandidates`, `evaluatedCandidates`, `evaluatedCards`, `rawBytesTransferred`, and `issues: [...]`.
 
 ---
 
@@ -121,7 +127,7 @@ The UI controller manages page streaming, held requests, and lifecycle events:
 
 ---
 
-## 5. Historical Context Provenance & Inspection Contract
+## 5. Historical Context Provenance, Inspection & Scheduler Ownership Contract
 
 - **Content Provenance Classification:**
   - `current`: Saved cards in `ai_study_sets` hash to the version of the reviewed item.
@@ -129,25 +135,29 @@ The UI controller manages page streaming, held requests, and lifecycle events:
   - `valid_empty`: `ai_study_sets.flashcards_json === '[]'` (guide-only set without flashcards). Distinct from missing rows.
   - `unavailable`: Study set row is missing from database.
   - `malformed`: Saved JSON format is corrupted.
-- **Historical Payload:**
-  - Exposes parsed `priorState` and `nextState` objects directly from `card_review_events`.
-  - Displays honest intervals derived directly from `nextState.step` or `dueAt`, never inventing intervals for missing or legacy state.
+  - `pending`: Deferred due to batch budget ceiling or oversize preflight. Supported via targeted `enrichMaterialIds` continuation.
+- **Scheduler Ownership & State Validation:**
+  - `validateScheduleState(stateJsonStr, eventSchedulerVersion)` receives the event's actual `scheduler_version`.
+  - Explicit unsupported event version yields null validated schedule/interval fields while raw audit strings remain intact.
+  - Missing legacy state version may inherit only from an explicitly supported event version (`simple-v1`), never defaulting unsupported versions to `simple-v1`.
+  - Rejects non-canonical calendar dates (e.g. Feb 30), negative or non-integer reps/lapses, and out-of-bounds ladder steps.
 - **Read-Only Inspection Target:**
   - Clicking a history row navigates to the read-only card inspection modal or `/study/:materialId/cards` in inspection mode.
   - Historical card views are read-only; they do not trigger mutations or rewrite active versions.
 
 ---
 
-## 6. Worst-Case Budgets & Safety Caps
+## 6. Worst-Case Budgets, JSON Escaping & Safety Caps
 
-- **Theoretical Worst-Case Analysis & Honest Code-Point Arithmetic:**
+- **Theoretical Worst-Case Analysis & Honest Serialization Arithmetic:**
   - C1 allows up to 500 cards per material, with up to 1,000 front code points and 2,000 back code points (3,000 code points per card).
   - In ASCII (1 byte/character): 3,000 bytes/card × 500 cards = ~1.5 MB raw JSON per study set. For 250 candidates without caps, this would transfer **~375 MB**.
   - In astral multi-byte Unicode (up to 3–4 bytes/character): up to ~11,000 bytes/card × 500 cards = ~5.5 MB raw JSON per study set (measured fixture: **5.26 MB**). For 250 candidates without caps, this would transfer **~1,375 MB (1.37 GB)**.
-  - *Correction of prior estimate:* The previously cited 31.25 MB figure was based on an arbitrary small-card example of 250 bytes/card, which severely understates worst-case storage and wire transfer. Executable budgets bound work safely regardless of card text length.
+  - **Honest JSON Escaping Reality:** Code points alone do not bound serialized JSON length. Control characters like `\u0001` expand from 1 byte in memory to 6 serialized ASCII bytes (`\u0001`). For a valid C1 500-card set with 1,000 front and 2,000 back `\u0001` characters, `JSON.stringify` produces **9,020,501 bytes** (~8.60 MiB). Whitespace, indentation, and extra JSON properties further expand raw size.
+  - This proves why preflight `LENGTH(CAST(flashcards_json AS BLOB))` checks before SQLite wire transfer and deserialization are strictly required.
 - **Enforced Executable Safety Caps:**
   - `candidateBatchBudget`: 250 materials.
-  - `maxBatchCardsBudget`: 2,500 cards.
+  - `maxBatchCardsBudget`: 2,500 cards (enforced via preflight 500-card conservative reservation).
   - `maxBatchRawJsonBytesBudget`: 2,097,152 bytes (2 MiB).
   - `ABSOLUTE_MAX_SINGLE_SET_RAW_JSON_BYTES`: 8,388,608 bytes (8 MiB).
   - Single-set admission lane: admits a single oversize set (<= 8 MiB) if budget is exceeded on item 0, ensuring terminating forward progress without empty-page livelock.
@@ -157,20 +167,21 @@ The UI controller manages page streaming, held requests, and lifecycle events:
 
 ## 7. Verified Proof, Diagnostics & Gate
 
-The complete planning proof package in `docs/evidence/m2-card-review-c2-bounded-read-corrections-2026-10-07/` proves all contracts:
+The complete planning proof package in `docs/evidence/m2-card-review-c2-contract-finish-2026-10-07/` proves all contracts:
 
-1. **All Five Frozen Reviewer Diagnostics Pass Unchanged (56 / 56 total):**
+1. **All Six Frozen Reviewer Diagnostics Pass Unchanged (67 / 67 total):**
    - Diagnostic 1 (`docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs`): **9 / 9 passed (exit 0)**.
    - Diagnostic 2 (`docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs`): **12 / 12 passed (exit 0)**.
    - Diagnostic 3 (`docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs`): **16 / 16 passed (exit 0)**.
    - Diagnostic 4 (`docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs`): **11 / 11 passed (exit 0)**.
    - Diagnostic 5 (`docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs`): **8 / 8 passed (exit 0)**.
-2. **Comprehensive Proof Suite (`proof.test.mjs`):** **40 / 40 passed (exit 0)** across 12 test suites.
+   - Diagnostic 6 (`docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs`): **11 / 11 passed (exit 0)**.
+2. **Comprehensive Proof Suite (`proof.test.mjs`):** **46 / 46 passed (exit 0)** across 13 test suites.
 3. **Reliable Semantic Mutation Verifier (`runMutants.mjs` & `mutantSurvivalControl.mjs`):** Shared independently held A/B fixture verifies baseline passes (exit 0) and 4 mutants are killed with `AssertionError` (exit 1). Survival control confirms verifier fails if assertions are disabled (exit 0).
 4. **SQL Pipeline Audit (`query-audit.mjs`):** Confirms preflighted bounded batching across pages and filters on a 5,000-material / 10,000-event fixture.
 5. **Latency Budget Status:**
-   - **Review Due Page 1 p50:** **6.76 ms** at 5,000 materials (budget target: 10 ms) -> **PASS** in SQLite/Node.
-   - **History Page 1 p50:** **9.52 ms** at 5,000 materials / 10,000 events (budget target: 15 ms) -> **PASS** in SQLite/Node.
+   - **Review Due Page 1 p50:** **6.08 ms** at 5,000 materials (budget target: 10 ms) -> **PASS** in SQLite/Node.
+   - **History Page 1 p50:** **9.57 ms** at 5,000 materials / 10,000 events (budget target: 15 ms) -> **PASS** in SQLite/Node.
    - **Desktop Tauri IPC & WebKit Rendering:** **UNMEASURED**.
 
 ---
@@ -180,4 +191,4 @@ The complete planning proof package in `docs/evidence/m2-card-review-c2-bounded-
 Production implementation of C2 requires:
 1. Independent scope acceptance of this completed proposal and evidence.
 2. Owner approval of the recommended product defaults (**C2-D1 through C2-D9**).
-3. Execution of the conditional implementation prompt ([`docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md`](docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md)).
+3. Execution of the conditional implementation prompt ([`M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md`](M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md)).

@@ -1,0 +1,1185 @@
+Building synthetic database at scale: 5,000 materials / 10,000 events...
+=== C2 COMPLETED SQL QUERY & PIPELINE AUDIT (FINAL CONTRACT MODEL) ===
+Node: v22.23.3, SQLite: 3.53.4
+
+--- DUE_PAGE1 ---
+Returned Results: 50
+SQL Calls: 175
+Returned SQL Rows: 1053
+Estimated SQL Result JSON UTF-8 Bytes: 489554
+Executed Statements:
+  [1] method: all, rows: 251, bytes: 51492
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != '' ORDER BY CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC LIMIT ?
+  [2] method: all, rows: 250, bytes: 14162
+      SQL: SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  [3] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [4] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [5] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [6] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [7] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [8] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [9] method: get, rows: 1, bytes: 822
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [10] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [11] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [12] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [13] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [14] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [15] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [16] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [17] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [18] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [19] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [20] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [21] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [22] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [23] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [24] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [25] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [26] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [27] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [28] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [29] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [30] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [31] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [32] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [33] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [34] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [35] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [36] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [37] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [38] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [39] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [40] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [41] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [42] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [43] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [44] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [45] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [46] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [47] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [48] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [49] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [50] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [51] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [52] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [53] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [54] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [55] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [56] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [57] method: get, rows: 1, bytes: 1684
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [58] method: get, rows: 1, bytes: 970
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [59] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [60] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [61] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [62] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [63] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [64] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [65] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [66] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [67] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [68] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [69] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [70] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [71] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [72] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [73] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [74] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [75] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [76] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [77] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [78] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [79] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [80] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [81] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [82] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [83] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [84] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [85] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [86] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [87] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [88] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [89] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [90] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [91] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [92] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [93] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [94] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [95] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [96] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [97] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [98] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [99] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [100] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [101] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [102] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [103] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [104] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [105] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [106] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [107] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [108] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [109] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [110] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [111] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [112] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [113] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [114] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [115] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [116] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [117] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [118] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [119] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [120] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [121] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [122] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [123] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [124] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [125] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [126] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [127] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [128] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [129] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [130] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [131] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [132] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [133] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [134] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [135] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [136] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [137] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [138] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [139] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [140] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [141] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [142] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [143] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [144] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [145] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [146] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [147] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [148] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [149] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [150] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [151] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [152] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [153] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [154] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [155] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [156] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [157] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [158] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [159] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [160] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [161] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [162] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [163] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [164] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [165] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [166] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [167] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [168] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [169] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [170] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [171] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [172] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [173] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [174] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [175] method: all, rows: 380, bytes: 87398
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+
+--- DUE_PAGE2_CONTINUATION ---
+Returned Results: 50
+SQL Calls: 150
+Returned SQL Rows: 231
+Estimated SQL Result JSON UTF-8 Bytes: 140289
+Executed Statements:
+  [1] method: get, rows: 1, bytes: 226
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [2] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [3] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [4] method: get, rows: 1, bytes: 221
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [5] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [6] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [7] method: get, rows: 1, bytes: 223
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [8] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [9] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [10] method: get, rows: 1, bytes: 219
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [11] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [12] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [13] method: get, rows: 1, bytes: 219
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [14] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [15] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [16] method: get, rows: 1, bytes: 224
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [17] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [18] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [19] method: get, rows: 1, bytes: 228
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [20] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [21] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [22] method: get, rows: 1, bytes: 218
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [23] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [24] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [25] method: get, rows: 1, bytes: 216
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [26] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [27] method: all, rows: 5, bytes: 1131
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [28] method: get, rows: 1, bytes: 225
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [29] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [30] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [31] method: get, rows: 1, bytes: 215
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [32] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [33] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [34] method: get, rows: 1, bytes: 227
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [35] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [36] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [37] method: get, rows: 1, bytes: 221
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [38] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [39] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [40] method: get, rows: 1, bytes: 224
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [41] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [42] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [43] method: get, rows: 1, bytes: 218
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [44] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [45] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [46] method: get, rows: 1, bytes: 222
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [47] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [48] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [49] method: get, rows: 1, bytes: 224
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [50] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [51] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [52] method: get, rows: 1, bytes: 229
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [53] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [54] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [55] method: get, rows: 1, bytes: 217
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [56] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [57] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [58] method: get, rows: 1, bytes: 218
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [59] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [60] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [61] method: get, rows: 1, bytes: 222
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [62] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [63] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [64] method: get, rows: 1, bytes: 220
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [65] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [66] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [67] method: get, rows: 1, bytes: 217
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [68] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [69] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [70] method: get, rows: 1, bytes: 221
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [71] method: get, rows: 1, bytes: 832
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [72] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [73] method: get, rows: 1, bytes: 227
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [74] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [75] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [76] method: get, rows: 1, bytes: 225
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [77] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [78] method: all, rows: 5, bytes: 1152
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [79] method: get, rows: 1, bytes: 201
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [80] method: get, rows: 1, bytes: 970
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [81] method: all, rows: 1, bytes: 231
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [82] method: get, rows: 1, bytes: 224
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [83] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [84] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [85] method: get, rows: 1, bytes: 222
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [86] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [87] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [88] method: get, rows: 1, bytes: 221
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [89] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [90] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [91] method: get, rows: 1, bytes: 220
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [92] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [93] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [94] method: get, rows: 1, bytes: 219
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [95] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [96] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [97] method: get, rows: 1, bytes: 220
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [98] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [99] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [100] method: get, rows: 1, bytes: 222
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [101] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [102] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [103] method: get, rows: 1, bytes: 229
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [104] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [105] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [106] method: get, rows: 1, bytes: 224
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [107] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [108] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [109] method: get, rows: 1, bytes: 223
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [110] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [111] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [112] method: get, rows: 1, bytes: 223
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [113] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [114] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [115] method: get, rows: 1, bytes: 220
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [116] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [117] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [118] method: get, rows: 1, bytes: 221
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [119] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [120] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [121] method: get, rows: 1, bytes: 220
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [122] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [123] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [124] method: get, rows: 1, bytes: 223
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [125] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [126] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [127] method: get, rows: 1, bytes: 231
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [128] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [129] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [130] method: get, rows: 1, bytes: 216
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [131] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [132] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [133] method: get, rows: 1, bytes: 227
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [134] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [135] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [136] method: get, rows: 1, bytes: 229
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [137] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [138] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [139] method: get, rows: 1, bytes: 214
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [140] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [141] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [142] method: get, rows: 1, bytes: 227
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [143] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [144] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [145] method: get, rows: 1, bytes: 215
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [146] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [147] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+  [148] method: get, rows: 1, bytes: 228
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''
+  [149] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [150] method: all, rows: 0, bytes: 2
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)
+
+--- DUE_FILTERED_DUE_TODAY ---
+Returned Results: 50
+SQL Calls: 177
+Returned SQL Rows: 1064
+Estimated SQL Result JSON UTF-8 Bytes: 494987
+Executed Statements:
+  [1] method: all, rows: 251, bytes: 52812
+      SQL: SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != '' AND m.topic = ? ORDER BY CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC LIMIT ?
+  [2] method: all, rows: 250, bytes: 14167
+      SQL: SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  [3] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [4] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [5] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [6] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [7] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [8] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [9] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [10] method: get, rows: 1, bytes: 1684
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [11] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [12] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [13] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [14] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [15] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [16] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [17] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [18] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [19] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [20] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [21] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [22] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [23] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [24] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [25] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [26] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [27] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [28] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [29] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [30] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [31] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [32] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [33] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [34] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [35] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [36] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [37] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [38] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [39] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [40] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [41] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [42] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [43] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [44] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [45] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [46] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [47] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [48] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [49] method: get, rows: 1, bytes: 2494
+      SQL: SELEC(node:18008) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+T flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [50] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [51] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [52] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [53] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [54] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [55] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [56] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [57] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [58] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [59] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [60] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [61] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [62] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [63] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [64] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [65] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [66] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [67] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [68] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [69] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [70] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [71] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [72] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [73] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [74] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [75] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [76] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [77] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [78] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [79] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [80] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [81] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [82] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [83] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [84] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [85] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [86] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [87] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [88] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [89] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [90] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [91] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [92] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [93] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [94] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [95] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [96] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [97] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [98] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [99] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [100] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [101] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [102] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [103] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [104] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [105] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [106] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [107] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [108] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [109] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [110] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [111] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [112] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [113] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [114] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [115] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [116] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [117] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [118] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [119] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [120] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [121] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [122] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [123] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [124] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [125] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [126] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [127] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [128] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [129] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [130] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [131] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [132] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [133] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [134] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [135] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [136] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [137] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [138] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [139] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [140] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [141] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [142] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [143] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [144] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [145] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [146] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [147] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [148] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [149] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [150] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [151] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [152] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [153] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [154] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [155] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [156] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [157] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [158] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [159] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [160] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [161] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [162] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [163] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [164] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [165] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [166] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [167] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [168] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [169] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [170] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [171] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [172] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [173] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [174] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [175] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [176] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [177] method: all, rows: 389, bytes: 89470
+      SQL: SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+
+--- HISTORY_PAGE1 ---
+Returned Results: 20
+SQL Calls: 22
+Returned SQL Rows: 61
+Estimated SQL Result JSON UTF-8 Bytes: 66274
+Executed Statements:
+  [1] method: all, rows: 21, bytes: 17260
+      SQL: SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json, i.ordinal, i.front, i.back, i.source_page, v.id AS version_id, v.content_hash, v.created_at AS version_created_at, v.source_material_id AS material_id, m.title AS material_title, m.topic AS topic FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id JOIN study_materials m ON m.id = v.source_material_id WHERE 1=1 ORDER BY e.reviewed_at DESC, e.id DESC LIMIT ?
+  [2] method: all, rows: 20, bytes: 1136
+      SQL: SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  [3] method: get, rows: 1, bytes: 1684
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [4] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [5] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [6] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [7] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [8] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [9] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [10] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [11] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [12] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [13] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [14] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [15] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [16] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [17] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [18] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [19] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [20] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [21] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [22] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+
+--- HISTORY_PAGE2_CONTINUATION ---
+Returned Results: 20
+SQL Calls: 22
+Returned SQL Rows: 61
+Estimated SQL Result JSON UTF-8 Bytes: 55441
+Executed Statements:
+  [1] method: all, rows: 21, bytes: 17244
+      SQL: SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json, i.ordinal, i.front, i.back, i.source_page, v.id AS version_id, v.content_hash, v.created_at AS version_created_at, v.source_material_id AS material_id, m.title AS material_title, m.topic AS topic FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id JOIN study_materials m ON m.id = v.source_material_id WHERE 1=1 AND ((e.reviewed_at < ?) OR (e.reviewed_at = ? AND e.id < ?)) ORDER BY e.reviewed_at DESC, e.id DESC LIMIT ?
+  [2] method: all, rows: 20, bytes: 1133
+      SQL: SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  [3] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [4] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [5] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [6] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [7] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [8] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [9] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [10] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [11] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [12] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [13] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [14] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [15] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [16] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [17] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [18] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [19] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [20] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [21] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [22] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+
+--- HISTORY_FILTERED_TOPIC ---
+Returned Results: 20
+SQL Calls: 22
+Returned SQL Rows: 61
+Estimated SQL Result JSON UTF-8 Bytes: 61316
+Executed Statements:
+  [1] method: all, rows: 21, bytes: 17361
+      SQL: SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json, i.ordinal, i.front, i.back, i.source_page, v.id AS version_id, v.content_hash, v.created_at AS version_created_at, v.source_material_id AS material_id, m.title AS material_title, m.topic AS topic FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id JOIN study_materials m ON m.id = v.source_material_id WHERE 1=1 AND m.topic = ? ORDER BY e.reviewed_at DESC, e.id DESC LIMIT ?
+  [2] method: all, rows: 20, bytes: 1133
+      SQL: SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  [3] method: get, rows: 1, bytes: 1684
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [4] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [5] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [6] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [7] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [8] method: get, rows: 1, bytes: 2464
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [9] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [10] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [11] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [12] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [13] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [14] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [15] method: get, rows: 1, bytes: 852
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [16] method: get, rows: 1, bytes: 842
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [17] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [18] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [19] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [20] method: get, rows: 1, bytes: 2494
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [21] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+  [22] method: get, rows: 1, bytes: 2524
+      SQL: SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?
+
+
