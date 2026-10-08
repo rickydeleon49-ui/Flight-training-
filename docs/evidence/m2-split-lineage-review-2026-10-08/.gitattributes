@@ -1,0 +1,2 @@
+# Preserve raw independent execution receipts exactly.
+receipts/*.txt -whitespace

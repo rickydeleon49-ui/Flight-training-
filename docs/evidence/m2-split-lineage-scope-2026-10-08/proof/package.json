@@ -1,0 +1,7 @@
+{
+  "name": "m2-split-lineage-proof",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Disposable executable contract proof for M2 split-source lineage"
+}
