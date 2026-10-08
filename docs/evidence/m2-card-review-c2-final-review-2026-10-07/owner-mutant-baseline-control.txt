@@ -1,0 +1,15 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Held read B must retain busy lock while awaiting settlement!
+    at file:///Users/rickymac/.codex/worktrees/m2-card-c2-final-review/Flight-training-/docs/evidence/m2-card-review-c2-final-review-2026-10-07/owner-mutant-baseline-control.mjs:158:14 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: null,
+  expected: null,
+  operator: 'notStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.3

@@ -1,0 +1,226 @@
+TAP version 13
+# Running Baseline Behavioral Assertions in isolated child process...
+#   -> Baseline passed successfully (exit 0).
+# Running Mutant: mutant_wrong_version (Wrong version reliance (ignores unmaterialized raw card changes))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_time_boundary (Broken time boundary (drops Day due cards before local midnight))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_cursor_tie (Broken keyset cursor (drops tied timestamp items without id tiebreaker))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_owner_lock (Broken lock ownership (stale resolution drops held active read lock))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Baseline Behavioral Assertions in isolated child process...
+#   -> Baseline passed successfully (exit 0).
+# Running Mutant: mutant_wrong_version (Wrong version reliance (ignores unmaterialized raw card changes))...
+#   -> FAIL: MUTATION VERIFIER FAILURE: Mutant 'mutant_wrong_version' survived! Process exited with code 0.
+# (node:9444) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+    # Subtest: discovers unmaterialized material with new cards and zero due cards
+    ok 1 - discovers unmaterialized material with new cards and zero due cards
+      ---
+      duration_ms: 28.460084
+      type: 'test'
+      ...
+    # Subtest: excludes old A's due rows when content changes to unmaterialized B; B cards are new
+    ok 2 - excludes old A's due rows when content changes to unmaterialized B; B cards are new
+      ---
+      duration_ms: 14.470625
+      type: 'test'
+      ...
+    # Subtest: reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+    ok 3 - reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+      ---
+      duration_ms: 13.743667
+      type: 'test'
+      ...
+    # Subtest: retired A state rows cannot reduce current B new-card count
+    ok 4 - retired A state rows cannot reduce current B new-card count
+      ---
+      duration_ms: 4.688292
+      type: 'test'
+      ...
+    # Subtest: distinguishes valid-empty guide-only sets from malformed sets
+    ok 5 - distinguishes valid-empty guide-only sets from malformed sets
+      ---
+      duration_ms: 12.771459
+      type: 'test'
+      ...
+    1..5
+ok 1 - [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+  ---
+  duration_ms: 74.711625
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+    # Subtest: includes Again card at exact instant and Day card before next local midnight
+    ok 1 - includes Again card at exact instant and Day card before next local midnight
+      ---
+      duration_ms: 12.610084
+      type: 'test'
+      ...
+    # Subtest: applies within-batch urgency ranking: Again due before Day due before New cards
+    ok 2 - applies within-batch urgency ranking: Again due before Day due before New cards
+      ---
+      duration_ms: 4.942208
+      type: 'test'
+      ...
+    1..2
+ok 2 - [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+  ---
+  duration_ms: 17.805458
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+    # Subtest: consumes tied history events without dropping rows or duplicating
+    ok 1 - consumes tied history events without dropping rows or duplicating
+      ---
+      duration_ms: 18.610917
+      type: 'test'
+      ...
+    # Subtest: enriches history rows with contentStatus, interval, step, and card sides
+    ok 2 - enriches history rows with contentStatus, interval, step, and card sides
+      ---
+      duration_ms: 10.122167
+      type: 'test'
+      ...
+    # Subtest: enforces maximum 250 candidate budget cap and returns page-local summary
+    ok 3 - enforces maximum 250 candidate budget cap and returns page-local summary
+      ---
+      duration_ms: 8.765209
+      type: 'test'
+      ...
+    1..3
+ok 3 - [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+  ---
+  duration_ms: 37.594
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 4: Filters (C2-R7)
+    # Subtest: statusFilter due_today excludes new-only materials and includes mixed
+    ok 1 - statusFilter due_today excludes new-only materials and includes mixed
+      ---
+      duration_ms: 4.443084
+      type: 'test'
+      ...
+    # Subtest: filters history by materialId and topic in SQL before keyset limit
+    ok 2 - filters history by materialId and topic in SQL before keyset limit
+      ---
+      duration_ms: 9.347209
+      type: 'test'
+      ...
+    1..2
+ok 4 - [C2 Proof] Assertion 4: Filters (C2-R7)
+  ---
+  duration_ms: 13.832875
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8)
+    # Subtest: rejects cursor with mismatched filter as STALE_CURSOR
+    ok 1 - rejects cursor with mismatched filter as STALE_CURSOR
+      ---
+      duration_ms: 9.363833
+      type: 'test'
+      ...
+    # Subtest: rejects cursor with mismatched clock/midnight as STALE_CURSOR
+    ok 2 - rejects cursor with mismatched clock/midnight as STALE_CURSOR
+      ---
+      duration_ms: 12.042292
+      type: 'test'
+      ...
+    # Subtest: continuation re-evaluates pending item and drops deleted material
+    ok 3 - continuation re-evaluates pending item and drops deleted material
+      ---
+      duration_ms: 4.195625
+      type: 'test'
+      ...
+    # Subtest: supports consuming same-query stream with larger or smaller page size
+    ok 4 - supports consuming same-query stream with larger or smaller page size
+      ---
+      duration_ms: 14.143291
+      type: 'test'
+      ...
+    1..4
+ok 5 - [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8)
+  ---
+  duration_ms: 39.815
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9)
+    # Subtest: synchronous reader throw releases lock and allows immediate retry
+    ok 1 - synchronous reader throw releases lock and allows immediate retry
+      ---
+      duration_ms: 4.019708
+      type: 'test'
+      ...
+    # Subtest: asynchronous rejection at non-null cursor allows successful retry with preserved cursor
+    ok 2 - asynchronous rejection at non-null cursor allows successful retry with preserved cursor
+      ---
+      duration_ms: 14.020459
+      type: 'test'
+      ...
+    # Subtest: onReset replaces matching stale summary with authoritative fresh row
+    ok 3 - onReset replaces matching stale summary with authoritative fresh row
+      ---
+      duration_ms: 3.989291
+      type: 'test'
+      ...
+    # Subtest: preserves multiple distinct history events for the same material
+    ok 4 - preserves multiple distinct history events for the same material
+      ---
+      duration_ms: 4.069833
+      type: 'test'
+      ...
+    1..4
+ok 6 - [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9)
+  ---
+  duration_ms: 26.172208
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10)
+    # Subtest: exact roundtrip discovery and history across file-backed db close and reopen
+    ok 1 - exact roundtrip discovery and history across file-backed db close and reopen
+      ---
+      duration_ms: 29.611041
+      type: 'test'
+      ...
+    # Subtest: proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+    ok 2 - proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+      ---
+      duration_ms: 4.05975
+      type: 'test'
+      ...
+    1..2
+ok 7 - [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10)
+  ---
+  duration_ms: 33.722458
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11)
+    # Subtest: verifies all semantic mutants are reliably killed by assertions in isolated processes
+    ok 1 - verifies all semantic mutants are reliably killed by assertions in isolated processes
+      ---
+      duration_ms: 478.264709
+      type: 'test'
+      ...
+    # Subtest: survival control proves verifier rejects surviving mutant when assertions are disabled
+    ok 2 - survival control proves verifier rejects surviving mutant when assertions are disabled
+      ---
+      duration_ms: 212.207333
+      type: 'test'
+      ...
+    1..2
+ok 8 - [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11)
+  ---
+  duration_ms: 690.530916
+  type: 'suite'
+  ...
+1..8
+# tests 24
+# suites 8
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1031.251209

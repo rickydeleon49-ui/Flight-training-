@@ -1,0 +1,13 @@
+{
+  "files": {
+    "docs/M2_CARD_REVIEW_C2_FINAL_REVIEW_2026-10-07.md": "0c0d704bade661be377572a331e97e64ffad4c6040b2dac23dc7ed5d33b21606",
+    "docs/M2_CARD_REVIEW_C2_READ_PIPELINE_CORRECTIONS_PROMPT_2026-10-07.md": "721955bad9bc6b354d444e0d8fd8ad716f7e8d8c2be13dccf39383150910c234",
+    "STATUS.md": "a13bef59f8bf002fbd19ea52b754a09c3418ea34738221a8a83ed5db53c1b6de",
+    "docs/PROJECT_HANDOFF.md": "b58626b5c870e3b69162db2813187937719fa8f709c5abe3cef7fbe28f692616",
+    "ROADMAP.md": "106b63333b11087bff6f9693ce1b78cb4c7114ee5a26f9092200d675d1c8833c",
+    "docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs": "beea8c9c8ce48d273077416079de990b62cb5c7a825bda7d6b668b8075eb1eb8",
+    "docs/evidence/m2-card-review-c2-final-review-2026-10-07/query-audit.mjs": "b8fc62d05e916c20ac7e382af43f985c8b97e96f79fe236c681f7336f0620221",
+    "docs/evidence/m2-card-review-c2-final-review-2026-10-07/run-mutant-verifier.mjs": "4b42a170f01d11a78864e65a738cfb6e1d349a9697dffd390ff01f7ddef2c996",
+    "docs/evidence/m2-card-review-c2-final-review-2026-10-07/owner-mutant-baseline-control.mjs": "0e2c4165a89f11b90da4ff288f1b20642a50b8fd3a09005177ab7ecdf26eb323"
+  }
+}
