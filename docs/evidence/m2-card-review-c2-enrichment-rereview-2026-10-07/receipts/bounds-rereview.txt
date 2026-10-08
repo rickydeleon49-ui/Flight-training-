@@ -1,0 +1,81 @@
+TAP version 13
+# history first set bytes 0 absolute cap 8388608
+# mixed discovery parsed 400 reported evaluated 400
+# mixed pending parsed 400 reported evaluated 400
+# (node:23117) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R4] first valid oversize material is reported explicitly instead of silently completing
+ok 1 - [R4] first valid oversize material is reported explicitly instead of silently completing
+  ---
+  duration_ms: 17.658334
+  type: 'test'
+  ...
+# Subtest: [R4] pending valid oversize material is reported explicitly instead of discarded
+ok 2 - [R4] pending valid oversize material is reported explicitly instead of discarded
+  ---
+  duration_ms: 15.458292
+  type: 'test'
+  ...
+# Subtest: [R4] history first-set enrichment obeys the absolute 8 MiB bound
+ok 3 - [R4] history first-set enrichment obeys the absolute 8 MiB bound
+  ---
+  duration_ms: 43.635209
+  type: 'test'
+  ...
+# Subtest: [R4] mixed-size discovery reserves card work before parsing the next set
+ok 4 - [R4] mixed-size discovery reserves card work before parsing the next set
+  ---
+  duration_ms: 6.0935
+  type: 'test'
+  ...
+# Subtest: [R4] mixed-size pending traversal reserves card work before parsing the next set
+ok 5 - [R4] mixed-size pending traversal reserves card work before parsing the next set
+  ---
+  duration_ms: 6.569917
+  type: 'test'
+  ...
+# Subtest: [R8] due continuation requires a complete typed candidate key before SQL
+ok 6 - [R8] due continuation requires a complete typed candidate key before SQL
+  ---
+  duration_ms: 4.117791
+  type: 'test'
+  ...
+# Subtest: [R8] duplicate pending identities are rejected before SQL
+ok 7 - [R8] duplicate pending identities are rejected before SQL
+  ---
+  duration_ms: 4.046542
+  type: 'test'
+  ...
+# Subtest: [R8] history continuation enforces canonical time and bounded ID before SQL
+ok 8 - [R8] history continuation enforces canonical time and bounded ID before SQL
+  ---
+  duration_ms: 4.075375
+  type: 'test'
+  ...
+# Subtest: [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+ok 9 - [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+  ---
+  duration_ms: 4.222584
+  type: 'test'
+  ...
+# Subtest: [inspection] invalid calendar and negative count cannot be valid C1 state
+ok 10 - [inspection] invalid calendar and negative count cannot be valid C1 state
+  ---
+  duration_ms: 0.243625
+  type: 'test'
+  ...
+# Subtest: [control] supported C1 state retains its verified interval
+ok 11 - [control] supported C1 state retains its verified interval
+  ---
+  duration_ms: 0.072417
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 219.476208

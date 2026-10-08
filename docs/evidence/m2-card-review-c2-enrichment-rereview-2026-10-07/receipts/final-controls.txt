@@ -1,0 +1,36 @@
+TAP version 13
+# (node:23295) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [final ownership] obsolete enrichment rejection cannot poison a newer owned retry
+ok 1 - [final ownership] obsolete enrichment rejection cannot poison a newer owned retry
+  ---
+  duration_ms: 0.618458
+  type: 'test'
+  ...
+# Subtest: [final progress] real bounded reader/controller finishes pending materials without duplicates
+ok 2 - [final progress] real bounded reader/controller finishes pending materials without duplicates
+  ---
+  duration_ms: 6.643334
+  type: 'test'
+  ...
+# Subtest: [final combined work] failed targeted parse prevents page raw content under the same allowance
+ok 3 - [final combined work] failed targeted parse prevents page raw content under the same allowance
+  ---
+  duration_ms: 4.82325
+  type: 'test'
+  ...
+# Subtest: [final actual blocked publication] oversized history remains unknown and has an encoded inspection action
+ok 4 - [final actual blocked publication] oversized history remains unknown and has an encoded inspection action
+  ---
+  duration_ms: 12.582125
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 109.854334
