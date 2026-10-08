@@ -1,0 +1,31 @@
+▶ [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+  ✔ discovers unmaterialized material with new cards and zero due cards (15.992375ms)
+  ✔ excludes old A's due rows when content changes to unmaterialized B; B cards are new (6.239583ms)
+  ✔ reuses retained schedule when content returns to identical A (A -> B -> A) (6.487084ms)
+  ✔ distinguishes valid-empty guide-only sets from malformed sets (6.147583ms)
+✔ [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement (35.301375ms)
+▶ [C2 Proof] Assertion 2: Time Boundaries, Filtering, & Ordering
+  ✔ includes Again card at exact instant, excludes before exact instant (7.998875ms)
+  ✔ includes day ladder cards before next local midnight; handles DST 25-hour day (1.225291ms)
+  ✔ excludes paused and flagged never-rated cards from due and new work (6.765833ms)
+  ✔ ranks urgent Again materials first, then Day materials, then New-only materials (5.894375ms)
+✔ [C2 Proof] Assertion 2: Time Boundaries, Filtering, & Ordering (22.027333ms)
+▶ [C2 Proof] Assertion 3 & 4: Keyset Pagination, History Provenance, & Separation
+  ✔ pages history without omissions or duplicates across tied timestamps (3.994083ms)
+  ✔ marks earlier-version ratings with isEarlierVersion: true (3.962625ms)
+  ✔ strictly separates card ratings from practice test attempts (4.161459ms)
+  ✔ deleting material cascades card items, events, and versions; leaves tombstoned ops (3.832375ms)
+✔ [C2 Proof] Assertion 3 & 4: Keyset Pagination, History Provenance, & Separation (16.056833ms)
+▶ [C2 Proof] Assertion 6: Negative Controls & Semantic Failure Verification
+  ✔ semantic negative control 1: query without current-content check fails Assertion 1 (6.47375ms)
+  ✔ semantic negative control 2: query without exclusive nextLocalMidnightUtc fails Assertion 2 (3.471917ms)
+  ✔ semantic negative control 3: keyset pagination without tie-breaker id loses rows on tied timestamps (3.399ms)
+✔ [C2 Proof] Assertion 6: Negative Controls & Semantic Failure Verification (13.40325ms)
+ℹ tests 15
+ℹ suites 4
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 170.558583

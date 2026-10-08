@@ -1,0 +1,325 @@
+{
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpus": 10,
+    "cpuModel": "Apple M5",
+    "totalMemoryGb": 32,
+    "nodeVersion": "v26.10.0",
+    "date": "2026-10-08T00:07:55.048Z"
+  },
+  "queryPlans": {
+    "dueQuery": [
+      {
+        "id": 12,
+        "parent": 0,
+        "notused": 216,
+        "detail": "SCAN s"
+      },
+      {
+        "id": 28,
+        "parent": 0,
+        "notused": 46,
+        "detail": "SEARCH i USING INDEX sqlite_autoindex_card_items_1 (id=?)"
+      },
+      {
+        "id": 34,
+        "parent": 0,
+        "notused": 46,
+        "detail": "SEARCH v USING INDEX sqlite_autoindex_card_versions_1 (id=?)"
+      },
+      {
+        "id": 41,
+        "parent": 0,
+        "notused": 44,
+        "detail": "SEARCH m USING COVERING INDEX sqlite_autoindex_study_materials_1 (id=?)"
+      },
+      {
+        "id": 45,
+        "parent": 0,
+        "notused": 0,
+        "detail": "USE TEMP B-TREE FOR GROUP BY"
+      }
+    ],
+    "historyQuery": [
+      {
+        "id": 13,
+        "parent": 0,
+        "notused": 212,
+        "detail": "SCAN e USING INDEX idx_card_events_item"
+      },
+      {
+        "id": 18,
+        "parent": 0,
+        "notused": 46,
+        "detail": "SEARCH i USING INDEX sqlite_autoindex_card_items_1 (id=?)"
+      },
+      {
+        "id": 23,
+        "parent": 0,
+        "notused": 46,
+        "detail": "SEARCH v USING INDEX sqlite_autoindex_card_versions_1 (id=?)"
+      },
+      {
+        "id": 28,
+        "parent": 0,
+        "notused": 46,
+        "detail": "SEARCH m USING INDEX sqlite_autoindex_study_materials_1 (id=?)"
+      },
+      {
+        "id": 46,
+        "parent": 0,
+        "notused": 0,
+        "detail": "USE TEMP B-TREE FOR ORDER BY"
+      }
+    ]
+  },
+  "scales": {
+    "100_materials": {
+      "materialCount": 100,
+      "cardCount": 476,
+      "reviewEventCount": 190,
+      "summary": {
+        "totalMaterialsWithDue": 14,
+        "totalMaterialsWithNew": 78,
+        "totalDueCards": 63,
+        "totalNewCards": 801
+      },
+      "pagedResultCount": 50,
+      "runs": 30,
+      "latencyMs": {
+        "reviewDue_endToEnd": {
+          "count": 30,
+          "min": 1.315,
+          "p50": 1.511,
+          "p95": 1.796,
+          "p99": 2.699,
+          "max": 2.699
+        },
+        "reviewDue_sqlOnly": {
+          "count": 30,
+          "min": 0.106,
+          "p50": 0.114,
+          "p95": 0.137,
+          "p99": 0.149,
+          "max": 0.149
+        },
+        "reviewDue_hashVerificationOnly": {
+          "count": 30,
+          "min": 0.057,
+          "p50": 0.06,
+          "p95": 0.085,
+          "p99": 0.161,
+          "max": 0.161
+        },
+        "reviewDue_topicFiltered": {
+          "count": 30,
+          "min": 0.268,
+          "p50": 0.307,
+          "p95": 0.334,
+          "p99": 0.555,
+          "max": 0.555
+        },
+        "reviewDue_dueTodayFiltered": {
+          "count": 30,
+          "min": 1.207,
+          "p50": 1.29,
+          "p95": 1.521,
+          "p99": 1.653,
+          "max": 1.653
+        },
+        "reviewDue_newOnlyFiltered": {
+          "count": 30,
+          "min": 1.215,
+          "p50": 1.263,
+          "p95": 1.462,
+          "p99": 1.5,
+          "max": 1.5
+        },
+        "history_page1": {
+          "count": 30,
+          "min": 0.173,
+          "p50": 0.179,
+          "p95": 0.218,
+          "p99": 0.361,
+          "max": 0.361
+        },
+        "history_page2_keysetCursor": {
+          "count": 30,
+          "min": 0.147,
+          "p50": 0.151,
+          "p95": 0.175,
+          "p99": 0.22,
+          "max": 0.22
+        }
+      }
+    },
+    "2500_materials": {
+      "materialCount": 2500,
+      "cardCount": 12476,
+      "reviewEventCount": 4933,
+      "summary": {
+        "totalMaterialsWithDue": 334,
+        "totalMaterialsWithNew": 389,
+        "totalDueCards": 1643,
+        "totalNewCards": 4023
+      },
+      "pagedResultCount": 50,
+      "runs": 20,
+      "latencyMs": {
+        "reviewDue_endToEnd": {
+          "count": 20,
+          "min": 11.298,
+          "p50": 11.705,
+          "p95": 13.088,
+          "p99": 13.348,
+          "max": 13.348
+        },
+        "reviewDue_sqlOnly": {
+          "count": 20,
+          "min": 2.124,
+          "p50": 2.283,
+          "p95": 2.398,
+          "p99": 2.433,
+          "max": 2.433
+        },
+        "reviewDue_hashVerificationOnly": {
+          "count": 20,
+          "min": 0.19,
+          "p50": 0.199,
+          "p95": 0.234,
+          "p99": 0.421,
+          "max": 0.421
+        },
+        "reviewDue_topicFiltered": {
+          "count": 20,
+          "min": 4.175,
+          "p50": 4.281,
+          "p95": 4.943,
+          "p99": 6.111,
+          "max": 6.111
+        },
+        "reviewDue_dueTodayFiltered": {
+          "count": 20,
+          "min": 10.777,
+          "p50": 11.622,
+          "p95": 12.078,
+          "p99": 12.284,
+          "max": 12.284
+        },
+        "reviewDue_newOnlyFiltered": {
+          "count": 20,
+          "min": 10.64,
+          "p50": 11.457,
+          "p95": 15.921,
+          "p99": 24.835,
+          "max": 24.835
+        },
+        "history_page1": {
+          "count": 20,
+          "min": 4.106,
+          "p50": 4.207,
+          "p95": 4.325,
+          "p99": 5.151,
+          "max": 5.151
+        },
+        "history_page2_keysetCursor": {
+          "count": 20,
+          "min": 2.679,
+          "p50": 2.711,
+          "p95": 2.863,
+          "p99": 2.909,
+          "max": 2.909
+        }
+      }
+    },
+    "5000_materials": {
+      "materialCount": 5000,
+      "cardCount": 24976,
+      "reviewEventCount": 9874,
+      "summary": {
+        "totalMaterialsWithDue": 668,
+        "totalMaterialsWithNew": 639,
+        "totalDueCards": 3293,
+        "totalNewCards": 6523
+      },
+      "pagedResultCount": 50,
+      "runs": 15,
+      "latencyMs": {
+        "reviewDue_endToEnd": {
+          "count": 15,
+          "min": 21.769,
+          "p50": 22.51,
+          "p95": 24.7,
+          "p99": 24.7,
+          "max": 24.7
+        },
+        "reviewDue_sqlOnly": {
+          "count": 15,
+          "min": 4.691,
+          "p50": 4.97,
+          "p95": 5.9,
+          "p99": 5.9,
+          "max": 5.9
+        },
+        "reviewDue_hashVerificationOnly": {
+          "count": 15,
+          "min": 0.2,
+          "p50": 0.208,
+          "p95": 0.283,
+          "p99": 0.283,
+          "max": 0.283
+        },
+        "reviewDue_topicFiltered": {
+          "count": 15,
+          "min": 5.594,
+          "p50": 5.688,
+          "p95": 7.521,
+          "p99": 7.521,
+          "max": 7.521
+        },
+        "reviewDue_dueTodayFiltered": {
+          "count": 15,
+          "min": 21.864,
+          "p50": 22.865,
+          "p95": 23.733,
+          "p99": 23.733,
+          "max": 23.733
+        },
+        "reviewDue_newOnlyFiltered": {
+          "count": 15,
+          "min": 22.028,
+          "p50": 22.302,
+          "p95": 23.479,
+          "p99": 23.479,
+          "max": 23.479
+        },
+        "history_page1": {
+          "count": 15,
+          "min": 8.973,
+          "p50": 9.301,
+          "p95": 11.052,
+          "p99": 11.052,
+          "max": 11.052
+        },
+        "history_page2_keysetCursor": {
+          "count": 15,
+          "min": 5.69,
+          "p50": 5.811,
+          "p95": 5.996,
+          "p99": 5.996,
+          "max": 5.996
+        }
+      }
+    }
+  },
+  "proposedBudgets": {
+    "reviewDueQuery_p50_ms": 15,
+    "reviewDueQuery_p95_ms": 35,
+    "historyPageQuery_p50_ms": 5,
+    "historyPageQuery_p95_ms": 15,
+    "discoveryJsonHash_p50_ms": 5,
+    "uiRenderPreparation_p50_ms": 10,
+    "totalViewRender_p95_ms": 50
+  }
+}

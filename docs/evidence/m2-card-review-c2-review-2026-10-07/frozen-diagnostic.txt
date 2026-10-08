@@ -1,0 +1,192 @@
+TAP version 13
+# (node:4015) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+not ok 1 - [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+  ---
+  duration_ms: 15.752291
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:22:1'
+  failureType: 'testCodeFailure'
+  error: 'Older new material must be discoverable through bounded continuation; exhausted candidates must not imply caught up'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:28:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: [C2-R1] returned due cursor actually advances to a different material
+not ok 2 - [C2-R1] returned due cursor actually advances to a different material
+  ---
+  duration_ms: 4.660416
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:31:1'
+  failureType: 'testCodeFailure'
+  error: 'nextCursor must be consumable, not repeat page one'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'one'
+  actual: 'one'
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:36:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+not ok 3 - [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+  ---
+  duration_ms: 22.083833
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:39:1'
+  failureType: 'testCodeFailure'
+  error: 'Expected bounded discovery; instead 400 raw material reads for 50 results'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:44:35)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+not ok 4 - [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+  ---
+  duration_ms: 0.898417
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:47:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Retained current A due work must return before a new mutation updates is_active
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:51:39)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R2] retired A state cannot consume current B new-card count
+not ok 5 - [C2-R2] retired A state cannot consume current B new-card count
+  ---
+  duration_ms: 0.644416
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:54:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Only B current item states may reduce B new count
+    
+    0 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:59:71)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R3] history marks old A earlier after raw B replacement without writes
+not ok 6 - [C2-R3] history marks old A earlier after raw B replacement without writes
+  ---
+  duration_ms: 0.466333
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:62:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The stale active flag is not current content identity
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:65:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R3] history marks retained A current after raw A reversion without writes
+not ok 7 - [C2-R3] history marks retained A current after raw A reversion without writes
+  ---
+  duration_ms: 0.434417
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:68:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Raw current A is current even when its snapshot is inactive
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-review/Flight-training-/docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs:71:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [control] ordinary active current content returns due and new counts
+ok 8 - [control] ordinary active current content returns due and new counts
+  ---
+  duration_ms: 0.469291
+  type: 'test'
+  ...
+# Subtest: [control] history consumes all 35 tied events without loss or duplicates
+ok 9 - [control] history consumes all 35 tied events without loss or duplicates
+  ---
+  duration_ms: 2.050375
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 2
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108.379209

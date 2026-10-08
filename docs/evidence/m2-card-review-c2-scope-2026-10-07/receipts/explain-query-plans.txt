@@ -1,0 +1,113 @@
+EXPLAIN QUERY PLAN RECEIPTS (SQLite 3.54 / Schema 12)
+========================================================
+
+1. Library Review Due: Active Materialized Cards Query
+--------------------------------------------------------
+[
+  {
+    "id": 14,
+    "parent": 0,
+    "notused": 216,
+    "detail": "SCAN s"
+  },
+  {
+    "id": 30,
+    "parent": 0,
+    "notused": 46,
+    "detail": "SEARCH i USING INDEX sqlite_autoindex_card_items_1 (id=?)"
+  },
+  {
+    "id": 36,
+    "parent": 0,
+    "notused": 46,
+    "detail": "SEARCH v USING INDEX sqlite_autoindex_card_versions_1 (id=?)"
+  },
+  {
+    "id": 43,
+    "parent": 0,
+    "notused": 46,
+    "detail": "SEARCH m USING INDEX sqlite_autoindex_study_materials_1 (id=?)"
+  },
+  {
+    "id": 48,
+    "parent": 0,
+    "notused": 0,
+    "detail": "USE TEMP B-TREE FOR GROUP BY"
+  },
+  {
+    "id": 134,
+    "parent": 0,
+    "notused": 0,
+    "detail": "CORRELATED SCALAR SUBQUERY 1"
+  },
+  {
+    "id": 140,
+    "parent": 134,
+    "notused": 62,
+    "detail": "SEARCH crs USING INDEX idx_card_state_due (source_material_id=?)"
+  }
+]
+
+2. Library Review Due: Unmaterialized New-Card Candidate Discovery
+--------------------------------------------------------------------
+[
+  {
+    "id": 9,
+    "parent": 0,
+    "notused": 216,
+    "detail": "SCAN a"
+  },
+  {
+    "id": 15,
+    "parent": 0,
+    "notused": 46,
+    "detail": "SEARCH m USING INDEX sqlite_autoindex_study_materials_1 (id=?)"
+  },
+  {
+    "id": 21,
+    "parent": 0,
+    "notused": 45,
+    "detail": "SEARCH v USING INDEX uq_active_card_version (source_material_id=?) LEFT-JOIN"
+  },
+  {
+    "id": 61,
+    "parent": 0,
+    "notused": 0,
+    "detail": "USE TEMP B-TREE FOR ORDER BY"
+  }
+]
+
+3. Library Recent Reviews: Keyset History Pagination Query
+-----------------------------------------------------------
+[
+  {
+    "id": 12,
+    "parent": 0,
+    "notused": 216,
+    "detail": "SCAN e"
+  },
+  {
+    "id": 20,
+    "parent": 0,
+    "notused": 46,
+    "detail": "SEARCH i USING INDEX sqlite_autoindex_card_items_1 (id=?)"
+  },
+  {
+    "id": 25,
+    "parent": 0,
+    "notused": 46,
+    "detail": "SEARCH v USING INDEX sqlite_autoindex_card_versions_1 (id=?)"
+  },
+  {
+    "id": 30,
+    "parent": 0,
+    "notused": 46,
+    "detail": "SEARCH m USING INDEX sqlite_autoindex_study_materials_1 (id=?)"
+  },
+  {
+    "id": 57,
+    "parent": 0,
+    "notused": 0,
+    "detail": "USE TEMP B-TREE FOR ORDER BY"
+  }
+]
