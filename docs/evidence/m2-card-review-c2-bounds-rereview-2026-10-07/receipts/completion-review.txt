@@ -1,0 +1,108 @@
+TAP version 13
+# (node:14991) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R7] due_today excludes new-only materials
+ok 1 - [C2-R7] due_today excludes new-only materials
+  ---
+  duration_ms: 6.356833
+  type: 'test'
+  ...
+# Subtest: [C2-R7] new_only excludes due materials
+ok 2 - [C2-R7] new_only excludes due materials
+  ---
+  duration_ms: 4.2435
+  type: 'test'
+  ...
+# Subtest: [C2-R7] history materialId filter is applied before pagination
+ok 3 - [C2-R7] history materialId filter is applied before pagination
+  ---
+  duration_ms: 4.332459
+  type: 'test'
+  ...
+# Subtest: [C2-R7] history topic filter is applied before pagination
+ok 4 - [C2-R7] history topic filter is applied before pagination
+  ---
+  duration_ms: 4.442625
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor cannot cross a topic filter
+ok 5 - [C2-R8] pending cursor cannot cross a topic filter
+  ---
+  duration_ms: 8.334792
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor does not return a deleted material
+ok 6 - [C2-R8] pending cursor does not return a deleted material
+  ---
+  duration_ms: 4.654958
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor recomputes changed current raw cards or rejects
+ok 7 - [C2-R8] pending cursor recomputes changed current raw cards or rejects
+  ---
+  duration_ms: 4.091125
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor is owned by the clock boundary
+ok 8 - [C2-R8] pending cursor is owned by the clock boundary
+  ---
+  duration_ms: 4.240542
+  type: 'test'
+  ...
+# Subtest: [C2-R9] controller preserves distinct history event IDs from one material
+ok 9 - [C2-R9] controller preserves distinct history event IDs from one material
+  ---
+  duration_ms: 4.265708
+  type: 'test'
+  ...
+# Subtest: [C2-R9] synchronous reader rejection releases its lock and retry works
+ok 10 - [C2-R9] synchronous reader rejection releases its lock and retry works
+  ---
+  duration_ms: 0.396583
+  type: 'test'
+  ...
+# Subtest: [C2-R9] reset fresh traversal replaces surviving stale summaries
+ok 11 - [C2-R9] reset fresh traversal replaces surviving stale summaries
+  ---
+  duration_ms: 0.100875
+  type: 'test'
+  ...
+# Subtest: [C2-R9] invalidation clears loading when old read is held
+ok 12 - [C2-R9] invalidation clears loading when old read is held
+  ---
+  duration_ms: 0.048625
+  type: 'test'
+  ...
+# Subtest: [C2-R10] valid-empty history context is distinct from unavailable
+ok 13 - [C2-R10] valid-empty history context is distinct from unavailable
+  ---
+  duration_ms: 4.262584
+  type: 'test'
+  ...
+# Subtest: [C2-R10] event payload retains prior and next interval/state context
+ok 14 - [C2-R10] event payload retains prior and next interval/state context
+  ---
+  duration_ms: 4.057375
+  type: 'test'
+  ...
+# Subtest: [control] stale A settling cannot release held B lock
+ok 15 - [control] stale A settling cannot release held B lock
+  ---
+  duration_ms: 0.153083
+  type: 'test'
+  ...
+# Subtest: [control] fixture card shape is accepted by production parser
+ok 16 - [control] fixture card shape is accepted by production parser
+  ---
+  duration_ms: 3.827792
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 169.697584

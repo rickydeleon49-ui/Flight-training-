@@ -1,0 +1,65 @@
+TAP version 13
+# discovery malformed bytes 1400000 reported 1400000
+# pending malformed bytes 1400000 reported 1400000
+# card boundary bytes 24281 reported 24281 raw reads 1
+# issued cursor bytes 13296
+# history bytes 1520501
+# (node:14995) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [resource] malformed discovery prefix still obeys actual raw-transfer ceiling
+ok 1 - [resource] malformed discovery prefix still obeys actual raw-transfer ceiling
+  ---
+  duration_ms: 9.516583
+  type: 'test'
+  ...
+# Subtest: [resource] pending malformed work is counted and bounded even when no rows are emitted
+ok 2 - [resource] pending malformed work is counted and bounded even when no rows are emitted
+  ---
+  duration_ms: 12.002292
+  type: 'test'
+  ...
+# Subtest: [resource] card budget stop cannot hide the extra raw read from counters
+ok 3 - [resource] card budget stop cannot hide the extra raw read from counters
+  ---
+  duration_ms: 5.220958
+  type: 'test'
+  ...
+# Subtest: [cursor] reader-issued maximum candidate cursor can be consumed
+ok 4 - [cursor] reader-issued maximum candidate cursor can be consumed
+  ---
+  duration_ms: 14.359834
+  type: 'test'
+  ...
+# Subtest: [cursor] due token requires a version and bounded typed pending IDs
+ok 5 - [cursor] due token requires a version and bounded typed pending IDs
+  ---
+  duration_ms: 4.251458
+  type: 'test'
+  ...
+# Subtest: [cursor] history token requires the complete keyset shape
+ok 6 - [cursor] history token requires the complete keyset shape
+  ---
+  duration_ms: 4.142792
+  type: 'test'
+  ...
+# Subtest: [resource] history current-provenance reads obey declared applicable raw budget
+ok 7 - [resource] history current-provenance reads obey declared applicable raw budget
+  ---
+  duration_ms: 26.708625
+  type: 'test'
+  ...
+# Subtest: [control] fresh controller generation preserves authoritative replacement
+ok 8 - [control] fresh controller generation preserves authoritative replacement
+  ---
+  duration_ms: 0.6715
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 163.822208

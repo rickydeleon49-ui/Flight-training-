@@ -1,0 +1,244 @@
+TAP version 13
+# history first set bytes 9020501 absolute cap 8388608
+# mixed discovery parsed 900 reported evaluated 400
+# mixed pending parsed 900 reported evaluated 400
+# (node:15127) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R4] first valid oversize material is reported explicitly instead of silently completing
+not ok 1 - [R4] first valid oversize material is reported explicitly instead of silently completing
+  ---
+  duration_ms: 16.139291
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:17:1'
+  failureType: 'testCodeFailure'
+  error: 'Oversize valid material must remain discoverable through an explicit result, not vanish as caught up'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    oversizeRead (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:16:162)
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:17:161)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: [R4] pending valid oversize material is reported explicitly instead of discarded
+not ok 2 - [R4] pending valid oversize material is reported explicitly instead of discarded
+  ---
+  duration_ms: 14.054916
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:18:1'
+  failureType: 'testCodeFailure'
+  error: 'Oversize valid material must remain discoverable through an explicit result, not vanish as caught up'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    oversizeRead (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:16:162)
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:18:290)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [R4] history first-set enrichment obeys the absolute 8 MiB bound
+not ok 3 - [R4] history first-set enrichment obeys the absolute 8 MiB bound
+  ---
+  duration_ms: 95.613958
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:19:1'
+  failureType: 'testCodeFailure'
+  error: 'First history set must not bypass absolute raw-read bound'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:19:381)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [R4] mixed-size discovery reserves card work before parsing the next set
+not ok 4 - [R4] mixed-size discovery reserves card work before parsing the next set
+  ---
+  duration_ms: 5.466166
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:20:1'
+  failureType: 'testCodeFailure'
+  error: '400+500 were parsed under a 600-card budget'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:20:342)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [R4] mixed-size pending traversal reserves card work before parsing the next set
+not ok 5 - [R4] mixed-size pending traversal reserves card work before parsing the next set
+  ---
+  duration_ms: 6.542416
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:21:1'
+  failureType: 'testCodeFailure'
+  error: '400+500 were parsed under a 600-card budget'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:21:411)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [R8] due continuation requires a complete typed candidate key before SQL
+not ok 6 - [R8] due continuation requires a complete typed candidate key before SQL
+  ---
+  duration_ms: 4.174334
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:22:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:22:148)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [R8] duplicate pending identities are rejected before SQL
+not ok 7 - [R8] duplicate pending identities are rejected before SQL
+  ---
+  duration_ms: 4.280375
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:23:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:23:133)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [R8] history continuation enforces canonical time and bounded ID before SQL
+not ok 8 - [R8] history continuation enforces canonical time and bounded ID before SQL
+  ---
+  duration_ms: 4.118709
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:24:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:24:223)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+not ok 9 - [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+  ---
+  duration_ms: 4.500334
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:25:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Event scheduler is unsupported, but missing state version was defaulted to simple-v1
+    
+    '1d' !== null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: '1d'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:25:247)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [inspection] invalid calendar and negative count cannot be valid C1 state
+not ok 10 - [inspection] invalid calendar and negative count cannot be valid C1 state
+  ---
+  duration_ms: 0.219292
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:26:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-bounds-rereview/Flight-training-/docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs:26:267)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [control] supported C1 state retains its verified interval
+ok 11 - [control] supported C1 state retains its verified interval
+  ---
+  duration_ms: 0.093792
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 1
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 264.154792

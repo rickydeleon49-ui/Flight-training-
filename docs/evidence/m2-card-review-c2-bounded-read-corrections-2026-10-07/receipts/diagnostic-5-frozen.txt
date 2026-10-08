@@ -1,0 +1,21 @@
+discovery malformed bytes 1400000 reported 1400000
+pending malformed bytes 1400000 reported 1400000
+card boundary bytes 24281 reported 24281 raw reads 1
+issued cursor bytes 13296
+history bytes 1520501
+✔ [resource] malformed discovery prefix still obeys actual raw-transfer ceiling (6.824583ms)
+✔ [resource] pending malformed work is counted and bounded even when no rows are emitted (9.803417ms)
+✔ [resource] card budget stop cannot hide the extra raw read from counters (5.28375ms)
+✔ [cursor] reader-issued maximum candidate cursor can be consumed (12.779042ms)
+✔ [cursor] due token requires a version and bounded typed pending IDs (4.148375ms)
+✔ [cursor] history token requires the complete keyset shape (3.883625ms)
+✔ [resource] history current-provenance reads obey declared applicable raw budget (14.751667ms)
+✔ [control] fresh controller generation preserves authoritative replacement (0.412542ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 161.222375

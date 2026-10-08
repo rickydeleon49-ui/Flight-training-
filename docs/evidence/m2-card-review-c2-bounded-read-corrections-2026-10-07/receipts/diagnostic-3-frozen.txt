@@ -1,0 +1,24 @@
+✔ [C2-R7] due_today excludes new-only materials (5.775542ms)
+✔ [C2-R7] new_only excludes due materials (4.196292ms)
+✔ [C2-R7] history materialId filter is applied before pagination (4.408125ms)
+✔ [C2-R7] history topic filter is applied before pagination (4.079625ms)
+✔ [C2-R8] pending cursor cannot cross a topic filter (8.076042ms)
+✔ [C2-R8] pending cursor does not return a deleted material (4.184416ms)
+✔ [C2-R8] pending cursor recomputes changed current raw cards or rejects (3.998458ms)
+✔ [C2-R8] pending cursor is owned by the clock boundary (4.0475ms)
+✔ [C2-R9] controller preserves distinct history event IDs from one material (4.020291ms)
+✔ [C2-R9] synchronous reader rejection releases its lock and retry works (0.244334ms)
+✔ [C2-R9] reset fresh traversal replaces surviving stale summaries (0.087ms)
+✔ [C2-R9] invalidation clears loading when old read is held (0.05ms)
+✔ [C2-R10] valid-empty history context is distinct from unavailable (3.951834ms)
+✔ [C2-R10] event payload retains prior and next interval/state context (4.318042ms)
+✔ [control] stale A settling cannot release held B lock (0.089459ms)
+✔ [control] fixture card shape is accepted by production parser (3.773959ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 155.62175

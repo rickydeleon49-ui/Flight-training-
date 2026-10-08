@@ -1,0 +1,3952 @@
+{
+  "node": "v26.10.0",
+  "sqlite": "3.53.4",
+  "due_page1": {
+    "returnedRows": 50,
+    "calls": 218,
+    "returnedSqlRows": 1196,
+    "estimatedJsonUtf8Bytes": 595755,
+    "detail": [
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != '' ORDER BY CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC LIMIT ?",
+        "method": "all",
+        "rows": 251,
+        "estimatedJsonUtf8Bytes": 51492
+      },
+      {
+        "sql": "SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "method": "all",
+        "rows": 250,
+        "estimatedJsonUtf8Bytes": 14162
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 822
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 1684
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 970
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "method": "all",
+        "rows": 480,
+        "estimatedJsonUtf8Bytes": 110397
+      }
+    ]
+  },
+  "due_page2_continuation": {
+    "returnedRows": 50,
+    "calls": 150,
+    "returnedSqlRows": 331,
+    "estimatedJsonUtf8Bytes": 168340,
+    "detail": [
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 225
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 227
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 226
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 220
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 224
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 222
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 219
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 223
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 229
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 227
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 216
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 224
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 216
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 225
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 224
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 226
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 221
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 223
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 219
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 219
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 224
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 228
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 218
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 216
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1131
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 225
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 215
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 227
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 221
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 224
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 218
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 222
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 224
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 229
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 217
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 227
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 225
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 216
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 226
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1131
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 226
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 218
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 222
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 220
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 217
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 221
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 832
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 227
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 225
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 5,
+        "estimatedJsonUtf8Bytes": 1152
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 201
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 970
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 231
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 224
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 0,
+        "estimatedJsonUtf8Bytes": 2
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 222
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 0,
+        "estimatedJsonUtf8Bytes": 2
+      },
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at, LENGTH(CAST(a.flashcards_json AS BLOB)) AS byte_len FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE m.id = ? AND a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != ''",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 221
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?)",
+        "method": "all",
+        "rows": 0,
+        "estimatedJsonUtf8Bytes": 2
+      }
+    ]
+  },
+  "due_filtered_due_today": {
+    "returnedRows": 50,
+    "calls": 216,
+    "returnedSqlRows": 1193,
+    "estimatedJsonUtf8Bytes": 597379,
+    "detail": [
+      {
+        "sql": "SELECT m.id AS material_id, m.title, m.topic, m.review_status, m.priority, m.updated_at FROM study_materials m JOIN ai_study_sets a ON a.source_material_id = m.id WHERE a.flashcards_json IS NOT NULL AND a.flashcards_json != '[]' AND a.flashcards_json != '' AND m.topic = ? ORDER BY CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC LIMIT ?",
+        "method": "all",
+        "rows": 251,
+        "estimatedJsonUtf8Bytes": 52812
+      },
+      {
+        "sql": "SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "method": "all",
+        "rows": 250,
+        "estimatedJsonUtf8Bytes": 14167
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 1684
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "method": "all",
+        "rows": 479,
+        "estimatedJsonUtf8Bytes": 110146
+      }
+    ]
+  },
+  "history_page1": {
+    "returnedRows": 20,
+    "calls": 22,
+    "returnedSqlRows": 61,
+    "estimatedJsonUtf8Bytes": 66274,
+    "detail": [
+      {
+        "sql": "SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json, i.ordinal, i.front, i.back, i.source_page, v.id AS version_id, v.content_hash, v.created_at AS version_created_at, v.source_material_id AS material_id, m.title AS material_title, m.topic AS topic FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id JOIN study_materials m ON m.id = v.source_material_id WHERE 1=1 ORDER BY e.reviewed_at DESC, e.id DESC LIMIT ?",
+        "method": "all",
+        "rows": 21,
+        "estimatedJsonUtf8Bytes": 17260
+      },
+      {
+        "sql": "SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "method": "all",
+        "rows": 20,
+        "estimatedJsonUtf8Bytes": 1136
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 1684
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      }
+    ]
+  },
+  "history_page2_continuation": {
+    "returnedRows": 20,
+    "calls": 22,
+    "returnedSqlRows": 61,
+    "estimatedJsonUtf8Bytes": 55441,
+    "detail": [
+      {
+        "sql": "SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json, i.ordinal, i.front, i.back, i.source_page, v.id AS version_id, v.content_hash, v.created_at AS version_created_at, v.source_material_id AS material_id, m.title AS material_title, m.topic AS topic FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id JOIN study_materials m ON m.id = v.source_material_id WHERE 1=1 AND ((e.reviewed_at < ?) OR (e.reviewed_at = ? AND e.id < ?)) ORDER BY e.reviewed_at DESC, e.id DESC LIMIT ?",
+        "method": "all",
+        "rows": 21,
+        "estimatedJsonUtf8Bytes": 17244
+      },
+      {
+        "sql": "SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "method": "all",
+        "rows": 20,
+        "estimatedJsonUtf8Bytes": 1133
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      }
+    ]
+  },
+  "history_filtered_topic": {
+    "returnedRows": 20,
+    "calls": 22,
+    "returnedSqlRows": 61,
+    "estimatedJsonUtf8Bytes": 61316,
+    "detail": [
+      {
+        "sql": "SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json, i.ordinal, i.front, i.back, i.source_page, v.id AS version_id, v.content_hash, v.created_at AS version_created_at, v.source_material_id AS material_id, m.title AS material_title, m.topic AS topic FROM card_review_events e JOIN card_items i ON i.id = e.item_id JOIN card_versions v ON v.id = i.version_id JOIN study_materials m ON m.id = v.source_material_id WHERE 1=1 AND m.topic = ? ORDER BY e.reviewed_at DESC, e.id DESC LIMIT ?",
+        "method": "all",
+        "rows": 21,
+        "estimatedJsonUtf8Bytes": 17361
+      },
+      {
+        "sql": "SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "method": "all",
+        "rows": 20,
+        "estimatedJsonUtf8Bytes": 1133
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 1684
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2464
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 852
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 842
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2494
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      },
+      {
+        "sql": "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+        "method": "get",
+        "rows": 1,
+        "estimatedJsonUtf8Bytes": 2524
+      }
+    ]
+  }
+}
