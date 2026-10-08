@@ -1,0 +1,30 @@
+EXPLAIN QUERY PLAN RESULTS FOR EXACT EXECUTED C2 QUERIES
+=========================================================
+Environment: Node v22.23.3, SQLite 3.53.4 (arm64)
+
+Query: candidate_discovery
+--------------------------
+  id=7 parent=0 notused=216 detail=SCAN a
+  id=13 parent=0 notused=46 detail=SEARCH m USING INDEX sqlite_autoindex_study_materials_1 (id=?)
+  id=38 parent=0 notused=0 detail=USE TEMP B-TREE FOR ORDER BY
+
+Query: raw_content_read
+-----------------------
+  id=3 parent=0 notused=39 detail=SEARCH ai_study_sets USING INDEX sqlite_autoindex_ai_study_sets_1 (source_material_id=?)
+
+Query: version_lookup
+---------------------
+  id=3 parent=0 notused=39 detail=SEARCH card_versions USING INDEX sqlite_autoindex_card_versions_1 (id=?)
+
+Query: state_by_version
+-----------------------
+  id=5 parent=0 notused=62 detail=SEARCH i USING INDEX sqlite_autoindex_card_items_2 (version_id=?)
+  id=12 parent=0 notused=46 detail=SEARCH s USING INDEX sqlite_autoindex_card_review_state_1 (item_id=?)
+
+Query: history_keyset
+---------------------
+  id=13 parent=0 notused=212 detail=SCAN e USING INDEX idx_card_events_item
+  id=16 parent=0 notused=46 detail=SEARCH i USING INDEX sqlite_autoindex_card_items_1 (id=?)
+  id=21 parent=0 notused=46 detail=SEARCH v USING INDEX sqlite_autoindex_card_versions_1 (id=?)
+  id=26 parent=0 notused=46 detail=SEARCH m USING INDEX sqlite_autoindex_study_materials_1 (id=?)
+  id=53 parent=0 notused=0 detail=USE TEMP B-TREE FOR ORDER BY

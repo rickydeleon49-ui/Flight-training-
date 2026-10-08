@@ -1,0 +1,13 @@
+{
+  "root": "repository",
+  "base": "a53b51c5e6c9e91879970c9365728b01e73a9f81",
+  "files": {
+    "STATUS.md": "34f5f599699a9dffef9357d8ff614fec628b313acd31e5523b28582773673e38",
+    "docs/PROJECT_HANDOFF.md": "d7f091b69cf73f7002a25e6201e390a4787b3b596c5ab7a988c98e50567eba26",
+    "ROADMAP.md": "0328c8e014fee95958520a5a657941ab9dc00ca068ebd48c8a270f147fca3f2c",
+    "docs/M2_CARD_REVIEW_C2_SCOPE_REREVIEW_2026-10-07.md": "6b969c308e79f4f560fdce5bd7b2d4f8a3dc7ce2a5e9ecfc8c605e2b11ef4701",
+    "docs/M2_CARD_REVIEW_C2_SCOPE_COMPLETION_PROMPT_2026-10-07.md": "52fd408884d4dc20599a4a5852c819716a7e3fb772dfed69364ed3b1f4728f7c",
+    "docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs": "99f7a565209da2dbfa731f010b3ca3ad4d002e6cb3f43d8efb83bfefaf586b74",
+    "docs/evidence/m2-card-review-c2-rereview-2026-10-07/query-audit.mjs": "e2fe8eebef521845a976a49cd093d75cf96aa175edcc19e2a29bc3ccacf34232"
+  }
+}

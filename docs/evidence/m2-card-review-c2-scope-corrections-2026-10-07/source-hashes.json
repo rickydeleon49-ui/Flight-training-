@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-10-08T00:38:40.550Z",
+  "files": {
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/README.md": "e9dde894cbdf3ed86cfd00f82541dd1db796fa961138cab29ee3b0944a052662",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/optional_migration_0013.sql": "14784cb6cede582d6b4b71cf6f4615997c9fa750fe72a5bd5b2259a714591174",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/proof/benchmark.mjs": "77a9056f7bf3a52fb35a006fe248e60fb63cee9d576567ae40aaed8e5a79ba9c",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/proof/contractModel.mjs": "bc85d3ee207dde0e633b69c9da9c6557e63b8fc0ef537f7459ee785c747cf52b",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/proof/package.json": "4b9a3177225a99eafc1436747f2bca9d49e2e2abf0558ad9ffff212a738153ad",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/proof/proof.test.mjs": "5aa8623a82456e8afaacf836e3439672e4de986b8bac578d974b48493e901c1e",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/proof/syntheticDataset.mjs": "3e553cc998fbd22b64a3831603e51e9043f2b7b02cc35346387fa99dfd02ff5c",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/benchmark-run.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/benchmark-run.txt": "394750179a5fe56976f2d0cf3be906f772221c5d20a4dd5f94d53025e5ed978e",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/explain-query-plans.txt": "f2eb4d6aee7acb14c75df50c18bd414832696731412e2dad41e6ba930e3d7e76",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/frozen-diagnostic.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/frozen-diagnostic.txt": "df3b19c2e7af3968d18fbfe171a63c0e7bf67b7aec38e609ab8b4513518e0cc3",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/negative-controls.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/negative-controls.txt": "8f2f8bdf74a165c9a860a78fed369c9013beaee3ff9bbd41de0e698d303b1778",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/proof-run.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/receipts/proof-run.txt": "0c4994b636a576bc4dd56e5e04117d70861875f94cc957ae3b5b59932e91ca1c",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/results.json": "5b0cc0e340b3fc91fbf3cd837d59710e2161d011ee03e16e9cf18d465d01f1a5",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/submitted/docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md": "0b1139ed354c10cea3c3ad99a7f6f57afbe452a07582f28ea4dd3c3e8b5c69b8",
+    "docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/submitted/docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md": "66a5952379ae5856c5d7c7736dabaeb7375825a79cc4c4782f16f4e8b9024f39"
+  }
+}

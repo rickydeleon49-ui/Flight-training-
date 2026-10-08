@@ -1,3 +1,5 @@
+**7 October C2 correction re-review:** C1 acceptance remains in force. [C2 R2/R3 reviewed cases are fixed; R1/R4/R5/R6 require completion](docs/M2_CARD_REVIEW_C2_SCOPE_REREVIEW_2026-10-07.md). [Active model-neutral scope completion assignment](docs/M2_CARD_REVIEW_C2_SCOPE_COMPLETION_PROMPT_2026-10-07.md) supersedes earlier correction prompts. Production C2 and its defaults await independently supported scope and owner approval.
+
 **7 October C2 planning review:** C1 is accepted in PR #111. Library-wide Review due/History planning needs [C2-R1–R5 corrections](docs/M2_CARD_REVIEW_C2_SCOPE_REVIEW_2026-10-07.md) before owner decisions. [Active model-neutral planning correction assignment](docs/M2_CARD_REVIEW_C2_SCOPE_CORRECTIONS_PROMPT_2026-10-07.md). C2 production execution remains conditional on supported scope acceptance and recorded defaults.
 
 # Her Flight Deck — implementation roadmap

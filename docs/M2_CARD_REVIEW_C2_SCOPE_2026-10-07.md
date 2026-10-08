@@ -1,10 +1,10 @@
-# M2-4 / Card Reviews C2 — Product Scope, Recommended Defaults, and Query Contract (7 October 2026)
+# M2-4 / Card Reviews C2 — Product Scope, Recommended Defaults, and Verified Query Contract (7 October 2026)
 
-**Planning proposal and disposable query proof for review. Do not implement production C2 yet.**
+**Corrected planning proposal and verified query proof for re-review. Do not begin production C2 implementation.**
 
 C1 delivered durable, material-level card reviews within `MaterialDetail` (`/study/:materialId`), featuring content-addressed version identity, deterministic `simple-v1` scheduling, atomic generation-guarded resets, and replay-safe operation receipts ([C1 Acceptance](M2_CARD_REVIEW_C1_ACCEPTANCE_2026-10-07.md)).
 
-C2 expands card reviews to the library level inside the existing Study Library (`/study`). It allows a student pilot to see which study materials have current cards due for review, choose any material for a focused offline review session, and inspect a bounded chronological history of card reviews with clear version provenance, completely separated from practice test attempt scores.
+C2 expands card reviews to the library level inside the existing Study Library (`/study`). It allows a student pilot to see which study materials have current cards due for review, choose any material for a focused offline review session, and inspect a bounded chronological history of card reviews with authoritative version provenance, completely separated from practice test attempt scores.
 
 ---
 
@@ -21,7 +21,7 @@ To ground the design, consider a pilot's Study Library containing the following 
      - **Card 3 (Flagged card):** Flagged as `unclear` before rating. It has `due_at IS NULL`, `reps = 0`, and `flag = 'unclear'`. It is excluded from both due work and new card counts.
      - **Cards 4–9 (New cards):** Never rated or flagged (6 eligible new cards).
    - **Regeneration Scenario (A → B unmaterialized):**
-     If the user subsequently regenerates or edits M1's flashcards into Version B (12 cards), Version B is raw in `ai_study_sets` and has no row in `card_versions`. In C2, Version A's due cards (Cards 0 and 1) are recognized as belonging to a retired snapshot and are **strictly excluded** from due work. All 12 cards of Version B appear as new cards. If the user reverts M1 back to Version A's exact text (A → B → A), Version A's retained schedule and due cards immediately reactivate.
+     If the user subsequently regenerates or edits M1's flashcards into Version B (12 cards), Version B is raw in `ai_study_sets` and has no row in `card_versions`. In C2, Version A's due cards (Cards 0 and 1) are recognized as belonging to a retired snapshot and are **strictly excluded** from due work. All 12 cards of Version B appear as new cards. If the user reverts M1 back to Version A's exact text (A → B → A), Version A's retained schedule and due cards immediately reactivate with zero database writes.
 
 2. **Material M2: "Cross-Country Navigation & VORs"** (`mat-nav-02`, topic: `navigation`, priority: `important`):
    - Created with 8 flashcards in `ai_study_sets.flashcards_json`.
@@ -43,15 +43,15 @@ The following decision table resolves all product defaults for C2. One owner app
 
 | ID | Decision Area | Recommended Default | Alternative Considered | Impact / Rationale | Owner Approval Needed? |
 | --- | --- | --- | --- | --- | :---: |
-| **C2-D1** | **Navigation & Workspace Layout** | Tabbed sub-views inside existing Study Library (`Library` \| `Review due` \| `History`) with URL synchronization (`/study`, `/study?tab=due`, `/study?tab=history`). | Separate top-level navigation routes or a distinct study application. | Avoids fragmenting the application; keeps notes, guides, tests, and cards unified per ROADMAP section 7C. | **Yes** |
+| **C2-D1** | **Navigation & Workspace Layout** | Tabbed sub-views inside existing Study Library (`Library` \| `Review due` \| `History`) with URL synchronization (`/study`, `/study?tab=due`, `/study?tab=history`), while preserving `/study/history` as a compatible route. | Separate top-level navigation routes or a distinct study application. | Avoids fragmenting the application; keeps notes, guides, tests, and cards unified per ROADMAP section 7C. | **Yes** |
 | **C2-D2** | **Session Entry Model** | **Material-selected C1 sessions first.** Clicking a material in "Review due" launches a focused session for that specific material. | Blended multi-material review collections across different topics. | Preserves C1's robust per-material transaction boundary, atomic generation barrier, and simple offline model. Multi-material sessions are deferred. | **Yes** |
-| **C2-D3** | **Default Ordering in "Review due"** | **Urgency-first bucket ranking:**<br>1. Materials with due Again cards (step -1)<br>2. Materials with due Day cards (step >= 0)<br>3. Materials with only New cards.<br>Tie-break by `next_up` priority, then earliest due instant, then title ASC. | Chronological `updated_at` order or pure alphabetical order. | Surfaces urgent relearning and daily review work immediately, avoiding pilot cognitive overload. | **Yes** |
-| **C2-D4** | **Default Filters in "Review due"** | Default filter: **"All actionable"** (due or new cards). Options: "Due today only", "New cards only", and Topic filter. | Only showing due cards; hiding new cards until manually started. | Allows students to choose whether to clear due reviews or learn new concepts, while keeping new content discoverable. | **Yes** |
-| **C2-D5** | **Empty, Loading, & Error States** | Friendly empty card ("All caught up! No cards due for review"). Shimmer loading with route epoch guards. Non-blocking error banner with sanitized message and manual "Check again" retry. | Hard blocking error dialogs or silent failure. | Carries C1 request-ownership principles forward; prevents stale flashes and race conditions during rapid navigation. | **Yes** |
+| **C2-D3** | **Default Ordering in "Review due"** | **Urgency-first bucket ranking within candidate scan batches:**<br>1. Materials with due Again cards (step -1)<br>2. Materials with due Day cards (step >= 0)<br>3. Materials with only New cards.<br>Tie-break by `next_up` priority, then earliest due instant, then title ASC, then ID ASC. | Pure chronological `updated_at` order or alphabetical order. | Surfaces urgent relearning and daily review work immediately, avoiding pilot cognitive overload while maintaining deterministic paging. | **Yes** |
+| **C2-D4** | **Default Filters in "Review due"** | Default filter: **"All actionable"** (`totalDueCount > 0 \|\| newCount > 0`). Filter options:<br>- `"due_today"`: materials with `totalDueCount > 0`<br>- `"new_only"`: materials with `totalDueCount === 0 && newCount > 0`<br>- Topic filter chip selector. | Only showing due cards; hiding new cards until manually started. | Mixed materials (having both due and new cards) match "due_today" and "all", but are excluded from "new_only". Allows pilots to focus purely on unlearned concepts without mixing due relearning. | **Yes** |
+| **C2-D5** | **Empty, Loading, & Error States** | Friendly empty card ("All caught up! No cards due for review" when candidate stream is exhausted). Progressive continuation prompt if scan budget reached without finding actionable items. Shimmer loading with route epoch guards. Non-blocking error banner with sanitized message and manual "Check again" retry without replaying writes. | Hard blocking error dialogs or silent failure. | Carries C1 request-ownership principles forward; prevents stale flashes and race conditions during rapid navigation. | **Yes** |
 | **C2-D6** | **History Paging & Scope** | **Keyset cursor pagination** (`reviewed_at DESC, id DESC`), bounded at 20 items per page. "Load more" button disabled while loading. | Full array in React memory, or offset pagination. | Scales efficiently to 10,000+ review events; prevents row skipping or duplication across tied timestamps. | **Yes** |
 | **C2-D7** | **Separation from Practice Tests** | **Strict semantic & visual separation.** Card reviews display spaced-repetition ratings (`Again`, `Hard`, `Good`, `Easy`) and interval progression. Practice tests display test scores, percentages, and completed attempts. Explicit disclaimers on both views. | Blended composite "Study Score" or inferred FAA exam readiness score. | ROADMAP 7C explicitly forbids claiming mastery or exam readiness from card repetitions. | **Yes** |
-| **C2-D8** | **New-Card Discovery Architecture** | **Bounded On-Demand Discovery** (Design 1) with targeted SQL queries and candidate hash checks. **Zero database migrations** (Schema 12 preserved). | Rebuildable cache table (Migration 0013) or persistent backfill. | Benchmarks prove p50 latency is **22.5ms** at 5,000 materials without schema changes, eliminating upgrade risk and backup incompatibilities. | **Yes** |
-| **C2-D9** | **Candidate & Session Bounds** | Library candidate list capped at **250 materials** per query; individual review sessions retain C1 caps (**MAX_NEW = 10**, **MAX_TOTAL = 20**). | Uncapped global queries or unlimited session lengths. | Prevents memory exhaustion and preserves spaced-repetition pedagogical effectiveness. | **Yes** |
+| **C2-D8** | **New-Card Discovery Architecture** | **Bounded Candidate Discovery with Keyset Continuation** (Design 1) with candidate batch budget (250 items per call). **Zero database migrations** (Schema 12 preserved). | Rebuildable cache table (Migration 0013) or persistent backfill. | Benchmarks prove p50 latency is **3.24 ms** per page at 5,000 materials without schema changes, eliminating upgrade risk and backup incompatibilities. | **Yes** |
+| **C2-D9** | **Candidate & Session Bounds** | Candidate evaluation budget capped at **250 materials** per query; individual review sessions retain C1 caps (**MAX_NEW = 10**, **MAX_TOTAL = 20**). | Uncapped global queries or unlimited session lengths. | Prevents memory exhaustion and preserves spaced-repetition pedagogical effectiveness. | **Yes** |
 
 ---
 
@@ -65,28 +65,31 @@ We evaluated three architectural options across 100, 2,500, and 5,000 materials:
 +---------------------------------------------------------------------------------------------------+
 | Architecture Comparison                                                                           |
 +------------------------------+---------------------------+-----------------------+----------------+
-| Metric / Criterion           | Design 1: Bounded On-     | Design 2: Rebuildable | Design 3:      |
-|                              | Demand Discovery (Rec.)   | Cache (Mig. 0013)     | Persistent     |
-|                              |                           |                       | Backfill       |
+| Metric / Criterion           | Design 1: Bounded         | Design 2: Rebuildable | Design 3:      |
+|                              | Discovery with            | Cache Table           | Persistent     |
+|                              | Continuation (Rec.)       | (Provisional Mig. 0013)| Backfill      |
 +------------------------------+---------------------------+-----------------------+----------------+
 | Schema Migration Required    | NONE (Schema 12 preserved)| YES (Migration 0013)  | YES (Mig. 0013)|
-| 5,000 Materials p50 Latency  | 22.5 ms                   | 8.2 ms                | 7.9 ms         |
-| 5,000 Materials p95 Latency  | 24.7 ms                   | 11.4 ms               | 10.8 ms        |
-| Old Backup Restore (Schema 11/12)| Instantaneous (0 ms)  | Requires table rebuild| Heavy backfill |
-| Application Upgrade Overhead | Zero downtime             | Checksum & DDL exec   | Heavy I/O lock |
-| A -> B -> A Reversion Safety | Automatic & immediate     | Requires cache sync   | Fragile sync   |
-| DB Storage Footprint         | Minimal                   | Moderate (+1-2 MB)    | High (+15 MB)  |
-| Read-Only Invariant          | Preserved ("Reads never   | Mutates cache on read | Writes on boot |
-|                              | write")                   | or sync               |                |
+| 5,000 Materials Page 1 (p50) | 3.24 ms (Measured)        | Estimated ~2-4 ms     | Estimated ~2 ms|
+| Full Discovery p50 (84 pages)| 251.27 ms (Measured)      | Single read           | Single read    |
+| Old Backup Restore (11/12)   | Instantaneous (No DDL)    | Requires DDL + sync   | Heavy backfill |
+| Application Upgrade Risk     | Zero (Code only)          | Checksum registry +   | Large I/O lock |
+|                              |                           | DDL migration         | on startup     |
+| A -> B -> A Reversion Safety | Automatic & immediate     | Fragile sync hook     | Fragile sync   |
+| Read-Only Invariant          | Preserved ("Reads never   | Mutates cache on sync | Writes on boot |
+|                              | write")                   | or mutation           |                |
+| Desktop IPC / UI Cost        | Unmeasured in Node        | Unmeasured in Node    | Unmeasured in  |
+|                              | micro-benchmarks          | micro-benchmarks      | Node benchmarks|
 +------------------------------+---------------------------+-----------------------+----------------+
 ```
 
 ### Recommendation:
-We recommend **Design 1: Bounded On-Demand Discovery**.
-- It runs well under the 50 ms interactive UI budget (22.5 ms at 5,000 materials).
+We recommend **Design 1: Bounded Discovery with Continuation**.
+- It runs in **3.24 ms** (p50) and **4.19 ms** (p95) for the first page at 5,000 materials.
 - It requires **zero schema migrations**, keeping `CURRENT_SCHEMA_VERSION = 12`.
 - It completely eliminates migration risk for desktop macOS and prospective iOS clients.
 - It honors the C1 architectural invariant: *"Reads never write."*
+- Proposing provisional Migration 0013 is preserved under C2-D8 as an unapproved future alternative, should persistent indexing ever be desired by the owner.
 
 ---
 
@@ -96,21 +99,86 @@ We recommend **Design 1: Bounded On-Demand Discovery**.
 Inside `src/App.tsx` and `src/pages/StudyLibrary/StudyLibrary.tsx`:
 - `/study`: Study Library binder (default `tab=library`).
 - `/study?tab=due`: Review Due queue.
-- `/study?tab=history` (or `/study/history`): History hub with distinct tabs:
-  - Sub-tab A: **Flashcard Reviews** (`card_review_events`, keyset paginated).
-  - Sub-tab B: **Practice Tests** (`practice_attempts`, completed attempts from Slice B).
+- `/study?tab=history`: History hub inside Study Library (with sub-tabs for Flashcards and Practice Tests).
+- `/study/history`: Preserved for backwards route compatibility, synchronizing seamlessly with `tab=history`.
 
-### B. Minimal Proposed Files
-1. `src/domain/types.ts`: Extend with `LibraryReviewDueInput`, `LibraryReviewMaterialEntry`, `LibraryReviewDueSummary`, and `LibraryRecentReviewEntry`.
-2. `src/data/repositories/cardReviewRepository.ts`: Add `getLibraryReviewDue()` and `getLibraryRecentReviews()`.
-3. `src/pages/StudyLibrary/StudyLibrary.tsx`: Add tab switcher (`Library`, `Review due`, `History`), integrate review status badges into `MaterialCard`, and render `LibraryReviewDuePanel`.
-4. `src/pages/StudyLibrary/LibraryReviewDuePanel.tsx`: New component displaying the ranked materials queue, filter chips, loading/empty states, and session launcher.
-5. `src/pages/StudyLibrary/PracticeHistory.tsx`: Add sub-tab toggle for Flashcards vs Practice Tests, preserving all existing attempt review routes.
-6. `src/pages/StudyLibrary/studyLibrary.css`: Minimal styles for review badges and queue cards.
+### B. Typed Query Contracts
+
+```typescript
+export interface LibraryReviewDueInput {
+  nowUtc: string; // ISO 8601 UTC instant
+  nextLocalMidnightUtc: string; // ISO 8601 UTC instant of next local calendar midnight
+  topic?: string | null;
+  statusFilter?: "all" | "due_today" | "new_only"; // default: "all"
+  limit?: number; // default: 50
+  cursor?: string | null; // opaque candidate continuation cursor
+  candidateBatchBudget?: number; // default: 250
+}
+
+export interface LibraryReviewMaterialEntry {
+  materialId: string;
+  title: string;
+  topic: string;
+  reviewStatus: string;
+  priority: string;
+  updatedAt: string;
+  cardCount: number;
+  againCount: number;
+  dayCount: number;
+  newCount: number;
+  totalDueCount: number;
+  earliestDueAt: string | null;
+  hasActiveVersion: boolean;
+  activeVersionId: string | null;
+}
+
+export interface LibraryReviewDueSummary {
+  totalMaterialsWithDue: number;
+  totalMaterialsWithNew: number;
+  totalDueCards: number;
+  totalNewCards: number;
+  scannedCandidates: number;
+  isComplete: boolean; // true if candidate stream was completely exhausted
+}
+
+export interface LibraryReviewDueResult {
+  summary: LibraryReviewDueSummary;
+  materials: LibraryReviewMaterialEntry[];
+  nextCursor: string | null;
+}
+
+export interface LibraryRecentReviewsInput {
+  cursor?: { reviewedAt: string; id: string } | null;
+  limit?: number; // default: 20
+  topic?: string | null;
+  materialId?: string | null;
+}
+
+export interface LibraryRecentReviewEntry {
+  id: string;
+  itemId: string;
+  rating: "again" | "hard" | "good" | "easy";
+  reviewedAt: string;
+  schedulerVersion: string;
+  generation: number;
+  front: string;
+  sourcePage: number | null;
+  materialId: string;
+  materialTitle: string;
+  materialTopic: string;
+  versionId: string;
+  isEarlierVersion: boolean; // determined by comparing event versionId to current raw cards
+}
+
+export interface LibraryRecentReviewsResult {
+  rows: LibraryRecentReviewEntry[];
+  next: { reviewedAt: string; id: string } | null;
+}
+```
 
 ### C. Executable Candidate SQL Queries
 
-#### Query 1: Active Due Cards Aggregation
+#### Query 1: Candidate Selection with Deterministic Keyset Cursor
 ```sql
 SELECT
   m.id AS material_id,
@@ -118,52 +186,39 @@ SELECT
   m.topic,
   m.review_status,
   m.priority,
-  m.updated_at,
-  v.id AS active_version_id,
-  v.content_hash AS active_content_hash,
-  v.card_count AS active_card_count,
-  SUM(CASE WHEN s.step < 0 AND s.due_at <= :nowUtc THEN 1 ELSE 0 END) AS again_count,
-  SUM(CASE WHEN s.step >= 0 AND s.due_at < :nextLocalMidnightUtc THEN 1 ELSE 0 END) AS day_count,
-  MIN(CASE WHEN ((s.step < 0 AND s.due_at <= :nowUtc) OR (s.step >= 0 AND s.due_at < :nextLocalMidnightUtc)) THEN s.due_at ELSE NULL END) AS earliest_due_at,
-  (SELECT COUNT(*) FROM card_review_state crs
-   WHERE crs.source_material_id = m.id
-     AND (crs.due_at IS NOT NULL OR crs.suspended = 1 OR crs.flag IS NOT NULL)) AS touched_count
-FROM card_review_state s
-JOIN card_items i ON i.id = s.item_id
-JOIN card_versions v ON v.id = i.version_id
-JOIN study_materials m ON m.id = v.source_material_id
-WHERE v.is_active = 1
-  AND s.suspended = 0
-  AND s.flag IS NULL
-  AND s.due_at IS NOT NULL
-  AND ((s.step < 0 AND s.due_at <= :nowUtc) OR (s.step >= 0 AND s.due_at < :nextLocalMidnightUtc))
-GROUP BY m.id, m.title, m.topic, m.review_status, m.priority, m.updated_at, v.id, v.content_hash, v.card_count;
-```
-
-#### Query 2: Unmaterialized New-Card Candidate Discovery
-```sql
-SELECT
-  m.id AS material_id,
-  m.title,
-  m.topic,
-  m.review_status,
-  m.priority,
-  m.updated_at,
-  a.flashcards_json,
-  v.id AS active_version_id,
-  v.content_hash AS active_content_hash,
-  v.card_count AS active_card_count
+  m.updated_at
 FROM study_materials m
 JOIN ai_study_sets a ON a.source_material_id = m.id
-LEFT JOIN card_versions v ON v.source_material_id = m.id AND v.is_active = 1
 WHERE a.flashcards_json IS NOT NULL
   AND a.flashcards_json != '[]'
   AND a.flashcards_json != ''
-ORDER BY CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END, m.updated_at DESC
-LIMIT :maxNewDiscovery;
+  AND (:topic IS NULL OR m.topic = :topic)
+  AND (
+    :cursorP IS NULL
+    OR (CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END > :cursorP)
+    OR (CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END = :cursorP AND m.updated_at < :cursorU)
+    OR (CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END = :cursorP AND m.updated_at = :cursorU AND m.id > :cursorId)
+  )
+ORDER BY
+  CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC,
+  m.updated_at DESC,
+  m.id ASC
+LIMIT :candidateBatchBudgetPlusOne;
 ```
 
-#### Query 3: Library-Wide History Keyset Pagination
+#### Query 2: Review State Scoped Strictly to Current Version Items
+```sql
+SELECT
+  s.step,
+  s.due_at,
+  s.suspended,
+  s.flag
+FROM card_review_state s
+JOIN card_items i ON i.id = s.item_id
+WHERE i.version_id = :currentVersionId;
+```
+
+#### Query 3: Library-Wide History Keyset Pagination with Tie-Breaker
 ```sql
 SELECT
   e.id AS event_id,
@@ -201,57 +256,67 @@ LIMIT :limitPlusOne;
 
 ---
 
-## 4. Disposable Proof and Performance Measurements
+## 4. Verified Proof and Performance Measurements
 
-Comprehensive verification was conducted using the disposable proof suite in `docs/evidence/m2-card-review-c2-scope-2026-10-07/`:
+All five review findings (C2-R1 through C2-R5) were resolved and verified in `docs/evidence/m2-card-review-c2-scope-corrections-2026-10-07/`:
 
-### A. Assertion Suite Results (`node --test proof.test.mjs`)
-- **15 tests passed / 0 failed** in 170 ms (Node v26.10.0, Apple M5, macOS arm64).
-- Verified:
-  1. Discovery of unmaterialized materials (`mat-nav-02` shows 8 new cards, 0 due).
-  2. Exclusion of retired snapshot due rows on content change (`mat-changed-03` shows 0 due, 7 new).
-  3. Schedule reactivation on A → B → A reversion (`mat-revert-04` reuses version A's due schedule).
-  4. Exact time boundaries: Again card included at exact instant, excluded 1ms prior; Day card included before next local midnight; 25-hour DST boundary handled accurately.
-  5. Paused/flagged never-rated cards excluded from due and new counts.
-  6. Keyset pagination over tied timestamps produces zero duplicates and zero omissions.
-  7. History provenance correctly marks retired snapshot events as earlier versions.
-  8. Material deletion cascades card data, preserving tombstoned receipts (`is_erased = 1`).
-  9. Three deliberate semantic negative controls failed their assertions as expected, proving test sensitivity.
+### A. Frozen Reviewer Diagnostic (`diagnostic.test.mjs`)
+- Executed unchanged via `C2_REVIEW_MODEL` against the corrected contract model:
+- **9 tests passed / 0 failed, exit 0** in 102 ms (receipt: `receipts/frozen-diagnostic.txt`).
 
-### B. Scalability Benchmarks (`results.json`)
+### B. Comprehensive Proof Suite (`proof.test.mjs`)
+- **15 tests passed / 0 failed, exit 0** in 191 ms (receipt: `receipts/proof-run.txt`).
+- Proves:
+  1. Discovery of unmaterialized materials (`mat-nav-02` has 8 new cards, 0 due).
+  2. Immediate exclusion of retired version A due cards upon unmaterialized B replacement (`mat-changed-03`).
+  3. Immediate reuse of retained schedule upon raw A reversion (`mat-revert-04`) with zero writes.
+  4. Isolation of touched states: retired A state rows cannot reduce current B new counts.
+  5. Exact time boundaries: Again card at exact instant, Day card before next local midnight, 25-hour DST boundary.
+  6. Keyset pagination over tied timestamps produces zero duplicates and zero omissions, matching independent SQL oracle.
+  7. DeferredReadController generation barriers, held continuations, and deliberate read retries without replaying writes.
+  8. Deletion cascades real version and item IDs, tombstones operations (`is_erased = 1`).
+  9. Three deliberate semantic negative controls failed as expected (receipt: `receipts/negative-controls.txt`).
+
+### C. Scalability Benchmarks (`results.json`)
+Measured on Apple M5 (10 cores, Node v22.23.3, SQLite 3.53.4, receipt: `receipts/benchmark-run.txt`):
 
 ```
 +----------------------------------------------------------------------------------------+
-| Measured Latency Across Library Scales (Apple M5, arm64, Node v26, SQLite 3.54)        |
+| Measured Latency Across Library Scales (Apple M5, arm64, Node v22.23.3, SQLite 3.53.4) |
 +--------------------------+--------------------+--------------------+-------------------+
 | Operation / Query        | 100 Materials      | 2,500 Materials    | 5,000 Materials   |
-|                          | (476 cards,        | (12,476 cards,     | (24,976 cards,    |
-|                          | 190 events)        | 4,933 events)      | 9,874 events)     |
+|                          | (976 cards,        | (12,976 cards,     | (25,476 cards,    |
+|                          | 200 events)        | 5,000 events)      | 10,000 events)    |
 +--------------------------+--------------------+--------------------+-------------------+
-| Review Due (End-to-End)  | p50: 1.51 ms       | p50: 11.71 ms      | p50: 22.51 ms     |
-|                          | p95: 1.80 ms       | p95: 13.09 ms      | p95: 24.70 ms     |
+| Review Due Page 1        | p50: 1.86 ms       | p50: 2.26 ms       | p50: 3.24 ms      |
+| (limit 50, budget 250)   | p95: 5.46 ms       | p95: 2.92 ms       | p95: 4.19 ms      |
 +--------------------------+--------------------+--------------------+-------------------+
-| SQL Portion Alone        | p50: 0.11 ms       | p50:  2.28 ms      | p50:  4.97 ms     |
-| Hash & JSON Verification | p50: 0.06 ms       | p50:  0.20 ms      | p50:  0.21 ms     |
+| Full Discovery           | 2 pages            | 42 pages           | 84 pages          |
+| (Traversing Entire DB)   | p50: 3.89 ms       | p50: 97.80 ms      | p50: 251.27 ms    |
 +--------------------------+--------------------+--------------------+-------------------+
-| History Page 1 (20 items)| p50: 0.18 ms       | p50:  4.21 ms      | p50:  9.30 ms     |
-| History Page 2 (Cursor)  | p50: 0.15 ms       | p50:  2.71 ms      | p50:  5.81 ms     |
+| Candidate SQL Query      | p50: 0.10 ms       | p50: 1.01 ms       | p50: 1.93 ms      |
+| JSON + Canonical + Hash  | p50: 0.85 ms       | p50: 0.76 ms       | p50: 0.78 ms      |
+| (50 materials, ~89 KB)   |                    |                    |                   |
 +--------------------------+--------------------+--------------------+-------------------+
+| History Page 1 (20 items)| p50: 1.09 ms       | p50: 4.61 ms       | p50: 9.63 ms      |
+| History Page 2 (Cursor)  | p50: 0.99 ms       | p50: 3.15 ms       | p50: 6.22 ms      |
++--------------------------+--------------------+--------------------+-------------------+
+| Adversarial 500-Card Set | Full parse, canonicalize, content hash & 500 item hashes:  |
+| Pipeline Benchmark       | p50: 0.48 ms | p95: 0.87 ms | max: 0.97 ms             |
++--------------------------+-------------------------------------------------------------+
 ```
 
-### C. Proposed Performance Budgets
-Based on the measured evidence, the following production budgets are proposed:
-- **Review Due Query:** p50 <= 15 ms, p95 <= 35 ms.
-- **History Keyset Page Query:** p50 <= 5 ms, p95 <= 15 ms.
-- **Candidate Content-Hash Verification:** p50 <= 2 ms.
-- **UI Render Preparation:** p50 <= 10 ms.
-- **Total User-Perceived Interaction Budget:** <= 50 ms.
+### D. Truthful Performance Budget Evaluation
+- **Candidate Discovery & Page 1 Read:** Measured p50 = 3.24 ms <= proposed budget 15 ms (**PASS** in SQLite/Node).
+- **History Keyset Page Query:** Measured p50 = 9.63 ms (Page 1) and 6.22 ms (Page 2) <= proposed budget 15 ms (**PASS** in SQLite/Node).
+- **500-Card Full Pipeline Hashing:** Measured p50 = 0.48 ms <= proposed budget 5 ms (**PASS**).
+- **Desktop IPC & Safari/WebKit UI Rendering:** Explicitly labeled as **UNMEASURED** in Node micro-benchmarks; requires end-to-end measurement in the Tauri runtime.
 
 ---
 
 ## 5. Next Steps and Gate
 
 Production implementation of C2 requires:
-1. Independent scope acceptance of this document and its disposable evidence.
+1. Independent scope acceptance of this corrected package and evidence.
 2. Owner approval of the recommended product defaults (C2-D1 through C2-D9).
 3. Execution of the conditional implementation prompt ([`docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md`](M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md)).

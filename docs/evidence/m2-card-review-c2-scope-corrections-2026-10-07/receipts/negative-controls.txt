@@ -1,0 +1,48 @@
+SEMANTIC NEGATIVE CONTROLS & PURPOSEFUL FAILURE VERIFICATION
+==============================================================
+Date: 2026-10-07
+Environment: Node v22.23.3, SQLite 3.53.4 (arm64, Darwin)
+
+The test suite in proof.test.mjs exercises deliberate semantic failure
+variants to prove that the assertions are meaningful, sensitive, and strictly
+verifying system contracts rather than tautologies.
+
+Control 1: Missing Current-Content Verification
+------------------------------------------------
+Variant: getLibraryReviewDueBrokenCurrentVersion
+Contract violated: C1/C2 Content-Addressed Identity and Discovery Contract (C2-R2).
+Implementation flaw: The query trusts the existing active snapshot in
+card_versions without verifying whether raw ai_study_sets.flashcards_json
+was updated or replaced.
+Observed failure: In synthetic fixture mat-changed-03 (where Version A with 2
+due cards was superseded by unmaterialized Version B with 7 cards), the broken
+query incorrectly returned 2 due cards belonging to retired Version A.
+Semantic assertion: Real query verified totalDueCount === 0 and newCount === 7.
+The test passes by confirming that the broken query fails this contract.
+
+Control 2: Keyset Pagination Omission on Tied Timestamps
+---------------------------------------------------------
+Variant: getLibraryRecentReviewsBrokenCursor
+Contract violated: Keyset Deterministic Tie-Ordering Contract (C2-R5).
+Implementation flaw: ORDER BY e.reviewed_at DESC without tie-breaker id,
+and cursor filtering with e.reviewed_at < cursor.reviewedAt.
+Observed failure: When multiple review events share identical timestamps (e.g.,
+batch imported reviews, scripted sessions, or rapid ratings), the second page
+drops all remaining tied items (0 returned vs 3 remaining).
+Semantic assertion: Real query uses composite cursor (reviewed_at, id) and
+correctly retrieves all remaining tied items across page boundaries without
+loss or duplication.
+
+Control 3: Bounded Candidate Progression & Continuation
+--------------------------------------------------------
+Variant: getLibraryReviewDueBrokenCandidateProgression
+Contract violated: Bounded Candidate Discovery Contract (C2-R1).
+Implementation flaw: Statically cuts off candidate evaluation after the first 250
+materials without returning a continuation cursor, prematurely claiming the library
+is caught up.
+Observed failure: In a library where the first 250 candidates are fully reviewed or
+future-due (ineligible), older unreviewed materials (e.g., 'older-new') located at
+position 251 are permanently undiscoverable on page 1 and cannot be continued.
+Semantic assertion: Real query returns a consumable nextCursor advancing across
+candidate evaluation batches, reliably reaching older actionable materials without
+exceeding per-request evaluation bounds.
