@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **CONDITIONAL ASSIGNMENT — DO NOT IMPLEMENT BEFORE APPROVAL.**
 > Production execution of this prompt requires:
-> 1. Independent scope acceptance of the completed [`docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md`](docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md) and its verification evidence.
+> 1. Independent scope acceptance of the completed [`M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md`](M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md) and its verification evidence.
 > 2. Recorded owner approval of proposed defaults **C2-D1 through C2-D9**.
 > Any owner-selected model can execute this prompt once activated; Codex remains independent reviewer and Git coordinator. The real-user check-in waiver persists.
 
@@ -51,6 +51,15 @@ export interface LibraryReviewDueInput {
   maxBatchRawJsonBytesBudget?: number; // default: 2097152 (2 MiB)
 }
 
+export interface LibraryReviewOversizeIssue {
+  materialId: string;
+  title: string;
+  code: "PAYLOAD_TOO_LARGE";
+  rawBytes: number;
+  allowedBytes: number;
+  inspectionTarget: string;
+}
+
 export interface LibraryReviewMaterialEntry {
   materialId: string;
   title: string;
@@ -78,6 +87,7 @@ export interface LibraryReviewDueSummary {
   newCount: number;
   isComplete: boolean; // true if candidate stream was completely exhausted
   isPageLocal: boolean; // always true for page-scoped summaries
+  issues: LibraryReviewOversizeIssue[]; // explicit issues for reported oversize sets
 }
 
 export interface LibraryReviewDueResult {
@@ -92,6 +102,7 @@ export interface LibraryRecentReviewsInput {
   topic?: string | null;
   materialId?: string | null;
   maxBatchRawJsonBytesBudget?: number; // default: 2097152 (2 MiB)
+  enrichMaterialIds?: string[] | null; // optional targeted material enrichment
 }
 
 export interface ValidatedCardSchedule {
@@ -139,6 +150,7 @@ export interface LibraryRecentReviewEntry {
 export interface LibraryRecentReviewsResult {
   rows: LibraryRecentReviewEntry[];
   next: string | null;
+  pendingMaterialIds: string[];
 }
 
 export interface ReadOnlyCardInspectionTarget {
@@ -164,25 +176,28 @@ export interface ReadOnlyCardInspectionTarget {
 ### B. Pure Logic Parity
 Directly reuse pure logic modules without re-implementing or duplicating logic:
 - `src/logic/cardIdentity.ts`: `parseSavedCards`, `canonicalJson`, `cardVersion`, `deriveCurrentCards`, limits (`MAX_CARDS = 500`, `MAX_FRONT_CHARS = 1000`, `MAX_BACK_CHARS = 2000`, `MAX_SOURCE_PAGE = 1000`).
-- `src/logic/cardScheduler.ts`: `scheduleCard`, ladder intervals (`LADDER_DAYS = [1, 3, 7, 16, 35, 75, 150, 180]`), `SCHEDULER_VERSION = 'simple-v1'`.
+- `src/logic/cardScheduler.ts`: `scheduleCard`, `isIsoInstant`, ladder intervals (`LADDER_DAYS = [1, 3, 7, 16, 35, 75, 150, 180]`), `SCHEDULER_VERSION = 'simple-v1'`.
 - `src/logic/localDay.ts`: `nextLocalMidnightUtc`, `localDate`.
 
 ### C. Database Reads with Real SQL Batching (`src-tauri/src/card_reviews.rs` & driver)
 Implement real SQL batching across candidate boundaries:
 
 1. **`get_library_review_due` Pipeline:**
-   - **Candidate Scan:** Keyset scan on `study_materials` joined with `ai_study_sets` where `flashcards_json IS NOT NULL AND flashcards_json != '[]' AND flashcards_json != ''`, ordered by `CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC` with `LIMIT candidateBatchBudget + 1`.
-   - **Preflight Byte Check:** Execute `SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (...)`. Admit candidates in candidate order up to `maxBatchRawJsonBytesBudget` (2 MiB). Single-set lane allows admission if candidate 0 exceeds budget.
-   - **Raw Cards Fetch:** Fetch raw cards only for admitted candidates: `SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?`. Stop if accumulating cards exceeds `maxBatchCardsBudget` (2,500 cards).
+   - **Candidate Keyset Scan:** Scan `study_materials` joined with `ai_study_sets` where `flashcards_json IS NOT NULL AND flashcards_json != '[]' AND flashcards_json != ''`, ordered by `CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC` with `LIMIT candidateBatchBudget + 1`.
+   - **Preflight Byte Check:** Execute `SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (...)`.
+     - If `byte_len > ABSOLUTE_MAX_SINGLE_SET_RAW_JSON_BYTES` (8 MiB), do NOT transfer raw JSON; report in `issues: [{ materialId, title, code: 'PAYLOAD_TOO_LARGE', rawBytes, allowedBytes, inspectionTarget }]`. Advance keyset continuation past this reported candidate so later materials remain discoverable.
+     - Enforce conservative card reservation before reading candidate $i > 0$: if `cumulativeCards + 500 > maxBatchCardsBudget`, break and retain candidate for continuation. Single-set lane allows admitting set 0 if under 8 MiB.
+   - **Raw Cards Fetch:** Fetch raw cards only for admitted candidates: `SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?`.
    - **Batched Review State:** Fetch review state rows for derived versions: `SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (...)`.
    - **Filters:** Apply `statusFilter` (`all`, `due_today`, `new_only`) and topic filter after deriving current card counts and before urgency ranking.
    - **In-Memory Urgency Ranking:** Sort actionable materials by Bucket 0 (Again due) -> Bucket 1 (Day due) -> Bucket 2 (New only) -> Tie-breakers (`next_up` priority, earliest due instant, title, ID).
-   - **Pending Stream Revalidation & Continuation:** Carry leftover undisplayed material IDs (`remIds: [...]`) in the cursor. On continuation, validate query/clock ownership (`STALE_CURSOR`), track evaluated vs discarded candidates (`consumedCount`), and re-query live database state for those IDs, dropping deleted materials or materials whose flashcards were cleared without duplicating subsequent live rows.
+   - **Strict Cursor Schema & Stream Revalidation:** Continuation cursor validated before SQL: requires `v === 1`, `type === 'due'`, `ctx`, boolean `isExhausted`, unique string IDs in `remIds` array $\le 250$, keyset boundary `lc` ($\le 64$ chars), integer rank `lp`, and canonical ISO `lu`. Carry leftover undisplayed material IDs (`remIds: [...]`) in the cursor. On continuation, validate ownership (`STALE_CURSOR`), track evaluated vs discarded candidates (`consumedCount`), and re-query live database state for those IDs.
 2. **`get_library_recent_reviews` Pipeline:**
    - **Event Keyset Query:** Keyset query on `card_review_events` joined with items, versions, and study materials, filtered by `materialId` and `topic` in SQL before LIMIT, ordered by `e.reviewed_at DESC, e.id DESC` with `LIMIT limit + 1`.
-   - **Batched Distinct Materials:** Read `ai_study_sets.flashcards_json` for distinct material IDs on this page: `SELECT source_material_id, flashcards_json FROM ai_study_sets WHERE source_material_id IN (...)`.
-   - Compare derived current version ID against event version ID to assign `isEarlierVersion` and `contentStatus` (`current`, `earlier`, `valid_empty`, `unavailable`, `malformed`).
-   - Validate cursor ownership context: require `ctx: { materialId, topic }`; throw `STALE_CURSOR` on mismatched filters.
+   - **Preflight Byte Check & Bounded Raw Cards:** Preflight byte lengths via `SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (...)`. Apply absolute 8 MiB bound and 2 MiB batch raw JSON budget before reading individual sets. Oversize or unbudgeted materials remain deferred (`contentStatus: "pending"`, `isEarlierVersion: null`) without wire transfer.
+   - **History Pending Resolution:** Support `enrichMaterialIds` option to enrich deferred materials individually on subsequent calls without losing, reordering, or duplicating event stream pagination.
+   - **Strict Cursor Schema:** Validated before SQL: requires `v === 1`, `type === 'history'`, `ctx`, canonical ISO `t` (`isIsoInstant(t)`), and non-empty string `id` ($\le 64$ chars).
+   - **Scheduler Ownership Validation:** Pass event's actual `scheduler_version` into `validateScheduleState(next_state_json, row.scheduler_version)`. Unsupported scheduler versions yield null validated schedule fields. Validate canonical ISO timestamps, non-negative integer reps/lapses, and ladder bounds.
 
 ### D. UI State Controller (`src/pages/StudyLibrary/useDeferredReviewRead.ts`)
 Implement `DeferredReadController` pattern:
@@ -196,7 +211,7 @@ Implement `DeferredReadController` pattern:
 1. **Tabs in `StudyLibrary.tsx`:** Synchronize URL search params (`tab=library`, `tab=due`, `tab=history`). Support `/study/history` route redirect.
 2. **Review Due View (`StudyLibraryReviewDue.tsx`):**
    - Render urgency-ranked list of actionable study materials.
-   - Display page-local counts and candidate scan progress indicator.
+   - Display page-local counts, candidate scan progress indicator, and explicit issue notifications for reported oversize sets.
    - Provide "Load more" button disabled while loading.
    - Include topic filter chips and status filter dropdown (`All actionable`, `Due today`, `New only`).
 3. **Recent Reviews View (`StudyLibraryHistory.tsx`):**
@@ -210,16 +225,17 @@ Implement `DeferredReadController` pattern:
 
 ## 4. Verification & Acceptance Criteria
 
-1. **All Five Reviewer Diagnostics Must Pass Unchanged (56 / 56 total):**
+1. **All Six Reviewer Diagnostics Must Pass Unchanged (67 / 67 total):**
    - Diagnostic 1 (`docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs`): 9/9 pass.
    - Diagnostic 2 (`docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs`): 12/12 pass.
    - Diagnostic 3 (`docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs`): 16/16 pass.
    - Diagnostic 4 (`docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs`): 11/11 pass.
    - Diagnostic 5 (`docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs`): 8/8 pass.
-2. **Comprehensive Proof Test Suite (`proof.test.mjs`):** 40 / 40 pass across 12 test suites.
+   - Diagnostic 6 (`docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs`): 11/11 pass.
+2. **Comprehensive Proof Test Suite (`proof.test.mjs`):** 46 / 46 pass across 13 test suites.
 3. **Reliable Mutation Verification:**
    - Isolated child process runs kill all 4 semantic mutants with `AssertionError`.
    - Survival control confirms verifier fails when mutant assertions are disabled.
-4. **Resource Limit Verification:** Card budget (2,500), byte ceiling (2 MiB), and absolute single-set bound (8 MiB) strictly enforced via preflight.
+4. **Resource Limit Verification:** Card budget (2,500), byte ceiling (2 MiB), and absolute single-set bound (8 MiB) strictly enforced via preflight with conservative 500-card reservation before parse.
 5. **Cursor Bounds & Validation:** 32 KiB maximum cursor length supporting 250 candidate IDs; strict `v: 1` versioning and mandatory context ownership enforced before SQL.
 6. **Offline & Invariant Integrity:** Zero provider/network calls; Schema 12 preserved without migrations; reads remain strictly read-only.
