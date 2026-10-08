@@ -1,0 +1,170 @@
+{
+  "description": "Actual production reader statement counts and in-process medians (7 runs) on node:sqlite; synthetic 5,000 materials x 12 cards, 10,000 rating events. Desktop IPC/WebKit unmeasured.",
+  "node": "v22.23.3",
+  "calls": [
+    {
+      "name": "due_first_page",
+      "statements": 170,
+      "medianMs": 39.55,
+      "summary": {
+        "scannedCandidates": 167,
+        "evaluatedCandidates": 167,
+        "attemptedCards": 2004,
+        "evaluatedCards": 2004,
+        "rawReads": 167,
+        "rawBytesTransferred": 127087,
+        "actionableCount": 50,
+        "againCount": 0,
+        "dayCount": 0,
+        "totalDueCount": 0,
+        "newCount": 590,
+        "isComplete": false,
+        "isPageLocal": true,
+        "issues": []
+      }
+    },
+    {
+      "name": "due_continuation_page",
+      "statements": 150,
+      "medianMs": 14.23,
+      "summary": {
+        "scannedCandidates": 50,
+        "evaluatedCandidates": 50,
+        "attemptedCards": 600,
+        "evaluatedCards": 600,
+        "rawReads": 50,
+        "rawBytesTransferred": 38050,
+        "actionableCount": 50,
+        "againCount": 0,
+        "dayCount": 0,
+        "totalDueCount": 0,
+        "newCount": 590,
+        "isComplete": false,
+        "isPageLocal": true,
+        "issues": []
+      }
+    },
+    {
+      "name": "due_status_due_today",
+      "statements": 170,
+      "medianMs": 39.73,
+      "summary": {
+        "scannedCandidates": 167,
+        "evaluatedCandidates": 167,
+        "attemptedCards": 2004,
+        "evaluatedCards": 2004,
+        "rawReads": 167,
+        "rawBytesTransferred": 127087,
+        "actionableCount": 0,
+        "againCount": 0,
+        "dayCount": 0,
+        "totalDueCount": 0,
+        "newCount": 0,
+        "isComplete": false,
+        "isPageLocal": true,
+        "issues": []
+      }
+    },
+    {
+      "name": "due_topic_weather",
+      "statements": 170,
+      "medianMs": 37.87,
+      "summary": {
+        "scannedCandidates": 167,
+        "evaluatedCandidates": 167,
+        "attemptedCards": 2004,
+        "evaluatedCards": 2004,
+        "rawReads": 167,
+        "rawBytesTransferred": 127087,
+        "actionableCount": 50,
+        "againCount": 0,
+        "dayCount": 0,
+        "totalDueCount": 0,
+        "newCount": 590,
+        "isComplete": false,
+        "isPageLocal": true,
+        "issues": []
+      }
+    },
+    {
+      "name": "history_first_page",
+      "statements": 22,
+      "medianMs": 14.34,
+      "summary": {
+        "eventsReturned": 20,
+        "rawReads": 20,
+        "rawBytesTransferred": 15220,
+        "attemptedCards": 240,
+        "evaluatedCards": 240,
+        "maxBatchCardsBudget": 2500,
+        "maxBatchRawJsonBytesBudget": 2097152,
+        "isPageLocal": true
+      }
+    },
+    {
+      "name": "history_next_page",
+      "statements": 22,
+      "medianMs": 15.84,
+      "summary": {
+        "eventsReturned": 20,
+        "rawReads": 20,
+        "rawBytesTransferred": 15220,
+        "attemptedCards": 240,
+        "evaluatedCards": 240,
+        "maxBatchCardsBudget": 2500,
+        "maxBatchRawJsonBytesBudget": 2097152,
+        "isPageLocal": true
+      }
+    },
+    {
+      "name": "history_topic_filter",
+      "statements": 22,
+      "medianMs": 7.52,
+      "summary": {
+        "eventsReturned": 20,
+        "rawReads": 20,
+        "rawBytesTransferred": 15220,
+        "attemptedCards": 240,
+        "evaluatedCards": 240,
+        "maxBatchCardsBudget": 2500,
+        "maxBatchRawJsonBytesBudget": 2097152,
+        "isPageLocal": true
+      }
+    },
+    {
+      "name": "history_enrichment_only",
+      "statements": 4,
+      "medianMs": 0.46,
+      "summary": {
+        "eventsReturned": 0,
+        "rawReads": 2,
+        "rawBytesTransferred": 1522,
+        "attemptedCards": 24,
+        "evaluatedCards": 24,
+        "maxBatchCardsBudget": 2500,
+        "maxBatchRawJsonBytesBudget": 2097152,
+        "isPageLocal": true
+      }
+    },
+    {
+      "name": "history_combined_page_plus_targets",
+      "statements": 25,
+      "medianMs": 14.92,
+      "summary": {
+        "eventsReturned": 20,
+        "rawReads": 21,
+        "rawBytesTransferred": 15981,
+        "attemptedCards": 252,
+        "evaluatedCards": 252,
+        "maxBatchCardsBudget": 2500,
+        "maxBatchRawJsonBytesBudget": 2097152,
+        "isPageLocal": true
+      }
+    }
+  ],
+  "fullDueTraversal": {
+    "pages": 120,
+    "statements": 15590,
+    "totalMs": 2128.6
+  }
+}

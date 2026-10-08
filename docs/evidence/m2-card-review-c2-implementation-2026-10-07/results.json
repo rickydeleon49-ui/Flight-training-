@@ -1,0 +1,183 @@
+{
+  "assignment": "docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_START_PROMPT_2026-10-07.md",
+  "owner_approval": "OWNER_APPROVAL.md",
+  "branch": "codex/m2-card-review-c2-implementation",
+  "base": "cc84964737067cfa5fa5ed20ddf125a74b10b003",
+  "head": "cc84964737067cfa5fa5ed20ddf125a74b10b003",
+  "staged": false,
+  "state": "implemented, uncommitted, pending independent source review",
+  "gate_attempt1": {
+    "status": "passed (superseded: adapter test added afterwards)",
+    "npm_test": {
+      "passed": 2796,
+      "skipped": 5
+    },
+    "cargo_test": {
+      "passed": 420,
+      "ignored": 6
+    }
+  },
+  "gate_attempt2": {
+    "status": "passed",
+    "focused_vitest": {
+      "passed": 100,
+      "skipped": 1
+    },
+    "focused_native": {
+      "passed": 31
+    },
+    "npm_test": {
+      "files": 101,
+      "passed": 2799,
+      "skipped": 5,
+      "failed": 0,
+      "unhandled": 0
+    },
+    "cargo_test": {
+      "passed": 420,
+      "ignored": 6
+    },
+    "typecheck": 0,
+    "build": 0,
+    "clippy": 0,
+    "cargo_fmt": 0,
+    "cargo_lock": 0,
+    "hygiene": 0,
+    "preserved": 0
+  },
+  "mutations": [
+    {
+      "id": "E1",
+      "defect": "paused/flagged cards counted as due or new (C1 semantics lost)",
+      "file": "src/logic/cardLibrary.ts",
+      "command": "npx vitest run src/logic/cardLibrary.test.ts src/data/cardLibraryReader.test.ts -t 'paused|follows the C1'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "ab376de93192968237978f84d9a35638d96ba802f89a823c2247e8c2ec34796b"
+    },
+    {
+      "id": "E2",
+      "defect": "Again cards judged by the end-of-day boundary",
+      "file": "src/logic/cardLibrary.ts",
+      "command": "npx vitest run src/data/cardLibraryReader.test.ts -t 'exact instant'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "ab376de93192968237978f84d9a35638d96ba802f89a823c2247e8c2ec34796b"
+    },
+    {
+      "id": "R1",
+      "defect": "a failed parse refunds its work reservation",
+      "file": "src/data/cardLibraryReader.ts",
+      "command": "npx vitest run src/data/cardLibraryReader.test.ts -t 'work reservations'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "5159b2769a146a91bb2854df5304add472149b6d0209e60b2ef5f96f725d4410"
+    },
+    {
+      "id": "R2",
+      "defect": "leftover candidates re-shown without revalidating eligibility",
+      "file": "src/data/cardLibraryReader.ts",
+      "command": "npx vitest run src/data/cardLibraryReader.test.ts -t 'revalidated'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "5159b2769a146a91bb2854df5304add472149b6d0209e60b2ef5f96f725d4410"
+    },
+    {
+      "id": "C1",
+      "defect": "controller ownership ignores the generation",
+      "file": "src/pages/StudyLibrary/deferredReviewRead.ts",
+      "command": "npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "0743cd8d2a7cf93a023becdda8a0a5aedaaaf480248f6507a8bf7dc264154ace"
+    },
+    {
+      "id": "C2",
+      "defect": "Retry dispatches live state instead of the failed snapshot",
+      "file": "src/pages/StudyLibrary/deferredReviewRead.ts",
+      "command": "npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts -t 'Retry repeats'",
+      "exit": 0,
+      "killed": false,
+      "restored": true,
+      "sha256": "0743cd8d2a7cf93a023becdda8a0a5aedaaaf480248f6507a8bf7dc264154ace"
+    },
+    {
+      "id": "C3",
+      "defect": "Retry does nothing (failed read never repeated)",
+      "file": "src/pages/StudyLibrary/deferredReviewRead.ts",
+      "command": "npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts -t 'Retry repeats|most recent live failure'",
+      "exit": 1,
+      "killed": true,
+      "restored": true,
+      "sha256": "0743cd8d2a7cf93a023becdda8a0a5aedaaaf480248f6507a8bf7dc264154ace"
+    },
+    {
+      "id": "N1",
+      "defect": "native reader counts paused/flagged cards",
+      "file": "src-tauri/src/card_library.rs",
+      "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml card_library::tests::shared_card_library_contract",
+      "exit": 101,
+      "killed": true,
+      "restored": true,
+      "sha256": "7d761a8c6388885fd5079e694e8352f5074fd4c73bf35f5419a5b526a72dc35b"
+    }
+  ],
+  "measurements": {
+    "due_first_page": {
+      "statements": 170,
+      "medianMs": 39.55
+    },
+    "due_continuation_page": {
+      "statements": 150,
+      "medianMs": 14.23
+    },
+    "due_status_due_today": {
+      "statements": 170,
+      "medianMs": 39.73
+    },
+    "due_topic_weather": {
+      "statements": 170,
+      "medianMs": 37.87
+    },
+    "history_first_page": {
+      "statements": 22,
+      "medianMs": 14.34
+    },
+    "history_next_page": {
+      "statements": 22,
+      "medianMs": 15.84
+    },
+    "history_topic_filter": {
+      "statements": 22,
+      "medianMs": 7.52
+    },
+    "history_enrichment_only": {
+      "statements": 4,
+      "medianMs": 0.46
+    },
+    "history_combined_page_plus_targets": {
+      "statements": 25,
+      "medianMs": 14.92
+    },
+    "full_due_traversal": {
+      "pages": 120,
+      "statements": 15590,
+      "totalMs": 2128.6
+    }
+  },
+  "shared_fixture": {
+    "path": "src-tauri/fixtures/card-library/cases.json",
+    "calls": 35,
+    "engines": [
+      "rusqlite (native)",
+      "node:sqlite",
+      "sql.js",
+      "select fallback"
+    ]
+  }
+}

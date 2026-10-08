@@ -1,0 +1,53 @@
+mutation R1: a failed parse refunds its work reservation
+file src/data/cardLibraryReader.ts
+$ npx vitest run src/data/cardLibraryReader.test.ts -t 'work reservations'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+ ❯ src/data/cardLibraryReader.test.ts (32 tests | 2 failed | 30 skipped) 97ms
+     × work reservations: a failed parse stays charged, a valid set reconciles, and the budget stops before the next read 23ms
+     × work reservations: a failed parse stays charged, a valid set reconciles, and the budget stops before the next read 73ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 30 skipped (32)
+   Start at  23:35:26
+   Duration  335ms (transform 117ms, setup 0ms, import 158ms, tests 97ms, environment 0ms)
+
+(node:30944) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on node > work reservations: a failed parse stays charged, a valid set reconciles, and the budget stops before the next read
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on sqljs > work reservations: a failed parse stays charged, a valid set reconciles, and the budget stops before the next read
+AssertionError: expected { scannedCandidates: 3, …(13) } to match object { rawReads: 2, …(4) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "attemptedCards": 507,
+-   "evaluatedCandidates": 1,
+-   "evaluatedCards": 7,
+-   "rawReads": 2,
+-   "scannedCandidates": 2,
++   "attemptedCards": 10,
++   "evaluatedCandidates": 2,
++   "evaluatedCards": 10,
++   "rawReads": 3,
++   "scannedCandidates": 3,
+  }
+
+ ❯ src/data/cardLibraryReader.test.ts:242:28
+    240|     const { query, rawReads } = counting(db);
+    241|     const result = await readLibraryReviewDue(query, { ...DUE, maxBatc…
+    242|     expect(result.summary).toMatchObject({ rawReads: 2, attemptedCards…
+       |                            ^
+    243|     expect(rawReads()).toBe(2);
+    244|     expect(result.materials.map((m) => m.materialId)).toEqual(["ok"]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+exit 1

@@ -1,0 +1,21 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/logic/cardLibrary.test.ts src/data/cardLibraryReader.test.ts src/data/cardLibraryParity.test.ts src/data/cardLibraryTauri.test.ts src/pages/StudyLibrary/deferredReviewRead.test.ts src/pages/StudyLibrary/StudyLibraryReviews.test.ts src/pages/StudyLibrary/StudyLibrary.test.ts src/pages/StudyLibrary/CardReviewPanel.test.ts src/pages/StudyLibrary/useCardReview.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-review/Flight-training-
+
+(node:32496) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32494) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32495) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32497) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  8 passed (8)
+      Tests  100 passed | 1 skipped (101)
+   Start at  23:41:58
+   Duration  5.88s (transform 1.30s, setup 0ms, import 1.98s, tests 14.36s, environment 916ms)
+

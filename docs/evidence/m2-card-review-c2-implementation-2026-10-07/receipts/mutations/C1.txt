@@ -1,0 +1,98 @@
+mutation C1: controller ownership ignores the generation
+file src/pages/StudyLibrary/deferredReviewRead.ts
+$ npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+ ❯ src/pages/StudyLibrary/deferredReviewRead.test.ts (10 tests | 2 failed) 738ms
+     × an invalidated read can never publish, record a failure or release the newer lock 3ms
+     × an obsolete synchronous reader throw cannot clear a newer held operation 1ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  23:35:27
+   Duration  860ms (transform 33ms, setup 0ms, import 40ms, tests 738ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/deferredReviewRead.test.ts > [c2] owned page operations > an invalidated read can never publish, record a failure or release the newer lock
+AssertionError: expected { generation: 1, …(12) } to match object { rows: [], loading: 'page', …(2) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": null,
+    "failedRead": null,
+-   "loading": "page",
+-   "rows": [],
++   "loading": null,
++   "rows": [
++     {
++       "againCount": 0,
++       "cardCount": 1,
++       "dayCount": 0,
++       "earliestDueAt": null,
++       "materialId": "stale",
++       "newCount": 1,
++       "priority": "later",
++       "retainedCardCount": 0,
++       "title": "stale",
++       "topic": "general",
++       "totalDueCount": 0,
++       "updatedAt": "2026-10-06T16:00:00.000Z",
++     },
++   ],
+  }
+
+ ❯ src/pages/StudyLibrary/deferredReviewRead.test.ts:116:34
+    114|     calls[0]!.settle.reject(new Error("too late"));
+    115|     await Promise.resolve();
+    116|     expect(stream.getSnapshot()).toMatchObject({ rows: [], loading: "p…
+       |                                  ^
+    117|     expect(stream.busy).toBe(true);
+    118|     calls[1]!.settle.resolve(duePage(["fresh"], null));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/deferredReviewRead.test.ts > [c2] owned page operations > an obsolete synchronous reader throw cannot clear a newer held operation
+AssertionError: expected { generation: 1, …(12) } to match object { loading: 'page', error: null, …(1) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": null,
+-   "failedRead": null,
+-   "loading": "page",
++   "error": Error {
++     "message": "synchronous failure of the obsolete read",
++   },
++   "failedRead": {
++     "cursor": null,
++     "generation": 0,
++     "kind": "page",
++     "options": {
++       "nextLocalMidnightUtc": "2026-10-07T05:00:00.000Z",
++       "nowUtc": "2026-10-06T16:00:00.000Z",
++       "statusFilter": "all",
++     },
++   },
++   "loading": null,
+  }
+
+ ❯ src/pages/StudyLibrary/deferredReviewRead.test.ts:139:34
+    137|     );
+    138|     await stream.loadNextPage();
+    139|     expect(stream.getSnapshot()).toMatchObject({ loading: "page", erro…
+       |                                  ^
+    140|     expect(stream.busy).toBe(true);
+    141|     held.resolve(duePage(["kept"], null));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit 1

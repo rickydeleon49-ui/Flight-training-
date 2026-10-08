@@ -1,0 +1,19 @@
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/.codex/worktrees/m2-card-c2-source-review/Flight-training-/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.23s
+     Running unittests src/lib.rs (/Users/rickymac/code/Flight-training-c2-implementation/src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 5 tests
+test card_library::tests::inspection_targets_match_encode_uri_component ... ok
+test card_library::tests::every_native_message_is_the_typescript_allowlisted_message ... ok
+test card_library::tests::schedule_validation_owns_the_event_scheduler_version ... ok
+test card_library::tests::reads_refuse_before_readiness_and_never_open_for_writing ... ok
+test card_library::tests::shared_card_library_contract_native_outcomes ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 421 filtered out; finished in 1.91s
+
+     Running unittests src/main.rs (/Users/rickymac/code/Flight-training-c2-implementation/src-tauri/target/debug/deps/her_flight_deck-6bb5cae655f02641)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

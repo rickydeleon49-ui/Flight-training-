@@ -764,3 +764,8 @@ Automatic splitting in `pdf.rs` uses `delete_pages_batch`, which batches page-tr
 ## Living macOS parity tracker
 
 Track Mac implementation follow-ups, feature parity, installed-app checks, and performance evidence in [MAC_PARITY_CHECKLIST.md](docs/MAC_PARITY_CHECKLIST.md). Update it when shared or Windows work affects Mac behavior. Unverified Mac checks remain open; shared tests and package builds do not establish installed-app readiness.
+
+
+## 2026-10-07 — C2 production source review
+
+C2-D1–D9 approval is recorded; source remains uncommitted in the isolated implementation checkout. Independent review requests C2SRC-R1 (same-count/timestamp content invalidation) and C2SRC-R2 (open history inspection provenance). Existing affected frontend tests: 100 passed / 1 skipped; typecheck clean; five focused native tests passed. Three frozen UI diagnostics fail by assertion. Source is not accepted. See [source review](docs/M2_CARD_REVIEW_C2_SOURCE_REVIEW_2026-10-07.md) and [correction prompt](docs/M2_CARD_REVIEW_C2_SOURCE_CORRECTIONS_PROMPT_2026-10-07.md).

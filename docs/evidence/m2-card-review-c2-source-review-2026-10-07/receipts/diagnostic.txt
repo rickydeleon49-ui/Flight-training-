@@ -1,0 +1,936 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-review/Flight-training-
+
+(node:33231) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts (3 tests | 3 failed) 2292ms
+     × [C2SRC-R1 due] same-count same-timestamp replacement invalidates loaded counts 1098ms
+     × [C2SRC-R1 history] same-count same-timestamp replacement invalidates provenance 1098ms
+     × [C2SRC-R2] an inspection opened during version checking reconciles with its completed result 96ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R1 due] same-count same-timestamp replacement invalidates loaded counts
+TestingLibraryElementError: Unable to find an element with the text: 2 new cards. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mStudy Library[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mYour training binder — notes, handouts, worksheets and what to do with them.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--wrap"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study/history"[39m
+        [36m>[39m
+          [0mPractice history[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.6"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 4.5h14v10L14 20H5z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 14.5h-5v5.4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8.5 9h7M8.5 12.5h4.5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Import study packet…[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14M5 12h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add material[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Study Library views"[39m
+      [33mclass[39m=[32m"library-tabs"[39m
+      [33mrole[39m=[32m"tablist"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-library"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-library"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mLibrary[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-due"[39m
+        [33maria-selected[39m=[32m"true"[39m
+        [33mclass[39m=[32m"library-tab is-active"[39m
+        [33mid[39m=[32m"library-tab-due"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mReview due[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-history"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-history"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mHistory[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-labelledby[39m=[32m"library-tab-due"[39m
+      [33mid[39m=[32m"library-panel-due"[39m
+      [33mrole[39m=[32m"tabpanel"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"review-due-title"[39m
+        [33mclass[39m=[32m"stack stack--4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between row--wrap"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"section-title"[39m
+              [33mid[39m=[32m"review-due-title"[39m
+            [36m>[39m
+              [0mReview due[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"small muted"[39m
+            [36m>[39m
+              [0mFlashcards ready now, most urgent first. Open one material to review its cards.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCheck again[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap library-review__filters"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Which cards"[39m
+            [33mclass[39m=[32m"filter-chips"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"filter-chip is-active"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAll actionable[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"filter-chip"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mDue today[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"filter-chip"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mNew only[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Filter review due by topic"[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mstyle[39m=[32m"width: auto;"[39m
+          [36m>[39m
+            [36m<option[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mStudy Library[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mYour training binder — notes, handouts, worksheets and what to do with them.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--wrap"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study/history"[39m
+        [36m>[39m
+          [0mPractice history[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.6"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 4.5h14v10L14 20H5z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 14.5h-5v5.4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8.5 9h7M8.5 12.5h4.5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Import study packet…[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14M5 12h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add material[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Study Library views"[39m
+      [33mclass[39m=[32m"library-tabs"[39m
+      [33mrole[39m=[32m"tablist"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-library"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-library"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mLibrary[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-due"[39m
+        [33maria-selected[39m=[32m"true"[39m
+        [33mclass[39m=[32m"library-tab is-active"[39m
+        [33mid[39m=[32m"library-tab-due"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mReview due[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-history"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-history"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mHistory[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-labelledby[39m=[32m"library-tab-due"[39m
+      [33mid[39m=[32m"library-panel-due"[39m
+      [33mrole[39m=[32m"tabpanel"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"review-due-title"[39m
+        [33mclass[39m=[32m"stack stack--4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between row--wrap"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"section-title"[39m
+              [33mid[39m=[32m"review-due-title"[39m
+            [36m>[39m
+              [0mReview due[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"small muted"[39m
+            [36m>[39m
+              [0mFlashcards ready now, most urgent first. Open one material to review its cards.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCheck again[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap library-review__filters"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Which cards"[39m
+            [33mclass[39m=[32m"filter-chips"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"filter-chip is-active"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAll actionable[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"filter-chip"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mDue today[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"filter-chip"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mNew only[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Filter review due by topic"[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mstyle[39m=[32m"width: auto;"[39m
+          [36m>[39m
+            [36m<option[39m
+      ...
+ ❯ waitForWrapper ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts:152:25
+    150|     });
+    151|     expect(actual.materials[0]?.newCount).toBe(2);
+    152|     expect(await screen.findByText("2 new cards")).toBeTruthy();
+       |                         ^
+    153|   });
+    154|   it("[C2SRC-R1 history] same-count same-timestamp replacement invalid…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R1 history] same-count same-timestamp replacement invalidates provenance
+TestingLibraryElementError: Unable to find an element with the text: Earlier version of these cards. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mStudy Library[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mYour training binder — notes, handouts, worksheets and what to do with them.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--wrap"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study/history"[39m
+        [36m>[39m
+          [0mPractice history[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.6"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 4.5h14v10L14 20H5z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 14.5h-5v5.4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8.5 9h7M8.5 12.5h4.5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Import study packet…[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14M5 12h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add material[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Study Library views"[39m
+      [33mclass[39m=[32m"library-tabs"[39m
+      [33mrole[39m=[32m"tablist"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-library"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-library"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mLibrary[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-due"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-due"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mReview due[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-history"[39m
+        [33maria-selected[39m=[32m"true"[39m
+        [33mclass[39m=[32m"library-tab is-active"[39m
+        [33mid[39m=[32m"library-tab-history"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mHistory[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-labelledby[39m=[32m"library-tab-history"[39m
+      [33mid[39m=[32m"library-panel-history"[39m
+      [33mrole[39m=[32m"tabpanel"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"card-history-title"[39m
+        [33mclass[39m=[32m"stack stack--4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between row--wrap"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"section-title"[39m
+              [33mid[39m=[32m"card-history-title"[39m
+            [36m>[39m
+              [0mCard review history[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"small muted"[39m
+            [36m>[39m
+              [0mEvery flashcard rating, newest first. [0m
+              [36m<a[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/study/history"[39m
+              [36m>[39m
+                [0mPractice test history[0m
+              [36m</a>[39m
+              [0m is kept separately.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRefresh[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap library-review__filters"[39m
+        [36m>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Filter history by material"[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mstyle[39m=[32m"width: auto; max-width: 100%;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mEvery material[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"m1"[39m
+            [36m>[39m
+              [0mWeather basics[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Filter history by topic"[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mstyle[39m=[32m"width: auto;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mAny topic[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"weather"[39m
+...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mStudy Library[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mYour training binder — notes, handouts, worksheets and what to do with them.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--wrap"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study/history"[39m
+        [36m>[39m
+          [0mPractice history[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.6"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 4.5h14v10L14 20H5z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 14.5h-5v5.4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8.5 9h7M8.5 12.5h4.5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Import study packet…[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14M5 12h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add material[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Study Library views"[39m
+      [33mclass[39m=[32m"library-tabs"[39m
+      [33mrole[39m=[32m"tablist"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-library"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-library"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mLibrary[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-due"[39m
+        [33maria-selected[39m=[32m"false"[39m
+        [33mclass[39m=[32m"library-tab"[39m
+        [33mid[39m=[32m"library-tab-due"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mReview due[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"library-panel-history"[39m
+        [33maria-selected[39m=[32m"true"[39m
+        [33mclass[39m=[32m"library-tab is-active"[39m
+        [33mid[39m=[32m"library-tab-history"[39m
+        [33mrole[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mHistory[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-labelledby[39m=[32m"library-tab-history"[39m
+      [33mid[39m=[32m"library-panel-history"[39m
+      [33mrole[39m=[32m"tabpanel"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"card-history-title"[39m
+        [33mclass[39m=[32m"stack stack--4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between row--wrap"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"section-title"[39m
+              [33mid[39m=[32m"card-history-title"[39m
+            [36m>[39m
+              [0mCard review history[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"small muted"[39m
+            [36m>[39m
+              [0mEvery flashcard rating, newest first. [0m
+              [36m<a[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/study/history"[39m
+              [36m>[39m
+                [0mPractice test history[0m
+              [36m</a>[39m
+              [0m is kept separately.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRefresh[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap library-review__filters"[39m
+        [36m>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Filter history by material"[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mstyle[39m=[32m"width: auto; max-width: 100%;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mEvery material[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"m1"[39m
+            [36m>[39m
+              [0mWeather basics[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Filter history by topic"[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mstyle[39m=[32m"width: auto;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mAny topic[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"weather"[39m
+...
+ ❯ waitForWrapper ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts:166:25
+    164|       }));
+    165|     });
+    166|     expect(await screen.findByText("Earlier version of these cards")).…
+       |                         ^
+    167|   });
+    168|   it("[C2SRC-R2] an inspection opened during version checking reconcil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R2] an inspection opened during version checking reconciles with its completed result
+TestingLibraryElementError: Unable to find an element with the text: Not checked against the current cards yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_12_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_12_"[39m
+      [36m>[39m
+        [0mCard as you reviewed it[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mFirst · card 1[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"eyebrow"[39m
+        [36m>[39m
+          [0mQuestion[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"ai-copy"[39m
+        [36m>[39m
+          [0mA question 0[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"eyebrow"[39m
+        [36m>[39m
+          [0mAnswer[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"ai-copy"[39m
+        [36m>[39m
+          [0mA answer 0[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"small muted"[39m
+      [36m>[39m
+        [0mRated [0m
+        [0mGood[0m
+        [0m on [0m
+        [0m04/10/2026, 08:00:00[0m
+        [0m, back in 1 day[0m
+        [0m.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"small"[39m
+      [36m>[39m
+        [0mNot checked against the current cards yet[0m
+        [0m.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny dim"[39m
+      [36m>[39m
+        [0mThis is a read-only record. Your saved cards and their reviews are not changed here.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mdata-discover[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/study/a"[39m
+    [36m>[39m
+      [0mOpen material[0m
+    [36m</a>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mClose[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+ ❯ Object.getElementError ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts:186:27
+    184|     fireEvent.click(screen.getByRole("button", { name: "View card: A q…
+    185|     const dialog = await screen.findByRole("dialog", { name: "Card as …
+    186|     expect(within(dialog).getByText("Not checked against the current c…
+       |                           ^
+    187|     await act(async () => { release(); });
+    188|     await waitFor(() => expect(within(screen.getByRole("list", { name:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  23:49:12
+   Duration  2.98s (transform 277ms, setup 0ms, import 382ms, tests 2.29s, environment 223ms)
+

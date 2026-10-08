@@ -137,3 +137,8 @@ Follow the owner's [development and review workflow](PROJECT_DEVELOPMENT_REVIEW_
 Research star counts, license observations and peer ranges are October 1 snapshots, not current-version guarantees. Re-check the selected version and source boundary before taking code. Follow ROADMAP and the existing data/security guarantees; this index does not authorize release or new migrations.
 
 [Publication contents and local validation receipt](SHARED_HANDOFF_PUBLICATION_2026-10-02.md).
+
+
+## 2026-10-07 — C2 production source review
+
+C2-D1–D9 approval is recorded; source remains uncommitted in the isolated implementation checkout. Independent review requests C2SRC-R1 (same-count/timestamp content invalidation) and C2SRC-R2 (open history inspection provenance). Existing affected frontend tests: 100 passed / 1 skipped; typecheck clean; five focused native tests passed. Three frozen UI diagnostics fail by assertion. Source is not accepted. See [source review](M2_CARD_REVIEW_C2_SOURCE_REVIEW_2026-10-07.md) and [correction prompt](M2_CARD_REVIEW_C2_SOURCE_CORRECTIONS_PROMPT_2026-10-07.md).

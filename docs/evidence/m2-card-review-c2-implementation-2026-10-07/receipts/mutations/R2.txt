@@ -1,0 +1,44 @@
+mutation R2: leftover candidates re-shown without revalidating eligibility
+file src/data/cardLibraryReader.ts
+$ npx vitest run src/data/cardLibraryReader.test.ts -t 'revalidated'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+ ❯ src/data/cardLibraryReader.test.ts (32 tests | 2 failed | 30 skipped) 121ms
+     × leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once 23ms
+     × leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once 97ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 30 skipped (32)
+   Start at  23:35:26
+   Duration  356ms (transform 117ms, setup 0ms, import 157ms, tests 121ms, environment 0ms)
+
+(node:30964) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on node > leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on sqljs > leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once
+AssertionError: expected [ 'e', 'f' ] to deeply equal [ 'f' ]
+
+- Expected
++ Received
+
+  [
++   "e",
+    "f",
+  ]
+
+ ❯ src/data/cardLibraryReader.test.ts:202:55
+    200|     await act(db, "e", 0, T0, { action: "suspend" });
+    201|     const second = await repo.readReviewDue({ ...DUE, limit: 2, cursor…
+    202|     expect(second.materials.map((m) => m.materialId)).toEqual(["f"]);
+       |                                                       ^
+    203|     expect(second.nextCursor).toBeNull();
+    204|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+exit 1

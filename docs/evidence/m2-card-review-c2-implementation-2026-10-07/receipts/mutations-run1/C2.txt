@@ -1,0 +1,14 @@
+mutation C2: Retry dispatches live state instead of the failed snapshot
+file src/pages/StudyLibrary/deferredReviewRead.ts
+$ npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts -t 'Retry repeats'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 9 skipped (10)
+   Start at  23:34:53
+   Duration  226ms (transform 34ms, setup 0ms, import 42ms, tests 104ms, environment 0ms)
+
+
+exit 0
