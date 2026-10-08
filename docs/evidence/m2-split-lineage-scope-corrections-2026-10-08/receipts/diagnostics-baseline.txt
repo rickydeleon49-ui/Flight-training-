@@ -1,0 +1,107 @@
+✔ [control] valid child mapping remains one-based (0.303ms)
+✔ [control] deleting parent preserves child and provenance (1.416875ms)
+✖ [SL-R2] child page beyond the recorded range must be refused (0.317334ms)
+✖ [SL-R2] SQL must refuse fractional physical page bounds (0.317583ms)
+✖ [SL-R2] SQL must refuse a lineage row without child material identity (0.250916ms)
+✖ [SL-R2] a split child cannot also be its own original root (0.220125ms)
+✖ [SL-R3] disposable database claiming shipped schema must expose actual attempt/state tables (0.180458ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 2
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82.568041
+
+✖ failing tests:
+
+test at docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:10:1
+✖ [SL-R2] child page beyond the recorded range must be refused (0.317334ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:10:80)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:11:1
+✖ [SL-R2] SQL must refuse fractional physical page bounds (0.317583ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:11:96)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:12:1
+✖ [SL-R2] SQL must refuse a lineage row without child material identity (0.250916ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:12:110)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:13:1
+✖ [SL-R2] a split child cannot also be its own original root (0.220125ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:13:99)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:14:1
+✖ [SL-R3] disposable database claiming shipped schema must expose actual attempt/state tables (0.180458ms)
+  AssertionError [ERR_ASSERTION]: actual migration 0011 practice_attempts is missing
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-review-2026-10-08/diagnostics/lineage-review.test.mjs:14:255)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

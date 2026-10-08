@@ -1,0 +1,26 @@
+=== Real Mutation Sensitivity Verification ===
+Original lineageContract.mjs SHA256: 8f1d7aaee2a5616bbebb3c787ed24475be4ab5bd80d6f464a76ad0980f9605aa
+Original candidate_migration_0013.sql SHA256: 5754bb3c0634aa43816ed6d2b7456edec30c3552152936284748b92212b5270a
+
+--- Testing MUTANT-1: Off-by-one arithmetic in composeNestedRanges (omitting - 1) ---
+SUCCESS: MUTANT-1 caught as expected! Exit code: 1
+Matched expected failure: "Composed R start"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-2: Removal of child length upper-bound enforcement in mapChildPageToSource ---
+SUCCESS: MUTANT-2 caught as expected! Exit code: 1
+Matched expected failure: "Missing expected exception"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-3: Removal of TYPEOF integer checks across candidate DDL (reverting to loose SQLite affinity) ---
+SUCCESS: MUTANT-3 caught as expected! Exit code: 1
+Matched expected failure: "Missing expected exception"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-4: Removal of CHECK (material_id != root_material_id) constraint in candidate DDL ---
+SUCCESS: MUTANT-4 caught as expected! Exit code: 1
+Matched expected failure: "Missing expected exception"
+Restoration confirmed exact SHA-256 match.
+
+=== Summary: 4/4 mutations successfully caught and verified ===
+All source files restored to exact baseline byte-for-byte.

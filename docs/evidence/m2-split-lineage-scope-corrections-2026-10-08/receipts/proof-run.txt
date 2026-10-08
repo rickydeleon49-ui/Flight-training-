@@ -1,0 +1,23 @@
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.616209ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds (0.19ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (5.499125ms)
+✔ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.049958ms)
+✔ Contract 5: SHA-256 Content Hashing Determinism (0.200875ms)
+✔ Contract 6: Candidate DDL Constraints Enforce Child Identity and Bounds (4.714584ms)
+✔ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.132208ms)
+✔ Contract 8: Source Version Evaluation through Model Boundary (0.092625ms)
+✔ Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions (4.605917ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.343125ms)
+✔ Contract 11: Atomic Batch Save Refuses Stale Source and Rolls Back on Failure (4.764417ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.094625ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (3.975125ms)
+✔ Contract 14: Disposable Schema Migration, Export/Reopen, and Synthetic File Preservation (7.13625ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.058583ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 126.774625
