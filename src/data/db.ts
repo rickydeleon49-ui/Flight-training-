@@ -61,6 +61,18 @@ export interface SqlDatabase {
   saveCardReviewAtomically?(
     action: import("@/domain/types").CardReviewAction,
   ): Promise<import("@/domain/types").CardReviewResult>;
+  /**
+   * Library-wide Review due page (M2-4 / C2). Read-only; bounded by its
+   * input budgets. Drivers without it fall back to the TypeScript reader
+   * over `select`.
+   */
+  readLibraryReviewDue?(
+    input: import("@/domain/types").LibraryReviewDueInput,
+  ): Promise<import("@/domain/types").LibraryReviewDueResult>;
+  /** Library-wide card review history page or enrichment (M2-4 / C2). Read-only. */
+  readLibraryRecentReviews?(
+    input: import("@/domain/types").LibraryRecentReviewsInput,
+  ): Promise<import("@/domain/types").LibraryRecentReviewsResult>;
 }
 
 export interface PracticeTestSaveOperation {

@@ -402,6 +402,25 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         }),
       );
     },
+    /** Reads only: owned like every other call, never exported or stored. */
+    readLibraryReviewDue(
+      input: import("@/domain/types").LibraryReviewDueInput,
+    ): Promise<import("@/domain/types").LibraryReviewDueResult> {
+      return owner.exclusive(async () => {
+        if (connectionBroken) throw connectionBroken;
+        const { readLibraryReviewDue } = await import("./cardLibraryReader");
+        return readLibraryReviewDue(query, input);
+      });
+    },
+    readLibraryRecentReviews(
+      input: import("@/domain/types").LibraryRecentReviewsInput,
+    ): Promise<import("@/domain/types").LibraryRecentReviewsResult> {
+      return owner.exclusive(async () => {
+        if (connectionBroken) throw connectionBroken;
+        const { readLibraryRecentReviews } = await import("./cardLibraryReader");
+        return readLibraryRecentReviews(query, input);
+      });
+    },
     /** Every acknowledged write is already stored; this re-stores and reports failure. */
     persist(): Promise<void> {
       return owner.exclusive(() => {

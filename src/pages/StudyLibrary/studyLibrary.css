@@ -359,3 +359,55 @@
 .card-review__browse-options { align-items: flex-start; gap: var(--space-2); }
 .card-review__reset { padding-top: var(--space-2); }
 .card-review__wait { color: inherit; opacity: 0.85; }
+
+/* Library-wide card reviews (M2-4 / C2) */
+.library-tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle, var(--category-study-edge));
+  overflow-x: auto;
+}
+.library-tab {
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary, inherit);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.library-tab.is-active {
+  border-bottom-color: currentColor;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.library-tab:focus-visible { outline: 2px solid var(--category-study-edge); outline-offset: 2px; }
+.section-title { margin: 0; font-size: 1.15rem; }
+.library-review__filters { gap: var(--space-3); align-items: center; }
+.library-review__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.library-review__item { padding: var(--space-4); }
+.library-review__issues {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--category-study-edge);
+  border-radius: var(--radius-md);
+}
+.library__review-status { margin: 0 0 var(--space-3); }
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-button:disabled { cursor: default; opacity: 0.6; }

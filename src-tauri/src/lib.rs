@@ -5,6 +5,7 @@
 //! repository abstractions.
 
 mod backup;
+mod card_library;
 mod card_reviews;
 mod debrief;
 mod documents;
@@ -157,6 +158,8 @@ pub fn run() {
             practice_sessions::remove_practice_test_atomically,
             practice_sessions::run_practice_legacy_conversion,
             card_reviews::save_card_review_atomically,
+            card_library::get_library_review_due,
+            card_library::get_library_recent_reviews,
             documents::save_material_operation,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,

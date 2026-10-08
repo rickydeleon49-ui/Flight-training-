@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
@@ -106,6 +106,16 @@ function MaterialDetailPage({
 }: MaterialDetailPageProps) {
   const { materialId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Opened from Review due: start this material's card session once. The
+  // request is read once per visit and then cleared from history, so Back
+  // or a reload never starts another session by itself.
+  const [startCardReview] = useState(
+    () => (location.state as { startCardReview?: unknown } | null)?.startCardReview === true,
+  );
+  useEffect(() => {
+    if (startCardReview) navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, []);
   const { data, mutate, deleteWithUndo, repositories } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
@@ -816,6 +826,7 @@ function MaterialDetailPage({
                       materialTitle={material.title}
                       repository={repositories?.cardReviews}
                       contentKey={studySet.updatedAt}
+                      autoStart={startCardReview}
                       browseCard={
                         studySet.flashcards[cardIndex]
                           ? {

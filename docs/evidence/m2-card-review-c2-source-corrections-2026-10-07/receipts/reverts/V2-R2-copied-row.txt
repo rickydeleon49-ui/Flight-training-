@@ -1,0 +1,685 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/revert/base
+
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts (3 tests | 1 failed) 263ms
+     × [C2SRC-R2] an inspection opened during version checking reconciles with its completed result 90ms
+ ❯ src/pages/StudyLibrary/StudyLibraryReviews.test.ts (16 tests | 2 failed) 2928ms
+     × a viewer opened during Check versions shows the finished result and keeps the card exactly as reviewed 1065ms
+     × the viewer closes when its row leaves the list, and neither the obsolete check nor the new page reopens it 1088ms
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 16 passed (19)
+   Start at  23:59:55
+   Duration  3.68s (transform 566ms, setup 0ms, import 815ms, tests 3.19s, environment 506ms)
+
+(node:35009) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35008) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R2] an inspection opened during version checking reconciles with its completed result
+AssertionError: expected <span …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="badge badge--neutral"
+>
+  Not checked against the current cards yet
+</span>
+
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts:191:93
+    189|     // Closing the stale inspection or reconciling its event by ID is …
+    190|     const live = screen.queryByRole("dialog", { name: "Card as you rev…
+    191|     if (live) expect(within(live).queryByText("Not checked against the…
+       |                                                                                             ^
+    192|   });
+    193| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/pages/StudyLibrary/StudyLibraryReviews.test.ts > selected history record (C2SRC-R2) > a viewer opened during Check versions shows the finished result and keeps the card exactly as reviewed
+TestingLibraryElementError: Unable to find an element with the text: Earlier version of these cards. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_6l_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_6l_"[39m
+      [36m>[39m
+        [0mCard as you reviewed it[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mFirst · card 1[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"eyebrow"[39m
+        [36m>[39m
+          [0mQuestion[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"ai-copy"[39m
+        [36m>[39m
+          [0mA question 0[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"eyebrow"[39m
+        [36m>[39m
+          [0mAnswer[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"ai-copy"[39m
+        [36m>[39m
+          [0mA answer 0[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"small muted"[39m
+      [36m>[39m
+        [0mRated [0m
+        [0mGood[0m
+        [0m on [0m
+        [0m04/10/2026, 08:00:00[0m
+        [0m, back in 1 day[0m
+        [0m.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"small"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--neutral"[39m
+        [36m>[39m
+          [0mNot checked against the current cards yet[0m
+        [36m</span>[39m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny dim"[39m
+      [36m>[39m
+        [0mThis is a read-only record. Your saved cards and their reviews are not changed here.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mdata-discover[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/study/a"[39m
+    [36m>[39m
+      [0mOpen material[0m
+    [36m</a>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mClose[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mStudy Library[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mYour training binder — notes, handouts, worksheets and what to do with them.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study/history"[39m
+          [36m>[39m
+            [0mPractice history[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.6"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 4.5h14v10L14 20H5z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 14.5h-5v5.4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8.5 9h7M8.5 12.5h4.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Import study packet…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--primary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14M5 12h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Add material[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Study Library views"[39m
+        [33mclass[39m=[32m"library-tabs"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"library-panel-library"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"library-tab"[39m
+          [33mid[39m=[32m"library-tab-library"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mLibrary[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"library-panel-due"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"library-tab"[39m
+          [33mid[39m=[32m"library-tab-due"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReview due[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"library-panel-history"[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"library-tab is-active"[39m
+          [33mid[39m=[32m"library-tab-history"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mHistory[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"library-tab-history"[39m
+        [33mid[39m=[32m"library-panel-history"[39m
+        [33mrole[39m=[32m"tabpanel"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"card-history-title"[39m
+          [33mclass[39m=[32m"stack stack--4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row row--between row--wrap"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"section-title"[39m
+                [33mid[39m=[32m"card-history-title"[39m
+              [36m>[39m
+                [0mCard review history[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"small muted"[39m
+              [36m>[39m
+                [0mEvery flashcard rating, newest first. [0m
+                [36m<a[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/study/history"[39m
+                [36m>[39m
+                  [0mPractice test history[0m
+                [36m</a>[39m
+                [0m is kept separately.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--secondary button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRefresh[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row row--wrap library-review__filters"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter history by material"[39m
+              [33mclass[39m=[32m"select"[39m
+              [33mstyle[39m=[32m"width: auto; max-width: 100%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mEvery material[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"a"[39m
+              [36m>[39m
+                [0mFirst[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"b"[39m
+              [36m>[39m
+              ...
+ ❯ Proxy.waitForWrapper ../../../../../../../../Users/rickymac/code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/pages/StudyLibrary/StudyLibraryReviews.test.ts:480:11
+    478|       holds[0]!.open();
+    479|     });
+    480|     await waitFor(() => expect(within(dialog).getByText("Earlier versi…
+       |           ^
+    481|     expect(within(dialog).queryByText("Not checked against the current…
+    482|     expect(within(dialog).getByText("A question 0")).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/pages/StudyLibrary/StudyLibraryReviews.test.ts > selected history record (C2SRC-R2) > the viewer closes when its row leaves the list, and neither the obsolete check nor the new page reopens it
+AssertionError: expected <dialog class="dialog" …(2)>…(3)</dialog> to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mStudy Library[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mYour training binder — notes, handouts, worksheets and what to do with them.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--wrap"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study/history"[39m
+          [36m>[39m
+            [0mPractice history[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.6"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 4.5h14v10L14 20H5z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 14.5h-5v5.4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8.5 9h7M8.5 12.5h4.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Import study packet…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--primary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14M5 12h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Add material[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Study Library views"[39m
+        [33mclass[39m=[32m"library-tabs"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"library-panel-library"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"library-tab"[39m
+          [33mid[39m=[32m"library-tab-library"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mLibrary[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"library-panel-due"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"library-tab"[39m
+          [33mid[39m=[32m"library-tab-due"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReview due[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"library-panel-history"[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"library-tab is-active"[39m
+          [33mid[39m=[32m"library-tab-history"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mHistory[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"library-tab-history"[39m
+        [33mid[39m=[32m"library-panel-history"[39m
+        [33mrole[39m=[32m"tabpanel"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"card-history-title"[39m
+          [33mclass[39m=[32m"stack stack--4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row row--between row--wrap"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"section-title"[39m
+                [33mid[39m=[32m"card-history-title"[39m
+              [36m>[39m
+                [0mCard review history[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"small muted"[39m
+              [36m>[39m
+                [0mEvery flashcard rating, newest first. [0m
+                [36m<a[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/study/history"[39m
+                [36m>[39m
+                  [0mPractice test history[0m
+                [36m</a>[39m
+                [0m is kept separately.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--secondary button--small"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRefresh[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row row--wrap library-review__filters"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter history by material"[39m
+              [33mclass[39m=[32m"select"[39m
+              [33mstyle[39m=[32m"width: auto; max-width: 100%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mEvery material[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"a"[39m
+              [36m>[39m
+                [0mFirst[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"b"...
+
+- Expected:
+null
+
++ Received:
+<dialog
+  aria-labelledby="_r_71_"
+  class="dialog"
+  open=""
+>
+  <div
+    class="dialog__header"
+  >
+    <div>
+      <h2
+        class="dialog__title"
+        id="_r_71_"
+      >
+        Card as you reviewed it
+      </h2>
+      <p
+        class="dialog__description"
+      >
+        First · card 1
+      </p>
+    </div>
+    <button
+      class="icon-button"
+      title="Close"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        focusable="false"
+        height="18"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="18"
+      >
+        <path
+          d="M6 6l12 12M18 6 6 18"
+        />
+      </svg>
+      <span
+        class="visually-hidden"
+      >
+        Close
+      </span>
+    </button>
+  </div>
+  <div
+    class="dialog__body"
+  >
+    <div
+      class="stack stack--3"
+    >
+      <div>
+        <p
+          class="eyebrow"
+        >
+          Question
+        </p>
+        <p
+          class="ai-copy"
+        >
+          A question 0
+        </p>
+      </div>
+      <div>
+        <p
+          class="eyebrow"
+        >
+          Answer
+        </p>
+        <p
+          class="ai-copy"
+        >
+          A answer 0
+        </p>
+      </div>
+      <p
+        class="small muted"
+      >
+        Rated 
+        Good
+         on 
+        04/10/2026, 08:00:00
+        , back in 1 day
+        .
+      </p>
+      <p
+        class="small"
+      >
+        <span
+          class="badge badge--neutral"
+        >
+          Not checked against the current cards yet
+        </span>
+      </p>
+      <p
+        class="tiny dim"
+      >
+        This is a read-only record. Your saved cards and their reviews are not changed here.
+      </p>
+    </div>
+  </div>
+  <div
+    class="dialog__footer"
+  >
+    <a
+      class="button button--secondary"
+      data-discover="true"
+      href="/study/a"
+    >
+      Open material
+    </a>
+    <button
+      class="button button--primary"
+      type="button"
+    >
+      Close
+    </button>
+  </div>
+</dialog>
+
+ ❯ src/pages/StudyLibrary/StudyLibraryReviews.test.ts:501:99
+    499|       await appMutate((repos) => repos.app.set("c2-test-marker", "publ…
+    500|     });
+    501|     await waitFor(() => expect(screen.queryByRole("dialog", { name: "C…
+       |                                                                                                   ^
+    502|     expect(screen.queryByRole("list", { name: "Card ratings" })).toBeN…
+    503|     await act(async () => {
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../../../../../Users/rickymac/code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../../../../../Users/rickymac/code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../../../../../Users/rickymac/code/Flight-training-pr70-integration/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+

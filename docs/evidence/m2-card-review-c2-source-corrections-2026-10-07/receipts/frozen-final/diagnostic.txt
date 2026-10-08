@@ -1,0 +1,14 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+(node:35142) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R1 due] same-count same-timestamp replacement invalidates loaded counts 89ms
+ ✓ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R1 history] same-count same-timestamp replacement invalidates provenance 76ms
+ ✓ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R2] an inspection opened during version checking reconciles with its completed result 80ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  00:00:22
+   Duration  925ms (transform 273ms, setup 0ms, import 377ms, tests 246ms, environment 223ms)
+

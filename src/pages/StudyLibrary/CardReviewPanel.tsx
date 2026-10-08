@@ -47,12 +47,29 @@ interface CardReviewPanelProps {
   contentKey?: string;
   /** The card the browse carousel is showing, so it can be paused or flagged. */
   browseCard?: { index: number; front: string; back: string } | null;
+  /** Opened from Review due: start this material's session once its cards are read. */
+  autoStart?: boolean;
 }
 
-export function CardReviewPanel({ materialId, materialTitle, repository, contentKey, browseCard }: CardReviewPanelProps) {
+export function CardReviewPanel({ materialId, materialTitle, repository, contentKey, browseCard, autoStart = false }: CardReviewPanelProps) {
   const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
+  const autoStarted = useRef(false);
+  const { session, blocked, starting, startSession, clock } = review;
+  const reviewRead = review.read;
+
+  // A request from Review due starts at most one session, and only when
+  // this material has cards ready (the C1 caps of 10 new / 20 total apply).
+  useEffect(() => {
+    if (!autoStart || autoStarted.current || session || blocked || starting) return;
+    if (reviewRead.phase !== "ready") return;
+    autoStarted.current = true;
+    if (reviewRead.snapshot.current.status !== "ok") return;
+    const now = clock.now();
+    const summary = summarizeCards(reviewRead.snapshot, now, nextLocalMidnightUtc(now, clock.timeZone()));
+    if (summary.dueNow + summary.newCount > 0) void startSession();
+  }, [autoStart, reviewRead, session, blocked, starting, startSession, clock]);
 
   // The dialog closes once its reset is resolved (acknowledged or refused).
   useEffect(() => {

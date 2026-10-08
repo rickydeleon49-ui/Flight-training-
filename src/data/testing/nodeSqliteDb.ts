@@ -19,6 +19,7 @@ import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { executeStructuredImport } from "../structuredImportTransaction";
 import { executeCardReviewAction } from "../cardReviewTransaction";
+import { readLibraryRecentReviews, readLibraryReviewDue } from "../cardLibraryReader";
 import {
   executeEraseHistoryAction,
   executeLegacyConversion,
@@ -166,6 +167,16 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
       action: import("@/domain/types").CardReviewAction,
     ): Promise<import("@/domain/types").CardReviewResult> {
       return owner.exclusive(() => executeCardReviewAction(exec, run, query, action));
+    },
+    readLibraryReviewDue(
+      input: import("@/domain/types").LibraryReviewDueInput,
+    ): Promise<import("@/domain/types").LibraryReviewDueResult> {
+      return owner.exclusive(() => readLibraryReviewDue(query, input));
+    },
+    readLibraryRecentReviews(
+      input: import("@/domain/types").LibraryRecentReviewsInput,
+    ): Promise<import("@/domain/types").LibraryRecentReviewsResult> {
+      return owner.exclusive(() => readLibraryRecentReviews(query, input));
     },
     close() {
       db.close();

@@ -1,0 +1,2 @@
+# Preserve immutable raw terminal output.
+receipts/*.txt whitespace=-blank-at-eof

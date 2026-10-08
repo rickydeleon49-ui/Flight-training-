@@ -92,6 +92,13 @@ interface AppDataContextValue {
   /** Fatal load error. Mutation problems surface through `lastError`. */
   error: string | null;
   data: AppData;
+  /**
+   * Advances each time a freshly loaded snapshot is published (startup,
+   * refresh, every completed mutation), never for an obsolete load. Views
+   * that read the database outside `data` use it to know their reads are out
+   * of date, whatever changed: counts and timestamps are not content.
+   */
+  dataRevision: number;
   repositories: Repositories | null;
   /** Run a write and refresh. Returns null if the write failed. */
   mutate: <T>(work: (repos: Repositories) => Promise<T>, options?: MutateOptions) => Promise<T | null>;
@@ -236,7 +243,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
-  const [data, setData] = useState<AppData>(EMPTY_DATA);
+  const [snapshot, setSnapshot] = useState<{ data: AppData; revision: number }>({ data: EMPTY_DATA, revision: 0 });
+  const data = snapshot.data;
   const [pending, setPending] = useState<PendingDelete | null>(null);
   const repositoriesRef = useRef<Repositories | null>(null);
   const startupRef = useRef<Promise<AppData> | null>(null);
@@ -245,14 +253,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const writeQueue = useRef(Promise.resolve());
   const refreshVersion = useRef(0);
+  // Whether a refresh has already published; the startup load is older then.
+  const refreshPublished = useRef(false);
+  const publish = useCallback((loaded: AppData) => {
+    setSnapshot((current) => ({ data: loaded, revision: current.revision + 1 }));
+  }, []);
 
   const refresh = useCallback(async () => {
     const repositories = repositoriesRef.current;
     if (!repositories) return;
     const version = ++refreshVersion.current;
     const loaded = await loadAll(repositories);
-    if (version === refreshVersion.current) setData(loaded);
-  }, []);
+    if (version === refreshVersion.current) {
+      refreshPublished.current = true;
+      publish(loaded);
+    }
+  }, [publish]);
 
   useEffect(() => {
     let cancelled = false;
@@ -270,7 +286,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     startupRef.current
       .then((loaded) => {
         if (cancelled) return;
-        setData(loaded);
+        if (!refreshPublished.current) publish(loaded);
         setStatus("ready");
       })
       .catch((loadError) => {
@@ -282,7 +298,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [publish]);
 
   const mutate = useCallback(
     async <T,>(
@@ -369,6 +385,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       status,
       error,
       data: visibleData,
+      dataRevision: snapshot.revision,
       repositories: repositoriesRef.current,
       mutate,
       refresh,
@@ -382,6 +399,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       status,
       error,
       visibleData,
+      snapshot.revision,
       mutate,
       refresh,
       deleteWithUndo,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -23,9 +23,12 @@ import {
   TOPIC_OPTIONS,
   type MaterialType,
   type ReviewStatus,
+  type LibraryReviewMaterialEntry,
+  type LibraryReviewOversizeIssue,
   type StudyMaterial,
   type Topic,
 } from "@/domain/types";
+import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
 import { newId } from "@/lib/id";
 import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
 import { useAppData } from "@/state/AppDataContext";
@@ -33,7 +36,23 @@ import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState"
 
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
+import { StudyLibraryHistory } from "./StudyLibraryHistory";
+import { StudyLibraryReviewDue } from "./StudyLibraryReviewDue";
+import { useLibraryDueStream } from "./useLibraryReviews";
 import "./studyLibrary.css";
+
+export type LibraryTab = "library" | "due" | "history";
+const TABS: Array<{ value: LibraryTab; label: string }> = [
+  { value: "library", label: "Library" },
+  { value: "due", label: "Review due" },
+  { value: "history", label: "History" },
+];
+
+/** The tab named in the address (`?tab=due`, `?tab=history`); anything else is the Library. */
+export function libraryTabFrom(params: URLSearchParams): LibraryTab {
+  const tab = params.get("tab");
+  return tab === "due" || tab === "history" ? tab : "library";
+}
 
 type StatusFilter = ReviewStatus | "all" | "next_up";
 
@@ -51,8 +70,16 @@ const SORT_VALUES = MATERIAL_SORT_OPTIONS.map((option) => option.value);
 const MATERIAL_PAGE_SIZE = 100;
 
 export function StudyLibrary() {
-  const { data, mutate } = useAppData();
+  const { data, dataRevision, mutate, repositories } = useAppData();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const tab = libraryTabFrom(params);
+  const cardLibrary = repositories?.cardLibrary;
+  const [binderStatus, setBinderStatus] = useState<BinderStatus | null>(null);
+  const materialsWithCards = useMemo(
+    () => new Set(data.aiStudySets.filter((set) => set.flashcards.length > 0).map((set) => set.sourceMaterialId)),
+    [data.aiStudySets],
+  );
   const [importing, setImporting] = useState(false);
   // Kept while the app is open, so moving to a material and back does not
   // throw away the filtering she just set up.
@@ -141,6 +168,45 @@ export function StudyLibrary() {
         }
       />
 
+      <div className="library-tabs" role="tablist" aria-label="Study Library views">
+        {TABS.map((choice) => (
+          <button
+            type="button"
+            role="tab"
+            key={choice.value}
+            id={`library-tab-${choice.value}`}
+            aria-selected={tab === choice.value}
+            aria-controls={`library-panel-${choice.value}`}
+            className={`library-tab${tab === choice.value ? " is-active" : ""}`}
+            onClick={() => {
+              if (choice.value === tab) return;
+              const next = new URLSearchParams(params);
+              if (choice.value === "library") next.delete("tab");
+              else next.set("tab", choice.value);
+              setParams(next);
+            }}
+          >
+            {choice.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "due" && cardLibrary ? (
+        <div role="tabpanel" id="library-panel-due" aria-labelledby="library-tab-due">
+          <StudyLibraryReviewDue repository={cardLibrary} dataRevision={dataRevision} />
+        </div>
+      ) : null}
+      {tab === "history" && cardLibrary ? (
+        <div role="tabpanel" id="library-panel-history" aria-labelledby="library-tab-history">
+          <StudyLibraryHistory repository={cardLibrary} materials={data.materials} dataRevision={dataRevision} />
+        </div>
+      ) : null}
+
+      {tab === "library" ? (
+      <div role="tabpanel" id="library-panel-library" aria-labelledby="library-tab-library">
+      {hasAny && cardLibrary ? (
+        <BinderReviewStatus repository={cardLibrary} dataRevision={dataRevision} onStatus={setBinderStatus} />
+      ) : null}
       {hasAny ? (
         <div className="library__toolbar">
           <div className="search-field">
@@ -240,6 +306,7 @@ export function StudyLibrary() {
                 key={material.id}
                 material={material}
                 nextActionTitle={nextActionTitles.get(material.id)}
+                review={tab === "library" ? reviewIndicator(binderStatus, material.id, materialsWithCards.has(material.id)) : null}
               />
             ))}
           </div>
@@ -252,6 +319,9 @@ export function StudyLibrary() {
           ) : null}
         </>
       )}
+
+      </div>
+      ) : null}
 
       <MaterialFormDialog
         open={creating}
@@ -279,9 +349,11 @@ export function StudyLibrary() {
 function MaterialCard({
   material,
   nextActionTitle,
+  review,
 }: {
   material: StudyMaterial;
   nextActionTitle?: string;
+  review?: string | null;
 }) {
   const statusTone =
     material.reviewStatus === "confident"
@@ -318,6 +390,7 @@ function MaterialCard({
         <Badge tone="study">{TOPIC_LABELS[material.topic]}</Badge>
         <Badge tone={statusTone}>{REVIEW_STATUS_LABELS[material.reviewStatus]}</Badge>
         {material.priority === "next_up" ? <Badge tone="berry">Next Up</Badge> : null}
+        {review ? <Badge tone={review === "Caught up" ? "complete" : review.startsWith("Cards") ? "neutral" : "due"}>{review}</Badge> : null}
       </span>
 
       {nextActionTitle ? (
@@ -325,4 +398,83 @@ function MaterialCard({
       ) : null}
     </Link>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Binder review indicators (M2-4 / C2)                                */
+/* ------------------------------------------------------------------ */
+
+export interface BinderStatus {
+  entries: Map<string, LibraryReviewMaterialEntry>;
+  issues: Map<string, LibraryReviewOversizeIssue>;
+  /** Every material with cards has been checked. */
+  complete: boolean;
+}
+
+/**
+ * A material card's review label: "2 due", "8 new", "Caught up" only once
+ * every material has been checked, or nothing while unknown.
+ */
+export function reviewIndicator(status: BinderStatus | null, materialId: string, hasCards: boolean): string | null {
+  if (!status) return null;
+  const entry = status.entries.get(materialId);
+  if (entry) {
+    const parts: string[] = [];
+    if (entry.totalDueCount > 0) parts.push(`${entry.totalDueCount.toLocaleString()} due`);
+    if (entry.newCount > 0) parts.push(`${entry.newCount.toLocaleString()} new`);
+    return parts.join(" · ");
+  }
+  if (status.issues.has(materialId)) return "Cards too large to check";
+  return status.complete && hasCards ? "Caught up" : null;
+}
+
+/**
+ * The binder's own bounded Review due stream (all actionable, any topic).
+ * It reports what it has checked; materials beyond the checked part show no
+ * label rather than a guess.
+ */
+function BinderReviewStatus({
+  repository,
+  dataRevision,
+  onStatus,
+}: {
+  repository: CardLibraryRepository;
+  /** Every published app data snapshot makes the loaded status obsolete. */
+  dataRevision: number;
+  onStatus: (status: BinderStatus | null) => void;
+}) {
+  const { stream, state } = useLibraryDueStream(repository, { statusFilter: "all", topic: null }, dataRevision, 250);
+  useEffect(() => {
+    onStatus(
+      state.pagesLoaded === 0
+        ? null
+        : {
+            entries: new Map(state.rows.map((row) => [row.materialId, row])),
+            issues: new Map(state.issues.map((issue) => [issue.materialId, issue])),
+            complete: state.isComplete,
+          },
+    );
+  }, [onStatus, state.rows, state.issues, state.isComplete, state.pagesLoaded]);
+  useEffect(() => () => onStatus(null), [onStatus]);
+  if (state.error) {
+    return (
+      <p className="tiny muted library__review-status" role="status">
+        Card review status couldn&rsquo;t be checked just now.{" "}
+        <button type="button" className="link-button" onClick={() => void stream.retryRead()}>
+          Retry
+        </button>
+      </p>
+    );
+  }
+  if (state.pagesLoaded > 0 && !state.isComplete) {
+    return (
+      <p className="tiny muted library__review-status" role="status">
+        Card review status is shown for the materials checked so far.{" "}
+        <button type="button" className="link-button" onClick={() => void stream.loadNextPage()} disabled={state.loading !== null}>
+          Check more
+        </button>
+      </p>
+    );
+  }
+  return null;
 }

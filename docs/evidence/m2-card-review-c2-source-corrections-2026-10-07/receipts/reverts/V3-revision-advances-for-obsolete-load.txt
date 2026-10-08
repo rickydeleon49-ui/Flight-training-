@@ -1,0 +1,35 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/revert/base
+
+ ❯ src/state/appDataRevision.test.ts (2 tests | 1 failed) 141ms
+   × an obsolete refresh that finishes last neither publishes its data nor advances the revision 66ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:59:59
+   Duration  667ms (transform 145ms, setup 0ms, import 223ms, tests 141ms, environment 225ms)
+
+(node:35034) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/appDataRevision.test.ts > an obsolete refresh that finishes last neither publishes its data nor advances the revision
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/state/appDataRevision.test.ts:84:32
+     82|     await older;
+     83|   });
+     84|   expect(context.dataRevision).toBe(before + 1);
+       |                                ^
+     85|   expect(context.data.materials.map((m) => m.id)).toEqual(["m1"]);
+     86| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
