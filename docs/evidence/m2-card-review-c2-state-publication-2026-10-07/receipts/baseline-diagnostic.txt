@@ -1,0 +1,180 @@
+invalid raw reads 3 reported evaluated cards 0
+(node:19060) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# Subtest: [R4] invalid arrays spend conservative reservations and retain unread discovery candidates
+not ok 1 - [R4] invalid arrays spend conservative reservations and retain unread discovery candidates
+  ---
+  duration_ms: 6.704583
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:12:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Every attempted 500-card parse must spend its reservation even when invalid
+    
+    3 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 3
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:12:402)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: [R9/R4] reader issues survive the controller publication path
+not ok 2 - [R9/R4] reader issues survive the controller publication path
+  ---
+  duration_ms: 1.062
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:13:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The controller currently drops warnings and publishes terminal empty results
+    + actual - expected
+    
+    + undefined
+    - [
+    -   {
+    -     allowedBytes: 8388608,
+    -     code: 'PAYLOAD_TOO_LARGE',
+    -     inspectionTarget: '/study/a',
+    -     materialId: 'a',
+    -     rawBytes: 9000000,
+    -     title: 'A'
+    -   }
+    - ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0:
+      materialId: 'a'
+      title: 'A'
+      code: 'PAYLOAD_TOO_LARGE'
+      rawBytes: 9000000
+      allowedBytes: 8388608
+      inspectionTarget: '/study/a'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:13:234)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [R4] oversize inspection target points at the existing Study material route
+not ok 3 - [R4] oversize inspection target points at the existing Study material route
+  ---
+  duration_ms: 13.055334
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    /materials/a is not a registered route
+    + actual - expected
+    
+    + '/materials/a'
+    - '/study/a'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '/study/a'
+  actual: '/materials/a'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:14:388)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [R8] priority rank is restricted to the actual candidate key domain before SQL
+not ok 4 - [R8] priority rank is restricted to the actual candidate key domain before SQL
+  ---
+  duration_ms: 4.924542
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:15:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:15:350)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [history] targeted enrichment can reach a deferred material after its event page advances
+not ok 5 - [history] targeted enrichment can reach a deferred material after its event page advances
+  ---
+  duration_ms: 28.64125
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:16:1'
+  failureType: 'testCodeFailure'
+  error: 'Target selection only sorts current page members, so deferred b is unreachable after advancing'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:16:769)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [history] targeted refresh does not downgrade already resolved untargeted provenance
+not ok 6 - [history] targeted refresh does not downgrade already resolved untargeted provenance
+  ---
+  duration_ms: 34.936959
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:17:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Whole-row replacement would turn previously current b into pending
+    + actual - expected
+    
+    + 'pending'
+    - 'current'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'current'
+  actual: 'pending'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs:17:682)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [control] supported canonical schedule keeps its interval
+ok 7 - [control] supported canonical schedule keeps its interval
+  ---
+  duration_ms: 0.08775
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 1
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 93.626083

@@ -1,0 +1,232 @@
+TAP version 13
+# target malformed raw reads 3
+# (node:20946) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [enrichment/context] explicit targets cannot bypass the active material/topic filter
+not ok 1 - [enrichment/context] explicit targets cannot bypass the active material/topic filter
+  ---
+  duration_ms: 9.376125
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:11:1'
+  failureType: 'testCodeFailure'
+  error: 'Out-of-context target must not be enriched'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:11:289)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: [enrichment/bounds] more than 250 distinct targets is rejected before SQL
+not ok 2 - [enrichment/bounds] more than 250 distinct targets is rejected before SQL
+  ---
+  duration_ms: 4.561292
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:12:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:12:136)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [enrichment/work] failed target parses spend the same conservative card-work budget
+not ok 3 - [enrichment/work] failed target parses spend the same conservative card-work budget
+  ---
+  duration_ms: 5.160583
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:13:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    A failed parse consumes the 500-card allowance before target b
+    
+    3 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 3
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:13:388)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [controller/read-mode] enrichment-only action does not page or read unrelated history content
+not ok 4 - [controller/read-mode] enrichment-only action does not page or read unrelated history content
+  ---
+  duration_ms: 4.566208
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    limit:0 is clamped to 1 and still runs an event query
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:14:475)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [controller/provenance] unread pending patches retain unknown earlier-version identity
+not ok 5 - [controller/provenance] unread pending patches retain unknown earlier-version identity
+  ---
+  duration_ms: 0.086917
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:15:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    No raw content identity exists to assert earlier=true
+    
+    true !== null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:15:436)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [controller/reconciliation] successful target resolution clears a prior budget-block reason
+not ok 6 - [controller/reconciliation] successful target resolution clears a prior budget-block reason
+  ---
+  duration_ms: 0.132875
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:16:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Resolved provenance must not retain the previous blocked reason
+    + actual - expected
+    
+    + 'budget_exceeded'
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 'budget_exceeded'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:16:449)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [controller/inspection] blocked history patch publishes its actual inspection action
+not ok 7 - [controller/inspection] blocked history patch publishes its actual inspection action
+  ---
+  duration_ms: 0.115
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:17:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Reader action is lost at controller patch publication
+    + actual - expected
+    
+    + undefined
+    - '/study/a'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '/study/a'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:17:456)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [controller/retry] the latest failed page request replaces an older failed enrichment request
+not ok 8 - [controller/retry] the latest failed page request replaces an older failed enrichment request
+  ---
+  duration_ms: 0.672292
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:18:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Retry must repeat page failure, not stale enrichment
+    + actual - expected
+    
+    + [
+    +   'a'
+    + ]
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+    0: 'a'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:18:528)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [route] issue inspection links encode supported material IDs as one route segment
+not ok 9 - [route] issue inspection links encode supported material IDs as one route segment
+  ---
+  duration_ms: 13.940792
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '/study/a/b'
+    - '/study/a%2Fb'
+               ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '/study/a%2Fb'
+  actual: '/study/a/b'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-publication-rereview/Flight-training-/docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs:19:275)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [control] resolved version patches keep older event provenance and cursor/order
+ok 10 - [control] resolved version patches keep older event provenance and cursor/order
+  ---
+  duration_ms: 0.700417
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 1
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 138.179
