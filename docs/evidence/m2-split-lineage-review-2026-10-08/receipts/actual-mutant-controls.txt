@@ -1,0 +1,16 @@
+Running deliberate semantic negative controls to verify test sensitivity...
+
+PASS: Mutation 1 (off-by-one in nested range composition) caught: Should have been 120
+
+121 !== 120
+
+PASS: Mutation 2 (permitting page 0) caught: Page 0 must be rejected
+
+true !== false
+
+PASS: Mutation 3 (cascade deletion of child when parent deleted) caught: Child material must survive parent deletion!
+PASS: Mutation 4 (self-parenting cycle) caught by CHECK constraint: CHECK constraint failed: material_id != parent_material_id
+
+Negative controls complete: 4/4 mutations caught successfully.
+(node:3929) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

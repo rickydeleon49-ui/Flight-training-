@@ -1,0 +1,21 @@
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.602833ms)
+✔ Contract 2: Page Translation Maps Child Position to Original Root Page (0.148458ms)
+✔ Contract 3: Nested Range Composition Combines Split Windows Correctly (0.063625ms)
+✔ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.035541ms)
+✔ Contract 5: SQL Schema Constraints Enforce Valid Range & Relational Invariants (1.842625ms)
+✔ Contract 6: Parent Deletion Preserves Child Material & Retains Lineage Metadata (ON DELETE SET NULL) (0.361417ms)
+✔ Contract 7: Child Deletion Cascades Lineage Row Without Affecting Parent (0.298708ms)
+✔ Contract 8: Parent Replacement / File Modification Invariance (0.422083ms)
+✔ Contract 9: Repeated Imports of Same PDF Have Distinct Material Identities (0.286666ms)
+✔ Contract 10: Legacy Materials without Lineage Coexist Safely (0.309458ms)
+✔ Contract 11: Sibling Navigation Lists Other Parts Sharing the Same Parent (0.316125ms)
+✔ Contract 12: Immutable PDF Bytes & Historical Study Snapshots Are Unchanged (0.3065ms)
+✔ Contract 13: Schema Migration 0012 -> 0013 and Backup/Restore Simulation (0.236542ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.555875
