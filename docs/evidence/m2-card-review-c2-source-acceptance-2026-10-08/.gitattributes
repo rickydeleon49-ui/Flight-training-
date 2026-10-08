@@ -1,2 +1,2 @@
-# Preserve immutable raw terminal output.
-receipts/*.txt whitespace=-blank-at-eof
+# Preserve immutable raw terminal output, including upstream whitespace.
+receipts/*.txt -whitespace
