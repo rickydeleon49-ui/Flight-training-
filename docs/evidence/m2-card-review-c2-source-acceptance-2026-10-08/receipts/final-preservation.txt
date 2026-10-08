@@ -1,0 +1,4 @@
+32/32 submitted implementation hashes verify after review.
+23 original submitted paths unchanged; native readers/fixtures/locks unchanged this correction round.
+Migrations, checksum registry, dependency manifests and lockfiles unchanged from integration base.
+Original submitted evidence copied byte-for-byte.

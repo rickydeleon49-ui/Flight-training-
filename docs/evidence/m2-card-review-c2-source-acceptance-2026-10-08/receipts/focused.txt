@@ -1,0 +1,25 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts src/pages/StudyLibrary/StudyLibraryReviews.test.ts src/state/appDataRevision.test.ts src/state/AppDataContext.test.ts src/pages/StudyLibrary/CardReviewPanel.test.ts src/pages/StudyLibrary/deferredReviewRead.test.ts src/data/cardLibraryReader.test.ts src/data/cardLibraryParity.test.ts src/data/cardLibraryTauri.test.ts src/logic/cardLibrary.test.ts src/pages/StudyLibrary/StudyLibrary.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-
+
+(node:37257) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37255) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37262) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37261) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37256) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37258) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  10 passed (10)
+      Tests  112 passed | 1 skipped (113)
+   Start at  00:05:45
+   Duration  6.27s (transform 2.09s, setup 0ms, import 3.30s, tests 15.93s, environment 2.07s)
+

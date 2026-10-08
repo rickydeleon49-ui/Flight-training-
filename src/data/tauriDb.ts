@@ -17,6 +17,11 @@ import {
   type StructuredImportSaveOperation,
 } from "./db";
 import {
+  CARD_LIBRARY_ERROR_MESSAGES,
+  CardLibraryReadError,
+  type CardLibraryErrorCode,
+} from "@/logic/cardLibrary";
+import {
   CARD_REVIEW_ERROR_MESSAGES,
   CardReviewError,
   IMPORT_SAVE_MESSAGES,
@@ -306,6 +311,75 @@ function isCardReviewResultFor(
   );
 }
 
+/**
+ * Invoke a native library-wide card review read (M2-4 / C2) and accept only
+ * allowlisted outcomes: exactly one native code with its fixed message, or a
+ * result of the expected shape. Anything else becomes IPC_TRANSPORT_ERROR.
+ */
+export async function invokeCardLibraryRead<T>(
+  command: "get_library_review_due" | "get_library_recent_reviews",
+  input: unknown,
+  isShape: (value: unknown) => value is T,
+  call: typeof invoke = invoke,
+): Promise<T> {
+  let result: unknown;
+  try {
+    result = await call(command, { input });
+  } catch (rejection) {
+    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (isNativeCardLibraryErrorCode(code) && message === CARD_LIBRARY_ERROR_MESSAGES[code]) {
+      throw new CardLibraryReadError(code);
+    }
+    throw new CardLibraryReadError("IPC_TRANSPORT_ERROR", { cause: rejection });
+  }
+  if (!isShape(result)) throw new CardLibraryReadError("IPC_TRANSPORT_ERROR");
+  return result;
+}
+
+const NATIVE_CARD_LIBRARY_CODES: readonly CardLibraryErrorCode[] = [
+  "INVALID_TIME",
+  "INVALID_FILTER",
+  "INVALID_INPUT",
+  "INVALID_CURSOR",
+  "STALE_CURSOR",
+  "INVALID_TARGET",
+  "NOT_READY",
+  "STORAGE_ERROR",
+];
+
+function isNativeCardLibraryErrorCode(value: unknown): value is CardLibraryErrorCode {
+  return typeof value === "string" && (NATIVE_CARD_LIBRARY_CODES as readonly string[]).includes(value);
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+export function isLibraryReviewDueResult(value: unknown): value is import("@/domain/types").LibraryReviewDueResult {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.materials) &&
+    Array.isArray(value.issues) &&
+    (value.nextCursor === null || typeof value.nextCursor === "string") &&
+    isRecord(value.summary) &&
+    value.summary.isPageLocal === true &&
+    typeof value.summary.isComplete === "boolean" &&
+    value.materials.every((m) => isRecord(m) && typeof m.materialId === "string" && typeof m.newCount === "number")
+  );
+}
+
+export function isLibraryRecentReviewsResult(value: unknown): value is import("@/domain/types").LibraryRecentReviewsResult {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.rows) &&
+    Array.isArray(value.pendingMaterialIds) &&
+    (value.next === null || typeof value.next === "string") &&
+    (value.enrichment === null || Array.isArray(value.enrichment)) &&
+    isRecord(value.summary) &&
+    value.summary.isPageLocal === true &&
+    value.rows.every((r) => isRecord(r) && typeof r.id === "string" && typeof r.materialId === "string")
+  );
+}
+
 export async function createTauriDatabase(): Promise<SqlDatabase> {
   // Migrations were registered in Rust and run as part of this load().
   const db = await Database.load(DB_URL);
@@ -385,6 +459,16 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
       action: import("@/domain/types").CardReviewAction,
     ): Promise<import("@/domain/types").CardReviewResult> {
       return invokeCardReviewSave(action);
+    },
+    readLibraryReviewDue(
+      input: import("@/domain/types").LibraryReviewDueInput,
+    ): Promise<import("@/domain/types").LibraryReviewDueResult> {
+      return invokeCardLibraryRead("get_library_review_due", input, isLibraryReviewDueResult);
+    },
+    readLibraryRecentReviews(
+      input: import("@/domain/types").LibraryRecentReviewsInput,
+    ): Promise<import("@/domain/types").LibraryRecentReviewsResult> {
+      return invokeCardLibraryRead("get_library_recent_reviews", input, isLibraryRecentReviewsResult);
     },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);

@@ -1,0 +1,2 @@
+32/32 source hashes; 57/57 original evidence entries; 30/30 correction evidence entries.
+23 prior manifest paths unchanged; 7 changed; AppDataContext plus new appDataRevision test added.

@@ -1,0 +1,43 @@
+
+> her-flight-deck@0.5.3 test
+> vitest run src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts -t C2SRC-R2
+
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-
+
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts (3 tests | 1 failed | 2 skipped) 199ms
+     × [C2SRC-R2] an inspection opened during version checking reconciles with its completed result 198ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  00:07:10
+   Duration  964ms (transform 323ms, setup 0ms, import 446ms, tests 199ms, environment 237ms)
+
+(node:37534) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts > C2 independent source diagnostics > [C2SRC-R2] an inspection opened during version checking reconciles with its completed result
+AssertionError: expected <span …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="badge badge--neutral"
+>
+  Not checked against the current cards yet
+</span>
+
+ ❯ src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts:191:93
+    189|     // Closing the stale inspection or reconciling its event by ID is …
+    190|     const live = screen.queryByRole("dialog", { name: "Card as you rev…
+    191|     if (live) expect(within(live).queryByText("Not checked against the…
+       |                                                                                             ^
+    192|   });
+    193| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

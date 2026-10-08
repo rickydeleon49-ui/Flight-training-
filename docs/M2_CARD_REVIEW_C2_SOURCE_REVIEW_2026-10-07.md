@@ -1,3 +1,5 @@
+**8 October evidence correction and superseding acceptance:** The original R2 diagnostic baseline failed at its text-match precondition, not its reconciliation assertion. The actual defect is now proved independently with the corrected badge plus old copied-row state (failure at line 191), and both R1/R2 are fixed. See [production source acceptance](M2_CARD_REVIEW_C2_SOURCE_ACCEPTANCE_2026-10-08.md). Original frozen diagnostics/receipts remain unchanged.
+
 # M2 card review C2: independent production source review — 2026-10-07
 
 **Decision: changes requested. C2 source is not yet accepted for integration.** The owner approval of C2-D1–D9 is recorded in the submitted implementation evidence; no repeat approval is needed for these corrections.

@@ -1,0 +1,16 @@
+$ docs/evidence/m2-card-review-c2-source-corrections-2026-10-07/check_preserved.sh
+27:pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 12;
+shipped migrations 0001-0012, registry and schema version 12: unchanged
+planning pack scope-2026-10-07: SHA256SUMS OK (pack-rooted)
+planning pack scope-corrections-2026-10-07: SHA256SUMS OK (repository-rooted)
+planning pack scope-completion-2026-10-07: SHA256SUMS OK (pack-rooted)
+planning pack final-corrections-2026-10-07: SHA256SUMS OK (pack-rooted)
+planning pack read-pipeline-corrections-2026-10-07: SHA256SUMS OK (pack-rooted)
+planning pack bounded-read-corrections-2026-10-07: SHA256SUMS OK (pack-rooted)
+planning pack contract-finish-2026-10-07: SHA256SUMS OK (pack-rooted)
+planning pack state-publication-2026-10-07: SHA256SUMS OK (pack-rooted)
+planning pack enrichment-corrections-2026-10-07: SHA256SUMS OK (pack-rooted)
+all 18 earlier C2 evidence packs byte-identical to base
+implementation pack: 57 SHA256SUMS entries OK
+implementation pack: 58 files byte-identical to origin/main
+exit 0

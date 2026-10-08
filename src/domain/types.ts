@@ -591,6 +591,174 @@ export interface CardRecentReviewCursor {
   id: string;
 }
 
+/* ------------------------------------------------------------------ */
+/* Library-wide card reviews (M2-4 / C2)                               */
+/* ------------------------------------------------------------------ */
+
+export type LibraryDueStatusFilter = "all" | "due_today" | "new_only";
+
+export interface LibraryReviewDueInput {
+  /** The captured clock: one instant for a whole traversal. */
+  nowUtc: string;
+  /** The exclusive end of the local day at `nowUtc`. */
+  nextLocalMidnightUtc: string;
+  topic?: string | null;
+  statusFilter?: LibraryDueStatusFilter | null;
+  /** Default 50, at most 250. */
+  limit?: number;
+  cursor?: string | null;
+  /** Default 250, at most 250. */
+  candidateBatchBudget?: number;
+  /** Default 2,500. */
+  maxBatchCardsBudget?: number;
+  /** Default 2 MiB. */
+  maxBatchRawJsonBytesBudget?: number;
+}
+
+export interface LibraryReviewOversizeIssue {
+  materialId: string;
+  title: string;
+  code: "PAYLOAD_TOO_LARGE";
+  rawBytes: number;
+  allowedBytes: number;
+  inspectionTarget: string;
+}
+
+export interface LibraryReviewMaterialEntry {
+  materialId: string;
+  title: string;
+  topic: string;
+  priority: string;
+  updatedAt: string;
+  cardCount: number;
+  againCount: number;
+  dayCount: number;
+  newCount: number;
+  totalDueCount: number;
+  retainedCardCount: number;
+  earliestDueAt: string | null;
+}
+
+/** Counters for one page read only — never whole-library totals. */
+export interface LibraryReviewDueSummary {
+  scannedCandidates: number;
+  evaluatedCandidates: number;
+  /** Cards reserved/attempted across raw reads (stays charged when a set fails to parse). */
+  attemptedCards: number;
+  /** Valid cards parsed and evaluated. */
+  evaluatedCards: number;
+  rawReads: number;
+  rawBytesTransferred: number;
+  actionableCount: number;
+  againCount: number;
+  dayCount: number;
+  totalDueCount: number;
+  newCount: number;
+  /** The candidate stream is exhausted. */
+  isComplete: boolean;
+  isPageLocal: true;
+  issues: LibraryReviewOversizeIssue[];
+}
+
+export interface LibraryReviewDueResult {
+  summary: LibraryReviewDueSummary;
+  materials: LibraryReviewMaterialEntry[];
+  nextCursor: string | null;
+  issues: LibraryReviewOversizeIssue[];
+}
+
+export interface LibraryRecentReviewsInput {
+  cursor?: string | null;
+  /** Default 20, at most 100; 0 means enrichment only. */
+  limit?: number;
+  topic?: string | null;
+  materialId?: string | null;
+  /** Default 2,500 (C2-D9). */
+  maxBatchCardsBudget?: number;
+  /** Default 2 MiB. */
+  maxBatchRawJsonBytesBudget?: number;
+  /** At most 250 distinct targets. */
+  enrichMaterialIds?: string[] | null;
+  /** Skip the event query entirely and only resolve the targets. */
+  enrichmentOnly?: boolean;
+}
+
+export interface ValidatedCardSchedule {
+  schedulerVersion: "simple-v1";
+  step: number;
+  dueAt: string | null;
+  lastReviewedAt: string | null;
+  reps: number | null;
+  lapses: number | null;
+  intervalDays: number | null;
+  intervalMinutes: number | null;
+  intervalLabel: string | null;
+}
+
+export type HistoryContentStatus = "current" | "earlier" | "valid_empty" | "unavailable" | "malformed" | "pending";
+
+export interface LibraryRecentReviewEntry {
+  id: string;
+  itemId: string;
+  materialId: string;
+  materialTitle: string;
+  topic: string;
+  versionId: string;
+  contentHash: string;
+  ordinal: number;
+  front: string;
+  back: string;
+  sourcePage: number | null;
+  rating: CardRating;
+  reviewedAt: string;
+  schedulerVersion: string;
+  priorStateRaw: string | null;
+  nextStateRaw: string | null;
+  priorState: Record<string, unknown> | null;
+  nextState: Record<string, unknown> | null;
+  priorSchedule: ValidatedCardSchedule | null;
+  nextSchedule: ValidatedCardSchedule | null;
+  step: number | null;
+  dueAt: string | null;
+  intervalDays: number | null;
+  intervalMinutes: number | null;
+  intervalLabel: string | null;
+  /** null while the current content is unread (pending). */
+  isEarlierVersion: boolean | null;
+  contentStatus: HistoryContentStatus;
+  currentVersionId: string | null;
+  blockedReason: string | null;
+  inspectionTarget: string | null;
+}
+
+export interface HistoryMaterialEnrichmentRecord {
+  materialId: string;
+  contentStatus: HistoryContentStatus;
+  currentVersionId: string | null;
+  reason: string | null;
+  inspectionTarget: string | null;
+}
+
+/** Counters for one read call only. */
+export interface LibraryRecentReviewsSummary {
+  eventsReturned: number;
+  rawReads: number;
+  rawBytesTransferred: number;
+  attemptedCards: number;
+  evaluatedCards: number;
+  maxBatchCardsBudget: number;
+  maxBatchRawJsonBytesBudget: number;
+  isPageLocal: true;
+}
+
+export interface LibraryRecentReviewsResult {
+  rows: LibraryRecentReviewEntry[];
+  next: string | null;
+  pendingMaterialIds: string[];
+  enrichment: HistoryMaterialEnrichmentRecord[] | null;
+  summary: LibraryRecentReviewsSummary;
+}
+
 export interface PracticeHistoryGroup {
   historyKey: string;
   sourceMaterialTitle: string;

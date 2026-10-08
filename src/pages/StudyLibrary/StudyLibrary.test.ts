@@ -29,7 +29,7 @@ beforeEach(() => {
       makeAction({ relatedType: "material", relatedId: "material-0", title: "First step" }),
       makeAction({ relatedType: "material", relatedId: "material-0", title: "Later step" }),
     ],
-    goals: [], events: [],
+    goals: [], events: [], aiStudySets: [],
   } as unknown as AppData;
 });
 afterEach(cleanup);

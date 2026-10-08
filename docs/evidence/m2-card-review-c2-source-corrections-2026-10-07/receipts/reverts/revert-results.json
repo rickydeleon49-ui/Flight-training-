@@ -1,0 +1,46 @@
+{
+  "V1-R1-metadata-key": {
+    "file": "src/pages/StudyLibrary/StudyLibrary.tsx",
+    "tests": [
+      "src/pages/StudyLibrary/StudyLibraryReviews.test.ts",
+      "src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts"
+    ],
+    "exit": 1,
+    "failed": [
+      "[C2SRC-R1 due] same-count same-timestamp replacement invalidates loaded counts",
+      "[C2SRC-R1 history] same-count same-timestamp replacement invalidates provenance",
+      "a held read from before the publication can neither show old counts nor take the newer read's place",
+      "a restore-like replacement that keeps every saved timestamp is picked up on the app's refresh",
+      "a review saved through the app (state only, cards unchanged) is reflected without a clock change",
+      "a same-count, same-timestamp replacement reaches Review due, History and the binder",
+      "the binder drops its loaded badges when a replacement is published while it is open",
+      "the viewer closes when its row leaves the list, and neither the obsolete check nor the new page reopens it"
+    ],
+    "restored_sha256": "f72faef6d3281be35ed6d352bb6d70de0f1b6173f142915f838f2f8184fcf54f"
+  },
+  "V2-R2-copied-row": {
+    "file": "src/pages/StudyLibrary/StudyLibraryHistory.tsx",
+    "tests": [
+      "src/pages/StudyLibrary/StudyLibraryReviews.test.ts",
+      "src/pages/StudyLibrary/C2SourceReviewDiagnostic.test.ts"
+    ],
+    "exit": 1,
+    "failed": [
+      "[C2SRC-R2] an inspection opened during version checking reconciles with its completed result",
+      "a viewer opened during Check versions shows the finished result and keeps the card exactly as reviewed",
+      "the viewer closes when its row leaves the list, and neither the obsolete check nor the new page reopens it"
+    ],
+    "restored_sha256": "92df21ce0082790567182025f44890e30040ee7c600a59c78b58fdb218c76740"
+  },
+  "V3-revision-advances-for-obsolete-load": {
+    "file": "src/state/AppDataContext.tsx",
+    "tests": [
+      "src/state/appDataRevision.test.ts"
+    ],
+    "exit": 1,
+    "failed": [
+      "an obsolete refresh that finishes last neither publishes its data nor advances the revision"
+    ],
+    "restored_sha256": "cd7d708029e6741d041b5a7c627f8b809888f240da3e4811d131426783781c87"
+  }
+}
