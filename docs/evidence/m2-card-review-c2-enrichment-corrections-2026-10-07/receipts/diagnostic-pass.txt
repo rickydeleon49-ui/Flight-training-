@@ -1,0 +1,73 @@
+TAP version 13
+# target malformed raw reads 1
+# (node:22225) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [enrichment/context] explicit targets cannot bypass the active material/topic filter
+ok 1 - [enrichment/context] explicit targets cannot bypass the active material/topic filter
+  ---
+  duration_ms: 6.270709
+  type: 'test'
+  ...
+# Subtest: [enrichment/bounds] more than 250 distinct targets is rejected before SQL
+ok 2 - [enrichment/bounds] more than 250 distinct targets is rejected before SQL
+  ---
+  duration_ms: 4.193541
+  type: 'test'
+  ...
+# Subtest: [enrichment/work] failed target parses spend the same conservative card-work budget
+ok 3 - [enrichment/work] failed target parses spend the same conservative card-work budget
+  ---
+  duration_ms: 5.19925
+  type: 'test'
+  ...
+# Subtest: [controller/read-mode] enrichment-only action does not page or read unrelated history content
+ok 4 - [controller/read-mode] enrichment-only action does not page or read unrelated history content
+  ---
+  duration_ms: 4.483
+  type: 'test'
+  ...
+# Subtest: [controller/provenance] unread pending patches retain unknown earlier-version identity
+ok 5 - [controller/provenance] unread pending patches retain unknown earlier-version identity
+  ---
+  duration_ms: 0.1055
+  type: 'test'
+  ...
+# Subtest: [controller/reconciliation] successful target resolution clears a prior budget-block reason
+ok 6 - [controller/reconciliation] successful target resolution clears a prior budget-block reason
+  ---
+  duration_ms: 0.046417
+  type: 'test'
+  ...
+# Subtest: [controller/inspection] blocked history patch publishes its actual inspection action
+ok 7 - [controller/inspection] blocked history patch publishes its actual inspection action
+  ---
+  duration_ms: 0.093042
+  type: 'test'
+  ...
+# Subtest: [controller/retry] the latest failed page request replaces an older failed enrichment request
+ok 8 - [controller/retry] the latest failed page request replaces an older failed enrichment request
+  ---
+  duration_ms: 0.209542
+  type: 'test'
+  ...
+# Subtest: [route] issue inspection links encode supported material IDs as one route segment
+ok 9 - [route] issue inspection links encode supported material IDs as one route segment
+  ---
+  duration_ms: 13.669333
+  type: 'test'
+  ...
+# Subtest: [control] resolved version patches keep older event provenance and cursor/order
+ok 10 - [control] resolved version patches keep older event provenance and cursor/order
+  ---
+  duration_ms: 0.25975
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 122.728042

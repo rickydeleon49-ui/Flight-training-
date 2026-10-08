@@ -1,0 +1,56 @@
+=== M2 Card Review C2 Synthetic Performance Benchmark (Read Pipeline Corrections) ===
+Node.js: v22.23.3
+Platform: darwin arm64
+
+--------------------------------------------------------------------------------
+Generating synthetic dataset at 100_materials_scale (100 materials, 200 events)...
+Populated in 11.56 ms: 100 materials, 41 versions, 976 items, 202 states, 200 events.
+Results for 100_materials_scale:
+  Review Due Page 1 (limit 50):   p50 = 2.973 ms | p95 = 5.623 ms
+  Review Due Page 2 Cont:         p50 = 0.919 ms | p95 = 1.2 ms
+  Full Discovery (2 pages):       p50 = 3.718 ms | p95 = 4.898 ms
+  Candidate Query:                p50 = 0.092 ms
+  Preflight Byte Length Check:    p50 = 0.069 ms
+  Raw Card JSON Reads (Budgeted): p50 = 2.111 ms (~219.3 KB)
+  Urgency Ranking (Approximate):  p50 = 0.1 ms
+  History Page 1 (limit 20):      p50 = 1.043 ms | p95 = 1.666 ms
+  History Page 2 (limit 20):      p50 = 0.966 ms | p95 = 1.673 ms
+
+--------------------------------------------------------------------------------
+Generating synthetic dataset at 2500_materials_scale (2500 materials, 5000 events)...
+Populated in 104.09 ms: 2500 materials, 1001 versions, 12976 items, 5002 states, 5000 events.
+Results for 2500_materials_scale:
+  Review Due Page 1 (limit 50):   p50 = 5.144 ms | p95 = 5.752 ms
+  Review Due Page 2 Cont:         p50 = 1.574 ms | p95 = 2.058 ms
+  Full Discovery (52 pages):       p50 = 109.307 ms | p95 = 110.359 ms
+  Candidate Query:                p50 = 1.019 ms
+  Preflight Byte Length Check:    p50 = 0.221 ms
+  Raw Card JSON Reads (Budgeted): p50 = 3.008 ms (~304.0 KB)
+  Urgency Ranking (Approximate):  p50 = 0.183 ms
+  History Page 1 (limit 20):      p50 = 4.559 ms | p95 = 5.609 ms
+  History Page 2 (limit 20):      p50 = 3.199 ms | p95 = 3.594 ms
+
+--------------------------------------------------------------------------------
+Generating synthetic dataset at 5000_materials_scale (5000 materials, 10000 events)...
+Populated in 204.43 ms: 5000 materials, 2001 versions, 25476 items, 10002 states, 10000 events.
+Results for 5000_materials_scale:
+  Review Due Page 1 (limit 50):   p50 = 6.074 ms | p95 = 7.022 ms
+  Review Due Page 2 Cont:         p50 = 1.566 ms | p95 = 2.017 ms
+  Full Discovery (103 pages):       p50 = 249.951 ms | p95 = 256.592 ms
+  Candidate Query:                p50 = 1.964 ms
+  Preflight Byte Length Check:    p50 = 0.231 ms
+  Raw Card JSON Reads (Budgeted): p50 = 2.707 ms (~305.0 KB)
+  Urgency Ranking (Approximate):  p50 = 0.187 ms
+  History Page 1 (limit 20):      p50 = 9.519 ms | p95 = 11.825 ms
+  History Page 2 (limit 20):      p50 = 6.239 ms | p95 = 6.644 ms
+
+--------------------------------------------------------------------------------
+Measuring representative stress workloads (500 cards, max text, Unicode, JSON escaping)...
+Standard 500-Card Pipeline:      p50 = 0.628 ms | max = 1.033 ms
+Unicode Sample-Text 500-Card:    p50 = 1.151 ms (~182.7 KB) | max = 1.502 ms
+Genuine Max-Unicode 500-Card:    p50 = 10.487 ms (~5.26 MB) | max = 10.517 ms
+JSON Escaped 500-Card Fixture:   8.60 MB (Exceeds 8 MiB cap: true)
+
+Saved benchmark results to /Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/results.json
+(node:22531) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

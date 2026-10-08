@@ -1,7 +1,7 @@
 # M2-4 / Card Reviews C2 — Library-Wide Review Due and History Scope Proposal (7 October 2026)
 
 > [!IMPORTANT]
-> **PROPOSED PLANNING SCOPE — CORRECTED, PENDING INDEPENDENT REVIEW.**
+> **PLANNING PROOF ACCEPTED — PRODUCT DEFAULTS PENDING OWNER APPROVAL.**
 > This document specifies the complete, verified product and architectural design for Milestone 2, Card Review C2 (Library-Wide Review Due and History Discovery). All recommended defaults (**C2-D1 through C2-D9**) are **PROPOSED** pending independent scope acceptance and recorded owner choice.
 > Production C2 implementation is not authorized until owner approval is recorded.
 
@@ -9,7 +9,7 @@
 
 ## Executive Summary & Problem Framing
 
-In C1 (delivered and accepted in PR #70), flashcard review capabilities were introduced inside individual study materials (`/study/:materialId`). While C1 established a sound deterministic scheduling engine (`simple-v1`), content-addressed card identity, and atomic write-transaction boundaries, it left review activities siloed:
+In C1 (delivered and accepted in PR #111), flashcard review capabilities were introduced inside individual study materials (`/study/:materialId`). While C1 established a sound deterministic scheduling engine (`simple-v1`), content-addressed card identity, and atomic write-transaction boundaries, it left review activities siloed:
 - A pilot cannot determine which study materials currently have cards due for review without opening each material individually.
 - Study materials that were generated with flashcards but never opened for review remain completely invisible in any review context.
 - Historical review activity is scoped strictly to the single open material.
@@ -39,7 +39,7 @@ The following decision table defines the proposed product defaults for C2. All d
 | **C2-D5** | **Empty, Loading, & Error States** | Friendly empty card ("All caught up! No cards due for review" when candidate stream is exhausted and no issues exist). Progress continuation prompt if scan budget reached without finding actionable items. Synchronous busy lock and route generation guards. Non-blocking error banner with manual retry without replaying writes. Exposes blocked unavailable content if terminal result contains issues. | Hard blocking error dialogs or silent failure. | Carries C1 request-ownership principles forward; prevents duplicate loads, stale flashes, and race conditions during rapid navigation. | **Proposed** |
 | **C2-D6** | **History Paging & Scope** | **Keyset cursor pagination** (`reviewed_at DESC, id DESC`), bounded at 20 items per page. Filters by `materialId` and `topic` executed in SQL before LIMIT. "Load more" button disabled while loading. Targeted enrichment resolves deferred provenance independently of event pagination. | Full array in React memory, or offset pagination. | Scales efficiently to 10,000+ review events; prevents row skipping or duplication across tied timestamps. | **Proposed** |
 | **C2-D7** | **Separation from Practice Tests** | **Strict semantic & visual separation.** Card reviews display spaced-repetition ratings (`Again`, `Hard`, `Good`, `Easy`) and interval progression. Practice tests display test scores, percentages, and completed attempts. Explicit disclaimers on both views. | Blended composite "Study Score" or inferred FAA exam readiness score. | ROADMAP 7C explicitly forbids claiming mastery or exam readiness from card repetitions. | **Proposed** |
-| **C2-D8** | **New-Card Discovery Architecture** | **Bounded Candidate Discovery with Real SQL Batching & Revalidated Keyset Continuation** (Design 1). **No additional database migrations** (shipped Schema 12 preserved). | Rebuildable cache table (Migration 0013) or persistent backfill. | Benchmarks prove p50 latency is **6.16 ms** per page at 5,000 materials on shipped schema 12, eliminating migration overhead. | **Proposed** |
+| **C2-D8** | **New-Card Discovery Architecture** | **Bounded Candidate Discovery with Real SQL Batching & Revalidated Keyset Continuation** (Design 1). **No additional database migrations** (shipped Schema 12 preserved). | Rebuildable cache table (Migration 0013) or persistent backfill. | Benchmarks prove p50 latency is **6.07 ms** per page at 5,000 materials on shipped schema 12, eliminating migration overhead. | **Proposed** |
 | **C2-D9** | **Candidate & Session Bounds** | Candidate evaluation budget capped at **250 materials** per query; batch card work reservation at **500 cards** per set, batch card ceiling at **2,500 cards** and **2 MiB raw JSON**; single-set lane for oversize sets; individual review sessions retain C1 caps (**MAX_NEW = 10**, **MAX_TOTAL = 20**). | Uncapped global queries or unlimited session lengths. | Prevents memory exhaustion and preserves spaced-repetition pedagogical effectiveness. | **Proposed** |
 
 ---
@@ -53,8 +53,8 @@ We evaluated three architectural options:
 | Criterion | Design 1: Bounded Discovery with Real SQL Batching (Recommended) | Design 2: Rebuildable Cache Table (Provisional Migration 0013) | Design 3: Persistent Migration Backfill |
 |---|---|---|---|
 | **Database Migration Required** | **NONE** (Shipped Schema 12 preserved) | **YES** (Requires Migration 0013) | **YES** (Requires Migration 0013) |
-| **5,000 Materials / 10,000 Events (p50)** | **6.16 ms** (Measured in Node/SQLite) | Unmeasured theoretical prediction | Unmeasured theoretical prediction |
-| **Full Discovery Traversal (92 pages)** | **257.93 ms** (Measured in Node/SQLite) | Unmeasured | Unmeasured |
+| **5,000 Materials / 10,000 Events (p50)** | **6.07 ms** (Measured in Node/SQLite) | Unmeasured theoretical prediction | Unmeasured theoretical prediction |
+| **Full Discovery Traversal (103 pages)** | **249.95 ms** (Measured in Node/SQLite) | Unmeasured | Unmeasured |
 | **Schema-11 Backup Restore** | Restores via shipped migration 0012 DDL; **C2 adds no further DDL upon restore** | Requires additional DDL + startup cache rebuild | Large startup mutation lock |
 | **Migration & Schema Overhead** | **No additional migration**; schema version remains 12 | Requires new migration 0013 and schema bump | Heavy migration lock |
 | **A -> B -> A Reversion Safety** | **Automatic & immediate** (Zero writes) | Fragile cache invalidation | Fragile cache invalidation |
@@ -114,7 +114,7 @@ Within each evaluated batch of candidates:
 
 ### C. Page-Local Summaries vs. Library Cumulative Totals
 - The summary returned by a single page query is explicitly defined as **page-local** (`isPageLocal: true`).
-- An `isComplete: true` flag on a terminal page indicates candidate stream exhaustion, but does not convert page-local counts into whole-library totals. Cumulative totals across loaded pages are maintained exclusively by the UI state controller.
+- An `isComplete: true` flag on a terminal page indicates candidate stream exhaustion, but does not convert page-local counts into whole-library totals. The proof controller retains loaded rows/issues and the latest page summary; it does not maintain whole-library cumulative totals.
 - Exposes typed work counters:
   - `scannedCandidates`: candidate rows inspected from database headers.
   - `evaluatedCandidates`: candidates whose card items were parsed and evaluated.
@@ -155,14 +155,27 @@ The UI controller manages page streaming, held requests, and lifecycle events:
   - `current`: Saved cards in `ai_study_sets` hash to the version of the reviewed item (`isEarlierVersion: false`).
   - `earlier`: Saved cards exist but have a different content hash (`isEarlierVersion: true`).
   - `valid_empty`: `ai_study_sets.flashcards_json === '[]'` (guide-only set without flashcards). Distinct from missing rows.
-  - `unavailable`: Study set row is missing from database, or set exceeds absolute byte ceiling.
+  - `unavailable`: Study set row is missing from database, candidate does not match active filter, or set exceeds absolute byte ceiling.
   - `malformed`: Saved JSON format is corrupted.
-  - `pending`: Deferred due to batch budget ceiling. Resolved via targeted `enrichMaterials` without re-paging event stream.
+  - `pending`: Deferred due to batch budget ceiling or oversize.
+    - *Retryable pending:* Content deferred due to batch budget ceiling (`blockedReason: 'budget_exceeded'`). Retried fairly in batches $\le 250$ targets without dropping remaining work.
+    - *Permanently oversized blocked content:* Content exceeding absolute raw byte limit or oversize threshold (`blockedReason: 'oversize'`). Excluded from automatic pending Retry; publishes both `blockedReason: 'oversize'` and `inspectionTarget: getStudyInspectionTarget(materialId)`.
 - **Independent Targeted History Enrichment:**
-  - `enrichMaterialIds` queries requested materials directly and returns target-only `enrichment` records.
-  - Exposes `currentVersionId` so historical events compare against their own version identity, correctly preserving retired-version meaning (`isEarlierVersion: true`) even after enrichment.
-  - Applying target patches to loaded history rows preserves resolved untargeted fields within the same live generation.
-  - Distinguishes temporary budget deferral from permanently oversized blocked content (exposing reason/action).
+  - `enrichMaterialIds` validates array shape, individual IDs ($\le 64$ characters), and deduplicates entries before SQL, rejecting $> 250$ distinct targets (`INVALID_TARGET`).
+  - Enforces active `materialId` and `topic` ownership prior to raw SQL queries. Non-matching candidates skip raw fetching and return `{ contentStatus: 'unavailable', currentVersionId: null, reason: 'filter_mismatch' }`.
+  - Exposes `currentVersionId` so historical events compare against their own version identity. Compares event versions only when readable current identity exists (`currentVersionId !== null`), while unread/pending patches preserve `isEarlierVersion: null`.
+  - Applying target patches to loaded history rows preserves resolved untargeted fields within the live generation. Successful resolution clears obsolete blocking reason (`blockedReason: null`) and inspection action (`inspectionTarget: null`).
+  - Dedicated enrichment-only mode (`enrichmentOnly: true`, `limit: 0`) skips event paging entirely (`eventQueries === 0`), preserving controller cursor, event order, and event IDs.
+- **Fair Batching & Shared Ledger Accounting:**
+  - Readers report per-call counters (`attemptedCards`, `evaluatedCards`, `rawReads`, `rawBytesTransferred`). `rawAttempts` and `cumulativeRawBytes` are internal ledger variables. The proof controller stores the latest page summary only; production must publish enrichment progress explicitly and distinguish loaded-view counts from whole-library totals.
+  - History readers share a conservative reservation policy (reserving 500 cards before each raw fetch) across explicit targets and event page materials. Failed reservations remain spent; valid parses reconcile to actual card counts. Unread targets are preserved in `pendingMaterialIds`.
+  - Controller fairly batches loaded pending targets in slices $\le 250$ without dropping remaining work.
+- **Discriminated Failed-Read Descriptor & Owned Invalidation:**
+  - Replaces independent failure markers with a single discriminated `this.lastFailedRead = { kind: 'page' | 'enrich', ... } | null` descriptor.
+  - Overwritten only by a live owned failure; cleared on live success and authoritative invalidation (`onReset`, `setFilter`, `onMaterialDeleted`).
+  - `retryRead()` repeats the most recent failed read without writes, covering both operation orders and synchronous re-entry under held locks.
+- **Route Encoding for Inspection Actions:**
+  - Central helper `getStudyInspectionTarget(id)` produces `/study/${encodeURIComponent(id)}` (e.g., ID `a/b` maps to `/study/a%2Fb`) across due issues and history blocked actions.
 - **Scheduler Ownership & State Validation:**
   - `validateScheduleState(stateJsonStr, eventSchedulerVersion)` receives the event's actual `scheduler_version`.
   - Explicit unsupported event version yields null validated schedule/interval fields while raw audit strings remain intact.
@@ -194,29 +207,33 @@ The UI controller manages page streaming, held requests, and lifecycle events:
 
 ## 7. Verified Proof, Diagnostics & Gate
 
-The complete planning proof package in `docs/evidence/m2-card-review-c2-state-publication-2026-10-07/` proves all contracts:
+The complete planning proof package in `docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/` proves all contracts:
 
-1. **All Seven Frozen Reviewer Diagnostics Pass Unchanged (74 / 74 total):**
+1. **All Eight Frozen Reviewer Diagnostics Pass Unchanged (84 / 84 total):**
    - Diagnostic 1 (`docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs`): **9 / 9 passed (exit 0)**.
    - Diagnostic 2 (`docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs`): **12 / 12 passed (exit 0)**.
    - Diagnostic 3 (`docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs`): **16 / 16 passed (exit 0)**.
    - Diagnostic 4 (`docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs`): **11 / 11 passed (exit 0)**.
    - Diagnostic 5 (`docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs`): **8 / 8 passed (exit 0)**.
    - Diagnostic 6 (`docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs`): **11 / 11 passed (exit 0)**.
-   - Diagnostic 7 (`docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs`): **7 / 7 passed (exit 0)** (promoted from 1 pass / 6 fail baseline).
-2. **Comprehensive Proof Suite (`proof.test.mjs`):** **57 / 57 passed (exit 0)** across 14 test suites (Assertion 14 verifies all 6 state-publication findings).
+   - Diagnostic 7 (`docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs`): **7 / 7 passed (exit 0)**.
+   - Diagnostic 8 (`docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs`): **10 / 10 passed (exit 0)** (promoted from 1 pass / 9 fail baseline).
+2. **Comprehensive Proof Suite (`proof.test.mjs`):** **71 / 71 passed (exit 0)** across 15 test suites (Suite 15 promotes all 9 enrichment-corrections findings into permanent regressions alongside controls).
 3. **Reliable Semantic Mutation Verifier (`runMutants.mjs` & `mutantSurvivalControl.mjs`):** Shared independently held A/B fixture verifies baseline passes (exit 0) and 4 mutants are killed with `AssertionError` (exit 1). Survival control confirms verifier fails if assertions are disabled (exit 0).
 4. **SQL Pipeline Audit (`query-audit.mjs`):**
    - Executed SQL calls on 5,000-material / 10,000-event fixture:
      - Due first page: **175 calls** (1 candidate header scan + 1 byte preflight + 172 raw card fetches + 1 review state batch)
      - Due continuation page: **150 calls** (revalidation of pending IDs: 1 metadata scan + 1 byte preflight + 147 raw card fetches + 1 review state batch)
-     - Due status filter page (`new_only`): **177 calls** (1 candidate header scan + 1 byte preflight + 174 raw card fetches + 1 review state batch)
+     - Due status filter page (`due_today`): **177 calls** (1 candidate header scan + 1 byte preflight + 174 raw card fetches + 1 review state batch)
      - History first page: **22 calls** (1 event keyset scan + 1 distinct byte preflight + 20 raw card fetches)
      - History next page: **22 calls** (1 event keyset scan + 1 distinct byte preflight + 20 raw card fetches)
      - History filtered page: **22 calls** (1 event keyset scan + 1 distinct byte preflight + 20 raw card fetches)
+     - History enrichment-only (`history_enrichment_only`): **3 calls** (0 event queries + 1 distinct byte preflight + 2 raw card fetches)
+     - History combined page plus targets (`history_combined_page_plus_target`): **24 calls** (1 event keyset scan + 1 distinct byte preflight + 22 raw card fetches with deduplicated targets)
 5. **Latency Budget Status:**
-   - **Review Due Page 1 p50:** **6.16 ms** at 5,000 materials (budget target: 10 ms) -> **PASS** in SQLite/Node.
-   - **History Page 1 p50:** **9.81 ms** at 5,000 materials / 10,000 events (budget target: 15 ms) -> **PASS** in SQLite/Node.
+   - **Review Due Page 1 p50:** **6.07 ms** at 5,000 materials (budget target: 10 ms) -> **PASS** in SQLite/Node.
+   - **History Page 1 p50:** **9.52 ms** at 5,000 materials / 10,000 events (budget target: 15 ms) -> **PASS** in SQLite/Node.
+   - **Full Discovery Traversal (103 pages):** **249.95 ms** -> **PASS** in SQLite/Node.
    - **Desktop Tauri IPC & WebKit Rendering:** **UNMEASURED**.
 
 ---

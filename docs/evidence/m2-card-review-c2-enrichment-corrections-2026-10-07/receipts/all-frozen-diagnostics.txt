@@ -1,0 +1,688 @@
+=== All Eight Frozen Diagnostics Verification Suite ===
+Date: 2026-10-08T05:40:48Z
+Node: v22.23.3
+Model: /Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# (node:22383) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+ok 1 - [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+  ---
+  duration_ms: 20.71825
+  type: 'test'
+  ...
+# Subtest: [C2-R1] returned due cursor actually advances to a different material
+ok 2 - [C2-R1] returned due cursor actually advances to a different material
+  ---
+  duration_ms: 8.654459
+  type: 'test'
+  ...
+# Subtest: [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+ok 3 - [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+  ---
+  duration_ms: 23.724167
+  type: 'test'
+  ...
+# Subtest: [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+ok 4 - [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+  ---
+  duration_ms: 4.315541
+  type: 'test'
+  ...
+# Subtest: [C2-R2] retired A state cannot consume current B new-card count
+ok 5 - [C2-R2] retired A state cannot consume current B new-card count
+  ---
+  duration_ms: 4.00325
+  type: 'test'
+  ...
+# Subtest: [C2-R3] history marks old A earlier after raw B replacement without writes
+ok 6 - [C2-R3] history marks old A earlier after raw B replacement without writes
+  ---
+  duration_ms: 4.273208
+  type: 'test'
+  ...
+# Subtest: [C2-R3] history marks retained A current after raw A reversion without writes
+ok 7 - [C2-R3] history marks retained A current after raw A reversion without writes
+  ---
+  duration_ms: 3.807584
+  type: 'test'
+  ...
+# Subtest: [control] ordinary active current content returns due and new counts
+ok 8 - [control] ordinary active current content returns due and new counts
+  ---
+  duration_ms: 3.872167
+  type: 'test'
+  ...
+# Subtest: [control] history consumes all 35 tied events without loss or duplicates
+ok 9 - [control] history consumes all 35 tied events without loss or duplicates
+  ---
+  duration_ms: 5.72325
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 166.122417
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# (node:22389) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R6] production parser parity: overlong front
+ok 1 - [C2-R6] production parser parity: overlong front
+  ---
+  duration_ms: 0.997375
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: overlong back and page
+ok 2 - [C2-R6] production parser parity: overlong back and page
+  ---
+  duration_ms: 0.052792
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: lone surrogate
+ok 3 - [C2-R6] production parser parity: lone surrogate
+  ---
+  duration_ms: 0.047959
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: empty string
+ok 4 - [C2-R6] production parser parity: empty string
+  ---
+  duration_ms: 0.032125
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: accepted control character
+ok 5 - [C2-R6] production parser parity: accepted control character
+  ---
+  duration_ms: 0.107792
+  type: 'test'
+  ...
+# Subtest: [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+ok 6 - [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+  ---
+  duration_ms: 0.696417
+  type: 'test'
+  ...
+# Subtest: [C2-R4] no-migration baseline does not add an index absent from shipped schema
+ok 7 - [C2-R4] no-migration baseline does not add an index absent from shipped schema
+  ---
+  duration_ms: 8.4735
+  type: 'test'
+  ...
+# Subtest: [C2-R1] urgency ranking actually applies inside one candidate batch
+ok 8 - [C2-R1] urgency ranking actually applies inside one candidate batch
+  ---
+  duration_ms: 5.336917
+  type: 'test'
+  ...
+# Subtest: [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+ok 9 - [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+  ---
+  duration_ms: 13.469167
+  type: 'test'
+  ...
+# Subtest: [C2-R5] filter change clears the prior filter rows before next publication
+ok 10 - [C2-R5] filter change clears the prior filter rows before next publication
+  ---
+  duration_ms: 4.176167
+  type: 'test'
+  ...
+# Subtest: [C2-R5] two same-turn activations do not duplicate the complete page
+ok 11 - [C2-R5] two same-turn activations do not duplicate the complete page
+  ---
+  duration_ms: 4.12025
+  type: 'test'
+  ...
+# Subtest: [control] ordinary ASCII cards retain identical content identity
+ok 12 - [control] ordinary ASCII cards retain identical content identity
+  ---
+  duration_ms: 4.631167
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.440542
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# (node:22395) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R7] due_today excludes new-only materials
+ok 1 - [C2-R7] due_today excludes new-only materials
+  ---
+  duration_ms: 6.991625
+  type: 'test'
+  ...
+# Subtest: [C2-R7] new_only excludes due materials
+ok 2 - [C2-R7] new_only excludes due materials
+  ---
+  duration_ms: 4.216833
+  type: 'test'
+  ...
+# Subtest: [C2-R7] history materialId filter is applied before pagination
+ok 3 - [C2-R7] history materialId filter is applied before pagination
+  ---
+  duration_ms: 4.421708
+  type: 'test'
+  ...
+# Subtest: [C2-R7] history topic filter is applied before pagination
+ok 4 - [C2-R7] history topic filter is applied before pagination
+  ---
+  duration_ms: 4.575666
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor cannot cross a topic filter
+ok 5 - [C2-R8] pending cursor cannot cross a topic filter
+  ---
+  duration_ms: 8.096041
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor does not return a deleted material
+ok 6 - [C2-R8] pending cursor does not return a deleted material
+  ---
+  duration_ms: 4.225
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor recomputes changed current raw cards or rejects
+ok 7 - [C2-R8] pending cursor recomputes changed current raw cards or rejects
+  ---
+  duration_ms: 3.993583
+  type: 'test'
+  ...
+# Subtest: [C2-R8] pending cursor is owned by the clock boundary
+ok 8 - [C2-R8] pending cursor is owned by the clock boundary
+  ---
+  duration_ms: 4.184417
+  type: 'test'
+  ...
+# Subtest: [C2-R9] controller preserves distinct history event IDs from one material
+ok 9 - [C2-R9] controller preserves distinct history event IDs from one material
+  ---
+  duration_ms: 4.116625
+  type: 'test'
+  ...
+# Subtest: [C2-R9] synchronous reader rejection releases its lock and retry works
+ok 10 - [C2-R9] synchronous reader rejection releases its lock and retry works
+  ---
+  duration_ms: 0.404
+  type: 'test'
+  ...
+# Subtest: [C2-R9] reset fresh traversal replaces surviving stale summaries
+ok 11 - [C2-R9] reset fresh traversal replaces surviving stale summaries
+  ---
+  duration_ms: 0.102375
+  type: 'test'
+  ...
+# Subtest: [C2-R9] invalidation clears loading when old read is held
+ok 12 - [C2-R9] invalidation clears loading when old read is held
+  ---
+  duration_ms: 0.049292
+  type: 'test'
+  ...
+# Subtest: [C2-R10] valid-empty history context is distinct from unavailable
+ok 13 - [C2-R10] valid-empty history context is distinct from unavailable
+  ---
+  duration_ms: 4.003208
+  type: 'test'
+  ...
+# Subtest: [C2-R10] event payload retains prior and next interval/state context
+ok 14 - [C2-R10] event payload retains prior and next interval/state context
+  ---
+  duration_ms: 3.872416
+  type: 'test'
+  ...
+# Subtest: [control] stale A settling cannot release held B lock
+ok 15 - [control] stale A settling cannot release held B lock
+  ---
+  duration_ms: 0.12325
+  type: 'test'
+  ...
+# Subtest: [control] fixture card shape is accepted by production parser
+ok 16 - [control] fixture card shape is accepted by production parser
+  ---
+  duration_ms: 3.730875
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 142.611917
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# (node:22401) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R8 continued] deleted pending prefix does not repeat the next live row
+ok 1 - [R8 continued] deleted pending prefix does not repeat the next live row
+  ---
+  duration_ms: 11.422834
+  type: 'test'
+  ...
+# Subtest: [R8 continued] empty-content pending prefix does not repeat the next live row
+ok 2 - [R8 continued] empty-content pending prefix does not repeat the next live row
+  ---
+  duration_ms: 4.644458
+  type: 'test'
+  ...
+# Subtest: [R8 continued] history cursor cannot silently skip another filter stream
+ok 3 - [R8 continued] history cursor cannot silently skip another filter stream
+  ---
+  duration_ms: 4.671792
+  type: 'test'
+  ...
+# Subtest: [R8 continued] due cursor missing mandatory ownership context is rejected
+ok 4 - [R8 continued] due cursor missing mandatory ownership context is rejected
+  ---
+  duration_ms: 4.114
+  type: 'test'
+  ...
+# Subtest: [R9 continued] fresh reset traversal removes surviving no-longer-actionable summaries
+ok 5 - [R9 continued] fresh reset traversal removes surviving no-longer-actionable summaries
+  ---
+  duration_ms: 0.214167
+  type: 'test'
+  ...
+# Subtest: [R9 continued] fresh reset traversal adopts authoritative urgency order
+ok 6 - [R9 continued] fresh reset traversal adopts authoritative urgency order
+  ---
+  duration_ms: 0.061416
+  type: 'test'
+  ...
+# Subtest: [R9 continued] obsolete synchronous throw cannot clear a new held operation lock
+ok 7 - [R9 continued] obsolete synchronous throw cannot clear a new held operation lock
+  ---
+  duration_ms: 0.173041
+  type: 'test'
+  ...
+# Subtest: [R4 continued] requested 2500-card work budget bounds the delivered candidate batch
+ok 8 - [R4 continued] requested 2500-card work budget bounds the delivered candidate batch
+  ---
+  duration_ms: 12.683666
+  type: 'test'
+  ...
+# Subtest: [R4 continued] raw-card SQL reads respect proposed 2 MiB batch ceiling
+ok 9 - [R4 continued] raw-card SQL reads respect proposed 2 MiB batch ceiling
+  ---
+  duration_ms: 35.367709
+  type: 'test'
+  ...
+# Subtest: [control] unchanged pending traversal remains complete and unique
+ok 10 - [control] unchanged pending traversal remains complete and unique
+  ---
+  duration_ms: 4.486667
+  type: 'test'
+  ...
+# Subtest: [control] live synchronous throw still releases lock for Retry
+ok 11 - [control] live synchronous throw still releases lock for Retry
+  ---
+  duration_ms: 0.173208
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 164.357542
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# discovery malformed bytes 1400000 reported 1400000
+# pending malformed bytes 1400000 reported 1400000
+# card boundary bytes 24281 reported 24281 raw reads 1
+# issued cursor bytes 13296
+# history bytes 1520501
+# (node:22407) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [resource] malformed discovery prefix still obeys actual raw-transfer ceiling
+ok 1 - [resource] malformed discovery prefix still obeys actual raw-transfer ceiling
+  ---
+  duration_ms: 10.684208
+  type: 'test'
+  ...
+# Subtest: [resource] pending malformed work is counted and bounded even when no rows are emitted
+ok 2 - [resource] pending malformed work is counted and bounded even when no rows are emitted
+  ---
+  duration_ms: 12.061834
+  type: 'test'
+  ...
+# Subtest: [resource] card budget stop cannot hide the extra raw read from counters
+ok 3 - [resource] card budget stop cannot hide the extra raw read from counters
+  ---
+  duration_ms: 5.439
+  type: 'test'
+  ...
+# Subtest: [cursor] reader-issued maximum candidate cursor can be consumed
+ok 4 - [cursor] reader-issued maximum candidate cursor can be consumed
+  ---
+  duration_ms: 14.207375
+  type: 'test'
+  ...
+# Subtest: [cursor] due token requires a version and bounded typed pending IDs
+ok 5 - [cursor] due token requires a version and bounded typed pending IDs
+  ---
+  duration_ms: 4.2165
+  type: 'test'
+  ...
+# Subtest: [cursor] history token requires the complete keyset shape
+ok 6 - [cursor] history token requires the complete keyset shape
+  ---
+  duration_ms: 4.029125
+  type: 'test'
+  ...
+# Subtest: [resource] history current-provenance reads obey declared applicable raw budget
+ok 7 - [resource] history current-provenance reads obey declared applicable raw budget
+  ---
+  duration_ms: 26.5465
+  type: 'test'
+  ...
+# Subtest: [control] fresh controller generation preserves authoritative replacement
+ok 8 - [control] fresh controller generation preserves authoritative replacement
+  ---
+  duration_ms: 0.6135
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 164.755375
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-pipeline-review-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# history first set bytes 0 absolute cap 8388608
+# mixed discovery parsed 400 reported evaluated 400
+# mixed pending parsed 400 reported evaluated 400
+# (node:22413) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R4] first valid oversize material is reported explicitly instead of silently completing
+ok 1 - [R4] first valid oversize material is reported explicitly instead of silently completing
+  ---
+  duration_ms: 17.121833
+  type: 'test'
+  ...
+# Subtest: [R4] pending valid oversize material is reported explicitly instead of discarded
+ok 2 - [R4] pending valid oversize material is reported explicitly instead of discarded
+  ---
+  duration_ms: 13.895875
+  type: 'test'
+  ...
+# Subtest: [R4] history first-set enrichment obeys the absolute 8 MiB bound
+ok 3 - [R4] history first-set enrichment obeys the absolute 8 MiB bound
+  ---
+  duration_ms: 41.520375
+  type: 'test'
+  ...
+# Subtest: [R4] mixed-size discovery reserves card work before parsing the next set
+ok 4 - [R4] mixed-size discovery reserves card work before parsing the next set
+  ---
+  duration_ms: 5.144333
+  type: 'test'
+  ...
+# Subtest: [R4] mixed-size pending traversal reserves card work before parsing the next set
+ok 5 - [R4] mixed-size pending traversal reserves card work before parsing the next set
+  ---
+  duration_ms: 6.315458
+  type: 'test'
+  ...
+# Subtest: [R8] due continuation requires a complete typed candidate key before SQL
+ok 6 - [R8] due continuation requires a complete typed candidate key before SQL
+  ---
+  duration_ms: 4.157416
+  type: 'test'
+  ...
+# Subtest: [R8] duplicate pending identities are rejected before SQL
+ok 7 - [R8] duplicate pending identities are rejected before SQL
+  ---
+  duration_ms: 3.892292
+  type: 'test'
+  ...
+# Subtest: [R8] history continuation enforces canonical time and bounded ID before SQL
+ok 8 - [R8] history continuation enforces canonical time and bounded ID before SQL
+  ---
+  duration_ms: 3.845166
+  type: 'test'
+  ...
+# Subtest: [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+ok 9 - [inspection] unsupported event scheduler cannot acquire an inferred simple-v1 interval
+  ---
+  duration_ms: 4.051958
+  type: 'test'
+  ...
+# Subtest: [inspection] invalid calendar and negative count cannot be valid C1 state
+ok 10 - [inspection] invalid calendar and negative count cannot be valid C1 state
+  ---
+  duration_ms: 0.244167
+  type: 'test'
+  ...
+# Subtest: [control] supported C1 state retains its verified interval
+ok 11 - [control] supported C1 state retains its verified interval
+  ---
+  duration_ms: 0.070542
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 209.483917
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-bounds-rereview-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# invalid raw reads 1 reported evaluated cards 0
+# (node:22419) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [R4] invalid arrays spend conservative reservations and retain unread discovery candidates
+ok 1 - [R4] invalid arrays spend conservative reservations and retain unread discovery candidates
+  ---
+  duration_ms: 6.916834
+  type: 'test'
+  ...
+# Subtest: [R9/R4] reader issues survive the controller publication path
+ok 2 - [R9/R4] reader issues survive the controller publication path
+  ---
+  duration_ms: 0.636583
+  type: 'test'
+  ...
+# Subtest: [R4] oversize inspection target points at the existing Study material route
+ok 3 - [R4] oversize inspection target points at the existing Study material route
+  ---
+  duration_ms: 12.730459
+  type: 'test'
+  ...
+# Subtest: [R8] priority rank is restricted to the actual candidate key domain before SQL
+ok 4 - [R8] priority rank is restricted to the actual candidate key domain before SQL
+  ---
+  duration_ms: 4.453166
+  type: 'test'
+  ...
+# Subtest: [history] targeted enrichment can reach a deferred material after its event page advances
+ok 5 - [history] targeted enrichment can reach a deferred material after its event page advances
+  ---
+  duration_ms: 38.729667
+  type: 'test'
+  ...
+# Subtest: [history] targeted refresh does not downgrade already resolved untargeted provenance
+ok 6 - [history] targeted refresh does not downgrade already resolved untargeted provenance
+  ---
+  duration_ms: 36.609083
+  type: 'test'
+  ...
+# Subtest: [control] supported canonical schedule keeps its interval
+ok 7 - [control] supported canonical schedule keeps its interval
+  ---
+  duration_ms: 0.070625
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 186.945041
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-contract-review-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+------------------------------------------------------------
+RUNNING DIAGNOSTIC: docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs
+COMMAND: C2_REVIEW_MODEL="/Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-enrichment-corrections-2026-10-07/proof/contractModel.mjs" /opt/homebrew/opt/node@22/bin/node --experimental-strip-types --test "docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs"
+CWD: /Users/rickymac/code/Flight-training-pr70-integration
+------------------------------------------------------------
+TAP version 13
+# target malformed raw reads 1
+# (node:22425) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [enrichment/context] explicit targets cannot bypass the active material/topic filter
+ok 1 - [enrichment/context] explicit targets cannot bypass the active material/topic filter
+  ---
+  duration_ms: 6.396916
+  type: 'test'
+  ...
+# Subtest: [enrichment/bounds] more than 250 distinct targets is rejected before SQL
+ok 2 - [enrichment/bounds] more than 250 distinct targets is rejected before SQL
+  ---
+  duration_ms: 4.298
+  type: 'test'
+  ...
+# Subtest: [enrichment/work] failed target parses spend the same conservative card-work budget
+ok 3 - [enrichment/work] failed target parses spend the same conservative card-work budget
+  ---
+  duration_ms: 5.148416
+  type: 'test'
+  ...
+# Subtest: [controller/read-mode] enrichment-only action does not page or read unrelated history content
+ok 4 - [controller/read-mode] enrichment-only action does not page or read unrelated history content
+  ---
+  duration_ms: 4.994292
+  type: 'test'
+  ...
+# Subtest: [controller/provenance] unread pending patches retain unknown earlier-version identity
+ok 5 - [controller/provenance] unread pending patches retain unknown earlier-version identity
+  ---
+  duration_ms: 0.112708
+  type: 'test'
+  ...
+# Subtest: [controller/reconciliation] successful target resolution clears a prior budget-block reason
+ok 6 - [controller/reconciliation] successful target resolution clears a prior budget-block reason
+  ---
+  duration_ms: 0.066
+  type: 'test'
+  ...
+# Subtest: [controller/inspection] blocked history patch publishes its actual inspection action
+ok 7 - [controller/inspection] blocked history patch publishes its actual inspection action
+  ---
+  duration_ms: 0.097792
+  type: 'test'
+  ...
+# Subtest: [controller/retry] the latest failed page request replaces an older failed enrichment request
+ok 8 - [controller/retry] the latest failed page request replaces an older failed enrichment request
+  ---
+  duration_ms: 0.218167
+  type: 'test'
+  ...
+# Subtest: [route] issue inspection links encode supported material IDs as one route segment
+ok 9 - [route] issue inspection links encode supported material IDs as one route segment
+  ---
+  duration_ms: 14.696833
+  type: 'test'
+  ...
+# Subtest: [control] resolved version patches keep older event provenance and cursor/order
+ok 10 - [control] resolved version patches keep older event provenance and cursor/order
+  ---
+  duration_ms: 0.257625
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 123.050875
+
+CHILD_EXIT_CODE: 0
+DIAGNOSTIC PASSED: docs/evidence/m2-card-review-c2-publication-rereview-2026-10-07/diagnostic.test.mjs (child exit 0)
+
+OVERALL_EXIT_STATUS: 0

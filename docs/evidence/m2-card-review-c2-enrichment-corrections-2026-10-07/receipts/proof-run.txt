@@ -1,0 +1,553 @@
+TAP version 13
+# Running Baseline Behavioral Assertions in isolated child process...
+#   -> Baseline passed successfully (exit 0).
+# Running Mutant: mutant_wrong_version (Wrong version reliance (ignores unmaterialized raw card changes))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_time_boundary (Broken time boundary (drops Day due cards before local midnight))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_cursor_tie (Broken keyset cursor (drops tied timestamp items without id tiebreaker))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_owner_lock (Broken lock ownership (stale resolution drops held active read lock))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# (node:22456) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+    # Subtest: discovers unmaterialized material with new cards and zero due cards
+    ok 1 - discovers unmaterialized material with new cards and zero due cards
+      ---
+      duration_ms: 24.505375
+      type: 'test'
+      ...
+    # Subtest: excludes old A's due rows when content changes to unmaterialized B; B cards are new
+    ok 2 - excludes old A's due rows when content changes to unmaterialized B; B cards are new
+      ---
+      duration_ms: 12.796875
+      type: 'test'
+      ...
+    # Subtest: reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+    ok 3 - reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+      ---
+      duration_ms: 12.0125
+      type: 'test'
+      ...
+    # Subtest: retired A state rows cannot reduce current B new-card count
+    ok 4 - retired A state rows cannot reduce current B new-card count
+      ---
+      duration_ms: 4.111416
+      type: 'test'
+      ...
+    # Subtest: distinguishes valid-empty guide-only sets from malformed sets
+    ok 5 - distinguishes valid-empty guide-only sets from malformed sets
+      ---
+      duration_ms: 11.9905
+      type: 'test'
+      ...
+    1..5
+ok 1 - [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+  ---
+  duration_ms: 65.922042
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+    # Subtest: includes Again card at exact instant and Day card before next local midnight
+    ok 1 - includes Again card at exact instant and Day card before next local midnight
+      ---
+      duration_ms: 12.381375
+      type: 'test'
+      ...
+    # Subtest: applies within-batch urgency ranking: Again due before Day due before New cards
+    ok 2 - applies within-batch urgency ranking: Again due before Day due before New cards
+      ---
+      duration_ms: 4.52525
+      type: 'test'
+      ...
+    1..2
+ok 2 - [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+  ---
+  duration_ms: 17.12175
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+    # Subtest: consumes tied history events without dropping rows or duplicating
+    ok 1 - consumes tied history events without dropping rows or duplicating
+      ---
+      duration_ms: 19.07075
+      type: 'test'
+      ...
+    # Subtest: enriches history rows with contentStatus, interval, step, and card sides
+    ok 2 - enriches history rows with contentStatus, interval, step, and card sides
+      ---
+      duration_ms: 9.596958
+      type: 'test'
+      ...
+    # Subtest: enforces maximum 250 candidate budget cap and returns page-local summary
+    ok 3 - enforces maximum 250 candidate budget cap and returns page-local summary
+      ---
+      duration_ms: 8.603042
+      type: 'test'
+      ...
+    1..3
+ok 3 - [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+  ---
+  duration_ms: 37.351417
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 4: Filters (C2-R7)
+    # Subtest: statusFilter due_today excludes new-only materials and includes mixed
+    ok 1 - statusFilter due_today excludes new-only materials and includes mixed
+      ---
+      duration_ms: 4.054083
+      type: 'test'
+      ...
+    # Subtest: filters history by materialId and topic in SQL before keyset limit
+    ok 2 - filters history by materialId and topic in SQL before keyset limit
+      ---
+      duration_ms: 8.629125
+      type: 'test'
+      ...
+    1..2
+ok 4 - [C2 Proof] Assertion 4: Filters (C2-R7)
+  ---
+  duration_ms: 12.720875
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8)
+    # Subtest: rejects cursor with mismatched filter as STALE_CURSOR
+    ok 1 - rejects cursor with mismatched filter as STALE_CURSOR
+      ---
+      duration_ms: 9.030875
+      type: 'test'
+      ...
+    # Subtest: rejects cursor with mismatched clock/midnight as STALE_CURSOR
+    ok 2 - rejects cursor with mismatched clock/midnight as STALE_CURSOR
+      ---
+      duration_ms: 11.301875
+      type: 'test'
+      ...
+    # Subtest: continuation re-evaluates pending item and drops deleted material
+    ok 3 - continuation re-evaluates pending item and drops deleted material
+      ---
+      duration_ms: 3.916417
+      type: 'test'
+      ...
+    # Subtest: supports consuming same-query stream with larger or smaller page size
+    ok 4 - supports consuming same-query stream with larger or smaller page size
+      ---
+      duration_ms: 11.687334
+      type: 'test'
+      ...
+    1..4
+ok 5 - [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8)
+  ---
+  duration_ms: 36.021917
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9)
+    # Subtest: synchronous reader throw releases lock and allows immediate retry
+    ok 1 - synchronous reader throw releases lock and allows immediate retry
+      ---
+      duration_ms: 3.969417
+      type: 'test'
+      ...
+    # Subtest: asynchronous rejection at non-null cursor allows successful retry with preserved cursor
+    ok 2 - asynchronous rejection at non-null cursor allows successful retry with preserved cursor
+      ---
+      duration_ms: 11.416541
+      type: 'test'
+      ...
+    # Subtest: preserves multiple distinct history events for the same material
+    ok 3 - preserves multiple distinct history events for the same material
+      ---
+      duration_ms: 3.735042
+      type: 'test'
+      ...
+    1..3
+ok 6 - [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9)
+  ---
+  duration_ms: 19.163167
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10)
+    # Subtest: exact roundtrip discovery and history across file-backed db close and reopen
+    ok 1 - exact roundtrip discovery and history across file-backed db close and reopen
+      ---
+      duration_ms: 30.527667
+      type: 'test'
+      ...
+    # Subtest: proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+    ok 2 - proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+      ---
+      duration_ms: 3.775208
+      type: 'test'
+      ...
+    1..2
+ok 7 - [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10)
+  ---
+  duration_ms: 34.335667
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11)
+    # Subtest: verifies all semantic mutants are reliably killed by assertions in isolated processes
+    ok 1 - verifies all semantic mutants are reliably killed by assertions in isolated processes
+      ---
+      duration_ms: 438.765958
+      type: 'test'
+      ...
+    1..1
+ok 8 - [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11)
+  ---
+  duration_ms: 438.8035
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 9: Full Traversal Completeness across Stream Mutations (R8)
+    # Subtest: deleted pending prefix does not repeat subsequent live rows over full traversal
+    ok 1 - deleted pending prefix does not repeat subsequent live rows over full traversal
+      ---
+      duration_ms: 4.355542
+      type: 'test'
+      ...
+    # Subtest: empty-content pending prefix does not repeat subsequent live rows over full traversal
+    ok 2 - empty-content pending prefix does not repeat subsequent live rows over full traversal
+      ---
+      duration_ms: 3.90975
+      type: 'test'
+      ...
+    # Subtest: history cursor enforces filter context ownership and rejects cross-stream usage
+    ok 3 - history cursor enforces filter context ownership and rejects cross-stream usage
+      ---
+      duration_ms: 4.232625
+      type: 'test'
+      ...
+    # Subtest: due cursor missing mandatory ownership context is rejected
+    ok 4 - due cursor missing mandatory ownership context is rejected
+      ---
+      duration_ms: 3.718708
+      type: 'test'
+      ...
+    1..4
+ok 9 - [C2 Proof] Assertion 9: Full Traversal Completeness across Stream Mutations (R8)
+  ---
+  duration_ms: 16.28475
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 10: Authoritative Refresh Invalidation & Operation Lock (R9)
+    # Subtest: fresh reset traversal removes surviving no-longer-actionable summaries
+    ok 1 - fresh reset traversal removes surviving no-longer-actionable summaries
+      ---
+      duration_ms: 0.149167
+      type: 'test'
+      ...
+    # Subtest: fresh reset traversal adopts authoritative urgency order
+    ok 2 - fresh reset traversal adopts authoritative urgency order
+      ---
+      duration_ms: 0.1055
+      type: 'test'
+      ...
+    # Subtest: obsolete synchronous throw cannot clear a new held operation lock (reviewer boundary)
+    ok 3 - obsolete synchronous throw cannot clear a new held operation lock (reviewer boundary)
+      ---
+      duration_ms: 0.096209
+      type: 'test'
+      ...
+    1..3
+ok 10 - [C2 Proof] Assertion 10: Authoritative Refresh Invalidation & Operation Lock (R9)
+  ---
+  duration_ms: 0.38925
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 11: Executable Resource Budgets & Work Counters (R4)
+    # Subtest: requested 2500-card work budget bounds delivered candidate batch and preserves continuation
+    ok 1 - requested 2500-card work budget bounds delivered candidate batch and preserves continuation
+      ---
+      duration_ms: 6.903833
+      type: 'test'
+      ...
+    # Subtest: raw-card SQL reads respect proposed 2 MiB batch ceiling via preflight
+    ok 2 - raw-card SQL reads respect proposed 2 MiB batch ceiling via preflight
+      ---
+      duration_ms: 17.960042
+      type: 'test'
+      ...
+    # Subtest: oversize single-set lane admits single large set to prevent livelock
+    ok 3 - oversize single-set lane admits single large set to prevent livelock
+      ---
+      duration_ms: 6.273042
+      type: 'test'
+      ...
+    1..3
+ok 11 - [C2 Proof] Assertion 11: Executable Resource Budgets & Work Counters (R4)
+  ---
+  duration_ms: 31.189791
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 12: Bounded Read Pipeline, Strict Cursors, and Legacy Inspection (C2-R4, C2-R8)
+    # Subtest: malformed discovery and pending prefixes obey byte budget and retain unvisited candidates
+    ok 1 - malformed discovery and pending prefixes obey byte budget and retain unvisited candidates
+      ---
+      duration_ms: 6.647542
+      type: 'test'
+      ...
+    # Subtest: card budget stop counts already-read candidate in counters and retains candidate for next page
+    ok 2 - card budget stop counts already-read candidate in counters and retains candidate for next page
+      ---
+      duration_ms: 4.5635
+      type: 'test'
+      ...
+    # Subtest: maximum candidate cursor (250 IDs) roundtrips through strict decoder; rejects > 32KB cursor
+    ok 3 - maximum candidate cursor (250 IDs) roundtrips through strict decoder; rejects > 32KB cursor
+      ---
+      duration_ms: 11.457958
+      type: 'test'
+      ...
+    # Subtest: strict cursor validation rejects missing version, wrong kind, malformed keys, and arrays before SQL
+    ok 4 - strict cursor validation rejects missing version, wrong kind, malformed keys, and arrays before SQL
+      ---
+      duration_ms: 3.891167
+      type: 'test'
+      ...
+    # Subtest: history enrichment respects raw byte budget and marks unread sets as pending without guessing provenance
+    ok 5 - history enrichment respects raw byte budget and marks unread sets as pending without guessing provenance
+      ---
+      duration_ms: 25.530916
+      type: 'test'
+      ...
+    # Subtest: legacy review schedule inspection validates C1 simple-v1 ladder, produces typed intervals, and falls back cleanly for malformed/unsupported state
+    ok 6 - legacy review schedule inspection validates C1 simple-v1 ladder, produces typed intervals, and falls back cleanly for malformed/unsupported state
+      ---
+      duration_ms: 0.089542
+      type: 'test'
+      ...
+    # Subtest: genuinely 500-card / 1000-front / 2000-back Unicode fixture is production-valid under C1 parser and accurately measured
+    ok 7 - genuinely 500-card / 1000-front / 2000-back Unicode fixture is production-valid under C1 parser and accurately measured
+      ---
+      duration_ms: 16.069667
+      type: 'test'
+      ...
+    # Subtest: absolute oversize single-set policy bounds giant payloads (> 8 MiB) and explicitly reports issues
+    ok 8 - absolute oversize single-set policy bounds giant payloads (> 8 MiB) and explicitly reports issues
+      ---
+      duration_ms: 12.282
+      type: 'test'
+      ...
+    1..8
+ok 12 - [C2 Proof] Assertion 12: Bounded Read Pipeline, Strict Cursors, and Legacy Inspection (C2-R4, C2-R8)
+  ---
+  duration_ms: 80.638667
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 13: Contract Finishing — Explicit Oversize, Strict Schemas, and History Enrichment (7 Oct)
+    # Subtest: oversize payload > 8 MiB is explicitly reported in issues, zero bytes read, and later materials remain discoverable
+    ok 1 - oversize payload > 8 MiB is explicitly reported in issues, zero bytes read, and later materials remain discoverable
+      ---
+      duration_ms: 10.880042
+      type: 'test'
+      ...
+    # Subtest: oversize set content replacement with valid content recovers on live refresh without livelock
+    ok 2 - oversize set content replacement with valid content recovers on live refresh without livelock
+      ---
+      duration_ms: 10.837792
+      type: 'test'
+      ...
+    # Subtest: history pending resolution: two max-ASCII sets under 2 MiB defers set 2, targeted enrich resolves without event loss
+    ok 3 - history pending resolution: two max-ASCII sets under 2 MiB defers set 2, targeted enrich resolves without event loss
+      ---
+      duration_ms: 32.173125
+      type: 'test'
+      ...
+    # Subtest: due cursor strict schema rejects missing candidate keyset boundary, duplicate pending IDs, non-boolean exhaustion
+    ok 4 - due cursor strict schema rejects missing candidate keyset boundary, duplicate pending IDs, non-boolean exhaustion
+      ---
+      duration_ms: 3.884959
+      type: 'test'
+      ...
+    # Subtest: history cursor strict schema rejects non-canonical ISO dates and overlong IDs before SQL
+    ok 5 - history cursor strict schema rejects non-canonical ISO dates and overlong IDs before SQL
+      ---
+      duration_ms: 3.698917
+      type: 'test'
+      ...
+    # Subtest: validateScheduleState rejects unsupported event schedulers, non-canonical calendar dates, negative counts
+    ok 6 - validateScheduleState rejects unsupported event schedulers, non-canonical calendar dates, negative counts
+      ---
+      duration_ms: 0.057209
+      type: 'test'
+      ...
+    1..6
+ok 13 - [C2 Proof] Assertion 13: Contract Finishing — Explicit Oversize, Strict Schemas, and History Enrichment (7 Oct)
+  ---
+  duration_ms: 61.612083
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 14: State Publication, Conservative Work Reservations & Independent History Enrichment (7 Oct)
+    # Subtest: invalid arrays spend conservative 500-card reservation; budget 500 stops after 1 raw attempt and preserves continuation
+    ok 1 - invalid arrays spend conservative 500-card reservation; budget 500 stops after 1 raw attempt and preserves continuation
+      ---
+      duration_ms: 3.969208
+      type: 'test'
+      ...
+    # Subtest: budget 600 reconciles valid 400-card set to 400, stopping next 500-card candidate before raw read
+    ok 2 - budget 600 reconciles valid 400-card set to 400, stopping next 500-card candidate before raw read
+      ---
+      duration_ms: 4.271834
+      type: 'test'
+      ...
+    # Subtest: single-set exception allows at most one raw-work admission under sub-500 budget; metadata oversize does not consume exception
+    ok 3 - single-set exception allows at most one raw-work admission under sub-500 budget; metadata oversize does not consume exception
+      ---
+      duration_ms: 10.72875
+      type: 'test'
+      ...
+    # Subtest: controller publishes issues and summary through generation lock; retains multi-page issues and clears on reset
+    ok 4 - controller publishes issues and summary through generation lock; retains multi-page issues and clears on reset
+      ---
+      duration_ms: 0.121834
+      type: 'test'
+      ...
+    # Subtest: controller distinguishes isComplete from isCaughtUp on warning-only terminal results
+    ok 5 - controller distinguishes isComplete from isCaughtUp on warning-only terminal results
+      ---
+      duration_ms: 0.045875
+      type: 'test'
+      ...
+    # Subtest: cursor priority rank rejects lp !== 0 && lp !== 1 with INVALID_CURSOR before executing SQL
+    ok 6 - cursor priority rank rejects lp !== 0 && lp !== 1 with INVALID_CURSOR before executing SQL
+      ---
+      duration_ms: 3.788375
+      type: 'test'
+      ...
+    # Subtest: history targeted enrichment resolves deferred material from earlier event page without inserting old events
+    ok 7 - history targeted enrichment resolves deferred material from earlier event page without inserting old events
+      ---
+      duration_ms: 32.249625
+      type: 'test'
+      ...
+    # Subtest: controller.enrichMaterials applies target-only patches preserving existing untargeted current provenance and event order
+    ok 8 - controller.enrichMaterials applies target-only patches preserving existing untargeted current provenance and event order
+      ---
+      duration_ms: 32.537875
+      type: 'test'
+      ...
+    # Subtest: history enrichment distinguishes retired-version event from current version using currentVersionId
+    ok 9 - history enrichment distinguishes retired-version event from current version using currentVersionId
+      ---
+      duration_ms: 4.05125
+      type: 'test'
+      ...
+    # Subtest: oversized history content exposes reason: oversize and inspectionTarget rather than endless retry
+    ok 10 - oversized history content exposes reason: oversize and inspectionTarget rather than endless retry
+      ---
+      duration_ms: 10.130125
+      type: 'test'
+      ...
+    # Subtest: controller.enrichMaterials supports read-only retry on failure without altering cursor
+    ok 11 - controller.enrichMaterials supports read-only retry on failure without altering cursor
+      ---
+      duration_ms: 0.1165
+      type: 'test'
+      ...
+    1..11
+ok 14 - [C2 Proof] Assertion 14: State Publication, Conservative Work Reservations & Independent History Enrichment (7 Oct)
+  ---
+  duration_ms: 102.128583
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 15: Bounded Filter-Owned Enrichment, Status-Aware Publication & Operation-Discriminated Retry (C2-E1, C2-E2, C2-E3)
+    # Subtest: C2-E1 Case 1: explicit targets cannot bypass active material/topic ownership filter
+    ok 1 - C2-E1 Case 1: explicit targets cannot bypass active material/topic ownership filter
+      ---
+      duration_ms: 3.907125
+      type: 'test'
+      ...
+    # Subtest: C2-E1 Extended Context: material-only and topic-only filters reject out-of-scope targets before raw fetch
+    ok 2 - C2-E1 Extended Context: material-only and topic-only filters reject out-of-scope targets before raw fetch
+      ---
+      duration_ms: 3.929125
+      type: 'test'
+      ...
+    # Subtest: C2-E1 Case 2: more than 250 distinct targets is rejected before SQL with INVALID_TARGET/INVALID_INPUT
+    ok 3 - C2-E1 Case 2: more than 250 distinct targets is rejected before SQL with INVALID_TARGET/INVALID_INPUT
+      ---
+      duration_ms: 3.66975
+      type: 'test'
+      ...
+    # Subtest: C2-E1 Extended Bounds: malformed target array shapes and element IDs rejected before SQL
+    ok 4 - C2-E1 Extended Bounds: malformed target array shapes and element IDs rejected before SQL
+      ---
+      duration_ms: 3.793417
+      type: 'test'
+      ...
+    # Subtest: C2-E1 Extended Batching: controller fairly batches >250 pending loaded materials without dropping remainder
+    ok 5 - C2-E1 Extended Batching: controller fairly batches >250 pending loaded materials without dropping remainder
+      ---
+      duration_ms: 1.570709
+      type: 'test'
+      ...
+    # Subtest: C2-E1 Case 3: failed target parses spend the same conservative card-work budget
+    ok 6 - C2-E1 Case 3: failed target parses spend the same conservative card-work budget
+      ---
+      duration_ms: 3.991334
+      type: 'test'
+      ...
+    # Subtest: C2-E1 Case 4: enrichment-only action does not page or read unrelated history content
+    ok 7 - C2-E1 Case 4: enrichment-only action does not page or read unrelated history content
+      ---
+      duration_ms: 4.077583
+      type: 'test'
+      ...
+    # Subtest: C2-E2 Case 5: unread pending patches retain unknown earlier-version identity (null)
+    ok 8 - C2-E2 Case 5: unread pending patches retain unknown earlier-version identity (null)
+      ---
+      duration_ms: 0.047792
+      type: 'test'
+      ...
+    # Subtest: C2-E2 Case 6: successful target resolution clears a prior budget-block reason
+    ok 9 - C2-E2 Case 6: successful target resolution clears a prior budget-block reason
+      ---
+      duration_ms: 0.039792
+      type: 'test'
+      ...
+    # Subtest: C2-E2 Case 7: blocked history patch publishes its actual inspection action
+    ok 10 - C2-E2 Case 7: blocked history patch publishes its actual inspection action
+      ---
+      duration_ms: 0.030875
+      type: 'test'
+      ...
+    # Subtest: C2-E3 Case 8: the latest failed page request replaces an older failed enrichment request in retry descriptor
+    ok 11 - C2-E3 Case 8: the latest failed page request replaces an older failed enrichment request in retry descriptor
+      ---
+      duration_ms: 0.084458
+      type: 'test'
+      ...
+    # Subtest: C2-E3 Extended Retry: page failure followed by enrichment failure repeats enrichment; success clears descriptor
+    ok 12 - C2-E3 Extended Retry: page failure followed by enrichment failure repeats enrichment; success clears descriptor
+      ---
+      duration_ms: 0.123625
+      type: 'test'
+      ...
+    # Subtest: C2-E2 Case 9: issue inspection links encode supported material IDs with URI encoding
+    ok 13 - C2-E2 Case 9: issue inspection links encode supported material IDs with URI encoding
+      ---
+      duration_ms: 10.700375
+      type: 'test'
+      ...
+    # Subtest: C2-E2 Case 10: resolved version patches keep older event provenance and cursor/order (passing control)
+    ok 14 - C2-E2 Case 10: resolved version patches keep older event provenance and cursor/order (passing control)
+      ---
+      duration_ms: 0.089958
+      type: 'test'
+      ...
+    1..14
+ok 15 - [C2 Proof] Assertion 15: Bounded Filter-Owned Enrichment, Status-Aware Publication & Operation-Discriminated Retry (C2-E1, C2-E2, C2-E3)
+  ---
+  duration_ms: 36.175833
+  type: 'suite'
+  ...
+1..15
+# tests 71
+# suites 15
+# pass 71
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1088.189041
