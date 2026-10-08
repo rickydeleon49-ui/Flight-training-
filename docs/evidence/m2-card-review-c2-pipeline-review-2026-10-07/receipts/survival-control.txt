@@ -1,0 +1,13 @@
+=== RUNNING MUTANT SURVIVAL CONTROL ===
+Testing that disabling assertion failures causes runMutantVerification to fail...
+
+Running Baseline Behavioral Assertions in isolated child process...
+  -> Baseline passed successfully (exit 0).
+
+Running Mutant: mutant_wrong_version (Wrong version reliance (ignores unmaterialized raw card changes))...
+  -> FAIL: MUTATION VERIFIER FAILURE: Mutant 'mutant_wrong_version' survived! Process exited with code 0.
+SURVIVAL CONTROL PASSED: Verifier correctly failed upon mutant survival.
+Verified error message: "MUTATION VERIFIER FAILURE: Mutant 'mutant_wrong_version' survived! Process exited with code 0."
+
+(node:12804) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

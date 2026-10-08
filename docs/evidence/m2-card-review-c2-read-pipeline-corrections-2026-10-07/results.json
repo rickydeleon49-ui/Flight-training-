@@ -1,0 +1,438 @@
+{
+  "timestamp": "2026-10-08T02:26:57.704Z",
+  "nodeVersion": "v22.23.3",
+  "sqliteVersion": "3.53.4",
+  "platform": "darwin arm64",
+  "scales": {
+    "100_materials_scale": {
+      "dataset": {
+        "materials": 100,
+        "versions": 41,
+        "items": 976,
+        "states": 202,
+        "events": 200
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 2.712,
+        "max": 5.887,
+        "p50": 3.224,
+        "p95": 5.887,
+        "p99": 5.887,
+        "mean": 3.322,
+        "count": 20
+      },
+      "reviewDue_page2_continuation": {
+        "min": 0.941,
+        "max": 1.312,
+        "p50": 0.984,
+        "p95": 1.312,
+        "p99": 1.312,
+        "mean": 1.05,
+        "count": 20
+      },
+      "fullDiscovery_all_pages": {
+        "min": 3.714,
+        "max": 5.702,
+        "p50": 3.962,
+        "p95": 5.702,
+        "p99": 5.702,
+        "mean": 4.339,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 2,
+      "fullDiscovery_materials_found": 81,
+      "pipeline_breakdown_actual_rows": {
+        "sql_candidate_query": {
+          "min": 0.087,
+          "max": 0.113,
+          "p50": 0.093,
+          "p95": 0.113,
+          "p99": 0.113,
+          "mean": 0.094,
+          "count": 20
+        },
+        "sql_preflight_byte_check": {
+          "min": 0.068,
+          "max": 0.111,
+          "p50": 0.07,
+          "p95": 0.111,
+          "p99": 0.111,
+          "mean": 0.073,
+          "count": 20
+        },
+        "sql_raw_card_reads": {
+          "min": 1.807,
+          "max": 2.658,
+          "p50": 2.27,
+          "p95": 2.658,
+          "p99": 2.658,
+          "mean": 2.251,
+          "count": 20
+        },
+        "json_parse_canonical_hash_250": {
+          "min": 1.807,
+          "max": 2.658,
+          "p50": 2.27,
+          "p95": 2.658,
+          "p99": 2.658,
+          "mean": 2.251,
+          "count": 20
+        },
+        "sql_batched_state_read": {
+          "min": 0.243,
+          "max": 0.806,
+          "p50": 0.253,
+          "p95": 0.806,
+          "p99": 0.806,
+          "mean": 0.283,
+          "count": 20
+        },
+        "urgency_ranking_actual_rows": {
+          "min": 0.081,
+          "max": 0.426,
+          "p50": 0.1,
+          "p95": 0.426,
+          "p99": 0.426,
+          "mean": 0.118,
+          "count": 20
+        },
+        "sample_bytes_transferred": 224538
+      },
+      "topic_filter_aerodynamics": {
+        "min": 0.315,
+        "max": 0.779,
+        "p50": 0.337,
+        "p95": 0.779,
+        "p99": 0.779,
+        "mean": 0.361,
+        "count": 20
+      },
+      "history_page1_20_limit": {
+        "min": 0.993,
+        "max": 1.562,
+        "p50": 1.169,
+        "p95": 1.562,
+        "p99": 1.562,
+        "mean": 1.19,
+        "count": 20
+      },
+      "history_page2_20_limit": {
+        "min": 0.937,
+        "max": 1.711,
+        "p50": 1.098,
+        "p95": 1.711,
+        "p99": 1.711,
+        "mean": 1.138,
+        "count": 20
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "PASS",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "PASS",
+        "desktop_ipc_status": "UNMEASURED (Desktop Tauri WebKit runtime separate from Node/SQLite engine)",
+        "webkit_render_status": "UNMEASURED"
+      }
+    },
+    "2500_materials_scale": {
+      "dataset": {
+        "materials": 2500,
+        "versions": 1001,
+        "items": 12976,
+        "states": 5002,
+        "events": 5000
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 5.847,
+        "max": 6.837,
+        "p50": 6.531,
+        "p95": 6.837,
+        "p99": 6.837,
+        "mean": 6.46,
+        "count": 10
+      },
+      "reviewDue_page2_continuation": {
+        "min": 1.721,
+        "max": 2.231,
+        "p50": 1.794,
+        "p95": 2.231,
+        "p99": 2.231,
+        "mean": 1.835,
+        "count": 10
+      },
+      "fullDiscovery_all_pages": {
+        "min": 118.684,
+        "max": 122.823,
+        "p50": 119.411,
+        "p95": 122.823,
+        "p99": 122.823,
+        "mean": 119.926,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 47,
+      "fullDiscovery_materials_found": 2081,
+      "pipeline_breakdown_actual_rows": {
+        "sql_candidate_query": {
+          "min": 1.073,
+          "max": 1.18,
+          "p50": 1.128,
+          "p95": 1.18,
+          "p99": 1.18,
+          "mean": 1.122,
+          "count": 10
+        },
+        "sql_preflight_byte_check": {
+          "min": 0.215,
+          "max": 0.266,
+          "p50": 0.225,
+          "p95": 0.266,
+          "p99": 0.266,
+          "mean": 0.229,
+          "count": 10
+        },
+        "sql_raw_card_reads": {
+          "min": 3.712,
+          "max": 4.358,
+          "p50": 4.221,
+          "p95": 4.358,
+          "p99": 4.358,
+          "mean": 4.193,
+          "count": 10
+        },
+        "json_parse_canonical_hash_250": {
+          "min": 3.712,
+          "max": 4.358,
+          "p50": 4.221,
+          "p95": 4.358,
+          "p99": 4.358,
+          "mean": 4.193,
+          "count": 10
+        },
+        "sql_batched_state_read": {
+          "min": 0.717,
+          "max": 0.895,
+          "p50": 0.76,
+          "p95": 0.895,
+          "p99": 0.895,
+          "mean": 0.767,
+          "count": 10
+        },
+        "urgency_ranking_actual_rows": {
+          "min": 0.268,
+          "max": 0.291,
+          "p50": 0.279,
+          "p95": 0.291,
+          "p99": 0.291,
+          "mean": 0.279,
+          "count": 10
+        },
+        "sample_bytes_transferred": 452822
+      },
+      "topic_filter_aerodynamics": {
+        "min": 4.974,
+        "max": 5.824,
+        "p50": 5.48,
+        "p95": 5.824,
+        "p99": 5.824,
+        "mean": 5.409,
+        "count": 10
+      },
+      "history_page1_20_limit": {
+        "min": 4.466,
+        "max": 5.454,
+        "p50": 4.555,
+        "p95": 5.454,
+        "p99": 5.454,
+        "mean": 4.63,
+        "count": 10
+      },
+      "history_page2_20_limit": {
+        "min": 3.102,
+        "max": 3.583,
+        "p50": 3.164,
+        "p95": 3.583,
+        "p99": 3.583,
+        "mean": 3.226,
+        "count": 10
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "PASS",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "PASS",
+        "desktop_ipc_status": "UNMEASURED (Desktop Tauri WebKit runtime separate from Node/SQLite engine)",
+        "webkit_render_status": "UNMEASURED"
+      }
+    },
+    "5000_materials_scale": {
+      "dataset": {
+        "materials": 5000,
+        "versions": 2001,
+        "items": 25476,
+        "states": 10002,
+        "events": 10000
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 6.818,
+        "max": 7.971,
+        "p50": 7.308,
+        "p95": 7.971,
+        "p99": 7.971,
+        "mean": 7.327,
+        "count": 10
+      },
+      "reviewDue_page2_continuation": {
+        "min": 1.735,
+        "max": 2.243,
+        "p50": 1.791,
+        "p95": 2.243,
+        "p99": 2.243,
+        "mean": 1.831,
+        "count": 10
+      },
+      "fullDiscovery_all_pages": {
+        "min": 256.201,
+        "max": 258.158,
+        "p50": 257.931,
+        "p95": 258.158,
+        "p99": 258.158,
+        "mean": 257.625,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 92,
+      "fullDiscovery_materials_found": 4165,
+      "pipeline_breakdown_actual_rows": {
+        "sql_candidate_query": {
+          "min": 2.061,
+          "max": 2.682,
+          "p50": 2.145,
+          "p95": 2.682,
+          "p99": 2.682,
+          "mean": 2.197,
+          "count": 10
+        },
+        "sql_preflight_byte_check": {
+          "min": 0.227,
+          "max": 0.293,
+          "p50": 0.236,
+          "p95": 0.293,
+          "p99": 0.293,
+          "mean": 0.243,
+          "count": 10
+        },
+        "sql_raw_card_reads": {
+          "min": 3.739,
+          "max": 4.562,
+          "p50": 4.335,
+          "p95": 4.562,
+          "p99": 4.562,
+          "mean": 4.257,
+          "count": 10
+        },
+        "json_parse_canonical_hash_250": {
+          "min": 3.739,
+          "max": 4.562,
+          "p50": 4.335,
+          "p95": 4.562,
+          "p99": 4.562,
+          "mean": 4.257,
+          "count": 10
+        },
+        "sql_batched_state_read": {
+          "min": 0.809,
+          "max": 1.327,
+          "p50": 0.881,
+          "p95": 1.327,
+          "p99": 1.327,
+          "mean": 0.929,
+          "count": 10
+        },
+        "urgency_ranking_actual_rows": {
+          "min": 0.275,
+          "max": 0.306,
+          "p50": 0.288,
+          "p95": 0.306,
+          "p99": 0.306,
+          "mean": 0.289,
+          "count": 10
+        },
+        "sample_bytes_transferred": 454282
+      },
+      "topic_filter_aerodynamics": {
+        "min": 5.314,
+        "max": 6.318,
+        "p50": 5.848,
+        "p95": 6.318,
+        "p99": 6.318,
+        "mean": 5.801,
+        "count": 10
+      },
+      "history_page1_20_limit": {
+        "min": 9.493,
+        "max": 11.414,
+        "p50": 9.93,
+        "p95": 11.414,
+        "p99": 11.414,
+        "mean": 9.942,
+        "count": 10
+      },
+      "history_page2_20_limit": {
+        "min": 6.094,
+        "max": 6.581,
+        "p50": 6.353,
+        "p95": 6.581,
+        "p99": 6.581,
+        "mean": 6.336,
+        "count": 10
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "PASS",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "PASS",
+        "desktop_ipc_status": "UNMEASURED (Desktop Tauri WebKit runtime separate from Node/SQLite engine)",
+        "webkit_render_status": "UNMEASURED"
+      }
+    }
+  },
+  "stress_measurements": {
+    "standard_500_cards": {
+      "cardCount": 500,
+      "jsonBytes": 74069,
+      "stats": {
+        "min": 0.488,
+        "max": 0.949,
+        "p50": 0.499,
+        "p95": 0.949,
+        "p99": 0.949,
+        "mean": 0.54,
+        "count": 20
+      }
+    },
+    "unicode_max_text_500_cards": {
+      "cardCount": 500,
+      "jsonBytes": 187131,
+      "stats": {
+        "min": 1.132,
+        "max": 1.588,
+        "p50": 1.165,
+        "p95": 1.588,
+        "p99": 1.588,
+        "mean": 1.241,
+        "count": 20
+      }
+    },
+    "worst_case_budget_analysis": {
+      "theoretical_candidates_per_batch": 250,
+      "theoretical_max_cards_per_material": 500,
+      "theoretical_max_cards_per_batch": 125000,
+      "honest_byte_calculation": "250 candidates * 500 cards * ~250 bytes/card = ~31.25 MB (theoretical unmeasured limit without caps)",
+      "enforced_executable_caps": {
+        "candidateBatchBudget": 250,
+        "maxBatchCardsBudget": 2500,
+        "maxBatchRawJsonBytesBudget": 2097152,
+        "singleSetAdmissionLane": "Single-set admission lane ensures terminating forward progress without empty-page livelock if candidate exceeds normal budget"
+      }
+    }
+  }
+}
