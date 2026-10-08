@@ -1,0 +1,41 @@
+mutation R2: leftover candidates not revalidated (deleted/emptied kept)
+file src/data/cardLibraryReader.ts
+$ npx vitest run src/data/cardLibraryReader.test.ts -t 'revalidated'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+ ❯ src/data/cardLibraryReader.test.ts (32 tests | 2 failed | 30 skipped) 133ms
+     × leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once 25ms
+     × leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once 108ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 30 skipped (32)
+   Start at  23:34:51
+   Duration  384ms (transform 124ms, setup 0ms, import 171ms, tests 133ms, environment 0ms)
+
+(node:30737) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on node > leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on sqljs > leftover candidates are revalidated: deleted, emptied and no-longer-actionable ones are dropped, the rest continue once
+CardLibraryReadError: Card reviews couldn't be read just now.
+ ❯ guarded src/data/cardLibraryReader.ts:75:11
+     73|   } catch (error) {
+     74|     if (error instanceof CardLibraryReadError) throw error;
+     75|     throw new CardLibraryReadError("STORAGE_ERROR", { cause: error });
+       |           ^
+     76|   }
+     77| }
+ ❯ src/data/connectionOwner.ts:528:18
+
+Caused by: TypeError: Cannot read properties of undefined (reading 'material_id')
+ ❯ candidateFrom src/data/cardLibraryReader.ts:173:24
+ ❯ src/data/cardLibraryReader.ts:288:27
+ ❯ guarded src/data/cardLibraryReader.ts:72:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+exit 1

@@ -1,0 +1,3 @@
+$ docs/evidence/m2-card-review-c2-implementation-2026-10-07/check_hygiene.sh
+new files checked: 28; problems: none
+exit 0

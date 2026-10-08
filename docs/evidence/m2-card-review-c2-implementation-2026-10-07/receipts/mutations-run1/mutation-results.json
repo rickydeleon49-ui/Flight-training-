@@ -1,0 +1,72 @@
+[
+  {
+    "id": "E1",
+    "defect": "paused/flagged cards counted as due or new (C1 semantics lost)",
+    "file": "src/logic/cardLibrary.ts",
+    "command": "npx vitest run src/logic/cardLibrary.test.ts src/data/cardLibraryReader.test.ts -t 'paused|follows the C1'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "ab376de93192968237978f84d9a35638d96ba802f89a823c2247e8c2ec34796b"
+  },
+  {
+    "id": "E2",
+    "defect": "Again cards judged by the end-of-day boundary",
+    "file": "src/logic/cardLibrary.ts",
+    "command": "npx vitest run src/data/cardLibraryReader.test.ts -t 'exact instant'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "ab376de93192968237978f84d9a35638d96ba802f89a823c2247e8c2ec34796b"
+  },
+  {
+    "id": "R1",
+    "defect": "a failed parse refunds its work reservation",
+    "file": "src/data/cardLibraryReader.ts",
+    "command": "npx vitest run src/data/cardLibraryReader.test.ts -t 'work reservations'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "5159b2769a146a91bb2854df5304add472149b6d0209e60b2ef5f96f725d4410"
+  },
+  {
+    "id": "R2",
+    "defect": "leftover candidates not revalidated (deleted/emptied kept)",
+    "file": "src/data/cardLibraryReader.ts",
+    "command": "npx vitest run src/data/cardLibraryReader.test.ts -t 'revalidated'",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "5159b2769a146a91bb2854df5304add472149b6d0209e60b2ef5f96f725d4410"
+  },
+  {
+    "id": "C1",
+    "defect": "controller ownership ignores the generation",
+    "file": "src/pages/StudyLibrary/deferredReviewRead.ts",
+    "command": "npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts",
+    "exit": 1,
+    "killed": true,
+    "restored": true,
+    "sha256": "0743cd8d2a7cf93a023becdda8a0a5aedaaaf480248f6507a8bf7dc264154ace"
+  },
+  {
+    "id": "C2",
+    "defect": "Retry dispatches live state instead of the failed snapshot",
+    "file": "src/pages/StudyLibrary/deferredReviewRead.ts",
+    "command": "npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts -t 'Retry repeats'",
+    "exit": 0,
+    "killed": false,
+    "restored": true,
+    "sha256": "0743cd8d2a7cf93a023becdda8a0a5aedaaaf480248f6507a8bf7dc264154ace"
+  },
+  {
+    "id": "N1",
+    "defect": "native reader counts paused/flagged cards",
+    "file": "src-tauri/src/card_library.rs",
+    "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml card_library::tests::shared_card_library_contract",
+    "exit": 101,
+    "killed": true,
+    "restored": true,
+    "sha256": "7d761a8c6388885fd5079e694e8352f5074fd4c73bf35f5419a5b526a72dc35b"
+  }
+]

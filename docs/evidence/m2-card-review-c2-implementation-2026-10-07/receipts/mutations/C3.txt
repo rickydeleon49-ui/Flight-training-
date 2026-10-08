@@ -1,0 +1,44 @@
+mutation C3: Retry does nothing (failed read never repeated)
+file src/pages/StudyLibrary/deferredReviewRead.ts
+$ npx vitest run src/pages/StudyLibrary/deferredReviewRead.test.ts -t 'Retry repeats|most recent live failure'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+ ❯ src/pages/StudyLibrary/deferredReviewRead.test.ts (10 tests | 2 failed | 8 skipped) 265ms
+     × Retry repeats the failed read's immutable snapshot exactly, read-only, and invalidation clears it 107ms
+     × the most recent live failure is the one retried, in either order, and success clears it 157ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 skipped (10)
+   Start at  23:35:29
+   Duration  390ms (transform 33ms, setup 0ms, import 41ms, tests 265ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/deferredReviewRead.test.ts > [c2] owned page operations > Retry repeats the failed read's immutable snapshot exactly, read-only, and invalidation clears it
+TypeError: Cannot read properties of undefined (reading 'input')
+ ❯ src/pages/StudyLibrary/deferredReviewRead.test.ts:160:22
+    158|     expect(stream.getSnapshot().rows.map((r) => r.materialId)).toEqual…
+    159|     void stream.retryRead();
+    160|     expect(calls[2]!.input).toEqual(calls[1]!.input);
+       |                      ^
+    161|     calls[2]!.settle.reject(new Error("again"));
+    162|     await vi.waitFor(() => expect(stream.getSnapshot().failedRead).not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/deferredReviewRead.test.ts > [c2] history enrichment > the most recent live failure is the one retried, in either order, and success clears it
+TypeError: Cannot read properties of undefined (reading 'input')
+ ❯ src/pages/StudyLibrary/deferredReviewRead.test.ts:322:22
+    320|     await vi.waitFor(() => expect(stream.getSnapshot().failedRead?.kin…
+    321|     void stream.retryRead();
+    322|     expect(calls[3]!.input).toEqual(calls[2]!.input);
+       |                      ^
+    323|     expect(calls[3]!.input.cursor).toBe("c1");
+    324|     calls[3]!.settle.resolve(historyResult([event("e2", "b", "v2", "cu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit 1

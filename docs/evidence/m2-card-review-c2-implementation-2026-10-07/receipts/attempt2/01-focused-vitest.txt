@@ -1,0 +1,19 @@
+$ npx vitest run src/logic/cardLibrary.test.ts src/data/cardLibraryTauri.test.ts src/data/cardLibraryReader.test.ts src/data/cardLibraryParity.test.ts src/pages/StudyLibrary/deferredReviewRead.test.ts src/pages/StudyLibrary/StudyLibraryReviews.test.ts src/pages/StudyLibrary/StudyLibrary.test.ts src/pages/StudyLibrary/CardReviewPanel.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+(node:31237) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31239) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31240) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31242) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  8 passed (8)
+      Tests  100 passed | 1 skipped (101)
+   Start at  23:37:12
+   Duration  5.89s (transform 1.46s, setup 0ms, import 2.05s, tests 14.32s, environment 921ms)
+
+exit 0

@@ -1,0 +1,79 @@
+mutation E1: paused/flagged cards counted as due or new (C1 semantics lost)
+file src/logic/cardLibrary.ts
+$ npx vitest run src/logic/cardLibrary.test.ts src/data/cardLibraryReader.test.ts -t 'paused|follows the C1'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+ ❯ src/logic/cardLibrary.test.ts (11 tests | 1 failed | 8 skipped) 6ms
+     × counts exact Again instants, the exclusive local boundary, and excludes paused or flagged cards 5ms
+ ❯ src/data/cardLibraryReader.test.ts (32 tests | 2 failed | 30 skipped) 116ms
+     × Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither 26ms
+     × Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither 89ms
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 2 passed | 38 skipped (43)
+   Start at  23:34:49
+   Duration  370ms (transform 170ms, setup 0ms, import 221ms, tests 122ms, environment 0ms)
+
+(node:30676) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on node > Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on sqljs > Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither
+AssertionError: expected { materialId: 'm', …(11) } to match object { againCount: 1, dayCount: 1, …(1) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "againCount": 1,
+-   "dayCount": 1,
+-   "newCount": 0,
++   "dayCount": 2,
++   "newCount": 1,
+  }
+
+ ❯ src/data/cardLibraryReader.test.ts:145:58
+    143|     await act(db, "m", 4, T0, { action: "flag", reason: "unclear" });
+    144|     const repo = cardLibraryRepository(db);
+    145|     expect((await repo.readReviewDue(DUE)).materials[0]).toMatchObject…
+       |                                                          ^
+    146|     const nine = { nowUtc: at(NOW, -MIN), nextLocalMidnightUtc: MIDNIG…
+    147|     expect((await repo.readReviewDue(nine)).materials[0]).toMatchObjec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/logic/cardLibrary.test.ts > [c2] due/new counting follows the C1 queue > counts exact Again instants, the exclusive local boundary, and excludes paused or flagged cards
+AssertionError: expected { cardCount: 10, againCount: 2, …(5) } to deeply equal { cardCount: 10, againCount: 2, …(5) }
+
+- Expected
++ Received
+
+  {
+    "againCount": 2,
+    "cardCount": 10,
+-   "dayCount": 1,
++   "dayCount": 3,
+    "earliestDueAt": "2026-10-06T15:59:00.000Z",
+-   "newCount": 2,
++   "newCount": 3,
+    "retainedCardCount": 9,
+-   "totalDueCount": 3,
++   "totalDueCount": 5,
+  }
+
+ ❯ src/logic/cardLibrary.test.ts:184:20
+    182|   it("counts exact Again instants, the exclusive local boundary, and e…
+    183|     const counts = evaluateDueCounts([...states.keys(), "untouched"], …
+    184|     expect(counts).toEqual({
+       |                    ^
+    185|       cardCount: 10,
+    186|       againCount: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+exit 1

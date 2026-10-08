@@ -1,0 +1,46 @@
+mutation E2: Again cards judged by the end-of-day boundary
+file src/logic/cardLibrary.ts
+$ npx vitest run src/data/cardLibraryReader.test.ts -t 'exact instant'
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-c2-implementation
+
+ ❯ src/data/cardLibraryReader.test.ts (32 tests | 2 failed | 30 skipped) 113ms
+     × Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither 25ms
+     × Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither 88ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 30 skipped (32)
+   Start at  23:35:25
+   Duration  350ms (transform 116ms, setup 0ms, import 158ms, tests 113ms, environment 0ms)
+
+(node:30924) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on node > Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither
+ FAIL  src/data/cardLibraryReader.test.ts > library review due on sqljs > Again is due at its exact instant; day cards before the exclusive midnight; paused and flagged cards are neither
+AssertionError: expected { materialId: 'm', …(11) } to match object { againCount: +0, dayCount: 1 }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "againCount": 0,
++   "againCount": 1,
+    "dayCount": 1,
+  }
+
+ ❯ src/data/cardLibraryReader.test.ts:147:59
+    145|     expect((await repo.readReviewDue(DUE)).materials[0]).toMatchObject…
+    146|     const nine = { nowUtc: at(NOW, -MIN), nextLocalMidnightUtc: MIDNIG…
+    147|     expect((await repo.readReviewDue(nine)).materials[0]).toMatchObjec…
+       |                                                           ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+exit 1

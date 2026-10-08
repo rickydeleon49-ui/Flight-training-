@@ -1,0 +1,2 @@
+# Preserve raw execution output byte-for-byte, including terminal blank lines.
+receipts/*.txt whitespace=-blank-at-eof
