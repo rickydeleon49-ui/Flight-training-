@@ -1,0 +1,54 @@
+TAP version 13
+# (node:6088) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [control] valid child mapping remains one-based
+ok 1 - [control] valid child mapping remains one-based
+  ---
+  duration_ms: 0.297084
+  type: 'test'
+  ...
+# Subtest: [control] deleting parent preserves child and provenance
+ok 2 - [control] deleting parent preserves child and provenance
+  ---
+  duration_ms: 5.747667
+  type: 'test'
+  ...
+# Subtest: [SL-R2] child page beyond the recorded range must be refused
+ok 3 - [SL-R2] child page beyond the recorded range must be refused
+  ---
+  duration_ms: 0.074375
+  type: 'test'
+  ...
+# Subtest: [SL-R2] SQL must refuse fractional physical page bounds
+ok 4 - [SL-R2] SQL must refuse fractional physical page bounds
+  ---
+  duration_ms: 4.389167
+  type: 'test'
+  ...
+# Subtest: [SL-R2] SQL must refuse a lineage row without child material identity
+ok 5 - [SL-R2] SQL must refuse a lineage row without child material identity
+  ---
+  duration_ms: 4.206875
+  type: 'test'
+  ...
+# Subtest: [SL-R2] a split child cannot also be its own original root
+ok 6 - [SL-R2] a split child cannot also be its own original root
+  ---
+  duration_ms: 4.296292
+  type: 'test'
+  ...
+# Subtest: [SL-R3] disposable database claiming shipped schema must expose actual attempt/state tables
+ok 7 - [SL-R3] disposable database claiming shipped schema must expose actual attempt/state tables
+  ---
+  duration_ms: 4.348875
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.800417

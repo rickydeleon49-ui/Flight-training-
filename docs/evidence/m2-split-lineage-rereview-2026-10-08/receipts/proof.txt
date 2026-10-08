@@ -1,0 +1,102 @@
+TAP version 13
+# (node:6086) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+ok 1 - Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+  ---
+  duration_ms: 0.982542
+  type: 'test'
+  ...
+# Subtest: Contract 2: Page Translation Maps Child Position to Source with Strict Bounds
+ok 2 - Contract 2: Page Translation Maps Child Position to Source with Strict Bounds
+  ---
+  duration_ms: 0.209083
+  type: 'test'
+  ...
+# Subtest: Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+ok 3 - Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+  ---
+  duration_ms: 6.286416
+  type: 'test'
+  ...
+# Subtest: Contract 4: Multi-Level Transitive Nested Composition (3-Level)
+ok 4 - Contract 4: Multi-Level Transitive Nested Composition (3-Level)
+  ---
+  duration_ms: 0.049458
+  type: 'test'
+  ...
+# Subtest: Contract 5: SHA-256 Content Hashing Determinism
+ok 5 - Contract 5: SHA-256 Content Hashing Determinism
+  ---
+  duration_ms: 0.390542
+  type: 'test'
+  ...
+# Subtest: Contract 6: Candidate DDL Constraints Enforce Child Identity and Bounds
+ok 6 - Contract 6: Candidate DDL Constraints Enforce Child Identity and Bounds
+  ---
+  duration_ms: 6.467375
+  type: 'test'
+  ...
+# Subtest: Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root
+ok 7 - Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root
+  ---
+  duration_ms: 4.244833
+  type: 'test'
+  ...
+# Subtest: Contract 8: Source Version Evaluation through Model Boundary
+ok 8 - Contract 8: Source Version Evaluation through Model Boundary
+  ---
+  duration_ms: 0.07575
+  type: 'test'
+  ...
+# Subtest: Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions
+ok 9 - Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions
+  ---
+  duration_ms: 4.923416
+  type: 'test'
+  ...
+# Subtest: Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+ok 10 - Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+  ---
+  duration_ms: 4.51875
+  type: 'test'
+  ...
+# Subtest: Contract 11: Atomic Batch Save Refuses Stale Source and Rolls Back on Failure
+ok 11 - Contract 11: Atomic Batch Save Refuses Stale Source and Rolls Back on Failure
+  ---
+  duration_ms: 4.48525
+  type: 'test'
+  ...
+# Subtest: Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+ok 12 - Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+  ---
+  duration_ms: 4.161208
+  type: 'test'
+  ...
+# Subtest: Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+ok 13 - Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+  ---
+  duration_ms: 4.039209
+  type: 'test'
+  ...
+# Subtest: Contract 14: Disposable Schema Migration, Export/Reopen, and Synthetic File Preservation
+ok 14 - Contract 14: Disposable Schema Migration, Export/Reopen, and Synthetic File Preservation
+  ---
+  duration_ms: 7.230333
+  type: 'test'
+  ...
+# Subtest: Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+ok 15 - Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+  ---
+  duration_ms: 0.051958
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 115.841166
