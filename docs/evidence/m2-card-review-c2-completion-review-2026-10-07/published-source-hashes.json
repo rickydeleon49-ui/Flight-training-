@@ -1,0 +1,12 @@
+{
+  "files": {
+    "docs/M2_CARD_REVIEW_C2_COMPLETION_REVIEW_2026-10-07.md": "05df3185b8ff219def5b8566dc626175f4c1acda0cde947c900965bf4577c73c",
+    "docs/M2_CARD_REVIEW_C2_FINAL_CORRECTIONS_PROMPT_2026-10-07.md": "c1efda271819e603336589af8dff315b15f35d37ded7c9f3fe7035225487cb29",
+    "STATUS.md": "84c11dbe1be95b464ba17955fd32781bc71e604bdc1ae7939d5e9524f53fbf27",
+    "docs/PROJECT_HANDOFF.md": "342bdeba51286b7e88776d0ad2d529c890948cf286cb6ba6870ec5dd3f992df3",
+    "ROADMAP.md": "f57cfc880625faea05c3e64504ccee937f306bf0817ff43088a82e1aea7a004d",
+    "docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs": "284f059558656cd47cde2dde9134f24685973244bb6ab364e8e2afb4d5e8843c",
+    "docs/evidence/m2-card-review-c2-completion-review-2026-10-07/query-audit.mjs": "28d916a3dfbbadfd2fa2a53c8addc82537e730c349b95707dfab702c7639dda0",
+    "docs/evidence/m2-card-review-c2-completion-review-2026-10-07/mutant-survival-control.mjs": "2b51c744403999a1aa31784c4e25173b5edab7fe05277fbcba74d1430acfeb5a"
+  }
+}

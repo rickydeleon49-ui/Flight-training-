@@ -1,0 +1,355 @@
+{
+  "timestamp": "2026-10-08T01:09:49.611Z",
+  "nodeVersion": "v22.23.3",
+  "platform": "darwin arm64",
+  "scales": {
+    "100_materials_scale": {
+      "dataset": {
+        "materials": 100,
+        "studySets": 100,
+        "versions": 41,
+        "items": 976,
+        "states": 202,
+        "events": 200
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 2.4,
+        "max": 5.252,
+        "p50": 2.87,
+        "p95": 5.252,
+        "p99": 5.252,
+        "mean": 2.921,
+        "count": 20
+      },
+      "fullDiscovery_all_pages": {
+        "min": 2.728,
+        "max": 3.269,
+        "p50": 2.808,
+        "p95": 3.269,
+        "p99": 3.269,
+        "mean": 2.9,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 2,
+      "fullDiscovery_materials_found": 81,
+      "pipeline_breakdown": {
+        "sql_candidate_query": {
+          "min": 0.088,
+          "max": 0.737,
+          "p50": 0.098,
+          "p95": 0.737,
+          "p99": 0.737,
+          "mean": 0.13,
+          "count": 20
+        },
+        "sql_batched_raw_read": {
+          "min": 0.073,
+          "max": 0.12,
+          "p50": 0.077,
+          "p95": 0.12,
+          "p99": 0.12,
+          "mean": 0.084,
+          "count": 20
+        },
+        "json_parse_canonical_hash_250": {
+          "min": 1.693,
+          "max": 2.406,
+          "p50": 1.843,
+          "p95": 2.406,
+          "p99": 2.406,
+          "mean": 1.901,
+          "count": 20
+        },
+        "sql_batched_state_read": {
+          "min": 0.239,
+          "max": 0.292,
+          "p50": 0.255,
+          "p95": 0.292,
+          "p99": 0.292,
+          "mean": 0.256,
+          "count": 20
+        },
+        "urgency_ranking_sort": {
+          "min": 0.01,
+          "max": 0.125,
+          "p50": 0.015,
+          "p95": 0.125,
+          "p99": 0.125,
+          "mean": 0.024,
+          "count": 20
+        },
+        "sample_bytes_transferred": 224538
+      },
+      "topic_filter_aerodynamics": {
+        "min": 0.298,
+        "max": 0.766,
+        "p50": 0.303,
+        "p95": 0.766,
+        "p99": 0.766,
+        "mean": 0.33,
+        "count": 20
+      },
+      "history_page1_20_limit": {
+        "min": 0.965,
+        "max": 1.362,
+        "p50": 1.004,
+        "p95": 1.362,
+        "p99": 1.362,
+        "mean": 1.06,
+        "count": 20
+      },
+      "history_page2_20_limit": {
+        "min": 0.894,
+        "max": 2.875,
+        "p50": 0.931,
+        "p95": 2.875,
+        "p99": 2.875,
+        "mean": 1.081,
+        "count": 20
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "evaluated_below",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "evaluated_below",
+        "desktop_ipc_status": "unmeasured",
+        "webkit_render_status": "unmeasured"
+      }
+    },
+    "2500_materials_scale": {
+      "dataset": {
+        "materials": 2500,
+        "studySets": 2500,
+        "versions": 1001,
+        "items": 12976,
+        "states": 5002,
+        "events": 5000
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 6.647,
+        "max": 6.963,
+        "p50": 6.837,
+        "p95": 6.963,
+        "p99": 6.963,
+        "mean": 6.801,
+        "count": 10
+      },
+      "fullDiscovery_all_pages": {
+        "min": 61.91,
+        "max": 63.872,
+        "p50": 62.502,
+        "p95": 63.872,
+        "p99": 63.872,
+        "mean": 62.605,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 45,
+      "fullDiscovery_materials_found": 2081,
+      "pipeline_breakdown": {
+        "sql_candidate_query": {
+          "min": 1.093,
+          "max": 1.208,
+          "p50": 1.114,
+          "p95": 1.208,
+          "p99": 1.208,
+          "mean": 1.12,
+          "count": 10
+        },
+        "sql_batched_raw_read": {
+          "min": 0.225,
+          "max": 0.263,
+          "p50": 0.239,
+          "p95": 0.263,
+          "p99": 0.263,
+          "mean": 0.238,
+          "count": 10
+        },
+        "json_parse_canonical_hash_250": {
+          "min": 3.471,
+          "max": 4.041,
+          "p50": 3.926,
+          "p95": 4.041,
+          "p99": 4.041,
+          "mean": 3.869,
+          "count": 10
+        },
+        "sql_batched_state_read": {
+          "min": 0.683,
+          "max": 0.826,
+          "p50": 0.713,
+          "p95": 0.826,
+          "p99": 0.826,
+          "mean": 0.723,
+          "count": 10
+        },
+        "urgency_ranking_sort": {
+          "min": 0.029,
+          "max": 0.105,
+          "p50": 0.038,
+          "p95": 0.105,
+          "p99": 0.105,
+          "mean": 0.044,
+          "count": 10
+        },
+        "sample_bytes_transferred": 452822
+      },
+      "topic_filter_aerodynamics": {
+        "min": 5.593,
+        "max": 6.236,
+        "p50": 5.789,
+        "p95": 6.236,
+        "p99": 6.236,
+        "mean": 5.81,
+        "count": 10
+      },
+      "history_page1_20_limit": {
+        "min": 4.479,
+        "max": 5.529,
+        "p50": 4.584,
+        "p95": 5.529,
+        "p99": 5.529,
+        "mean": 4.653,
+        "count": 10
+      },
+      "history_page2_20_limit": {
+        "min": 3.073,
+        "max": 3.475,
+        "p50": 3.162,
+        "p95": 3.475,
+        "p99": 3.475,
+        "mean": 3.197,
+        "count": 10
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "evaluated_below",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "evaluated_below",
+        "desktop_ipc_status": "unmeasured",
+        "webkit_render_status": "unmeasured"
+      }
+    },
+    "5000_materials_scale": {
+      "dataset": {
+        "materials": 5000,
+        "studySets": 5000,
+        "versions": 2001,
+        "items": 25476,
+        "states": 10002,
+        "events": 10000
+      },
+      "reviewDue_page1_50_limit": {
+        "min": 7.374,
+        "max": 8.49,
+        "p50": 7.916,
+        "p95": 8.49,
+        "p99": 8.49,
+        "mean": 7.874,
+        "count": 10
+      },
+      "fullDiscovery_all_pages": {
+        "min": 143.031,
+        "max": 144.887,
+        "p50": 143.974,
+        "p95": 144.887,
+        "p99": 144.887,
+        "mean": 143.985,
+        "count": 5
+      },
+      "fullDiscovery_pages_count": 90,
+      "fullDiscovery_materials_found": 4165,
+      "pipeline_breakdown": {
+        "sql_candidate_query": {
+          "min": 1.967,
+          "max": 2.162,
+          "p50": 2.053,
+          "p95": 2.162,
+          "p99": 2.162,
+          "mean": 2.055,
+          "count": 10
+        },
+        "sql_batched_raw_read": {
+          "min": 0.235,
+          "max": 0.268,
+          "p50": 0.245,
+          "p95": 0.268,
+          "p99": 0.268,
+          "mean": 0.247,
+          "count": 10
+        },
+        "json_parse_canonical_hash_250": {
+          "min": 3.359,
+          "max": 3.905,
+          "p50": 3.811,
+          "p95": 3.905,
+          "p99": 3.905,
+          "mean": 3.771,
+          "count": 10
+        },
+        "sql_batched_state_read": {
+          "min": 0.754,
+          "max": 0.96,
+          "p50": 0.804,
+          "p95": 0.96,
+          "p99": 0.96,
+          "mean": 0.806,
+          "count": 10
+        },
+        "urgency_ranking_sort": {
+          "min": 0.027,
+          "max": 0.04,
+          "p50": 0.032,
+          "p95": 0.04,
+          "p99": 0.04,
+          "mean": 0.032,
+          "count": 10
+        },
+        "sample_bytes_transferred": 454282
+      },
+      "topic_filter_aerodynamics": {
+        "min": 5.864,
+        "max": 6.785,
+        "p50": 6.378,
+        "p95": 6.785,
+        "p99": 6.785,
+        "mean": 6.333,
+        "count": 10
+      },
+      "history_page1_20_limit": {
+        "min": 9.533,
+        "max": 11.691,
+        "p50": 9.691,
+        "p95": 11.691,
+        "p99": 11.691,
+        "mean": 9.911,
+        "count": 10
+      },
+      "history_page2_20_limit": {
+        "min": 6.103,
+        "max": 6.81,
+        "p50": 6.242,
+        "p95": 6.81,
+        "p99": 6.81,
+        "mean": 6.308,
+        "count": 10
+      },
+      "budgets": {
+        "due_p50_target_ms": 10,
+        "due_p50_status": "evaluated_below",
+        "history_p50_target_ms": 15,
+        "history_p50_status": "evaluated_below",
+        "desktop_ipc_status": "unmeasured",
+        "webkit_render_status": "unmeasured"
+      }
+    }
+  },
+  "adversarial_500_card_hashing": {
+    "min": 0.523,
+    "max": 0.955,
+    "p50": 0.533,
+    "p95": 0.955,
+    "p99": 0.955,
+    "mean": 0.587,
+    "count": 20
+  }
+}

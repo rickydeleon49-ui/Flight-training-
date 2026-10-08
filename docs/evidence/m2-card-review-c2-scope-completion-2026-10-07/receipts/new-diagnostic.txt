@@ -1,0 +1,84 @@
+TAP version 13
+# (node:7250) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R6] production parser parity: overlong front
+ok 1 - [C2-R6] production parser parity: overlong front
+  ---
+  duration_ms: 1.007959
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: overlong back and page
+ok 2 - [C2-R6] production parser parity: overlong back and page
+  ---
+  duration_ms: 0.050917
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: lone surrogate
+ok 3 - [C2-R6] production parser parity: lone surrogate
+  ---
+  duration_ms: 0.045875
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: empty string
+ok 4 - [C2-R6] production parser parity: empty string
+  ---
+  duration_ms: 0.030875
+  type: 'test'
+  ...
+# Subtest: [C2-R6] production parser parity: accepted control character
+ok 5 - [C2-R6] production parser parity: accepted control character
+  ---
+  duration_ms: 0.112583
+  type: 'test'
+  ...
+# Subtest: [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+ok 6 - [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+  ---
+  duration_ms: 0.639667
+  type: 'test'
+  ...
+# Subtest: [C2-R4] no-migration baseline does not add an index absent from shipped schema
+ok 7 - [C2-R4] no-migration baseline does not add an index absent from shipped schema
+  ---
+  duration_ms: 9.555417
+  type: 'test'
+  ...
+# Subtest: [C2-R1] urgency ranking actually applies inside one candidate batch
+ok 8 - [C2-R1] urgency ranking actually applies inside one candidate batch
+  ---
+  duration_ms: 4.62775
+  type: 'test'
+  ...
+# Subtest: [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+ok 9 - [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+  ---
+  duration_ms: 14.589125
+  type: 'test'
+  ...
+# Subtest: [C2-R5] filter change clears the prior filter rows before next publication
+ok 10 - [C2-R5] filter change clears the prior filter rows before next publication
+  ---
+  duration_ms: 4.445708
+  type: 'test'
+  ...
+# Subtest: [C2-R5] two same-turn activations do not duplicate the complete page
+ok 11 - [C2-R5] two same-turn activations do not duplicate the complete page
+  ---
+  duration_ms: 4.204875
+  type: 'test'
+  ...
+# Subtest: [control] ordinary ASCII cards retain identical content identity
+ok 12 - [control] ordinary ASCII cards retain identical content identity
+  ---
+  duration_ms: 3.722125
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 133.942792

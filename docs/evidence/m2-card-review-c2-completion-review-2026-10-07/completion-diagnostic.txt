@@ -1,0 +1,421 @@
+TAP version 13
+# (node:7964) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R7] due_today excludes new-only materials
+not ok 1 - [C2-R7] due_today excludes new-only materials
+  ---
+  duration_ms: 7.087208
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:24:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        'b-due',
+    +   'a-new'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'b-due'
+  actual:
+    0: 'b-due'
+    1: 'a-new'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:25:96)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: [C2-R7] new_only excludes due materials
+not ok 2 - [C2-R7] new_only excludes due materials
+  ---
+  duration_ms: 4.592417
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:27:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    +   'b-due',
+        'a-new'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'a-new'
+  actual:
+    0: 'b-due'
+    1: 'a-new'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:28:96)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [C2-R7] history materialId filter is applied before pagination
+not ok 3 - [C2-R7] history materialId filter is applied before pagination
+  ---
+  duration_ms: 4.436791
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:30:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    +   'b'
+    -   'a'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'a'
+  actual:
+    0: 'b'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:31:147)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R7] history topic filter is applied before pagination
+not ok 4 - [C2-R7] history topic filter is applied before pagination
+  ---
+  duration_ms: 4.524583
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:33:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    +   'b'
+    -   'a'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'a'
+  actual:
+    0: 'b'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:34:168)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R8] pending cursor cannot cross a topic filter
+not ok 5 - [C2-R8] pending cursor cannot cross a topic filter
+  ---
+  duration_ms: 8.289042
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:36:1'
+  failureType: 'testCodeFailure'
+  error: 'previous-topic rows leaked'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:37:331)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R8] pending cursor does not return a deleted material
+not ok 6 - [C2-R8] pending cursor does not return a deleted material
+  ---
+  duration_ms: 4.280958
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:39:1'
+  failureType: 'testCodeFailure'
+  error: 'cached deleted summary returned'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:40:265)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R8] pending cursor recomputes changed current raw cards or rejects
+not ok 7 - [C2-R8] pending cursor recomputes changed current raw cards or rejects
+  ---
+  duration_ms: 4.223334
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:42:1'
+  failureType: 'testCodeFailure'
+  error: 'cached summary survived content removal'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:43:299)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R8] pending cursor is owned by the clock boundary
+not ok 8 - [C2-R8] pending cursor is owned by the clock boundary
+  ---
+  duration_ms: 4.466958
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:45:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    summary retained prior clock boundary
+    + actual - expected
+    
+    + {
+    +   againCount: 0,
+    +   cardCount: 1,
+    +   dayCount: 1,
+    +   earliestDueAt: '2026-10-07T15:00:00.000Z',
+    +   materialId: 'b',
+    +   newCount: 0,
+    +   priority: 'later',
+    +   retainedCardCount: 1,
+    +   title: 'b',
+    +   topic: 'navigation',
+    +   totalDueCount: 1,
+    +   updatedAt: '2026-10-07T15:00:00.000Z'
+    + }
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+    materialId: 'b'
+    title: 'b'
+    topic: 'navigation'
+    priority: 'later'
+    updatedAt: '2026-10-07T15:00:00.000Z'
+    cardCount: 1
+    againCount: 0
+    dayCount: 1
+    totalDueCount: 1
+    newCount: 0
+    retainedCardCount: 1
+    earliestDueAt: '2026-10-07T15:00:00.000Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:51:43)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R9] controller preserves distinct history event IDs from one material
+not ok 9 - [C2-R9] controller preserves distinct history event IDs from one material
+  ---
+  duration_ms: 4.40775
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:54:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        'ev-b',
+    -   'ev-a'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'ev-b'
+    1: 'ev-a'
+  actual:
+    0: 'ev-b'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:55:189)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R9] synchronous reader rejection releases its lock and retry works
+not ok 10 - [C2-R9] synchronous reader rejection releases its lock and retry works
+  ---
+  duration_ms: 0.455667
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:57:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    settled rejection left an owned busyPromise
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:59:72)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R9] reset fresh traversal replaces surviving stale summaries
+not ok 11 - [C2-R9] reset fresh traversal replaces surviving stale summaries
+  ---
+  duration_ms: 0.2255
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:61:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    fresh a suppressed by material dedup
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:62:217)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R9] invalidation clears loading when old read is held
+not ok 12 - [C2-R9] invalidation clears loading when old read is held
+  ---
+  duration_ms: 0.115583
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:64:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    new idle generation kept obsolete loading flag
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:65:219)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R10] valid-empty history context is distinct from unavailable
+not ok 13 - [C2-R10] valid-empty history context is distinct from unavailable
+  ---
+  duration_ms: 4.201875
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:67:1'
+  failureType: 'testCodeFailure'
+  error: 'valid empty and unavailable collapsed'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'unavailable'
+  actual: 'unavailable'
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:68:344)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R10] event payload retains prior and next interval/state context
+not ok 14 - [C2-R10] event payload retains prior and next interval/state context
+  ---
+  duration_ms: 4.034666
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:70:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + undefined
+    - {
+    -   dueAt: '2026-10-07T15:00:00.000Z',
+    -   reps: 1,
+    -   step: 0
+    - }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    step: 0
+    dueAt: '2026-10-07T15:00:00.000Z'
+    reps: 1
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-completion-review/Flight-training-/docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs:71:131)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [control] stale A settling cannot release held B lock
+ok 15 - [control] stale A settling cannot release held B lock
+  ---
+  duration_ms: 0.087334
+  type: 'test'
+  ...
+# Subtest: [control] fixture card shape is accepted by production parser
+ok 16 - [control] fixture card shape is accepted by production parser
+  ---
+  duration_ms: 3.86675
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 2
+# fail 14
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 149.287458
