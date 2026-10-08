@@ -1,0 +1,4 @@
+due {"returnedRows":50,"sqlCalls":124,"returnedSqlRows":439,"estimatedJsonUtf8Bytes":161014}
+history {"returnedRows":20,"sqlCalls":21,"returnedSqlRows":41,"estimatedJsonUtf8Bytes":61550}
+(node:5980) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

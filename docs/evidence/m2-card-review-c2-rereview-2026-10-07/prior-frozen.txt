@@ -1,0 +1,66 @@
+TAP version 13
+# (node:5696) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+ok 1 - [C2-R1] discovery can reach actionable material beyond 250 ineligible candidates
+  ---
+  duration_ms: 17.849083
+  type: 'test'
+  ...
+# Subtest: [C2-R1] returned due cursor actually advances to a different material
+ok 2 - [C2-R1] returned due cursor actually advances to a different material
+  ---
+  duration_ms: 0.636792
+  type: 'test'
+  ...
+# Subtest: [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+ok 3 - [C2-R1] 400 due materials do not bypass the stated 250 discovery bound
+  ---
+  duration_ms: 18.777542
+  type: 'test'
+  ...
+# Subtest: [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+ok 4 - [C2-R2] raw A reversion reuses inactive A schedule while B remains last-active
+  ---
+  duration_ms: 0.548666
+  type: 'test'
+  ...
+# Subtest: [C2-R2] retired A state cannot consume current B new-card count
+ok 5 - [C2-R2] retired A state cannot consume current B new-card count
+  ---
+  duration_ms: 0.517958
+  type: 'test'
+  ...
+# Subtest: [C2-R3] history marks old A earlier after raw B replacement without writes
+ok 6 - [C2-R3] history marks old A earlier after raw B replacement without writes
+  ---
+  duration_ms: 0.491958
+  type: 'test'
+  ...
+# Subtest: [C2-R3] history marks retained A current after raw A reversion without writes
+ok 7 - [C2-R3] history marks retained A current after raw A reversion without writes
+  ---
+  duration_ms: 0.458334
+  type: 'test'
+  ...
+# Subtest: [control] ordinary active current content returns due and new counts
+ok 8 - [control] ordinary active current content returns due and new counts
+  ---
+  duration_ms: 0.419625
+  type: 'test'
+  ...
+# Subtest: [control] history consumes all 35 tied events without loss or duplicates
+ok 9 - [control] history consumes all 35 tied events without loss or duplicates
+  ---
+  duration_ms: 2.413166
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 103.64025

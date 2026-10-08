@@ -1,0 +1,418 @@
+TAP version 13
+# (node:6036) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2-R6] production parser parity: overlong front
+not ok 1 - [C2-R6] production parser parity: overlong front
+  ---
+  duration_ms: 1.8525
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:29:36'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   cards: [
+    +     {
+    +       back: 'back',
+    +       front: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    +       sourcePage: null
+    +     }
+    +   ],
+    +   status: 'ok'
+    -   status: 'malformed'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    status: 'malformed'
+  actual:
+    status: 'ok'
+    cards:
+      0:
+        front: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+        back: 'back'
+        sourcePage: ~
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:30:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: [C2-R6] production parser parity: overlong back and page
+not ok 2 - [C2-R6] production parser parity: overlong back and page
+  ---
+  duration_ms: 0.331459
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:29:36'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   cards: [
+    +     {
+    +       back: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    +       front: 'front',
+    +       sourcePage: 1001
+    +     }
+    +   ],
+    +   status: 'ok'
+    -   status: 'malformed'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    status: 'malformed'
+  actual:
+    status: 'ok'
+    cards:
+      0:
+        front: 'front'
+        back: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+        sourcePage: 1001
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:30:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [C2-R6] production parser parity: lone surrogate
+not ok 3 - [C2-R6] production parser parity: lone surrogate
+  ---
+  duration_ms: 0.1745
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:29:36'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   cards: [
+    +     {
+    +       back: 'back',
+    +       front: 'front\ud800',
+    +       sourcePage: null
+    +     }
+    +   ],
+    +   status: 'ok'
+    -   status: 'malformed'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    status: 'malformed'
+  actual:
+    status: 'ok'
+    cards:
+      0:
+        front: 'front\ud800'
+        back: 'back'
+        sourcePage: ~
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:30:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R6] production parser parity: empty string
+not ok 4 - [C2-R6] production parser parity: empty string
+  ---
+  duration_ms: 0.116917
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:29:36'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   status: 'none'
+    -   status: 'malformed'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    status: 'malformed'
+  actual:
+    status: 'none'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:30:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R6] production parser parity: accepted control character
+not ok 5 - [C2-R6] production parser parity: accepted control character
+  ---
+  duration_ms: 0.081375
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:29:36'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   status: 'malformed'
+    -   cards: [
+    -     {
+    -       back: 'back',
+    -       front: 'a\x01',
+    -       sourcePage: null
+    -     }
+    -   ],
+    -   status: 'ok'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    status: 'ok'
+    cards:
+      0:
+        front: 'a\x01'
+        back: 'back'
+        sourcePage: ~
+  actual:
+    status: 'malformed'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:30:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+not ok 6 - [C2-R6] simple-v1 step 3 preserves approved sixteen-day interval
+  ---
+  duration_ms: 0.672875
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:32:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '2026-10-21T15:00:00.000Z'
+    - '2026-10-23T15:00:00.000Z'
+                ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '2026-10-23T15:00:00.000Z'
+  actual: '2026-10-21T15:00:00.000Z'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:34:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R4] no-migration baseline does not add an index absent from shipped schema
+not ok 7 - [C2-R4] no-migration baseline does not add an index absent from shipped schema
+  ---
+  duration_ms: 5.068792
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:36:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The no-migration benchmark baseline must match shipped indexes
+    + actual - expected
+    
+    + [Object: null prototype] {
+    +   name: 'idx_materials_priority_updated'
+    + }
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+    name: 'idx_materials_priority_updated'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:41:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R1] urgency ranking actually applies inside one candidate batch
+not ok 8 - [C2-R1] urgency ranking actually applies inside one candidate batch
+  ---
+  duration_ms: 0.932125
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:44:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    +   'a-new',
+        'z-again',
+    -   'a-new'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'z-again'
+    1: 'a-new'
+  actual:
+    0: 'a-new'
+    1: 'z-again'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:47:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+not ok 9 - [C2-R1] caller input cannot bypass the maximum 250-candidate request budget
+  ---
+  duration_ms: 7.119375
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:50:1'
+  failureType: 'testCodeFailure'
+  error: 'Budget is declared capped at 250, got 260'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:55:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R5] filter change clears the prior filter rows before next publication
+not ok 10 - [C2-R5] filter change clears the prior filter rows before next publication
+  ---
+  duration_ms: 0.718041
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:62:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   {
+    +     activeVersionId: null,
+    +     againCount: 0,
+    +     cardCount: 1,
+    +     dayCount: 0,
+    +     earliestDueAt: null,
+    +     hasActiveVersion: false,
+    +     materialId: 'old',
+    +     newCount: 1,
+    +     priority: 'later',
+    +     reviewStatus: 'needs_review',
+    +     title: 'old',
+    +     topic: 'general',
+    +     totalDueCount: 0,
+    +     updatedAt: '2026-10-07T15:00:00.000Z'
+    +   }
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      materialId: 'old'
+      title: 'old'
+      topic: 'general'
+      reviewStatus: 'needs_review'
+      priority: 'later'
+      updatedAt: '2026-10-07T15:00:00.000Z'
+      cardCount: 1
+      againCount: 0
+      dayCount: 0
+      newCount: 1
+      totalDueCount: 0
+      earliestDueAt: ~
+      hasActiveVersion: false
+      activeVersionId: ~
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:65:44)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [C2-R5] two same-turn activations do not duplicate the complete page
+not ok 11 - [C2-R5] two same-turn activations do not duplicate the complete page
+  ---
+  duration_ms: 0.516333
+  type: 'test'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:68:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    4 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 4
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-rereview/Flight-training-/docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs:72:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [control] ordinary ASCII cards retain identical content identity
+ok 12 - [control] ordinary ASCII cards retain identical content identity
+  ---
+  duration_ms: 4.278291
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 1
+# fail 11
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 104.867333
