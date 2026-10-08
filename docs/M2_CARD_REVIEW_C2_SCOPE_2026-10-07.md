@@ -39,8 +39,8 @@ The following decision table defines the proposed product defaults for C2. All d
 | **C2-D5** | **Empty, Loading, & Error States** | Friendly empty card ("All caught up! No cards due for review" when candidate stream is exhausted). Progressive continuation prompt if scan budget reached without finding actionable items. Synchronous busy lock and route generation guards. Non-blocking error banner with manual retry without replaying writes. | Hard blocking error dialogs or silent failure. | Carries C1 request-ownership principles forward; prevents duplicate loads, stale flashes, and race conditions during rapid navigation. | **Proposed** |
 | **C2-D6** | **History Paging & Scope** | **Keyset cursor pagination** (`reviewed_at DESC, id DESC`), bounded at 20 items per page. Filters by `materialId` and `topic` executed in SQL before LIMIT. "Load more" button disabled while loading. | Full array in React memory, or offset pagination. | Scales efficiently to 10,000+ review events; prevents row skipping or duplication across tied timestamps. | **Proposed** |
 | **C2-D7** | **Separation from Practice Tests** | **Strict semantic & visual separation.** Card reviews display spaced-repetition ratings (`Again`, `Hard`, `Good`, `Easy`) and interval progression. Practice tests display test scores, percentages, and completed attempts. Explicit disclaimers on both views. | Blended composite "Study Score" or inferred FAA exam readiness score. | ROADMAP 7C explicitly forbids claiming mastery or exam readiness from card repetitions. | **Proposed** |
-| **C2-D8** | **New-Card Discovery Architecture** | **Bounded Candidate Discovery with Real SQL Batching & Revalidated Keyset Continuation** (Design 1). **No additional database migrations** (shipped Schema 12 preserved). | Rebuildable cache table (Migration 0013) or persistent backfill. | Benchmarks prove p50 latency is **7.43 ms** per page at 5,000 materials on shipped schema 12, eliminating migration overhead. | **Proposed** |
-| **C2-D9** | **Candidate & Session Bounds** | Candidate evaluation budget capped at **250 materials** per query; batch card safety ceiling at **2,500 cards** and **2 MB raw JSON**; individual review sessions retain C1 caps (**MAX_NEW = 10**, **MAX_TOTAL = 20**). | Uncapped global queries or unlimited session lengths. | Prevents memory exhaustion and preserves spaced-repetition pedagogical effectiveness. | **Proposed** |
+| **C2-D8** | **New-Card Discovery Architecture** | **Bounded Candidate Discovery with Real SQL Batching & Revalidated Keyset Continuation** (Design 1). **No additional database migrations** (shipped Schema 12 preserved). | Rebuildable cache table (Migration 0013) or persistent backfill. | Benchmarks prove p50 latency is **7.31 ms** per page at 5,000 materials on shipped schema 12, eliminating migration overhead. | **Proposed** |
+| **C2-D9** | **Candidate & Session Bounds** | Candidate evaluation budget capped at **250 materials** per query; batch card safety ceiling at **2,500 cards** and **2 MiB raw JSON**; single-set lane for oversize sets; individual review sessions retain C1 caps (**MAX_NEW = 10**, **MAX_TOTAL = 20**). | Uncapped global queries or unlimited session lengths. | Prevents memory exhaustion and preserves spaced-repetition pedagogical effectiveness. | **Proposed** |
 
 ---
 
@@ -53,8 +53,8 @@ We evaluated three architectural options:
 | Criterion | Design 1: Bounded Discovery with Real SQL Batching (Recommended) | Design 2: Rebuildable Cache Table (Provisional Migration 0013) | Design 3: Persistent Migration Backfill |
 |---|---|---|---|
 | **Database Migration Required** | **NONE** (Shipped Schema 12 preserved) | **YES** (Requires Migration 0013) | **YES** (Requires Migration 0013) |
-| **5,000 Materials / 10,000 Events (p50)** | **7.43 ms** (Measured in Node/SQLite) | Unmeasured theoretical prediction | Unmeasured theoretical prediction |
-| **Full Discovery Traversal (90 pages)** | **307.56 ms** (Measured in Node/SQLite) | Unmeasured | Unmeasured |
+| **5,000 Materials / 10,000 Events (p50)** | **7.31 ms** (Measured in Node/SQLite) | Unmeasured theoretical prediction | Unmeasured theoretical prediction |
+| **Full Discovery Traversal (92 pages)** | **257.93 ms** (Measured in Node/SQLite) | Unmeasured | Unmeasured |
 | **Schema-11 Backup Restore** | Restores via shipped migration 0012 DDL; **C2 adds no further DDL upon restore** | Requires additional DDL + startup cache rebuild | Large startup mutation lock |
 | **Migration & Schema Overhead** | **No additional migration**; schema version remains 12 | Requires new migration 0013 and schema bump | Heavy migration lock |
 | **A -> B -> A Reversion Safety** | **Automatic & immediate** (Zero writes) | Fragile cache invalidation | Fragile cache invalidation |
@@ -64,8 +64,7 @@ We evaluated three architectural options:
 ### Recommendation:
 We recommend **Design 1: Bounded Discovery with Real SQL Batching**.
 - It requires **no additional schema migrations**, keeping `CURRENT_SCHEMA_VERSION = 12`.
-- Real batched queries reduce database calls to **3 calls** for due discovery and **2 calls** for history.
-- It completely eliminates migration risk for desktop macOS and prospective iOS clients.
+- Real batched queries with SQLite preflight reduce database overhead while enforcing strict memory and card budgets.
 - It honors the C1 architectural invariant: *"Reads never write."*
 - An optional comparison index (`idx_materials_priority_updated`) is documented in `optional_migration_0013.sql` as an unapproved variant with distinct migration impact.
 
@@ -73,16 +72,17 @@ We recommend **Design 1: Bounded Discovery with Real SQL Batching**.
 
 ## 3. Concrete Read Pipeline, Batching & Ranking Architecture
 
-### A. Real SQL Batching
-Rather than looping individual queries per candidate or distinct material, the read pipeline executes bounded batched queries:
+### A. Real SQL Batching & Preflight Byte Checks
+Rather than looping unbounded queries or transferring excessive JSON strings, the read pipeline executes bounded, preflighted queries:
 
-1. **Review Due Pipeline (3 SQL Calls Total):**
+1. **Review Due Pipeline:**
    - **Query 1 (Candidate Headers Scan):** Selects up to `candidateBatchBudget + 1` materials (capped at 250) ordered by `CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC` using keyset continuation.
-   - **Query 2 (Batched Raw Cards):** Reads `ai_study_sets.flashcards_json` for all candidates in the batch via `WHERE source_material_id IN (?, ..., ?)`.
-   - **Query 3 (Batched Review State):** For all derived versions with cards, reads review state rows via `SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (?, ..., ?)`.
-2. **Recent Reviews History Pipeline (2 SQL Calls Total):**
+   - **Query 2 (SQLite Byte Preflight):** Selects `source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len` for candidates in the batch. Candidates are admitted in order until `maxBatchRawJsonBytesBudget` (2 MiB) is reached. If the very first set exceeds the budget, it is admitted under the single-set lane to ensure terminating forward progress without empty-page livelock.
+   - **Query 3 (Admitted Raw Cards Fetch):** Queries `flashcards_json` only for admitted candidates. Card derivation parsing stops if adding the next candidate would exceed `maxBatchCardsBudget` (2,500 cards).
+   - **Query 4 (Batched Review State):** For all derived versions with cards, reads review state rows via `SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (...)`.
+2. **Recent Reviews History Pipeline:**
    - **Query 1 (Event Keyset Query):** Selects up to `limit + 1` events joined with card items, versions, and study materials, filtered by `materialId` and `topic` in SQL before LIMIT, ordered by `e.reviewed_at DESC, e.id DESC`.
-   - **Query 2 (Batched Distinct Raw Cards):** Reads raw flashcards for all distinct materials on the page via `WHERE source_material_id IN (?, ..., ?)`.
+   - **Query 2 (Batched Distinct Raw Cards):** Reads raw flashcards for all distinct materials on the page via `WHERE source_material_id IN (...)`.
 
 ### B. Urgency Ranking within Evaluated Batches
 Within each evaluated batch of candidates:
@@ -95,12 +95,12 @@ Within each evaluated batch of candidates:
    - Material priority `next_up` (0) before others (1).
    - Earliest `earliestDueAt` timestamp ASC.
    - Material title ASC, then material ID ASC.
-3. **Cursor Continuation with Live Database Revalidation:**
-   When an evaluated batch produces more actionable materials than the requested `limit`, the leftover material IDs are encoded into the continuation cursor (`remIds: [...]`). On subsequent continuation calls, the reader validates query and clock ownership (`STALE_CURSOR`), and re-queries `study_materials` and `ai_study_sets` for those IDs. This guarantees that:
-   - Deleted materials are dropped immediately.
-   - Materials whose flashcards were cleared to `[]` produce 0 due/new cards.
+3. **Cursor Continuation with Pending Stream Revalidation:**
+   When an evaluated batch produces more actionable materials than the requested `limit`, remaining candidate IDs are encoded into the continuation cursor (`remIds: [...]`). On subsequent continuation calls, the reader validates query and clock ownership (`STALE_CURSOR`), tracks evaluated vs discarded candidates (`consumedCount`), and re-queries `study_materials` and `ai_study_sets` for those IDs.
+   - Deleted materials are discarded without duplicating subsequent live rows.
+   - Materials whose flashcards were cleared to `[]` produce 0 due/new cards and are discarded cleanly.
    - Clock shifts across midnight re-evaluate due eligibility accurately.
-   - Different page sizes can consume the same stream without item loss or duplication.
+   - Page-size adjustments consume the stream without item loss or duplication.
 
 ### C. Page-Local Summaries vs. Library Cumulative Totals
 - The summary returned by a single page query is explicitly defined as **page-local** (`isPageLocal: true`).
@@ -111,13 +111,12 @@ Within each evaluated batch of candidates:
 ## 4. UI Asynchronous State Controller Contract (`DeferredReadController`)
 
 The UI controller manages page streaming, held requests, and lifecycle events:
-- **Synchronous Busy Lock (`busyPromise`):** Installed synchronously before calling the reader. If the reader synchronously throws or asynchronously rejects, `busyPromise` is cleared immediately in try/catch, allowing clean `retryRead()`.
+- **Synchronously Owned Reader Lock (`busyPromise` & `currentOp`):** Installed synchronously with a unique operation token (`Symbol('op')`) before calling the reader. If reader A synchronously throws or invalidates, catch/finally handlers clear locks only if generation and operation match. An obsolete synchronous throw from A cannot clear a newer held operation B.
 - **Dedup Identity by Reader Kind:**
   - Due discovery rows are deduplicated by `materialId`.
   - History event rows are deduplicated by event `id` (preserving multiple distinct events from the same material).
 - **Generation Isolation:** Every request captures `reqGen = ++this.generation`. When responses resolve or reject, results are published only if `this.generation === reqGen`.
-- **Synchronous Invalidation:** Calling `setFilter(...)`, `onReset(...)`, `onMaterialDeleted(...)`, or `dispose()` immediately sets `isLoading = false`, clears the pagination cursor, and bumps generation.
-- **Authoritative Summary Replacement on Reset:** Calling `onReset(materialId)` clears the cursor for a fresh read, and replaces any existing matching summary in `results` with the fresh authoritative row, avoiding stale count persistence.
+- **Authoritative Refresh Invalidation:** Calling `onReset(materialId)` clears `results = []`, bumps generation, resets cursor to null, and idles loading state. The next page read starts from page 1, adopting fresh urgency ordering and eliminating surviving no-longer-actionable rows.
 - **Retry Semantics:** `retryRead()` retains the exact failed request cursor without replaying writes.
 
 ---
@@ -143,30 +142,31 @@ The UI controller manages page streaming, held requests, and lifecycle events:
 
 - **Theoretical Worst-Case Analysis:**
   - 250 candidate materials × up to 500 cards per material = up to **125,000 cards**.
-  - At ~250 bytes per card, this represents ~31.25 MB raw JSON. Synchronous V8 JSON parsing and hashing across 125,000 cards would require an estimated 250–500 ms (unexecuted upper bound).
-- **Proposed Safety Caps:**
+  - 250 candidates × 500 cards × ~250 bytes/card = ~31.25 MB raw JSON (theoretical unmeasured upper bound without caps).
+- **Enforced Executable Safety Caps:**
   - `candidateBatchBudget`: 250 materials.
   - `maxBatchCardsBudget`: 2,500 cards.
-  - `maxBatchRawJsonBytesBudget`: 2 MB (2,097,152 bytes).
-  - When either card or byte budget is exceeded during batch scanning, the reader terminates the current candidate batch and yields a valid continuation cursor, guaranteeing fair forward progression and preventing memory/IPC exhaustion.
+  - `maxBatchRawJsonBytesBudget`: 2,097,152 bytes (2 MiB).
+  - Single-set lane: ensures terminating forward progress without empty-page livelock if candidate exceeds normal budget.
 - **IPC & WebKit Rendering:** Explicitly marked **UNMEASURED**. Node/SQLite in-process measurements do not establish Desktop Tauri IPC or WebKit render latency.
 
 ---
 
 ## 7. Verified Proof, Diagnostics & Gate
 
-The complete planning proof package in `docs/evidence/m2-card-review-c2-final-corrections-2026-10-07/` proves all contracts:
+The complete planning proof package in `docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/` proves all contracts:
 
-1. **All Three Frozen Reviewer Diagnostics Pass Unchanged:**
+1. **All Four Frozen Reviewer Diagnostics Pass Unchanged:**
    - Diagnostic 1 (`docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs`): **9 / 9 passed (exit 0)**.
    - Diagnostic 2 (`docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs`): **12 / 12 passed (exit 0)**.
    - Diagnostic 3 (`docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs`): **16 / 16 passed (exit 0)**.
-2. **Comprehensive Proof Suite (`proof.test.mjs`):** **24 / 24 passed (exit 0)** across 8 test suites.
-3. **Reliable Semantic Mutation Verifier (`runMutants.mjs` & `mutantSurvivalControl.mjs`):** Real child processes verify that baseline passes and 4 mutants are killed with `AssertionError`. Survival control confirms the verifier fails if mutant assertions are disabled.
-4. **SQL Pipeline Audit (`query-audit.mjs`):** Confirms **3 SQL calls** for due discovery and **2 SQL calls** for history on a 5,000-material / 10,000-event fixture.
+   - Diagnostic 4 (`docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs`): **11 / 11 passed (exit 0)**.
+2. **Comprehensive Proof Suite (`proof.test.mjs`):** **32 / 32 passed (exit 0)** across 11 test suites.
+3. **Reliable Semantic Mutation Verifier (`runMutants.mjs` & `mutantSurvivalControl.mjs`):** Shared independently held A/B fixture verifies baseline passes (exit 0) and 4 mutants are killed with `AssertionError` (exit 1). Survival control confirms verifier fails if assertions are disabled (exit 0).
+4. **SQL Pipeline Audit (`query-audit.mjs`):** Confirms preflighted bounded batching across pages and filters on a 5,000-material / 10,000-event fixture.
 5. **Latency Budget Status:**
-   - **Review Due Page 1 p50:** **7.43 ms** (budget target: 10 ms) -> **PASS** in SQLite/Node.
-   - **History Page 1 p50:** **9.62 ms** (budget target: 15 ms) -> **PASS** in SQLite/Node.
+   - **Review Due Page 1 p50:** **7.31 ms** at 5,000 materials (budget target: 10 ms) -> **PASS** in SQLite/Node.
+   - **History Page 1 p50:** **9.93 ms** at 5,000 materials / 10,000 events (budget target: 15 ms) -> **PASS** in SQLite/Node.
    - **Desktop Tauri IPC & WebKit Rendering:** **UNMEASURED**.
 
 ---

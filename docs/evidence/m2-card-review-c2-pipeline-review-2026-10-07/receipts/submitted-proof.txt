@@ -1,0 +1,325 @@
+TAP version 13
+# Running Baseline Behavioral Assertions in isolated child process...
+#   -> Baseline passed successfully (exit 0).
+# Running Mutant: mutant_wrong_version (Wrong version reliance (ignores unmaterialized raw card changes))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_time_boundary (Broken time boundary (drops Day due cards before local midnight))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_cursor_tie (Broken keyset cursor (drops tied timestamp items without id tiebreaker))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# Running Mutant: mutant_owner_lock (Broken lock ownership (stale resolution drops held active read lock))...
+#   -> Killed as expected: failed with AssertionError (exit 1).
+# (node:12639) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+    # Subtest: discovers unmaterialized material with new cards and zero due cards
+    ok 1 - discovers unmaterialized material with new cards and zero due cards
+      ---
+      duration_ms: 25.278542
+      type: 'test'
+      ...
+    # Subtest: excludes old A's due rows when content changes to unmaterialized B; B cards are new
+    ok 2 - excludes old A's due rows when content changes to unmaterialized B; B cards are new
+      ---
+      duration_ms: 13.324125
+      type: 'test'
+      ...
+    # Subtest: reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+    ok 3 - reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+      ---
+      duration_ms: 13.066792
+      type: 'test'
+      ...
+    # Subtest: retired A state rows cannot reduce current B new-card count
+    ok 4 - retired A state rows cannot reduce current B new-card count
+      ---
+      duration_ms: 4.404459
+      type: 'test'
+      ...
+    # Subtest: distinguishes valid-empty guide-only sets from malformed sets
+    ok 5 - distinguishes valid-empty guide-only sets from malformed sets
+      ---
+      duration_ms: 12.432958
+      type: 'test'
+      ...
+    1..5
+ok 1 - [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+  ---
+  duration_ms: 69.02375
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+    # Subtest: includes Again card at exact instant and Day card before next local midnight
+    ok 1 - includes Again card at exact instant and Day card before next local midnight
+      ---
+      duration_ms: 12.688958
+      type: 'test'
+      ...
+    # Subtest: applies within-batch urgency ranking: Again due before Day due before New cards
+    ok 2 - applies within-batch urgency ranking: Again due before Day due before New cards
+      ---
+      duration_ms: 5.594417
+      type: 'test'
+      ...
+    1..2
+ok 2 - [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+  ---
+  duration_ms: 18.551167
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+    # Subtest: consumes tied history events without dropping rows or duplicating
+    ok 1 - consumes tied history events without dropping rows or duplicating
+      ---
+      duration_ms: 19.410833
+      type: 'test'
+      ...
+    # Subtest: enriches history rows with contentStatus, interval, step, and card sides
+    ok 2 - enriches history rows with contentStatus, interval, step, and card sides
+      ---
+      duration_ms: 10.184916
+      type: 'test'
+      ...
+    # Subtest: enforces maximum 250 candidate budget cap and returns page-local summary
+    ok 3 - enforces maximum 250 candidate budget cap and returns page-local summary
+      ---
+      duration_ms: 9.198125
+      type: 'test'
+      ...
+    1..3
+ok 3 - [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+  ---
+  duration_ms: 38.8845
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 4: Filters (C2-R7)
+    # Subtest: statusFilter due_today excludes new-only materials and includes mixed
+    ok 1 - statusFilter due_today excludes new-only materials and includes mixed
+      ---
+      duration_ms: 4.258
+      type: 'test'
+      ...
+    # Subtest: filters history by materialId and topic in SQL before keyset limit
+    ok 2 - filters history by materialId and topic in SQL before keyset limit
+      ---
+      duration_ms: 9.077584
+      type: 'test'
+      ...
+    1..2
+ok 4 - [C2 Proof] Assertion 4: Filters (C2-R7)
+  ---
+  duration_ms: 13.370667
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8)
+    # Subtest: rejects cursor with mismatched filter as STALE_CURSOR
+    ok 1 - rejects cursor with mismatched filter as STALE_CURSOR
+      ---
+      duration_ms: 9.789209
+      type: 'test'
+      ...
+    # Subtest: rejects cursor with mismatched clock/midnight as STALE_CURSOR
+    ok 2 - rejects cursor with mismatched clock/midnight as STALE_CURSOR
+      ---
+      duration_ms: 12.315
+      type: 'test'
+      ...
+    # Subtest: continuation re-evaluates pending item and drops deleted material
+    ok 3 - continuation re-evaluates pending item and drops deleted material
+      ---
+      duration_ms: 4.459416
+      type: 'test'
+      ...
+    # Subtest: supports consuming same-query stream with larger or smaller page size
+    ok 4 - supports consuming same-query stream with larger or smaller page size
+      ---
+      duration_ms: 12.425334
+      type: 'test'
+      ...
+    1..4
+ok 5 - [C2 Proof] Assertion 5: Cursor Ownership & Revalidation (C2-R8)
+  ---
+  duration_ms: 39.089333
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9)
+    # Subtest: synchronous reader throw releases lock and allows immediate retry
+    ok 1 - synchronous reader throw releases lock and allows immediate retry
+      ---
+      duration_ms: 4.302625
+      type: 'test'
+      ...
+    # Subtest: asynchronous rejection at non-null cursor allows successful retry with preserved cursor
+    ok 2 - asynchronous rejection at non-null cursor allows successful retry with preserved cursor
+      ---
+      duration_ms: 12.483375
+      type: 'test'
+      ...
+    # Subtest: preserves multiple distinct history events for the same material
+    ok 3 - preserves multiple distinct history events for the same material
+      ---
+      duration_ms: 4.043917
+      type: 'test'
+      ...
+    1..3
+ok 6 - [C2 Proof] Assertion 6: Asynchronous Deferred Read Controller (C2-R9)
+  ---
+  duration_ms: 20.88125
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10)
+    # Subtest: exact roundtrip discovery and history across file-backed db close and reopen
+    not ok 1 - exact roundtrip discovery and history across file-backed db close and reopen
+      ---
+      duration_ms: 0.185375
+      type: 'test'
+      location: '/Users/rickymac/.codex/worktrees/m2-card-c2-pipeline-review/Flight-training-/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/proof.test.mjs:420:3'
+      failureType: 'testCodeFailure'
+      error: 'unable to open database file'
+      code: 'ERR_SQLITE_ERROR'
+      stack: |-
+        createDisposableDb (file:///Users/rickymac/.codex/worktrees/m2-card-c2-pipeline-review/Flight-training-/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/contractModel.mjs:100:14)
+        TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-pipeline-review/Flight-training-/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/proof.test.mjs:425:19)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Test.start (node:internal/test_runner/test:944:17)
+        node:internal/test_runner/test:1440:71
+        node:internal/per_context/primordials:466:82
+        new Promise (<anonymous>)
+        new SafePromise (node:internal/per_context/primordials:435:3)
+        node:internal/per_context/primordials:466:9
+      ...
+    # Subtest: proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+    not ok 2 - proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+      ---
+      duration_ms: 0.102083
+      type: 'test'
+      location: '/Users/rickymac/.codex/worktrees/m2-card-c2-pipeline-review/Flight-training-/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/proof.test.mjs:458:3'
+      failureType: 'testCodeFailure'
+      error: "ENOENT: no such file or directory, scandir '/Users/rickymac/.codex/worktrees/m2-card-c2-pipeline-review/Flight-training-/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/src-tauri/migrations'"
+      code: 'ENOENT'
+      stack: |-
+        readdirSync (node:fs:1590:26)
+        TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-pipeline-review/Flight-training-/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/proof.test.mjs:462:21)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1442:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..2
+not ok 7 - [C2 Proof] Assertion 7: Historical Context Provenance & File-Backed Reopen (C2-R10)
+  ---
+  duration_ms: 0.326833
+  type: 'suite'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-pipeline-review/Flight-training-/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/proof.test.mjs:419:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11)
+    # Subtest: verifies all semantic mutants are reliably killed by assertions in isolated processes
+    ok 1 - verifies all semantic mutants are reliably killed by assertions in isolated processes
+      ---
+      duration_ms: 449.179458
+      type: 'test'
+      ...
+    1..1
+ok 8 - [C2 Proof] Assertion 8: Mutation Verifier and Survival Control (C2-R11)
+  ---
+  duration_ms: 449.216042
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 9: Full Traversal Completeness across Stream Mutations (R8)
+    # Subtest: deleted pending prefix does not repeat subsequent live rows over full traversal
+    ok 1 - deleted pending prefix does not repeat subsequent live rows over full traversal
+      ---
+      duration_ms: 4.733334
+      type: 'test'
+      ...
+    # Subtest: empty-content pending prefix does not repeat subsequent live rows over full traversal
+    ok 2 - empty-content pending prefix does not repeat subsequent live rows over full traversal
+      ---
+      duration_ms: 4.215125
+      type: 'test'
+      ...
+    # Subtest: history cursor enforces filter context ownership and rejects cross-stream usage
+    ok 3 - history cursor enforces filter context ownership and rejects cross-stream usage
+      ---
+      duration_ms: 4.41675
+      type: 'test'
+      ...
+    # Subtest: due cursor missing mandatory ownership context is rejected
+    ok 4 - due cursor missing mandatory ownership context is rejected
+      ---
+      duration_ms: 4.002542
+      type: 'test'
+      ...
+    1..4
+ok 9 - [C2 Proof] Assertion 9: Full Traversal Completeness across Stream Mutations (R8)
+  ---
+  duration_ms: 17.4305
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 10: Authoritative Refresh Invalidation & Operation Lock (R9)
+    # Subtest: fresh reset traversal removes surviving no-longer-actionable summaries
+    ok 1 - fresh reset traversal removes surviving no-longer-actionable summaries
+      ---
+      duration_ms: 0.144125
+      type: 'test'
+      ...
+    # Subtest: fresh reset traversal adopts authoritative urgency order
+    ok 2 - fresh reset traversal adopts authoritative urgency order
+      ---
+      duration_ms: 0.064083
+      type: 'test'
+      ...
+    # Subtest: obsolete synchronous throw cannot clear a new held operation lock (reviewer boundary)
+    ok 3 - obsolete synchronous throw cannot clear a new held operation lock (reviewer boundary)
+      ---
+      duration_ms: 0.080041
+      type: 'test'
+      ...
+    1..3
+ok 10 - [C2 Proof] Assertion 10: Authoritative Refresh Invalidation & Operation Lock (R9)
+  ---
+  duration_ms: 0.326333
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 11: Executable Resource Budgets & Work Counters (R4)
+    # Subtest: requested 2500-card work budget bounds delivered candidate batch and preserves continuation
+    ok 1 - requested 2500-card work budget bounds delivered candidate batch and preserves continuation
+      ---
+      duration_ms: 7.553291
+      type: 'test'
+      ...
+    # Subtest: raw-card SQL reads respect proposed 2 MiB batch ceiling via preflight
+    ok 2 - raw-card SQL reads respect proposed 2 MiB batch ceiling via preflight
+      ---
+      duration_ms: 19.363042
+      type: 'test'
+      ...
+    # Subtest: oversize single-set lane admits single large set to prevent livelock
+    ok 3 - oversize single-set lane admits single large set to prevent livelock
+      ---
+      duration_ms: 6.499
+      type: 'test'
+      ...
+    1..3
+ok 11 - [C2 Proof] Assertion 11: Executable Resource Budgets & Work Counters (R4)
+  ---
+  duration_ms: 33.463833
+  type: 'suite'
+  ...
+1..11
+# tests 32
+# suites 11
+# pass 30
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 825.022667

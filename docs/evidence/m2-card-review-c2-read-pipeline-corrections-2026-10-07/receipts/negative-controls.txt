@@ -1,0 +1,120 @@
+=== RELIABLE SEMANTIC MUTATION VERIFIER REPORT ===
+Node: v26.10.0, Date: 2026-10-08T02:33:28.072Z
+
+[BASELINE PASSED] Exit: 0
+
+--- mutant_wrong_version ---
+Description: Wrong version reliance (ignores unmaterialized raw card changes)
+Exit Code: 1
+Stdout:
+(empty)
+Stderr:
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Retired version due cards must be excluded!
+
+2 !== 0
+
+    at file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/runMutants.mjs:131:14
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.10.0
+
+[MUTANT KILLED AS EXPECTED] Intended AssertionError detected.
+
+--- mutant_time_boundary ---
+Description: Broken time boundary (drops Day due cards before local midnight)
+Exit Code: 1
+Stdout:
+(empty)
+Stderr:
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Card due tomorrow after midnight must NOT be counted as due today!
+
+1 !== 0
+
+    at file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/runMutants.mjs:154:14
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.10.0
+
+[MUTANT KILLED AS EXPECTED] Intended AssertionError detected.
+
+--- mutant_cursor_tie ---
+Description: Broken keyset cursor (drops tied timestamp items without id tiebreaker)
+Exit Code: 1
+Stdout:
+(empty)
+Stderr:
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Broken cursor dropped tied timestamp events!
+
+0 !== 3
+
+    at file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/runMutants.mjs:181:14
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 3,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.10.0
+
+[MUTANT KILLED AS EXPECTED] Intended AssertionError detected.
+
+--- mutant_owner_lock ---
+Description: Broken lock ownership (stale resolution drops held active read lock)
+Exit Code: 1
+Stdout:
+(empty)
+Stderr:
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Held read B must retain busy lock while awaiting settlement!
+    at runOwnerLockCase (file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/runMutants.mjs:67:14)
+    at async file:///Users/rickymac/code/Flight-training-pr70-integration/docs/evidence/m2-card-review-c2-read-pipeline-corrections-2026-10-07/proof/runMutants.mjs:188:5 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: null,
+  expected: null,
+  operator: 'notStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.10.0
+
+[MUTANT KILLED AS EXPECTED] Intended AssertionError detected.
+

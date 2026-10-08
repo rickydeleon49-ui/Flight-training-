@@ -37,7 +37,7 @@ It operates entirely offline with zero provider/network requests, requires **zer
 ## 3. Implementation Contract
 
 ### A. Domain Types (`src/domain/types.ts`)
-Extend domain types with typed query inputs, material review summaries, and recent review entries:
+Extend domain types with typed query inputs, material review summaries, recent review entries, and inspection modal contracts:
 ```typescript
 export interface LibraryReviewDueInput {
   nowUtc: string; // ISO 8601 UTC instant
@@ -47,6 +47,8 @@ export interface LibraryReviewDueInput {
   limit?: number; // default: 50, hard-capped at 250
   cursor?: string | null; // opaque candidate continuation cursor
   candidateBatchBudget?: number; // default: 250, hard-capped at 250
+  maxBatchCardsBudget?: number; // default: 2500
+  maxBatchRawJsonBytesBudget?: number; // default: 2097152 (2 MiB)
 }
 
 export interface LibraryReviewMaterialEntry {
@@ -66,6 +68,9 @@ export interface LibraryReviewMaterialEntry {
 
 export interface LibraryReviewDueSummary {
   scannedCandidates: number;
+  evaluatedCandidates: number;
+  evaluatedCards: number;
+  rawBytesTransferred: number;
   actionableCount: number;
   againCount: number;
   dayCount: number;
@@ -82,7 +87,7 @@ export interface LibraryReviewDueResult {
 }
 
 export interface LibraryRecentReviewsInput {
-  cursor?: string | null; // opaque base64 keyset cursor { t, id }
+  cursor?: string | null; // opaque base64 keyset cursor { t, id, ctx }
   limit?: number; // default: 20, hard-capped at 100
   topic?: string | null;
   materialId?: string | null;
@@ -103,8 +108,8 @@ export interface LibraryRecentReviewEntry {
   rating: "again" | "hard" | "good" | "easy";
   reviewedAt: string;
   schedulerVersion: string;
-  priorState: unknown | null;
-  nextState: unknown | null;
+  priorState: { step: number; dueAt: string | null; reps?: number } | null;
+  nextState: { step: number; dueAt: string | null; reps?: number } | null;
   step: number | null;
   dueAt: string | null;
   isEarlierVersion: boolean;
@@ -114,6 +119,24 @@ export interface LibraryRecentReviewEntry {
 export interface LibraryRecentReviewsResult {
   rows: LibraryRecentReviewEntry[];
   next: string | null;
+}
+
+export interface ReadOnlyCardInspectionTarget {
+  eventId: string;
+  materialId: string;
+  materialTitle: string;
+  topic: string;
+  versionId: string;
+  ordinal: number;
+  front: string;
+  back: string;
+  sourcePage: number | null;
+  rating: "again" | "hard" | "good" | "easy";
+  reviewedAt: string;
+  step: number | null;
+  dueAt: string | null;
+  contentStatus: "current" | "earlier" | "valid_empty" | "unavailable" | "malformed";
+  isEarlierVersion: boolean;
 }
 ```
 
@@ -126,25 +149,26 @@ Directly reuse pure logic modules without re-implementing or duplicating logic:
 ### C. Database Reads with Real SQL Batching (`src-tauri/src/card_reviews.rs` & driver)
 Implement real SQL batching across candidate boundaries:
 
-1. **`get_library_review_due` Pipeline (3 SQL Calls):**
-   - **Call 1 (Candidate Scan):** Keyset scan on `study_materials` joined with `ai_study_sets` where `flashcards_json IS NOT NULL AND flashcards_json != '[]' AND flashcards_json != ''`, ordered by `CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC` with `LIMIT candidateBatchBudget + 1`.
-   - **Call 2 (Batched Raw Flashcards):** Fetch raw cards for candidate IDs in batch: `SELECT source_material_id, flashcards_json FROM ai_study_sets WHERE source_material_id IN (...)`.
-   - **Call 3 (Batched Review State):** Fetch all review state rows for current derived version IDs: `SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (...)`.
+1. **`get_library_review_due` Pipeline:**
+   - **Candidate Scan:** Keyset scan on `study_materials` joined with `ai_study_sets` where `flashcards_json IS NOT NULL AND flashcards_json != '[]' AND flashcards_json != ''`, ordered by `CASE WHEN m.priority = 'next_up' THEN 0 ELSE 1 END ASC, m.updated_at DESC, m.id ASC` with `LIMIT candidateBatchBudget + 1`.
+   - **Preflight Byte Check:** Execute `SELECT source_material_id, LENGTH(CAST(flashcards_json AS BLOB)) AS byte_len FROM ai_study_sets WHERE source_material_id IN (...)`. Admit candidates in candidate order up to `maxBatchRawJsonBytesBudget` (2 MiB). Single-set lane allows admission if candidate 0 exceeds budget.
+   - **Raw Cards Fetch:** Fetch raw cards only for admitted candidates: `SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?`. Stop if accumulating cards exceeds `maxBatchCardsBudget` (2,500 cards).
+   - **Batched Review State:** Fetch review state rows for derived versions: `SELECT i.version_id, s.item_id, s.step, s.due_at, s.suspended, s.flag FROM card_items i JOIN card_review_state s ON s.item_id = i.id WHERE i.version_id IN (...)`.
    - **Filters:** Apply `statusFilter` (`all`, `due_today`, `new_only`) and topic filter after deriving current card counts and before urgency ranking.
    - **In-Memory Urgency Ranking:** Sort actionable materials by Bucket 0 (Again due) -> Bucket 1 (Day due) -> Bucket 2 (New only) -> Tie-breakers (`next_up` priority, earliest due instant, title, ID).
-   - **Revalidated Continuation Cursor:** Carry leftover undisplayed material IDs (`remIds: [...]`) in the cursor. On continuation, validate query/clock ownership (`STALE_CURSOR`), and re-query live database state for those IDs, dropping deleted materials or materials whose flashcards were cleared.
-2. **`get_library_recent_reviews` Pipeline (2 SQL Calls):**
-   - **Call 1 (Event Keyset Query):** Keyset query on `card_review_events` joined with items, versions, and study materials, filtered by `materialId` and `topic` in SQL before LIMIT, ordered by `e.reviewed_at DESC, e.id DESC` with `LIMIT limit + 1`.
-   - **Call 2 (Batched Distinct Materials):** Read `ai_study_sets.flashcards_json` for distinct material IDs on this page: `SELECT source_material_id, flashcards_json FROM ai_study_sets WHERE source_material_id IN (...)`.
+   - **Pending Stream Revalidation & Continuation:** Carry leftover undisplayed material IDs (`remIds: [...]`) in the cursor. On continuation, validate query/clock ownership (`STALE_CURSOR`), track evaluated vs discarded candidates (`consumedCount`), and re-query live database state for those IDs, dropping deleted materials or materials whose flashcards were cleared without duplicating subsequent live rows.
+2. **`get_library_recent_reviews` Pipeline:**
+   - **Event Keyset Query:** Keyset query on `card_review_events` joined with items, versions, and study materials, filtered by `materialId` and `topic` in SQL before LIMIT, ordered by `e.reviewed_at DESC, e.id DESC` with `LIMIT limit + 1`.
+   - **Batched Distinct Materials:** Read `ai_study_sets.flashcards_json` for distinct material IDs on this page: `SELECT source_material_id, flashcards_json FROM ai_study_sets WHERE source_material_id IN (...)`.
    - Compare derived current version ID against event version ID to assign `isEarlierVersion` and `contentStatus` (`current`, `earlier`, `valid_empty`, `unavailable`, `malformed`).
+   - Validate cursor ownership context: require `ctx: { materialId, topic }`; throw `STALE_CURSOR` on mismatched filters.
 
 ### D. UI State Controller (`src/pages/StudyLibrary/useDeferredReviewRead.ts`)
 Implement `DeferredReadController` pattern:
-- **Synchronous Busy Lock (`busyPromise`):** Installed synchronously before calling reader. Synchronous throws and asynchronous promise rejections clear `busyPromise` immediately in try/catch, enabling clean `retryRead()`.
+- **Synchronously Owned Operation Lock (`busyPromise` & `currentOp`):** Installed synchronously with a unique operation token (`Symbol('op')`) before calling reader. Synchronous throws and asynchronous promise rejections clear `busyPromise` only if generation and operation match, preventing an obsolete synchronous throw from clearing a newer held operation.
 - **Dedup Keys:** Deduplicate by `item.materialId` for review due materials, and by event `item.id` for history events (preserving multiple events from the same material).
 - **Generation Tracking:** Tag each request with `reqGen = ++generation`. Settle and publish only if `currentGen === reqGen`.
-- **Synchronous Invalidation:** `setFilter()`, `onReset()`, `onMaterialDeleted()`, and `dispose()` immediately set `isLoading = false`, reset the cursor, and bump generation.
-- **Authoritative Summary Replacement:** `onReset(materialId)` replaces matching existing summaries with fresh authoritative rows, preventing stale count persistence.
+- **Authoritative Refresh Invalidation:** Calling `onReset(materialId)` clears `results = []`, resets the cursor to null, idles loading, and bumps generation. Page 1 replaces the prior generation, adopting fresh urgency ordering and eliminating surviving no-longer-actionable rows.
 - **Retry Semantics:** `retryRead()` retains failed cursor without replaying writes.
 
 ### E. Component & Route Integration
@@ -165,12 +189,13 @@ Implement `DeferredReadController` pattern:
 
 ## 4. Verification & Acceptance Criteria
 
-1. **All Three Reviewer Diagnostics Must Pass Unchanged:**
+1. **All Four Reviewer Diagnostics Must Pass Unchanged:**
    - Diagnostic 1 (`docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs`): 9/9 pass.
    - Diagnostic 2 (`docs/evidence/m2-card-review-c2-rereview-2026-10-07/diagnostic.test.mjs`): 12/12 pass.
    - Diagnostic 3 (`docs/evidence/m2-card-review-c2-completion-review-2026-10-07/diagnostic.test.mjs`): 16/16 pass.
+   - Diagnostic 4 (`docs/evidence/m2-card-review-c2-final-review-2026-10-07/diagnostic.test.mjs`): 11/11 pass.
 2. **Reliable Mutation Verification:**
    - Isolated child process runs kill all 4 semantic mutants with `AssertionError`.
    - Survival control confirms verifier fails when mutant assertions are disabled.
-3. **SQL Query Count Verification:** Due discovery consumes <= 3 SQL calls; history consumes <= 2 SQL calls.
+3. **Resource Limit Verification:** Card budget (2,500) and byte ceiling (2 MiB) strictly enforced via preflight.
 4. **Offline & Invariant Integrity:** Zero provider/network calls; Schema 12 preserved without migrations; reads remain strictly read-only.
