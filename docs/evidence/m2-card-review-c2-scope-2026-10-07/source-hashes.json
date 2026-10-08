@@ -1,0 +1,10 @@
+{
+  "root": "repository root /Users/rickymac/code/Flight-training-pr70-integration (branch codex/m2-card-review-c2-scope from main 9028675)",
+  "application_source_changed": false,
+  "sha256": {
+    "docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md": "66a5952379ae5856c5d7c7736dabaeb7375825a79cc4c4782f16f4e8b9024f39",
+    "docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md": "0b1139ed354c10cea3c3ad99a7f6f57afbe452a07582f28ea4dd3c3e8b5c69b8",
+    "STATUS.md": "8b38dd11d9e4ced064ff7542f68423b107e71478ef0b4ad349650ebd492d7d58",
+    "docs/PROJECT_HANDOFF.md": "f5f1138261be0c4cd1433afaa8dd5766b660e4305e7fcb94f91d98a8431b3ad4"
+  }
+}

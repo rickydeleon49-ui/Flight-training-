@@ -1,0 +1,12 @@
+{
+  "root": "repository",
+  "base": "9028675475616ce338253ae7e4e46ba6b840b72c",
+  "files": {
+    "STATUS.md": "71e10acf8f0ce67222860090cca874247ded86494ca32dd76aef62594dd498a1",
+    "docs/PROJECT_HANDOFF.md": "f2500394d15b9dbebd47dd93cd8711b9943de5d1207628ecd3d19c5ded879fdc",
+    "ROADMAP.md": "c4eaeeb05b3c3938923f9aa67f18480072ae65758396cb67164c7992a5ce24f0",
+    "docs/M2_CARD_REVIEW_C2_SCOPE_REVIEW_2026-10-07.md": "8c65d96b9a16dd3cc548b176852eff59f00c1b41ccd583a317fa192adf200187",
+    "docs/M2_CARD_REVIEW_C2_SCOPE_CORRECTIONS_PROMPT_2026-10-07.md": "ac7c08fc4bfabeb101d8c88237b3ee4288306b8f30b8bacf883302794a5e49d3",
+    "docs/evidence/m2-card-review-c2-review-2026-10-07/diagnostic.test.mjs": "c24357eed4c1b468881c764678e3e472d335aca38a477b685aabc93461f64bb7"
+  }
+}

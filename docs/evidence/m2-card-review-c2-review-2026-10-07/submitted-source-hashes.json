@@ -1,0 +1,25 @@
+{
+  "root": "/Users/rickymac/code/Flight-training-pr70-integration",
+  "branch": "codex/m2-card-review-c2-scope",
+  "head": "9028675475616ce338253ae7e4e46ba6b840b72c",
+  "files": {
+    "STATUS.md": "8b38dd11d9e4ced064ff7542f68423b107e71478ef0b4ad349650ebd492d7d58",
+    "docs/PROJECT_HANDOFF.md": "f5f1138261be0c4cd1433afaa8dd5766b660e4305e7fcb94f91d98a8431b3ad4",
+    "docs/M2_CARD_REVIEW_C2_SCOPE_2026-10-07.md": "66a5952379ae5856c5d7c7736dabaeb7375825a79cc4c4782f16f4e8b9024f39",
+    "docs/M2_CARD_REVIEW_C2_IMPLEMENTATION_PROMPT_2026-10-07.md": "0b1139ed354c10cea3c3ad99a7f6f57afbe452a07582f28ea4dd3c3e8b5c69b8",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/README.md": "516219d291f3f882c3a2cde4e7ebf0de067ecc02f3056c595f75f939ea8a7606",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/SHA256SUMS": "398eb0e6975b5613101341aae6ef29694ecdb343aed63dff51ecdfe8ae2ce8cb",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/optional_migration_0013.sql": "7063068eb8bb8eec8a1c0619978d30226f98424a63d272d4e09c97eb28223f0e",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/proof/benchmark.mjs": "86292a30952b64e191ed45987c753af03d4f6557b9e813f8bc887ebd66ec6b3c",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/proof/contractModel.mjs": "2502b551bbca65eefc9ccc708db2f29c421d7f1c9f2c1be047712cf97a045531",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/proof/package.json": "4b9a3177225a99eafc1436747f2bca9d49e2e2abf0558ad9ffff212a738153ad",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/proof/proof.test.mjs": "705f9fb50a1034aad2bebc9cf86c499f42a5a9f4468efd8c8c9619e2ad034c10",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/proof/syntheticDataset.mjs": "b012063c60e522431e901af081a02fc4ef5e38ca2bd97e9dbddf72f62684f53b",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/receipts/benchmark-run.txt": "81e570b8d123806b3dfbe8ef7aa791b0d238c87677304f525e398dd2c2ff2e87",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/receipts/explain-query-plans.txt": "a4d7b1f3840d51d66b1d8b6a3967ff28f91c389d61acb1a2d1aab6023e6399f0",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/receipts/negative-controls.txt": "0972d54a8a4941277364d904190b02623a7ce2a724b91f4235d4ca523f7f2809",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/receipts/proof-run.txt": "fc345d0baffc180b1e413e23c0c0000e4eed50fbe4fc20d563fbb122cb8befd1",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/results.json": "312df692568d10a4086e0a9842a4feecc9e92abf6d310de8e363382a47f38873",
+    "docs/evidence/m2-card-review-c2-scope-2026-10-07/source-hashes.json": "0969bd883b986dfeb8437d8f763ef1e7c5f9a51c13896ea7eefd4579e7cf4574"
+  }
+}

@@ -1,3 +1,5 @@
+**7 October C2 planning review:** C1 is accepted in PR #111. Library-wide Review due/History planning needs [C2-R1–R5 corrections](docs/M2_CARD_REVIEW_C2_SCOPE_REVIEW_2026-10-07.md) before owner decisions. [Active model-neutral planning correction assignment](docs/M2_CARD_REVIEW_C2_SCOPE_CORRECTIONS_PROMPT_2026-10-07.md). C2 production execution remains conditional on supported scope acceptance and recorded defaults.
+
 # Her Flight Deck — implementation roadmap
 
 **7 October M2 source update:** material-level card reviews C1 complete independent source review, with migration 0012 and approved `simple-v1` scheduling; the containing PR supplies final CI/merge. See [acceptance](docs/M2_CARD_REVIEW_C1_ACCEPTANCE_2026-10-07.md). Next: [C2 Study Library Review due/History scope and disposable query proof](docs/M2_CARD_REVIEW_C2_SCOPE_PROMPT_2026-10-07.md), before owner approval of new defaults. Installed/signing/release gates remain separate. Earlier dated milestone snapshots remain historical.
