@@ -1,0 +1,180 @@
+TAP version 13
+# (node:7257) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+    # Subtest: discovers unmaterialized material with new cards and zero due cards
+    ok 1 - discovers unmaterialized material with new cards and zero due cards
+      ---
+      duration_ms: 25.117417
+      type: 'test'
+      ...
+    # Subtest: excludes old A's due rows when content changes to unmaterialized B; B cards are new
+    ok 2 - excludes old A's due rows when content changes to unmaterialized B; B cards are new
+      ---
+      duration_ms: 13.2955
+      type: 'test'
+      ...
+    # Subtest: reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+    ok 3 - reuses retained schedule when content returns to identical A (A -> B -> A) without writes
+      ---
+      duration_ms: 12.911125
+      type: 'test'
+      ...
+    # Subtest: retired A state rows cannot reduce current B new-card count
+    ok 4 - retired A state rows cannot reduce current B new-card count
+      ---
+      duration_ms: 4.352417
+      type: 'test'
+      ...
+    # Subtest: distinguishes valid-empty guide-only sets from malformed sets
+    ok 5 - distinguishes valid-empty guide-only sets from malformed sets
+      ---
+      duration_ms: 12.107166
+      type: 'test'
+      ...
+    1..5
+ok 1 - [C2 Proof] Assertion 1 & 5: Version-Owned Discovery & Content Replacement
+  ---
+  duration_ms: 68.406416
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+    # Subtest: includes Again card at exact instant and Day card before next local midnight
+    ok 1 - includes Again card at exact instant and Day card before next local midnight
+      ---
+      duration_ms: 12.04025
+      type: 'test'
+      ...
+    # Subtest: applies within-batch urgency ranking: Again due before Day due before New cards
+    ok 2 - applies within-batch urgency ranking: Again due before Day due before New cards
+      ---
+      duration_ms: 4.785917
+      type: 'test'
+      ...
+    1..2
+ok 2 - [C2 Proof] Assertion 2: Urgency Ranking & Time Boundaries
+  ---
+  duration_ms: 17.059375
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+    # Subtest: consumes tied history events without dropping rows or duplicating
+    ok 1 - consumes tied history events without dropping rows or duplicating
+      ---
+      duration_ms: 17.499625
+      type: 'test'
+      ...
+    # Subtest: enriches history rows with contentStatus, interval, step, and card sides
+    ok 2 - enriches history rows with contentStatus, interval, step, and card sides
+      ---
+      duration_ms: 10.008375
+      type: 'test'
+      ...
+    # Subtest: enforces maximum 250 candidate budget cap and returns page-local summary
+    ok 3 - enforces maximum 250 candidate budget cap and returns page-local summary
+      ---
+      duration_ms: 8.465416
+      type: 'test'
+      ...
+    1..3
+ok 3 - [C2 Proof] Assertion 3: Keyset Pagination, History Enriched Payload & Caps
+  ---
+  duration_ms: 36.063583
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 4: Asynchronous Deferred Read Controller & Held Requests
+    # Subtest: synchronous busy lock excludes same-turn duplicate activations
+    ok 1 - synchronous busy lock excludes same-turn duplicate activations
+      ---
+      duration_ms: 4.12775
+      type: 'test'
+      ...
+    # Subtest: held read promises: obsolete generation discarded when filter changes while awaiting
+    ok 2 - held read promises: obsolete generation discarded when filter changes while awaiting
+      ---
+      duration_ms: 3.904708
+      type: 'test'
+      ...
+    # Subtest: retry retains failed cursor without replaying writes
+    ok 3 - retry retains failed cursor without replaying writes
+      ---
+      duration_ms: 11.875583
+      type: 'test'
+      ...
+    # Subtest: onReset invalidates material and triggers fresh authoritative read
+    ok 4 - onReset invalidates material and triggers fresh authoritative read
+      ---
+      duration_ms: 11.432875
+      type: 'test'
+      ...
+    # Subtest: onMaterialDeleted cleans up rows and prevents zombie reappearance
+    ok 5 - onMaterialDeleted cleans up rows and prevents zombie reappearance
+      ---
+      duration_ms: 11.934708
+      type: 'test'
+      ...
+    1..5
+ok 4 - [C2 Proof] Assertion 4: Asynchronous Deferred Read Controller & Held Requests
+  ---
+  duration_ms: 43.349542
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 5: File-Backed Reopen/Restore & Schema-11 Upgrade
+    # Subtest: exact roundtrip discovery across file-backed db close and reopen
+    ok 1 - exact roundtrip discovery across file-backed db close and reopen
+      ---
+      duration_ms: 27.622375
+      type: 'test'
+      ...
+    # Subtest: proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+    ok 2 - proves schema-11 database gains shipped schema 12 and discovers cards without backfill
+      ---
+      duration_ms: 3.912542
+      type: 'test'
+      ...
+    # Subtest: cascading material deletion deletes items and versions while tombstoning operations
+    ok 3 - cascading material deletion deletes items and versions while tombstoning operations
+      ---
+      duration_ms: 8.971333
+      type: 'test'
+      ...
+    1..3
+ok 5 - [C2 Proof] Assertion 5: File-Backed Reopen/Restore & Schema-11 Upgrade
+  ---
+  duration_ms: 40.557209
+  type: 'suite'
+  ...
+# Subtest: [C2 Proof] Assertion 6: Negative Controls & Semantic Failure Verification
+    # Subtest: semantic negative control 1: query without current-content check fails Assertion 1
+    ok 1 - semantic negative control 1: query without current-content check fails Assertion 1
+      ---
+      duration_ms: 11.871583
+      type: 'test'
+      ...
+    # Subtest: semantic negative control 2: keyset pagination without tie-breaker id loses rows on tied timestamps
+    ok 2 - semantic negative control 2: keyset pagination without tie-breaker id loses rows on tied timestamps
+      ---
+      duration_ms: 8.7305
+      type: 'test'
+      ...
+    # Subtest: semantic negative control 3: broken candidate progression without cursor drops older items behind 250 ineligible items
+    ok 3 - semantic negative control 3: broken candidate progression without cursor drops older items behind 250 ineligible items
+      ---
+      duration_ms: 19.11525
+      type: 'test'
+      ...
+    1..3
+ok 6 - [C2 Proof] Assertion 6: Negative Controls & Semantic Failure Verification
+  ---
+  duration_ms: 39.773458
+  type: 'suite'
+  ...
+1..6
+# tests 21
+# suites 6
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 339.742708

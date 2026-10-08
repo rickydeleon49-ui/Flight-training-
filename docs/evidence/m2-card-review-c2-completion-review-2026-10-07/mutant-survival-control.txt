@@ -1,0 +1,9 @@
+=== RUNNING SEMANTIC MUTANTS (VERIFYING FAILING BEHAVIOR) ===
+
+Running Mutant 1: Wrong Version / Inactive Flag Reliance...
+Running Mutant 2: Keyset Cursor Without ID Tiebreaker...
+Running Mutant 3: Candidate Batch Cutoff Without Continuation...
+
+Negative controls verification complete. Log saved to receipts/negative-controls.txt.
+(node:8026) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

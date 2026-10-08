@@ -1,0 +1,23 @@
+=== SEMANTIC MUTATION RUN LOG ===
+
+[MUTANT 1 FAILED AS EXPECTED]
+Assertion Error: MUTANT FAILED: Retired version due cards were incorrectly included!
+
+2 !== 0
+
+Code: ERR_ASSERTION
+
+[MUTANT 2 FAILED AS EXPECTED]
+Assertion Error: MUTANT FAILED: Broken cursor dropped tied timestamp events!
+
+0 !== 3
+
+Code: ERR_ASSERTION
+
+[MUTANT 3 FAILED AS EXPECTED]
+Assertion Error: MUTANT FAILED: Older material past 250 was dropped by broken progression!
+
+false !== true
+
+Code: ERR_ASSERTION
+
