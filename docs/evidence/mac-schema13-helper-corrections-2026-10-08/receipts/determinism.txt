@@ -1,0 +1,11 @@
+# Determinism of the focused regressions (node v22.23.3)
+
+## self-check, three consecutive runs (sha256 of stdout; the scratch root is redacted to <scratch>, every verdict is real)
+0e4afb3cba8602c44d66533c0a44bcd40dee1e2362a17a169f18e16f13f85db0  -
+0e4afb3cba8602c44d66533c0a44bcd40dee1e2362a17a169f18e16f13f85db0  -
+0e4afb3cba8602c44d66533c0a44bcd40dee1e2362a17a169f18e16f13f85db0  -
+
+## frozen review diagnostics, three consecutive runs (sha256 of stdout)
+6b842d2d267d7e4f68276cafb4b2c6f3c9d2f62a9534cfe8343de7891bfa2c4d  -
+6b842d2d267d7e4f68276cafb4b2c6f3c9d2f62a9534cfe8343de7891bfa2c4d  -
+6b842d2d267d7e4f68276cafb4b2c6f3c9d2f62a9534cfe8343de7891bfa2c4d  -

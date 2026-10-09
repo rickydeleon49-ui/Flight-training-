@@ -1,0 +1,57 @@
+# Anchor verification — 2026-10-09T07:08:52ZZ
+
+## 1. The 28 paths the re-review froze (docs/evidence/mac-schema13-preparation-rereview-2026-10-08/submitted-hashes.json)
+##    verified BEFORE any edit in this round and re-verified now; the helper is the only
+##    tracked path this round changes, so its own entry is expected to differ.
+entries=28 match=25 differing=3
+  STATUS.md: now dc5ba39a223619e07124c0ca2a4dbd95a4200c28475bf5cbe8eb273c485b9484
+  docs/PROJECT_HANDOFF.md: now a4045c37cf4d03b101bc16331e19e46fc95054609c8dc1fb0d22ff1255695302
+  scripts/mac-schema13-profile-snapshot.mjs: now 1aaad1b4726f75003f703802af908f20a4f2c19867c2eef270b063162645bcce
+
+## 2. The 13 production source anchors from the previous preparation review
+anchors=13 match=13 differing=0
+
+## 3. Accepted local candidates (MACV-R3 closed: verified in place, never rebuilt)
+b3ead8139049d2fe829469744ff5a3394e145a3cb0ad09d8ca5ac9ae9f65f334  /Users/rickymac/code/.qwen/tmp/schema13-candidates/NEW-schema13-36a7b39-adhoc.dmg
+ddb0594e351e0cd90a9fd0ede4824c1fd6fe3cb043d523a31939988fc0077c62  /Users/rickymac/code/.qwen/tmp/schema13-candidates/OLD-schema12-2a6a415-adhoc.dmg
+b3ead8139049d2fe829469744ff5a3394e145a3cb0ad09d8ca5ac9ae9f65f334  /Users/Shared/hfd-schema13-kit-2026-10-08/installers/NEW-schema13-36a7b39-adhoc.dmg
+ddb0594e351e0cd90a9fd0ede4824c1fd6fe3cb043d523a31939988fc0077c62  /Users/Shared/hfd-schema13-kit-2026-10-08/installers/OLD-schema12-2a6a415-adhoc.dmg
+expected NEW b3ead8139049d2fe829469744ff5a3394e145a3cb0ad09d8ca5ac9ae9f65f334
+expected OLD ddb0594e351e0cd90a9fd0ede4824c1fd6fe3cb043d523a31939988fc0077c62
+
+## 4. Previously rejected originals and prior evidence packs still present
+6aecab8608224f9e3f272dff1b8ace4f23d699566329ef1d24e5ab95bb1b0c99  /Users/rickymac/code/.qwen/tmp/schema13-candidates/NEW-schema13-36a7b39.dmg
+455eb12d3f906fd60cef529e2aca464c98ae81e36e48c62d8afd73a092681fcd  /Users/rickymac/code/.qwen/tmp/schema13-candidates/OLD-schema12-2a6a415.dmg
+docs/evidence/mac-schema13-preparation-corrections-2026-10-08:
+README.md
+RUNBOOK-G1-G3.md
+SHA256SUMS
+inspect-adhoc-packages.py
+receipts
+
+docs/evidence/mac-schema13-verification-2026-10-08:
+README.md
+RUNBOOK-G1-G3.md
+SHA256SUMS
+receipts
+
+## 5. Exact working-tree state
+HEAD: 36a7b39acd291cba14be4f137798b3ad6f7272f1
+origin/main: 8973df3a64e7ec86e6d27a09fd3b9c38c82e9267
+staged entries: 0
+modified/untracked (top level):
+ M .gitattributes
+ M STATUS.md
+ M docs/PROJECT_HANDOFF.md
+?? docs/MAC_SCHEMA13_HELPER_CORRECTIONS_2026-10-08.md
+?? docs/MAC_SCHEMA13_PREPARATION_CORRECTIONS_2026-10-08.md
+?? docs/MAC_SCHEMA13_VERIFICATION_2026-10-08.md
+?? docs/evidence/mac-schema13-helper-corrections-2026-10-08/
+?? docs/evidence/mac-schema13-preparation-corrections-2026-10-08/
+?? docs/evidence/mac-schema13-verification-2026-10-08/
+?? scripts/mac-schema13-profile-snapshot.mjs
+
+## 6. Toolchain
+node: v22.23.3  (/opt/homebrew/opt/node@22/bin)
+npm: 10.9.9
+platform: 27.0.0 arm64
