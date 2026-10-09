@@ -40,3 +40,8 @@ mac-schema13-verification-2026-10-08/receipts/build-old-schema12.log -whitespace
 mac-schema13-preparation-review-2026-10-08/submitted/docs/evidence/mac-schema13-verification-2026-10-08/receipts/build-old-schema12.log -whitespace
 mac-schema13-preparation-review-2026-10-08/receipts/NEW-schema13-36a7b39.dmg.attach.txt -whitespace
 mac-schema13-preparation-review-2026-10-08/receipts/OLD-schema12-2a6a415.dmg.attach.txt -whitespace
+
+# Verbatim submitted Mac schema13 correction receipts.
+mac-schema13-preparation-corrections-2026-10-08/receipts/rebundle-*.log -whitespace
+mac-schema13-preparation-corrections-2026-10-08/receipts/*.attach.txt -whitespace
+mac-schema13-preparation-corrections-2026-10-08/receipts/helper-self-check.json whitespace=-blank-at-eof

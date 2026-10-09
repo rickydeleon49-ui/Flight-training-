@@ -1,0 +1,112 @@
+[
+  {
+    "file": "README.md",
+    "match": true,
+    "sha256": "6d09aaad0f8e032968ee06b0daad17dcf82897c9cea14f56392ebd95ead180b7"
+  },
+  {
+    "file": "RUNBOOK-G1-G3.md",
+    "match": true,
+    "sha256": "80562af78a9cd96bbc587ee74ecc9c63b4e5e4c2e87803391e0e065481eba2ef"
+  },
+  {
+    "file": "inspect-adhoc-packages.py",
+    "match": true,
+    "sha256": "c476367eb64ecf925676a0b74229f72223322463bc0a20899b169665627527b5"
+  },
+  {
+    "file": "receipts/NEW-schema13-36a7b39-adhoc.dmg.arch.txt",
+    "match": true,
+    "sha256": "c1669e1d8edca98769c37d494b76442a1d6e5ffffd7b4da1fb63aef8ebaf6f01"
+  },
+  {
+    "file": "receipts/NEW-schema13-36a7b39-adhoc.dmg.attach.txt",
+    "match": true,
+    "sha256": "bbf0c05ed15456b9c4b202e29810f4102c6ede7a352846e71d4449f3ec252b25"
+  },
+  {
+    "file": "receipts/NEW-schema13-36a7b39-adhoc.dmg.bundle-verify.txt",
+    "match": true,
+    "sha256": "a9417b7ba95c68c8928e83aa8320119d09cd6dce7a48d68bd35ebb44f4053a2f"
+  },
+  {
+    "file": "receipts/NEW-schema13-36a7b39-adhoc.dmg.exe-verify.txt",
+    "match": true,
+    "sha256": "8ab769e3a4aaed469914ae693bb7b17816132d92bb0b964350ea59384b99fbd9"
+  },
+  {
+    "file": "receipts/NEW-schema13-36a7b39-adhoc.dmg.plist.txt",
+    "match": true,
+    "sha256": "691726bce151a978cd18a2146cdc8a64676d3ef8ab1a7930fc63f6b320c611d9"
+  },
+  {
+    "file": "receipts/NEW-schema13-36a7b39-adhoc.dmg.signature.txt",
+    "match": true,
+    "sha256": "1ac931504ecc5a0898ae0add73624a5c2d63f85a1f6ebe588be30700c0f9f3e2"
+  },
+  {
+    "file": "receipts/OLD-schema12-2a6a415-adhoc.dmg.arch.txt",
+    "match": true,
+    "sha256": "c1669e1d8edca98769c37d494b76442a1d6e5ffffd7b4da1fb63aef8ebaf6f01"
+  },
+  {
+    "file": "receipts/OLD-schema12-2a6a415-adhoc.dmg.attach.txt",
+    "match": true,
+    "sha256": "04be3b5012a67823de8b13b356c7fe92a611118ff47a976565d310a8b1fc2077"
+  },
+  {
+    "file": "receipts/OLD-schema12-2a6a415-adhoc.dmg.bundle-verify.txt",
+    "match": true,
+    "sha256": "8d90f836cd742c139edb51c3e63da6ebae20b1985ff083f01ae39f254a4bc462"
+  },
+  {
+    "file": "receipts/OLD-schema12-2a6a415-adhoc.dmg.exe-verify.txt",
+    "match": true,
+    "sha256": "8a67e0f026be9c42d678acf6bb6a3039b98f8c8e68247ebc0bda99428f90728a"
+  },
+  {
+    "file": "receipts/OLD-schema12-2a6a415-adhoc.dmg.plist.txt",
+    "match": true,
+    "sha256": "691726bce151a978cd18a2146cdc8a64676d3ef8ab1a7930fc63f6b320c611d9"
+  },
+  {
+    "file": "receipts/OLD-schema12-2a6a415-adhoc.dmg.signature.txt",
+    "match": true,
+    "sha256": "49c3fede75e3328181a55f51e3e1d552e1c64de255ff97dd5c216fddd191e1c5"
+  },
+  {
+    "file": "receipts/adhoc-overlay.json",
+    "match": true,
+    "sha256": "b835ecdc7c10b20f576f3229b180074fa6520f442c850605d953657f06b046a1"
+  },
+  {
+    "file": "receipts/fixture-hashes.txt",
+    "match": true,
+    "sha256": "6a8a9b8828b9e7aa05b18075ff9c0a65279bee4caf178cfadc805388de0d6b7f"
+  },
+  {
+    "file": "receipts/helper-self-check.json",
+    "match": true,
+    "sha256": "25107ae568ed79e25ecd15921395b5c6875e208b65e364b05a0035425f0df5eb"
+  },
+  {
+    "file": "receipts/originals-preserved.txt",
+    "match": true,
+    "sha256": "6eaaae24059e096d21b5f41c8e683950a4ce9e3a8f8a87476dd498171bb8698d"
+  },
+  {
+    "file": "receipts/package-results.json",
+    "match": true,
+    "sha256": "481aeb44cf16b615b17949b76f25ac717dc0a9ba2fa01fad1cf3fbc15d99aa86"
+  },
+  {
+    "file": "receipts/rebundle-new.log",
+    "match": true,
+    "sha256": "936ad5e572b13bc4e536368445b4f7e887a371c882a161088ed90dd6a2b949af"
+  },
+  {
+    "file": "receipts/rebundle-old.log",
+    "match": true,
+    "sha256": "fecce419e94056ef3ca80f41f233edd571a0aa37b57212173ddc6d8c8bb78784"
+  }
+]

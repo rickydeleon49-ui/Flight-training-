@@ -1,0 +1,6 @@
+# Preserve immutable raw rebundle and mount output only.
+submitted/docs/evidence/mac-schema13-preparation-corrections-2026-10-08/receipts/rebundle-*.log -whitespace
+submitted/docs/evidence/mac-schema13-preparation-corrections-2026-10-08/receipts/*.attach.txt -whitespace
+receipts/packages/*.attach.txt -whitespace
+receipts/self-check.json whitespace=-blank-at-eof
+submitted/docs/evidence/mac-schema13-preparation-corrections-2026-10-08/receipts/helper-self-check.json whitespace=-blank-at-eof

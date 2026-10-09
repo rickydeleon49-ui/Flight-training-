@@ -1,0 +1,22 @@
+[
+  {
+    "check": "self-check",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "scripts/mac-schema13-profile-snapshot.mjs",
+      "self-check"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "check": "diagnostics",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "/tmp/mac-schema13-rereview/diagnostics.mjs",
+      "scripts/mac-schema13-profile-snapshot.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 1
+  }
+]

@@ -1,0 +1,72 @@
+       Debug [tauri_cli::helpers::app_paths] Found Tauri project inside /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri on early lookup
+    Bundling [tauri_bundler::bundle::macos::app] Her Flight Deck.app (/Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app)
+     Running [tauri_bundler::utils] Command `xattr  -crs /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app`
+     Signing [tauri_bundler::bundle::macos::sign] with identity "-"
+Signing with identity "-"
+Signing /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+     Running [tauri_macos_sign] Command `codesign  --force -s - --options runtime /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck`
+/Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck: replacing existing signature
+Signing with identity "-"
+Signing /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app
+     Running [tauri_macos_sign] Command `codesign  --force -s - --options runtime /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app`
+/Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app: replacing existing signature
+        Warn [tauri_bundler::bundle::macos::app] skipping app notarization, no APPLE_ID & APPLE_PASSWORD & APPLE_TEAM_ID or APPLE_API_KEY & APPLE_API_ISSUER & APPLE_API_KEY_PATH environment variables found
+    Bundling [tauri_bundler::bundle::macos::dmg] Her Flight Deck_0.5.3_aarch64.dmg (/Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg)
+     Running [tauri_bundler::bundle::macos::dmg] bundle_dmg.sh
+     Running [tauri_bundler::utils] Command `/Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/bundle_dmg.sh  --volname Her Flight Deck --icon Her Flight Deck.app 180 170 --app-drop-link 480 170 --window-size 660 400 --hide-extension Her Flight Deck.app --volicon /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/icon.icns Her Flight Deck_0.5.3_aarch64.dmg Her Flight Deck.app`
+Creating disk image...
+hdiutil: WARNING: 'hdiutil create -volname -format ...' is deprecated. Please use 'diskutil image create from/blank --volumeName --format ...' instead.
+created: /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/rw.47082.Her Flight Deck_0.5.3_aarch64.dmg
+hdiutil: WARNING: 'hdiutil resize ...' is deprecated. Please use 'diskutil image resize ...' instead.
+hdiutil: WARNING: 'hdiutil resize -size ...' is deprecated. Please use 'diskutil image resize --size ...' instead.
+Mounting disk image...
+hdiutil: WARNING: 'hdiutil attach -nobrowse ...' is deprecated. Please use 'diskutil image attach --mountOptions nobrowse ...' instead.
+Device name:     /dev/disk4
+Searching for mounted interstitial disk image using /dev/disk4s...
+Mount dir:       /Volumes/dmg.RNhxmk
+Making link to Applications dir...
+/Volumes/dmg.RNhxmk
+Copying volume icon file '/Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/icon.icns'...
+Will sleep for 2 seconds to workaround occasions "Can't get disk (-1728)" issues...
+Running AppleScript to make Finder stuff pretty: /usr/bin/osascript "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/createdmg.tmp.XXXXXXXXXX.WDwDxOkmq2" "dmg.RNhxmk"
+waited 1 seconds for .DS_STORE to be created.
+Done running the AppleScript...
+Fixing permissions...
+Done fixing permissions
+Skipping blessing on sandbox
+Deleting .fseventsd
+Unmounting disk image...
+hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.
+"disk4" ejected.
+Compressing disk image...
+Preparing imaging engine…
+Reading Protective Master Boot Record (MBR : 0)…
+   (CRC32 $F1A6DCD4: Protective Master Boot Record (MBR : 0))
+Reading GPT Header (Primary GPT Header : 1)…
+   (CRC32 $35E56FB4: GPT Header (Primary GPT Header : 1))
+Reading GPT Partition Data (Primary GPT Table : 2)…
+   (CRC32 $C958BEA8: GPT Partition Data (Primary GPT Table : 2))
+Reading  (Apple_Free : 3)…
+   (CRC32 $00000000:  (Apple_Free : 3))
+Reading disk image (Apple_HFS : 4)…
+   (CRC32 $31C70052: disk image (Apple_HFS : 4))
+Reading  (Apple_Free : 5)…
+   (CRC32 $00000000:  (Apple_Free : 5))
+Reading GPT Partition Data (Backup GPT Table : 6)…
+   (CRC32 $C958BEA8: GPT Partition Data (Backup GPT Table : 6))
+Reading GPT Header (Backup GPT Header : 7)…
+   (CRC32 $9BDBD135: GPT Header (Backup GPT Header : 7))
+Adding resources…
+Elapsed Time:  3.500s
+File size: 4781365 bytes, Checksum: CRC32 $684FC062
+Sectors processed: 67660, 18900 compressed
+Speed: 2.6MB/s
+Savings: 86.2%
+hdiutil: WARNING: 'hdiutil convert -format ...' is deprecated. Please use 'diskutil image create from --format ...' instead.
+created: /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck_0.5.3_aarch64.dmg
+hdiutil does not support internet-enable. Note it was removed in macOS 10.15.
+Disk image done
+    Cleaning [tauri_bundler::bundle] /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app
+    Finished [tauri_bundler::bundle] 1 bundle at:
+        /Users/rickymac/code/.qwen/tmp/old-schema12-build/flight/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg
+
