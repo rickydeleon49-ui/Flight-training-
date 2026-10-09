@@ -1,0 +1,122 @@
+[
+  {
+    "path": "./README.md",
+    "sha256": "e13c11494447fa5f364d78c76d07f0197832bb01b2d1bbfb1a42744461dc0508",
+    "verified": true
+  },
+  {
+    "path": "./RUNBOOK-G1-G3.md",
+    "sha256": "e083c09093930faa19d16b95a2abecbb03b3eb0d82e1d27eafb4ac3f46437be0",
+    "verified": true
+  },
+  {
+    "path": "./env.sh",
+    "sha256": "89a6491de5e66d3e2d86992cee2e39145831185fe7a887880d0d1e8c080aa57e",
+    "verified": true
+  },
+  {
+    "path": "./hfd-operator-selftest.sh",
+    "sha256": "2745130a2e35eac458cc2ded1257fa562852ed8358a24069515b10de487dfde7",
+    "verified": true
+  },
+  {
+    "path": "./hfd-operator.sh",
+    "sha256": "b0c737ed155f2c586ed3c2df9b6e1563f5f8686b3fc78832e7b699045c8e59ed",
+    "verified": true
+  },
+  {
+    "path": "./receipts/anchor-verification.txt",
+    "sha256": "a55084091a737c795ae4202a944e3dfa668d7fc4fdeeaef2c668d284a54b1919",
+    "verified": true
+  },
+  {
+    "path": "./receipts/determinism.txt",
+    "sha256": "44c104903204798af06315d261181451fdbd80d995515581d822c61f692302c5",
+    "verified": true
+  },
+  {
+    "path": "./receipts/diagnostics-final.json",
+    "sha256": "6b842d2d267d7e4f68276cafb4b2c6f3c9d2f62a9534cfe8343de7891bfa2c4d",
+    "verified": true
+  },
+  {
+    "path": "./receipts/diagnostics-final.stderr",
+    "sha256": "8fa8023165abf9070974566fab4da77673c48e86d3bd025f6a0973a3e79f78c0",
+    "verified": true
+  },
+  {
+    "path": "./receipts/final-source-hashes.txt",
+    "sha256": "a5db64a9d8169902f26516c8c323f4976044b3140446e71d91b26e9a096af223",
+    "verified": true
+  },
+  {
+    "path": "./receipts/frozen-diagnostics-hash.txt",
+    "sha256": "256626f5de546422b8c2367365b65839f2b6e2a611eb356b7c8e4141852583ee",
+    "verified": true
+  },
+  {
+    "path": "./receipts/kit-transfer-manifest.txt",
+    "sha256": "6d14bf144b20dc55cfa2de65a949ea702957bb20ded3fb72ba7fc87d9fc98e3a",
+    "verified": true
+  },
+  {
+    "path": "./receipts/kit-transfer-verify.txt",
+    "sha256": "78f90ed160c3bfcf22df9562112499769df52f50eaf2bf178a95546cd93e834f",
+    "verified": true
+  },
+  {
+    "path": "./receipts/operator-selftest.json",
+    "sha256": "4a0cfb1b059ee7a945d7b62d7d570952927594c53c0d9e11c84fa0e4b9cab455",
+    "verified": true
+  },
+  {
+    "path": "./receipts/operator-selftest.progress.txt",
+    "sha256": "51ef156a8dc05645383d06c9b0585ab2488cd24e9964c03532f98c49280f2459",
+    "verified": true
+  },
+  {
+    "path": "./receipts/rereview-frozen-diagnostics-original-failing.json",
+    "sha256": "0433658ff55c743691299047d8bf1e648dad11db38ae97bbcb880e025aa2d4d5",
+    "verified": true
+  },
+  {
+    "path": "./receipts/rereview-selfcheck-original.json",
+    "sha256": "25107ae568ed79e25ecd15921395b5c6875e208b65e364b05a0035425f0df5eb",
+    "verified": true
+  },
+  {
+    "path": "./receipts/revert-sensitivity-notes.md",
+    "sha256": "1597990b6ec0beed4d6f5afc21d4730d6659165ed69d11c5964af75ad1b109a5",
+    "verified": true
+  },
+  {
+    "path": "./receipts/revert-sensitivity.json",
+    "sha256": "ae1b8ea6387809110473e76b27f7f5919028d28bc3a54c9b2ebde9dd982f85c9",
+    "verified": true
+  },
+  {
+    "path": "./receipts/revert-sensitivity.progress.txt",
+    "sha256": "263841c63786e686db8cfdd25f2dda9abc1515e6e3d1cd7e9b57cee3655d742d",
+    "verified": true
+  },
+  {
+    "path": "./receipts/selfcheck-final.json",
+    "sha256": "0e4afb3cba8602c44d66533c0a44bcd40dee1e2362a17a169f18e16f13f85db0",
+    "verified": true
+  },
+  {
+    "path": "./receipts/selfcheck-final.stderr",
+    "sha256": "42a9d9cd8e931a003fe5f8aaa0f795a78cc49c28063dac21dbff4b8529b07706",
+    "verified": true
+  },
+  {
+    "path": "./revert-sensitivity.sh",
+    "sha256": "559b43f64a7fb9654e530581ed05db68a83427fa1c2fa1d84940e3eb3cd10464",
+    "verified": true
+  },
+  {
+    "path": "./verify-anchors.sh",
+    "sha256": "72119ea68e38f12459c78dd05e6f9ea34e74b43fcf209cf298d6123064cb7bd4",
+    "verified": true
+  }
+]

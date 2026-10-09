@@ -1,0 +1,43 @@
+{
+  "source": "docs/evidence/mac-schema13-helper-corrections-2026-10-08/hfd-operator.sh",
+  "passed": 2,
+  "failed": 4,
+  "results": [
+    {
+      "name": "[control] an allowed fresh copy preserves the source",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: copied /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/profiles/source -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/profiles/control (source retained)\n"
+    },
+    {
+      "name": "[control] backup block succeeds and removes owner write",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: recorded original mode 700 in /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/evidence/backups-original-mode-20261009T071900Z.txt and removed write permission\n"
+    },
+    {
+      "name": "[MACV-R7] unblock round-trips a path with Application Support spaces",
+      "pass": false,
+      "exit": 2,
+      "output": "REFUSED: record /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/evidence/backups-original-mode-20261009T071900Z.txt names /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/Application, not the approved backups directory\n"
+    },
+    {
+      "name": "[MACV-R7] account-inspection failure must refuse before copying",
+      "pass": false,
+      "exit": 0,
+      "output": "OK: copied /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/Application Support/com.herflightdeck.app -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/profiles/group-error (source retained)\n"
+    },
+    {
+      "name": "[MACV-R7] dot-dot operands cannot escape the profiles directory",
+      "pass": false,
+      "exit": 0,
+      "output": "OK: copied /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/profiles/../outside -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/profiles/traversal (source retained)\n"
+    },
+    {
+      "name": "[MACV-R7] a symlink destination parent cannot escape the policy root",
+      "pass": false,
+      "exit": 0,
+      "output": "OK: copied /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/profiles/source -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-fc94cipn/kit/profiles/link/escaped (source retained)\n"
+    }
+  ]
+}

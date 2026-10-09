@@ -1,0 +1,23 @@
+[
+  {
+    "path": "/Users/Shared/hfd-schema13-kit-2026-10-08",
+    "uid": 501,
+    "gid": 0,
+    "mode": "0o755",
+    "nonowner_write_bit": false
+  },
+  {
+    "path": "/Users/Shared/hfd-schema13-kit-2026-10-08/evidence",
+    "uid": 501,
+    "gid": 0,
+    "mode": "0o755",
+    "nonowner_write_bit": false
+  },
+  {
+    "path": "/Users/Shared/hfd-schema13-kit-2026-10-08/profiles",
+    "uid": 501,
+    "gid": 0,
+    "mode": "0o755",
+    "nonowner_write_bit": false
+  }
+]

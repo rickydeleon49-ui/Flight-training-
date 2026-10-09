@@ -1,0 +1,11 @@
+inspection-fail-open: selfExit=1 selfBite=yes diagExit=1 diagBite=yes
+matched-pid-tolerated: selfExit=1 selfBite=yes diagExit=1 diagBite=yes
+output-alias-both-branches-off: selfExit=2 selfBite=no diagExit=0 diagBite=no
+output-alias-path-branch-off: selfExit=1 selfBite=yes diagExit=0 diagBite=not-expected
+output-alias-inode-branch-off: selfExit=1 selfBite=yes diagExit=0 diagBite=not-expected
+no-profile-root-protection: selfExit=1 selfBite=yes diagExit=0 diagBite=not-expected
+nul-truncating-text: selfExit=1 selfBite=yes diagExit=1 diagBite=yes
+frame-drops-table-identity: selfExit=1 selfBite=yes diagExit=0 diagBite=not-expected
+unchanged-demands-schema13: selfExit=1 selfBite=yes diagExit=1 diagBite=yes
+no-snapshot-validation: selfExit=1 selfBite=yes diagExit=1 diagBite=yes
+historyonly-skips-files: selfExit=1 selfBite=not-expected diagExit=1 diagBite=yes

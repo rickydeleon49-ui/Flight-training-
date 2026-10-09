@@ -1,0 +1,33 @@
+# Final source hashes for review — generated 2026-10-09T07:08:52ZZ from HEAD 36a7b39acd291cba14be4f137798b3ad6f7272f1
+
+## Changed or produced in the repository (this round)
+1aaad1b4726f75003f703802af908f20a4f2c19867c2eef270b063162645bcce  scripts/mac-schema13-profile-snapshot.mjs
+44d3bbac280aaa990023377a418e902ace79e2a2dc923b82eac67370aa4ebf16  docs/MAC_SCHEMA13_HELPER_CORRECTIONS_2026-10-08.md
+e083c09093930faa19d16b95a2abecbb03b3eb0d82e1d27eafb4ac3f46437be0  docs/evidence/mac-schema13-helper-corrections-2026-10-08/RUNBOOK-G1-G3.md
+89a6491de5e66d3e2d86992cee2e39145831185fe7a887880d0d1e8c080aa57e  docs/evidence/mac-schema13-helper-corrections-2026-10-08/env.sh
+b0c737ed155f2c586ed3c2df9b6e1563f5f8686b3fc78832e7b699045c8e59ed  docs/evidence/mac-schema13-helper-corrections-2026-10-08/hfd-operator.sh
+559b43f64a7fb9654e530581ed05db68a83427fa1c2fa1d84940e3eb3cd10464  docs/evidence/mac-schema13-helper-corrections-2026-10-08/revert-sensitivity.sh
+2745130a2e35eac458cc2ded1257fa562852ed8358a24069515b10de487dfde7  docs/evidence/mac-schema13-helper-corrections-2026-10-08/hfd-operator-selftest.sh
+72119ea68e38f12459c78dd05e6f9ea34e74b43fcf209cf298d6123064cb7bd4  docs/evidence/mac-schema13-helper-corrections-2026-10-08/verify-anchors.sh
+e13c11494447fa5f364d78c76d07f0197832bb01b2d1bbfb1a42744461dc0508  docs/evidence/mac-schema13-helper-corrections-2026-10-08/README.md
+dc5ba39a223619e07124c0ca2a4dbd95a4200c28475bf5cbe8eb273c485b9484  STATUS.md
+a4045c37cf4d03b101bc16331e19e46fc95054609c8dc1fb0d22ff1255695302  docs/PROJECT_HANDOFF.md
+
+## Staged operator kit (must match the repository copies)
+1aaad1b4726f75003f703802af908f20a4f2c19867c2eef270b063162645bcce  /Users/Shared/hfd-schema13-kit-2026-10-08/bin/mac-schema13-profile-snapshot.mjs
+b0c737ed155f2c586ed3c2df9b6e1563f5f8686b3fc78832e7b699045c8e59ed  /Users/Shared/hfd-schema13-kit-2026-10-08/bin/hfd-operator.sh
+89a6491de5e66d3e2d86992cee2e39145831185fe7a887880d0d1e8c080aa57e  /Users/Shared/hfd-schema13-kit-2026-10-08/env.sh
+e083c09093930faa19d16b95a2abecbb03b3eb0d82e1d27eafb4ac3f46437be0  /Users/Shared/hfd-schema13-kit-2026-10-08/README-START-HERE.md
+6d14bf144b20dc55cfa2de65a949ea702957bb20ded3fb72ba7fc87d9fc98e3a  /Users/Shared/hfd-schema13-kit-2026-10-08/TRANSFERSHA256SUMS.txt
+
+## Accepted candidates verified in place, never rebuilt
+b3ead8139049d2fe829469744ff5a3394e145a3cb0ad09d8ca5ac9ae9f65f334  /Users/Shared/hfd-schema13-kit-2026-10-08/installers/NEW-schema13-36a7b39-adhoc.dmg
+ddb0594e351e0cd90a9fd0ede4824c1fd6fe3cb043d523a31939988fc0077c62  /Users/Shared/hfd-schema13-kit-2026-10-08/installers/OLD-schema12-2a6a415-adhoc.dmg
+
+## Preserved from earlier rounds (unmodified)
+9880deb6b807735d669d4043774737bbef35955cc5a1552ee08c0df33225ef58  docs/MAC_SCHEMA13_PREPARATION_CORRECTIONS_2026-10-08.md
+6039455f0abcefc92d6e6701b11c83c714ebd10367bb84eefc26e559f35b11ca  docs/MAC_SCHEMA13_VERIFICATION_2026-10-08.md
+80562af78a9cd96bbc587ee74ecc9c63b4e5e4c2e87803391e0e065481eba2ef  docs/evidence/mac-schema13-preparation-corrections-2026-10-08/RUNBOOK-G1-G3.md
+
+## Frozen review harness actually run (unmodified)
+14c40581fb225207b10b3dff4ec5a0ddde98ac683903e75016512388a01c74ca  /Users/rickymac/code/.qwen/tmp/macv2/diagnostics.mjs

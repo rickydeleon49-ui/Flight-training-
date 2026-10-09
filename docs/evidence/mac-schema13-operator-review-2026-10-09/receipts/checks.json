@@ -1,0 +1,45 @@
+[
+  {
+    "check": "self-check",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "scripts/mac-schema13-profile-snapshot.mjs",
+      "self-check"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "prior-frozen",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/docs/evidence/mac-schema13-preparation-rereview-2026-10-08/diagnostics.mjs",
+      "scripts/mac-schema13-profile-snapshot.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "helper-new",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "/tmp/mac-schema13-final-review/helper-diagnostics.mjs"
+    ],
+    "exit": 1
+  },
+  {
+    "check": "operator-new",
+    "args": [
+      "python3",
+      "/tmp/mac-schema13-final-review/operator-diagnostics.py"
+    ],
+    "exit": 1
+  },
+  {
+    "check": "operator-prior",
+    "args": [
+      "/bin/bash",
+      "docs/evidence/mac-schema13-helper-corrections-2026-10-08/hfd-operator-selftest.sh",
+      "/Users/Shared/hfd-schema13-kit-2026-10-08"
+    ],
+    "exit": 0
+  }
+]
