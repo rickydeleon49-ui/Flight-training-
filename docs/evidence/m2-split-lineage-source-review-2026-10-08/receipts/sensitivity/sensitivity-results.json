@@ -1,0 +1,52 @@
+[
+  {
+    "variant": "S1-receipt-hash-check-skipped",
+    "file": "src-tauri/src/lineage.rs",
+    "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml an_edited_or_unrecorded_receipt_saves_nothing",
+    "exit": 101,
+    "expected_failing_test": "an_edited_or_unrecorded_receipt_saves_nothing",
+    "caught": true,
+    "restored_sha256": "3733b71f1c73da026cc276418700c5539c78b00985a9ad4b11bc8cc5a7f34822",
+    "restored": true
+  },
+  {
+    "variant": "S2-nested-snapshot-recheck-removed",
+    "file": "src-tauri/src/lineage.rs",
+    "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml a_parent_whose_lineage_changed_after_the_split_is_refused",
+    "exit": 101,
+    "expected_failing_test": "a_parent_whose_lineage_changed_after_the_split_is_refused",
+    "caught": true,
+    "restored_sha256": "3733b71f1c73da026cc276418700c5539c78b00985a9ad4b11bc8cc5a7f34822",
+    "restored": true
+  },
+  {
+    "variant": "S3-reissue-resets-the-record",
+    "file": "src-tauri/src/lineage.rs",
+    "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml a_cancelled_split_stays_cancelled_and_cannot_be_saved",
+    "exit": 101,
+    "expected_failing_test": "a_cancelled_split_stays_cancelled_and_cannot_be_saved",
+    "caught": true,
+    "restored_sha256": "3733b71f1c73da026cc276418700c5539c78b00985a9ad4b11bc8cc5a7f34822",
+    "restored": true
+  },
+  {
+    "variant": "S4-hash-nullness-tier-heuristic",
+    "file": "src/logic/splitLineage.ts",
+    "command": "npx vitest run src/logic/splitLineage.test.ts",
+    "exit": 1,
+    "expected_failing_test": "a matching original never vouches for a parent whose fingerprint is unknown",
+    "caught": true,
+    "restored_sha256": "189109971e05a07c3a7e79aba07e278dedd1bc15e364bdd5af131d23fd1b532b",
+    "restored": true
+  },
+  {
+    "variant": "S5-receipt-shape-allows-extra-provenance",
+    "file": "src/data/splitLineageShapes.ts",
+    "command": "npx vitest run src/data/splitLineageShapes.test.ts",
+    "exit": 1,
+    "expected_failing_test": "refuses extra provenance",
+    "caught": true,
+    "restored_sha256": "b5b1b90093a51a5ed5e8c9ad9336a4088b4e775f33539fddcb56a53c26b9e9be",
+    "restored": true
+  }
+]

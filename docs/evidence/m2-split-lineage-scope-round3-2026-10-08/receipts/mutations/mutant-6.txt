@@ -1,0 +1,56 @@
+Mutant: MUTANT-6-CALLER-HASH-PRECEDENCE
+Description: Caller hash precedence is restored (caller forged hash overrides verified hash)
+Target: lineageContract
+Baseline SHA256: b6d0f6eade61a740fd809f2072c821733f427f875b180693fb618c03e77c8cf4
+Mutated SHA256: 2dc1ad28a188a2d1e598a92c8b1c0d8e9e350bf6f9503bc1d8e9c4defbc90016
+Exit Code: 1
+Expected Failure Substring: "Caller forged hash must not replace verified hash"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.672125ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.104916ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.058291ms)
+✔ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.053541ms)
+✔ Contract 5: SHA-256 Content Hashing Determinism (0.175292ms)
+✔ Contract 6: Candidate DDL Constraints Enforce Child Identity, Bounds & Structural Tiers (5.430916ms)
+✔ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.394167ms)
+✔ Contract 8: Source Version Evaluation through Model Boundary (Two-Tier Structural Classification) (4.6305ms)
+✔ Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions (4.811042ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.394ms)
+✖ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.321166ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.34725ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.246333ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.787125ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.047417ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.032459ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.09225ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Cancellation (4.797166ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.535625
+
+✖ failing tests:
+
+test at proof.test.mjs:474:1
+✖ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.321166ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception: Caller forged hash must not replace verified hash
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:508:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Contradictory caller hash/i,
+    operator: 'throws',
+    diff: 'simple'
+  }
+

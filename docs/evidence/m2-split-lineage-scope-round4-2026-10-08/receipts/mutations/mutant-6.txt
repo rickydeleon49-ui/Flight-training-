@@ -1,0 +1,63 @@
+Mutant: MUTANT-6-SIBLING-COALESCE
+Description: Sibling COALESCE grouping restored (COALESCE(parent_content_sha256, source_content_sha256))
+Target: lineageContract
+Baseline SHA256: b584035b1daeb387efc0f3d47fbd2105111ed3c3a098851acff4930fcf032b9d
+Mutated SHA256: 5cb7b5e628d445c4129c1c447c88d07d0cdcc5b581028249a8c3f4cd4367c151
+Exit Code: 1
+Expected Failure Substring: "Unknown parent editions must not be grouped as siblings"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.679334ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.106375ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.063125ms)
+✔ Contract 4: Multi-level Nested Hierarchy (3+ levels) (0.068583ms)
+✔ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.709833ms)
+✔ Contract 6: Two-Tier Veracity Verification from Real Files (5.588042ms)
+✔ Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity (4.65ms)
+✔ Contract 8: Legacy NULL Parent Hash is Handled as Unknown (4.773667ms)
+✖ Contract 9: Unknown Parent Editions Are Not Grouped as Siblings (4.84825ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.664291ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure (5.676958ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.805375ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.226625ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.776ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.057417ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.029167ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.202333ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation (5.335125ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147.450125
+
+✖ failing tests:
+
+test at proof.test.mjs:498:1
+✖ Contract 9: Unknown Parent Editions Are Not Grouped as Siblings (4.84825ms)
+  AssertionError [ERR_ASSERTION]: Unknown parent editions must not be grouped as siblings
+  + actual - expected
+  
+  + [
+  +   'B2'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/proof.test.mjs:540:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'B2' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+

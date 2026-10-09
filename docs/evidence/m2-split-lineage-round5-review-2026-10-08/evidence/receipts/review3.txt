@@ -1,0 +1,118 @@
+TAP version 13
+# (node:16308) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: control: a receipt-based direct save persists the receipt hash and total
+ok 1 - control: a receipt-based direct save persists the receipt hash and total
+  ---
+  duration_ms: 6.834125
+  type: 'test'
+  ...
+# Subtest: control: a receipt-based nested save derives R120–140
+ok 2 - control: a receipt-based nested save derives R120–140
+  ---
+  duration_ms: 5.681583
+  type: 'test'
+  ...
+# Subtest: control: a source file replaced between receipt and save is refused
+ok 3 - control: a source file replaced between receipt and save is refused
+  ---
+  duration_ms: 5.162333
+  type: 'test'
+  ...
+# Subtest: control: saving the same receipt twice replays without new rows
+ok 4 - control: saving the same receipt twice replays without new rows
+  ---
+  duration_ms: 5.102292
+  type: 'test'
+  ...
+# Subtest: control: a mid-transaction failure with a receipt rolls back and cleans up exactly once
+ok 5 - control: a mid-transaction failure with a receipt rolls back and cleans up exactly once
+  ---
+  duration_ms: 4.920833
+  type: 'test'
+  ...
+# Subtest: [SL-R10] a save without a receipt is refused, even with matching expected hash and bytes
+ok 6 - [SL-R10] a save without a receipt is refused, even with matching expected hash and bytes
+  ---
+  duration_ms: 4.518708
+  type: 'test'
+  ...
+# Subtest: [SL-R10] a recorded source file that is missing cannot be replaced by caller bytes
+ok 7 - [SL-R10] a recorded source file that is missing cannot be replaced by caller bytes
+  ---
+  duration_ms: 4.947583
+  type: 'test'
+  ...
+# Subtest: [SL-R10] an edited receipt (total and plan) is not accepted as authoritative
+ok 8 - [SL-R10] an edited receipt (total and plan) is not accepted as authoritative
+  ---
+  duration_ms: 4.70775
+  type: 'test'
+  ...
+# Subtest: [SL-R10] caller parts cannot replace the receipt plan
+ok 9 - [SL-R10] caller parts cannot replace the receipt plan
+  ---
+  duration_ms: 4.757584
+  type: 'test'
+  ...
+# Subtest: [SL-R10] the nested parent snapshot in the receipt is compared at save time
+ok 10 - [SL-R10] the nested parent snapshot in the receipt is compared at save time
+  ---
+  duration_ms: 5.004875
+  type: 'test'
+  ...
+# Subtest: [SL-R11] the operation log is part of the candidate DDL, not the shipped baseline
+not ok 11 - [SL-R11] the operation log is part of the candidate DDL, not the shipped baseline
+  ---
+  duration_ms: 4.626875
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:105:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:110:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [SL-R11] cancelling before commit removes this operation's staged file
+not ok 12 - [SL-R11] cancelling before commit removes this operation's staged file
+  ---
+  duration_ms: 0.299667
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:114:1'
+  failureType: 'testCodeFailure'
+  error: 'cancelBatch requires a database instance and an operationId string'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    cancelBatch (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:940:11)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:119:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 10
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 134.552042

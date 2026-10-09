@@ -16,6 +16,22 @@ export interface SqlDatabase {
   persist?(): Promise<void>;
   /** Desktop-only pinned transaction for a batch of PDF part records. */
   saveMaterialsAtomically?(materials: import("@/domain/types").StudyMaterial[]): Promise<void>;
+  /**
+   * Desktop-only: save the parts of a recorded split with their lineage, in
+   * one native transaction bound to the split's receipt.
+   */
+  saveSplitBatch?(
+    receipt: import("@/domain/types").SplitSourceReceipt,
+    presentation: import("@/domain/types").SplitPartPresentation[],
+  ): Promise<import("@/domain/types").SplitBatchSaveResult>;
+  /** Desktop-only: cancel an unsaved split and remove its own part files. */
+  cancelSplitBatch?(operationId: string): Promise<import("@/domain/types").SplitBatchCancelResult>;
+  /** Desktop-only: read a split back by its operation id. */
+  reconcileSplitBatch?(operationId: string): Promise<import("@/domain/types").SplitBatchReconciliation>;
+  /** Desktop-only: fingerprint stored documents, off the interface thread. */
+  fingerprintStoredDocuments?(
+    relativePaths: string[],
+  ): Promise<import("@/domain/types").StoredDocumentFingerprint[]>;
   /** Single-connection atomic transaction for debrief multi-record acceptance. */
   saveDebriefAtomically?(operation: DebriefSaveOperation): Promise<void>;
   /** Single-connection atomic transaction for study material create or update. */

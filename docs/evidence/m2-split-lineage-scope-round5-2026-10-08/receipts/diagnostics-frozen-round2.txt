@@ -1,0 +1,61 @@
+(node:15682) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ [SL-R4] direct split uses recorded root hash to verify its immediate source (5.424458ms)
+✔ [SL-R4] direct split sibling lookup excludes another edition (4.721583ms)
+✔ [SL-R5] expected source identity without current bytes refuses all writes (4.332709ms)
+✔ [SL-R5] nested save refuses root range inconsistent with persisted parent (4.198959ms)
+✖ control: matching current source permits a valid save (4.118625ms)
+✖ control: actual later insert failure rolls back earlier material/tag/lineage writes (4.316208ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.906917
+
+✖ failing tests:
+
+test at docs/evidence/m2-split-lineage-rereview-2026-10-08/diagnostics/lineage-round2.test.mjs:13:1
+✖ control: matching current source permits a valid save (4.118625ms)
+  Error: A valid SplitSourceReceipt is required; unverified split refused.
+      at validateAndSaveSplitBatch (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-rereview-2026-10-08/diagnostics/lineage-round2.test.mjs:13:100)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at docs/evidence/m2-split-lineage-rereview-2026-10-08/diagnostics/lineage-round2.test.mjs:14:1
+✖ control: actual later insert failure rolls back earlier material/tag/lineage writes (4.316208ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /injected later insert/. Input:
+  
+  'Error: A valid SplitSourceReceipt is required; unverified split refused.'
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-rereview-2026-10-08/diagnostics/lineage-round2.test.mjs:14:301)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: A valid SplitSourceReceipt is required; unverified split refused.
+        at validateAndSaveSplitBatch (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+        at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-rereview-2026-10-08/diagnostics/lineage-round2.test.mjs:14:312
+        at getActual (node:assert:580:5)
+        at strict.throws (node:assert:728:24)
+        at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-rereview-2026-10-08/diagnostics/lineage-round2.test.mjs:14:301)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: /injected later insert/,
+    operator: 'throws',
+    diff: 'simple'
+  }

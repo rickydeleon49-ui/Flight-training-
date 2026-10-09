@@ -1,0 +1,7 @@
+{
+  "name": "m2-split-lineage-proof-round3",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Round 3 corrected disposable executable contract proof for M2 split-source lineage (SL-R7–SL-R9)"
+}

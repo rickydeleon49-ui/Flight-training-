@@ -1,0 +1,56 @@
+Mutant: MUTANT-5-OPTIONAL-GATE
+Description: Verification gate becomes optional again (omitting receipt/expectedParentSha256 check)
+Target: lineageContract
+Baseline SHA256: b6d0f6eade61a740fd809f2072c821733f427f875b180693fb618c03e77c8cf4
+Mutated SHA256: 37a0fc826eca83b7a4e6a4f40fb9f8e74cdd16bfee3c4152c14324c9c552ecdd
+Exit Code: 1
+Expected Failure Substring: "Unverified split without receipt must refuse all writes"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.688375ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.10775ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.058708ms)
+✔ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.059875ms)
+✔ Contract 5: SHA-256 Content Hashing Determinism (0.174792ms)
+✔ Contract 6: Candidate DDL Constraints Enforce Child Identity, Bounds & Structural Tiers (5.151875ms)
+✔ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.744291ms)
+✔ Contract 8: Source Version Evaluation through Model Boundary (Two-Tier Structural Classification) (4.602875ms)
+✔ Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions (4.580166ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.382125ms)
+✖ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.40525ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.380917ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (3.900291ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.811167ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.051167ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.031292ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.0075ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Cancellation (4.666875ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.9355
+
+✖ failing tests:
+
+test at proof.test.mjs:474:1
+✖ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.40525ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception: Unverified split without receipt must refuse all writes
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:499:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /without any verified source identity refuses all writes/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+

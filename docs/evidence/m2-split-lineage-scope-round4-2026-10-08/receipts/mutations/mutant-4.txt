@@ -1,0 +1,56 @@
+Mutant: MUTANT-4-SELF-CYCLE
+Description: Removal of CHECK (material_id != parent_material_id) constraint in candidate DDL
+Target: candidateDdl
+Baseline SHA256: a60c9622b5c6792745d5beb2907614c80f4ea9267651575efb813f8384726b0c
+Mutated SHA256: d5c5b30c5fbc3d170926fbb5ef1ecbaf1b9a1fdb00de126b2fb783639c8b9a5f
+Exit Code: 1
+Expected Failure Substring: "Self-parenting must fail cycle check constraint"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.676167ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.113791ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.064917ms)
+✔ Contract 4: Multi-level Nested Hierarchy (3+ levels) (0.070917ms)
+✖ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.733917ms)
+✔ Contract 6: Two-Tier Veracity Verification from Real Files (5.541917ms)
+✔ Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity (4.694375ms)
+✔ Contract 8: Legacy NULL Parent Hash is Handled as Unknown (4.807625ms)
+✔ Contract 9: Unknown Parent Editions Are Not Grouped as Siblings (4.510791ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.486125ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure (5.676875ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.965041ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.392667ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.912667ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.039375ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.031458ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.357708ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation (5.528417ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 148.365375
+
+✖ failing tests:
+
+test at proof.test.mjs:129:1
+✖ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.733917ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception: Self-parenting must fail cycle check constraint
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/proof.test.mjs:240:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /CHECK constraint failed/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+

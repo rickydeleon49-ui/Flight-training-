@@ -1,0 +1,176 @@
+✔ control: a receipt-based direct save persists the receipt hash and total (6.739375ms)
+✔ control: a receipt-based nested save derives R120–140 (5.14725ms)
+✔ control: a source file replaced between receipt and save is refused (4.634416ms)
+✔ control: saving the same receipt twice replays without new rows (5.309083ms)
+✔ control: a mid-transaction failure with a receipt rolls back and cleans up exactly once (4.700834ms)
+✖ [SL-R10] a save without a receipt is refused, even with matching expected hash and bytes (5.049583ms)
+✖ [SL-R10] a recorded source file that is missing cannot be replaced by caller bytes (4.807625ms)
+✖ [SL-R10] an edited receipt (total and plan) is not accepted as authoritative (4.585042ms)
+✖ [SL-R10] caller parts cannot replace the receipt plan (4.569291ms)
+✖ [SL-R10] the nested parent snapshot in the receipt is compared at save time (4.857208ms)
+✖ [SL-R11] the operation log is part of the candidate DDL, not the shipped baseline (4.337458ms)
+✖ [SL-R11] cancelling before commit removes this operation's staged file (0.319167ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 5
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.384166
+
+✖ failing tests:
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:70:1
+✖ [SL-R10] a save without a receipt is refused, even with matching expected hash and bytes (5.049583ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:72:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:23:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:70:104)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:76:1
+✖ [SL-R10] a recorded source file that is missing cannot be replaced by caller bytes (4.807625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:81:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:23:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:76:98)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:84:1
+✖ [SL-R10] an edited receipt (total and plan) is not accepted as authoritative (4.585042ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:88:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:23:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:84:92)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:91:1
+✖ [SL-R10] caller parts cannot replace the receipt plan (4.569291ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:94:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:23:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:91:69)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:97:1
+✖ [SL-R10] the nested parent snapshot in the receipt is compared at save time (4.857208ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:102:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:23:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:97:91)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:105:1
+✖ [SL-R11] the operation log is part of the candidate DDL, not the shipped baseline (4.337458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:108:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:114:1
+✖ [SL-R11] cancelling before commit removes this operation's staged file (0.319167ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:120:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

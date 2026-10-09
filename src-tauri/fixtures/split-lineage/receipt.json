@@ -1,0 +1,46 @@
+{
+  "core": {
+    "sourceMaterialId": "A",
+    "sourceFilePath": "A-part.pdf",
+    "sourceFileSize": 30,
+    "sourceContentSha256": "ba78158bf019d6d119d3bb2d9bff0ce88b612052135f136784fbf490e007d65d",
+    "sourceTotalPages": 200,
+    "isNested": true,
+    "rootMaterialId": "R",
+    "rootTitle": "Root Handbook",
+    "rootFileName": "Root Handbook.pdf",
+    "rootContentSha256": "3d0a927d27c2ffc9ec7cfa7aed29c09708f9aed05fcaaec94d759c451e5c8c08",
+    "rootTotalPages": 400,
+    "parentSnapshot": {
+      "rootMaterialId": "R",
+      "rootTitle": "Root Handbook",
+      "rootFileName": "Root Handbook.pdf",
+      "rootContentSha256": "3d0a927d27c2ffc9ec7cfa7aed29c09708f9aed05fcaaec94d759c451e5c8c08",
+      "rootTotalPages": 400,
+      "parentRootPageStart": 101,
+      "parentRootPageEnd": 300,
+      "parentTotalPages": 200,
+      "parentNestedLevel": 1,
+      "parentTitle": "Title of A",
+      "parentFileName": "A.pdf"
+    },
+    "nestedLevel": 2,
+    "plan": [
+      {
+        "id": "B",
+        "selection": {
+          "start": 20,
+          "end": 40
+        },
+        "childPageCount": 21,
+        "canonicalRootStart": 120,
+        "canonicalRootEnd": 140,
+        "filePath": "B-part.pdf",
+        "fileSize": 28,
+        "originalFileName": "B.pdf"
+      }
+    ]
+  },
+  "receiptHash": "f3dd62864c07169d210d2ed025fcabce921c15cedb60f4be7950c344a6c69d06",
+  "operationId": "f3dd62864c07169d210d2ed025fcabce921c15cedb60f4be7950c344a6c69d06"
+}

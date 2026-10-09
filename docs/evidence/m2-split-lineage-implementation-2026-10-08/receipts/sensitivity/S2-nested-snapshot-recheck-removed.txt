@@ -1,0 +1,22 @@
+
+running 1 test
+test lineage::tests::a_parent_whose_lineage_changed_after_the_split_is_refused ... FAILED
+
+failures:
+
+---- lineage::tests::a_parent_whose_lineage_changed_after_the_split_is_refused stdout ----
+
+thread 'lineage::tests::a_parent_whose_lineage_changed_after_the_split_is_refused' (324410) panicked at src/lineage_tests.rs:462:77:
+called `Result::unwrap_err()` on an `Ok` value: SplitBatchSaveResult { operation_id: "f3dd62864c07169d210d2ed025fcabce921c15cedb60f4be7950c344a6c69d06", parts: [SavedSplitPart { id: "B", title: "Title of B", file_path: Some("B-part.pdf"), file_size: Some(28) }], idempotent_replay: false }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    lineage::tests::a_parent_whose_lineage_changed_after_the_split_is_refused
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 449 filtered out; finished in 0.07s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sl-sens/copy/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.75s
+     Running unittests src/lib.rs (/Users/rickymac/code/Flight-training-split-lineage-implementation/src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`

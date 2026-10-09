@@ -1,0 +1,57 @@
+(node:15686) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ control: a receipt-based direct save persists the receipt hash and total (6.045375ms)
+✔ control: a receipt-based nested save derives R120–140 (5.585084ms)
+✔ control: a source file replaced between receipt and save is refused (4.802917ms)
+✔ control: saving the same receipt twice replays without new rows (4.682459ms)
+✔ control: a mid-transaction failure with a receipt rolls back and cleans up exactly once (4.66825ms)
+✔ [SL-R10] a save without a receipt is refused, even with matching expected hash and bytes (4.627ms)
+✔ [SL-R10] a recorded source file that is missing cannot be replaced by caller bytes (4.2595ms)
+✔ [SL-R10] an edited receipt (total and plan) is not accepted as authoritative (4.481791ms)
+✔ [SL-R10] caller parts cannot replace the receipt plan (4.606125ms)
+✔ [SL-R10] the nested parent snapshot in the receipt is compared at save time (4.839458ms)
+✖ [SL-R11] the operation log is part of the candidate DDL, not the shipped baseline (4.352583ms)
+✖ [SL-R11] cancelling before commit removes this operation's staged file (0.452542ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 141.180833
+
+✖ failing tests:
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:105:1
+✖ [SL-R11] the operation log is part of the candidate DDL, not the shipped baseline (4.352583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:110:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:114:1
+✖ [SL-R11] cancelling before commit removes this operation's staged file (0.452542ms)
+  TypeError [Error]: cancelBatch requires a database instance and an operationId string
+      at cancelBatch (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:940:11)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round4-2026-10-08/diagnostics/lineage-round3-review.test.mjs:119:5)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

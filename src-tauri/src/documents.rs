@@ -17,7 +17,7 @@ use tauri::AppHandle;
 use crate::storage::app_root;
 
 /// Subdirectory of app data that holds imported study materials.
-const DOCUMENTS_DIR: &str = "documents";
+pub(crate) const DOCUMENTS_DIR: &str = "documents";
 /// Subdirectory inside documents for staged deletions.
 pub(crate) const TRASH_DIR: &str = ".trash";
 
@@ -383,9 +383,18 @@ pub(crate) fn stored_destination(
     material_id: &str,
     file_name: &str,
 ) -> Result<(PathBuf, String), String> {
+    stored_destination_in(&documents_root(app)?, material_id, file_name)
+}
+
+/// `stored_destination` against an explicit documents directory.
+pub(crate) fn stored_destination_in(
+    documents_dir: &Path,
+    material_id: &str,
+    file_name: &str,
+) -> Result<(PathBuf, String), String> {
     let safe_id = sanitize_file_name(material_id);
     let stored_name = format!("{safe_id}-{}", sanitize_file_name(file_name));
-    reserve_destination(&documents_root(app)?, &stored_name)
+    reserve_destination(documents_dir, &stored_name)
 }
 
 /// Reserve a fresh name atomically. Replacing a same-named attachment used to
@@ -1969,9 +1978,12 @@ mod tests {
     use super::*;
 
     fn split_test_root() -> PathBuf {
+        static SEQUENCE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let sequence = SEQUENCE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let root = std::env::temp_dir().join(format!(
-            "hfd-split-{}-{}",
+            "hfd-split-{}-{}-{}",
             std::process::id(),
+            sequence,
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

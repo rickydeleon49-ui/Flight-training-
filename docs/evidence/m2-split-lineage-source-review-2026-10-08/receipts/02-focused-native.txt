@@ -1,0 +1,13 @@
+=== clean single-threaded focused-native tally ===
+# reviewer note: run_gate.sh step 02 uses the 'split' filter which intermittently fails on a pre-existing flaky test helper (see finding). This is the same three filters run with --test-threads=1 to remove the timing collision.
+$ cargo test --locked lineage|split|newer_database (single-threaded)
+----- filter: lineage -----
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 429 filtered out; finished in 1.70s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+----- filter: split -----
+test result: ok. 19 passed; 0 failed; 2 ignored; 0 measured; 429 filtered out; finished in 6.92s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+----- filter: newer_database -----
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 449 filtered out; finished in 0.11s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+exit of filter loop captured separately

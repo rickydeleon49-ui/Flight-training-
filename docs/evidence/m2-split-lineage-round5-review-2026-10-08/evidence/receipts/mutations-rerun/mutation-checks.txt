@@ -1,0 +1,21 @@
+=== Real Mutation Sensitivity Verification (Round 5) ===
+Baseline lineageContract.mjs SHA256: dd1c95bffca08174b49a455311378bd5bee23c5b132cb2765cfee29e7eec772e
+Baseline candidate_migration_0013.sql SHA256: 4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106
+
+SUCCESS: MUTANT-1-RANGE-COMPOSE caught as expected (Exit 1, test="Contract 3: Nested Range Composition", message="Composed R start mismatch")
+SUCCESS: MUTANT-2-CHILD-BOUNDS caught as expected (Exit 1, test="Contract 2: Page Translation Maps Child Position", message="Child page beyond length must throw out-of-bounds error")
+SUCCESS: MUTANT-3-TYPEOF-CHECKS caught as expected (Exit 1, test="Contract 5: Structural Tiers and Strict DDL CHECK Constraints", message="Fractional physical page bounds must fail TYPEOF constraint")
+SUCCESS: MUTANT-4-SELF-CYCLE caught as expected (Exit 1, test="Contract 5: Structural Tiers and Strict DDL CHECK Constraints", message="Self-parenting must fail cycle check constraint")
+SUCCESS: MUTANT-5-HASH-NULLNESS-HEURISTIC caught as expected (Exit 1, test="Contract 8: Legacy NULL Parent Hash is Handled as Unknown", message="Legacy NULL parent hash must yield unknown status")
+SUCCESS: MUTANT-6-SIBLING-COALESCE caught as expected (Exit 1, test="Contract 9: Unknown Parent Editions Are Not Grouped as Siblings", message="Unknown parent editions must not be grouped as siblings")
+SUCCESS: MUTANT-7-OUTPUT-COLLISION-SKIPPED caught as expected (Exit 1, test="Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation", message="Planned output material ID already exists in library")
+SUCCESS: MUTANT-8-CANCEL-AFTER-COMMIT-ALLOWED caught as expected (Exit 1, test="Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation", message="Expected values to be strictly equal")
+SUCCESS: MUTANT-9-RECEIPTLESS-SAVE-RESTORED caught as expected (Exit 1, test="Contract 11: Atomic Batch Save Binds to Authoritative Receipt", message="Receipt-less save must throw mandatory receipt error")
+SUCCESS: MUTANT-10-RECEIPT-HASH-SKIPPED caught as expected (Exit 1, test="Contract 11: Atomic Batch Save Binds to Authoritative Receipt", message="Tampered receipt must be refused by hash check")
+SUCCESS: MUTANT-11-SNAPSHOT-COMPARISON-REMOVED caught as expected (Exit 1, test="Contract 11: Atomic Batch Save Binds to Authoritative Receipt", message="Parent lineage snapshot drift must be refused")
+SUCCESS: MUTANT-12-OPERATION-LOG-IN-HELPER caught as expected (Exit 1, test="Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline", message="split_operation_log must not exist in shipped migrations 0001–0012")
+SUCCESS: MUTANT-13-PARENT-TIER-MISLABEL caught as expected (Exit 1, test="Contract 11: Atomic Batch Save Binds to Authoritative Receipt", message="Nested parent tier must record immediate parent title and file name")
+SUCCESS: MUTANT-14-REISSUE-RESETS-OPERATION caught as expected (Exit 1, test="Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation", message="Re-issuing receipt must not reset committed operation status")
+
+=== Summary: 14/14 mutations successfully caught and verified ===
+All source files preserved byte-for-byte; temporary mutation sandbox removed.

@@ -1,0 +1,66 @@
+Mutant: MUTANT-4-SELF-CYCLE
+Description: Removal of CHECK (material_id != parent_material_id) constraint in candidate DDL
+Target: candidateDdl
+Baseline SHA256: eff3fe59878df7fed76e4bccb483994e4357dbd12fcc08d9280880ef7b08c75a
+Mutated SHA256: 0324170e2e2c54100e03cc9e916baca5fb1e05a00dd9779c6e2234ecab387bee
+Exit Code: 1
+Expected Failure Substring: "Self-parenting must fail cycle check constraint"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.686875ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.108875ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.058916ms)
+✔ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.053875ms)
+✔ Contract 5: SHA-256 Content Hashing Determinism (0.186541ms)
+✔ Contract 6: Candidate DDL Constraints Enforce Child Identity, Bounds & Structural Tiers (5.144458ms)
+✖ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.751459ms)
+✔ Contract 8: Source Version Evaluation through Model Boundary (Two-Tier Structural Classification) (4.652875ms)
+✔ Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions (4.429875ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.349292ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.717208ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.443208ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.023208ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.61525ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.045625ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.030542ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (4.991416ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Cancellation (4.793208ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.485
+
+✖ failing tests:
+
+test at proof.test.mjs:210:1
+✖ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.751459ms)
+  AssertionError [ERR_ASSERTION]: Self-parenting must fail cycle check constraint
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:216:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: FOREIGN KEY constraint failed
+        at insertSplitLineage (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/lineageContract.mjs:279:8)
+        at file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:217:7
+        at getActual (node:assert:580:5)
+        at strict.throws (node:assert:728:24)
+        at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:216:12)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: /CHECK constraint failed/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+

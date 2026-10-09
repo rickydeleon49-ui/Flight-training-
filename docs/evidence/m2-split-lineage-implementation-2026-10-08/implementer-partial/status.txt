@@ -1,0 +1,13 @@
+ M src-tauri/src/documents.rs
+ M src-tauri/src/lib.rs
+ M src-tauri/src/pdf.rs
+ M src/data/db.ts
+ M src/data/migration-checksums.json
+ M src/data/migrations.ts
+ M src/data/tauriDb.ts
+ M src/domain/types.ts
+?? docs/evidence/m2-split-lineage-implementation-2026-10-08/
+?? node_modules
+?? src-tauri/migrations/0013_split_source_lineage.sql
+?? src-tauri/src/lineage.rs
+?? src/logic/splitLineage.ts

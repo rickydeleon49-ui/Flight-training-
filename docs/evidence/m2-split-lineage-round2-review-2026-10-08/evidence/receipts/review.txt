@@ -1,0 +1,243 @@
+TAP version 13
+# (node:8521) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: control: verified direct save with matching bytes persists the verified hash
+ok 1 - control: verified direct save with matching bytes persists the verified hash
+  ---
+  duration_ms: 6.310708
+  type: 'test'
+  ...
+# Subtest: control: verified nested save derives canonical R120–140 from persisted A101–300
+ok 2 - control: verified nested save derives canonical R120–140 from persisted A101–300
+  ---
+  duration_ms: 4.974958
+  type: 'test'
+  ...
+# Subtest: [SL-R7] a new split without any verified source identity refuses all writes
+not ok 3 - [SL-R7] a new split without any verified source identity refuses all writes
+  ---
+  duration_ms: 4.611917
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:37:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'throws'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:38:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:37:91)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [SL-R7] a caller hash cannot replace the hash of the bytes actually verified (direct)
+not ok 4 - [SL-R7] a caller hash cannot replace the hash of the bytes actually verified (direct)
+  ---
+  duration_ms: 4.499958
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:42:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:44:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:42:101)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [SL-R7] nested parts cannot override the persisted root hash or the verified parent hash
+not ok 5 - [SL-R7] nested parts cannot override the persisted root hash or the verified parent hash
+  ---
+  duration_ms: 4.306584
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:47:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:50:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:47:104)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [SL-R7] a direct range is bounded by the authoritative source total, not an optional caller field
+not ok 6 - [SL-R7] a direct range is bounded by the authoritative source total, not an optional caller field
+  ---
+  duration_ms: 4.477458
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:53:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'throws'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:54:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:53:113)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [SL-R7] stale on-disk source: an old caller Buffer cannot prove the current file is unchanged
+not ok 7 - [SL-R7] stale on-disk source: an old caller Buffer cannot prove the current file is unchanged
+  ---
+  duration_ms: 4.93525
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:58:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'throws'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:64:12
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:58:109)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: guard: after the historical root is deleted, the immediate parent is never recorded as the root
+ok 8 - guard: after the historical root is deleted, the immediate parent is never recorded as the root
+  ---
+  duration_ms: 4.446459
+  type: 'test'
+  ...
+# Subtest: [SL-R8] a nested part with an unknown parent hash is not certified by matching root bytes
+not ok 9 - [SL-R8] a nested part with an unknown parent hash is not certified by matching root bytes
+  ---
+  duration_ms: 4.527209
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:76:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'matching'
+    - 'unknown'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'unknown'
+  actual: 'matching'
+  operator: 'strictEqual'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:80:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:76:105)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [SL-R8] unknown parent editions are not grouped as siblings through the root hash
+not ok 10 - [SL-R8] unknown parent editions are not grouped as siblings through the root hash
+  ---
+  duration_ms: 4.93525
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:83:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'B2'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'B2'
+  operator: 'deepStrictEqual'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:89:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:83:97)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [SL-R9] a mid-transaction failure runs this operation's cleanup exactly once
+not ok 11 - [SL-R9] a mid-transaction failure runs this operation's cleanup exactly once
+  ---
+  duration_ms: 4.396666
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:96:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr2/copy/docs/evidence/m2-split-lineage-round2-review-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:93)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 3
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 118.803833

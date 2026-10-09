@@ -233,6 +233,134 @@ export interface StudyMaterial {
   updatedAt: IsoDateTime;
   lastReviewedAt: IsoDateTime | null;
   tags: string[];
+  /**
+   * Where this part was split from (M2 split lineage). `null` or absent for a
+   * material that was not split, or was split before lineage was recorded —
+   * that history is never guessed from titles or notes.
+   */
+  lineage?: SplitLineage | null;
+}
+
+/** What the current copy of a source says about a split part's pages. */
+export type SplitSourceVerdict = "matching" | "changed" | "missing" | "deleted" | "unknown";
+
+/** A split part's recorded origin, as stored in `material_split_lineage`. */
+export interface SplitLineage {
+  materialId: Id;
+  /** The material this part was split from, when that was itself a part. */
+  parentMaterialId: Id | null;
+  /** The original document; `null` once it has been removed from the library. */
+  rootMaterialId: Id | null;
+  /** Pages of the original document this part holds. */
+  sourcePageStart: number;
+  sourcePageEnd: number;
+  /** Pages of the immediate parent part, for a part of a part. */
+  parentPageStart: number | null;
+  parentPageEnd: number | null;
+  childPageCount: number;
+  sourceFileName: string;
+  sourceTitle: string;
+  sourceContentSha256: string | null;
+  sourceTotalPages: number | null;
+  parentFileName: string | null;
+  parentTitle: string | null;
+  parentContentSha256: string | null;
+  parentTotalPages: number | null;
+  nestedLevel: number;
+  createdAt: IsoDateTime;
+}
+
+/** One part a split produced (see `src-tauri/src/lineage.rs`). */
+export interface SplitPlanPart {
+  id: Id;
+  selection: { start: number; end: number };
+  childPageCount: number;
+  canonicalRootStart: number;
+  canonicalRootEnd: number;
+  filePath: string;
+  fileSize: number;
+  originalFileName: string;
+}
+
+export interface SplitParentSnapshot {
+  rootMaterialId: Id | null;
+  rootTitle: string;
+  rootFileName: string;
+  rootContentSha256: string | null;
+  rootTotalPages: number | null;
+  parentRootPageStart: number;
+  parentRootPageEnd: number;
+  parentTotalPages: number;
+  parentNestedLevel: number;
+  parentTitle: string;
+  parentFileName: string;
+}
+
+export interface SplitReceiptCore {
+  sourceMaterialId: Id;
+  sourceFilePath: string;
+  sourceFileSize: number;
+  sourceContentSha256: string;
+  sourceTotalPages: number;
+  isNested: boolean;
+  rootMaterialId: Id | null;
+  rootTitle: string;
+  rootFileName: string;
+  rootContentSha256: string | null;
+  rootTotalPages: number | null;
+  parentSnapshot: SplitParentSnapshot | null;
+  nestedLevel: number;
+  plan: SplitPlanPart[];
+}
+
+/**
+ * Issued by the desktop PDF splitter and recorded before anything is saved.
+ * The interface passes it back unchanged; it never builds or edits one.
+ */
+export interface SplitSourceReceipt {
+  core: SplitReceiptCore;
+  receiptHash: string;
+  operationId: string;
+}
+
+/** Display text for one planned part. Not part of its provenance. */
+export interface SplitPartPresentation {
+  id: Id;
+  title: string;
+  notes: string;
+}
+
+export interface SavedSplitPart {
+  id: Id;
+  title: string;
+  filePath: string | null;
+  fileSize: number | null;
+}
+
+export interface SplitBatchSaveResult {
+  operationId: string;
+  parts: SavedSplitPart[];
+  idempotentReplay: boolean;
+}
+
+export interface SplitBatchReconciliation {
+  operationId: string;
+  status: "pending" | "committed" | "cancelled" | "unknown";
+  parts: SavedSplitPart[];
+  reconciled: boolean;
+}
+
+export interface SplitBatchCancelResult {
+  operationId: string;
+  status: string;
+  cancelled: boolean;
+  removedFiles: string[];
+}
+
+/** The current fingerprint of a stored document; `null` when it is not there. */
+export interface StoredDocumentFingerprint {
+  relativePath: string;
+  sha256: string | null;
 }
 
 export interface StudyGuideSection {

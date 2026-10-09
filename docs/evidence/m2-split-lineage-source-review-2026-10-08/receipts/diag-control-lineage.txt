@@ -1,0 +1,4 @@
+=== CONTROL A: 'lineage' filter (21 delivered tests) x6 at default parallelism ===
+lineage clean in 6/6 runs
+=== CONTROL B: 'pdf::tests::a_manual_split' + 'an_automatic_split' x6 ===
+pdf::tests clean in 6/6 runs

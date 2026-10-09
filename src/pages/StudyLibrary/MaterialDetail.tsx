@@ -65,6 +65,7 @@ import { PracticeTestPanel } from "./PracticeTestPanel";
 import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
+import { SplitLineageDetails } from "./SplitLineageDetails";
 import "./studyLibrary.css";
 
 interface ActiveGeminiOperation {
@@ -703,6 +704,7 @@ function MaterialDetailPage({
                     ) : null}
                   </div>
                 ) : null}
+                <SplitLineageDetails material={material} materials={data.materials} />
               </CardBody>
             </Card>
           ) : null}

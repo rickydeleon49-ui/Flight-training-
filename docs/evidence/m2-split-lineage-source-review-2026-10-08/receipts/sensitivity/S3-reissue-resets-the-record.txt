@@ -1,0 +1,24 @@
+
+running 1 test
+test lineage::tests::a_cancelled_split_stays_cancelled_and_cannot_be_saved ... FAILED
+
+failures:
+
+---- lineage::tests::a_cancelled_split_stays_cancelled_and_cannot_be_saved stdout ----
+
+thread 'lineage::tests::a_cancelled_split_stays_cancelled_and_cannot_be_saved' (363822) panicked at src/lineage_tests.rs:576:5:
+assertion `left == right` failed
+  left: Some("pending")
+ right: Some("cancelled")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    lineage::tests::a_cancelled_split_stays_cancelled_and_cannot_be_saved
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 449 filtered out; finished in 0.06s
+
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/.qwen/tmp/split-lineage-review-2026-10-08/copy/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.79s
+     Running unittests src/lib.rs (/Users/rickymac/code/.qwen/tmp/split-lineage-sensitivity-target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`

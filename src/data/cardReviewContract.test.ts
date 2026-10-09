@@ -746,7 +746,7 @@ describe("browser storage durability for card reviews (sql.js)", () => {
 });
 
 describe("schema upgrade and ceiling (node:sqlite)", () => {
-  it("a schema-11 database upgrades to 12 with empty card tables (generation 0 everywhere)", async () => {
+  it("a schema-11 database upgrades through 12 to the latest schema with empty card tables (generation 0 everywhere)", async () => {
     const dir = mkdtempSync(join(tmpdir(), "card-upgrade-"));
     tempDirs.push(dir);
     const path = join(dir, "eleven.db");
@@ -767,18 +767,22 @@ describe("schema upgrade and ceiling (node:sqlite)", () => {
 
     const db = await createNodeSqliteDatabase(path);
     opened.push(db);
-    expect(await db.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: 12 }]);
+    expect(await db.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: MIGRATIONS.at(-1)!.version }]);
     const snapshot = await cardReviewRepository(db).getCardReviewSnapshot(M);
     expect(snapshot).toMatchObject({ generation: 0, states: {}, current: { status: "ok" } });
     expect(await counts(db)).toMatchObject({ versions: 0, receipts: 0 });
   });
 
-  it("a database from a newer format (schema 13) is refused", async () => {
+  it("a database from a newer format (one past the latest schema) is refused", async () => {
     const dir = mkdtempSync(join(tmpdir(), "card-ceiling-"));
     tempDirs.push(dir);
-    const path = join(dir, "thirteen.db");
+    const path = join(dir, "future.db");
+    const { MIGRATIONS } = await import("./migrations");
     const first = await createNodeSqliteDatabase(path);
-    await first.execute("INSERT INTO schema_migrations (version, description, applied_at) VALUES (13, 'future', ?)", [T0]);
+    await first.execute("INSERT INTO schema_migrations (version, description, applied_at) VALUES (?, 'future', ?)", [
+      MIGRATIONS.at(-1)!.version + 1,
+      T0,
+    ]);
     first.close();
     await expect(createNodeSqliteDatabase(path)).rejects.toThrow(/newer format/);
   });

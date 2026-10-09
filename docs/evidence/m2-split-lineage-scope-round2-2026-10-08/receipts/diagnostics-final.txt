@@ -1,0 +1,14 @@
+✔ [SL-R4] direct split uses recorded root hash to verify its immediate source (5.705125ms)
+✔ [SL-R4] direct split sibling lookup excludes another edition (4.783666ms)
+✔ [SL-R5] expected source identity without current bytes refuses all writes (4.287042ms)
+✔ [SL-R5] nested save refuses root range inconsistent with persisted parent (4.386708ms)
+✔ control: matching current source permits a valid save (4.106ms)
+✔ control: actual later insert failure rolls back earlier material/tag/lineage writes (4.524209ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.587542

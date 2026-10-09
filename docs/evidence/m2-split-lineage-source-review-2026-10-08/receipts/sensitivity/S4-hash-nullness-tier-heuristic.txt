@@ -1,0 +1,126 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/rickymac/code/.qwen/tmp/split-lineage-review-2026-10-08/copy[39m
+
+ [31m❯[39m src/logic/splitLineage.test.ts [2m([22m[2m14 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 6[2mms[22m[39m
+     [32m✓[39m matches the native splitter: canonical example[32m 1[2mms[22m[39m
+     [32m✓[39m matches the native splitter: first page only[32m 0[2mms[22m[39m
+     [32m✓[39m matches the native splitter: last page only[32m 0[2mms[22m[39m
+     [32m✓[39m matches the native splitter: the whole parent[32m 0[2mms[22m[39m
+     [32m✓[39m matches the native splitter: one past the parent[32m 0[2mms[22m[39m
+     [32m✓[39m matches the native splitter: page zero[32m 0[2mms[22m[39m
+     [32m✓[39m matches the native splitter: reversed[32m 0[2mms[22m[39m
+[31m     [31m×[31m classifies tiers by structure, never by which fingerprints are missing[39m[32m 2[2mms[22m[39m
+     [32m✓[39m describes pages in the original and in the immediate parent[32m 0[2mms[22m[39m
+     [32m✓[39m covers matching, changed, missing, removed, unknown and not-yet-checked[32m 0[2mms[22m[39m
+[31m     [31m×[31m a matching original never vouches for a parent whose fingerprint is unknown[39m[32m 1[2mms[22m[39m
+     [32m✓[39m judges each tier against its own file[32m 0[2mms[22m[39m
+     [32m✓[39m groups only parts from the same known edition of the same source, in page order[32m 0[2mms[22m[39m
+[31m     [31m×[31m never groups parts of a part through the original when their parent edition is unknown[39m[32m 1[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m11 passed[39m[22m[90m (14)[39m
+[2m   Start at [22m 19:45:31
+[2m   Duration [22m 123ms[2m (transform 22ms, setup 0ms, import 28ms, tests 6ms, environment 0ms)[22m
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/logic/splitLineage.test.ts[2m > [22mpage arithmetic[2m > [22mclassifies tiers by structure, never by which fingerprints are missing
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m src/logic/splitLineage.test.ts:[2m79:54[22m[39m
+    [90m 77|[39m     [34mexpect[39m([34misDirectSplit[39m([34mdirect[39m([32m"p"[39m[33m,[39m [34m1[39m[33m,[39m [34m10[39m[33m,[39m [35mnull[39m)))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m 78|[39m     [34mexpect[39m([34misDirectSplit[39m([34mnested[39m([32m"q"[39m[33m,[39m [34m20[39m[33m,[39m [34m40[39m)))[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m 79|[39m     [34mexpect[39m([34misDirectSplit[39m([34mnested[39m([32m"q"[39m[33m,[39m [34m20[39m[33m,[39m [34m40[39m[33m,[39m [35mnull[39m)))[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m   |[39m                                                      [31m^[39m
+    [90m 80|[39m   })[33m;[39m
+    [90m 81|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/logic/splitLineage.test.ts[2m > [22msource verdicts[2m > [22ma matching original never vouches for a parent whose fingerprint is unknown
+[31m[1mAssertionError[22m: expected { Object (parent, root) } to deeply equal { parent: 'unknown', root: 'matching' }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "parent": "unknown",[39m
+[31m+   "parent": "matching",[39m
+[2m    "root": "matching",[22m
+[2m  }[22m
+
+[36m [2m❯[22m src/logic/splitLineage.test.ts:[2m110:67[22m[39m
+    [90m108|[39m     [35mconst[39m b [33m=[39m [34mmaterial[39m([32m"B"[39m[33m,[39m [32m"b.pdf"[39m[33m,[39m [34mnested[39m([32m"B"[39m[33m,[39m [34m20[39m[33m,[39m [34m40[39m[33m,[39m [35mnull[39m))[33m;[39m
+    [90m109|[39m     [35mconst[39m prints [33m=[39m [35mnew[39m [33mMap[39m([[[32m"root.pdf"[39m[33m,[39m [33mH1[39m][33m,[39m [[32m"a.pdf"[39m[33m,[39m [33mHA[39m]])[33m;[39m
+    [90m110|[39m     expect(lineageVerdicts(b.lineage!, byId(root, a, b), prints)).toEq…
+    [90m   |[39m                                                                   [31m^[39m
+    [90m111|[39m   })[33m;[39m
+    [90m112|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/logic/splitLineage.test.ts[2m > [22mrelated parts[2m > [22mnever groups parts of a part through the original when their parent edition is unknown
+[31m[1mAssertionError[22m: expected [ { id: 'B2', …(16) } ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "createdAt": "2026-10-08T12:00:00.000Z",[39m
+[31m+     "eventId": null,[39m
+[31m+     "filePath": "b2.pdf",[39m
+[31m+     "fileSize": null,[39m
+[31m+     "goalId": null,[39m
+[31m+     "id": "B2",[39m
+[31m+     "lastReviewedAt": null,[39m
+[31m+     "lineage": {[39m
+[31m+       "childPageCount": 20,[39m
+[31m+       "createdAt": "2026-10-08T12:00:00.000Z",[39m
+[31m+       "materialId": "B2",[39m
+[31m+       "nestedLevel": 2,[39m
+[31m+       "parentContentSha256": null,[39m
+[31m+       "parentFileName": "a.pdf",[39m
+[31m+       "parentMaterialId": "A",[39m
+[31m+       "parentPageEnd": 60,[39m
+[31m+       "parentPageStart": 41,[39m
+[31m+       "parentTitle": "Part A",[39m
+[31m+       "parentTotalPages": 200,[39m
+[31m+       "rootMaterialId": "R",[39m
+[31m+       "sourceContentSha256": "1111111111111111111111111111111111111111111111111111111111111111",[39m
+[31m+       "sourceFileName": "root.pdf",[39m
+[31m+       "sourcePageEnd": 160,[39m
+[31m+       "sourcePageStart": 141,[39m
+[31m+       "sourceTitle": "Root Handbook",[39m
+[31m+       "sourceTotalPages": 400,[39m
+[31m+     },[39m
+[31m+     "materialType": "study_guide",[39m
+[31m+     "notes": "",[39m
+[31m+     "originalFileName": null,[39m
+[31m+     "priority": "later",[39m
+[31m+     "reviewStatus": "needs_review",[39m
+[31m+     "tags": [],[39m
+[31m+     "title": "Title B2",[39m
+[31m+     "topic": "general",[39m
+[31m+     "updatedAt": "2026-10-08T12:00:00.000Z",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/logic/splitLineage.test.ts:[2m146:40[22m[39m
+    [90m144|[39m     [35mconst[39m b1 [33m=[39m [34mmaterial[39m([32m"B1"[39m[33m,[39m [32m"b1.pdf"[39m[33m,[39m [34mnested[39m([32m"B1"[39m[33m,[39m [34m20[39m[33m,[39m [34m40[39m[33m,[39m [35mnull[39m))[33m;[39m
+    [90m145|[39m     [35mconst[39m b2 [33m=[39m [34mmaterial[39m([32m"B2"[39m[33m,[39m [32m"b2.pdf"[39m[33m,[39m [34mnested[39m([32m"B2"[39m[33m,[39m [34m41[39m[33m,[39m [34m60[39m[33m,[39m [35mnull[39m))[33m;[39m
+    [90m146|[39m     [34mexpect[39m([34mrelatedParts[39m(b1[33m,[39m [b1[33m,[39m b2]))[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m   |[39m                                        [31m^[39m
+    [90m147|[39m     [35mconst[39m c1 [33m=[39m [34mmaterial[39m([32m"C1"[39m[33m,[39m [32m"c1.pdf"[39m[33m,[39m [34mnested[39m([32m"C1"[39m[33m,[39m [34m41[39m[33m,[39m [34m60[39m))[33m;[39m
+    [90m148|[39m     [35mconst[39m c2 [33m=[39m [34mmaterial[39m([32m"C2"[39m[33m,[39m [32m"c2.pdf"[39m[33m,[39m [34mnested[39m([32m"C2"[39m[33m,[39m [34m20[39m[33m,[39m [34m40[39m))[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+

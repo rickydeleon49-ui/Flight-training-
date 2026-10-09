@@ -1,0 +1,21 @@
+$ npx vitest run src/logic/splitLineage.test.ts src/data/splitLineageShapes.test.ts src/data/splitLineageStorage.test.ts src/data/splitLineageValidationParity.test.ts src/pages/StudyLibrary/SplitLineage.test.ts src/data/cardReviewContract.test.ts src/acceptance/m1Upgrade.acceptance.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-split-lineage-implementation
+
+(node:26119) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26123) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26122) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26120) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26121) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  7 passed (7)
+      Tests  110 passed (110)
+   Start at  19:28:32
+   Duration  8.65s (transform 942ms, setup 0ms, import 1.38s, tests 9.93s, environment 285ms)
+
+exit 0

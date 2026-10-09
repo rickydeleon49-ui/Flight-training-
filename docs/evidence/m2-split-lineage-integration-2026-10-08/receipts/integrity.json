@@ -1,0 +1,72 @@
+{
+  "reviewed_hashes": 35,
+  "identical_to_reviewed": 32,
+  "intended_differences": [
+    "STATUS.md",
+    "docs/PROJECT_HANDOFF.md",
+    "src-tauri/src/documents.rs"
+  ],
+  "checksums": [
+    {
+      "pack": "docs/evidence/m2-split-lineage-implementation-2026-10-08",
+      "verified": 32
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-implementation-review-2026-10-08",
+      "verified": 1
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-rereview-2026-10-08",
+      "verified": 19
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-review-2026-10-08",
+      "verified": 20
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-round2-review-2026-10-08",
+      "verified": 17
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-round3-review-2026-10-08",
+      "verified": 15
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-round4-review-2026-10-08",
+      "verified": 49
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-round5-review-2026-10-08",
+      "verified": 50
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-scope-2026-10-08",
+      "verified": 9
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-scope-corrections-2026-10-08",
+      "verified": 18
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-scope-round2-2026-10-08",
+      "verified": 22
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-scope-round3-2026-10-08",
+      "verified": 38
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-scope-round4-2026-10-08",
+      "verified": 49
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-scope-round5-2026-10-08",
+      "verified": 84
+    },
+    {
+      "pack": "docs/evidence/m2-split-lineage-source-review-2026-10-08",
+      "verified": 24
+    }
+  ],
+  "all_main_tracking_text_preserved": true
+}

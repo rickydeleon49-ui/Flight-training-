@@ -1,0 +1,16 @@
+attempt final  started 2026-10-09T02:28:31Z  cwd /Users/rickymac/code/Flight-training-split-lineage-implementation
+HEAD 2a6a41536b676559db94b476c71dd645af03fbab  branch codex/m2-split-lineage-implementation
+node v22.23.3  npm 10.9.9  rustc 1.99.0 (b940084d7 2026-09-28)  cargo 1.99.0 (5f94df478 2026-08-27)
+xcode Xcode 27.0 Build version 27A266a   SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+01 focused-vitest: exit 0 (9s)
+02 focused-native: exit 0 (17s)
+03 typecheck: exit 0 (3s)
+04 npm-test: exit 0 (38s)
+05 build: exit 0 (4s)
+06 cargo-test: exit 0 (27s)
+07 clippy: exit 0 (0s)
+08 cargo-fmt: exit 0 (0s)
+09 cargo-lock: exit 0 (2s)
+10 hygiene: exit 0 (0s)
+11 preserved: exit 0 (0s)
+finished 2026-10-09T02:30:11Z

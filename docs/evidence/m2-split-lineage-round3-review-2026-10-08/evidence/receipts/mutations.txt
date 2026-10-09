@@ -1,0 +1,59 @@
+=== Real Mutation Sensitivity Verification (Round 3) ===
+Original lineageContract.mjs SHA256: b6d0f6eade61a740fd809f2072c821733f427f875b180693fb618c03e77c8cf4
+Original candidate_migration_0013.sql SHA256: eff3fe59878df7fed76e4bccb483994e4357dbd12fcc08d9280880ef7b08c75a
+
+--- Testing MUTANT-1-RANGE-COMPOSE: Off-by-one arithmetic in composeNestedRanges (omitting - 1) ---
+SUCCESS: MUTANT-1-RANGE-COMPOSE caught as expected! Exit code: 1
+Matched expected failure: "Composed R start mismatch"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-2-CHILD-BOUNDS: Removal of child length upper-bound enforcement in mapChildPageToSource ---
+SUCCESS: MUTANT-2-CHILD-BOUNDS caught as expected! Exit code: 1
+Matched expected failure: "Child page beyond length must throw out-of-bounds error"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-3-TYPEOF-CHECKS: Removal of TYPEOF integer checks across candidate DDL (reverting to loose SQLite affinity) ---
+SUCCESS: MUTANT-3-TYPEOF-CHECKS caught as expected! Exit code: 1
+Matched expected failure: "Fractional physical page bounds must fail TYPEOF constraint"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-4-SELF-CYCLE: Removal of CHECK (material_id != parent_material_id) constraint in candidate DDL ---
+SUCCESS: MUTANT-4-SELF-CYCLE caught as expected! Exit code: 1
+Matched expected failure: "Self-parenting must fail cycle check constraint"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-5-OPTIONAL-GATE: Verification gate becomes optional again (omitting receipt/expectedParentSha256 check) ---
+SUCCESS: MUTANT-5-OPTIONAL-GATE caught as expected! Exit code: 1
+Matched expected failure: "Unverified split without receipt must refuse all writes"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-6-CALLER-HASH-PRECEDENCE: Caller hash precedence is restored (caller forged hash overrides verified hash) ---
+SUCCESS: MUTANT-6-CALLER-HASH-PRECEDENCE caught as expected! Exit code: 1
+Matched expected failure: "Caller forged hash must not replace verified hash"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-7-HASH-NULLNESS-HEURISTIC: Hash-nullness tier heuristic restored (guessing tier from parent hash nullness instead of structure) ---
+SUCCESS: MUTANT-7-HASH-NULLNESS-HEURISTIC caught as expected! Exit code: 1
+Matched expected failure: "Nested part with null parent hash must report unknown parentStatus"
+Restoration confirmed exact SHA-256 match.
+
+--- Testing MUTANT-8-SIBLING-COALESCE: Sibling COALESCE grouping restored (COALESCE(parent_content_sha256, source_content_sha256)) ---
+SUCCESS: MUTANT-8-SIBLING-COALESCE caught as expected! Exit code: 1
+Matched expected failure: "Unknown parent editions must not be grouped as siblings"
+Restoration confirmed exact SHA-256 match.
+
+=== Real Mutation Sensitivity Verification (Round 3) ===
+Baseline lineageContract.mjs SHA256: b6d0f6eade61a740fd809f2072c821733f427f875b180693fb618c03e77c8cf4
+Baseline candidate_migration_0013.sql SHA256: eff3fe59878df7fed76e4bccb483994e4357dbd12fcc08d9280880ef7b08c75a
+
+SUCCESS: MUTANT-1-RANGE-COMPOSE caught as expected (Exit 1, matched "Composed R start mismatch")
+SUCCESS: MUTANT-2-CHILD-BOUNDS caught as expected (Exit 1, matched "Child page beyond length must throw out-of-bounds error")
+SUCCESS: MUTANT-3-TYPEOF-CHECKS caught as expected (Exit 1, matched "Fractional physical page bounds must fail TYPEOF constraint")
+SUCCESS: MUTANT-4-SELF-CYCLE caught as expected (Exit 1, matched "Self-parenting must fail cycle check constraint")
+SUCCESS: MUTANT-5-OPTIONAL-GATE caught as expected (Exit 1, matched "Unverified split without receipt must refuse all writes")
+SUCCESS: MUTANT-6-CALLER-HASH-PRECEDENCE caught as expected (Exit 1, matched "Caller forged hash must not replace verified hash")
+SUCCESS: MUTANT-7-HASH-NULLNESS-HEURISTIC caught as expected (Exit 1, matched "Nested part with null parent hash must report unknown parentStatus")
+SUCCESS: MUTANT-8-SIBLING-COALESCE caught as expected (Exit 1, matched "Unknown parent editions must not be grouped as siblings")
+
+=== Summary: 8/8 mutations successfully caught and verified ===
+All source files preserved byte-for-byte; temporary mutation sandbox removed.

@@ -10,6 +10,12 @@ import {
   type Priority,
   type ReviewStatus,
   type StudyMaterial,
+  type SplitBatchCancelResult,
+  type SplitBatchReconciliation,
+  type SplitBatchSaveResult,
+  type SplitLineage,
+  type SplitPartPresentation,
+  type SplitSourceReceipt,
   type AiStudySet,
   type PracticeQuestion,
   type PracticeTest,
@@ -34,6 +40,46 @@ interface Row {
   review_status: unknown; priority: unknown; goal_id: unknown; event_id: unknown;
   notes: unknown; file_path: unknown; original_file_name: unknown; file_size: unknown;
   created_at: unknown; updated_at: unknown; last_reviewed_at: unknown;
+}
+
+interface LineageRow {
+  material_id: string; parent_material_id: unknown; root_material_id: unknown;
+  source_page_start: unknown; source_page_end: unknown; parent_page_start: unknown;
+  parent_page_end: unknown; child_page_count: unknown; source_file_name: unknown;
+  source_title: unknown; source_content_sha256: unknown; source_total_pages: unknown;
+  parent_file_name: unknown; parent_title: unknown; parent_content_sha256: unknown;
+  parent_total_pages: unknown; nested_level: unknown; created_at: unknown;
+}
+
+const toPage = (value: unknown): number => toNullableNumber(value) ?? 0;
+
+const mapLineage = (row: LineageRow): SplitLineage => ({
+  materialId: row.material_id,
+  parentMaterialId: toNullableText(row.parent_material_id),
+  rootMaterialId: toNullableText(row.root_material_id),
+  sourcePageStart: toPage(row.source_page_start),
+  sourcePageEnd: toPage(row.source_page_end),
+  parentPageStart: toNullableNumber(row.parent_page_start),
+  parentPageEnd: toNullableNumber(row.parent_page_end),
+  childPageCount: toPage(row.child_page_count),
+  sourceFileName: toText(row.source_file_name),
+  sourceTitle: toText(row.source_title),
+  sourceContentSha256: toNullableText(row.source_content_sha256),
+  sourceTotalPages: toNullableNumber(row.source_total_pages),
+  parentFileName: toNullableText(row.parent_file_name),
+  parentTitle: toNullableText(row.parent_title),
+  parentContentSha256: toNullableText(row.parent_content_sha256),
+  parentTotalPages: toNullableNumber(row.parent_total_pages),
+  nestedLevel: toPage(row.nested_level),
+  createdAt: toText(row.created_at),
+});
+
+/** Splitting a PDF reads and writes files, which only the desktop app can do. */
+export class SplitNeedsDesktopError extends Error {
+  constructor() {
+    super("Splitting a PDF needs the desktop app, so nothing was changed.");
+    this.name = "SplitNeedsDesktopError";
+  }
 }
 
 interface AiRow {
@@ -195,13 +241,67 @@ export function documentRepository(db: SqlDatabase) {
     return grouped;
   }
 
+  async function lineageByMaterial(): Promise<Map<string, SplitLineage>> {
+    const rows = await db.select<LineageRow>("SELECT * FROM material_split_lineage");
+    return new Map(rows.map((row) => [row.material_id, mapLineage(row)]));
+  }
+
   return {
     async list(): Promise<StudyMaterial[]> {
-      const [rows, tags] = await Promise.all([
+      const [rows, tags, lineage] = await Promise.all([
         db.select<Row>("SELECT * FROM study_materials ORDER BY created_at DESC"),
         tagsByMaterial(),
+        lineageByMaterial(),
       ]);
-      return rows.map((row) => map(row, tags.get(row.id) ?? []));
+      return rows.map((row) => ({
+        ...map(row, tags.get(row.id) ?? []),
+        lineage: lineage.get(row.id) ?? null,
+      }));
+    },
+
+    /**
+     * Save the parts of a split the desktop splitter recorded (M2 split
+     * lineage). The receipt goes back exactly as it was issued; only display
+     * text comes from here. A brief lock is retried like `createMany`.
+     */
+    async saveSplitBatch(
+      receipt: SplitSourceReceipt,
+      presentation: SplitPartPresentation[],
+    ): Promise<SplitBatchSaveResult> {
+      if (typeof db.saveSplitBatch !== "function") throw new SplitNeedsDesktopError();
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await db.saveSplitBatch(receipt, presentation);
+        } catch (error) {
+          if (!isTransientLockError(error)) throw error;
+          if (attempt >= LOCK_RETRY_DELAYS_MS.length) throw lockGaveUpError();
+          await delay(LOCK_RETRY_DELAYS_MS[attempt]!);
+        }
+      }
+    },
+
+    /** Cancel a split that was not saved, removing only its own part files. */
+    async cancelSplitBatch(operationId: string): Promise<SplitBatchCancelResult> {
+      if (typeof db.cancelSplitBatch !== "function") throw new SplitNeedsDesktopError();
+      return db.cancelSplitBatch(operationId);
+    },
+
+    /** What became of a split, read by its operation id. */
+    async reconcileSplitBatch(operationId: string): Promise<SplitBatchReconciliation> {
+      if (typeof db.reconcileSplitBatch !== "function") throw new SplitNeedsDesktopError();
+      return db.reconcileSplitBatch(operationId);
+    },
+
+    /**
+     * Current fingerprints of stored documents, or `null` where this cannot be
+     * checked (browser mode). Done natively and off the interface thread.
+     */
+    async fingerprintDocuments(relativePaths: string[]): Promise<Map<string, string | null> | null> {
+      if (typeof db.fingerprintStoredDocuments !== "function" || relativePaths.length === 0) {
+        return null;
+      }
+      const results = await db.fingerprintStoredDocuments(relativePaths);
+      return new Map(results.map((item) => [item.relativePath, item.sha256]));
     },
 
     async listTags(): Promise<string[]> {

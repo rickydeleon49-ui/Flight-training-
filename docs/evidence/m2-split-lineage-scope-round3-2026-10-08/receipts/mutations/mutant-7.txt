@@ -1,0 +1,61 @@
+Mutant: MUTANT-7-HASH-NULLNESS-HEURISTIC
+Description: Hash-nullness tier heuristic restored (guessing tier from parent hash nullness instead of structure)
+Target: lineageContract
+Baseline SHA256: b6d0f6eade61a740fd809f2072c821733f427f875b180693fb618c03e77c8cf4
+Mutated SHA256: aeefae8df4d2108bf1785610781ce5d05ae7434e3e1ae7bc6b859d7f1fbbf771
+Exit Code: 1
+Expected Failure Substring: "Nested part with null parent hash must report unknown parentStatus"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.688375ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.107167ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.05825ms)
+✔ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.05775ms)
+✔ Contract 5: SHA-256 Content Hashing Determinism (0.183ms)
+✔ Contract 6: Candidate DDL Constraints Enforce Child Identity, Bounds & Structural Tiers (5.090875ms)
+✔ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.618834ms)
+✖ Contract 8: Source Version Evaluation through Model Boundary (Two-Tier Structural Classification) (4.925333ms)
+✔ Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions (4.706958ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.348792ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.285458ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.309583ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (3.887125ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.764959ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.059375ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.030375ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.016958ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Cancellation (4.610917ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.177875
+
+✖ failing tests:
+
+test at proof.test.mjs:253:1
+✖ Contract 8: Source Version Evaluation through Model Boundary (Two-Tier Structural Classification) (4.925333ms)
+  AssertionError [ERR_ASSERTION]: Nested part with null parent hash must report unknown parentStatus
+  + actual - expected
+  
+  + 'matching'
+  - 'unknown'
+  
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:331:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'matching',
+    expected: 'unknown',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+

@@ -1,0 +1,7 @@
+== trials=12  root=/Users/rickymac/code/.qwen/tmp/split-lineage-review-2026-10-08/copy ==
+CONTROL  delivered 'lineage' filter: 12/12 clean (expect 12/12)
+CONTROL  delivered 'pdf::tests' filter: 12/12 clean (expect 12/12)
+DIAG     'documents::tests' at DEFAULT parallelism: 1/12 runs FAILED (expect >0 = flake reproduced)
+CONTROL  'documents::tests' single-threaded: 12/12 clean (expect 12/12)
+CORRECTED 'documents::tests' at DEFAULT parallelism: 12/12 clean (expect 12/12 once fixed)
+verdict: F-1 CONFIRMED (pre-existing, bounded fix works, feature tests clean)

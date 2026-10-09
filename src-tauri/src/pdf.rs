@@ -16,7 +16,8 @@ use lopdf::{Dictionary, Document, Object, ObjectId};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
-use crate::documents::{self, ImportedDocument};
+use crate::documents;
+use crate::lineage::{self, SplitSourceReceipt, WrittenPart};
 
 #[derive(Clone, Serialize)]
 struct SplitProgress {
@@ -49,23 +50,23 @@ pub struct PdfOutline {
     pub max_pages_per_split: u32,
 }
 
-#[derive(Debug, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PdfPart {
-    pub relative_path: String,
-    pub original_file_name: String,
-    pub file_size: u64,
-    pub first_page: u32,
-    pub last_page: u32,
+fn open_pdf(path: &Path) -> Result<Document, String> {
+    Document::load(path).map_err(unreadable_pdf)
 }
 
-fn open_pdf(path: &Path) -> Result<Document, String> {
-    Document::load(path).map_err(|e| {
-        format!(
-            "That PDF could not be read: {e}. If it opens in a PDF viewer, try saving a fresh \
-             copy from there and adding that instead."
-        )
-    })
+fn unreadable_pdf(e: lopdf::Error) -> String {
+    format!(
+        "That PDF could not be read: {e}. If it opens in a PDF viewer, try saving a fresh \
+         copy from there and adding that instead."
+    )
+}
+
+/// Read a stored PDF once, keeping its exact bytes, so the fingerprint a split
+/// records is of the very bytes the split was made from.
+fn read_pdf_once(path: &Path) -> Result<(Vec<u8>, Document), String> {
+    let bytes = std::fs::read(path).map_err(|e| format!("That PDF could not be read: {e}"))?;
+    let document = Document::load_mem(&bytes).map_err(unreadable_pdf)?;
+    Ok((bytes, document))
 }
 
 /// How many pages a stored PDF has.
@@ -81,12 +82,20 @@ fn page_count(path: &Path) -> Result<u32, String> {
 /// Copy pages `first..=last` of `source` into a new PDF at `destination`.
 ///
 /// Returns how many pages were written. The source is only ever read.
+/// (The commands read the source once through `read_pdf_once` instead.)
+#[cfg(test)]
 fn write_page_range(
     source: &Path,
     destination: &Path,
     first: u32,
     last: u32,
 ) -> Result<u32, String> {
+    check_requested_range(first, last)?;
+    let document = open_pdf(source)?;
+    write_page_range_from_document(&document, destination, first, last)
+}
+
+fn check_requested_range(first: u32, last: u32) -> Result<(), String> {
     if first == 0 {
         return Err("Pages are numbered from 1.".to_string());
     }
@@ -100,9 +109,7 @@ fn write_page_range(
              range — a chapter makes a better study aid than a whole book anyway."
         ));
     }
-
-    let document = open_pdf(source)?;
-    write_page_range_from_document(&document, destination, first, last)
+    Ok(())
 }
 
 fn write_page_range_from_document(
@@ -331,10 +338,13 @@ pub async fn inspect_pdf(app: AppHandle, relative_path: String) -> Result<PdfOut
     })
 }
 
-/// Save a page range from a stored PDF as a study document of its own.
+/// Save a page range from a stored PDF as a study document of its own, and
+/// record a receipt of exactly what was split (see `lineage`).
 ///
-/// `material_id` is the id of the material the new file will belong to, so
-/// the stored name cannot collide with anything already in the library.
+/// `material_id` is the id the new material will be created with, so the
+/// stored name cannot collide with anything already in the library.
+/// `source_material_id` is the material whose PDF is being split; the receipt
+/// is refused unless that material really owns `relative_path`.
 #[tauri::command]
 pub async fn split_pdf(
     app: AppHandle,
@@ -343,34 +353,70 @@ pub async fn split_pdf(
     first_page: u32,
     last_page: u32,
     file_name: String,
-) -> Result<ImportedDocument, String> {
-    let source = documents::stored_document_path(&app, &relative_path)?;
-    let original_file_name = pdf_file_name(&file_name);
-    let (destination, stored_name) =
-        documents::stored_destination(&app, &material_id, &original_file_name)?;
-
-    let written = destination.clone();
-    if let Err(error) =
-        run_off_thread(move || write_page_range(&source, &written, first_page, last_page)).await
-    {
-        let _ = std::fs::remove_file(&destination);
-        return Err(error);
-    }
-
-    let file_size = match std::fs::metadata(&destination) {
-        Ok(metadata) => metadata.len(),
-        Err(error) => {
-            let _ = std::fs::remove_file(&destination);
-            return Err(format!("The split PDF could not be read back: {error}"));
-        }
-    };
-    enforce_pdf_size_limit(&destination, file_size)?;
-
-    Ok(ImportedDocument {
-        relative_path: stored_name,
-        original_file_name,
-        file_size,
+    source_material_id: String,
+) -> Result<SplitSourceReceipt, String> {
+    let root = crate::storage::app_root(&app)?;
+    run_off_thread(move || {
+        split_range_at(
+            &root,
+            &source_material_id,
+            &relative_path,
+            &material_id,
+            first_page,
+            last_page,
+            &file_name,
+        )
     })
+    .await
+}
+
+pub(crate) fn split_range_at(
+    root: &Path,
+    source_material_id: &str,
+    relative_path: &str,
+    material_id: &str,
+    first_page: u32,
+    last_page: u32,
+    file_name: &str,
+) -> Result<SplitSourceReceipt, String> {
+    check_requested_range(first_page, last_page)?;
+    let documents_dir = root.join(documents::DOCUMENTS_DIR);
+    let source = documents_dir.join(documents::safe_relative_path(relative_path)?);
+    let (bytes, document) = read_pdf_once(&source)?;
+    let total = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
+    if total == 0 {
+        return Err("That PDF has no pages this application can read.".to_string());
+    }
+    let original_file_name = pdf_file_name(file_name);
+    let (destination, stored_name) =
+        documents::stored_destination_in(&documents_dir, material_id, &original_file_name)?;
+
+    let outcome = (|| {
+        write_page_range_from_document(&document, &destination, first_page, last_page)?;
+        let file_size = std::fs::metadata(&destination)
+            .map_err(|error| format!("The split PDF could not be read back: {error}"))?
+            .len();
+        enforce_pdf_size_limit(&destination, file_size)?;
+        lineage::issue_receipt_at(
+            root,
+            source_material_id,
+            relative_path,
+            &bytes,
+            total,
+            &[WrittenPart {
+                id: material_id.to_string(),
+                first_page,
+                last_page,
+                file_path: stored_name,
+                file_size,
+                original_file_name,
+            }],
+        )
+    })();
+    if outcome.is_err() {
+        let _ = std::fs::remove_file(&destination);
+    }
+    outcome
 }
 
 /// Refuse a split result over Google's PDF limit, against a plain path and
@@ -394,7 +440,8 @@ fn enforce_pdf_size_limit(destination: &Path, file_size: u64) -> Result<(), Stri
     ))
 }
 
-/// Split a stored PDF into consecutive parts that Google can read.
+/// Split a stored PDF into consecutive parts that Google can read, and record
+/// a receipt of exactly what was split (see `lineage`).
 ///
 /// The original is read only. All output files are removed if any part fails,
 /// so the library can never be left with half of an automatic split.
@@ -404,88 +451,110 @@ pub async fn split_pdf_automatically(
     relative_path: String,
     batch_id: String,
     file_name: String,
-) -> Result<Vec<PdfPart>, String> {
-    let source = documents::stored_document_path(&app, &relative_path)?;
+    source_material_id: String,
+) -> Result<SplitSourceReceipt, String> {
+    let root = crate::storage::app_root(&app)?;
     run_off_thread(move || {
-        let document = open_pdf(&source)?;
-        let total = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
-        if total == 0 {
-            return Err("That PDF has no pages this application can read.".to_string());
-        }
-
-        let base = file_name.trim().trim_end_matches(".pdf").trim();
-        let base = if base.is_empty() {
-            "Study document"
-        } else {
-            base
-        };
-        let total_parts_estimate = total.div_ceil(MAX_PAGES).max(1);
-        let mut created_paths = Vec::new();
-        let result = (|| {
-            let mut parts = Vec::new();
-            let mut first = 1;
-            let mut number = 1;
-            while first <= total {
-                let window_high = total.min(first.saturating_add(MAX_PAGES - 1));
-                say(
-                    &app,
-                    format!(
-                        "Reading pages {first}\u{2013}{window_high} (part {number} of about \
-                         {total_parts_estimate})…"
-                    ),
-                );
-                // Bounded to at most MAX_PAGES pages, however long the book
-                // is — every candidate below is cloned and pruned from this,
-                // not from the whole remaining document. See `window_document`.
-                let window = window_document(&document, first, window_high, total);
-
-                let part_name = format!("{base} - Part {number}.pdf");
-                let part_id = format!("{batch_id}-part-{number}");
-                let (destination, stored_name) =
-                    documents::stored_destination(&app, &part_id, &part_name)?;
-                created_paths.push(destination.clone());
-
-                let (last, bytes) = largest_fitting_last_page(
-                    first,
-                    window_high,
-                    MAX_PAGES,
-                    MAX_PDF_BYTES,
-                    |candidate| render_window_range(&window, 1, candidate - first + 1),
-                )?;
-                let file_size = bytes.len() as u64;
-                std::fs::write(&destination, &bytes)
-                    .map_err(|e| format!("Could not save the split PDF: {e}"))?;
-
-                say(
-                    &app,
-                    format!(
-                        "Created part {number}: pages {first}\u{2013}{last} \
-                         ({} MB)",
-                        file_size.div_ceil(1024 * 1024)
-                    ),
-                );
-
-                parts.push(PdfPart {
-                    relative_path: stored_name,
-                    original_file_name: part_name,
-                    file_size,
-                    first_page: first,
-                    last_page: last,
-                });
-                first = last + 1;
-                number += 1;
-            }
-            Ok(parts)
-        })();
-
-        if result.is_err() {
-            for path in created_paths {
-                let _ = std::fs::remove_file(path);
-            }
-        }
-        result
+        split_automatically_at(
+            &root,
+            &source_material_id,
+            &relative_path,
+            &batch_id,
+            &file_name,
+            &|message| say(&app, message),
+        )
     })
     .await
+}
+
+pub(crate) fn split_automatically_at(
+    root: &Path,
+    source_material_id: &str,
+    relative_path: &str,
+    batch_id: &str,
+    file_name: &str,
+    report: &dyn Fn(String),
+) -> Result<SplitSourceReceipt, String> {
+    let documents_dir = root.join(documents::DOCUMENTS_DIR);
+    let source = documents_dir.join(documents::safe_relative_path(relative_path)?);
+    let (bytes, document) = read_pdf_once(&source)?;
+    let total = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
+    if total == 0 {
+        return Err("That PDF has no pages this application can read.".to_string());
+    }
+
+    let base = file_name.trim().trim_end_matches(".pdf").trim();
+    let base = if base.is_empty() {
+        "Study document"
+    } else {
+        base
+    };
+    let total_parts_estimate = total.div_ceil(MAX_PAGES).max(1);
+    let mut created_paths = Vec::new();
+    let result = (|| {
+        let mut parts = Vec::new();
+        let mut first = 1;
+        let mut number = 1;
+        while first <= total {
+            let window_high = total.min(first.saturating_add(MAX_PAGES - 1));
+            report(format!(
+                "Reading pages {first}\u{2013}{window_high} (part {number} of about \
+                 {total_parts_estimate})…"
+            ));
+            // Bounded to at most MAX_PAGES pages, however long the book
+            // is — every candidate below is cloned and pruned from this,
+            // not from the whole remaining document. See `window_document`.
+            let window = window_document(&document, first, window_high, total);
+
+            let part_name = format!("{base} - Part {number}.pdf");
+            let part_id = format!("{batch_id}-part-{number}");
+            let (destination, stored_name) =
+                documents::stored_destination_in(&documents_dir, &part_id, &part_name)?;
+            created_paths.push(destination.clone());
+
+            let (last, part_bytes) = largest_fitting_last_page(
+                first,
+                window_high,
+                MAX_PAGES,
+                MAX_PDF_BYTES,
+                |candidate| render_window_range(&window, 1, candidate - first + 1),
+            )?;
+            let file_size = part_bytes.len() as u64;
+            std::fs::write(&destination, &part_bytes)
+                .map_err(|e| format!("Could not save the split PDF: {e}"))?;
+
+            report(format!(
+                "Created part {number}: pages {first}\u{2013}{last} ({} MB)",
+                file_size.div_ceil(1024 * 1024)
+            ));
+
+            parts.push(WrittenPart {
+                id: part_id,
+                first_page: first,
+                last_page: last,
+                file_path: stored_name,
+                file_size,
+                original_file_name: part_name,
+            });
+            first = last + 1;
+            number += 1;
+        }
+        lineage::issue_receipt_at(
+            root,
+            source_material_id,
+            relative_path,
+            &bytes,
+            total,
+            &parts,
+        )
+    })();
+
+    if result.is_err() {
+        for path in created_paths {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+    result
 }
 
 /// Make sure the new document is named like the PDF it is.
@@ -740,6 +809,133 @@ mod tests {
         ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    /// A disposable library folder: every shipped migration, and a material
+    /// `R` that owns a real `pages`-page PDF.
+    fn split_library(label: &str, pages: u32) -> PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "her-flight-deck-split-lineage-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let documents_dir = root.join(documents::DOCUMENTS_DIR);
+        std::fs::create_dir_all(&documents_dir).unwrap();
+        write_pdf(&documents_dir, "R-handbook.pdf", pages);
+        let conn = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        for migration in crate::migrations() {
+            conn.execute_batch(migration.sql).unwrap();
+        }
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, original_file_name, file_size,
+               created_at, updated_at)
+             VALUES ('R', 'Handbook', 'R-handbook.pdf', 'Handbook.pdf', 1,
+               '2026-10-08T12:00:00.000Z', '2026-10-08T12:00:00.000Z')",
+            [],
+        )
+        .unwrap();
+        root
+    }
+
+    fn presentation(receipt: &SplitSourceReceipt) -> Vec<lineage::SplitPartPresentation> {
+        receipt
+            .core
+            .plan
+            .iter()
+            .map(|part| lineage::SplitPartPresentation {
+                id: part.id.clone(),
+                title: format!("Part {}", part.id),
+                notes: String::new(),
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_manual_split_records_the_exact_bytes_and_engine_page_count() {
+        let root = split_library("manual", 12);
+        let source = std::fs::read(root.join("documents/R-handbook.pdf")).unwrap();
+        let receipt =
+            split_range_at(&root, "R", "R-handbook.pdf", "chapter", 3, 7, "Chapter").unwrap();
+        assert_eq!(
+            receipt.core.source_content_sha256,
+            lineage::calculate_sha256(&source)
+        );
+        assert_eq!(receipt.core.source_total_pages, 12);
+        let plan = &receipt.core.plan[0];
+        assert_eq!(
+            (
+                plan.selection.start,
+                plan.selection.end,
+                plan.child_page_count
+            ),
+            (3, 7, 5)
+        );
+        let written = root.join("documents").join(&plan.file_path);
+        assert_eq!(page_count(&written).unwrap(), 5);
+        assert_eq!(std::fs::metadata(&written).unwrap().len(), plan.file_size);
+
+        lineage::save_split_batch_at(&root, &receipt, &presentation(&receipt)).unwrap();
+        let conn = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        let pages: (u32, u32, u32) = conn
+            .query_row(
+                "SELECT source_page_start, source_page_end, source_total_pages
+                   FROM material_split_lineage WHERE material_id = 'chapter'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(pages, (3, 7, 12));
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn a_manual_split_of_a_pdf_the_material_does_not_own_leaves_no_file() {
+        let root = split_library("not-owned", 6);
+        write_pdf(&root.join("documents"), "other.pdf", 6);
+        let before = std::fs::read_dir(root.join("documents")).unwrap().count();
+        let error =
+            split_range_at(&root, "R", "other.pdf", "chapter", 1, 2, "Chapter").unwrap_err();
+        assert!(error.contains("does not belong"), "{error}");
+        assert_eq!(
+            std::fs::read_dir(root.join("documents")).unwrap().count(),
+            before
+        );
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn an_automatic_split_records_every_part_against_the_same_source() {
+        let root = split_library("automatic", 9);
+        let receipt = split_automatically_at(
+            &root,
+            "R",
+            "R-handbook.pdf",
+            "batch",
+            "Handbook.pdf",
+            &|_| {},
+        )
+        .unwrap();
+        let plan = &receipt.core.plan;
+        assert!(!plan.is_empty());
+        assert_eq!(plan[0].selection.start, 1);
+        assert_eq!(plan.last().unwrap().selection.end, 9);
+        for pair in plan.windows(2) {
+            assert_eq!(pair[1].selection.start, pair[0].selection.end + 1);
+        }
+        lineage::save_split_batch_at(&root, &receipt, &presentation(&receipt)).unwrap();
+        let conn = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        let saved: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM material_split_lineage WHERE root_material_id = 'R'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(saved as usize, plan.len());
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]

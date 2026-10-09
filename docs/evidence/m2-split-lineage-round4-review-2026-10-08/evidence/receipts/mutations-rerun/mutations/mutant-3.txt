@@ -1,0 +1,158 @@
+Mutant: MUTANT-3-TYPEOF-CHECKS
+Description: Removal of TYPEOF integer checks across candidate DDL (reverting to loose SQLite affinity)
+Target: candidateDdl
+Baseline SHA256: a60c9622b5c6792745d5beb2907614c80f4ea9267651575efb813f8384726b0c
+Mutated SHA256: 9f7378faa53120745f3fb62ef8e08b2cf931032abfe4c3a847f6d660eb423429
+Exit Code: 1
+Expected Failure Substring: "Fractional physical page bounds must fail TYPEOF constraint"
+
+=== Raw Test Execution Output ===
+TAP version 13
+# (node:14355) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+ok 1 - Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+  ---
+  duration_ms: 1.061875
+  type: 'test'
+  ...
+# Subtest: Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options
+ok 2 - Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options
+  ---
+  duration_ms: 0.186667
+  type: 'test'
+  ...
+# Subtest: Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+ok 3 - Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+  ---
+  duration_ms: 0.113167
+  type: 'test'
+  ...
+# Subtest: Contract 4: Multi-level Nested Hierarchy (3+ levels)
+ok 4 - Contract 4: Multi-level Nested Hierarchy (3+ levels)
+  ---
+  duration_ms: 0.094542
+  type: 'test'
+  ...
+# Subtest: Contract 5: Structural Tiers and Strict DDL CHECK Constraints
+not ok 5 - Contract 5: Structural Tiers and Strict DDL CHECK Constraints
+  ---
+  duration_ms: 5.97
+  type: 'test'
+  location: '/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-oQwM7u/pack/proof/proof.test.mjs:129:1'
+  failureType: 'testCodeFailure'
+  error: 'Fractional physical page bounds must fail TYPEOF constraint'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'FOREIGN KEY constraint failed'
+  stack: |-
+    insertSplitLineage (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-oQwM7u/pack/proof/lineageContract.mjs:306:8)
+    file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-oQwM7u/pack/proof/proof.test.mjs:224:7
+    getActual (node:assert:609:5)
+    Function.throws (node:assert:757:24)
+    TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-oQwM7u/pack/proof/proof.test.mjs:223:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-oQwM7u/pack/proof/proof.test.mjs:223:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Contract 6: Two-Tier Veracity Verification from Real Files
+ok 6 - Contract 6: Two-Tier Veracity Verification from Real Files
+  ---
+  duration_ms: 6.303458
+  type: 'test'
+  ...
+# Subtest: Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity
+ok 7 - Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity
+  ---
+  duration_ms: 4.702667
+  type: 'test'
+  ...
+# Subtest: Contract 8: Legacy NULL Parent Hash is Handled as Unknown
+ok 8 - Contract 8: Legacy NULL Parent Hash is Handled as Unknown
+  ---
+  duration_ms: 5.061542
+  type: 'test'
+  ...
+# Subtest: Contract 9: Unknown Parent Editions Are Not Grouped as Siblings
+ok 9 - Contract 9: Unknown Parent Editions Are Not Grouped as Siblings
+  ---
+  duration_ms: 4.5195
+  type: 'test'
+  ...
+# Subtest: Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+ok 10 - Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+  ---
+  duration_ms: 4.715125
+  type: 'test'
+  ...
+# Subtest: Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure
+ok 11 - Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure
+  ---
+  duration_ms: 6.073416
+  type: 'test'
+  ...
+# Subtest: Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+ok 12 - Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+  ---
+  duration_ms: 4.870875
+  type: 'test'
+  ...
+# Subtest: Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+ok 13 - Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+  ---
+  duration_ms: 4.488542
+  type: 'test'
+  ...
+# Subtest: Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation
+ok 14 - Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation
+  ---
+  duration_ms: 7.973333
+  type: 'test'
+  ...
+# Subtest: Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+ok 15 - Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+  ---
+  duration_ms: 0.038792
+  type: 'test'
+  ...
+# Subtest: Contract 16: Explicit Page Bounds and Storage Limit Specification
+ok 16 - Contract 16: Explicit Page Bounds and Storage Limit Specification
+  ---
+  duration_ms: 0.024292
+  type: 'test'
+  ...
+# Subtest: Contract 17: Concurrent Staged Operations and Cleanup Isolation
+ok 17 - Contract 17: Concurrent Staged Operations and Cleanup Isolation
+  ---
+  duration_ms: 5.69275
+  type: 'test'
+  ...
+# Subtest: Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation
+ok 18 - Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation
+  ---
+  duration_ms: 5.706542
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 17
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.806083
+

@@ -1,0 +1,20 @@
+Command: node node_modules/vitest/vitest.mjs run src/logic/splitLineage.test.ts src/data/splitLineageShapes.test.ts src/data/splitLineageStorage.test.ts src/data/splitLineageValidationParity.test.ts src/pages/StudyLibrary/SplitLineage.test.ts src/data/cardReviewContract.test.ts src/acceptance/m1Upgrade.acceptance.test.ts
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-
+
+(node:36231) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36234) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36235) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36233) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  7 passed (7)
+      Tests  110 passed (110)
+   Start at  20:52:50
+   Duration  8.59s (transform 901ms, setup 0ms, import 1.44s, tests 9.81s, environment 481ms)
+

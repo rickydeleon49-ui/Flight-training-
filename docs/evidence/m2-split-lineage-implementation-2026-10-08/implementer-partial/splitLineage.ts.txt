@@ -1,0 +1,303 @@
+import { createHash } from "node:crypto";
+
+import type { SplitLineage, SplitSourceVerdict } from "@/domain/types";
+
+/**
+ * Engine limits and physical bounds.
+ */
+export const ENGINE_LIMITS = Object.freeze({
+  MIN_PAGE: 1,
+  MAX_PAGE: 10_000,
+  MAX_PDF_BYTES: 50 * 1024 * 1024, // 50 MiB
+  MAX_PARTS_PER_BATCH: 200,
+  MIN_PART_LENGTH: 1,
+  PAGE_NUMBER_LIMIT: 2147483647, // 32-bit signed max
+  SAFE_INT_LIMIT: Number.MAX_SAFE_INTEGER,
+});
+
+/**
+ * Canonical JSON serializer with sorted keys for deterministic hashing.
+ */
+export function canonicalJson(obj: unknown): string {
+  if (obj === null || typeof obj !== "object") {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return "[" + obj.map(canonicalJson).join(",") + "]";
+  }
+  const keys = Object.keys(obj as Record<string, unknown>).sort();
+  return (
+    "{" +
+    keys
+      .map(
+        (k) =>
+          JSON.stringify(k) +
+          ":" +
+          canonicalJson((obj as Record<string, unknown>)[k]),
+      )
+      .join(",") +
+    "}"
+  );
+}
+
+/**
+ * Computes deterministic SHA-256 digest in lowercase hexadecimal.
+ */
+export function calculateSha256(content: Buffer | string | Uint8Array): string {
+  if (content === null || content === undefined) {
+    throw new Error("Cannot hash null or undefined content");
+  }
+  return createHash("sha256").update(content).digest("hex");
+}
+
+/**
+ * Validates 1-based, inclusive physical page ranges.
+ */
+export function validatePageRange(
+  start: number,
+  end: number,
+  totalPages: number | null = null,
+): { start: number; end: number; pageCount: number } {
+  if (!Number.isInteger(start) || !Number.isInteger(end)) {
+    throw new Error(`Page range bounds must be integers: start=${start}, end=${end}`);
+  }
+  if (start < ENGINE_LIMITS.MIN_PAGE) {
+    throw new Error(`Start page (${start}) must be >= ${ENGINE_LIMITS.MIN_PAGE}`);
+  }
+  if (end < start) {
+    throw new Error(`End page (${end}) cannot be less than start page (${start})`);
+  }
+  if (end > ENGINE_LIMITS.MAX_PAGE) {
+    throw new Error(`End page (${end}) exceeds maximum allowed pages (${ENGINE_LIMITS.MAX_PAGE})`);
+  }
+  if (totalPages !== null && totalPages !== undefined) {
+    if (!Number.isInteger(totalPages) || totalPages < 1) {
+      throw new Error(`Total pages (${totalPages}) must be a positive integer`);
+    }
+    if (end > totalPages) {
+      throw new Error(`End page (${end}) exceeds total pages (${totalPages})`);
+    }
+  }
+  return { start, end, pageCount: end - start + 1 };
+}
+
+export interface MapChildPageOptions {
+  childPage?: number;
+  sourcePageStart?: number;
+  childPageCount?: number;
+  childPageEnd?: number;
+  start?: number;
+  end?: number;
+  sourceStart?: number;
+}
+
+/**
+ * Modern named options API for mapping child page to source.
+ * Also supports positional calls for backwards compatibility.
+ */
+export function mapChildPageToSource(
+  optionsOrStart: MapChildPageOptions | number,
+  childPageArg?: number,
+  parentTotalPagesOrEnd?: number | null,
+): number {
+  if (typeof optionsOrStart === "number") {
+    return mapChildPageToSourcePositional(
+      optionsOrStart,
+      childPageArg!,
+      parentTotalPagesOrEnd ?? null,
+    );
+  }
+
+  const options = optionsOrStart;
+  const childPage = options.childPage ?? options.start ?? 1;
+  const sourceStart = options.sourcePageStart ?? options.sourceStart;
+  if (!Number.isInteger(sourceStart) || sourceStart! < 1) {
+    throw new Error(`Invalid sourceStart: ${sourceStart}`);
+  }
+  if (!Number.isInteger(childPage) || childPage < 1) {
+    throw new Error(`Invalid childPage: ${childPage}`);
+  }
+
+  const count =
+    options.childPageCount ??
+    (options.childPageEnd
+      ? options.childPageEnd - sourceStart! + 1
+      : options.end && options.start !== undefined
+        ? options.end - options.start + 1
+        : null);
+
+  if (count !== null && count !== undefined) {
+    if (childPage > count) {
+      throw new Error(`Child page ${childPage} exceeds child page count ${count}`);
+    }
+  }
+
+  const result = sourceStart! + childPage - 1;
+  if (result > Number.MAX_SAFE_INTEGER) {
+    throw new Error("Resulting page position exceeds safe integer limit");
+  }
+  return result;
+}
+
+/**
+ * Positional adapter for page translation calls.
+ */
+export function mapChildPageToSourcePositional(
+  sourcePageStart: number,
+  childPage: number,
+  parentTotalPagesOrEnd: number | null = null,
+): number {
+  if (!Number.isInteger(sourcePageStart) || sourcePageStart < 1) {
+    throw new Error(`Invalid sourcePageStart: ${sourcePageStart}`);
+  }
+  if (!Number.isInteger(childPage) || childPage < 1) {
+    throw new Error(`Invalid childPage: ${childPage}`);
+  }
+
+  if (parentTotalPagesOrEnd !== null && parentTotalPagesOrEnd !== undefined) {
+    let bound = parentTotalPagesOrEnd;
+    if (typeof parentTotalPagesOrEnd === "number" && parentTotalPagesOrEnd >= sourcePageStart) {
+      bound = parentTotalPagesOrEnd - sourcePageStart + 1;
+    }
+    if (childPage > bound) {
+      throw new Error(`Child page ${childPage} exceeds bound ${bound}`);
+    }
+  }
+
+  const result = sourcePageStart + childPage - 1;
+  if (result > Number.MAX_SAFE_INTEGER) {
+    throw new Error("Resulting page position exceeds safe integer limit");
+  }
+  return result;
+}
+
+export interface RangeInput {
+  start?: number;
+  end?: number;
+  sourcePageStart?: number;
+  sourcePageEnd?: number;
+  parentPageStart?: number;
+  parentPageEnd?: number;
+  totalPages?: number | null;
+}
+
+export interface ComposedRange {
+  rootPageStart: number;
+  rootPageEnd: number;
+  sourcePageStart: number;
+  sourcePageEnd: number;
+  parentPageStart: number;
+  parentPageEnd: number;
+  childPageCount: number;
+}
+
+/**
+ * Composes nested split ranges.
+ */
+export function composeNestedRanges(
+  parentRange: RangeInput,
+  childSelection: RangeInput,
+): ComposedRange {
+  const pStart = parentRange.start ?? parentRange.sourcePageStart!;
+  const pEnd = parentRange.end ?? parentRange.sourcePageEnd!;
+  const p = validatePageRange(pStart, pEnd, parentRange.totalPages || null);
+  const parentLength = p.end - p.start + 1;
+
+  const cStart = childSelection.start ?? childSelection.parentPageStart!;
+  const cEnd = childSelection.end ?? childSelection.parentPageEnd!;
+  const c = validatePageRange(cStart, cEnd, parentLength);
+
+  const rootStart = p.start + c.start - 1;
+  const rootEnd = p.start + c.end - 1;
+  const childLength = c.end - c.start + 1;
+
+  return {
+    rootPageStart: rootStart,
+    rootPageEnd: rootEnd,
+    sourcePageStart: rootStart,
+    sourcePageEnd: rootEnd,
+    parentPageStart: c.start,
+    parentPageEnd: c.end,
+    childPageCount: childLength,
+  };
+}
+
+export interface MultiLevelComposedRange {
+  rootPageStart: number;
+  rootPageEnd: number;
+  sourcePageStart: number;
+  sourcePageEnd: number;
+  immediateParentPageStart: number;
+  immediateParentPageEnd: number;
+  childPageCount: number;
+  nestedLevel: number;
+}
+
+/**
+ * Composes multiple levels of nested ranges transitively.
+ */
+export function composeMultiLevelRanges(
+  levels: RangeInput[],
+): MultiLevelComposedRange {
+  if (!Array.isArray(levels) || levels.length === 0) {
+    throw new Error("Multi-level composition requires at least one range level");
+  }
+  let currentRootRange: { start: number; end: number; totalPages: number | null } = {
+    start: levels[0]!.start ?? levels[0]!.sourcePageStart!,
+    end: levels[0]!.end ?? levels[0]!.sourcePageEnd!,
+    totalPages: levels[0]!.totalPages || null,
+  };
+  let lastComposed: ComposedRange | null = null;
+  for (let i = 1; i < levels.length; i++) {
+    lastComposed = composeNestedRanges(currentRootRange, levels[i]!);
+    currentRootRange = {
+      start: lastComposed.rootPageStart,
+      end: lastComposed.rootPageEnd,
+      totalPages: levels[0]!.totalPages || null,
+    };
+  }
+  return {
+    rootPageStart: currentRootRange.start,
+    rootPageEnd: currentRootRange.end,
+    sourcePageStart: currentRootRange.start,
+    sourcePageEnd: currentRootRange.end,
+    immediateParentPageStart: lastComposed
+      ? lastComposed.parentPageStart
+      : (levels[0]!.start ?? levels[0]!.sourcePageStart!),
+    immediateParentPageEnd: lastComposed
+      ? lastComposed.parentPageEnd
+      : (levels[0]!.end ?? levels[0]!.sourcePageEnd!),
+    childPageCount: currentRootRange.end - currentRootRange.start + 1,
+    nestedLevel: levels.length,
+  };
+}
+
+/**
+ * Determines whether a lineage row represents a direct 1-level split.
+ * Enforced structurally per SL-R8: nested_level === 1 AND parent_page_start === null.
+ */
+export function isDirectSplit(lineage: SplitLineage): boolean {
+  return lineage.nestedLevel === 1 && lineage.parentPageStart === null;
+}
+
+/**
+ * Read-only source version evaluation per SL-R1, SL-R4, SL-R8.
+ */
+export function evaluateSourceVersion(
+  recordedSha256: string | null | undefined,
+  currentHashOrBytes: string | Uint8Array | null | undefined,
+  entityExists: boolean = true,
+  fileExists: boolean = true,
+): SplitSourceVerdict {
+  if (!recordedSha256) return "unknown";
+  if (!entityExists) return "deleted";
+  if (!fileExists) return "missing";
+  if (!currentHashOrBytes) return "unknown";
+
+  const liveHash =
+    typeof currentHashOrBytes === "string"
+      ? currentHashOrBytes
+      : calculateSha256(currentHashOrBytes);
+
+  return liveHash === recordedSha256 ? "matching" : "changed";
+}

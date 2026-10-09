@@ -1,0 +1,31 @@
+=== Real Mutation Sensitivity Verification (Isolated Scratch Workspace) ===
+Original lineageContract.mjs SHA256: 28bff00bc4b6f2761183707d818e42f0595fca425466e4f98772f0d06f732520
+Original candidate_migration_0013.sql SHA256: 5754bb3c0634aa43816ed6d2b7456edec30c3552152936284748b92212b5270a
+
+Isolated temporary workspace: /var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-lineage-mutations-qEPGSC
+
+--- Testing MUTANT-1: Off-by-one arithmetic in composeNestedRanges (omitting - 1) ---
+SUCCESS: MUTANT-1 caught as expected! Exit code: 1
+Matched expected failure: "120"
+Restoration confirmed exact SHA-256 match in temp workspace.
+
+--- Testing MUTANT-2: Removal of child length upper-bound enforcement in mapChildPageToSource ---
+SUCCESS: MUTANT-2 caught as expected! Exit code: 1
+Matched expected failure: "Missing expected exception"
+Restoration confirmed exact SHA-256 match in temp workspace.
+
+--- Testing MUTANT-3: Removal of TYPEOF integer checks across candidate DDL (reverting to loose SQLite affinity) ---
+SUCCESS: MUTANT-3 caught as expected! Exit code: 1
+Matched expected failure: "Missing expected exception"
+Restoration confirmed exact SHA-256 match in temp workspace.
+
+--- Testing MUTANT-4: Removal of CHECK (material_id != root_material_id) constraint in candidate DDL ---
+SUCCESS: MUTANT-4 caught as expected! Exit code: 1
+Matched expected failure: "Missing expected exception"
+Restoration confirmed exact SHA-256 match in temp workspace.
+
+Cleaned up temporary workspace: /var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-lineage-mutations-qEPGSC
+
+=== All 4 Meaningful Mutations Caught and Verified ===
+Passed checks: 4 / 4
+Original evidence files confirmed 100% byte-for-byte immutable.

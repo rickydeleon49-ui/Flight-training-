@@ -5,10 +5,12 @@ import type { StudyMaterial } from "@/domain/types";
 import { newId } from "@/lib/id";
 import { MAX_PDF_BYTES, checkSplitRange, describeFileSize } from "@/logic/aiLimits";
 import { pdfPartNotes } from "@/logic/pdfParts";
-import { cleanupDocuments, formatFileSize } from "@/services/documents";
+import { formatFileSize } from "@/services/documents";
 import { backupErrorMessage, createBackup } from "@/services/backups";
 import { inspectPdf, splitPdf, type PdfOutline } from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
+
+import { saveSplitParts } from "./splitSave";
 
 interface Props {
   open: boolean;
@@ -26,7 +28,7 @@ interface Props {
  * through never costs more than this one attempt.
  */
 export function ManualSplitDialog({ open, material, onClose, onCreated }: Props) {
-  const { mutate } = useAppData();
+  const { mutate, repositories, refresh } = useAppData();
   const [outline, setOutline] = useState<PdfOutline | null>(null);
   const [firstPage, setFirstPage] = useState("1");
   const [lastPage, setLastPage] = useState("");
@@ -82,34 +84,23 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
     const chosenTitle = title.trim() || `${material.title} — Pages ${first}–${last}`;
 
     try {
-      const document = await splitPdf({
+      const receipt = await splitPdf({
         relativePath: material.filePath,
         materialId,
         firstPage: first,
         lastPage: last,
         fileName: chosenTitle,
+        sourceMaterialId: material.id,
       });
 
-      const created = await mutate((repos) =>
-        repos.documents.createMany([{
-          id: materialId,
-          title: chosenTitle,
-          materialType: material.materialType,
-          topic: material.topic,
-          priority: material.priority,
-          goalId: material.goalId,
-          eventId: material.eventId,
-          tags: material.tags,
-          notes: pdfPartNotes(material.title, { firstPage: first, lastPage: last }),
-          filePath: document.relativePath,
-          originalFileName: document.originalFileName,
-          fileSize: document.fileSize,
-        }]).then((parts) => parts[0]!),
-      );
-      if (created === null) {
-        const cleanupFailures = await cleanupDocuments([document.relativePath]);
+      const outcome = await saveSplitParts(mutate, repositories, refresh, receipt, [{
+        id: materialId,
+        title: chosenTitle,
+        notes: pdfPartNotes(material.title, { firstPage: first, lastPage: last }),
+      }]);
+      if (!outcome.saved) {
         setError(
-          cleanupFailures.length === 0
+          !outcome.cleanupFailed
             ? "This chapter could not be saved to your library, so its file was removed again. " +
                 "The original PDF is untouched — try once more."
             : "This chapter could not be saved to your library, and its temporary file could " +
@@ -118,7 +109,7 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
         );
         return;
       }
-      onCreated(created.id);
+      onCreated(outcome.ids[0] ?? materialId);
     } catch (splitError) {
       setError(splitError instanceof Error ? splitError.message : String(splitError));
     } finally {

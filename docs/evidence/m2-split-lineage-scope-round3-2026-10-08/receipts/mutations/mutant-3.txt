@@ -1,0 +1,56 @@
+Mutant: MUTANT-3-TYPEOF-CHECKS
+Description: Removal of TYPEOF integer checks across candidate DDL (reverting to loose SQLite affinity)
+Target: candidateDdl
+Baseline SHA256: eff3fe59878df7fed76e4bccb483994e4357dbd12fcc08d9280880ef7b08c75a
+Mutated SHA256: ea929b9ff53c07c87af8976302a4c0aa9f29152a9d34997b57877ef9fad01482
+Exit Code: 1
+Expected Failure Substring: "Fractional physical page bounds must fail TYPEOF constraint"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.684791ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.112792ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.059292ms)
+✔ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.058167ms)
+✔ Contract 5: SHA-256 Content Hashing Determinism (0.180958ms)
+✖ Contract 6: Candidate DDL Constraints Enforce Child Identity, Bounds & Structural Tiers (5.536958ms)
+✔ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.430541ms)
+✔ Contract 8: Source Version Evaluation through Model Boundary (Two-Tier Structural Classification) (4.634583ms)
+✔ Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions (4.567208ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.463834ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.617ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.474792ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (3.983375ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.665875ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.051083ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.029583ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.087709ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Cancellation (4.705292ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.2495
+
+✖ failing tests:
+
+test at proof.test.mjs:134:1
+✖ Contract 6: Candidate DDL Constraints Enforce Child Identity, Bounds & Structural Tiers (5.536958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception: Fractional physical page bounds must fail TYPEOF constraint
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:192:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /CHECK constraint failed/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+

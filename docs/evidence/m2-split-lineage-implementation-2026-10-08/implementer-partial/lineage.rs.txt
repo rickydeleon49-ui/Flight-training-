@@ -1,0 +1,605 @@
+//! Split-source lineage, receipt generation, and operation tracking.
+//!
+//! Milestone 2 (M2) — Her Flight Deck.
+
+use std::collections::BTreeMap;
+use std::fs;
+use std::path::Path;
+
+use rusqlite::{params, Connection};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+
+pub const MAX_PAGES: u32 = 1_000;
+pub const MAX_PDF_BYTES: u64 = 50 * 1024 * 1024; // 50 MiB
+pub const MAX_PARTS_PER_BATCH: usize = 200;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PageSelection {
+    pub start: u32,
+    pub end: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitPlanPart {
+    pub id: String,
+    pub title: String,
+    pub selection: PageSelection,
+    pub child_page_count: u32,
+    pub canonical_root_start: u32,
+    pub canonical_root_end: u32,
+    #[serde(default)]
+    pub file_path: Option<String>,
+    #[serde(default)]
+    pub file_size: Option<u64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitParentSnapshot {
+    pub root_material_id: String,
+    pub root_title: String,
+    pub root_file_name: String,
+    pub root_content_sha256: Option<String>,
+    pub root_total_pages: Option<u32>,
+    pub parent_root_page_start: u32,
+    pub parent_root_page_end: u32,
+    pub parent_total_pages: u32,
+    pub parent_title: String,
+    pub parent_file_name: String,
+    pub nested_level: u32,
+    pub parent_file_path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitSourceReceipt {
+    pub source_material_id: String,
+    pub source_file_path: String,
+    pub source_file_size: u64,
+    pub source_content_sha256: String,
+    pub source_total_pages: u32,
+    pub is_nested: bool,
+    pub root_material_id: String,
+    pub root_title: String,
+    pub root_file_name: String,
+    pub root_content_sha256: String,
+    pub root_total_pages: u32,
+    pub parent_snapshot: Option<SplitParentSnapshot>,
+    pub nested_level: u32,
+    pub plan: Vec<SplitPlanPart>,
+    pub canonical_receipt_json: String,
+    pub receipt_hash: String,
+    pub operation_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitBatchSaveResult {
+    pub batch_id: String,
+    pub operation_id: String,
+    pub parts: Vec<serde_json::Value>,
+    pub count: usize,
+    pub saved_parts_count: usize,
+    pub idempotent_replay: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitBatchReconciliation {
+    pub operation_id: String,
+    pub status: String,
+    pub parts: Vec<serde_json::Value>,
+    pub count: usize,
+    pub reconciled: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitBatchCancelResult {
+    pub operation_id: String,
+    pub status: String,
+    pub cancelled: bool,
+    pub removed_files: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitLineage {
+    pub material_id: String,
+    pub parent_material_id: Option<String>,
+    pub root_material_id: Option<String>,
+    pub source_page_start: u32,
+    pub source_page_end: u32,
+    pub parent_page_start: Option<u32>,
+    pub parent_page_end: Option<u32>,
+    pub child_page_count: u32,
+    pub source_file_name: String,
+    pub source_title: String,
+    pub source_content_sha256: Option<String>,
+    pub source_total_pages: Option<u32>,
+    pub parent_file_name: Option<String>,
+    pub parent_title: Option<String>,
+    pub parent_content_sha256: Option<String>,
+    pub parent_total_pages: Option<u32>,
+    pub nested_level: u32,
+    pub created_at: String,
+}
+
+/// Computes SHA-256 digest in lowercase hexadecimal format.
+pub fn calculate_sha256(bytes: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    hex::encode(hasher.finalize())
+}
+
+/// Deterministic canonical JSON serializer with lexicographically sorted object keys.
+/// Exactly mirrors `canonicalJson` in `lineageContract.mjs`.
+pub fn canonical_json(value: &serde_json::Value) -> String {
+    match value {
+        serde_json::Value::Null => "null".to_string(),
+        serde_json::Value::Bool(b) => b.to_string(),
+        serde_json::Value::Number(n) => n.to_string(),
+        serde_json::Value::String(s) => serde_json::to_string(s).unwrap_or_else(|_| "\"\"".to_string()),
+        serde_json::Value::Array(arr) => {
+            let inner = arr.iter().map(canonical_json).collect::<Vec<_>>().join(",");
+            format!("[{inner}]")
+        }
+        serde_json::Value::Object(map) => {
+            let sorted: BTreeMap<&String, &serde_json::Value> = map.iter().collect();
+            let inner = sorted
+                .into_iter()
+                .map(|(k, v)| {
+                    format!(
+                        "{}:{}",
+                        serde_json::to_string(k).unwrap_or_else(|_| "\"\"".to_string()),
+                        canonical_json(v)
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join(",");
+            format!("{{{inner}}}")
+        }
+    }
+}
+
+pub struct CreateReceiptParams<'a> {
+    pub source_material_id: &'a str,
+    pub source_file_path: &'a str,
+    pub source_file_bytes: &'a [u8],
+    pub source_total_pages: u32,
+    pub plan_selections: &'a [(String, String, u32, u32, Option<String>, Option<u64>)],
+}
+
+/// Creates a typed, tamper-evident `SplitSourceReceipt` bound to `split_operation_log`.
+/// Conforms strictly to SL-R10, SL-R12:
+/// - Authoritative engine total from PDF engine.
+/// - Reads source material and detects nested splits to snapshot parent metadata.
+/// - Non-destructive plain INSERT into `split_operation_log`.
+pub fn create_split_source_receipt(
+    conn: &Connection,
+    params: CreateReceiptParams<'_>,
+) -> Result<SplitSourceReceipt, String> {
+    let source_material_id = params.source_material_id;
+    let effective_path = params.source_file_path;
+    let source_file_bytes = params.source_file_bytes;
+    let source_total_pages = params.source_total_pages;
+
+    if source_total_pages < 1 {
+        return Err(format!("Invalid source_total_pages: {source_total_pages}"));
+    }
+
+    // Query source material from study_materials
+    let mut stmt = conn
+        .prepare("SELECT title, original_file_name, file_path, file_size FROM study_materials WHERE id = ?1")
+        .map_err(|e| format!("Could not inspect source material: {e}"))?;
+
+    let source_mat: Option<(String, Option<String>, Option<String>, Option<i64>)> = stmt
+        .query_row(params![source_material_id], |row| {
+            Ok((
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+            ))
+        })
+        .ok();
+
+    let (source_title, source_original_file_name) = match source_mat {
+        Some((title, orig_name, _, _)) => (title, orig_name),
+        None => return Err(format!("Source material {source_material_id} does not exist in library")),
+    };
+
+    let file_size = source_file_bytes.len() as u64;
+    let source_content_sha256 = calculate_sha256(source_file_bytes);
+
+    let default_file_name = Path::new(effective_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("document.pdf")
+        .to_string();
+    let source_file_name = source_original_file_name.unwrap_or(default_file_name);
+
+    // Query existing lineage to see if source is nested
+    let mut lineage_stmt = conn
+        .prepare(
+            "SELECT parent_material_id, root_material_id, source_page_start, source_page_end,
+                    child_page_count, source_file_name, source_title, source_content_sha256,
+                    source_total_pages, nested_level
+             FROM material_split_lineage WHERE material_id = ?1",
+        )
+        .map_err(|e| format!("Could not inspect parent lineage: {e}"))?;
+
+    type LineageRow = (
+        Option<String>,
+        Option<String>,
+        u32,
+        u32,
+        u32,
+        String,
+        String,
+        Option<String>,
+        Option<u32>,
+        u32,
+    );
+
+    let parent_lineage: Option<LineageRow> = lineage_stmt
+        .query_row(params![source_material_id], |r| {
+            Ok((
+                r.get(0)?,
+                r.get(1)?,
+                r.get(2)?,
+                r.get(3)?,
+                r.get(4)?,
+                r.get(5)?,
+                r.get(6)?,
+                r.get(7)?,
+                r.get(8)?,
+                r.get(9)?,
+            ))
+        })
+        .ok();
+
+    let is_nested = parent_lineage.is_some();
+    let (
+        root_material_id,
+        root_title,
+        root_file_name,
+        root_content_sha256,
+        root_total_pages,
+        parent_snapshot,
+        nested_level,
+    ) = if let Some(pl) = &parent_lineage {
+        let root_mat_id = pl.1.clone().unwrap_or_else(|| source_material_id.to_string());
+        let root_t = pl.6.clone();
+        let root_fn = pl.5.clone();
+        let root_sha = pl.7.clone().unwrap_or_else(|| source_content_sha256.clone());
+        let root_tot = pl.8.unwrap_or(source_total_pages);
+        let n_level = pl.9 + 1;
+
+        let snapshot = SplitParentSnapshot {
+            root_material_id: root_mat_id.clone(),
+            root_title: root_t.clone(),
+            root_file_name: root_fn.clone(),
+            root_content_sha256: pl.7.clone(),
+            root_total_pages: pl.8,
+            parent_root_page_start: pl.2,
+            parent_root_page_end: pl.3,
+            parent_total_pages: pl.4,
+            parent_title: source_title.clone(),
+            parent_file_name: source_file_name.clone(),
+            nested_level: pl.9,
+            parent_file_path: effective_path.to_string(),
+        };
+
+        (
+            root_mat_id,
+            root_t,
+            root_fn,
+            root_sha,
+            root_tot,
+            Some(snapshot),
+            n_level,
+        )
+    } else {
+        (
+            source_material_id.to_string(),
+            source_title.clone(),
+            source_file_name.clone(),
+            source_content_sha256.clone(),
+            source_total_pages,
+            None,
+            1,
+        )
+    };
+
+    let max_allowed = if let Some(ref pl) = parent_lineage {
+        pl.4
+    } else {
+        source_total_pages
+    };
+
+    let mut validated_plan = Vec::new();
+    for (part_id, part_title, start_page, end_page, part_path, part_size) in params.plan_selections {
+        let s = *start_page;
+        let e = *end_page;
+        if s < 1 || e < s || e > max_allowed {
+            return Err(format!(
+                "Selection {s}–{e} exceeds authoritative source limit {max_allowed}"
+            ));
+        }
+        let count = e - s + 1;
+        let (canonical_root_start, canonical_root_end) = if let Some(ref pl) = parent_lineage {
+            (pl.2 + s - 1, pl.2 + e - 1)
+        } else {
+            (s, e)
+        };
+
+        validated_plan.push(SplitPlanPart {
+            id: part_id.clone(),
+            title: part_title.clone(),
+            selection: PageSelection { start: s, end: e },
+            child_page_count: count,
+            canonical_root_start,
+            canonical_root_end,
+            file_path: part_path.clone(),
+            file_size: *part_size,
+        });
+    }
+
+    let receipt_data_val = serde_json::json!({
+        "isNested": is_nested,
+        "nestedLevel": nested_level,
+        "parentSnapshot": parent_snapshot,
+        "plan": validated_plan,
+        "rootContentSha256": root_content_sha256,
+        "rootFileName": root_file_name,
+        "rootMaterialId": root_material_id,
+        "rootTitle": root_title,
+        "rootTotalPages": root_total_pages,
+        "sourceContentSha256": source_content_sha256,
+        "sourceFilePath": effective_path,
+        "sourceFileSize": file_size,
+        "sourceMaterialId": source_material_id,
+        "sourceTotalPages": source_total_pages,
+    });
+
+    let canonical_receipt_json = canonical_json(&receipt_data_val);
+    let receipt_hash = calculate_sha256(canonical_receipt_json.as_bytes());
+    let operation_id = receipt_hash.clone();
+
+    // Verify split_operation_log table exists
+    let has_op_log: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'split_operation_log'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Could not inspect operation log schema: {e}"))?;
+
+    if has_op_log == 0 {
+        return Err("split_operation_log table does not exist; split operation tracking required.".to_string());
+    }
+
+    // Check existing operation log row (re-issue policy)
+    let existing_status: Option<String> = conn
+        .query_row(
+            "SELECT status FROM split_operation_log WHERE operation_id = ?1",
+            params![&operation_id],
+            |r| r.get(0),
+        )
+        .ok();
+
+    if existing_status.is_none() {
+        conn.execute(
+            "INSERT INTO split_operation_log (
+                operation_id, source_material_id, receipt_canonical_json, receipt_hash, status, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, 'pending', datetime('now'), datetime('now'))",
+            params![
+                &operation_id,
+                source_material_id,
+                &canonical_receipt_json,
+                &receipt_hash,
+            ],
+        )
+        .map_err(|e| format!("Could not persist split operation log: {e}"))?;
+    }
+
+    Ok(SplitSourceReceipt {
+        source_material_id: source_material_id.to_string(),
+        source_file_path: effective_path.to_string(),
+        source_file_size: file_size,
+        source_content_sha256,
+        source_total_pages,
+        is_nested,
+        root_material_id,
+        root_title,
+        root_file_name,
+        root_content_sha256,
+        root_total_pages,
+        parent_snapshot,
+        nested_level,
+        plan: validated_plan,
+        canonical_receipt_json,
+        receipt_hash,
+        operation_id,
+    })
+}
+
+/// Cancels a split batch by operation ID.
+/// - Unlinks ONLY staged files recorded in the receipt plan.
+/// - Returns status and removed files list.
+pub fn cancel_split_batch_at(
+    root: &Path,
+    operation_id: &str,
+) -> Result<SplitBatchCancelResult, String> {
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        return Ok(SplitBatchCancelResult {
+            operation_id: operation_id.to_string(),
+            status: "unknown".to_string(),
+            cancelled: false,
+            removed_files: vec![],
+        });
+    }
+
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Could not open database: {e}"))?;
+
+    let has_op_log: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'split_operation_log'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or(0);
+
+    if has_op_log == 0 {
+        return Ok(SplitBatchCancelResult {
+            operation_id: operation_id.to_string(),
+            status: "unknown".to_string(),
+            cancelled: false,
+            removed_files: vec![],
+        });
+    }
+
+    let row: Option<(String, String)> = conn
+        .query_row(
+            "SELECT status, receipt_canonical_json FROM split_operation_log WHERE operation_id = ?1",
+            params![operation_id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .ok();
+
+    let (status, canonical_json_str) = match row {
+        Some(r) => r,
+        None => {
+            return Ok(SplitBatchCancelResult {
+                operation_id: operation_id.to_string(),
+                status: "unknown".to_string(),
+                cancelled: false,
+                removed_files: vec![],
+            });
+        }
+    };
+
+    if status == "committed" {
+        return Ok(SplitBatchCancelResult {
+            operation_id: operation_id.to_string(),
+            status: "committed".to_string(),
+            cancelled: false,
+            removed_files: vec![],
+        });
+    }
+
+    if status == "cancelled" {
+        return Ok(SplitBatchCancelResult {
+            operation_id: operation_id.to_string(),
+            status: "cancelled".to_string(),
+            cancelled: true,
+            removed_files: vec![],
+        });
+    }
+
+    conn.execute(
+        "UPDATE split_operation_log SET status = 'cancelled', updated_at = datetime('now') WHERE operation_id = ?1",
+        params![operation_id],
+    )
+    .map_err(|e| format!("Could not update operation status: {e}"))?;
+
+    let mut removed_files = Vec::new();
+    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&canonical_json_str) {
+        if let Some(plan) = val.get("plan").and_then(|p| p.as_array()) {
+            let doc_dir = root.join("documents");
+            for part in plan {
+                if let Some(fp) = part.get("filePath").and_then(|f| f.as_str()) {
+                    let full_path = doc_dir.join(fp);
+                    if full_path.is_file() {
+                        let _ = fs::remove_file(&full_path);
+                        removed_files.push(fp.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(SplitBatchCancelResult {
+        operation_id: operation_id.to_string(),
+        status: "cancelled".to_string(),
+        cancelled: true,
+        removed_files,
+    })
+}
+
+/// Reconciles a split batch by operation ID.
+pub fn reconcile_split_batch_at(
+    root: &Path,
+    operation_id: &str,
+) -> Result<SplitBatchReconciliation, String> {
+    let db_path = root.join("her-flight-deck.db");
+    if !db_path.is_file() {
+        return Err("The library database is missing.".to_string());
+    }
+
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Could not open database: {e}"))?;
+
+    let row: Option<(String, String)> = conn
+        .query_row(
+            "SELECT status, receipt_canonical_json FROM split_operation_log WHERE operation_id = ?1",
+            params![operation_id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .ok();
+
+    let (status, canonical_json_str) = match row {
+        Some(r) => r,
+        None => {
+            return Ok(SplitBatchReconciliation {
+                operation_id: operation_id.to_string(),
+                status: "unknown".to_string(),
+                parts: vec![],
+                count: 0,
+                reconciled: false,
+            });
+        }
+    };
+
+    let mut parts = Vec::new();
+    let mut plan_len = 0;
+
+    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&canonical_json_str) {
+        if let Some(plan) = val.get("plan").and_then(|p| p.as_array()) {
+            plan_len = plan.len();
+            for p in plan {
+                if let Some(id) = p.get("id").and_then(|i| i.as_str()) {
+                    let mut stmt = conn
+                        .prepare("SELECT id, title, file_path, file_size FROM study_materials WHERE id = ?1")
+                        .map_err(|e| format!("Could not prepare query: {e}"))?;
+                    if let Ok(mat) = stmt.query_row(params![id], |r| {
+                        Ok(serde_json::json!({
+                            "id": r.get::<_, String>(0)?,
+                            "title": r.get::<_, String>(1)?,
+                            "filePath": r.get::<_, Option<String>>(2)?,
+                            "fileSize": r.get::<_, Option<i64>>(3)?,
+                        }))
+                    }) {
+                        parts.push(mat);
+                    }
+                }
+            }
+        }
+    }
+
+    let reconciled = status == "committed" && parts.len() == plan_len;
+
+    Ok(SplitBatchReconciliation {
+        operation_id: operation_id.to_string(),
+        status,
+        count: parts.len(),
+        parts,
+        reconciled,
+    })
+}

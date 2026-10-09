@@ -1,0 +1,6 @@
+# Reviewer diagnostic: bounded fix applied on the isolated scratch copy only (NOT the worktree).
+# split_test_root now adds a per-process atomic sequence to the temp-dir name, guaranteeing uniqueness.
+# Command: run_gate.sh step 02's 'split' filter, default parallelism, 15 tries.
+build once:
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.06s
+CORRECTED 'split' filter: clean in 15/15 default-parallel runs

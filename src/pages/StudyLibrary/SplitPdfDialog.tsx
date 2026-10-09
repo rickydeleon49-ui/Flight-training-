@@ -5,7 +5,7 @@ import type { StudyMaterial } from "@/domain/types";
 import { newId } from "@/lib/id";
 import { MAX_PDF_BYTES, describeFileSize } from "@/logic/aiLimits";
 import { pdfPartNotes, pdfPartTitle } from "@/logic/pdfParts";
-import { cleanupDocuments, formatFileSize } from "@/services/documents";
+import { formatFileSize } from "@/services/documents";
 import {
   inspectPdf,
   splitPdfAutomatically,
@@ -13,6 +13,8 @@ import {
   type PdfOutline,
 } from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
+
+import { saveSplitParts } from "./splitSave";
 
 interface Props {
   open: boolean;
@@ -22,7 +24,7 @@ interface Props {
 }
 
 export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
-  const { mutate } = useAppData();
+  const { mutate, repositories, refresh } = useAppData();
   const [outline, setOutline] = useState<PdfOutline | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -55,34 +57,27 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
     let stopWatching = () => {};
     try {
       stopWatching = await watchSplitProgress(setProgress);
-      const documents = await splitPdfAutomatically({
+      const receipt = await splitPdfAutomatically({
         relativePath: material.filePath,
         batchId: newId(),
         fileName: material.originalFileName ?? material.title,
+        sourceMaterialId: material.id,
       });
-      const created = await mutate(async (repos) => {
-        const inputs = documents.map((document, index) => ({
-          id: newId(),
-          title: pdfPartTitle(material.title, index, documents.length),
-          materialType: material.materialType,
-          topic: material.topic,
-          priority: material.priority,
-          goalId: material.goalId,
-          eventId: material.eventId,
-          tags: material.tags,
-          notes: pdfPartNotes(material.title, document),
-          filePath: document.relativePath,
-          originalFileName: document.originalFileName,
-          fileSize: document.fileSize,
-        }));
-        return (await repos.documents.createMany(inputs)).map((part) => part.id);
-      });
-      if (created === null) {
-        const cleanupFailures = await cleanupDocuments(
-          documents.map((document) => document.relativePath),
-        );
+      const parts = receipt.core.plan;
+      const outcome = await saveSplitParts(
+        mutate,
+        repositories,
+        refresh,
+        receipt,
+        parts.map((part, index) => ({
+          id: part.id,
+          title: pdfPartTitle(material.title, index, parts.length),
+          notes: pdfPartNotes(material.title, { firstPage: part.selection.start, lastPage: part.selection.end }),
+        })),
+      );
+      if (!outcome.saved) {
         setError(
-          cleanupFailures.length === 0
+          !outcome.cleanupFailed
             ? "The parts could not be saved to your library, so their files were removed again. " +
                 "The original PDF is untouched — try once more."
             : "The parts could not be saved to your library. Some temporary files could not be " +
@@ -90,6 +85,7 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
         );
         return;
       }
+      const created = outcome.ids;
       onCreated(created);
     } catch (splitError) {
       setError(splitError instanceof Error ? splitError.message : String(splitError));

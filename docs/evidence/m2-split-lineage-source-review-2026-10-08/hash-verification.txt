@@ -1,0 +1,60 @@
+# Reviewer hash-verification - M2 split-lineage implementation, 8 Oct 2026
+# base=2a6a41536b676559db94b476c71dd645af03fbab branch=codex/m2-split-lineage-implementation
+
+## 1. source-hashes.json (35 entries) vs worktree
+entries=35 ok=35 mismatch=0 missing=0
+
+## 2. pack SHA256SUMS (32 entries) verify
+SHA256SUMS: ALL OK (n_ok=32, exit 0)
+
+## 3. migrations 0001..0012 byte-identical to base; only 0013 new
+OK   src-tauri/migrations/0001_initial_schema.sql
+OK   src-tauri/migrations/0002_profile_details.sql
+OK   src-tauri/migrations/0003_personal_note.sql
+OK   src-tauri/migrations/0004_app_metadata.sql
+OK   src-tauri/migrations/0005_flight_log.sql
+OK   src-tauri/migrations/0006_pilot_toolkit.sql
+OK   src-tauri/migrations/0007_ai_study.sql
+OK   src-tauri/migrations/0008_notes.sql
+OK   src-tauri/migrations/0009_practice_tests.sql
+OK   src-tauri/migrations/0010_debrief_links.sql
+OK   src-tauri/migrations/0011_practice_sessions.sql
+OK   src-tauri/migrations/0012_card_reviews.sql
+0001-0012 differing vs base: 0
+new migration files vs base:
+  ?? src-tauri/migrations/0013_split_source_lineage.sql
+
+## 4. shipped 0013 == round-5 candidate DDL (byte-identical)
+candidate: 4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106
+shipped:   4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106
+RESULT: 0013 byte-identical to round-5 candidate
+
+## 5. git state (worktree untouched)
+HEAD=2a6a41536b676559db94b476c71dd645af03fbab
+staged_count=0
+tracked_modified_count=20
+  M STATUS.md
+  M docs/PROJECT_HANDOFF.md
+  M src-tauri/src/backup.rs
+  M src-tauri/src/card_reviews_tests.rs
+  M src-tauri/src/documents.rs
+  M src-tauri/src/lib.rs
+  M src-tauri/src/pdf.rs
+  M src/acceptance/m1Upgrade.acceptance.test.ts
+  M src/data/cardReviewContract.test.ts
+  M src/data/db.ts
+  M src/data/migration-checksums.json
+  M src/data/migrations.ts
+  M src/data/practiceStateValidation.ts
+  M src/data/repositories/documentRepository.ts
+  M src/data/tauriDb.ts
+  M src/domain/types.ts
+  M src/pages/StudyLibrary/ManualSplitDialog.tsx
+  M src/pages/StudyLibrary/MaterialDetail.tsx
+  M src/pages/StudyLibrary/SplitPdfDialog.tsx
+  M src/services/pdf.ts
+
+## 6. registry / schema version facts
+  checksums: 14:  "0013_split_source_lineage.sql": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106"
+  migrations.ts: 41:  { version: 13, description: "split_source_lineage", sql: splitSourceLineage },
+  lib.rs: 28:pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 13;

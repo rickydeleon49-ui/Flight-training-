@@ -1,0 +1,56 @@
+Mutant: MUTANT-10-RECEIPT-HASH-SKIPPED
+Description: Receipt canonical hash verification skipped against operation log (SL-R10.2)
+Target: lineageContract
+Baseline SHA256: b584035b1daeb387efc0f3d47fbd2105111ed3c3a098851acff4930fcf032b9d
+Mutated SHA256: 380bb0e9e3850a9acc67302ce91d5f782cb9fc34176d32ceb18657f7fab127f2
+Exit Code: 1
+Expected Failure Substring: "Receipt hash mismatch or unrecorded receipt"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.709375ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.113875ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.064625ms)
+✔ Contract 4: Multi-level Nested Hierarchy (3+ levels) (0.071833ms)
+✔ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.452667ms)
+✔ Contract 6: Two-Tier Veracity Verification from Real Files (5.175334ms)
+✔ Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity (4.993167ms)
+✔ Contract 8: Legacy NULL Parent Hash is Handled as Unknown (4.585208ms)
+✔ Contract 9: Unknown Parent Editions Are Not Grouped as Siblings (4.598ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.775542ms)
+✖ Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure (5.44325ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.727875ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.28525ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.791125ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.0565ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.030333ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.322125ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation (5.443625ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 146.064166
+
+✖ failing tests:
+
+test at proof.test.mjs:586:1
+✖ Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure (5.44325ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/proof.test.mjs:622:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Receipt hash mismatch or unrecorded receipt/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
