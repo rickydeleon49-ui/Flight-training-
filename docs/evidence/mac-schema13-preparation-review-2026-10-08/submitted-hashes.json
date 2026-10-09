@@ -1,0 +1,14 @@
+{
+  "STATUS.md": "e120a841b2e3596e12ba42fbab5a7179b13560438f1a4de6721ca9dcffb9af48",
+  "docs/PROJECT_HANDOFF.md": "e4bb6c15ce29838831d19e5f49f70990cc4ff10ff1b164bf1163bb1ebecf3f5a",
+  "docs/MAC_SCHEMA13_VERIFICATION_2026-10-08.md": "6039455f0abcefc92d6e6701b11c83c714ebd10367bb84eefc26e559f35b11ca",
+  "docs/evidence/mac-schema13-verification-2026-10-08/README.md": "68d16375cd43a05e10e7319f4e235a203b7f100b4ba3d19a869d48f25a09540a",
+  "docs/evidence/mac-schema13-verification-2026-10-08/RUNBOOK-G1-G3.md": "d9b8359b187e87ea95980ebabd955ff450b69e279c28ca2236787364ef66ddbd",
+  "docs/evidence/mac-schema13-verification-2026-10-08/SHA256SUMS": "0ac0f2f3568c23524b72ea4a5cf74c0e44b4a1c1fb7c32971006c32f9e18ee74",
+  "docs/evidence/mac-schema13-verification-2026-10-08/receipts/build-new-schema13.log": "40b63b032eed68a1bb2bd337cad92b1f19a2ce9018abf8941883224961b08abf",
+  "docs/evidence/mac-schema13-verification-2026-10-08/receipts/build-old-schema12.log": "a222539f2ea14d6e0e7fa4099ed5a0b8e884cb134079d05cae8b9e37c813cd57",
+  "docs/evidence/mac-schema13-verification-2026-10-08/receipts/candidate-identity.txt": "83e6c336005dbdb7fc70940041e60b6fdeb0528b52369fb5dec5949d6273a61a",
+  "docs/evidence/mac-schema13-verification-2026-10-08/receipts/prerequisite-audit.txt": "e5027809489dda05cf97d515cb4288a6413c70acf4f3d434f06d793bb44b1cc3",
+  "docs/evidence/mac-schema13-verification-2026-10-08/receipts/readiness-preflight.json": "0db00a8b71e71d15768352f41b2e122cbfbbf6ad03dce86ac1fc55242c57a454",
+  "docs/evidence/mac-schema13-verification-2026-10-08/receipts/readiness-preflight.txt": "4423f0d37dfa470f04dbd0b2f21056f735ad166d4d78852f483a9d23eedb5332"
+}

@@ -1,0 +1,4 @@
+ M STATUS.md
+ M docs/PROJECT_HANDOFF.md
+?? docs/MAC_SCHEMA13_VERIFICATION_2026-10-08.md
+?? docs/evidence/mac-schema13-verification-2026-10-08/

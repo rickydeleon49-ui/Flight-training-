@@ -1,0 +1,56 @@
+[
+  {
+    "dmg": "NEW-schema13-36a7b39.dmg",
+    "dmg_sha256": "6aecab8608224f9e3f272dff1b8ace4f23d699566329ef1d24e5ab95bb1b0c99",
+    "exe_sha256": "9c7056c3435b526eff8281d9dbb14daf570983024116a368d6d9d81b61022a2b",
+    "checks": [
+      {
+        "check": "exe-verify",
+        "exit": 1,
+        "output": "/tmp/mac-schema13-review/NEW-schema13-36a7b39/Her Flight Deck.app/Contents/MacOS/her-flight-deck: code has no resources but signature indicates they must be present\n"
+      },
+      {
+        "check": "bundle-verify",
+        "exit": 1,
+        "output": "/tmp/mac-schema13-review/NEW-schema13-36a7b39/Her Flight Deck.app: code has no resources but signature indicates they must be present\n"
+      },
+      {
+        "check": "signature",
+        "exit": 0,
+        "output": "Executable=/private/tmp/mac-schema13-review/NEW-schema13-36a7b39/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=her_flight_deck-ab230c473fe96d5f\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20400 size=65704 flags=0x20002(adhoc,linker-signed) hashes=2049+0 location=embedded\nVersionPlatform=1\nVersionMin=786432\nVersionSDK=1705216\nHash type=sha256 size=32\nCandidateCDHash sha256=1f2ce81c06149f6302ecdc658a876bd463a023d3\nCandidateCDHashFull sha256=1f2ce81c06149f6302ecdc658a876bd463a023d3612ae6e7166c5ad42ce535c6\nHash choices=sha256\nCMSDigest=1f2ce81c06149f6302ecdc658a876bd463a023d3612ae6e7166c5ad42ce535c6\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=8077312\nExecutable Segment flags=0x1\nPage size=4096\nCDHash=1f2ce81c06149f6302ecdc658a876bd463a023d3\nSignature=adhoc\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\nInternal requirements=none\n"
+      },
+      {
+        "check": "arch",
+        "exit": 0,
+        "output": "arm64\n"
+      }
+    ]
+  },
+  {
+    "dmg": "OLD-schema12-2a6a415.dmg",
+    "dmg_sha256": "455eb12d3f906fd60cef529e2aca464c98ae81e36e48c62d8afd73a092681fcd",
+    "exe_sha256": "efc33cb8fa5e7f1916cda3ca957fca80e328030361fc0e714bdb8333a7d72527",
+    "checks": [
+      {
+        "check": "exe-verify",
+        "exit": 1,
+        "output": "/tmp/mac-schema13-review/OLD-schema12-2a6a415/Her Flight Deck.app/Contents/MacOS/her-flight-deck: code has no resources but signature indicates they must be present\n"
+      },
+      {
+        "check": "bundle-verify",
+        "exit": 1,
+        "output": "/tmp/mac-schema13-review/OLD-schema12-2a6a415/Her Flight Deck.app: code has no resources but signature indicates they must be present\n"
+      },
+      {
+        "check": "signature",
+        "exit": 0,
+        "output": "Executable=/private/tmp/mac-schema13-review/OLD-schema12-2a6a415/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=her_flight_deck-ab230c473fe96d5f\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20400 size=64552 flags=0x20002(adhoc,linker-signed) hashes=2013+0 location=embedded\nVersionPlatform=1\nVersionMin=786432\nVersionSDK=1705216\nHash type=sha256 size=32\nCandidateCDHash sha256=c879646358bc66e08f858f5bcff502a5e4edf3f0\nCandidateCDHashFull sha256=c879646358bc66e08f858f5bcff502a5e4edf3f04d0d4d3ae1a606b13022bc53\nHash choices=sha256\nCMSDigest=c879646358bc66e08f858f5bcff502a5e4edf3f04d0d4d3ae1a606b13022bc53\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=7946240\nExecutable Segment flags=0x1\nPage size=4096\nCDHash=c879646358bc66e08f858f5bcff502a5e4edf3f0\nSignature=adhoc\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\nInternal requirements=none\n"
+      },
+      {
+        "check": "arch",
+        "exit": 0,
+        "output": "arm64\n"
+      }
+    ]
+  }
+]
