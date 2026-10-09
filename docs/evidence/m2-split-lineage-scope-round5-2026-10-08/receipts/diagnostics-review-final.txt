@@ -1,0 +1,18 @@
+(node:15678) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ control: nested receipt save derives R120–140 and records the parent hash of the bytes split (6.470208ms)
+✔ control: an edited receipt and a drifted nested snapshot are both refused (5.330208ms)
+✔ control: receipt replay after commit returns the persisted parts (4.874584ms)
+✔ control: cancelling a pending operation deletes its recorded staged file and blocks its save (4.994583ms)
+✔ [SL-R12] a nested part records the immediate parent (not the root) in its parent tier (5.027959ms)
+✔ [SL-R12] re-issuing an identical receipt never resets a committed operation (4.6715ms)
+✔ [SL-R12] re-issuing an identical receipt never revives a cancelled operation (4.887125ms)
+✔ [SL-R13] cancellation deletes only files recorded by the operation, never caller-listed paths (0.249708ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 125.6005

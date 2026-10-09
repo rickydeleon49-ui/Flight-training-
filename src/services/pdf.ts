@@ -9,17 +9,15 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import { isTauri } from "@/data";
-import { DesktopOnlyError, type ImportedDocument } from "./documents";
+import { isSplitSourceReceipt, SplitResultShapeError } from "@/data/splitLineageShapes";
+import type { SplitSourceReceipt } from "@/domain/types";
+
+import { DesktopOnlyError } from "./documents";
 
 export interface PdfOutline {
   pages: number;
   /** The most pages one split may take, so the form can say so. */
   maxPagesPerSplit: number;
-}
-
-export interface PdfPart extends ImportedDocument {
-  firstPage: number;
-  lastPage: number;
 }
 
 export const canSplitPdfs = (): boolean => isTauri();
@@ -31,30 +29,45 @@ export async function inspectPdf(relativePath: string): Promise<PdfOutline> {
 }
 
 /**
- * Save pages `firstPage`–`lastPage` as a new document in private storage.
+ * Save pages `firstPage`–`lastPage` of `sourceMaterialId`'s PDF as a new
+ * document in private storage.
  *
  * `materialId` is the id the new study material will be created with, so the
- * stored file cannot collide with anything already in the library.
+ * stored file cannot collide with anything already in the library. Nothing is
+ * in the library yet: the returned receipt records exactly what was split and
+ * is handed back unchanged to `documents.saveSplitBatch` (or cancelled).
  */
-export async function splitPdf(request: {
-  relativePath: string;
-  materialId: string;
-  firstPage: number;
-  lastPage: number;
-  fileName: string;
-}): Promise<ImportedDocument> {
+export async function splitPdf(
+  request: {
+    relativePath: string;
+    materialId: string;
+    firstPage: number;
+    lastPage: number;
+    fileName: string;
+    sourceMaterialId: string;
+  },
+  call: (command: string, args: Record<string, unknown>) => Promise<unknown> = invoke,
+): Promise<SplitSourceReceipt> {
   if (!isTauri()) throw new DesktopOnlyError();
-  return invoke<ImportedDocument>("split_pdf", request);
+  const receipt = await call("split_pdf", request);
+  if (!isSplitSourceReceipt(receipt)) throw new SplitResultShapeError("split_pdf");
+  return receipt;
 }
 
 /** Create consecutive, study-sized parts while preserving the source PDF. */
-export async function splitPdfAutomatically(request: {
-  relativePath: string;
-  batchId: string;
-  fileName: string;
-}): Promise<PdfPart[]> {
+export async function splitPdfAutomatically(
+  request: {
+    relativePath: string;
+    batchId: string;
+    fileName: string;
+    sourceMaterialId: string;
+  },
+  call: (command: string, args: Record<string, unknown>) => Promise<unknown> = invoke,
+): Promise<SplitSourceReceipt> {
   if (!isTauri()) throw new DesktopOnlyError();
-  return invoke<PdfPart[]>("split_pdf_automatically", request);
+  const receipt = await call("split_pdf_automatically", request);
+  if (!isSplitSourceReceipt(receipt)) throw new SplitResultShapeError("split_pdf_automatically");
+  return receipt;
 }
 
 /**

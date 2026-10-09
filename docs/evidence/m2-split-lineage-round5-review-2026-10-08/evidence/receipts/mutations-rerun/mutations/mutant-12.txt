@@ -1,0 +1,177 @@
+Mutant: MUTANT-12-OPERATION-LOG-IN-HELPER
+Description: Operation log table created prematurely in test helper instead of candidate DDL (SL-R11.1)
+Target: lineageContract
+Baseline SHA256: dd1c95bffca08174b49a455311378bd5bee23c5b132cb2765cfee29e7eec772e
+Mutated SHA256: ab0857c484620c2b753418d8849c7fb8bb8ffacafe50c32d1184229f3ac95656
+Exit Code: 1
+Expected Test Substring: "Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline"
+Expected Failure Substring: "split_operation_log must not exist in shipped migrations 0001–0012"
+
+=== Raw TAP Test Execution Output ===
+TAP version 13
+# (node:16361) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+ok 1 - Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+  ---
+  duration_ms: 1.051209
+  type: 'test'
+  ...
+# Subtest: Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options
+ok 2 - Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options
+  ---
+  duration_ms: 0.201208
+  type: 'test'
+  ...
+# Subtest: Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+ok 3 - Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+  ---
+  duration_ms: 0.115416
+  type: 'test'
+  ...
+# Subtest: Contract 4: Multi-level Nested Hierarchy (3+ levels)
+ok 4 - Contract 4: Multi-level Nested Hierarchy (3+ levels)
+  ---
+  duration_ms: 0.094208
+  type: 'test'
+  ...
+# Subtest: Contract 5: Structural Tiers and Strict DDL CHECK Constraints
+ok 5 - Contract 5: Structural Tiers and Strict DDL CHECK Constraints
+  ---
+  duration_ms: 5.835709
+  type: 'test'
+  ...
+# Subtest: Contract 6: Two-Tier Veracity Verification from Real Files
+ok 6 - Contract 6: Two-Tier Veracity Verification from Real Files
+  ---
+  duration_ms: 6.424167
+  type: 'test'
+  ...
+# Subtest: Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity
+ok 7 - Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity
+  ---
+  duration_ms: 4.844292
+  type: 'test'
+  ...
+# Subtest: Contract 8: Legacy NULL Parent Hash is Handled as Unknown
+ok 8 - Contract 8: Legacy NULL Parent Hash is Handled as Unknown
+  ---
+  duration_ms: 4.793167
+  type: 'test'
+  ...
+# Subtest: Contract 9: Unknown Parent Editions Are Not Grouped as Siblings
+ok 9 - Contract 9: Unknown Parent Editions Are Not Grouped as Siblings
+  ---
+  duration_ms: 4.62825
+  type: 'test'
+  ...
+# Subtest: Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+ok 10 - Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+  ---
+  duration_ms: 4.78225
+  type: 'test'
+  ...
+# Subtest: Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure
+ok 11 - Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure
+  ---
+  duration_ms: 6.767083
+  type: 'test'
+  ...
+# Subtest: Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+ok 12 - Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+  ---
+  duration_ms: 4.943042
+  type: 'test'
+  ...
+# Subtest: Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+not ok 13 - Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+  ---
+  duration_ms: 5.119291
+  type: 'test'
+  location: '/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-wEokqB/pack/proof/proof.test.mjs:751:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    split_operation_log must not exist in shipped migrations 0001–0012
+    + actual - expected
+    
+    + [Object: null prototype] {
+    +   name: 'split_operation_log'
+    + }
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+    name: 'split_operation_log'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-wEokqB/pack/proof/proof.test.mjs:759:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation
+not ok 14 - Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation
+  ---
+  duration_ms: 5.6465
+  type: 'test'
+  location: '/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-wEokqB/pack/proof/proof.test.mjs:787:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    source_material_id must become NULL via ON DELETE SET NULL
+    + actual - expected
+    
+    + 'parent-doc'
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 'parent-doc'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-wEokqB/pack/proof/proof.test.mjs:923:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+ok 15 - Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+  ---
+  duration_ms: 0.04725
+  type: 'test'
+  ...
+# Subtest: Contract 16: Explicit Page Bounds and Storage Limit Specification
+ok 16 - Contract 16: Explicit Page Bounds and Storage Limit Specification
+  ---
+  duration_ms: 0.031042
+  type: 'test'
+  ...
+# Subtest: Contract 17: Concurrent Staged Operations and Cleanup Isolation
+ok 17 - Contract 17: Concurrent Staged Operations and Cleanup Isolation
+  ---
+  duration_ms: 5.800417
+  type: 'test'
+  ...
+# Subtest: Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation
+ok 18 - Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation
+  ---
+  duration_ms: 5.955459
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 16
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 131.192083
+

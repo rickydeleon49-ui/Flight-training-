@@ -1,0 +1,66 @@
+Mutant: MUTANT-3-TYPEOF-CHECKS
+Description: Removal of TYPEOF integer checks across candidate DDL (reverting to loose SQLite affinity)
+Target: candidateDdl
+Baseline SHA256: a60c9622b5c6792745d5beb2907614c80f4ea9267651575efb813f8384726b0c
+Mutated SHA256: 9f7378faa53120745f3fb62ef8e08b2cf931032abfe4c3a847f6d660eb423429
+Exit Code: 1
+Expected Failure Substring: "Fractional physical page bounds must fail TYPEOF constraint"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.701042ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.117125ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.064833ms)
+✔ Contract 4: Multi-level Nested Hierarchy (3+ levels) (0.068041ms)
+✖ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.526667ms)
+✔ Contract 6: Two-Tier Veracity Verification from Real Files (5.646708ms)
+✔ Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity (4.721792ms)
+✔ Contract 8: Legacy NULL Parent Hash is Handled as Unknown (4.722458ms)
+✔ Contract 9: Unknown Parent Editions Are Not Grouped as Siblings (4.448625ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.390875ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure (5.493958ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.739417ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.279958ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.704667ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.047625ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.029125ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.258666ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation (5.479792ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 145.034792
+
+✖ failing tests:
+
+test at proof.test.mjs:129:1
+✖ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.526667ms)
+  AssertionError [ERR_ASSERTION]: Fractional physical page bounds must fail TYPEOF constraint
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/proof.test.mjs:223:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: FOREIGN KEY constraint failed
+        at insertSplitLineage (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/lineageContract.mjs:306:8)
+        at file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/proof.test.mjs:224:7
+        at getActual (node:assert:580:5)
+        at strict.throws (node:assert:728:24)
+        at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/proof.test.mjs:223:12)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: /CHECK constraint failed/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+

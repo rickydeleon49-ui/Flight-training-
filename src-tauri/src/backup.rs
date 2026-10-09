@@ -639,6 +639,141 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 12 {
         verify_schema_12_card_semantics(connection)?;
     }
+    if newest_migration >= 13 {
+        verify_schema_13_lineage_semantics(connection)?;
+    }
+    Ok(())
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 13: split lineage (TS twin: `validateSplitLineageState`)     */
+/* ------------------------------------------------------------------ */
+
+const LINEAGE_TABLES: [&str; 2] = ["material_split_lineage", "split_operation_log"];
+const LINEAGE_INDEXES: [(&str, &str); 4] = [
+    ("material_split_lineage", "idx_split_lineage_parent"),
+    ("material_split_lineage", "idx_split_lineage_root"),
+    ("split_operation_log", "idx_split_operation_source"),
+    ("split_operation_log", "idx_split_operation_status"),
+];
+
+/// The split-lineage contract a restored or opened database must meet: the
+/// tables exactly as migration 0013 defines them, its indexes, well-formed
+/// fingerprints, and split records whose hash is the hash of their receipt.
+pub(crate) fn verify_schema_13_lineage_semantics(connection: &Connection) -> Result<(), String> {
+    use crate::card_reviews::{is_lower_hex_64, sha256_hex};
+    let count = |sql: &str, params: &[&dyn rusqlite::ToSql]| -> Result<i64, String> {
+        connection
+            .query_row(sql, params, |r| r.get(0))
+            .map_err(|e| format!("Could not check split lineage: {e}"))
+    };
+    let reference = get_reference_schema_connection()?;
+    for table in LINEAGE_TABLES {
+        if count(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )? != 1
+        {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        let columns = |c: &Connection| -> Result<Vec<(String, String, i64, i64)>, String> {
+            let mut statement = c
+                .prepare(&format!(
+                    "SELECT name, type, [notnull], pk FROM pragma_table_info('{table}') ORDER BY name"
+                ))
+                .map_err(|e| format!("Could not inspect {table}: {e}"))?;
+            let rows = statement
+                .query_map([], |r| {
+                    Ok((
+                        r.get::<_, String>(0)?,
+                        r.get::<_, String>(1)?.to_ascii_lowercase(),
+                        r.get(2)?,
+                        r.get(3)?,
+                    ))
+                })
+                .map_err(|e| format!("Could not inspect {table}: {e}"))?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Could not inspect {table}: {e}"));
+            rows
+        };
+        if columns(connection)? != columns(&reference)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+    }
+    for (table, index) in LINEAGE_INDEXES {
+        if count(
+            &format!("SELECT COUNT(*) FROM pragma_index_list('{table}') WHERE name = ?1"),
+            &[&index],
+        )? == 0
+        {
+            return Err(format!("The database is missing required index: {index}"));
+        }
+    }
+
+    let mut statement = connection
+        .prepare(
+            "SELECT material_id, source_content_sha256, parent_content_sha256
+               FROM material_split_lineage",
+        )
+        .map_err(|e| format!("Could not check split lineage: {e}"))?;
+    let rows = statement
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, Option<String>>(1)?,
+                r.get::<_, Option<String>>(2)?,
+            ))
+        })
+        .map_err(|e| format!("Could not check split lineage: {e}"))?;
+    for row in rows {
+        let (material, root, parent) =
+            row.map_err(|e| format!("Could not check split lineage: {e}"))?;
+        for hash in [root, parent].into_iter().flatten() {
+            if !is_lower_hex_64(&hash) {
+                return Err(format!(
+                    "Split part {material} has a malformed source fingerprint."
+                ));
+            }
+        }
+    }
+
+    let mut statement = connection
+        .prepare(
+            "SELECT operation_id, receipt_hash, receipt_canonical_json FROM split_operation_log",
+        )
+        .map_err(|e| format!("Could not check split records: {e}"))?;
+    let rows = statement
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+            ))
+        })
+        .map_err(|e| format!("Could not check split records: {e}"))?;
+    for row in rows {
+        let (operation, hash, canonical) =
+            row.map_err(|e| format!("Could not check split records: {e}"))?;
+        if !is_lower_hex_64(&hash) || operation != hash || sha256_hex(&canonical) != hash {
+            return Err(format!(
+                "Split record {operation} does not match its receipt."
+            ));
+        }
+    }
     Ok(())
 }
 

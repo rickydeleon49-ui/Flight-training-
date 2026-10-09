@@ -1,0 +1,80 @@
+Mutant: MUTANT-1-RANGE-COMPOSE
+Description: Off-by-one arithmetic in composeNestedRanges (omitting - 1)
+Target: lineageContract
+Baseline SHA256: b6d0f6eade61a740fd809f2072c821733f427f875b180693fb618c03e77c8cf4
+Mutated SHA256: 56b7cf99397bfae2b0c3e9465bc6ba3f140bcbc822fdbdc7071fdb4f9354529e
+Exit Code: 1
+Expected Failure Substring: "Composed R start mismatch"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.700625ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.107666ms)
+✖ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.341833ms)
+✖ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.084333ms)
+✔ Contract 5: SHA-256 Content Hashing Determinism (0.1795ms)
+✔ Contract 6: Candidate DDL Constraints Enforce Child Identity, Bounds & Structural Tiers (5.141417ms)
+✔ Contract 7: Cycle Prevention Refuses Self-Parenting and Self-Root (4.462708ms)
+✔ Contract 8: Source Version Evaluation through Model Boundary (Two-Tier Structural Classification) (4.677792ms)
+✔ Contract 9: Sibling Navigation Isolates Parts Across Parent Document Editions (4.737583ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.425375ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Source, Requires Receipt, and Rolls Back on Failure (5.389958ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.487333ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (3.973625ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.930209ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.04675ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.03075ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (4.921417ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Cancellation (4.562875ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 16
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 136.3295
+
+✖ failing tests:
+
+test at proof.test.mjs:91:1
+✖ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.341833ms)
+  AssertionError [ERR_ASSERTION]: Composed R start mismatch: expected 120
+  
+  121 !== 120
+  
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:94:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 121,
+    expected: 120,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at proof.test.mjs:107:1
+✖ Contract 4: Multi-Level Transitive Nested Composition (3-Level) (0.084333ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  161 !== 159
+  
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr9-mutations-KdoQeI/pack/proof/proof.test.mjs:116:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 161,
+    expected: 159,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+

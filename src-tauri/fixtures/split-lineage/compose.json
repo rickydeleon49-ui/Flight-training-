@@ -1,0 +1,12 @@
+{
+  "note": "Shared by src-tauri/src/lineage_tests.rs and src/logic/splitLineage.test.ts. A part covering original pages `parent` is split again at its own pages `selection`; `expected` is the new part's pages in the original.",
+  "cases": [
+    { "name": "canonical example", "parent": { "start": 101, "end": 300 }, "selection": { "start": 20, "end": 40 }, "expected": { "start": 120, "end": 140, "childPageCount": 21 } },
+    { "name": "first page only", "parent": { "start": 101, "end": 300 }, "selection": { "start": 1, "end": 1 }, "expected": { "start": 101, "end": 101, "childPageCount": 1 } },
+    { "name": "last page only", "parent": { "start": 101, "end": 300 }, "selection": { "start": 200, "end": 200 }, "expected": { "start": 300, "end": 300, "childPageCount": 1 } },
+    { "name": "the whole parent", "parent": { "start": 1, "end": 50 }, "selection": { "start": 1, "end": 50 }, "expected": { "start": 1, "end": 50, "childPageCount": 50 } },
+    { "name": "one past the parent", "parent": { "start": 101, "end": 300 }, "selection": { "start": 190, "end": 201 }, "expected": null },
+    { "name": "page zero", "parent": { "start": 101, "end": 300 }, "selection": { "start": 0, "end": 5 }, "expected": null },
+    { "name": "reversed", "parent": { "start": 101, "end": 300 }, "selection": { "start": 40, "end": 20 }, "expected": null }
+  ]
+}

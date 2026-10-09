@@ -1,0 +1,38 @@
+
+running 1 test
+test lineage::tests::an_edited_or_unrecorded_receipt_saves_nothing ... FAILED
+
+failures:
+
+---- lineage::tests::an_edited_or_unrecorded_receipt_saves_nothing stdout ----
+
+thread 'lineage::tests::an_edited_or_unrecorded_receipt_saves_nothing' (323714) panicked at src/lineage_tests.rs:401:5:
+This split was cancelled or saved elsewhere, so nothing was saved.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    lineage::tests::an_edited_or_unrecorded_receipt_saves_nothing
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 449 filtered out; finished in 0.06s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sl-sens/copy/src-tauri)
+warning: unused variable: `recorded_source`
+   --> src/lineage.rs:555:15
+    |
+555 |     let Some((recorded_source, recorded_hash, status)) = recorded else {
+    |               ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_recorded_source`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `recorded_hash`
+   --> src/lineage.rs:555:32
+    |
+555 |     let Some((recorded_source, recorded_hash, status)) = recorded else {
+    |                                ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_recorded_hash`
+
+warning: `her-flight-deck` (lib test) generated 2 warnings (2 duplicates)
+warning: `her-flight-deck` (lib) generated 2 warnings (run `cargo fix --lib -p her-flight-deck` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.18s
+     Running unittests src/lib.rs (/Users/rickymac/code/Flight-training-split-lineage-implementation/src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`

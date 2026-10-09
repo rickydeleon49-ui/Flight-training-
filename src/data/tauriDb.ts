@@ -6,8 +6,25 @@
  */
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
-import type { PracticeSessionAction, PracticeSessionActionResult, StudyMaterial } from "@/domain/types";
+import type {
+  PracticeSessionAction,
+  PracticeSessionActionResult,
+  SplitBatchCancelResult,
+  SplitBatchReconciliation,
+  SplitBatchSaveResult,
+  SplitPartPresentation,
+  SplitSourceReceipt,
+  StoredDocumentFingerprint,
+  StudyMaterial,
+} from "@/domain/types";
 
+import {
+  isFingerprintList,
+  isSplitBatchCancelResult,
+  isSplitBatchReconciliation,
+  isSplitBatchSaveResult,
+  SplitResultShapeError,
+} from "./splitLineageShapes";
 import {
   toNumberedPlaceholders,
   type NativeImportSaveResult,
@@ -351,6 +368,51 @@ function isNativeCardLibraryErrorCode(value: unknown): value is CardLibraryError
   return typeof value === "string" && (NATIVE_CARD_LIBRARY_CODES as readonly string[]).includes(value);
 }
 
+/* ------------------------- split lineage (M2) ------------------------- */
+
+type Invoke = (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+const callNative: Invoke = (command, args) => invoke(command, args);
+
+/** Save a recorded split's parts; the receipt goes back exactly as issued. */
+export async function invokeSaveSplitBatch(
+  receipt: SplitSourceReceipt,
+  presentation: SplitPartPresentation[],
+  call: Invoke = callNative,
+): Promise<SplitBatchSaveResult> {
+  const result = await call("save_split_batch", { receipt, presentation });
+  if (!isSplitBatchSaveResult(result)) throw new SplitResultShapeError("save_split_batch");
+  return result;
+}
+
+export async function invokeCancelSplitBatch(
+  operationId: string,
+  call: Invoke = callNative,
+): Promise<SplitBatchCancelResult> {
+  const result = await call("cancel_split_batch", { operationId });
+  if (!isSplitBatchCancelResult(result)) throw new SplitResultShapeError("cancel_split_batch");
+  return result;
+}
+
+export async function invokeReconcileSplitBatch(
+  operationId: string,
+  call: Invoke = callNative,
+): Promise<SplitBatchReconciliation> {
+  const result = await call("reconcile_split_batch", { operationId });
+  if (!isSplitBatchReconciliation(result)) throw new SplitResultShapeError("reconcile_split_batch");
+  return result;
+}
+
+export async function invokeFingerprintStoredDocuments(
+  relativePaths: string[],
+  call: Invoke = callNative,
+): Promise<StoredDocumentFingerprint[]> {
+  const result = await call("fingerprint_stored_documents", { relativePaths });
+  if (!isFingerprintList(result, relativePaths)) {
+    throw new SplitResultShapeError("fingerprint_stored_documents");
+  }
+  return result;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
@@ -422,6 +484,10 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     async saveMaterialsAtomically(materials: StudyMaterial[]): Promise<void> {
       await invoke("save_split_materials", { materials });
     },
+    saveSplitBatch: (receipt, presentation) => invokeSaveSplitBatch(receipt, presentation),
+    cancelSplitBatch: (operationId) => invokeCancelSplitBatch(operationId),
+    reconcileSplitBatch: (operationId) => invokeReconcileSplitBatch(operationId),
+    fingerprintStoredDocuments: (relativePaths) => invokeFingerprintStoredDocuments(relativePaths),
     async saveDebriefAtomically(operation: import("./db").DebriefSaveOperation): Promise<void> {
       await invoke("save_debrief_operation", { operation });
     },

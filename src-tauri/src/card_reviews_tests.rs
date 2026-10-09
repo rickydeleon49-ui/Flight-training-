@@ -1063,7 +1063,7 @@ fn natively_written_card_history_passes_whole_application_validation() {
 }
 
 #[test]
-fn a_schema_11_database_validates_and_a_schema_13_database_is_refused() {
+fn a_schema_11_database_validates_and_a_newer_database_is_refused() {
     let dir = TempDir::new("ceiling");
     let path = dir.path().join("eleven.db");
     let conn = Connection::open(&path).unwrap();
@@ -1083,8 +1083,21 @@ fn a_schema_11_database_validates_and_a_schema_13_database_is_refused() {
     conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (12)", [])
         .unwrap();
     crate::backup::verify_application_connection(&conn).unwrap();
-    conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (13)", [])
+    // And so does every later shipped migration, up to the current schema.
+    for m in crate::migrations().into_iter().filter(|m| m.version > 12) {
+        conn.execute_batch(m.sql).unwrap();
+        conn.execute(
+            "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+            [m.version],
+        )
         .unwrap();
+        crate::backup::verify_application_connection(&conn).unwrap();
+    }
+    conn.execute(
+        "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+        [crate::CURRENT_SCHEMA_VERSION + 1],
+    )
+    .unwrap();
     let error = crate::backup::verify_application_connection(&conn).unwrap_err();
     assert!(error.contains("newer database format"), "{error}");
 }

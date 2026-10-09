@@ -1,0 +1,21 @@
+(node:11080) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ control: verified direct save with matching bytes persists the verified hash (5.897416ms)
+✔ control: verified nested save derives canonical R120–140 from persisted A101–300 (4.666959ms)
+✔ [SL-R7] a new split without any verified source identity refuses all writes (4.190541ms)
+✔ [SL-R7] a caller hash cannot replace the hash of the bytes actually verified (direct) (4.505125ms)
+✔ [SL-R7] nested parts cannot override the persisted root hash or the verified parent hash (4.184375ms)
+✔ [SL-R7] a direct range is bounded by the authoritative source total, not an optional caller field (4.083ms)
+✔ [SL-R7] stale on-disk source: an old caller Buffer cannot prove the current file is unchanged (4.677167ms)
+✔ guard: after the historical root is deleted, the immediate parent is never recorded as the root (4.659458ms)
+✔ [SL-R8] a nested part with an unknown parent hash is not certified by matching root bytes (4.212625ms)
+✔ [SL-R8] unknown parent editions are not grouped as siblings through the root hash (4.206333ms)
+✔ [SL-R9] a mid-transaction failure runs this operation's cleanup exactly once (4.272041ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.998584

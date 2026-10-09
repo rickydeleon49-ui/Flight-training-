@@ -1,0 +1,1202 @@
+diff --git a/src-tauri/src/documents.rs b/src-tauri/src/documents.rs
+index e22a0d0..1a7c6a1 100644
+--- a/src-tauri/src/documents.rs
++++ b/src-tauri/src/documents.rs
+@@ -1340,35 +1340,87 @@ pub struct SplitMaterial {
+ #[tauri::command]
+ pub async fn save_split_materials(
+     app: AppHandle,
+-    materials: Vec<SplitMaterial>,
+-) -> Result<(), String> {
++    receipt: Option<crate::lineage::SplitSourceReceipt>,
++    tags: Option<Vec<String>>,
++    materials: Option<Vec<serde_json::Value>>,
++) -> Result<crate::lineage::SplitBatchSaveResult, String> {
++    if materials.is_some() {
++        return Err("Caller parts cannot accompany a SplitSourceReceipt.".to_string());
++    }
++    let receipt = receipt.ok_or_else(|| {
++        "A valid SplitSourceReceipt is required; unverified split refused.".to_string()
++    })?;
++    let tags = tags.unwrap_or_default();
+     let root = app_root(&app)?;
+-    tauri::async_runtime::spawn_blocking(move || save_split_materials_at(&root, &materials))
+-        .await
+-        .map_err(|error| format!("Could not finish saving PDF parts: {error}"))?
++    tauri::async_runtime::spawn_blocking(move || {
++        save_split_materials_at(&root, &receipt, &tags)
++    })
++    .await
++    .map_err(|error| format!("Could not finish saving PDF parts: {error}"))?
+ }
+ 
+-fn save_split_materials_at(root: &Path, materials: &[SplitMaterial]) -> Result<(), String> {
+-    if materials.is_empty() {
+-        return Ok(());
++#[tauri::command]
++pub async fn cancel_split_batch(
++    app: AppHandle,
++    operation_id: String,
++) -> Result<crate::lineage::SplitBatchCancelResult, String> {
++    let root = app_root(&app)?;
++    tauri::async_runtime::spawn_blocking(move || {
++        crate::lineage::cancel_split_batch_at(&root, &operation_id)
++    })
++    .await
++    .map_err(|error| format!("Could not cancel split batch: {error}"))?
++}
++
++#[tauri::command]
++pub async fn reconcile_split_batch(
++    app: AppHandle,
++    operation_id: String,
++) -> Result<crate::lineage::SplitBatchReconciliation, String> {
++    let root = app_root(&app)?;
++    tauri::async_runtime::spawn_blocking(move || {
++        crate::lineage::reconcile_split_batch_at(&root, &operation_id)
++    })
++    .await
++    .map_err(|error| format!("Could not reconcile split batch: {error}"))?
++}
++
++pub fn save_split_materials_at(
++    root: &Path,
++    receipt: &crate::lineage::SplitSourceReceipt,
++    tags: &[String],
++) -> Result<crate::lineage::SplitBatchSaveResult, String> {
++    if receipt.plan.is_empty() {
++        return Err("Split batch requires at least one part in receipt plan.".to_string());
+     }
+-    for material in materials {
+-        let path = material
+-            .file_path
+-            .as_deref()
+-            .ok_or_else(|| "A split part must have a stored PDF file.".to_string())?;
+-        let safe = safe_relative_path(path)?;
+-        let metadata = std::fs::metadata(root.join(DOCUMENTS_DIR).join(safe))
+-            .map_err(|_| format!("The PDF part is missing: {path}"))?;
+-        let bytes = metadata.len();
+-        if !metadata.is_file()
+-            || bytes == 0
+-            || bytes > crate::pdf::MAX_PDF_BYTES
+-            || material.file_size != Some(bytes as i64)
+-        {
+-            return Err(format!("The PDF part has an invalid size: {path}"));
+-        }
++    if receipt.plan.len() > crate::lineage::MAX_PARTS_PER_BATCH {
++        return Err(format!(
++            "Batch part count ({}) exceeds maximum limit ({}).",
++            receipt.plan.len(),
++            crate::lineage::MAX_PARTS_PER_BATCH
++        ));
+     }
++
++    // Step 1: Recompute receipt canonical hash and verify tamper-evidence (SL-R10 / SL-R12.3)
++    let receipt_core = serde_json::json!({
++        "isNested": receipt.is_nested,
++        "nestedLevel": receipt.nested_level,
++        "parentSnapshot": receipt.parent_snapshot,
++        "plan": receipt.plan,
++        "rootContentSha256": receipt.root_content_sha256,
++        "rootFileName": receipt.root_file_name,
++        "rootMaterialId": receipt.root_material_id,
++        "rootTitle": receipt.root_title,
++        "rootTotalPages": receipt.root_total_pages,
++        "sourceContentSha256": receipt.source_content_sha256,
++        "sourceFilePath": receipt.source_file_path,
++        "sourceFileSize": receipt.source_file_size,
++        "sourceMaterialId": receipt.source_material_id,
++        "sourceTotalPages": receipt.source_total_pages,
++    });
++    let computed_json = crate::lineage::canonical_json(&receipt_core);
++    let computed_hash = crate::lineage::calculate_sha256(computed_json.as_bytes());
++
+     let database = root.join("her-flight-deck.db");
+     if !database.is_file() {
+         return Err("The library database is missing.".to_string());
+@@ -1381,49 +1433,414 @@ fn save_split_materials_at(root: &Path, materials: &[SplitMaterial]) -> Result<(
+     connection
+         .pragma_update(None, "foreign_keys", "ON")
+         .map_err(|error| format!("Could not protect library references: {error}"))?;
+-    let transaction = connection
+-        .transaction_with_behavior(TransactionBehavior::Immediate)
+-        .map_err(|error| format!("Could not start saving PDF parts: {error}"))?;
+-    for material in materials {
+-        transaction.execute(
+-            "INSERT INTO study_materials (id, title, material_type, topic, review_status, priority,
+-               goal_id, event_id, notes, file_path, original_file_name, file_size,
+-               created_at, updated_at, last_reviewed_at)
+-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+-            params![
+-                material.id, material.title, material.material_type, material.topic,
+-                material.review_status, material.priority, material.goal_id, material.event_id,
+-                material.notes, material.file_path, material.original_file_name, material.file_size,
+-                material.created_at, material.updated_at, material.last_reviewed_at,
+-            ],
+-        ).map_err(|error| format!("Could not save a PDF part: {error}"))?;
+-        for (index, raw) in material.tags.iter().enumerate() {
+-            let name = raw.trim();
+-            if name.is_empty() {
+-                continue;
++
++    // Step 2: Unconditional verification against split_operation_log (SL-R12.3)
++    let has_op_log: i64 = connection
++        .query_row(
++            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'split_operation_log'",
++            [],
++            |r| r.get(0),
++        )
++        .map_err(|e| format!("Could not inspect operation log schema: {e}"))?;
++    if has_op_log == 0 {
++        return Err("split_operation_log table does not exist; cannot verify receipt binding.".to_string());
++    }
++
++    let op_row: Option<(String, String, String)> = connection
++        .query_row(
++            "SELECT source_material_id, receipt_hash, status FROM split_operation_log WHERE operation_id = ?1",
++            params![&receipt.operation_id],
++            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
++        )
++        .ok();
++
++    let (op_source_id, op_receipt_hash, op_status) = match op_row {
++        Some(row) => row,
++        None => {
++            return Err("Receipt hash mismatch or unrecorded receipt: receipt has been tampered with or not issued by split engine".to_string());
++        }
++    };
++
++    if op_receipt_hash != computed_hash || op_source_id != receipt.source_material_id {
++        return Err("Receipt hash mismatch or unrecorded receipt: receipt has been tampered with or not issued by split engine".to_string());
++    }
++
++    if op_status == "cancelled" {
++        return Err("Cannot save a cancelled split operation".to_string());
++    }
++
++    if op_status == "committed" {
++        // Idempotent replay: return existing parts without modifying database
++        let mut existing_parts = Vec::new();
++        for part in &receipt.plan {
++            let mat_val = connection.query_row(
++                "SELECT id, title, file_path, file_size FROM study_materials WHERE id = ?1",
++                params![&part.id],
++                |r| Ok(serde_json::json!({
++                    "id": r.get::<_, String>(0)?,
++                    "title": r.get::<_, String>(1)?,
++                    "filePath": r.get::<_, Option<String>>(2)?,
++                    "fileSize": r.get::<_, Option<i64>>(3)?,
++                })),
++            ).ok();
++            if let Some(mv) = mat_val {
++                existing_parts.push(mv);
++            }
++        }
++        return Ok(crate::lineage::SplitBatchSaveResult {
++            batch_id: receipt.operation_id.clone(),
++            operation_id: receipt.operation_id.clone(),
++            count: existing_parts.len(),
++            saved_parts_count: existing_parts.len(),
++            parts: existing_parts,
++            idempotent_replay: true,
++        });
++    }
++
++    // Step 3: File-read boundary check (OUTSIDE transaction)
++    let source_disk_path = if Path::new(&receipt.source_file_path).is_absolute() {
++        PathBuf::from(&receipt.source_file_path)
++    } else {
++        let safe = safe_relative_path(&receipt.source_file_path)?;
++        root.join(DOCUMENTS_DIR).join(safe)
++    };
++
++    if !source_disk_path.is_file() {
++        return Err(format!(
++            "Source file is missing on disk for material {}",
++            receipt.source_material_id
++        ));
++    }
++
++    let disk_bytes = std::fs::read(&source_disk_path)
++        .map_err(|e| format!("Source file is unreadable: {e}"))?;
++    let disk_sha256 = crate::lineage::calculate_sha256(&disk_bytes);
++    if disk_sha256 != receipt.source_content_sha256 {
++        return Err("Stale on-disk source: current file on disk has changed and does not match receipt hash.".to_string());
++    }
++
++    // Verify each part in receipt.plan exists and has valid size
++    let doc_dir = root.join(DOCUMENTS_DIR);
++    for part in &receipt.plan {
++        if let Some(ref path) = part.file_path {
++            let full_part_path = if Path::new(path).is_absolute() {
++                PathBuf::from(path)
++            } else {
++                let safe = safe_relative_path(path)?;
++                doc_dir.join(safe)
++            };
++            let metadata = std::fs::metadata(&full_part_path)
++                .map_err(|_| format!("The PDF part is missing: {path}"))?;
++            let bytes = metadata.len();
++            if !metadata.is_file()
++                || bytes == 0
++                || bytes > crate::pdf::MAX_PDF_BYTES
++                || (part.file_size.is_some() && part.file_size != Some(bytes))
++            {
++                return Err(format!("The PDF part has an invalid size: {path}"));
+             }
++        }
++    }
++
++    // Step 4: Output identity collision check (SL-R11.2) before write
++    for part in &receipt.plan {
++        let exists: i64 = connection
++            .query_row(
++                "SELECT COUNT(*) FROM study_materials WHERE id = ?1",
++                params![&part.id],
++                |r| r.get(0),
++            )
++            .map_err(|e| format!("Could not check output identity collision: {e}"))?;
++        if exists > 0 {
++            return Err(format!(
++                "Planned output material ID already exists in library: {}",
++                part.id
++            ));
++        }
++    }
++
++    // Isolated cleanup closure: runs at most once, and only for this operation's staging files
++    let mut cleanup_invoked = false;
++    let mut do_cleanup = || {
++        if !cleanup_invoked {
++            cleanup_invoked = true;
++            for part in &receipt.plan {
++                if let Some(ref path) = part.file_path {
++                    let full_part_path = if Path::new(path).is_absolute() {
++                        PathBuf::from(path)
++                    } else if let Ok(safe) = safe_relative_path(path) {
++                        doc_dir.join(safe)
++                    } else {
++                        continue;
++                    };
++                    if full_part_path.is_file() {
++                        let _ = std::fs::remove_file(&full_part_path);
++                    }
++                }
++            }
++        }
++    };
++
++    // Step 5: Execute atomic transaction with BEGIN IMMEDIATE
++    let transaction = match connection.transaction_with_behavior(TransactionBehavior::Immediate) {
++        Ok(tx) => tx,
++        Err(e) => {
++            do_cleanup();
++            return Err(format!("Could not start saving PDF parts: {e}"));
++        }
++    };
++
++    let tx_res = (|| -> Result<Vec<serde_json::Value>, String> {
++        // In-transaction re-check: source material existence and path
++        let parent_mat_row: Option<(String, Option<String>, Option<String>)> = transaction
++            .query_row(
++                "SELECT title, topic, file_path FROM study_materials WHERE id = ?1",
++                params![&receipt.source_material_id],
++                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
++            )
++            .ok();
++
++        let (_parent_title, parent_topic, current_parent_file_path) = match parent_mat_row {
++            Some(row) => row,
++            None => {
++                return Err(format!(
++                    "Source material {} modified or removed concurrently",
++                    receipt.source_material_id
++                ));
++            }
++        };
++
++        if current_parent_file_path.as_deref() != Some(&receipt.source_file_path) {
++            return Err(format!(
++                "Source material {} modified or removed concurrently",
++                receipt.source_material_id
++            ));
++        }
++
++        // In-transaction re-check: nested parent lineage snapshot (SL-R10.4)
++        if receipt.is_nested {
++            let snap = match &receipt.parent_snapshot {
++                Some(s) => s,
++                None => return Err("Parent lineage record removed concurrently".to_string()),
++            };
++
++            type LineageSnapRow = (
++                Option<String>,
++                u32,
++                u32,
++                u32,
++                Option<String>,
++                Option<u32>,
++                u32,
++            );
++
++            let current_parent_lineage: Option<LineageSnapRow> = transaction
++                .query_row(
++                    "SELECT root_material_id, source_page_start, source_page_end, child_page_count,
++                            source_content_sha256, source_total_pages, nested_level
++                     FROM material_split_lineage WHERE material_id = ?1",
++                    params![&receipt.source_material_id],
++                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?, r.get(6)?)),
++                )
++                .ok();
++
++            let (
++                cur_root_id,
++                cur_src_start,
++                cur_src_end,
++                cur_child_count,
++                cur_src_sha,
++                cur_src_total,
++                cur_nested_level,
++            ) = match current_parent_lineage {
++                Some(r) => r,
++                None => return Err("Parent lineage record removed concurrently".to_string()),
++            };
++
++            let cur_root_id_str = cur_root_id.unwrap_or_else(|| receipt.source_material_id.clone());
++            if cur_root_id_str != snap.root_material_id
++                || cur_src_sha != snap.root_content_sha256
++                || cur_src_start != snap.parent_root_page_start
++                || cur_src_end != snap.parent_root_page_end
++                || cur_src_total != snap.root_total_pages
++                || cur_child_count != snap.parent_total_pages
++                || cur_nested_level != snap.nested_level
++            {
++                return Err("Parent lineage snapshot has changed since split".to_string());
++            }
++        }
++
++        let now = chrono::Utc::now().to_rfc3339();
++        let mut saved_parts = Vec::new();
++
++        for part in &receipt.plan {
++            let note = format!("Split part {}–{}", part.selection.start, part.selection.end);
++            let orig_file_name = part.file_path.as_ref().map(|p| {
++                Path::new(p)
++                    .file_name()
++                    .and_then(|n| n.to_str())
++                    .unwrap_or("document.pdf")
++                    .to_string()
++            });
++
+             transaction
+                 .execute(
+-                    "INSERT OR IGNORE INTO tags (id, name, created_at) VALUES (?1, ?2, ?3)",
++                    "INSERT INTO study_materials (
++                        id, title, material_type, topic, review_status, priority,
++                        goal_id, event_id, notes, file_path, original_file_name, file_size,
++                        created_at, updated_at, last_reviewed_at
++                     ) VALUES (?1, ?2, 'study_guide', ?3, 'needs_review', 'later', NULL, NULL, ?4, ?5, ?6, ?7, ?8, ?8, NULL)",
+                     params![
+-                        format!("{}-split-tag-{index}", material.id),
+-                        name,
+-                        material.created_at
++                        &part.id,
++                        &part.title,
++                        &parent_topic.as_deref().unwrap_or("general"),
++                        &note,
++                        &part.file_path,
++                        &orig_file_name,
++                        part.file_size.map(|s| s as i64),
++                        &now,
+                     ],
+                 )
+-                .map_err(|error| format!("Could not save a PDF tag: {error}"))?;
++                .map_err(|e| format!("Could not save a PDF part: {e}"))?;
++
++            let parent_mat_id = if receipt.is_nested {
++                Some(receipt.source_material_id.as_str())
++            } else {
++                None
++            };
++            let parent_p_start = if receipt.is_nested {
++                Some(part.selection.start)
++            } else {
++                None
++            };
++            let parent_p_end = if receipt.is_nested {
++                Some(part.selection.end)
++            } else {
++                None
++            };
++            let parent_tot = if receipt.is_nested {
++                receipt.parent_snapshot.as_ref().map(|s| s.parent_total_pages)
++            } else {
++                None
++            };
++            let parent_fn = if receipt.is_nested {
++                receipt.parent_snapshot.as_ref().map(|s| s.parent_file_name.as_str())
++            } else {
++                None
++            };
++            let parent_t = if receipt.is_nested {
++                receipt.parent_snapshot.as_ref().map(|s| s.parent_title.as_str())
++            } else {
++                None
++            };
++            let parent_h = if receipt.is_nested {
++                Some(receipt.source_content_sha256.as_str())
++            } else {
++                None
++            };
++
+             transaction
+                 .execute(
+-                    "INSERT INTO material_tags (material_id, tag_id)
+-                 SELECT ?1, id FROM tags WHERE name = ?2",
+-                    params![material.id, name],
++                    "INSERT INTO material_split_lineage (
++                        material_id, parent_material_id, root_material_id,
++                        source_page_start, source_page_end,
++                        parent_page_start, parent_page_end,
++                        child_page_count,
++                        source_file_name, source_title, source_content_sha256, source_total_pages,
++                        parent_file_name, parent_title, parent_content_sha256, parent_total_pages,
++                        nested_level, created_at
++                     ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
++                    params![
++                        &part.id,
++                        parent_mat_id,
++                        &receipt.root_material_id,
++                        part.canonical_root_start,
++                        part.canonical_root_end,
++                        parent_p_start,
++                        parent_p_end,
++                        part.child_page_count,
++                        &receipt.root_file_name,
++                        &receipt.root_title,
++                        &receipt.root_content_sha256,
++                        receipt.root_total_pages,
++                        parent_fn,
++                        parent_t,
++                        parent_h,
++                        parent_tot,
++                        receipt.nested_level,
++                        &now,
++                    ],
+                 )
+-                .map_err(|error| format!("Could not attach a PDF tag: {error}"))?;
++                .map_err(|e| format!("Could not save split lineage: {e}"))?;
++
++            for (index, raw) in tags.iter().enumerate() {
++                let name = raw.trim();
++                if name.is_empty() {
++                    continue;
++                }
++                transaction
++                    .execute(
++                        "INSERT OR IGNORE INTO tags (id, name, created_at) VALUES (?1, ?2, ?3)",
++                        params![
++                            format!("{}-split-tag-{index}", part.id),
++                            name,
++                            &now,
++                        ],
++                    )
++                    .map_err(|e| format!("Could not save a PDF tag: {e}"))?;
++                transaction
++                    .execute(
++                        "INSERT INTO material_tags (material_id, tag_id)
++                         SELECT ?1, id FROM tags WHERE name = ?2",
++                        params![&part.id, name],
++                    )
++                    .map_err(|e| format!("Could not attach a PDF tag: {e}"))?;
++            }
++
++            saved_parts.push(serde_json::json!({
++                "id": part.id,
++                "title": part.title,
++                "sourcePageStart": part.canonical_root_start,
++                "sourcePageEnd": part.canonical_root_end,
++                "childPageCount": part.child_page_count,
++                "filePath": part.file_path,
++                "fileSize": part.file_size,
++            }));
++        }
++
++        transaction
++            .execute(
++                "UPDATE split_operation_log SET status = 'committed', updated_at = datetime('now') WHERE operation_id = ?1",
++                params![&receipt.operation_id],
++            )
++            .map_err(|e| format!("Could not update operation log to committed: {e}"))?;
++
++        Ok(saved_parts)
++    })();
++
++    match tx_res {
++        Ok(saved_parts) => {
++            transaction
++                .commit()
++                .map_err(|error| {
++                    do_cleanup();
++                    format!("Could not commit PDF parts: {error}")
++                })?;
++            Ok(crate::lineage::SplitBatchSaveResult {
++                batch_id: receipt.operation_id.clone(),
++                operation_id: receipt.operation_id.clone(),
++                count: saved_parts.len(),
++                saved_parts_count: saved_parts.len(),
++                parts: saved_parts,
++                idempotent_replay: false,
++            })
++        }
++        Err(e) => {
++            let _ = transaction.rollback();
++            do_cleanup();
++            Err(e)
+         }
+     }
+-    transaction
+-        .commit()
+-        .map_err(|error| format!("Could not commit PDF parts: {error}"))
+ }
+ 
+ fn deserialize_nullable<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+diff --git a/src-tauri/src/lib.rs b/src-tauri/src/lib.rs
+index 0189e0e..08dcd16 100644
+--- a/src-tauri/src/lib.rs
++++ b/src-tauri/src/lib.rs
+@@ -10,6 +10,7 @@ mod card_reviews;
+ mod debrief;
+ mod documents;
+ mod gemini;
++mod lineage;
+ mod pdf;
+ // Platform abstraction scaffolding for the iOS port. Not yet wired into any
+ // command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
+@@ -24,7 +25,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
+ 
+ /// The SQLite database lives in the app data directory, never the repository.
+ const DB_URL: &str = "sqlite:her-flight-deck.db";
+-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 12;
++pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 13;
+ 
+ /// Schema migrations, applied in order on startup.
+ ///
+@@ -104,6 +105,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
+             sql: include_str!("../migrations/0012_card_reviews.sql"),
+             kind: MigrationKind::Up,
+         },
++        Migration {
++            version: 13,
++            description: "split_source_lineage",
++            sql: include_str!("../migrations/0013_split_source_lineage.sql"),
++            kind: MigrationKind::Up,
++        },
+     ]
+ }
+ 
+diff --git a/src-tauri/src/pdf.rs b/src-tauri/src/pdf.rs
+index e4463a8..d1204c8 100644
+--- a/src-tauri/src/pdf.rs
++++ b/src-tauri/src/pdf.rs
+@@ -16,7 +16,7 @@ use lopdf::{Dictionary, Document, Object, ObjectId};
+ use serde::Serialize;
+ use tauri::{AppHandle, Emitter};
+ 
+-use crate::documents::{self, ImportedDocument};
++use crate::documents;
+ 
+ #[derive(Clone, Serialize)]
+ struct SplitProgress {
+@@ -332,9 +332,8 @@ pub async fn inspect_pdf(app: AppHandle, relative_path: String) -> Result<PdfOut
+ }
+ 
+ /// Save a page range from a stored PDF as a study document of its own.
+-///
+-/// `material_id` is the id of the material the new file will belong to, so
+-/// the stored name cannot collide with anything already in the library.
++/// Save a page range from a stored PDF as a study document of its own,
++/// issuing a tamper-evident SplitSourceReceipt recorded in split_operation_log.
+ #[tauri::command]
+ pub async fn split_pdf(
+     app: AppHandle,
+@@ -343,34 +342,87 @@ pub async fn split_pdf(
+     first_page: u32,
+     last_page: u32,
+     file_name: String,
+-) -> Result<ImportedDocument, String> {
++    source_material_id: Option<String>,
++) -> Result<crate::lineage::SplitSourceReceipt, String> {
+     let source = documents::stored_document_path(&app, &relative_path)?;
+     let original_file_name = pdf_file_name(&file_name);
+     let (destination, stored_name) =
+         documents::stored_destination(&app, &material_id, &original_file_name)?;
+ 
++    let app_root = crate::storage::app_root(&app)?;
+     let written = destination.clone();
+-    if let Err(error) =
+-        run_off_thread(move || write_page_range(&source, &written, first_page, last_page)).await
+-    {
+-        let _ = std::fs::remove_file(&destination);
+-        return Err(error);
+-    }
+-
+-    let file_size = match std::fs::metadata(&destination) {
+-        Ok(metadata) => metadata.len(),
+-        Err(error) => {
+-            let _ = std::fs::remove_file(&destination);
+-            return Err(format!("The split PDF could not be read back: {error}"));
++    let source_clone = source.clone();
++    let file_name_clone = file_name.clone();
++    let relative_path_clone = relative_path.clone();
++
++    let result = run_off_thread(move || {
++        let source_bytes = std::fs::read(&source_clone)
++            .map_err(|e| format!("Could not read source PDF: {e}"))?;
++        let document = open_pdf(&source_clone)?;
++        let total_pages = u32::try_from(document.get_pages().len()).unwrap_or(0);
++        if total_pages == 0 {
++            return Err("That PDF has no pages this application can read.".to_string());
+         }
+-    };
+-    enforce_pdf_size_limit(&destination, file_size)?;
+ 
+-    Ok(ImportedDocument {
+-        relative_path: stored_name,
+-        original_file_name,
+-        file_size,
++        write_page_range_from_document(&document, &written, first_page, last_page)?;
++
++        let file_size = match std::fs::metadata(&written) {
++            Ok(metadata) => metadata.len(),
++            Err(error) => {
++                let _ = std::fs::remove_file(&written);
++                return Err(format!("The split PDF could not be read back: {error}"));
++            }
++        };
++        enforce_pdf_size_limit(&written, file_size)?;
++
++        let db_path = app_root.join("her-flight-deck.db");
++        let conn = rusqlite::Connection::open(&db_path)
++            .map_err(|e| format!("Could not open library database: {e}"))?;
++
++        let src_id = match source_material_id {
++            Some(id) if !id.trim().is_empty() => id,
++            _ => {
++                conn.query_row(
++                    "SELECT id FROM study_materials WHERE file_path = ?1 LIMIT 1",
++                    rusqlite::params![&relative_path_clone],
++                    |r| r.get::<_, String>(0),
++                )
++                .map_err(|_| "Could not identify source material for split.".to_string())?
++            }
++        };
++
++        let part_title = file_name_clone.trim().trim_end_matches(".pdf").trim().to_string();
++        let plan_part = (
++            material_id,
++            part_title,
++            first_page,
++            last_page,
++            Some(stored_name),
++            Some(file_size),
++        );
++
++        let receipt = crate::lineage::create_split_source_receipt(
++            &conn,
++            crate::lineage::CreateReceiptParams {
++                source_material_id: &src_id,
++                source_file_path: &relative_path_clone,
++                source_file_bytes: &source_bytes,
++                source_total_pages: total_pages,
++                plan_selections: &[plan_part],
++            },
++        )?;
++
++        Ok(receipt)
+     })
++    .await;
++
++    match result {
++        Ok(receipt) => Ok(receipt),
++        Err(e) => {
++            let _ = std::fs::remove_file(&destination);
++            Err(e)
++        }
++    }
+ }
+ 
+ /// Refuse a split result over Google's PDF limit, against a plain path and
+@@ -394,7 +446,8 @@ fn enforce_pdf_size_limit(destination: &Path, file_size: u64) -> Result<(), Stri
+     ))
+ }
+ 
+-/// Split a stored PDF into consecutive parts that Google can read.
++/// Split a stored PDF into consecutive parts that Google can read,
++/// issuing a tamper-evident SplitSourceReceipt for the batch.
+ ///
+ /// The original is read only. All output files are removed if any part fails,
+ /// so the library can never be left with half of an automatic split.
+@@ -404,9 +457,15 @@ pub async fn split_pdf_automatically(
+     relative_path: String,
+     batch_id: String,
+     file_name: String,
+-) -> Result<Vec<PdfPart>, String> {
++    source_material_id: Option<String>,
++) -> Result<crate::lineage::SplitSourceReceipt, String> {
+     let source = documents::stored_document_path(&app, &relative_path)?;
++    let app_root = crate::storage::app_root(&app)?;
++    let relative_path_clone = relative_path.clone();
++
+     run_off_thread(move || {
++        let source_bytes = std::fs::read(&source)
++            .map_err(|e| format!("Could not read source PDF: {e}"))?;
+         let document = open_pdf(&source)?;
+         let total = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
+         if total == 0 {
+@@ -421,8 +480,8 @@ pub async fn split_pdf_automatically(
+         };
+         let total_parts_estimate = total.div_ceil(MAX_PAGES).max(1);
+         let mut created_paths = Vec::new();
+-        let result = (|| {
+-            let mut parts = Vec::new();
++        let result = (|| -> Result<crate::lineage::SplitSourceReceipt, String> {
++            let mut plan_selections = Vec::new();
+             let mut first = 1;
+             let mut number = 1;
+             while first <= total {
+@@ -465,17 +524,46 @@ pub async fn split_pdf_automatically(
+                     ),
+                 );
+ 
+-                parts.push(PdfPart {
+-                    relative_path: stored_name,
+-                    original_file_name: part_name,
+-                    file_size,
+-                    first_page: first,
+-                    last_page: last,
+-                });
++                plan_selections.push((
++                    part_id,
++                    part_name,
++                    first,
++                    last,
++                    Some(stored_name),
++                    Some(file_size),
++                ));
+                 first = last + 1;
+                 number += 1;
+             }
+-            Ok(parts)
++
++            let db_path = app_root.join("her-flight-deck.db");
++            let conn = rusqlite::Connection::open(&db_path)
++                .map_err(|e| format!("Could not open library database: {e}"))?;
++
++            let src_id = match source_material_id {
++                Some(id) if !id.trim().is_empty() => id,
++                _ => {
++                    conn.query_row(
++                        "SELECT id FROM study_materials WHERE file_path = ?1 LIMIT 1",
++                        rusqlite::params![&relative_path_clone],
++                        |r| r.get::<_, String>(0),
++                    )
++                    .map_err(|_| "Could not identify source material for split.".to_string())?
++                }
++            };
++
++            let receipt = crate::lineage::create_split_source_receipt(
++                &conn,
++                crate::lineage::CreateReceiptParams {
++                    source_material_id: &src_id,
++                    source_file_path: &relative_path_clone,
++                    source_file_bytes: &source_bytes,
++                    source_total_pages: total,
++                    plan_selections: &plan_selections,
++                },
++            )?;
++
++            Ok(receipt)
+         })();
+ 
+         if result.is_err() {
+diff --git a/src/data/db.ts b/src/data/db.ts
+index d3c97b7..a3bd0f0 100644
+--- a/src/data/db.ts
++++ b/src/data/db.ts
+@@ -16,6 +16,15 @@ export interface SqlDatabase {
+   persist?(): Promise<void>;
+   /** Desktop-only pinned transaction for a batch of PDF part records. */
+   saveMaterialsAtomically?(materials: import("@/domain/types").StudyMaterial[]): Promise<void>;
++  /** Receipt-bound pinned atomic transaction for split parts with durable lineage. */
++  saveSplitMaterialsAtomically?(operation: {
++    receipt: import("@/domain/types").SplitSourceReceipt;
++    tags?: string[];
++  }): Promise<import("@/domain/types").SplitBatchSaveResult>;
++  /** Cancels a pending split operation and unlinks its staged files. */
++  cancelSplitBatch?(operationId: string): Promise<import("@/domain/types").SplitBatchCancelResult>;
++  /** Reconciles a split operation by operation ID. */
++  reconcileSplitBatch?(operationId: string): Promise<import("@/domain/types").SplitBatchReconciliation | null>;
+   /** Single-connection atomic transaction for debrief multi-record acceptance. */
+   saveDebriefAtomically?(operation: DebriefSaveOperation): Promise<void>;
+   /** Single-connection atomic transaction for study material create or update. */
+diff --git a/src/data/migration-checksums.json b/src/data/migration-checksums.json
+index 3ed3887..9c63135 100644
+--- a/src/data/migration-checksums.json
++++ b/src/data/migration-checksums.json
+@@ -10,5 +10,6 @@
+   "0009_practice_tests.sql": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
+   "0010_debrief_links.sql": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971",
+   "0011_practice_sessions.sql": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+-  "0012_card_reviews.sql": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e"
++  "0012_card_reviews.sql": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e",
++  "0013_split_source_lineage.sql": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106"
+ }
+diff --git a/src/data/migrations.ts b/src/data/migrations.ts
+index abf2f24..63d3b91 100644
+--- a/src/data/migrations.ts
++++ b/src/data/migrations.ts
+@@ -17,6 +17,7 @@ import practiceTests from "../../src-tauri/migrations/0009_practice_tests.sql?ra
+ import debriefLinks from "../../src-tauri/migrations/0010_debrief_links.sql?raw";
+ import practiceSessions from "../../src-tauri/migrations/0011_practice_sessions.sql?raw";
+ import cardReviews from "../../src-tauri/migrations/0012_card_reviews.sql?raw";
++import splitSourceLineage from "../../src-tauri/migrations/0013_split_source_lineage.sql?raw";
+ 
+ export interface Migration {
+   version: number;
+@@ -37,6 +38,7 @@ export const MIGRATIONS: Migration[] = [
+   { version: 10, description: "debrief_links", sql: debriefLinks },
+   { version: 11, description: "practice_sessions", sql: practiceSessions },
+   { version: 12, description: "card_reviews", sql: cardReviews },
++  { version: 13, description: "split_source_lineage", sql: splitSourceLineage },
+ ];
+ 
+ /**
+diff --git a/src/data/tauriDb.ts b/src/data/tauriDb.ts
+index 5b628eb..673b575 100644
+--- a/src/data/tauriDb.ts
++++ b/src/data/tauriDb.ts
+@@ -6,7 +6,18 @@
+  */
+ import Database from "@tauri-apps/plugin-sql";
+ import { invoke } from "@tauri-apps/api/core";
+-import type { PracticeSessionAction, PracticeSessionActionResult, StudyMaterial } from "@/domain/types";
++import type {
++  PracticeSessionAction,
++  PracticeSessionActionResult,
++  SplitBatchCancelResult,
++  SplitBatchReconciliation,
++  SplitBatchSaveResult,
++  SplitLineage,
++  SplitParentSnapshot,
++  SplitPlanPart,
++  SplitSourceReceipt,
++  StudyMaterial,
++} from "@/domain/types";
+ 
+ import {
+   toNumberedPlaceholders,
+@@ -380,6 +391,171 @@ export function isLibraryRecentReviewsResult(value: unknown): value is import("@
+   );
+ }
+ 
++export function isSplitPlanPart(value: unknown): value is SplitPlanPart {
++  return (
++    isRecord(value) &&
++    typeof value.id === "string" &&
++    typeof value.title === "string" &&
++    isRecord(value.selection) &&
++    typeof value.selection.start === "number" &&
++    typeof value.selection.end === "number" &&
++    typeof value.childPageCount === "number" &&
++    typeof value.canonicalRootStart === "number" &&
++    typeof value.canonicalRootEnd === "number" &&
++    (value.filePath === null || typeof value.filePath === "string") &&
++    (value.fileSize === null || typeof value.fileSize === "number")
++  );
++}
++
++export function isSplitParentSnapshot(value: unknown): value is SplitParentSnapshot {
++  return (
++    isRecord(value) &&
++    typeof value.rootMaterialId === "string" &&
++    typeof value.rootTitle === "string" &&
++    typeof value.rootFileName === "string" &&
++    (value.rootContentSha256 === null || typeof value.rootContentSha256 === "string") &&
++    (value.rootTotalPages === null || typeof value.rootTotalPages === "number") &&
++    typeof value.parentRootPageStart === "number" &&
++    typeof value.parentRootPageEnd === "number" &&
++    typeof value.parentTotalPages === "number" &&
++    typeof value.parentTitle === "string" &&
++    typeof value.parentFileName === "string" &&
++    typeof value.nestedLevel === "number" &&
++    typeof value.parentFilePath === "string"
++  );
++}
++
++export function isSplitSourceReceipt(value: unknown): value is SplitSourceReceipt {
++  return (
++    isRecord(value) &&
++    typeof value.sourceMaterialId === "string" &&
++    typeof value.sourceFilePath === "string" &&
++    typeof value.sourceFileSize === "number" &&
++    typeof value.sourceContentSha256 === "string" &&
++    typeof value.sourceTotalPages === "number" &&
++    typeof value.isNested === "boolean" &&
++    typeof value.rootMaterialId === "string" &&
++    typeof value.rootTitle === "string" &&
++    typeof value.rootFileName === "string" &&
++    typeof value.rootContentSha256 === "string" &&
++    typeof value.rootTotalPages === "number" &&
++    (value.parentSnapshot === null || isSplitParentSnapshot(value.parentSnapshot)) &&
++    typeof value.nestedLevel === "number" &&
++    Array.isArray(value.plan) &&
++    value.plan.every(isSplitPlanPart) &&
++    typeof value.canonicalReceiptJson === "string" &&
++    typeof value.receiptHash === "string" &&
++    typeof value.operationId === "string"
++  );
++}
++
++export function isSplitBatchSaveResult(value: unknown): value is SplitBatchSaveResult {
++  return (
++    isRecord(value) &&
++    typeof value.batchId === "string" &&
++    typeof value.operationId === "string" &&
++    Array.isArray(value.parts) &&
++    typeof value.count === "number" &&
++    typeof value.savedPartsCount === "number" &&
++    typeof value.idempotentReplay === "boolean"
++  );
++}
++
++export function isSplitBatchReconciliation(value: unknown): value is SplitBatchReconciliation {
++  return (
++    isRecord(value) &&
++    typeof value.operationId === "string" &&
++    typeof value.status === "string" &&
++    Array.isArray(value.parts) &&
++    typeof value.count === "number" &&
++    typeof value.reconciled === "boolean"
++  );
++}
++
++export function isSplitBatchCancelResult(value: unknown): value is SplitBatchCancelResult {
++  return (
++    isRecord(value) &&
++    typeof value.operationId === "string" &&
++    typeof value.status === "string" &&
++    typeof value.cancelled === "boolean" &&
++    Array.isArray(value.removedFiles) &&
++    value.removedFiles.every((f) => typeof f === "string")
++  );
++}
++
++export function isSplitLineage(value: unknown): value is SplitLineage {
++  return (
++    isRecord(value) &&
++    typeof value.materialId === "string" &&
++    (value.parentMaterialId === null || typeof value.parentMaterialId === "string") &&
++    (value.rootMaterialId === null || typeof value.rootMaterialId === "string") &&
++    typeof value.sourcePageStart === "number" &&
++    typeof value.sourcePageEnd === "number" &&
++    (value.parentPageStart === null || typeof value.parentPageStart === "number") &&
++    (value.parentPageEnd === null || typeof value.parentPageEnd === "number") &&
++    typeof value.childPageCount === "number" &&
++    typeof value.sourceFileName === "string" &&
++    typeof value.sourceTitle === "string" &&
++    (value.sourceContentSha256 === null || typeof value.sourceContentSha256 === "string") &&
++    (value.sourceTotalPages === null || typeof value.sourceTotalPages === "number") &&
++    (value.parentFileName === null || typeof value.parentFileName === "string") &&
++    (value.parentTitle === null || typeof value.parentTitle === "string") &&
++    (value.parentContentSha256 === null || typeof value.parentContentSha256 === "string") &&
++    (value.parentTotalPages === null || typeof value.parentTotalPages === "number") &&
++    typeof value.nestedLevel === "number" &&
++    typeof value.createdAt === "string"
++  );
++}
++
++export async function invokeSaveSplitMaterials(
++  operation: { receipt: SplitSourceReceipt; tags?: string[] },
++  call: typeof invoke = invoke,
++): Promise<SplitBatchSaveResult> {
++  let result: unknown;
++  try {
++    result = await call("save_split_materials", operation);
++  } catch (error) {
++    throw error instanceof Error ? error : new Error(String(error));
++  }
++  if (!isSplitBatchSaveResult(result)) {
++    throw new Error("IPC_TRANSPORT_ERROR: Invalid save_split_materials result shape");
++  }
++  return result;
++}
++
++export async function invokeCancelSplitBatch(
++  operationId: string,
++  call: typeof invoke = invoke,
++): Promise<SplitBatchCancelResult> {
++  let result: unknown;
++  try {
++    result = await call("cancel_split_batch", { operationId });
++  } catch (error) {
++    throw error instanceof Error ? error : new Error(String(error));
++  }
++  if (!isSplitBatchCancelResult(result)) {
++    throw new Error("IPC_TRANSPORT_ERROR: Invalid cancel_split_batch result shape");
++  }
++  return result;
++}
++
++export async function invokeReconcileSplitBatch(
++  operationId: string,
++  call: typeof invoke = invoke,
++): Promise<SplitBatchReconciliation | null> {
++  let result: unknown;
++  try {
++    result = await call("reconcile_split_batch", { operationId });
++  } catch (error) {
++    throw error instanceof Error ? error : new Error(String(error));
++  }
++  if (result === null) return null;
++  if (!isSplitBatchReconciliation(result)) {
++    throw new Error("IPC_TRANSPORT_ERROR: Invalid reconcile_split_batch result shape");
++  }
++  return result;
++}
++
+ export async function createTauriDatabase(): Promise<SqlDatabase> {
+   // Migrations were registered in Rust and run as part of this load().
+   const db = await Database.load(DB_URL);
+@@ -422,6 +598,18 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
+     async saveMaterialsAtomically(materials: StudyMaterial[]): Promise<void> {
+       await invoke("save_split_materials", { materials });
+     },
++    async saveSplitMaterialsAtomically(operation: {
++      receipt: SplitSourceReceipt;
++      tags?: string[];
++    }): Promise<SplitBatchSaveResult> {
++      return invokeSaveSplitMaterials(operation);
++    },
++    async cancelSplitBatch(operationId: string): Promise<SplitBatchCancelResult> {
++      return invokeCancelSplitBatch(operationId);
++    },
++    async reconcileSplitBatch(operationId: string): Promise<SplitBatchReconciliation | null> {
++      return invokeReconcileSplitBatch(operationId);
++    },
+     async saveDebriefAtomically(operation: import("./db").DebriefSaveOperation): Promise<void> {
+       await invoke("save_debrief_operation", { operation });
+     },
+diff --git a/src/domain/types.ts b/src/domain/types.ts
+index 7d7ef36..30bbeb5 100644
+--- a/src/domain/types.ts
++++ b/src/domain/types.ts
+@@ -233,6 +233,108 @@ export interface StudyMaterial {
+   updatedAt: IsoDateTime;
+   lastReviewedAt: IsoDateTime | null;
+   tags: string[];
++  lineage?: SplitLineage | null;
++}
++
++export type SplitSourceVerdict =
++  | "matching"
++  | "changed"
++  | "missing"
++  | "deleted"
++  | "unknown";
++
++export interface SplitLineage {
++  materialId: Id;
++  parentMaterialId: Id | null;
++  rootMaterialId: Id | null;
++  sourcePageStart: number;
++  sourcePageEnd: number;
++  parentPageStart: number | null;
++  parentPageEnd: number | null;
++  childPageCount: number;
++  sourceFileName: string;
++  sourceTitle: string;
++  sourceContentSha256: string | null;
++  sourceTotalPages: number | null;
++  parentFileName: string | null;
++  parentTitle: string | null;
++  parentContentSha256: string | null;
++  parentTotalPages: number | null;
++  nestedLevel: number;
++  createdAt: IsoDateTime;
++  parentStatus?: SplitSourceVerdict;
++  rootStatus?: SplitSourceVerdict;
++  status?: SplitSourceVerdict;
++}
++
++export interface SplitPlanPart {
++  id: string;
++  title: string;
++  selection: { start: number; end: number };
++  childPageCount: number;
++  canonicalRootStart: number;
++  canonicalRootEnd: number;
++  filePath: string | null;
++  fileSize: number | null;
++}
++
++export interface SplitParentSnapshot {
++  rootMaterialId: string;
++  rootTitle: string;
++  rootFileName: string;
++  rootContentSha256: string | null;
++  rootTotalPages: number | null;
++  parentRootPageStart: number;
++  parentRootPageEnd: number;
++  parentTotalPages: number;
++  parentTitle: string;
++  parentFileName: string;
++  nestedLevel: number;
++  parentFilePath: string;
++}
++
++export interface SplitSourceReceipt {
++  sourceMaterialId: string;
++  sourceFilePath: string;
++  sourceFileSize: number;
++  sourceContentSha256: string;
++  sourceTotalPages: number;
++  isNested: boolean;
++  rootMaterialId: string;
++  rootTitle: string;
++  rootFileName: string;
++  rootContentSha256: string;
++  rootTotalPages: number;
++  parentSnapshot: SplitParentSnapshot | null;
++  nestedLevel: number;
++  plan: SplitPlanPart[];
++  canonicalReceiptJson: string;
++  receiptHash: string;
++  operationId: string;
++}
++
++export interface SplitBatchSaveResult {
++  batchId: string;
++  operationId: string;
++  parts: StudyMaterial[];
++  count: number;
++  savedPartsCount: number;
++  idempotentReplay: boolean;
++}
++
++export interface SplitBatchReconciliation {
++  operationId: string;
++  status: "pending" | "committed" | "cancelled" | "unknown";
++  parts: StudyMaterial[];
++  count: number;
++  reconciled: boolean;
++}
++
++export interface SplitBatchCancelResult {
++  operationId: string;
++  status: string;
++  cancelled: boolean;
++  removedFiles: string[];
+ }
+ 
+ export interface StudyGuideSection {

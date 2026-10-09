@@ -1,0 +1,140 @@
+TAP version 13
+# (node:16302) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: control: verified direct save with matching bytes persists the verified hash
+not ok 1 - control: verified direct save with matching bytes persists the verified hash
+  ---
+  duration_ms: 5.518333
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:24:1'
+  failureType: 'testCodeFailure'
+  error: 'A valid SplitSourceReceipt is required; unverified split refused.'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    validateAndSaveSplitBatch (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:25:13
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:24:92)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: control: verified nested save derives canonical R120–140 from persisted A101–300
+not ok 2 - control: verified nested save derives canonical R120–140 from persisted A101–300
+  ---
+  duration_ms: 4.54425
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:30:1'
+  failureType: 'testCodeFailure'
+  error: 'A valid SplitSourceReceipt is required; unverified split refused.'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    validateAndSaveSplitBatch (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:32:3
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:30:96)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [SL-R7] a new split without any verified source identity refuses all writes
+ok 3 - [SL-R7] a new split without any verified source identity refuses all writes
+  ---
+  duration_ms: 4.360083
+  type: 'test'
+  ...
+# Subtest: [SL-R7] a caller hash cannot replace the hash of the bytes actually verified (direct)
+ok 4 - [SL-R7] a caller hash cannot replace the hash of the bytes actually verified (direct)
+  ---
+  duration_ms: 4.555875
+  type: 'test'
+  ...
+# Subtest: [SL-R7] nested parts cannot override the persisted root hash or the verified parent hash
+ok 5 - [SL-R7] nested parts cannot override the persisted root hash or the verified parent hash
+  ---
+  duration_ms: 4.193916
+  type: 'test'
+  ...
+# Subtest: [SL-R7] a direct range is bounded by the authoritative source total, not an optional caller field
+ok 6 - [SL-R7] a direct range is bounded by the authoritative source total, not an optional caller field
+  ---
+  duration_ms: 4.338416
+  type: 'test'
+  ...
+# Subtest: [SL-R7] stale on-disk source: an old caller Buffer cannot prove the current file is unchanged
+ok 7 - [SL-R7] stale on-disk source: an old caller Buffer cannot prove the current file is unchanged
+  ---
+  duration_ms: 5.185916
+  type: 'test'
+  ...
+# Subtest: guard: after the historical root is deleted, the immediate parent is never recorded as the root
+ok 8 - guard: after the historical root is deleted, the immediate parent is never recorded as the root
+  ---
+  duration_ms: 4.679542
+  type: 'test'
+  ...
+# Subtest: [SL-R8] a nested part with an unknown parent hash is not certified by matching root bytes
+ok 9 - [SL-R8] a nested part with an unknown parent hash is not certified by matching root bytes
+  ---
+  duration_ms: 4.73575
+  type: 'test'
+  ...
+# Subtest: [SL-R8] unknown parent editions are not grouped as siblings through the root hash
+ok 10 - [SL-R8] unknown parent editions are not grouped as siblings through the root hash
+  ---
+  duration_ms: 4.958916
+  type: 'test'
+  ...
+# Subtest: [SL-R9] a mid-transaction failure runs this operation's cleanup exactly once
+not ok 11 - [SL-R9] a mid-transaction failure runs this operation's cleanup exactly once
+  ---
+  duration_ms: 4.922834
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /injected/. Input:
+    
+    'Error: A valid SplitSourceReceipt is required; unverified split refused.'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'A valid SplitSourceReceipt is required; unverified split refused.'
+  stack: |-
+    validateAndSaveSplitBatch (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:95:23
+    getActual (node:assert:609:5)
+    Function.throws (node:assert:757:24)
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:95:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:93)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+  operator: 'throws'
+  stack: |-
+    file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:95:10
+    withDb (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/slr5/copy/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:93)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 8
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128.3625

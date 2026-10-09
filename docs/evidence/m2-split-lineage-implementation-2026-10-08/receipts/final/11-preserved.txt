@@ -1,0 +1,6 @@
+$ docs/evidence/m2-split-lineage-implementation-2026-10-08/check_preserved.sh
+28:pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 13;
+migrations 0001-0012 unchanged; registry adds only 0013 (checksum 4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106); schema version 13
+earlier evidence packs on base: 104 unchanged
+nothing staged
+exit 0

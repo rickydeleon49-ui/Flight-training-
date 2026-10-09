@@ -1,0 +1,169 @@
+Mutant: MUTANT-1-RANGE-COMPOSE
+Description: Off-by-one arithmetic in composeNestedRanges (omitting - 1)
+Target: lineageContract
+Baseline SHA256: dd1c95bffca08174b49a455311378bd5bee23c5b132cb2765cfee29e7eec772e
+Mutated SHA256: 21de3701feef28d8ce82bdcf71af118fe5d1eb6078a3b847ed8238db5ea88bab
+Exit Code: 1
+Expected Test Substring: "Contract 3: Nested Range Composition"
+Expected Failure Substring: "Composed R start mismatch"
+
+=== Raw TAP Test Execution Output ===
+TAP version 13
+# Subtest: Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+ok 1 - Contract 1: Page Range Validation enforces 1-based, inclusive bounds
+  ---
+  duration_ms: 0.716208
+  type: 'test'
+  ...
+# Subtest: Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options
+ok 2 - Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options
+  ---
+  duration_ms: 0.111084
+  type: 'test'
+  ...
+# Subtest: Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+not ok 3 - Contract 3: Nested Range Composition and Persisted Navigation Coordinates
+  ---
+  duration_ms: 0.347
+  type: 'test'
+  location: '/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-rCJTxy/pack/proof/proof.test.mjs:91:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Composed R start mismatch: expected 120
+    
+    121 !== 120
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 120
+  actual: 121
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-rCJTxy/pack/proof/proof.test.mjs:94:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: Contract 4: Multi-level Nested Hierarchy (3+ levels)
+not ok 4 - Contract 4: Multi-level Nested Hierarchy (3+ levels)
+  ---
+  duration_ms: 0.0955
+  type: 'test'
+  location: '/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-rCJTxy/pack/proof/proof.test.mjs:110:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    161 !== 159
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 159
+  actual: 161
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr12-13-mutations-rCJTxy/pack/proof/proof.test.mjs:118:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: Contract 5: Structural Tiers and Strict DDL CHECK Constraints
+ok 5 - Contract 5: Structural Tiers and Strict DDL CHECK Constraints
+  ---
+  duration_ms: 5.332167
+  type: 'test'
+  ...
+# Subtest: Contract 6: Two-Tier Veracity Verification from Real Files
+ok 6 - Contract 6: Two-Tier Veracity Verification from Real Files
+  ---
+  duration_ms: 5.416292
+  type: 'test'
+  ...
+# Subtest: Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity
+ok 7 - Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity
+  ---
+  duration_ms: 4.823583
+  type: 'test'
+  ...
+# Subtest: Contract 8: Legacy NULL Parent Hash is Handled as Unknown
+ok 8 - Contract 8: Legacy NULL Parent Hash is Handled as Unknown
+  ---
+  duration_ms: 4.454792
+  type: 'test'
+  ...
+# Subtest: Contract 9: Unknown Parent Editions Are Not Grouped as Siblings
+ok 9 - Contract 9: Unknown Parent Editions Are Not Grouped as Siblings
+  ---
+  duration_ms: 4.195042
+  type: 'test'
+  ...
+# Subtest: Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+ok 10 - Contract 10: Parent Deletion Preserves Child Material and Split Provenance
+  ---
+  duration_ms: 4.259708
+  type: 'test'
+  ...
+# Subtest: Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure
+ok 11 - Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure
+  ---
+  duration_ms: 5.798334
+  type: 'test'
+  ...
+# Subtest: Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+ok 12 - Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency
+  ---
+  duration_ms: 4.623666
+  type: 'test'
+  ...
+# Subtest: Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+ok 13 - Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline
+  ---
+  duration_ms: 4.25975
+  type: 'test'
+  ...
+# Subtest: Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation
+ok 14 - Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation
+  ---
+  duration_ms: 7.946834
+  type: 'test'
+  ...
+# Subtest: Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+ok 15 - Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator
+  ---
+  duration_ms: 0.0375
+  type: 'test'
+  ...
+# Subtest: Contract 16: Explicit Page Bounds and Storage Limit Specification
+ok 16 - Contract 16: Explicit Page Bounds and Storage Limit Specification
+  ---
+  duration_ms: 0.027834
+  type: 'test'
+  ...
+# Subtest: Contract 17: Concurrent Staged Operations and Cleanup Isolation
+ok 17 - Contract 17: Concurrent Staged Operations and Cleanup Isolation
+  ---
+  duration_ms: 5.032208
+  type: 'test'
+  ...
+# Subtest: Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation
+ok 18 - Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation
+  ---
+  duration_ms: 5.485584
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 16
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 143.660084
+

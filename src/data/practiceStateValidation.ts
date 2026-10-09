@@ -227,6 +227,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest > supported) refuse("The database was created by a newer format.");
   if (newest >= 11) await validatePracticeState(query, reference);
   if (newest >= 12) await validateCardReviewState(query, reference);
+  if (newest >= 13) await validateSplitLineageState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -932,6 +933,68 @@ export async function validateCardReviewState(query: ValidationQuery, reference:
   for (const itemId of eventsByItem.keys()) {
     if ((await count(query, "SELECT COUNT(*) AS n FROM card_review_state WHERE item_id = ?", [itemId])) !== 1) {
       refuse(`Card ${itemId} has rating events but no review state.`);
+    }
+  }
+}
+
+/* ------------------- schema 13: split lineage ------------------- */
+
+const LINEAGE_TABLES = ["material_split_lineage", "split_operation_log"] as const;
+const LINEAGE_INDEXES = [
+  ["material_split_lineage", "idx_split_lineage_parent"],
+  ["material_split_lineage", "idx_split_lineage_root"],
+  ["split_operation_log", "idx_split_operation_source"],
+  ["split_operation_log", "idx_split_operation_status"],
+] as const;
+const LOWER_HEX_64 = /^[0-9a-f]{64}$/;
+
+/**
+ * The schema-13 split-lineage contract (native `verify_schema_13_lineage_semantics`):
+ * the tables exactly as migration 0013 defines them, its indexes, well-formed
+ * fingerprints, and split records whose hash is the hash of their receipt.
+ */
+export async function validateSplitLineageState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  for (const table of LINEAGE_TABLES) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])) !== 1) {
+      refuse(`The database is missing required table: ${table}`);
+    }
+    const columnsSql = `SELECT name, type, "notnull" AS required, pk FROM pragma_table_info('${table}') ORDER BY name`;
+    const shape = (rows: Record<string, unknown>[]) =>
+      rows.map((row) => `${text(row, "name")}|${text(row, "type").toLowerCase()}|${int(row, "required")}|${int(row, "pk")}`);
+    if (!same(shape(await query(columnsSql, [])), shape(await reference(columnsSql, [])))) {
+      refuse(`Table ${table} columns do not match the registered migration contract.`);
+    }
+    if (!same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table))) {
+      refuse(`Table ${table} foreign keys do not match the registered migration contract.`);
+    }
+    if (!same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table)))) {
+      refuse(`Table ${table} CHECK constraints do not match the registered migration contract.`);
+    }
+  }
+  for (const [table, index] of LINEAGE_INDEXES) {
+    if ((await count(query, `SELECT COUNT(*) AS n FROM pragma_index_list('${table}') WHERE name = ?`, [index])) === 0) {
+      refuse(`The database is missing required index: ${index}`);
+    }
+  }
+  for (const row of await query(
+    "SELECT material_id, source_content_sha256, parent_content_sha256 FROM material_split_lineage",
+    [],
+  )) {
+    for (const key of ["source_content_sha256", "parent_content_sha256"]) {
+      const hash = row[key];
+      if (hash !== null && (typeof hash !== "string" || !LOWER_HEX_64.test(hash))) {
+        refuse(`Split part ${text(row, "material_id")} has a malformed source fingerprint.`);
+      }
+    }
+  }
+  for (const row of await query(
+    "SELECT operation_id, receipt_hash, receipt_canonical_json FROM split_operation_log",
+    [],
+  )) {
+    const operation = text(row, "operation_id");
+    const hash = text(row, "receipt_hash");
+    if (!LOWER_HEX_64.test(hash) || operation !== hash || (await sha256Hex(text(row, "receipt_canonical_json"))) !== hash) {
+      refuse(`Split record ${operation} does not match its receipt.`);
     }
   }
 }

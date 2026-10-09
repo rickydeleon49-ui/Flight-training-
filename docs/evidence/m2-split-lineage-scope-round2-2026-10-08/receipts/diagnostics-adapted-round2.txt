@@ -1,0 +1,16 @@
+(node:7532) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ [SL-R4] direct split uses recorded root hash to verify its immediate source (5.740958ms)
+✔ [SL-R4] direct split sibling lookup excludes another edition (4.561917ms)
+✔ [SL-R5] expected source identity without current bytes refuses all writes (4.223542ms)
+✔ [SL-R5] nested save refuses root range inconsistent with persisted parent (4.347209ms)
+✔ control: matching current source permits a valid save (4.117167ms)
+✔ control: actual later insert failure rolls back earlier material/tag/lineage writes (4.560667ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.92575

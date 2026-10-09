@@ -1,0 +1,10 @@
+started 2026-10-09T02:39:29Z  cwd /Users/rickymac/code/.qwen/tmp/split-lineage-review-2026-10-08/copy
+node v22.23.3  npm 10.9.9  rustc 1.99.0 (b940084d7 2026-09-28)  cargo 1.99.0 (5f94df478 2026-08-27)
+SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+01 focused-vitest: exit 0 (9s)
+02 focused-native: exit 101 (20s)
+03 typecheck: exit 0 (3s)
+04 validator-node-sqljs: exit 0 (1s)
+05 validator-native: exit 0 (0s)
+sensitivity done marker absent until python runs
+REPRO_STEPS_DONE 2026-10-09T02:40:02Z

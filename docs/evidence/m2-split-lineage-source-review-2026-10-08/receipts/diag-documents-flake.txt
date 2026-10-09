@@ -1,0 +1,2 @@
+=== DIAGNOSTIC: 'documents::tests' x12 at default parallelism ===
+documents::tests clean in 11/12; failed attempts: 2

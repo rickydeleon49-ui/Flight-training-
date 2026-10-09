@@ -1,0 +1,6 @@
+S1-receipt-hash-check-skipped exit 101 caught True restored True
+S2-nested-snapshot-recheck-removed exit 101 caught True restored True
+S3-reissue-resets-the-record exit 101 caught True restored True
+S4-hash-nullness-tier-heuristic exit 1 caught True restored True
+S5-receipt-shape-allows-extra-provenance exit 1 caught True restored True
+SENSITIVITY_EXIT=0

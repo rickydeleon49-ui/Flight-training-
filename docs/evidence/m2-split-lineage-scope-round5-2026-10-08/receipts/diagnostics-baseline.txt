@@ -1,0 +1,118 @@
+✔ control: nested receipt save derives R120–140 and records the parent hash of the bytes split (6.812792ms)
+✔ control: an edited receipt and a drifted nested snapshot are both refused (5.299916ms)
+✔ control: receipt replay after commit returns the persisted parts (4.822667ms)
+✔ control: cancelling a pending operation deletes its recorded staged file and blocks its save (5.469667ms)
+✖ [SL-R12] a nested part records the immediate parent (not the root) in its parent tier (5.26125ms)
+✖ [SL-R12] re-issuing an identical receipt never resets a committed operation (4.957792ms)
+✖ [SL-R12] re-issuing an identical receipt never revives a cancelled operation (5.124209ms)
+✖ [SL-R13] cancellation deletes only files recorded by the operation, never caller-listed paths (0.28175ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 4
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120.023667
+
+✖ failing tests:
+
+test at docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:64:1
+✖ [SL-R12] a nested part records the immediate parent (not the root) in its parent tier (5.26125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   f: 'root.pdf',
+  -   f: 'a.pdf',
+      rf: 'root.pdf',
+      rt: 'Root',
+  +   t: 'Root'
+  -   t: 'Parent A'
+    }
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:68:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:20:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:64:101)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { t: 'Root', f: 'root.pdf', rt: 'Root', rf: 'root.pdf' },
+    expected: { t: 'Parent A', f: 'a.pdf', rt: 'Root', rf: 'root.pdf' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:71:1
+✖ [SL-R12] re-issuing an identical receipt never resets a committed operation (4.957792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'pending'
+  - 'committed'
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:75:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:20:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:71:91)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pending',
+    expected: 'committed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:79:1
+✖ [SL-R12] re-issuing an identical receipt never revives a cancelled operation (5.124209ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:87:10
+      at setup (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:20:12)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:79:92)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:90:1
+✖ [SL-R13] cancellation deletes only files recorded by the operation, never caller-listed paths (0.28175ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/diagnostics/lineage-round4-review.test.mjs:96:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

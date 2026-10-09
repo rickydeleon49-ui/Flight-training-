@@ -10,6 +10,7 @@ mod card_reviews;
 mod debrief;
 mod documents;
 mod gemini;
+mod lineage;
 mod pdf;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any
 // command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
@@ -24,7 +25,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 12;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 13;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -104,6 +105,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0012_card_reviews.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 13,
+            description: "split_source_lineage",
+            sql: include_str!("../migrations/0013_split_source_lineage.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -150,6 +157,10 @@ pub fn run() {
             documents::import_unlinked_file,
             documents::trash_unlinked_file,
             documents::save_split_materials,
+            lineage::save_split_batch,
+            lineage::cancel_split_batch,
+            lineage::reconcile_split_batch,
+            lineage::fingerprint_stored_documents,
             study_packet::pick_study_packet,
             study_packet::save_structured_study_material_atomically,
             practice_sessions::save_practice_session_atomically,

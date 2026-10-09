@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sl-sens/copy
+
+ ❯ src/data/splitLineageShapes.test.ts (5 tests | 1 failed) 5ms
+     × refuses extra provenance, a mismatched operation id, bad fingerprints and tier mix-ups 2ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  19:27:46
+   Duration  143ms (transform 46ms, setup 0ms, import 59ms, tests 5ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/splitLineageShapes.test.ts > receipt shape > refuses extra provenance, a mismatched operation id, bad fingerprints and tier mix-ups
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/data/splitLineageShapes.test.ts:49:41
+     47|     zeroPage.core.plan[0].selection.start = 0;
+     48|     for (const bad of [extra, mismatched, badHash, directWithSnapshot,…
+     49|       expect(isSplitSourceReceipt(bad)).toBe(false);
+       |                                         ^
+     50|     }
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

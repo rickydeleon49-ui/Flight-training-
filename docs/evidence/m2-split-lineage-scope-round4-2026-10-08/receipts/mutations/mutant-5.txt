@@ -1,0 +1,61 @@
+Mutant: MUTANT-5-HASH-NULLNESS-HEURISTIC
+Description: Hash-nullness tier heuristic restored (guessing tier from parent hash nullness instead of structure)
+Target: lineageContract
+Baseline SHA256: b584035b1daeb387efc0f3d47fbd2105111ed3c3a098851acff4930fcf032b9d
+Mutated SHA256: a1a1a865dca61263f42240250b0568f55b6e6cdc974fe4d868ec9901b4aa0f30
+Exit Code: 1
+Expected Failure Substring: "Legacy NULL parent hash must yield unknown status"
+
+=== Raw Test Execution Output ===
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.674667ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.113917ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.064125ms)
+✔ Contract 4: Multi-level Nested Hierarchy (3+ levels) (0.065709ms)
+✔ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.48325ms)
+✔ Contract 6: Two-Tier Veracity Verification from Real Files (5.579834ms)
+✔ Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity (4.696458ms)
+✖ Contract 8: Legacy NULL Parent Hash is Handled as Unknown (5.25825ms)
+✔ Contract 9: Unknown Parent Editions Are Not Grouped as Siblings (4.351958ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.528417ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure (5.547958ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.762167ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.178791ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.605167ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.263542ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.035583ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.347042ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation (5.458459ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 146.078334
+
+✖ failing tests:
+
+test at proof.test.mjs:459:1
+✖ Contract 8: Legacy NULL Parent Hash is Handled as Unknown (5.25825ms)
+  AssertionError [ERR_ASSERTION]: Legacy NULL parent hash must yield unknown status
+  + actual - expected
+  
+  + 'changed'
+  - 'unknown'
+  
+      at TestContext.<anonymous> (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/m2-slr10-11-mutations-lm3USp/pack/proof/proof.test.mjs:488:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'changed',
+    expected: 'unknown',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+

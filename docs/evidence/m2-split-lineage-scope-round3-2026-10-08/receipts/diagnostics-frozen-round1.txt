@@ -1,0 +1,17 @@
+(node:11082) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ [control] valid child mapping remains one-based (0.280791ms)
+✔ [control] deleting parent preserves child and provenance (5.148875ms)
+✔ [SL-R2] child page beyond the recorded range must be refused (0.083791ms)
+✔ [SL-R2] SQL must refuse fractional physical page bounds (4.589375ms)
+✔ [SL-R2] SQL must refuse a lineage row without child material identity (4.178417ms)
+✔ [SL-R2] a split child cannot also be its own original root (4.076542ms)
+✔ [SL-R3] disposable database claiming shipped schema must expose actual attempt/state tables (4.001125ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 107.569292

@@ -1,0 +1,60 @@
+TAP version 13
+# (node:16284) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: control: nested receipt save derives R120–140 and records the parent hash of the bytes split
+ok 1 - control: nested receipt save derives R120–140 and records the parent hash of the bytes split
+  ---
+  duration_ms: 7.521459
+  type: 'test'
+  ...
+# Subtest: control: an edited receipt and a drifted nested snapshot are both refused
+ok 2 - control: an edited receipt and a drifted nested snapshot are both refused
+  ---
+  duration_ms: 5.475541
+  type: 'test'
+  ...
+# Subtest: control: receipt replay after commit returns the persisted parts
+ok 3 - control: receipt replay after commit returns the persisted parts
+  ---
+  duration_ms: 5.055083
+  type: 'test'
+  ...
+# Subtest: control: cancelling a pending operation deletes its recorded staged file and blocks its save
+ok 4 - control: cancelling a pending operation deletes its recorded staged file and blocks its save
+  ---
+  duration_ms: 4.832084
+  type: 'test'
+  ...
+# Subtest: [SL-R12] a nested part records the immediate parent (not the root) in its parent tier
+ok 5 - [SL-R12] a nested part records the immediate parent (not the root) in its parent tier
+  ---
+  duration_ms: 5.301
+  type: 'test'
+  ...
+# Subtest: [SL-R12] re-issuing an identical receipt never resets a committed operation
+ok 6 - [SL-R12] re-issuing an identical receipt never resets a committed operation
+  ---
+  duration_ms: 4.874
+  type: 'test'
+  ...
+# Subtest: [SL-R12] re-issuing an identical receipt never revives a cancelled operation
+ok 7 - [SL-R12] re-issuing an identical receipt never revives a cancelled operation
+  ---
+  duration_ms: 5.1795
+  type: 'test'
+  ...
+# Subtest: [SL-R13] cancellation deletes only files recorded by the operation, never caller-listed paths
+ok 8 - [SL-R13] cancellation deletes only files recorded by the operation, never caller-listed paths
+  ---
+  duration_ms: 0.266958
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 115.447875

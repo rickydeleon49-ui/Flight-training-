@@ -1,0 +1,10 @@
+post-check 2026-10-09T02:31:09Z after README/manifests; node_modules link removed
+new files checked: 24; problems: none
+hygiene exit 0
+28:pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 13;
+migrations 0001-0012 unchanged; registry adds only 0013 (checksum 4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106); schema version 13
+earlier evidence packs on base: 104 unchanged
+nothing staged
+preserved exit 0
+HEAD 2a6a41536b676559db94b476c71dd645af03fbab branch codex/m2-split-lineage-implementation staged 0
+node_modules present: 0

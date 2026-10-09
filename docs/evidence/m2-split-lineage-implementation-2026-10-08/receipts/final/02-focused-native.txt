@@ -1,0 +1,85 @@
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml lineage && cargo test --locked --manifest-path src-tauri/Cargo.toml split && cargo test --locked --manifest-path src-tauri/Cargo.toml newer_database
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-split-lineage-implementation/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.50s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 21 tests
+test lineage::tests::a_library_without_split_tracking_refuses_receipts_and_saves ... ok
+test lineage::tests::a_changed_or_missing_source_and_a_wrong_sized_part_save_nothing ... ok
+test lineage::tests::a_receipt_is_refused_for_a_file_the_material_does_not_own ... ok
+test lineage::tests::an_edited_or_unrecorded_receipt_saves_nothing ... ok
+test lineage::tests::a_direct_split_records_the_original_and_inherits_the_source_settings ... ok
+test lineage::tests::a_cancelled_split_stays_cancelled_and_cannot_be_saved ... ok
+test lineage::tests::a_source_moved_to_another_file_or_removed_before_saving_is_refused ... ok
+test lineage::tests::a_parent_whose_lineage_changed_after_the_split_is_refused ... ok
+test lineage::tests::a_part_of_a_part_records_both_tiers_with_the_canonical_pages ... ok
+test lineage::tests::a_saved_split_replays_and_reissuing_never_changes_a_settled_record ... ok
+test lineage::tests::fingerprints_report_current_contents_and_missing_files ... ok
+test lineage::tests::presentation_must_name_exactly_the_planned_parts ... ok
+test lineage::tests::an_existing_output_id_or_a_mid_save_failure_saves_nothing ... ok
+test lineage::tests::cancelling_removes_only_its_own_files_and_never_touches_a_saved_split ... ok
+test lineage::tests::reconcile_reads_a_split_back_by_its_operation_id ... ok
+test lineage::tests::removing_the_original_keeps_every_part_and_its_history_truthfully ... ok
+test lineage::tests::the_serialized_receipt_matches_the_shared_fixture ... ok
+test lineage::tests::the_schema_13_validator_refuses_a_missing_lineage_index ... ok
+test lineage::tests::the_schema_13_validator_accepts_real_lineage_and_refuses_a_forged_record ... ok
+test lineage::tests::shared_compose_cases_match_the_typescript_arithmetic ... ok
+test lineage::tests::shared_lineage_validation_contract_native_outcomes ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 429 filtered out; finished in 1.84s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-6bb5cae655f02641)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 21 tests
+test documents::tests::split_records_refuse_missing_or_mismatched_files_before_writing ... ok
+test documents::tests::a_failed_split_record_rolls_back_every_part_and_tag ... ok
+test documents::tests::split_parts_and_tags_commit_together_on_one_connection ... ok
+test backup::tests::a_new_import_or_split_appearing_after_the_snapshot_is_refused ... ok
+test lineage::tests::a_library_without_split_tracking_refuses_receipts_and_saves ... ok
+test documents::tests::save_split_materials_waits_for_transient_exclusive_lock_and_succeeds ... ok
+test pdf::tests::a_manual_split_of_a_pdf_the_material_does_not_own_leaves_no_file ... ok
+test lineage::tests::a_cancelled_split_stays_cancelled_and_cannot_be_saved ... ok
+test lineage::tests::a_parent_whose_lineage_changed_after_the_split_is_refused ... ok
+test pdf::tests::opt_in_byte_heavy_charts_fixture_split ... ignored, opt-in verification on byte-heavy 54 MiB fixture
+test pdf::tests::split_benchmark_long_and_image_heavy ... ignored, manual performance measurement; slow by design
+test pdf::tests::windowing_a_document_first_produces_the_same_split_as_windowing_it_directly ... ok
+test lineage::tests::a_direct_split_records_the_original_and_inherits_the_source_settings ... ok
+test lineage::tests::reconcile_reads_a_split_back_by_its_operation_id ... ok
+test lineage::tests::a_saved_split_replays_and_reissuing_never_changes_a_settled_record ... ok
+test lineage::tests::cancelling_removes_only_its_own_files_and_never_touches_a_saved_split ... ok
+test pdf::tests::a_manual_split_records_the_exact_bytes_and_engine_page_count ... ok
+test pdf::tests::an_automatic_split_records_every_part_against_the_same_source ... ok
+test pdf::tests::automatic_splitting_on_illustrated_document_produces_valid_consecutive_parts ... ok
+test pdf::tests::automatic_and_manual_splitting_on_1050_page_fixture ... ok
+test documents::tests::save_split_materials_times_out_boundedly_on_permanent_lock ... ok
+
+test result: ok. 19 passed; 0 failed; 2 ignored; 0 measured; 429 filtered out; finished in 5.23s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-6bb5cae655f02641)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+
+running 1 test
+test card_reviews::tests::a_schema_11_database_validates_and_a_newer_database_is_refused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 449 filtered out; finished in 0.11s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-6bb5cae655f02641)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit 0

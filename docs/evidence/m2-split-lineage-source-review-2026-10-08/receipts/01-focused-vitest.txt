@@ -1,0 +1,32 @@
+$ npx vitest run src/logic/splitLineage.test.ts src/data/splitLineageShapes.test.ts src/data/splitLineageStorage.test.ts src/data/splitLineageValidationParity.test.ts src/pages/StudyLibrary/SplitLineage.test.ts src/data/cardReviewContract.test.ts src/acceptance/m1Upgrade.acceptance.test.ts
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/rickymac/code/.qwen/tmp/split-lineage-review-2026-10-08/copy[39m
+
+ [32m✓[39m src/logic/splitLineage.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/data/splitLineageShapes.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+(node:28162) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28166) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/splitLineageStorage.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+(node:28165) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/acceptance/m1Upgrade.acceptance.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 119[2mms[22m[39m
+(node:28163) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28164) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/data/splitLineageValidationParity.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 866[2mms[22m[39m
+ [32m✓[39m src/pages/StudyLibrary/SplitLineage.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 459[2mms[22m[39m
+ [32m✓[39m src/data/cardReviewContract.test.ts [2m([22m[2m60 tests[22m[2m)[22m[33m 8253[2mms[22m[39m
+       [33m[2m✓[22m[39m order and limits apply after eligibility, even behind 200 ineligible older rows [33m 706[2mms[22m[39m
+       [33m[2m✓[22m[39m a 500-card set queues correctly and 10,000 events page in 20s with earlier versions labelled [33m 832[2mms[22m[39m
+       [33m[2m✓[22m[39m order and limits apply after eligibility, even behind 200 ineligible older rows [33m 2830[2mms[22m[39m
+       [33m[2m✓[22m[39m a 500-card set queues correctly and 10,000 events page in 20s with earlier versions labelled [33m 1726[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m110 passed[39m[22m[90m (110)[39m
+[2m   Start at [22m 19:39:29
+[2m   Duration [22m 8.57s[2m (transform 962ms, setup 0ms, import 1.40s, tests 9.82s, environment 285ms)[22m
+
+exit 0

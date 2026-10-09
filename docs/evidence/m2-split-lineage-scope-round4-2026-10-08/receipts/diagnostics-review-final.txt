@@ -1,0 +1,22 @@
+(node:13230) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ control: a receipt-based direct save persists the receipt hash and total (6.216291ms)
+✔ control: a receipt-based nested save derives R120–140 (5.7835ms)
+✔ control: a source file replaced between receipt and save is refused (4.721084ms)
+✔ control: saving the same receipt twice replays without new rows (4.905208ms)
+✔ control: a mid-transaction failure with a receipt rolls back and cleans up exactly once (4.931416ms)
+✔ [SL-R10] a save without a receipt is refused, even with matching expected hash and bytes (4.566875ms)
+✔ [SL-R10] a recorded source file that is missing cannot be replaced by caller bytes (4.4055ms)
+✔ [SL-R10] an edited receipt (total and plan) is not accepted as authoritative (4.748583ms)
+✔ [SL-R10] caller parts cannot replace the receipt plan (4.697084ms)
+✔ [SL-R10] the nested parent snapshot in the receipt is compared at save time (4.882167ms)
+✔ [SL-R11] the operation log is part of the candidate DDL, not the shipped baseline (4.234583ms)
+✔ [SL-R11] cancelling before commit removes this operation's staged file (0.294959ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 144.723666

@@ -1,0 +1,48 @@
+TAP version 13
+# (node:8336) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [SL-R4] direct split uses recorded root hash to verify its immediate source
+ok 1 - [SL-R4] direct split uses recorded root hash to verify its immediate source
+  ---
+  duration_ms: 5.98675
+  type: 'test'
+  ...
+# Subtest: [SL-R4] direct split sibling lookup excludes another edition
+ok 2 - [SL-R4] direct split sibling lookup excludes another edition
+  ---
+  duration_ms: 5.122209
+  type: 'test'
+  ...
+# Subtest: [SL-R5] expected source identity without current bytes refuses all writes
+ok 3 - [SL-R5] expected source identity without current bytes refuses all writes
+  ---
+  duration_ms: 4.870333
+  type: 'test'
+  ...
+# Subtest: [SL-R5] nested save refuses root range inconsistent with persisted parent
+ok 4 - [SL-R5] nested save refuses root range inconsistent with persisted parent
+  ---
+  duration_ms: 4.395375
+  type: 'test'
+  ...
+# Subtest: control: matching current source permits a valid save
+ok 5 - control: matching current source permits a valid save
+  ---
+  duration_ms: 4.655125
+  type: 'test'
+  ...
+# Subtest: control: actual later insert failure rolls back earlier material/tag/lineage writes
+ok 6 - control: actual later insert failure rolls back earlier material/tag/lineage writes
+  ---
+  duration_ms: 4.47275
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 105.507375

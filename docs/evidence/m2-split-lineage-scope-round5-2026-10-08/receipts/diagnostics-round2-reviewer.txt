@@ -1,0 +1,82 @@
+(node:15684) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✖ control: verified direct save with matching bytes persists the verified hash (5.212875ms)
+✖ control: verified nested save derives canonical R120–140 from persisted A101–300 (4.610292ms)
+✔ [SL-R7] a new split without any verified source identity refuses all writes (4.22675ms)
+✔ [SL-R7] a caller hash cannot replace the hash of the bytes actually verified (direct) (4.090583ms)
+✔ [SL-R7] nested parts cannot override the persisted root hash or the verified parent hash (4.126292ms)
+✔ [SL-R7] a direct range is bounded by the authoritative source total, not an optional caller field (4.055875ms)
+✔ [SL-R7] stale on-disk source: an old caller Buffer cannot prove the current file is unchanged (4.704125ms)
+✔ guard: after the historical root is deleted, the immediate parent is never recorded as the root (4.427417ms)
+✔ [SL-R8] a nested part with an unknown parent hash is not certified by matching root bytes (4.395125ms)
+✔ [SL-R8] unknown parent editions are not grouped as siblings through the root hash (4.363333ms)
+✖ [SL-R9] a mid-transaction failure runs this operation's cleanup exactly once (4.408834ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 8
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 135.772916
+
+✖ failing tests:
+
+test at docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:24:1
+✖ control: verified direct save with matching bytes persists the verified hash (5.212875ms)
+  Error: A valid SplitSourceReceipt is required; unverified split refused.
+      at validateAndSaveSplitBatch (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:25:13
+      at withDb (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:24:92)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:30:1
+✖ control: verified nested save derives canonical R120–140 from persisted A101–300 (4.610292ms)
+  Error: A valid SplitSourceReceipt is required; unverified split refused.
+      at validateAndSaveSplitBatch (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:32:3
+      at withDb (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:30:96)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:1
+✖ [SL-R9] a mid-transaction failure runs this operation's cleanup exactly once (4.408834ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /injected/. Input:
+  
+  'Error: A valid SplitSourceReceipt is required; unverified split refused.'
+  
+      at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:95:10
+      at withDb (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:93)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: A valid SplitSourceReceipt is required; unverified split refused.
+        at validateAndSaveSplitBatch (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round5-2026-10-08/proof/lineageContract.mjs:660:13)
+        at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:95:23
+        at getActual (node:assert:580:5)
+        at strict.throws (node:assert:728:24)
+        at file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:95:10
+        at withDb (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:16:122)
+        at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-split-lineage-scope/docs/evidence/m2-split-lineage-scope-round3-2026-10-08/diagnostics/lineage-round2-review.test.mjs:92:93)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18),
+    expected: /injected/,
+    operator: 'throws',
+    diff: 'simple'
+  }

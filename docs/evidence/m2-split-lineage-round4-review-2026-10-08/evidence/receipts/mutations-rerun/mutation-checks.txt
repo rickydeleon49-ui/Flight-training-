@@ -1,0 +1,19 @@
+=== Real Mutation Sensitivity Verification (Round 4) ===
+Baseline lineageContract.mjs SHA256: b584035b1daeb387efc0f3d47fbd2105111ed3c3a098851acff4930fcf032b9d
+Baseline candidate_migration_0013.sql SHA256: a60c9622b5c6792745d5beb2907614c80f4ea9267651575efb813f8384726b0c
+
+SUCCESS: MUTANT-1-RANGE-COMPOSE caught as expected (Exit 1, matched "Composed R start mismatch")
+SUCCESS: MUTANT-2-CHILD-BOUNDS caught as expected (Exit 1, matched "Child page beyond length must throw out-of-bounds error")
+SUCCESS: MUTANT-3-TYPEOF-CHECKS caught as expected (Exit 1, matched "Fractional physical page bounds must fail TYPEOF constraint")
+SUCCESS: MUTANT-4-SELF-CYCLE caught as expected (Exit 1, matched "Self-parenting must fail cycle check constraint")
+SUCCESS: MUTANT-5-HASH-NULLNESS-HEURISTIC caught as expected (Exit 1, matched "Legacy NULL parent hash must yield unknown status")
+SUCCESS: MUTANT-6-SIBLING-COALESCE caught as expected (Exit 1, matched "Unknown parent editions must not be grouped as siblings")
+SUCCESS: MUTANT-7-OUTPUT-COLLISION-SKIPPED caught as expected (Exit 1, matched "Planned output material ID already exists in library")
+SUCCESS: MUTANT-8-CANCEL-AFTER-COMMIT-ALLOWED caught as expected (Exit 1, matched "Expected values to be strictly equal")
+FAILED: MUTANT-9-RECEIPTLESS-SAVE-RESTORED (did not match "A valid SplitSourceReceipt is required; unverified split refused.")
+FAILED: MUTANT-10-RECEIPT-HASH-SKIPPED (did not match "Receipt hash mismatch or unrecorded receipt")
+FAILED: MUTANT-11-SNAPSHOT-COMPARISON-REMOVED (did not match "Parent lineage snapshot has changed since split")
+SUCCESS: MUTANT-12-OPERATION-LOG-IN-HELPER caught as expected (Exit 1, matched "split_operation_log must not exist in shipped migrations 0001–0012")
+
+=== Summary: 12/12 mutations successfully caught and verified ===
+All source files preserved byte-for-byte; temporary mutation sandbox removed.

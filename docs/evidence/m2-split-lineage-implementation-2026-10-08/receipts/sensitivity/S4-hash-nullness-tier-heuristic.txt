@@ -1,0 +1,115 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sl-sens/copy
+
+ ❯ src/logic/splitLineage.test.ts (14 tests | 3 failed) 7ms
+     × classifies tiers by structure, never by which fingerprints are missing 2ms
+     × a matching original never vouches for a parent whose fingerprint is unknown 1ms
+     × never groups parts of a part through the original when their parent edition is unknown 1ms
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 passed (14)
+   Start at  19:27:45
+   Duration  115ms (transform 19ms, setup 0ms, import 24ms, tests 7ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/logic/splitLineage.test.ts > page arithmetic > classifies tiers by structure, never by which fingerprints are missing
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/logic/splitLineage.test.ts:79:54
+     77|     expect(isDirectSplit(direct("p", 1, 10, null))).toBe(true);
+     78|     expect(isDirectSplit(nested("q", 20, 40))).toBe(false);
+     79|     expect(isDirectSplit(nested("q", 20, 40, null))).toBe(false);
+       |                                                      ^
+     80|   });
+     81|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/logic/splitLineage.test.ts > source verdicts > a matching original never vouches for a parent whose fingerprint is unknown
+AssertionError: expected { Object (parent, root) } to deeply equal { parent: 'unknown', root: 'matching' }
+
+- Expected
++ Received
+
+  {
+-   "parent": "unknown",
++   "parent": "matching",
+    "root": "matching",
+  }
+
+ ❯ src/logic/splitLineage.test.ts:110:67
+    108|     const b = material("B", "b.pdf", nested("B", 20, 40, null));
+    109|     const prints = new Map([["root.pdf", H1], ["a.pdf", HA]]);
+    110|     expect(lineageVerdicts(b.lineage!, byId(root, a, b), prints)).toEq…
+       |                                                                   ^
+    111|   });
+    112|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/logic/splitLineage.test.ts > related parts > never groups parts of a part through the original when their parent edition is unknown
+AssertionError: expected [ { id: 'B2', …(16) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "createdAt": "2026-10-08T12:00:00.000Z",
++     "eventId": null,
++     "filePath": "b2.pdf",
++     "fileSize": null,
++     "goalId": null,
++     "id": "B2",
++     "lastReviewedAt": null,
++     "lineage": {
++       "childPageCount": 20,
++       "createdAt": "2026-10-08T12:00:00.000Z",
++       "materialId": "B2",
++       "nestedLevel": 2,
++       "parentContentSha256": null,
++       "parentFileName": "a.pdf",
++       "parentMaterialId": "A",
++       "parentPageEnd": 60,
++       "parentPageStart": 41,
++       "parentTitle": "Part A",
++       "parentTotalPages": 200,
++       "rootMaterialId": "R",
++       "sourceContentSha256": "1111111111111111111111111111111111111111111111111111111111111111",
++       "sourceFileName": "root.pdf",
++       "sourcePageEnd": 160,
++       "sourcePageStart": 141,
++       "sourceTitle": "Root Handbook",
++       "sourceTotalPages": 400,
++     },
++     "materialType": "study_guide",
++     "notes": "",
++     "originalFileName": null,
++     "priority": "later",
++     "reviewStatus": "needs_review",
++     "tags": [],
++     "title": "Title B2",
++     "topic": "general",
++     "updatedAt": "2026-10-08T12:00:00.000Z",
++   },
++ ]
+
+ ❯ src/logic/splitLineage.test.ts:146:40
+    144|     const b1 = material("B1", "b1.pdf", nested("B1", 20, 40, null));
+    145|     const b2 = material("B2", "b2.pdf", nested("B2", 41, 60, null));
+    146|     expect(relatedParts(b1, [b1, b2])).toEqual([]);
+       |                                        ^
+    147|     const c1 = material("C1", "c1.pdf", nested("C1", 41, 60));
+    148|     const c2 = material("C2", "c2.pdf", nested("C2", 20, 40));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+

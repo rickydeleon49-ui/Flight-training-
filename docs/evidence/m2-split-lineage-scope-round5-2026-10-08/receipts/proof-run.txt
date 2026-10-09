@@ -1,0 +1,26 @@
+✔ Contract 1: Page Range Validation enforces 1-based, inclusive bounds (0.691166ms)
+✔ Contract 2: Page Translation Maps Child Position to Source with Strict Bounds & Explicit Options (0.10775ms)
+✔ Contract 3: Nested Range Composition and Persisted Navigation Coordinates (0.063416ms)
+✔ Contract 4: Multi-level Nested Hierarchy (3+ levels) (0.065042ms)
+✔ Contract 5: Structural Tiers and Strict DDL CHECK Constraints (5.378417ms)
+✔ Contract 6: Two-Tier Veracity Verification from Real Files (5.632708ms)
+✔ Contract 7: Direct & Nested Sibling Disambiguation by Effective Source Identity (4.692ms)
+✔ Contract 8: Legacy NULL Parent Hash is Handled as Unknown (4.607333ms)
+✔ Contract 9: Unknown Parent Editions Are Not Grouped as Siblings (4.321417ms)
+✔ Contract 10: Parent Deletion Preserves Child Material and Split Provenance (4.499958ms)
+✔ Contract 11: Atomic Batch Save Binds to Authoritative Receipt, Refuses Receipt-less Save, and Rolls Back on Failure (5.832958ms)
+✔ Contract 12: Acknowledged Save Followed by Failed Refresh Guarantees Consistency (4.641083ms)
+✔ Contract 13: Shipped Migrations 0001–0012 Faithful Schema Baseline (4.189625ms)
+✔ Contract 14: Disposable Schema Migration Lifecycle, Validated Save with Receipt, Export/Reopen, and Synthetic File Preservation (7.820916ms)
+✔ Contract 15: Restore Simulation Distinguishes Numeric Check from Native Validator (0.053583ms)
+✔ Contract 16: Explicit Page Bounds and Storage Limit Specification (0.024042ms)
+✔ Contract 17: Concurrent Staged Operations and Cleanup Isolation (5.159417ms)
+✔ Contract 18: Idempotent Resubmission, Reconciliation, and Real Cancellation (5.639959ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 143.789916
