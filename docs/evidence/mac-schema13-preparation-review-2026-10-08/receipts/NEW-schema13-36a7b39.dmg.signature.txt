@@ -1,0 +1,23 @@
+Executable=/private/tmp/mac-schema13-review/NEW-schema13-36a7b39/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+Identifier=her_flight_deck-ab230c473fe96d5f
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=65704 flags=0x20002(adhoc,linker-signed) hashes=2049+0 location=embedded
+VersionPlatform=1
+VersionMin=786432
+VersionSDK=1705216
+Hash type=sha256 size=32
+CandidateCDHash sha256=1f2ce81c06149f6302ecdc658a876bd463a023d3
+CandidateCDHashFull sha256=1f2ce81c06149f6302ecdc658a876bd463a023d3612ae6e7166c5ad42ce535c6
+Hash choices=sha256
+CMSDigest=1f2ce81c06149f6302ecdc658a876bd463a023d3612ae6e7166c5ad42ce535c6
+CMSDigestType=2
+Executable Segment base=0
+Executable Segment limit=8077312
+Executable Segment flags=0x1
+Page size=4096
+CDHash=1f2ce81c06149f6302ecdc658a876bd463a023d3
+Signature=adhoc
+Info.plist=not bound
+TeamIdentifier=not set
+Sealed Resources=none
+Internal requirements=none

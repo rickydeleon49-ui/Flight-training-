@@ -1,0 +1,1 @@
+/tmp/mac-schema13-review/OLD-schema12-2a6a415/Her Flight Deck.app/Contents/MacOS/her-flight-deck: code has no resources but signature indicates they must be present

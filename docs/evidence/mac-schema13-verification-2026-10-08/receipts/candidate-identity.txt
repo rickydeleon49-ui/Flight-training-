@@ -1,0 +1,25 @@
+# Candidate identity (built from exact commits, LOCAL UNSIGNED / ad hoc; not Developer ID, not notarized, not distributable)
+# run 2026-10-09T04:29:23Z  host Mac17,3 Apple M5 arm64  macOS 27.0.1  SDK pinned MacOSX26.5
+# cargo/rustc 1.99.0  node 22.23.3  npm 10.9.9
+
+## NEW candidate (installed app under test) — source commit 36a7b39acd291cba14be4f137798b3ad6f7272f1 (schema 13)
+  dmg  : /Users/rickymac/code/.qwen/tmp/schema13-candidates/NEW-schema13-36a7b39.dmg
+  dmg sha256: 6aecab8608224f9e3f272dff1b8ace4f23d699566329ef1d24e5ab95bb1b0c99
+  inner exe sha256: 9c7056c3435b526eff8281d9dbb14daf570983024116a368d6d9d81b61022a2b
+  arch: arm64   id: com.herflightdeck.app   version: 0.5.3   minOS: 12.0
+  codesign: Signature=adhoc  TeamIdentifier=not set  flags=(adhoc,linker-signed)  hardenedRuntime=false
+  preflight --app: signature.display=observed/adhoc ; integrity=failed ; stapler: not stapled ; spctl: rejected/unknown
+  bundle build: tauri build --bundles dmg --target aarch64-apple-darwin  exit 0
+
+## OLD candidate (older schema-12 binary for G2 source + G3 refusal) — source commit 2a6a415 (schema 12, migrations 0001-0012 only)
+  dmg  : /Users/rickymac/code/.qwen/tmp/schema13-candidates/OLD-schema12-2a6a415.dmg
+  dmg sha256: 455eb12d3f906fd60cef529e2aca464c98ae81e36e48c62d8afd73a092681fcd
+  inner exe sha256: efc33cb8fa5e7f1916cda3ca957fca80e328030361fc0e714bdb8333a7d72527
+  arch: arm64   id: com.herflightdeck.app   version: 0.5.3
+  codesign: Signature=adhoc  TeamIdentifier=not set ; preflight integrity=failed ; not notarized
+  2a6a415 confirmed ancestor of 36a7b39 (schema12 base -> schema13 head)
+
+## Synthetic PDF fixtures regenerated on THIS Mac (match MAC_PARITY_CHECKLIST §4 recorded hashes)
+b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d  synthetic-illustrated-charts.pdf
+0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1  synthetic-long-manual.pdf
+f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134  synthetic-small-checklist.pdf

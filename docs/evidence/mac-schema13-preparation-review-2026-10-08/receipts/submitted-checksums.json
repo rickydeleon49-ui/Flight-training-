@@ -1,0 +1,42 @@
+[
+  {
+    "path": "README.md",
+    "sha256": "68d16375cd43a05e10e7319f4e235a203b7f100b4ba3d19a869d48f25a09540a",
+    "match": true
+  },
+  {
+    "path": "RUNBOOK-G1-G3.md",
+    "sha256": "d9b8359b187e87ea95980ebabd955ff450b69e279c28ca2236787364ef66ddbd",
+    "match": true
+  },
+  {
+    "path": "receipts/build-new-schema13.log",
+    "sha256": "40b63b032eed68a1bb2bd337cad92b1f19a2ce9018abf8941883224961b08abf",
+    "match": true
+  },
+  {
+    "path": "receipts/build-old-schema12.log",
+    "sha256": "a222539f2ea14d6e0e7fa4099ed5a0b8e884cb134079d05cae8b9e37c813cd57",
+    "match": true
+  },
+  {
+    "path": "receipts/candidate-identity.txt",
+    "sha256": "83e6c336005dbdb7fc70940041e60b6fdeb0528b52369fb5dec5949d6273a61a",
+    "match": true
+  },
+  {
+    "path": "receipts/prerequisite-audit.txt",
+    "sha256": "e5027809489dda05cf97d515cb4288a6413c70acf4f3d434f06d793bb44b1cc3",
+    "match": true
+  },
+  {
+    "path": "receipts/readiness-preflight.json",
+    "sha256": "0db00a8b71e71d15768352f41b2e122cbfbbf6ad03dce86ac1fc55242c57a454",
+    "match": true
+  },
+  {
+    "path": "receipts/readiness-preflight.txt",
+    "sha256": "4423f0d37dfa470f04dbd0b2f21056f735ad166d4d78852f483a9d23eedb5332",
+    "match": true
+  }
+]
