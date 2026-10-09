@@ -1,0 +1,6 @@
+# Original (rejected-integrity) candidate DMGs and in-tree bundle outputs preserved byte-for-byte
+# frozen from the review: NEW 6aecab86..., OLD 455eb12d...
+6aecab8608224f9e3f272dff1b8ace4f23d699566329ef1d24e5ab95bb1b0c99  NEW-schema13-36a7b39.dmg
+455eb12d3f906fd60cef529e2aca464c98ae81e36e48c62d8afd73a092681fcd  OLD-schema12-2a6a415.dmg
+6aecab8608224f9e3f272dff1b8ace4f23d699566329ef1d24e5ab95bb1b0c99  original-bundle-artifacts/NEW/Her Flight Deck_0.5.3_aarch64.dmg
+455eb12d3f906fd60cef529e2aca464c98ae81e36e48c62d8afd73a092681fcd  original-bundle-artifacts/OLD/Her Flight Deck_0.5.3_aarch64.dmg

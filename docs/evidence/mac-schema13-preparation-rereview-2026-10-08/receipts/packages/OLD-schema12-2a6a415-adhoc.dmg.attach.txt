@@ -1,0 +1,4 @@
+expected   CRC32 $684FC062
+/dev/disk4          	GUID_partition_scheme          	
+/dev/disk4s1        	Apple_HFS                      	/private/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc
+hdiutil: WARNING: 'hdiutil attach -readonly -nobrowse -mountpoint ...' is deprecated. Please use 'diskutil image attach --readOnly --mountOptions nobrowse --mountPoint ...' instead.

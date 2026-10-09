@@ -1,0 +1,2 @@
+/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck: valid on disk
+/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck: satisfies its Designated Requirement

@@ -1,0 +1,12 @@
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+(node:49827) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

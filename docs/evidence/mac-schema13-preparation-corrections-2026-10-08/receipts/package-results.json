@@ -1,0 +1,66 @@
+[
+  {
+    "dmg": "NEW-schema13-36a7b39-adhoc.dmg",
+    "dmg_sha256": "b3ead8139049d2fe829469744ff5a3394e145a3cb0ad09d8ca5ac9ae9f65f334",
+    "exe_sha256": "824688939086c16bd5ec8be7312545725d79ce284ebab2fe3ed0d1eaf400eb28",
+    "checks": [
+      {
+        "check": "exe-verify",
+        "exit": 0,
+        "output": "/tmp/mac-schema13-adhoc-inspect/NEW-schema13-36a7b39-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck: valid on disk\n/tmp/mac-schema13-adhoc-inspect/NEW-schema13-36a7b39-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck: satisfies its Designated Requirement\n"
+      },
+      {
+        "check": "bundle-verify",
+        "exit": 0,
+        "output": "/tmp/mac-schema13-adhoc-inspect/NEW-schema13-36a7b39-adhoc/Her Flight Deck.app: valid on disk\n/tmp/mac-schema13-adhoc-inspect/NEW-schema13-36a7b39-adhoc/Her Flight Deck.app: satisfies its Designated Requirement\n"
+      },
+      {
+        "check": "signature",
+        "exit": 0,
+        "output": "Executable=/private/tmp/mac-schema13-adhoc-inspect/NEW-schema13-36a7b39-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20500 size=16630 flags=0x10002(adhoc,runtime) hashes=513+3 location=embedded\nVersionPlatform=1\nVersionMin=786432\nVersionSDK=1705216\nHash type=sha256 size=32\nCandidateCDHash sha256=d0266cf4ccfd06a4156bac43014be83d59ffc12f\nCandidateCDHashFull sha256=d0266cf4ccfd06a4156bac43014be83d59ffc12f7bbef032d3560ca8eab6666d\nHash choices=sha256\nCMSDigest=d0266cf4ccfd06a4156bac43014be83d59ffc12f7bbef032d3560ca8eab6666d\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=8077312\nExecutable Segment flags=0x1\nPage size=16384\nCDHash=d0266cf4ccfd06a4156bac43014be83d59ffc12f\nSignature=adhoc\nInfo.plist entries=16\nTeamIdentifier=not set\nRuntime Version=26.5.0\nSealed Resources version=2 rules=13 files=1\nInternal requirements count=0 size=12\nTotal signatures=1\nChosen signature=1\n"
+      },
+      {
+        "check": "arch",
+        "exit": 0,
+        "output": "arm64\n"
+      },
+      {
+        "check": "plist",
+        "exit": 0,
+        "output": "com.herflightdeck.app\n"
+      }
+    ]
+  },
+  {
+    "dmg": "OLD-schema12-2a6a415-adhoc.dmg",
+    "dmg_sha256": "ddb0594e351e0cd90a9fd0ede4824c1fd6fe3cb043d523a31939988fc0077c62",
+    "exe_sha256": "2e44bfbbd1dd65e93697d65ca8b5beff5237173e4dbf8484a89ee21f9c98842a",
+    "checks": [
+      {
+        "check": "exe-verify",
+        "exit": 0,
+        "output": "/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck: valid on disk\n/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck: satisfies its Designated Requirement\n"
+      },
+      {
+        "check": "bundle-verify",
+        "exit": 0,
+        "output": "/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc/Her Flight Deck.app: valid on disk\n/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc/Her Flight Deck.app: satisfies its Designated Requirement\n"
+      },
+      {
+        "check": "signature",
+        "exit": 0,
+        "output": "Executable=/private/tmp/mac-schema13-adhoc-inspect/OLD-schema12-2a6a415-adhoc/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20500 size=16342 flags=0x10002(adhoc,runtime) hashes=504+3 location=embedded\nVersionPlatform=1\nVersionMin=786432\nVersionSDK=1705216\nHash type=sha256 size=32\nCandidateCDHash sha256=5f9ae548284f303a26d465171c9ff2796a43cd10\nCandidateCDHashFull sha256=5f9ae548284f303a26d465171c9ff2796a43cd10448c3fac1ce3b3082461c69e\nHash choices=sha256\nCMSDigest=5f9ae548284f303a26d465171c9ff2796a43cd10448c3fac1ce3b3082461c69e\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=7946240\nExecutable Segment flags=0x1\nPage size=16384\nCDHash=5f9ae548284f303a26d465171c9ff2796a43cd10\nSignature=adhoc\nInfo.plist entries=16\nTeamIdentifier=not set\nRuntime Version=26.5.0\nSealed Resources version=2 rules=13 files=1\nInternal requirements count=0 size=12\nTotal signatures=1\nChosen signature=1\n"
+      },
+      {
+        "check": "arch",
+        "exit": 0,
+        "output": "arm64\n"
+      },
+      {
+        "check": "plist",
+        "exit": 0,
+        "output": "com.herflightdeck.app\n"
+      }
+    ]
+  }
+]

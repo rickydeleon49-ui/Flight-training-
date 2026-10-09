@@ -1,0 +1,72 @@
+{
+  "schema": "hfd-mac-profile-snapshot-selfcheck/1",
+  "checks": [
+    {
+      "name": "ledger is the desktop _sqlx_migrations table, max 12",
+      "pass": true
+    },
+    {
+      "name": "schema-13 tables absent at schema 12",
+      "pass": true
+    },
+    {
+      "name": "control: unchanged profile compares clean",
+      "pass": true
+    },
+    {
+      "name": "detection: a modified history row is reported",
+      "pass": true
+    },
+    {
+      "name": "refusal: a non-profile directory is refused",
+      "pass": true
+    },
+    {
+      "name": "refusal: a mismatched owner uid is refused",
+      "pass": true
+    },
+    {
+      "name": "wal: committed WAL rows are read from a copy; original main db bytes unchanged",
+      "pass": true,
+      "detail": {
+        "walBytes": 12392,
+        "openMode": "wal-copy-snapshot (12392 bytes of WAL read from a copy)",
+        "originalUntouched": true,
+        "tagsBefore": 0,
+        "tagsAfter": 1
+      }
+    },
+    {
+      "name": "upgrade: applying real 0013 keeps retained history identical and shows both new tables + ledger 13",
+      "pass": true,
+      "detail": {
+        "diffs": [],
+        "ledger": {
+          "table": "_sqlx_migrations",
+          "maxVersion": 13,
+          "versions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ]
+        },
+        "newTables": [
+          "material_split_lineage",
+          "split_operation_log"
+        ]
+      }
+    }
+  ],
+  "allPassed": true
+}
+

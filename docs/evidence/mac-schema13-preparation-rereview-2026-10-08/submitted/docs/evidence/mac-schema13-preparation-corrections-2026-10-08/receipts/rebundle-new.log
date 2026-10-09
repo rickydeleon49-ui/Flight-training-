@@ -1,0 +1,72 @@
+       Debug [tauri_cli::helpers::app_paths] Found Tauri project inside /Users/rickymac/code/Flight-training-/src-tauri on early lookup
+    Bundling [tauri_bundler::bundle::macos::app] Her Flight Deck.app (/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app)
+     Running [tauri_bundler::utils] Command `xattr  -crs /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app`
+     Signing [tauri_bundler::bundle::macos::sign] with identity "-"
+Signing with identity "-"
+Signing /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+     Running [tauri_macos_sign] Command `codesign  --force -s - --options runtime /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck`
+/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck: replacing existing signature
+Signing with identity "-"
+Signing /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app
+     Running [tauri_macos_sign] Command `codesign  --force -s - --options runtime /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app`
+/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app: replacing existing signature
+        Warn [tauri_bundler::bundle::macos::app] skipping app notarization, no APPLE_ID & APPLE_PASSWORD & APPLE_TEAM_ID or APPLE_API_KEY & APPLE_API_ISSUER & APPLE_API_KEY_PATH environment variables found
+    Bundling [tauri_bundler::bundle::macos::dmg] Her Flight Deck_0.5.3_aarch64.dmg (/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg)
+     Running [tauri_bundler::bundle::macos::dmg] bundle_dmg.sh
+     Running [tauri_bundler::utils] Command `/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/bundle_dmg.sh  --volname Her Flight Deck --icon Her Flight Deck.app 180 170 --app-drop-link 480 170 --window-size 660 400 --hide-extension Her Flight Deck.app --volicon /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/icon.icns Her Flight Deck_0.5.3_aarch64.dmg Her Flight Deck.app`
+Creating disk image...
+hdiutil: WARNING: 'hdiutil create -volname -format ...' is deprecated. Please use 'diskutil image create from/blank --volumeName --format ...' instead.
+created: /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/rw.46753.Her Flight Deck_0.5.3_aarch64.dmg
+hdiutil: WARNING: 'hdiutil resize ...' is deprecated. Please use 'diskutil image resize ...' instead.
+hdiutil: WARNING: 'hdiutil resize -size ...' is deprecated. Please use 'diskutil image resize --size ...' instead.
+Mounting disk image...
+hdiutil: WARNING: 'hdiutil attach -nobrowse ...' is deprecated. Please use 'diskutil image attach --mountOptions nobrowse ...' instead.
+Device name:     /dev/disk4
+Searching for mounted interstitial disk image using /dev/disk4s...
+Mount dir:       /Volumes/dmg.Dj948n
+Making link to Applications dir...
+/Volumes/dmg.Dj948n
+Copying volume icon file '/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/icon.icns'...
+Will sleep for 2 seconds to workaround occasions "Can't get disk (-1728)" issues...
+Running AppleScript to make Finder stuff pretty: /usr/bin/osascript "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/createdmg.tmp.XXXXXXXXXX.8pVUbsBylx" "dmg.Dj948n"
+waited 1 seconds for .DS_STORE to be created.
+Done running the AppleScript...
+Fixing permissions...
+Done fixing permissions
+Skipping blessing on sandbox
+Deleting .fseventsd
+Unmounting disk image...
+hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.
+"disk4" ejected.
+Compressing disk image...
+Preparing imaging engine…
+Reading Protective Master Boot Record (MBR : 0)…
+   (CRC32 $F7307A0C: Protective Master Boot Record (MBR : 0))
+Reading GPT Header (Primary GPT Header : 1)…
+   (CRC32 $E0E75042: GPT Header (Primary GPT Header : 1))
+Reading GPT Partition Data (Primary GPT Table : 2)…
+   (CRC32 $4B55C5D3: GPT Partition Data (Primary GPT Table : 2))
+Reading  (Apple_Free : 3)…
+   (CRC32 $00000000:  (Apple_Free : 3))
+Reading disk image (Apple_HFS : 4)…
+   (CRC32 $304CFA38: disk image (Apple_HFS : 4))
+Reading  (Apple_Free : 5)…
+   (CRC32 $00000000:  (Apple_Free : 5))
+Reading GPT Partition Data (Backup GPT Table : 6)…
+   (CRC32 $4B55C5D3: GPT Partition Data (Backup GPT Table : 6))
+Reading GPT Header (Backup GPT Header : 7)…
+   (CRC32 $0DB7DA70: GPT Header (Backup GPT Header : 7))
+Adding resources…
+Elapsed Time:  4.995s
+File size: 4845246 bytes, Checksum: CRC32 $56D2DB33
+Sectors processed: 67664, 19188 compressed
+Speed: 1.9MB/s
+Savings: 86.0%
+hdiutil: WARNING: 'hdiutil convert -format ...' is deprecated. Please use 'diskutil image create from --format ...' instead.
+created: /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck_0.5.3_aarch64.dmg
+hdiutil does not support internet-enable. Note it was removed in macOS 10.15.
+Disk image done
+    Cleaning [tauri_bundler::bundle] /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app
+    Finished [tauri_bundler::bundle] 1 bundle at:
+        /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Her Flight Deck_0.5.3_aarch64.dmg
+

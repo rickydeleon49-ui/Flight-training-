@@ -1,0 +1,54 @@
+{
+  "source": "/Users/rickymac/code/Flight-training-/scripts/mac-schema13-profile-snapshot.mjs",
+  "passed": 3,
+  "failed": 7,
+  "results": [
+    {
+      "name": "[control] no-match exit 1 permits a scratch root",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R4] a matched live app must refuse before copying/reading",
+      "pass": false,
+      "assertion": "Missing expected exception."
+    },
+    {
+      "name": "[MACV-R4] process-inspection exit 2 must fail closed",
+      "pass": false,
+      "assertion": "Missing expected exception."
+    },
+    {
+      "name": "[MACV-R4] output cannot overwrite the input database",
+      "pass": false,
+      "assertion": "refused=false; database preserved=false"
+    },
+    {
+      "name": "[control] unchanged history-only comparison passes",
+      "pass": true
+    },
+    {
+      "name": "[control] an ordinary changed history row is detected",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R5] Step C default compare must accept unchanged schema 12",
+      "pass": false,
+      "assertion": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "name": "[MACV-R5] Step D restore comparison must detect a changed document",
+      "pass": false,
+      "assertion": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "[MACV-R5] snapshots missing every required history table cannot pass",
+      "pass": false,
+      "assertion": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "name": "[MACV-R5] TEXT changed after embedded NUL must change its digest",
+      "pass": false,
+      "assertion": "stored changed bytes 6265666F72650074776F, but hash=07ce22b55d60b2d2aff70c5cde0281e01e832aa319d7af70eada37964ff9d517"
+    }
+  ]
+}
