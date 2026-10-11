@@ -1,0 +1,9 @@
+   Compiling m3-skills-evidence-native v0.0.0 (/private/tmp/hfd-m3-final-review/docs/evidence/m3-skills-evidence-scope-2026-10-10/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running tests/rereview_diagnostics.rs (/tmp/hfd-m3-final-review-native-target/debug/deps/rereview_diagnostics-c21468c460879acc)
+
+running 2 tests
+test control_valid_populated_fixture ... ok
+test r9_operation_owned_history_requires_its_receipt ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s

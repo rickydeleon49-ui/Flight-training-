@@ -1,10 +1,10 @@
 # M3 skills and feedback evidence: production implementation (CONDITIONAL)
 
 **Do not start until both are true:**
-1. A senior reviewer has accepted [`M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md`](M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md) and its evidence pack, **including the M3-R1–R7 corrections** ([report](M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md)), after independent re-review.
+1. A senior reviewer has accepted [`M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md`](M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md) and its evidence pack, **including the M3-R1–R7 corrections** ([report](M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md)) **and the M3-R8–R10 remaining corrections** ([report](M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md)), after independent re-review.
 2. The owner has approved M3-D1–D9 as written, or with recorded changes.
 
-*Corrected 11 October 2026 for M3-R1–R7: paged revision history, filter-bound fenced evidence cursors with `STALE_CURSOR`, exact receipt results with operation ownership, restored-catalog semantics with native `labelKey` parity, and the controller's write ownership, uncertain-save reconciliation, explicit outcomes and symmetric lifecycle.*
+*Corrected 11 October 2026 for M3-R1–R7: paged revision history, filter-bound fenced evidence cursors with `STALE_CURSOR`, exact receipt results with operation ownership, restored-catalog semantics with native `labelKey` parity, and the controller's write ownership, uncertain-save reconciliation, explicit outcomes and symmetric lifecycle. Corrected again for M3-R8–R10: whole-draft form acknowledgment and ownership, history → receipt ownership in both validators, and eviction of confirmed-erased content. These corrections remain inactive until both conditions above are met.*
 
 If either is missing, stop and report. This prompt is model-neutral.
 
@@ -41,7 +41,7 @@ Deliver one cohesive, reviewable change. Leave it uncommitted and unpushed for r
 | M3-D4 creation | `create_observation`:<br>• existing debrief required (`SOURCE_MISSING`);<br>• optional `sourceField` fingerprint;<br>• limits 2,000 characters / 8,000 bytes / 50 per debrief;<br>• no backfill or extraction. | Limit tests at the exact boundaries. The upgrade test proves existing debriefs gain no rows. |
 | M3-D5 history | Every change appends a `skill_observation_revisions` row in the same transaction. Skill and source are immutable. Edits are conditional on `expectedRevision`. Every revision stays reachable through `read_observation_history` pages (at most 100 per page, an observation-bound cursor, down to revision 1). There is no edit cap. | History test. A stale double-edit test. The append-only triggers refuse direct UPDATE/DELETE. A walk of more than 100 revisions reaches the first wording with no gap or repeat, on both TS engines and natively. |
 | M3-D6 sources | FK `SET NULL` with snapshots; no relink (null-safe `IS` CHECK); skills `RESTRICT`. Retire and restore. | Tests for a deleted, renamed or replaced debrief, a deleted or completed action, and a retired skill. All are validated after the change. |
-| M3-D7 erasure | `erase_observation` (confirm `"erase"`): earlier receipts for the subject become tombstones, then the observation is deleted with its history by cascade. Later replays and id reuse → `ERASED`; its history read is `ERASED`, not `NOT_FOUND`. The confirm dialog names what is erased and says earlier backups still contain it. | A scan of every table for unique wording after an erase finds nothing. A resurrection test, including through the form after an uncertain save. The validator rejects a tombstone whose subject is present, a tombstoned skill action, and an erase that left a live receipt. |
+| M3-D7 erasure | `erase_observation` (confirm `"erase"`): earlier receipts for the subject become tombstones, then the observation is deleted with its history by cascade. Later replays and id reuse → `ERASED`; its history read is `ERASED`, not `NOT_FOUND`. The confirm dialog names what is erased and says earlier backups still contain it. | A scan of every table for unique wording after an erase finds nothing. A resurrection test, including through the form after an uncertain save. The validator rejects a tombstone whose subject is present, a tombstoned skill action, and an erase that left a live receipt. **Screen (M3-R10):** once any answer says `ERASED`, the observation's loaded revisions, cursor and list entry are gone; the summary is re-read; a held late page cannot restore them; a temporary read failure keeps loaded pages. Proven with rendered and late-page tests. |
 | M3-D8 actions | `link_action` / `unlink_action` / `set_addressed`, each idempotent and recorded in history. `next_actions` is never written. Completion is shown separately with the scope document's sentence. | The action row is unchanged after link and mark. A deleted action keeps its name. Completion leaves `addressed_at` NULL. |
 | M3-D9 confidence and wording | `set_confidence` 1–5/NULL, separate from status. Evidence sentence thresholds live in `src/logic/skillEvidence.ts` (fewer than 3 observations, or fewer than 2 lessons → limited). The fixed disclaimer is on the skill page. | Logic unit tests for none/limited/recorded. UI tests for the sentences and disclaimer. |
 
@@ -61,10 +61,10 @@ Deliver one cohesive, reviewable change. Leave it uncommitted and unpushed for r
     - `list_skills`;
     - `read_observation_history({ observationId, cursor, limit })` returning `{ observationId, currentRevision, items, nextCursor }`, with 1–100 per page (default 20), a `["history", observationId, beforeRevision]` cursor, `ERASED` for an erased observation and `NOT_FOUND` for an unknown one.
 - `src-tauri/src/backup.rs`:
-  - add `verify_schema_14_skill_evidence_semantics`, ported from `docs/evidence/.../native/src/lib.rs`, including `label_key`, `decode_result`, the catalog step rules and receipt ownership (`unicode-normalization` is already an app dependency at `=0.1.25`);
+  - add `verify_schema_14_skill_evidence_semantics`, ported from `docs/evidence/.../native/src/lib.rs`, including `label_key`, `decode_result`, the catalog step rules and receipt ownership in **both directions** (`unicode-normalization` is already an app dependency at `=0.1.25`). Receipt → history: each live receipt owns the row it names. History → receipt (M3-R9): every user catalog revision, observation revision and self-assessment has its live receipt with the same operation, action family, subject and revision or sequence; catalog seeds need none;
   - call it from `verify_application_connection` for `newest_migration >= 14`.
 - Native tests:
-  - replay `src-tauri/fixtures/skill-evidence/{validation-cases.json, constraint-cases.json, operation-cases.json}`. Move the two existing fixtures (72 validation and 29 constraint cases) from the evidence pack. Add operation cases covering create, retry, conflict, stale, link, addressed, erase, resurrection and replay of a damaged receipt, with expected outcomes and rows.
+  - replay `src-tauri/fixtures/skill-evidence/{validation-cases.json, constraint-cases.json, operation-cases.json}`. Move the existing fixtures (85 validation and 29 constraint cases, and the real-writer library `writer-populated-schema14.sql`) from the evidence pack. Add operation cases covering create, retry, conflict, stale, link, addressed, erase, resurrection and replay of a damaged receipt, with expected outcomes and rows.
   - add a populated schema-13 → 14 upgrade test.
   - add a backup/restore round trip, a tampered-backup refusal, and a test that a mid-transaction failure leaves nothing behind.
 
@@ -85,7 +85,8 @@ Deliver one cohesive, reviewable change. Leave it uncommitted and unpushed for r
   - uncertain saves resolved by exact replay, or by an observation-id read where present is proof, `ERASED` blocks, and `NOT_FOUND` is followed by the exact-replay fence;
   - explicit `SaveOutcome`s, with `reviseSaved`/`startNewDraft` as the only ways forward;
   - read-only refresh;
-  - symmetric `activate`/`deactivate` for StrictMode.
+  - symmetric `activate`/`deactivate` for StrictMode;
+  - eviction of confirmed-erased observations from history, list and summary, with erased ids filtered from later answers (M3-R10).
 
   It also re-reads when `dataRevision` advances.
 
@@ -104,7 +105,7 @@ Deliver one cohesive, reviewable change. Leave it uncommitted and unpushed for r
 - **Lost answers and refreshes:**
   - a lost answer followed by changed content resolves the earlier request first. Present means earlier saved; erased means nothing is recreated; not found means the exact earlier request is replayed as a fence. It is never treated as permission to send new ids;
   - a pending original and a changed create never coexist;
-  - the form keeps wording that was not acknowledged and says what did save;
+  - the form compares the **complete** draft (wording, date, attribution, instructor name, skill and debrief) with a synchronously updated live draft before clearing, on every submission path. It keeps every changed field, names what is unsaved, scopes its draft key to the form instance, and ignores answers for an earlier draft (M3-R8);
   - an acknowledged write is never resent, and its draft identity survives until an explicit new draft;
   - a failed refresh shows "Saved" with a read-only refresh.
 - **Publication:**

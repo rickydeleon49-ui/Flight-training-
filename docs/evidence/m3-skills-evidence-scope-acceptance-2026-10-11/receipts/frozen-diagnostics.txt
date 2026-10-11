@@ -1,0 +1,12 @@
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-final-review
+
+(node:68754) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68753) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  10:35:42
+   Duration  726ms (transform 324ms, setup 0ms, import 463ms, tests 299ms, environment 252ms)

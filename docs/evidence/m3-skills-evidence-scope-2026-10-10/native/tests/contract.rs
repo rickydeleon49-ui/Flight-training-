@@ -162,3 +162,36 @@ fn the_candidate_refuses_a_library_newer_than_itself() {
     let error = verify_candidate(&conn, &reference().unwrap()).unwrap_err();
     assert!(error.contains("newer database format"));
 }
+
+fn writer_library(extra: Option<&str>) -> Connection {
+    let conn = Connection::open_in_memory().unwrap();
+    migrate(&conn, Some(CANDIDATE)).unwrap();
+    let rows = std::fs::read_to_string(format!("{}/../fixtures/writer-populated-schema14.sql", env!("CARGO_MANIFEST_DIR"))).unwrap();
+    conn.execute_batch(&rows).unwrap();
+    if let Some(sql) = extra {
+        conn.execute_batch(sql).unwrap();
+    }
+    conn
+}
+
+/// M3-R9: the library written by the real candidate writer validates natively,
+/// and removing any one receipt that owns history is refused (TS twin:
+/// tests/remaining-validation.test.ts).
+#[test]
+fn writer_library_requires_the_receipt_of_every_history_row() {
+    let reference = reference().unwrap();
+    let conn = writer_library(None);
+    verify_candidate(&conn, &reference).unwrap();
+    let mut statement = conn
+        .prepare("SELECT operation_id, action FROM skill_evidence_operations WHERE is_erased = 0 AND action <> 'erase_observation' ORDER BY rowid")
+        .unwrap();
+    let owning: Vec<(String, String)> = statement.query_map([], |r| Ok((r.get(0)?, r.get(1)?))).unwrap().map(Result::unwrap).collect();
+    let mut actions: Vec<&str> = owning.iter().map(|(_, a)| a.as_str()).collect();
+    actions.sort_unstable();
+    actions.dedup();
+    assert_eq!(actions.len(), 11, "every history-writing action is represented");
+    for (operation, action) in &owning {
+        let broken = writer_library(Some(&format!("DELETE FROM skill_evidence_operations WHERE operation_id = '{operation}'")));
+        assert!(verify_candidate(&broken, &reference).is_err(), "removing the {action} receipt {operation} was accepted");
+    }
+}

@@ -1,0 +1,40 @@
+$ env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/final-diag-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test rereview_diagnostics
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/final-diag
+# utc: 2026-10-11T17:05:53Z
+   Compiling version_check v0.9.5
+   Compiling zerocopy v0.8.56
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.12
+   Compiling vcpkg v0.2.15
+   Compiling pkg-config v0.3.34
+   Compiling once_cell v1.21.4
+   Compiling cfg-if v1.0.4
+   Compiling zmij v1.0.23
+   Compiling serde_core v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling tinyvec_macros v0.1.1
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling cc v1.4.5
+   Compiling tinyvec v1.13.2
+   Compiling ahash v0.8.12
+   Compiling fallible-iterator v0.3.0
+   Compiling bitflags v2.13.1
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling smallvec v1.16.0
+   Compiling unicode-normalization v0.1.25
+   Compiling libsqlite3-sys v0.30.1
+   Compiling hashbrown v0.14.5
+   Compiling hashlink v0.9.1
+   Compiling rusqlite v0.32.1
+   Compiling m3-skills-evidence-native v0.0.0 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/final-diag/docs/evidence/m3-skills-evidence-scope-2026-10-10/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.01s
+     Running tests/rereview_diagnostics.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/final-diag-target/debug/deps/rereview_diagnostics-c21468c460879acc)
+
+running 2 tests
+test control_valid_populated_fixture ... ok
+test r9_operation_owned_history_requires_its_receipt ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+# exit=0

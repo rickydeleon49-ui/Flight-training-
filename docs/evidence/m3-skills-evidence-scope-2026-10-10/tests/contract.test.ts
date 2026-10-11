@@ -37,6 +37,8 @@ describe("shared schema-14 validation contract", () => {
         "control", "schema", "schema-check", "schema-fk", "schema-key", "schema-index", "schema-trigger", "catalog", "history", "relationships", "receipts",
         // M3-R5 / M3-R6 corrections.
         "receipt-shape", "receipt-ownership", "catalog-pinned", "catalog-names",
+        // M3-R9 remaining correction.
+        "history-ownership",
       ]),
     );
   });

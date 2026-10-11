@@ -1,0 +1,24 @@
+$ git rev-parse --abbrev-ref HEAD; git rev-parse HEAD origin/main; git status --short; git diff --quiet 48fa47d -- src src-tauri package.json package-lock.json vite.config.ts tsconfig.json && echo 'production source/registry/dependencies identical to base 48fa47d'; git diff --quiet origin/main -- src src-tauri package.json package-lock.json vite.config.ts tsconfig.json && echo 'and identical to origin/main'; echo "registered migrations: $(grep -c '{ version: ' src/data/migrations.ts)"; grep -n 'CURRENT_SCHEMA_VERSION: i64' src-tauri/src/lib.rs; grep -rln '0014\|skills_evidence\|skill_observations' src src-tauri/src src-tauri/migrations src/data/migration-checksums.json || echo 'no candidate reference in production source'; cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/candidate/0014_skills_evidence.sql <(git show 48fa47d:docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md >/dev/null 2>&1; git show origin/main:docs/evidence/m3-skills-evidence-scope-2026-10-10/candidate/0014_skills_evidence.sql) && echo 'candidate 0014 byte-identical to the published candidate'; cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock <(git show origin/main:docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock) && echo 'native lockfile unchanged (no new dependency)'
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T08:00:26Z
+codex/m3-skills-evidence-scope
+48fa47d9d035b2636b72fd6692930d85f4992bb9
+954335a764f7ce21eba29b9288cc557864627230
+ M ROADMAP.md
+ M STATUS.md
+ M docs/PROJECT_HANDOFF.md
+?? docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md
+?? docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md
+?? docs/M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md
+?? docs/evidence/m3-skills-evidence-scope-2026-10-10/
+?? docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/
+?? docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/
+?? node_modules
+production source/registry/dependencies identical to base 48fa47d
+and identical to origin/main
+registered migrations: 13
+28:pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 13;
+no candidate reference in production source
+candidate 0014 byte-identical to the published candidate
+native lockfile unchanged (no new dependency)
+# exit=0

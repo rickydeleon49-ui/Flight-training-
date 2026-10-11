@@ -1,0 +1,16 @@
+$ env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c4-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test review_diagnostics
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c4
+# utc: 2026-10-11T16:59:27Z
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running tests/review_diagnostics.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c4-target/debug/deps/review_diagnostics-0c82d5f3c2731dfe)
+
+running 5 tests
+test r5_foreign_receipt_result ... ok
+test control_valid_candidate ... ok
+test control_builtin_retirement ... ok
+test r6b_normalized_active_label_collision ... ok
+test r6a_later_builtin_relabel ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+# exit=0

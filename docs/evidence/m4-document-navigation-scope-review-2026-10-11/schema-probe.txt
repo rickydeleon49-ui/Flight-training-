@@ -1,0 +1,7 @@
+Production migrations 1-13 plus candidate DDL executed in disposable SQLite memory database; no migration registered.
+study_materials columns: [('id', 0, None), ('title', 1, None), ('material_type', 1, "'study_guide'"), ('topic', 1, "'general'"), ('review_status', 1, "'needs_review'"), ('priority', 1, "'later'"), ('goal_id', 0, None), ('event_id', 0, None), ('notes', 1, "''"), ('file_path', 0, None), ('original_file_name', 0, None), ('file_size', 0, None), ('created_at', 1, None), ('updated_at', 1, None), ('last_reviewed_at', 0, None)]
+material_bookmarks ['id', 'material_id', 'page_index', 'page_label', 'title', 'notes', 'created_at', 'updated_at']
+material_reading_state ['material_id', 'last_read_page', 'last_read_page_label', 'updated_at']
+material_content_identities ['material_id', 'content_sha256', 'total_pages', 'verified_at']
+REPRODUCED: replacing current identity A/50pages with B/10pages leaves old bookmark page42 and reading page42 unchanged, with no stored originating hash or invalidation field.
+REPRODUCED: candidate DDL accepts malformed content_sha256.

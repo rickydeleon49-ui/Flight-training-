@@ -1,0 +1,28 @@
+$ git rev-parse --abbrev-ref HEAD; git rev-parse HEAD origin/main; git status --short; python3 -I docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/scripts/verify_rereview_identity.py | grep -E '^[0-9]\.|/[0-9]+ '; git diff --quiet 48fa47d -- src src-tauri package.json package-lock.json vite.config.ts tsconfig.json && echo 'production source/registry/dependencies identical to base 48fa47d'; cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/candidate/0014_skills_evidence.sql <(git show origin/main:docs/evidence/m3-skills-evidence-scope-2026-10-10/candidate/0014_skills_evidence.sql) && echo 'candidate 0014 identical to published'; cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock <(git show origin/main:docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock) && echo 'native lockfile identical (no new dependency)'; grep -rln '0014\|skills_evidence\|skill_observations' src src-tauri/src src-tauri/migrations src/data/migration-checksums.json || echo 'no candidate reference in production source'
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T17:08:21Z
+codex/m3-skills-evidence-scope
+48fa47d9d035b2636b72fd6692930d85f4992bb9
+c28ab8482c8635b0b2bf74686b081e02bf448f65
+ M ROADMAP.md
+ M STATUS.md
+ M docs/PROJECT_HANDOFF.md
+?? docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md
+?? docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md
+?? docs/M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md
+?? docs/M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md
+?? docs/evidence/m3-skills-evidence-scope-2026-10-10/
+?? docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/
+?? docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/
+1. frozen correction-submission paths: 127/127 (124 direct, 3 tracking documents via snapshots)
+2. manifests
+   64/64 corrections-pack entries verify against origin/main
+   56/56 scope-pack entries verify against origin/main
+3. document hashes: 6/6
+4. production anchors: 30/30 identical in the worktree, at 48fa47d and on origin/main
+5. frozen paths changed by the remaining corrections in this worktree:
+production source/registry/dependencies identical to base 48fa47d
+candidate 0014 identical to published
+native lockfile identical (no new dependency)
+no candidate reference in production source
+# exit=0

@@ -39,6 +39,15 @@
  *   current draft (an edit); startNewDraft(key) explicitly starts a fresh
  *   observation.
  *
+ * Confirmed erasure (M3-R10)
+ * - When a read or write answer says ERASED, that observation is evicted at
+ *   once: its loaded revisions, cursor and current revision are cleared, its
+ *   pending history requests become obsolete, it leaves the visible list, and
+ *   the summary is re-read (reads only; nothing is resent). Later pages and
+ *   late history answers can never bring it back: ids are never reused, so
+ *   an erased id is filtered for the controller's lifetime. A temporary read
+ *   failure is not erasure and keeps what is loaded, for retry.
+ *
  * Lifecycle
  * - activate()/deactivate() are symmetric, for React effects (StrictMode runs
  *   setup, cleanup, setup on one instance). deactivate() makes every request
@@ -100,6 +109,8 @@ export type SaveOutcome =
 export interface HistoryViewState {
   observationId: string;
   status: "loading" | "ready" | "error";
+  /** The reader confirmed this observation was erased: nothing of it is kept. */
+  erased: boolean;
   items: ObservationRevision[];
   currentRevision: number | null;
   nextCursor: string | null;
@@ -137,13 +148,25 @@ const INITIAL: EvidenceViewState = {
 type CreateRequest = Extract<SkillEvidenceAction, { action: "create_observation" }>;
 type EditRequest = Extract<SkillEvidenceAction, { action: "edit_observation" }>;
 
+/** The editable content of an acknowledged observation, as this form last stored it. */
+export interface SavedContent {
+  wording: string;
+  observedOn: string;
+  attribution: Attribution;
+  instructorName: string;
+}
+
+const contentOf = (request: CreateRequest | EditRequest): SavedContent => ({
+  wording: request.wording, observedOn: request.observedOn, attribution: request.attribution, instructorName: request.instructorName,
+});
+
 interface DraftRecord {
   skillId: string;
   /** The controller lifetime the record was made in; deactivate() ends a lifetime. */
   lifetime: number;
   observationId: string;
   /** The content that is acknowledged as stored, and its revision. */
-  saved: { fingerprint: string; revision: number } | null;
+  saved: { fingerprint: string; revision: number; content: SavedContent } | null;
   /** A request whose outcome is not settled yet: in flight, or unknown after a failure. */
   pending: { request: CreateRequest | EditRequest; fingerprint: string } | null;
   /** Further sends are refused until startNewDraft(): the observation was erased, or its ids clash. */
@@ -173,6 +196,9 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
   let lifetime = 0;
   const listeners = new Set<() => void>();
   const drafts = new Map<string, DraftRecord>();
+  /** Observations confirmed erased. Ids are never reused, so they stay filtered. */
+  const erased = new Set<string>();
+  const visible = (items: EvidenceItem[]) => (erased.size === 0 ? items : items.filter((item) => !erased.has(item.id)));
 
   const publish = (next: Partial<EvidenceViewState>) => {
     if (!active) return;
@@ -193,7 +219,7 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
         client.summary(skillId),
       ]);
       if (mine !== generation) return;
-      publish({ status: "ready", items: page.items, nextCursor: page.nextCursor, summary, readError: null });
+      publish({ status: "ready", items: visible(page.items), nextCursor: page.nextCursor, summary, readError: null });
     } catch (error) {
       if (mine !== generation) return;
       publish({ status: "error", readError: messageOf(error) });
@@ -252,7 +278,7 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
       // An answer that does not describe this request is not an acknowledgment.
       return { kind: "unknown", code: "STORAGE_FAILURE", message: "The app couldn't confirm that save." };
     }
-    record.saved = { fingerprint: pending.fingerprint, revision: result.revision };
+    record.saved = { fingerprint: pending.fingerprint, revision: result.revision, content: contentOf(pending.request) };
     record.pending = null;
     return { kind: "stored", revision: result.revision, replayed: outcome.status === "replayed" };
   }
@@ -283,7 +309,7 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
       }
       if (present) {
         // The observation id was minted for this request and can never be reused, so its presence means this create landed.
-        record.saved = { fingerprint: pending.fingerprint, revision: 1 };
+        record.saved = { fingerprint: pending.fingerprint, revision: 1, content: contentOf(pending.request) };
         record.pending = null;
         return { kind: "earlier_saved", observationId: record.observationId, revision: 1, justNow: false };
       }
@@ -297,8 +323,36 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
     return sent;
   }
 
+  const ERASED_HISTORY = "This observation was erased.";
+  const erasedView = (observationId: string): HistoryViewState => ({
+    observationId, status: "error", erased: true, items: [], currentRevision: null, nextCursor: null, loadingMore: false, error: ERASED_HISTORY,
+  });
+
+  /**
+   * The store confirmed this observation is erased: forget everything loaded
+   * about it and re-read the summary. Reads only; never resends a write.
+   */
+  function evictErased(observationId: string): void {
+    erased.add(observationId);
+    if (!active) return;
+    const showingIt = state.history?.observationId === observationId;
+    if (showingIt) historyGeneration += 1; // its pending history answers become obsolete
+    const wasListed = state.items.some((item) => item.id === observationId);
+    publish({ items: visible(state.items), history: showingIt ? erasedView(observationId) : state.history });
+    const skillId = state.skillId;
+    if (!skillId || !wasListed) return;
+    const mine = generation;
+    client.summary(skillId).then(
+      (summary) => {
+        if (mine === generation && state.skillId === skillId) publish({ summary });
+      },
+      () => undefined, // a failed summary re-read leaves the last one; the list is already correct
+    );
+  }
+
   /** Publish a settled outcome where it belongs, then refresh that skill's list if something is stored. */
   async function settle(record: DraftRecord, outcome: SaveOutcome): Promise<SaveOutcome> {
+    if (outcome.kind === "erased" && record.lifetime === lifetime) evictErased(record.observationId);
     if (record.saved === null && record.pending === null && record.blocked === null) {
       // Definitively refused before anything was stored: the next submission is a fresh request.
       for (const [key, value] of drafts) if (value === record) drafts.delete(key);
@@ -369,7 +423,7 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
       try {
         const page = await client.page({ skillId, cursor, limit: options.pageSize });
         if (mine !== generation) return;
-        publish({ items: [...state.items, ...page.items], nextCursor: page.nextCursor, loadingMore: false });
+        publish({ items: visible([...state.items, ...page.items]), nextCursor: page.nextCursor, loadingMore: false });
       } catch (error) {
         if (mine !== generation) return;
         const code = codeOf(error);
@@ -479,6 +533,12 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
       return true;
     },
 
+    /** What this draft key last stored (acknowledged), for an accurate "not saved yet" message. */
+    savedContent(draftKey: string): SavedContent | null {
+      const record = drafts.get(draftKey);
+      return record && record.lifetime === lifetime && record.saved ? { ...record.saved.content } : null;
+    },
+
     /** The ids a draft would send now (for tests and diagnostics). */
     draftIdentity(draftKey: string) {
       const d = drafts.get(draftKey);
@@ -489,15 +549,22 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
     /** Open one observation's revision history (newest first). */
     async openHistory(observationId: string): Promise<void> {
       const mine = ++historyGeneration;
-      publish({ history: { observationId, status: "loading", items: [], currentRevision: null, nextCursor: null, loadingMore: false, error: null } });
+      if (erased.has(observationId)) {
+        publish({ history: erasedView(observationId) });
+        return;
+      }
+      publish({ history: { observationId, status: "loading", erased: false, items: [], currentRevision: null, nextCursor: null, loadingMore: false, error: null } });
       try {
         const page = await client.history({ observationId, limit: options.historyPageSize });
-        if (mine !== historyGeneration) return;
-        publish({ history: { observationId, status: "ready", items: page.items, currentRevision: page.currentRevision, nextCursor: page.nextCursor, loadingMore: false, error: null } });
+        if (mine !== historyGeneration || erased.has(observationId)) return;
+        publish({ history: { observationId, status: "ready", erased: false, items: page.items, currentRevision: page.currentRevision, nextCursor: page.nextCursor, loadingMore: false, error: null } });
       } catch (error) {
         if (mine !== historyGeneration) return;
-        const message = codeOf(error) === "ERASED" ? "This observation was erased." : "We couldn't load its earlier versions right now.";
-        publish({ history: { observationId, status: "error", items: [], currentRevision: null, nextCursor: null, loadingMore: false, error: message } });
+        if (codeOf(error) === "ERASED") {
+          evictErased(observationId);
+          return;
+        }
+        publish({ history: { observationId, status: "error", erased: false, items: [], currentRevision: null, nextCursor: null, loadingMore: false, error: "We couldn't load its earlier versions right now." } });
       }
     },
 
@@ -509,12 +576,16 @@ export function createEvidenceController(client: EvidenceClient, options: { newI
       publish({ history: { ...view, loadingMore: true } });
       try {
         const page = await client.history({ observationId: view.observationId, cursor: view.nextCursor, limit: options.historyPageSize });
-        if (mine !== historyGeneration || !state.history) return;
+        if (mine !== historyGeneration || !state.history || erased.has(view.observationId)) return;
         publish({ history: { ...state.history, items: [...state.history.items, ...page.items], nextCursor: page.nextCursor, loadingMore: false } });
       } catch (error) {
         if (mine !== historyGeneration || !state.history) return;
-        const message = codeOf(error) === "ERASED" ? "This observation was erased." : "We couldn't load older versions right now.";
-        publish({ history: { ...state.history, loadingMore: false, error: message } });
+        if (codeOf(error) === "ERASED") {
+          evictErased(view.observationId);
+          return;
+        }
+        // A temporary failure is not erasure: keep the loaded versions and cursor for retry.
+        publish({ history: { ...state.history, loadingMore: false, error: "We couldn't load older versions right now." } });
       }
     },
 

@@ -1,0 +1,52 @@
+# variant: R10-4 (M3-R10) later evidence pages are not filtered for erased observations
+# file: prototype/evidenceController.ts
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts -t a held evidence page read before the erasure cannot put the erased observation back --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/rsens
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] confirmed erased history discards loaded text and cursor (review case), and leaves the list
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] opening the history of an observation erased elsewhere evicts it from the list and the summary
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] unrelated observations, and their history, stay
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held older history page that arrives after the erasure is known cannot republish it
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held evidence page read before the erasure cannot put the erased observation back in the list 29ms
+   → expected [ 'Newer note', 'Older private note' ] to deeply equal [ 'Newer note' ]
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] an erasure answer that lands after a route change leaves the new skill alone
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a save whose earlier request turns out erased evicts that observation too
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary older-history read error preserves loaded history for retry (review control)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary failure opening history keeps the observation listed
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  10:04:50
+   Duration  352ms (transform 174ms, setup 0ms, import 230ms, tests 30ms, environment 0ms)
+
+(node:63651) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held evidence page read before the erasure cannot put the erased observation back in the list
+AssertionError: expected [ 'Newer note', 'Older private note' ] to deeply equal [ 'Newer note' ]
+
+- Expected
++ Received
+
+  [
+    "Newer note",
++   "Older private note",
+  ]
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts:151:54
+    149|     gate.resolve();
+    150|     await more;
+    151|     expect(c.getState().items.map((i) => i.wording)).toEqual(["Newer n…
+       |                                                      ^
+    152|   });
+    153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+# restored-sha-matches=True

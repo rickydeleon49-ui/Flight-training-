@@ -1,0 +1,57 @@
+{
+  "cases": [
+    {
+      "name": "[M3-R5] receipt with correct action but foreign observation result is refused",
+      "expect": "refuse",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json='{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-000000000b22\",\"revision\":1}' WHERE operation_id='00000000-0000-4000-8000-0000000000a2'"
+      ]
+    },
+    {
+      "name": "[M3-R6a] later built-in revision cannot replace the pinned catalog label",
+      "expect": "refuse",
+      "sql": [
+        "UPDATE skill_catalog_entries SET label='Forged label',revision=2 WHERE id='builtin.normal_landing'",
+        "INSERT INTO skill_catalog_revisions SELECT id,2,label,description,topic,status,catalog_version,'user','00000000-0000-4000-8000-000000000a12','2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id='builtin.normal_landing'"
+      ]
+    },
+    {
+      "name": "[M3-R6b] normalized active custom and built-in label collision is refused",
+      "expect": "refuse",
+      "sql": [
+        "INSERT INTO skill_catalog_entries VALUES ('custom.00000000-0000-4000-8000-000000000c13','custom',NULL,'  NORMAL   approach and landing  ','','landings','active',1,'2026-10-10T09:00:00.000Z','2026-10-10T09:00:00.000Z',NULL)",
+        "INSERT INTO skill_catalog_revisions SELECT id,1,label,description,topic,status,catalog_version,'user','00000000-0000-4000-8000-000000000a13','2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id='custom.00000000-0000-4000-8000-000000000c13'"
+      ]
+    },
+    {
+      "name": "[control] valid candidate accepted",
+      "expect": "accept",
+      "sql": []
+    },
+    {
+      "name": "[control] built-in retirement preserving catalog wording accepted",
+      "expect": "accept",
+      "sql": [
+        "UPDATE skill_catalog_entries SET status='retired',retired_at='2026-10-10T09:00:00.000Z',revision=2 WHERE id='builtin.normal_landing'",
+        "INSERT INTO skill_catalog_revisions SELECT id,2,label,description,topic,status,catalog_version,'user','00000000-0000-4000-8000-000000000a14','2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id='builtin.normal_landing'",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000a14', 'retire_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'builtin.normal_landing', '2026-10-10T09:00:00.000Z', '{\"action\":\"retire_skill\",\"revision\":2,\"skillId\":\"builtin.normal_landing\"}', 0)"
+      ]
+    }
+  ],
+  "baseline": [
+    "INSERT INTO journal_entries (id, date, title, instructor_feedback, created_at, updated_at) VALUES ('j1', '2026-10-01', 'Pattern work', 'Flare later.', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO journal_entries (id, date, title, created_at, updated_at) VALUES ('j2', '2026-10-03', 'Crosswind', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO next_actions (id, title, related_type, related_id, created_at, updated_at) VALUES ('a1', 'Review flare timing', 'journal', 'j1', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 'custom', NULL, 'Short-field landing', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+    "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 1, 'Short-field landing', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-0000000000a1', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, action_id, linked_action_id, linked_action_title, addressed_at, created_at, updated_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 'builtin.normal_landing', 'Normal approach and landing', 'j1', 'j1', '2026-10-01', 'Pattern work', 'instructor_feedback', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'instructor_transcribed', 'Synthetic CFI', 'Flare later.', '2026-10-01', 2, 'a1', 'a1', 'Review flare timing', NULL, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 1, 'created', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', NULL, NULL, NULL, '00000000-0000-4000-8000-0000000000a2', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 2, 'linked_action', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '00000000-0000-4000-8000-0000000000a3', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('00000000-0000-4000-8000-0000000000a4', 'builtin.normal_landing', 'status', 'practicing', NULL, 1, '00000000-0000-4000-8000-0000000000a4', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a1', 'create_custom_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'custom.00000000-0000-4000-8000-0000000000c1', '2026-10-10T09:00:00.000Z', '{\"action\":\"create_custom_skill\",\"revision\":1,\"skillId\":\"custom.00000000-0000-4000-8000-0000000000c1\"}', 0)",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a2', 'create_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":1}', 0)",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a3', 'link_action', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":2}', 0)",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a4', 'set_status', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'builtin.normal_landing', '2026-10-10T09:00:00.000Z', '{\"action\":\"set_status\",\"sequence\":1,\"skillId\":\"builtin.normal_landing\"}', 0)"
+  ],
+  "_derived": "DERIVED from docs/evidence/m3-skills-evidence-scope-review-2026-10-10/diagnostics/review-validation-cases.json with ONE change (M3-R9): the [control] built-in retirement case also inserts the retirement revision's own receipt (operation a14), which the hand-written control omitted. The frozen file is unchanged."
+}
