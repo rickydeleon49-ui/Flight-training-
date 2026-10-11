@@ -49,6 +49,13 @@ import {
   PracticeSessionError,
   StructuredImportSaveError,
 } from "./persistenceErrors";
+import {
+  invokeListSkills,
+  invokeReadObservationHistory,
+  invokeReadSkillEvidencePage,
+  invokeReadSkillSummary,
+  invokeSkillEvidenceAction,
+} from "./skillEvidenceShapes";
 
 const DB_URL = "sqlite:her-flight-deck.db";
 
@@ -536,6 +543,11 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     ): Promise<import("@/domain/types").LibraryRecentReviewsResult> {
       return invokeCardLibraryRead("get_library_recent_reviews", input, isLibraryRecentReviewsResult);
     },
+    saveSkillEvidenceAtomically: (action) => invokeSkillEvidenceAction(action, callNative),
+    readSkillEvidencePage: (input) => invokeReadSkillEvidencePage(input, callNative),
+    readSkillSummary: (skillId) => invokeReadSkillSummary(skillId, callNative),
+    listSkills: (options) => invokeListSkills(options, callNative),
+    readObservationHistory: (input) => invokeReadObservationHistory(input, callNative),
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);
     },

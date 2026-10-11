@@ -1,0 +1,53 @@
+# TS-14: draft-identity retention after acknowledgment
+# file: src/state/useSkillEvidence.ts
+# test: src/state/skillEvidence/corrections-controller.test.ts > [M3-R1a] an acknowledged save keeps its draft identity
+$ npx vitest run src/state/skillEvidence/corrections-controller.test.ts -t '\\[M3\\-R1a\\]\\ an\\ acknowledged\\ save\\ keeps\\ its\\ draft\\ identity'
+# cwd: /private/tmp/m3-completion-sensitivity/tree
+--- removed
+    record.pending = null;
+    return { kind: "stored", revision: result.revision, replayed: outcome.status === "replayed" };
++++ added
+    record.pending = null;
+    for (const [key, value] of drafts) if (value === record) drafts.delete(key);
+    return { kind: "stored", revision: result.revision, replayed: outcome.status === "replayed" };
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/m3-completion-sensitivity/tree
+
+ ❯ src/state/skillEvidence/corrections-controller.test.ts (19 tests | 1 failed | 18 skipped) 87ms
+     × [M3-R1a] an acknowledged save keeps its draft identity while its refresh is held: a repeat submit writes nothing 86ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  13:16:26
+   Duration  429ms (transform 206ms, setup 0ms, import 249ms, tests 87ms, environment 0ms)
+
+(node:95157) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/skillEvidence/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1a] an acknowledged save keeps its draft identity while its refresh is held: a repeat submit writes nothing
+AssertionError: expected { kind: 'saved', …(2) } to deeply equal { kind: 'saved', …(2) }
+
+- Expected
++ Received
+
+  {
+    "kind": "saved",
+-   "observationId": "00000000-0000-4000-8000-000000000004",
++   "observationId": "00000000-0000-4000-8000-000000000006",
+    "revision": 1,
+  }
+
+ ❯ src/state/skillEvidence/corrections-controller.test.ts:64:15
+     62|     const [a, b] = await Promise.all([first, second]);
+     63|     expect(a).toMatchObject({ kind: "saved", revision: 1 });
+     64|     expect(b).toEqual(a);
+       |               ^
+     65|     expect(write).toHaveBeenCalledTimes(1);
+     66|     expect(observations(x.engine)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+# exit=1
+# caught=True
+# restored=True

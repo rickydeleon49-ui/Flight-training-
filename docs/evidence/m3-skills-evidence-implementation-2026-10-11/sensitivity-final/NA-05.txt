@@ -1,0 +1,43 @@
+# NA-05: transaction control (no immediate transaction)
+# file: src-tauri/src/skill_evidence.rs
+# test: skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back -- --exact
+# cwd: /private/tmp/m3-completion-sensitivity/tree
+--- removed
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(storage)?;
+    let outcome = execute_skill_evidence_transaction(&tx, request, hash)?;
+    tx.commit().map_err(storage)?;
+
++++ added
+    let _ = TransactionBehavior::Immediate;
+    let outcome = execute_skill_evidence_transaction(connection, request, hash)?;
+
+--- output (last 40 lines)
+running 1 test
+test skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back ... FAILED
+
+failures:
+
+---- skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back stdout ----
+
+thread 'skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back' (768927) panicked at src/skill_evidence_tests.rs:546:9:
+assertion `left == right` failed
+  left: [15, 15, 2, 2, 0, 1]
+ right: [15, 15, 1, 1, 0, 1]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.03s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/m3-completion-sensitivity/tree/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.91s
+     Running unittests src/lib.rs (/private/tmp/m3-completion-sensitivity/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+# exit=101
+# caught=True
+# restored=True

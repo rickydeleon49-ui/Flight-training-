@@ -1,0 +1,392 @@
+{
+  "node": "v22.23.3",
+  "platform": "darwin-arm64",
+  "results": [
+    {
+      "engine": "node:sqlite",
+      "observations": 100,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 100,
+        "medianMs": 0.117,
+        "p95Ms": 0.177,
+        "maxMs": 1.288
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.147,
+        "p95Ms": 0.517,
+        "maxMs": 0.517
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.083,
+        "p95Ms": 0.118,
+        "maxMs": 0.118
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.037,
+        "p95Ms": 0.134,
+        "maxMs": 0.134
+      },
+      "fullWalk50": {
+        "pages": 2,
+        "n": 2,
+        "medianMs": 0.375,
+        "p95Ms": 0.375,
+        "maxMs": 0.375,
+        "totalMs": 0.6
+      },
+      "restoreValidationMs": 19.6,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 1.685,
+        "p95Ms": 3.779,
+        "maxMs": 3.779
+      }
+    },
+    {
+      "engine": "node:sqlite",
+      "observations": 2500,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 2500,
+        "medianMs": 0.128,
+        "p95Ms": 0.155,
+        "maxMs": 3.716
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.149,
+        "p95Ms": 0.24,
+        "maxMs": 0.24
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.152,
+        "p95Ms": 0.201,
+        "maxMs": 0.201
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.056,
+        "p95Ms": 0.092,
+        "maxMs": 0.092
+      },
+      "fullWalk50": {
+        "pages": 50,
+        "n": 50,
+        "medianMs": 0.274,
+        "p95Ms": 0.348,
+        "maxMs": 2.211,
+        "totalMs": 16.2
+      },
+      "restoreValidationMs": 89.7,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 1.53,
+        "p95Ms": 3.498,
+        "maxMs": 3.498
+      }
+    },
+    {
+      "engine": "node:sqlite",
+      "observations": 5000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 5000,
+        "medianMs": 0.121,
+        "p95Ms": 0.159,
+        "maxMs": 5.924
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.199,
+        "p95Ms": 0.295,
+        "maxMs": 0.295
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.204,
+        "p95Ms": 0.234,
+        "maxMs": 0.234
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.112,
+        "p95Ms": 0.171,
+        "maxMs": 0.171
+      },
+      "fullWalk50": {
+        "pages": 100,
+        "n": 100,
+        "medianMs": 0.358,
+        "p95Ms": 0.505,
+        "maxMs": 7.221,
+        "totalMs": 46.4
+      },
+      "restoreValidationMs": 226,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 2.196,
+        "p95Ms": 3.409,
+        "maxMs": 3.409
+      }
+    },
+    {
+      "engine": "node:sqlite",
+      "observations": 10000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 10000,
+        "medianMs": 0.137,
+        "p95Ms": 0.214,
+        "maxMs": 8.455
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.122,
+        "p95Ms": 0.185,
+        "maxMs": 0.185
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.124,
+        "p95Ms": 0.15,
+        "maxMs": 0.15
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.109,
+        "p95Ms": 0.175,
+        "maxMs": 0.175
+      },
+      "fullWalk50": {
+        "pages": 200,
+        "n": 200,
+        "medianMs": 0.226,
+        "p95Ms": 0.25,
+        "maxMs": 1.806,
+        "totalMs": 47.6
+      },
+      "restoreValidationMs": 288,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 1.393,
+        "p95Ms": 3.838,
+        "maxMs": 3.838
+      }
+    },
+    {
+      "engine": "sql.js",
+      "observations": 100,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 100,
+        "medianMs": 0.172,
+        "p95Ms": 0.26,
+        "maxMs": 0.528
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.292,
+        "p95Ms": 0.523,
+        "maxMs": 0.523
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.118,
+        "p95Ms": 0.279,
+        "maxMs": 0.279
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.053,
+        "p95Ms": 0.122,
+        "maxMs": 0.122
+      },
+      "fullWalk50": {
+        "pages": 2,
+        "n": 2,
+        "medianMs": 0.855,
+        "p95Ms": 0.855,
+        "maxMs": 0.855,
+        "totalMs": 1.6
+      },
+      "restoreValidationMs": 22.4,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 2.528,
+        "p95Ms": 2.856,
+        "maxMs": 2.856
+      }
+    },
+    {
+      "engine": "sql.js",
+      "observations": 2500,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 2500,
+        "medianMs": 0.154,
+        "p95Ms": 0.201,
+        "maxMs": 1.361
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.292,
+        "p95Ms": 0.426,
+        "maxMs": 0.426
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.29,
+        "p95Ms": 0.461,
+        "maxMs": 0.461
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.087,
+        "p95Ms": 0.125,
+        "maxMs": 0.125
+      },
+      "fullWalk50": {
+        "pages": 50,
+        "n": 50,
+        "medianMs": 0.65,
+        "p95Ms": 0.743,
+        "maxMs": 0.777,
+        "totalMs": 33.2
+      },
+      "restoreValidationMs": 150.6,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 2.682,
+        "p95Ms": 3.016,
+        "maxMs": 3.016
+      }
+    },
+    {
+      "engine": "sql.js",
+      "observations": 5000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 5000,
+        "medianMs": 0.179,
+        "p95Ms": 0.253,
+        "maxMs": 12.47
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.296,
+        "p95Ms": 0.474,
+        "maxMs": 0.474
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.295,
+        "p95Ms": 0.413,
+        "maxMs": 0.413
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.122,
+        "p95Ms": 0.199,
+        "maxMs": 0.199
+      },
+      "fullWalk50": {
+        "pages": 100,
+        "n": 100,
+        "medianMs": 0.61,
+        "p95Ms": 0.712,
+        "maxMs": 0.737,
+        "totalMs": 62.5
+      },
+      "restoreValidationMs": 243.4,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 2.412,
+        "p95Ms": 2.761,
+        "maxMs": 2.761
+      }
+    },
+    {
+      "engine": "sql.js",
+      "observations": 10000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 10000,
+        "medianMs": 0.162,
+        "p95Ms": 0.289,
+        "maxMs": 2.92
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.297,
+        "p95Ms": 0.553,
+        "maxMs": 0.553
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.295,
+        "p95Ms": 0.454,
+        "maxMs": 0.454
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.21,
+        "p95Ms": 0.352,
+        "maxMs": 0.352
+      },
+      "fullWalk50": {
+        "pages": 200,
+        "n": 200,
+        "medianMs": 0.596,
+        "p95Ms": 0.756,
+        "maxMs": 1.409,
+        "totalMs": 124.4
+      },
+      "restoreValidationMs": 431.6,
+      "secondPageAfter100Edits": {
+        "n": 20,
+        "medianMs": 2.356,
+        "p95Ms": 2.795,
+        "maxMs": 2.795
+      }
+    }
+  ],
+  "history": [
+    {
+      "engine": "node:sqlite",
+      "revisions": 1000,
+      "historyWalk100": {
+        "pages": 10,
+        "n": 10,
+        "medianMs": 0.14,
+        "p95Ms": 0.325,
+        "maxMs": 0.325,
+        "totalMs": 1.7
+      }
+    },
+    {
+      "engine": "sql.js",
+      "revisions": 1000,
+      "historyWalk100": {
+        "pages": 10,
+        "n": 10,
+        "medianMs": 0.324,
+        "p95Ms": 0.5,
+        "maxMs": 0.5,
+        "totalMs": 3.6
+      }
+    }
+  ]
+}

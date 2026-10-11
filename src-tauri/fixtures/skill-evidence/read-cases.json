@@ -1,0 +1,1135 @@
+{
+ "reads": [
+  {
+   "kind": "page",
+   "input": {
+    "limit": 1
+   },
+   "output": {
+    "items": [
+     {
+      "id": "20000000-0000-4000-8000-00000000000c",
+      "skillId": "builtin.normal_landing",
+      "skillLabel": "Normal approach and landing",
+      "skillLabelAtRecording": "Normal approach and landing",
+      "skillRetired": false,
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "revision": 6,
+      "source": {
+       "kind": "present",
+       "journalId": "20000000-0000-4000-8000-000000000001",
+       "currentTitle": "Pattern work",
+       "currentDate": "2026-10-01",
+       "renamed": false,
+       "textChanged": false
+      },
+      "sourceSnapshot": {
+       "title": "Pattern work",
+       "date": "2026-10-01",
+       "field": "instructor_feedback"
+      },
+      "action": {
+       "kind": "none"
+      },
+      "addressedAt": null,
+      "createdAt": "2026-10-11T09:00:08.000Z",
+      "updatedAt": "2026-10-11T09:00:13.000Z"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  {
+   "kind": "page",
+   "input": {},
+   "output": {
+    "items": [
+     {
+      "id": "20000000-0000-4000-8000-00000000000c",
+      "skillId": "builtin.normal_landing",
+      "skillLabel": "Normal approach and landing",
+      "skillLabelAtRecording": "Normal approach and landing",
+      "skillRetired": false,
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "revision": 6,
+      "source": {
+       "kind": "present",
+       "journalId": "20000000-0000-4000-8000-000000000001",
+       "currentTitle": "Pattern work",
+       "currentDate": "2026-10-01",
+       "renamed": false,
+       "textChanged": false
+      },
+      "sourceSnapshot": {
+       "title": "Pattern work",
+       "date": "2026-10-01",
+       "field": "instructor_feedback"
+      },
+      "action": {
+       "kind": "none"
+      },
+      "addressedAt": null,
+      "createdAt": "2026-10-11T09:00:08.000Z",
+      "updatedAt": "2026-10-11T09:00:13.000Z"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "attribution": "self_report"
+   },
+   "output": {
+    "items": [],
+    "nextCursor": null
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "attribution": "instructor_transcribed",
+    "limit": 50
+   },
+   "output": {
+    "items": [
+     {
+      "id": "20000000-0000-4000-8000-00000000000c",
+      "skillId": "builtin.normal_landing",
+      "skillLabel": "Normal approach and landing",
+      "skillLabelAtRecording": "Normal approach and landing",
+      "skillRetired": false,
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "revision": 6,
+      "source": {
+       "kind": "present",
+       "journalId": "20000000-0000-4000-8000-000000000001",
+       "currentTitle": "Pattern work",
+       "currentDate": "2026-10-01",
+       "renamed": false,
+       "textChanged": false
+      },
+      "sourceSnapshot": {
+       "title": "Pattern work",
+       "date": "2026-10-01",
+       "field": "instructor_feedback"
+      },
+      "action": {
+       "kind": "none"
+      },
+      "addressedAt": null,
+      "createdAt": "2026-10-11T09:00:08.000Z",
+      "updatedAt": "2026-10-11T09:00:13.000Z"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "skillId": "builtin.normal_landing",
+    "limit": 1
+   },
+   "output": {
+    "items": [
+     {
+      "id": "20000000-0000-4000-8000-00000000000c",
+      "skillId": "builtin.normal_landing",
+      "skillLabel": "Normal approach and landing",
+      "skillLabelAtRecording": "Normal approach and landing",
+      "skillRetired": false,
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "revision": 6,
+      "source": {
+       "kind": "present",
+       "journalId": "20000000-0000-4000-8000-000000000001",
+       "currentTitle": "Pattern work",
+       "currentDate": "2026-10-01",
+       "renamed": false,
+       "textChanged": false
+      },
+      "sourceSnapshot": {
+       "title": "Pattern work",
+       "date": "2026-10-01",
+       "field": "instructor_feedback"
+      },
+      "action": {
+       "kind": "none"
+      },
+      "addressedAt": null,
+      "createdAt": "2026-10-11T09:00:08.000Z",
+      "updatedAt": "2026-10-11T09:00:13.000Z"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "journalId": "20000000-0000-4000-8000-000000000001"
+   },
+   "output": {
+    "items": [
+     {
+      "id": "20000000-0000-4000-8000-00000000000c",
+      "skillId": "builtin.normal_landing",
+      "skillLabel": "Normal approach and landing",
+      "skillLabelAtRecording": "Normal approach and landing",
+      "skillRetired": false,
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "revision": 6,
+      "source": {
+       "kind": "present",
+       "journalId": "20000000-0000-4000-8000-000000000001",
+       "currentTitle": "Pattern work",
+       "currentDate": "2026-10-01",
+       "renamed": false,
+       "textChanged": false
+      },
+      "sourceSnapshot": {
+       "title": "Pattern work",
+       "date": "2026-10-01",
+       "field": "instructor_feedback"
+      },
+      "action": {
+       "kind": "none"
+      },
+      "addressedAt": null,
+      "createdAt": "2026-10-11T09:00:08.000Z",
+      "updatedAt": "2026-10-11T09:00:13.000Z"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.checklist_use"
+   },
+   "output": {
+    "skillId": "builtin.checklist_use",
+    "label": "Using checklists",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.crosswind_landing"
+   },
+   "output": {
+    "skillId": "builtin.crosswind_landing",
+    "label": "Crosswind landing",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.emergency_approach"
+   },
+   "output": {
+    "skillId": "builtin.emergency_approach",
+    "label": "Emergency approach and landing",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.go_around"
+   },
+   "output": {
+    "skillId": "builtin.go_around",
+    "label": "Go-around",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 3,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.ground_reference"
+   },
+   "output": {
+    "skillId": "builtin.ground_reference",
+    "label": "Ground reference maneuvers",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.normal_landing"
+   },
+   "output": {
+    "skillId": "builtin.normal_landing",
+    "label": "Normal approach and landing",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 2,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 1,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 1,
+    "distinctDebriefs": 1,
+    "lastObservedOn": "2026-10-01",
+    "evidence": "limited"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.normal_takeoff"
+   },
+   "output": {
+    "skillId": "builtin.normal_takeoff",
+    "label": "Normal takeoff and climb",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.preflight_inspection"
+   },
+   "output": {
+    "skillId": "builtin.preflight_inspection",
+    "label": "Preflight inspection",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.radio_communications"
+   },
+   "output": {
+    "skillId": "builtin.radio_communications",
+    "label": "Radio communications",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.slow_flight"
+   },
+   "output": {
+    "skillId": "builtin.slow_flight",
+    "label": "Slow flight",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.stalls"
+   },
+   "output": {
+    "skillId": "builtin.stalls",
+    "label": "Stalls and recovery",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.steep_turns"
+   },
+   "output": {
+    "skillId": "builtin.steep_turns",
+    "label": "Steep turns",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.taxiing"
+   },
+   "output": {
+    "skillId": "builtin.taxiing",
+    "label": "Taxiing",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.traffic_pattern"
+   },
+   "output": {
+    "skillId": "builtin.traffic_pattern",
+    "label": "Traffic pattern",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.weather_decisions"
+   },
+   "output": {
+    "skillId": "builtin.weather_decisions",
+    "label": "Weather decisions",
+    "origin": "builtin",
+    "retired": false,
+    "revision": 1,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": null,
+    "confidenceSequence": 0,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "custom.20000000-0000-4000-8000-000000000004"
+   },
+   "output": {
+    "skillId": "custom.20000000-0000-4000-8000-000000000004",
+    "label": "Short-field approach",
+    "origin": "custom",
+    "retired": false,
+    "revision": 4,
+    "status": null,
+    "statusSequence": 0,
+    "confidence": 3,
+    "confidenceSequence": 1,
+    "observationCount": 0,
+    "selfReportCount": 0,
+    "instructorTranscribedCount": 0,
+    "distinctDebriefs": 0,
+    "lastObservedOn": null,
+    "evidence": "none"
+   }
+  },
+  {
+   "kind": "summary",
+   "input": {
+    "skillId": "builtin.no_such_skill"
+   },
+   "output": null
+  },
+  {
+   "kind": "skills",
+   "input": {},
+   "output": [
+    {
+     "id": "builtin.crosswind_landing",
+     "label": "Crosswind landing",
+     "description": "Holding centerline and correcting for wind.",
+     "origin": "builtin",
+     "topic": "landings",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.emergency_approach",
+     "label": "Emergency approach and landing",
+     "description": "Best glide, field selection and checklist with no engine power.",
+     "origin": "builtin",
+     "topic": "emergency_procedures",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.go_around",
+     "label": "Go-around",
+     "description": "Deciding early and flying the go-around.",
+     "origin": "builtin",
+     "topic": "landings",
+     "retired": false,
+     "revision": 3
+    },
+    {
+     "id": "builtin.ground_reference",
+     "label": "Ground reference maneuvers",
+     "description": "Correcting for wind relative to a ground track.",
+     "origin": "builtin",
+     "topic": "navigation",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.normal_landing",
+     "label": "Normal approach and landing",
+     "description": "Stabilized approach, flare and touchdown.",
+     "origin": "builtin",
+     "topic": "landings",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.normal_takeoff",
+     "label": "Normal takeoff and climb",
+     "description": "Takeoff roll, rotation and initial climb.",
+     "origin": "builtin",
+     "topic": "performance",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.preflight_inspection",
+     "label": "Preflight inspection",
+     "description": "Walking around and checking the airplane before flight.",
+     "origin": "builtin",
+     "topic": "aircraft_systems",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.radio_communications",
+     "label": "Radio communications",
+     "description": "Talking with ATC and other traffic clearly.",
+     "origin": "builtin",
+     "topic": "communications",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.slow_flight",
+     "label": "Slow flight",
+     "description": "Controlling the airplane near the low end of its speed range.",
+     "origin": "builtin",
+     "topic": "aerodynamics",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.stalls",
+     "label": "Stalls and recovery",
+     "description": "Recognizing a stall and recovering promptly.",
+     "origin": "builtin",
+     "topic": "aerodynamics",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.steep_turns",
+     "label": "Steep turns",
+     "description": "Holding altitude and bank through a steep turn.",
+     "origin": "builtin",
+     "topic": "aerodynamics",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.taxiing",
+     "label": "Taxiing",
+     "description": "Moving safely on the ground, including wind and signage.",
+     "origin": "builtin",
+     "topic": "airports",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.traffic_pattern",
+     "label": "Traffic pattern",
+     "description": "Flying the pattern: entry, spacing, altitude and turns.",
+     "origin": "builtin",
+     "topic": "airports",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.checklist_use",
+     "label": "Using checklists",
+     "description": "Following the checklist at each phase of flight.",
+     "origin": "builtin",
+     "topic": "general",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.weather_decisions",
+     "label": "Weather decisions",
+     "description": "Gathering weather and deciding whether and how to go.",
+     "origin": "builtin",
+     "topic": "weather",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "custom.20000000-0000-4000-8000-000000000004",
+     "label": "Short-field approach",
+     "description": "Over an obstacle.",
+     "origin": "custom",
+     "topic": "landings",
+     "retired": false,
+     "revision": 4
+    }
+   ]
+  },
+  {
+   "kind": "skills",
+   "input": {
+    "includeRetired": true
+   },
+   "output": [
+    {
+     "id": "builtin.crosswind_landing",
+     "label": "Crosswind landing",
+     "description": "Holding centerline and correcting for wind.",
+     "origin": "builtin",
+     "topic": "landings",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.emergency_approach",
+     "label": "Emergency approach and landing",
+     "description": "Best glide, field selection and checklist with no engine power.",
+     "origin": "builtin",
+     "topic": "emergency_procedures",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.go_around",
+     "label": "Go-around",
+     "description": "Deciding early and flying the go-around.",
+     "origin": "builtin",
+     "topic": "landings",
+     "retired": false,
+     "revision": 3
+    },
+    {
+     "id": "builtin.ground_reference",
+     "label": "Ground reference maneuvers",
+     "description": "Correcting for wind relative to a ground track.",
+     "origin": "builtin",
+     "topic": "navigation",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.normal_landing",
+     "label": "Normal approach and landing",
+     "description": "Stabilized approach, flare and touchdown.",
+     "origin": "builtin",
+     "topic": "landings",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.normal_takeoff",
+     "label": "Normal takeoff and climb",
+     "description": "Takeoff roll, rotation and initial climb.",
+     "origin": "builtin",
+     "topic": "performance",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.preflight_inspection",
+     "label": "Preflight inspection",
+     "description": "Walking around and checking the airplane before flight.",
+     "origin": "builtin",
+     "topic": "aircraft_systems",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.radio_communications",
+     "label": "Radio communications",
+     "description": "Talking with ATC and other traffic clearly.",
+     "origin": "builtin",
+     "topic": "communications",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.slow_flight",
+     "label": "Slow flight",
+     "description": "Controlling the airplane near the low end of its speed range.",
+     "origin": "builtin",
+     "topic": "aerodynamics",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.stalls",
+     "label": "Stalls and recovery",
+     "description": "Recognizing a stall and recovering promptly.",
+     "origin": "builtin",
+     "topic": "aerodynamics",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.steep_turns",
+     "label": "Steep turns",
+     "description": "Holding altitude and bank through a steep turn.",
+     "origin": "builtin",
+     "topic": "aerodynamics",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.taxiing",
+     "label": "Taxiing",
+     "description": "Moving safely on the ground, including wind and signage.",
+     "origin": "builtin",
+     "topic": "airports",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.traffic_pattern",
+     "label": "Traffic pattern",
+     "description": "Flying the pattern: entry, spacing, altitude and turns.",
+     "origin": "builtin",
+     "topic": "airports",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.checklist_use",
+     "label": "Using checklists",
+     "description": "Following the checklist at each phase of flight.",
+     "origin": "builtin",
+     "topic": "general",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "builtin.weather_decisions",
+     "label": "Weather decisions",
+     "description": "Gathering weather and deciding whether and how to go.",
+     "origin": "builtin",
+     "topic": "weather",
+     "retired": false,
+     "revision": 1
+    },
+    {
+     "id": "custom.20000000-0000-4000-8000-000000000004",
+     "label": "Short-field approach",
+     "description": "Over an obstacle.",
+     "origin": "custom",
+     "topic": "landings",
+     "retired": false,
+     "revision": 4
+    }
+   ]
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "limit": 1
+   },
+   "output": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "currentRevision": 6,
+    "items": [
+     {
+      "revision": 6,
+      "changeKind": "unlinked_action",
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "linkedActionId": null,
+      "linkedActionTitle": null,
+      "addressedAt": null,
+      "recordedAt": "2026-10-11T09:00:13.000Z"
+     }
+    ],
+    "nextCursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",6]"
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "limit": 1,
+    "cursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",6]"
+   },
+   "output": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "currentRevision": 6,
+    "items": [
+     {
+      "revision": 5,
+      "changeKind": "cleared_addressed",
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "linkedActionId": "20000000-0000-4000-8000-000000000002",
+      "linkedActionTitle": "Review flare timing",
+      "addressedAt": null,
+      "recordedAt": "2026-10-11T09:00:12.000Z"
+     }
+    ],
+    "nextCursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",5]"
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "limit": 1,
+    "cursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",5]"
+   },
+   "output": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "currentRevision": 6,
+    "items": [
+     {
+      "revision": 4,
+      "changeKind": "marked_addressed",
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "linkedActionId": "20000000-0000-4000-8000-000000000002",
+      "linkedActionTitle": "Review flare timing",
+      "addressedAt": "2026-10-11T09:00:11.000Z",
+      "recordedAt": "2026-10-11T09:00:11.000Z"
+     }
+    ],
+    "nextCursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",4]"
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "limit": 1,
+    "cursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",4]"
+   },
+   "output": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "currentRevision": 6,
+    "items": [
+     {
+      "revision": 3,
+      "changeKind": "linked_action",
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "linkedActionId": "20000000-0000-4000-8000-000000000002",
+      "linkedActionTitle": "Review flare timing",
+      "addressedAt": null,
+      "recordedAt": "2026-10-11T09:00:10.000Z"
+     }
+    ],
+    "nextCursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",3]"
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "limit": 1,
+    "cursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",3]"
+   },
+   "output": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "currentRevision": 6,
+    "items": [
+     {
+      "revision": 2,
+      "changeKind": "edited",
+      "wording": "Flare a little later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "linkedActionId": null,
+      "linkedActionTitle": null,
+      "addressedAt": null,
+      "recordedAt": "2026-10-11T09:00:09.000Z"
+     }
+    ],
+    "nextCursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",2]"
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "limit": 1,
+    "cursor": "[\"history\",\"20000000-0000-4000-8000-00000000000c\",2]"
+   },
+   "output": {
+    "observationId": "20000000-0000-4000-8000-00000000000c",
+    "currentRevision": 6,
+    "items": [
+     {
+      "revision": 1,
+      "changeKind": "created",
+      "wording": "Flare later.",
+      "observedOn": "2026-10-01",
+      "attribution": "instructor_transcribed",
+      "instructorName": "Synthetic CFI",
+      "linkedActionId": null,
+      "linkedActionTitle": null,
+      "addressedAt": null,
+      "recordedAt": "2026-10-11T09:00:08.000Z"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-000000000013"
+   },
+   "output": {
+    "code": "ERASED"
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "limit": 0
+   },
+   "output": {
+    "code": "LIMIT_EXCEEDED"
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "limit": 51
+   },
+   "output": {
+    "code": "LIMIT_EXCEEDED"
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "cursor": "[2,null,null,null,\"2026-10-01\",\"x\",\"y\",999]"
+   },
+   "output": {
+    "code": "INVALID_ARGUMENT"
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "skillId": "builtin.normal_landing",
+    "cursor": "[2,null,null,null,\"2026-10-01\",\"x\",\"y\",0]"
+   },
+   "output": {
+    "code": "INVALID_ARGUMENT"
+   }
+  },
+  {
+   "kind": "page",
+   "input": {
+    "cursor": "not json"
+   },
+   "output": {
+    "code": "INVALID_ARGUMENT"
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "not-a-uuid"
+   },
+   "output": {
+    "code": "INVALID_ARGUMENT"
+   }
+  },
+  {
+   "kind": "history",
+   "input": {
+    "observationId": "20000000-0000-4000-8000-0000000000ff"
+   },
+   "output": {
+    "code": "NOT_FOUND"
+   }
+  }
+ ]
+}

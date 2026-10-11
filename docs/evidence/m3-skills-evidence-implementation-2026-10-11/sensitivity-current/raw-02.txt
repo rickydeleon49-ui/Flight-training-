@@ -1,0 +1,15 @@
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'a\\ failure\\ after\\ the\\ first\\ writes\\ rolls\\ everything\\ back'
+# cwd: /private/tmp/m3-current-sensitivity/tree
+
+ RUN  v4.1.11 /private/tmp/m3-current-sensitivity/tree
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 22 skipped (24)
+   Start at  13:26:02
+   Duration  319ms (transform 114ms, setup 0ms, import 135ms, tests 104ms, environment 0ms)
+
+(node:98637) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+# exit=0

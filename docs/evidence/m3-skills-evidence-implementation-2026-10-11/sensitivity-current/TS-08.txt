@@ -1,0 +1,53 @@
+# TS-08: history -> receipt ownership (M3-R9)
+# file: src/data/practiceStateValidation.ts
+# test: src/data/skillEvidenceValidationParity.test.ts > node:sqlite gives the listed outcome for every case
+$ npx vitest run src/data/skillEvidenceValidationParity.test.ts -t 'node:sqlite\\ gives\\ the\\ listed\\ outcome\\ for\\ every\\ case'
+# cwd: /private/tmp/m3-current-sensitivity/tree
+--- removed
+if (!owned(r["operation_id"], OBSERVATION_HISTORY_ACTIONS, r["observation_id"], r["revision"])) {
++++ added
+if (false && !owned(r["operation_id"], OBSERVATION_HISTORY_ACTIONS, r["observation_id"], r["revision"])) {
+--- output (last 40 lines)
+AssertionError: expected [ …(85) ] to deeply equal [ …(85) ]
+
+- Expected
++ Received
+
+@@ -69,19 +69,19 @@
+    "[M3-R6] decomposed upper-case name collides with a composed one (NFC): refuse",
+    "[M3-R6] no-break and ideographic spaces collide with an active built-in: refuse",
+    "[M3-R6] byte-order marks around a name collide (JS whitespace): refuse",
+    "[M3-R6] final sigma: ΟΔΟΣ collides with οδος: refuse",
+    "[M3-R6] a built-in restored into a name now active elsewhere: refuse",
+-   "[M3-R9] observation history whose create receipt was removed (review case): refuse",
+-   "[M3-R9] a later observation revision whose receipt was removed: refuse",
+-   "[M3-R9] an edit revision whose receipt was removed (earlier receipts intact): refuse",
++   "[M3-R9] observation history whose create receipt was removed (review case): accept",
++   "[M3-R9] a later observation revision whose receipt was removed: accept",
++   "[M3-R9] an edit revision whose receipt was removed (earlier receipts intact): accept",
+    "[M3-R9] a custom catalog revision whose receipt was removed: refuse",
+    "[M3-R9] a built-in retirement revision without its receipt: refuse",
+    "[M3-R9] a status entry whose receipt was removed: refuse",
+    "[M3-R9] a cleared confidence entry without its receipt: refuse",
+-   "[M3-R9] one operation claims two observation revisions: refuse",
++   "[M3-R9] one operation claims two observation revisions: accept",
+    "[M3-R9] a status entry reuses an observation change's operation: refuse",
+    "[M3-R9] a catalog revision reuses an observation's create operation: refuse",
+-   "[M3-R9] history owned by an operation whose receipt is a tombstone: refuse",
++   "[M3-R9] history owned by an operation whose receipt is a tombstone: accept",
+    "[M3-R9] status history mixed up between two skills' receipts: refuse",
+    "[M3-R9] catalog seeds need no receipt; every user change has one: accept",
+  ]
+
+ ❯ src/data/skillEvidenceValidationParity.test.ts:66:24
+     64|         }
+     65|       }
+     66|       expect(outcomes).toEqual(VALIDATION.cases.map((c) => `${c.name}:…
+       |                        ^
+     67|     });
+     68|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+# exit=1
+# caught=True
+# restored=True

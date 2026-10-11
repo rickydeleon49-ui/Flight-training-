@@ -1,3 +1,9 @@
+## M3 production implementation reviewed and completed — 11 October 2026
+
+The authorized first production slice is complete: migration 14, native/TS/browser transactions and restore guards, skills/debrief UI, history and explicit follow-up/status/confidence. Codex took over the interrupted implementation at the owner's request, fixed confirmed retry/draft/provenance/navigation defects, completed the browser-driver checks, strengthened two masked history-cursor regressions and finished evidence/benchmarks. Final local gate receipts and integration conditions are in the [review and completion report](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_REVIEW_AND_COMPLETION_2026-10-11.md). GitHub merge requires required checks for the exact published head.
+
+M3-D1–D9 approval persists; shared accepted fixtures, shipped migrations and dependencies are preserved. M4 remains separately assigned preparation with OD-1–OD-10 proposed. G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; this is source-level work, not installed/signing/release acceptance. [Next model-neutral reviewer handoff](docs/M3_COMPLETION_NEXT_REVIEWER_PROMPT_2026-10-11.md).
+
 ## M3 production slice authorized — 11 October 2026
 
 **Owner-approved M3-D1–D9 as written.** The owner approved the implementation task after independent corrected-scope acceptance. [Decision record](docs/M3_SKILLS_EVIDENCE_OWNER_APPROVAL_2026-10-11.md); [one active model-neutral production assignment](docs/M3_SKILLS_EVIDENCE_PRODUCTION_START_PROMPT_2026-10-11.md). Both former conditional gates are satisfied; earlier PROPOSED/pending-approval entries remain historical.
@@ -298,6 +304,8 @@ Automatic split parts retain per-part guides and gain parent/source page-range m
 - Benchmark 100/2,500/5,000 materials and 10,000 review items; query/paginate history rather than loading it all in `AppDataContext`.
 
 ## 8. M3 — Skills and feedback evidence
+
+**11 October delivered first production slice:** the 15 built-in/custom catalog, deliberately attributed debrief observations, append-only paged history, deletion snapshots and irreversible erasure, explicit follow-up links/addressed choice, and separate status/confidence now have native, TypeScript, browser and UI implementations. [Completion review](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_REVIEW_AND_COMPLETION_2026-10-11.md) records the gate and exact GitHub integration conditions. ACS mappings, automatic extraction, verified-instructor input and flight-proficiency recommendations are not added by this slice. Installed G1–G3 remain deferred/unexecuted/unverified.
 
 Use a small versioned catalog with stable IDs and optional ACS mappings. Verify mappings against the [FAA ACS index](https://www.faa.gov/training_testing/testing/acs); broad library topics remain unchanged. Allow custom skills without claiming they are official ACS elements.
 

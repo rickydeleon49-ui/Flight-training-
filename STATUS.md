@@ -1,3 +1,9 @@
+## M3 production implementation reviewed and completed — 11 October 2026
+
+The authorized first production slice is complete: migration 14, native/TS/browser transactions and restore guards, skills/debrief UI, history and explicit follow-up/status/confidence. Codex took over the interrupted implementation at the owner's request, fixed confirmed retry/draft/provenance/navigation defects, completed the browser-driver checks, strengthened two masked history-cursor regressions and finished evidence/benchmarks. Final local gate receipts and integration conditions are in the [review and completion report](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_REVIEW_AND_COMPLETION_2026-10-11.md). GitHub merge requires required checks for the exact published head.
+
+M3-D1–D9 approval persists; shared accepted fixtures, shipped migrations and dependencies are preserved. M4 remains separately assigned preparation with OD-1–OD-10 proposed. G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; this is source-level work, not installed/signing/release acceptance. [Next model-neutral reviewer handoff](docs/M3_COMPLETION_NEXT_REVIEWER_PROMPT_2026-10-11.md).
+
 ## M4 integrated preparation re-review — 11 October 2026
 
 **CORRECTIONS REQUIRED: M4-R9–R12.** Retain the original behavior fixes and genuine PDF.js/file-backed SQLite demonstrations. Submitted22 tests pass on disclosed Node26; Node22 has a preserved scratch PDF.js Promise.try failure. Earlier current-source diagnostics10 pass; previous adapted cases14 pass/1 historical scanner failure legitimately superseded by real parser proof. New integration diagnostics14 failures/2 controls cover incomplete destinations, non-atomic identity/navigation validity and obsolete durable-save commits.

@@ -1,0 +1,87 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m3-implementation
+
+(node:93154) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/state/skillEvidence/catalog-recovery.test.ts (3 tests | 3 failed) 12ms
+   × catalog same-turn double submission joins one request 7ms
+   × catalog changed draft first resolves its unknown create and does not mint a second skill 3ms
+   × a catalog acknowledgment after unmount performs no refresh 1ms
+ ❯ src/state/skillEvidence/production-controller.test.ts (7 tests | 1 failed) 155ms
+     × changed item wording resolves the earlier unknown request without claiming the new wording was saved 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/skillEvidence/catalog-recovery.test.ts > catalog same-turn double submission joins one request
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/state/skillEvidence/catalog-recovery.test.ts:27:17
+     25|     two = hook.result.current.act("create", { label: "First" }, build(…
+     26|   });
+     27|   expect(write).toHaveBeenCalledTimes(1);
+       |                 ^
+     28|   await act(async () => { resolve({}); await Promise.all([one, two]); …
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/state/skillEvidence/catalog-recovery.test.ts > catalog changed draft first resolves its unknown create and does not mint a second skill
+AssertionError: expected { kind: 'done' } to match object { kind: 'earlier_done' }
+
+- Expected
++ Received
+
+  {
+-   "kind": "earlier_done",
++   "kind": "done",
+  }
+
+ ❯ src/state/skillEvidence/catalog-recovery.test.ts:40:93
+     38|   await act(async () => {
+     39|     expect(await hook.result.current.act("create", { label: "First" },…
+     40|     expect(await hook.result.current.act("create", { label: "Changed" …
+       |                                                                                             ^
+     41|   });
+     42|   expect(sent[1]).toEqual(sent[0]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/state/skillEvidence/catalog-recovery.test.ts > a catalog acknowledgment after unmount performs no refresh
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/state/skillEvidence/catalog-recovery.test.ts:52:23
+     50|   hook.unmount();
+     51|   await act(async () => { resolve({}); await pending; });
+     52|   expect(hook.skills).toHaveBeenCalledTimes(reads);
+       |                       ^
+     53| });
+     54|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/state/skillEvidence/production-controller.test.ts > production controller > changed item wording resolves the earlier unknown request without claiming the new wording was saved
+AssertionError: expected { kind: 'refused', …(2) } to match object { kind: 'earlier_done' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "kind": "earlier_done",
++   "kind": "refused",
+  }
+
+ ❯ src/state/skillEvidence/production-controller.test.ts:96:81
+     94|     });
+     95|     expect(await c.runAction("edit", { wording: "Earlier" }, build("Ea…
+     96|     expect(await c.runAction("edit", { wording: "Changed" }, build("Ch…
+       |                                                                                 ^
+     97|     expect(sent[1]).toEqual(sent[0]);
+     98|     expect((await x.store.page({})).items[0]!.wording).toBe("Earlier");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 6 passed (10)
+   Start at  13:12:41
+   Duration  439ms (transform 182ms, setup 0ms, import 254ms, tests 166ms, environment 241ms)
+

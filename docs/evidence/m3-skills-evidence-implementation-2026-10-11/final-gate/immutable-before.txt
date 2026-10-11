@@ -1,0 +1,979 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m3-implementation
+
+(node:94041) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/state/skillEvidence/controller.test.ts (9 tests | 1 failed | 8 skipped) 32ms
+     × changing skill or debrief provenance cannot be acknowledged as an edit of the saved observation 31ms
+(node:94040) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/FlightPath/skills/remaining-ui.test.ts (15 tests | 1 failed | 14 skipped) 1110ms
+     × a skill change during save is named as unsaved and must be saved as a new observation 1109ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/skillEvidence/controller.test.ts > operation ownership > changing skill or debrief provenance cannot be acknowledged as an edit of the saved observation
+AssertionError: expected "act" to not be called at all, but actually been called 3 times
+
+Received:
+
+  1st act call:
+
+    Array [
+      Object {
+        "action": "edit_observation",
+        "attribution": "instructor_transcribed",
+        "expectedRevision": 1,
+        "instructorName": "",
+        "observationId": "00000000-0000-4000-8000-000000000004",
+        "observedOn": "2026-10-01",
+        "operationId": "00000000-0000-4000-8000-000000000006",
+        "wording": "Look further down the runway.",
+      },
+    ]
+
+  2nd act call:
+
+    Array [
+      Object {
+        "action": "edit_observation",
+        "attribution": "instructor_transcribed",
+        "expectedRevision": 1,
+        "instructorName": "",
+        "observationId": "00000000-0000-4000-8000-000000000004",
+        "observedOn": "2026-10-01",
+        "operationId": "00000000-0000-4000-8000-000000000007",
+        "wording": "Look further down the runway.",
+      },
+    ]
+
+  3rd act call:
+
+    Array [
+      Object {
+        "action": "edit_observation",
+        "attribution": "instructor_transcribed",
+        "expectedRevision": 1,
+        "instructorName": "",
+        "observationId": "00000000-0000-4000-8000-000000000004",
+        "observedOn": "2026-10-01",
+        "operationId": "00000000-0000-4000-8000-000000000008",
+        "wording": "Look further down the runway.",
+      },
+    ]
+
+
+Number of calls: 3
+
+ ❯ src/state/skillEvidence/controller.test.ts:67:23
+     65|       expect(await c.reviseSaved("d", { ...original, ...change })).toM…
+     66|     }
+     67|     expect(write).not.toHaveBeenCalled();
+       |                       ^
+     68|   });
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/FlightPath/skills/remaining-ui.test.ts > M3-R8 whole-draft acknowledgment > a skill change during save is named as unsaved and must be saved as a new observation
+TestingLibraryElementError: Unable to find an element with the text: Not saved yet: your changes to the skill.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section>[39m
+      [36m<label[39m
+        [33mfor[39m=[32m"_r_0_-skill"[39m
+      [36m>[39m
+        [0mShowing skill[0m
+      [36m</label>[39m
+      [36m<select[39m
+        [33mid[39m=[32m"_r_0_-skill"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+        [36m>[39m
+          [0mCrosswind landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+        [36m>[39m
+          [0mEmergency approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.go_around"[39m
+        [36m>[39m
+          [0mGo-around[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.ground_reference"[39m
+        [36m>[39m
+          [0mGround reference maneuvers[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_landing"[39m
+        [36m>[39m
+          [0mNormal approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+        [36m>[39m
+          [0mNormal takeoff and climb[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+        [36m>[39m
+          [0mPreflight inspection[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.radio_communications"[39m
+        [36m>[39m
+          [0mRadio communications[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.slow_flight"[39m
+        [36m>[39m
+          [0mSlow flight[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.stalls"[39m
+        [36m>[39m
+          [0mStalls and recovery[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.steep_turns"[39m
+        [36m>[39m
+          [0mSteep turns[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.taxiing"[39m
+        [36m>[39m
+          [0mTaxiing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+        [36m>[39m
+          [0mTraffic pattern[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.checklist_use"[39m
+        [36m>[39m
+          [0mUsing checklists[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+        [36m>[39m
+          [0mWeather decisions[0m
+        [36m</option>[39m
+      [36m</select>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Summary"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mYour status: Not set[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mYour confidence: Not rated[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mOnly a few observations so far: not enough to show a pattern.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-labelledby[39m=[32m"_r_1_-title"[39m
+        [33mclass[39m=[32m"skill-form"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"small"[39m
+          [33mid[39m=[32m"_r_1_-title"[39m
+        [36m>[39m
+          [0mAdd an observation from “[0m
+          [0mPattern work[0m
+          [0m”[0m
+        [36m</h3>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_2_"[39m
+          [36m>[39m
+            [0mSkill[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mid[39m=[32m"_r_2_"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+            [36m>[39m
+              [0mCrosswind landing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+            [36m>[39m
+              [0mEmergency approach and landing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.go_around"[39m
+            [36m>[39m
+              [0mGo-around[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.ground_reference"[39m
+            [36m>[39m
+              [0mGround reference maneuvers[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.normal_landing"[39m
+            [36m>[39m
+              [0mNormal approach and landing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+            [36m>[39m
+              [0mNormal takeoff and climb[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+            [36m>[39m
+              [0mPreflight inspection[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.radio_communications"[39m
+            [36m>[39m
+              [0mRadio communications[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.slow_flight"[39m
+            [36m>[39m
+              [0mSlow flight[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.stalls"[39m
+            [36m>[39m
+              [0mStalls and recovery[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.steep_turns"[39m
+            [36m>[39m
+              [0mSteep turns[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.taxiing"[39m
+            [36m>[39m
+              [0mTaxiing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+            [36m>[39m
+              [0mTraffic pattern[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.checklist_use"[39m
+            [36m>[39m
+              [0mUsing checklists[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+            [36m>[39m
+              [0mWeather decisions[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<fieldset[39m
+          [33mclass[39m=[32m"skill-form__choices"[39m
+        [36m>[39m
+          [36m<legend[39m
+            [33mclass[39m=[32m"field__label"[39m
+          [36m>[39m
+            [0mWho said it?[0m
+          [36m</legend>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mchecked[39m=[32m""[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0m [0m
+            [0mMy instructor (I'm writing down what they said)[0m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0m [0m
+            [0mMe (my own observation)[0m
+          [36m</label>[39m
+        [36m</fieldset>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_3_"[39m
+          [36m>[39m
+            [0mInstructor name (optional)[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mid[39m=[32m"_r_3_"[39m
+            [33mmaxlength[39m=[32m"120"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_4_"[39m
+          [36m>[39m
+            [0mWhat was said or noticed[0m
+          [36m</label>[39m
+          [36m<textarea[39m
+            [33maria-describedby[39m=[32m"_r_4_-hint"[39m
+            [33mclass[39m=[32m"textarea"[39m
+            [33mid[39m=[32m"_r_4_"[39m
+            [33mrows[39m=[32m"4"[39m
+          [36m>[39m
+            [0mKeep the complete draft[0m
+          [36m</textarea>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"field__hint"[39m
+            [33mid[39m=[32m"_r_4_-hint"[39m
+          [36m>[39m
+            [0m23 of 2000 characters[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_5_"[39m
+          [36m>[39m
+            [0mCame from[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mid[39m=[32m"_r_5_"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"none"[39m
+            [36m>[39m
+              [0mNot from a particular part[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"instructor_feedback"[39m
+            [36m>[39m
+              [0mInstructor feedback[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"was_difficult"[39m
+            [36m>[39m
+              [0mWhat was difficult[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_6_"[39m
+          [36m>[39m
+            [0mDate observed[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mid[39m=[32m"_r_6_"[39m
+            [33mtype[39m=[32m"date"[39m
+            [33mvalue[39m=[32m"2026-10-01"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSave observation[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Your unsaved changes"[39m
+          [33mclass[39m=[32m"skill-form__follow-up"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mWhat's in the form above isn't saved yet.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"tiny muted"[39m
+            [33mid[39m=[32m"_r_1_-replace-hint"[39m
+          [36m>[39m
+            [0mReplacing updates the saved observation to match everything in the form: wording, date, who said it and instructor name.[0m
+          [36m</p>[39m
+          [36m<button[39m
+            [33maria-describedby[39m=[32m"_r_1_-replace-hint"[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReplace the saved wording with this[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mSave it as a new observation[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"skill-evidence"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSaved.[0m
+        [36m</p>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"Evidence history"[39m
+          [33mclass[39m=[32m"skill-evidence__list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"skill-evidence__item"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"small"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mInstructor feedback, as you wrote it down[0m
+              [36m</strong>[39m
+              [0m · [0m
+              [0m2026-10-01[0m
+            [36m</p>[39m
+            [36m<blockquote[39m
+              [33mclass[39m=[32m"skill-evidence__wording wrap-anywhere"[39m
+            [36m>[39m
+              [0mKeep the complete draft[0m
+            [36m</blockquote>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"tiny muted"[39m
+            [36m>[39m
+              [0mFrom “Pattern work”, 2026-10-01[0m
+            [36m</p>[39m
+            [36m<details[39m
+              [33mclass[39m=[32m"skill-evidence__menu"[39m
+            [36m>[39m
+              [36m<summary>[39m
+                [0mOptions[0m
+              [36m</summary>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"row skill-evidence__menu-items"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mEdit[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mLink a follow-up[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mMark addressed[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mView earlier versions[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--danger button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mErase permanently[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</details>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section>[39m
+      [36m<label[39m
+        [33mfor[39m=[32m"_r_0_-skill"[39m
+      [36m>[39m
+        [0mShowing skill[0m
+      [36m</label>[39m
+      [36m<select[39m
+        [33mid[39m=[32m"_r_0_-skill"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+        [36m>[39m
+          [0mCrosswind landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+        [36m>[39m
+          [0mEmergency approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.go_around"[39m
+        [36m>[39m
+          [0mGo-around[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.ground_reference"[39m
+        [36m>[39m
+          [0mGround reference maneuvers[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_landing"[39m
+        [36m>[39m
+          [0mNormal approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+        [36m>[39m
+          [0mNormal takeoff and climb[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+        [36m>[39m
+          [0mPreflight inspection[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.radio_communications"[39m
+        [36m>[39m
+          [0mRadio communications[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.slow_flight"[39m
+        [36m>[39m
+          [0mSlow flight[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.stalls"[39m
+        [36m>[39m
+          [0mStalls and recovery[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.steep_turns"[39m
+        [36m>[39m
+          [0mSteep turns[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.taxiing"[39m
+        [36m>[39m
+          [0mTaxiing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+        [36m>[39m
+          [0mTraffic pattern[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.checklist_use"[39m
+        [36m>[39m
+          [0mUsing checklists[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+        [36m>[39m
+          [0mWeather decisions[0m
+        [36m</option>[39m
+      [36m</select>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Summary"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mYour status: Not set[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mYour confidence: Not rated[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mOnly a few observations so far: not enough to show a pattern.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-labelledby[39m=[32m"_r_1_-title"[39m
+        [33mclass[39m=[32m"skill-form"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"small"[39m
+          [33mid[39m=[32m"_r_1_-title"[39m
+        [36m>[39m
+          [0mAdd an observation from “[0m
+          [0mPattern work[0m
+          [0m”[0m
+        [36m</h3>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_2_"[39m
+          [36m>[39m
+            [0mSkill[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mid[39m=[32m"_r_2_"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+            [36m>[39m
+              [0mCrosswind landing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+            [36m>[39m
+              [0mEmergency approach and landing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.go_around"[39m
+            [36m>[39m
+              [0mGo-around[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.ground_reference"[39m
+            [36m>[39m
+              [0mGround reference maneuvers[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.normal_landing"[39m
+            [36m>[39m
+              [0mNormal approach and landing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+            [36m>[39m
+              [0mNormal takeoff and climb[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+            [36m>[39m
+              [0mPreflight inspection[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.radio_communications"[39m
+            [36m>[39m
+              [0mRadio communications[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.slow_flight"[39m
+            [36m>[39m
+              [0mSlow flight[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.stalls"[39m
+            [36m>[39m
+              [0mStalls and recovery[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.steep_turns"[39m
+            [36m>[39m
+              [0mSteep turns[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.taxiing"[39m
+            [36m>[39m
+              [0mTaxiing[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+            [36m>[39m
+              [0mTraffic pattern[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.checklist_use"[39m
+            [36m>[39m
+              [0mUsing checklists[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+            [36m>[39m
+              [0mWeather decisions[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<fieldset[39m
+          [33mclass[39m=[32m"skill-form__choices"[39m
+        [36m>[39m
+          [36m<legend[39m
+            [33mclass[39m=[32m"field__label"[39m
+          [36m>[39m
+            [0mWho said it?[0m
+          [36m</legend>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mchecked[39m=[32m""[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0m [0m
+            [0mMy instructor (I'm writing down what they said)[0m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0m [0m
+            [0mMe (my own observation)[0m
+          [36m</label>[39m
+        [36m</fieldset>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_3_"[39m
+          [36m>[39m
+            [0mInstructor name (optional)[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mid[39m=[32m"_r_3_"[39m
+            [33mmaxlength[39m=[32m"120"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_4_"[39m
+          [36m>[39m
+            [0mWhat was said or noticed[0m
+          [36m</label>[39m
+          [36m<textarea[39m
+            [33maria-describedby[39m=[32m"_r_4_-hint"[39m
+            [33mclass[39m=[32m"textarea"[39m
+            [33mid[39m=[32m"_r_4_"[39m
+            [33mrows[39m=[32m"4"[39m
+          [36m>[39m
+            [0mKeep the complete draft[0m
+          [36m</textarea>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"field__hint"[39m
+            [33mid[39m=[32m"_r_4_-hint"[39m
+          [36m>[39m
+            [0m23 of 2000 characters[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_5_"[39m
+          [36m>[39m
+            [0mCame from[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"select"[39m
+            [33mid[39m=[32m"_r_5_"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"none"[39m
+            [36m>[39m
+              [0mNot from a particular part[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"instructor_feedback"[39m
+            [36m>[39m
+              [0mInstructor feedback[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"was_difficult"[39m
+            [36m>[39m
+              [0mWhat was difficult[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_6_"[39m
+          [36m>[39m
+            [0mDate observed[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mid[39m=[32m"_r_6_"[39m
+            [33mtype[39m=[32m"date"[39m
+            [33mvalue[39m=[32m"2026-10-01"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSave observation[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Your unsaved changes"[39m
+          [33mclass[39m=[32m"skill-form__follow-up"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mWhat's in the form above isn't saved yet.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"tiny muted"[39m
+            [33mid[39m=[32m"_r_1_-replace-hint"[39m
+          [36m>[39m
+            [0mReplacing updates the saved observation to match everything in the form: wording, date, who said it and instructor name.[0m
+          [36m</p>[39m
+          [36m<button[39m
+            [33maria-describedby[39m=[32m"_r_1_-replace-hint"[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReplace the saved wording with this[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mSave it as a new observation[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"skill-evidence"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSaved.[0m
+        [36m</p>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"Evidence history"[39m
+          [33mclass[39m=[32m"skill-evidence__list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"skill-evidence__item"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"small"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mInstructor feedback, as you wrote it down[0m
+              [36m</strong>[39m
+              [0m · [0m
+              [0m2026-10-01[0m
+            [36m</p>[39m
+            [36m<blockquote[39m
+              [33mclass[39m=[32m"skill-evidence__wording wrap-anywhere"[39m
+            [36m>[39m
+              [0mKeep the complete draft[0m
+            [36m</blockquote>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"tiny muted"[39m
+            [36m>[39m
+              [0mFrom “Pattern work”, 2026-10-01[0m
+            [36m</p>[39m
+            [36m<details[39m
+              [33mclass[39m=[32m"skill-evidence__menu"[39m
+            [36m>[39m
+              [36m<summary>[39m
+                [0mOptions[0m
+              [36m</summary>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"row skill-evidence__menu-items"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mEdit[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mLink a follow-up[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mMark addressed[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mView earlier versions[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--danger button--small"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mErase permanently[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</details>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/FlightPath/skills/remaining-ui.test.ts:140:18
+    138|     fireEvent.change(screen.getByLabelText("Skill"), { target: { value…
+    139|     await ctx.release();
+    140|     await screen.findByText("Not saved yet: your changes to the skill.…
+       |                  ^
+    141|     expect((screen.getByRole("button", { name: "Replace the saved word…
+    142|     expect(wording().value).toBe("Keep the complete draft");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 22 skipped (24)
+   Start at  13:14:41
+   Duration  1.60s (transform 274ms, setup 0ms, import 363ms, tests 1.14s, environment 255ms)
+

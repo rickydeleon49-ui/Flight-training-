@@ -1,0 +1,7 @@
+$ cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+# cwd: /Users/rickymac/code/Flight-training-m3-implementation
+# SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+   Compiling her-flight-deck v0.5.3 (/Users/rickymac/code/Flight-training-m3-implementation/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.88s
+
+# exit=0

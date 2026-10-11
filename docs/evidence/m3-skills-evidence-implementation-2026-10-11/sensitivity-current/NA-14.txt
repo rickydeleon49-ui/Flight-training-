@@ -1,0 +1,37 @@
+# NA-14: history-cursor binding
+# file: src-tauri/src/skill_evidence.rs
+# test: skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat -- --exact
+# cwd: /private/tmp/m3-current-sensitivity/tree
+--- removed
+            if items[1].as_str() != Some(observation_id) {
+                return Err(Code::InvalidArgument);
+            }
+
++++ added
+
+--- output (last 40 lines)
+running 1 test
+test skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat ... FAILED
+
+failures:
+
+---- skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat stdout ----
+
+thread 'skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat' (820216) panicked at src/skill_evidence_tests.rs:741:10:
+called `Result::unwrap_err()` on an `Ok` value: Object {"currentRevision": Number(2), "items": Array [Object {"addressedAt": Null, "attribution": String("self_report"), "changeKind": String("created"), "instructorName": String(""), "linkedActionId": Null, "linkedActionTitle": Null, "observedOn": String("2026-10-01"), "recordedAt": String("2026-10-11T20:27:54.912Z"), "revision": Number(1), "wording": String("Other")}], "nextCursor": Null, "observationId": String("20000000-0000-4000-8000-000000000002")}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.06s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/m3-current-sensitivity/tree/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.25s
+     Running unittests src/lib.rs (/private/tmp/m3-current-sensitivity/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+# exit=101
+# caught=True
+# restored=True

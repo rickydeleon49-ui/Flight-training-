@@ -1,0 +1,321 @@
+{
+  "description": "Shared M3 write contract: each case starts from a fresh schema-14 library plus the baseline, runs its steps in order and must end with the listed row counts and check results. Replayed by src/data/skillEvidenceOperations.test.ts (node:sqlite, sql.js) and skill_evidence_tests.rs (rusqlite). Timestamps are never compared. After the last step the whole library must pass validation unless valid is false.",
+  "baseline": [
+    "INSERT INTO journal_entries (id, date, title, instructor_feedback, was_difficult, created_at, updated_at) VALUES ('j1', '2026-10-01', 'Pattern work', 'Flare later.', 'Gusts.', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO journal_entries (id, date, title, created_at, updated_at) VALUES ('j2', '2026-10-03', 'Crosswind', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO next_actions (id, title, related_type, related_id, created_at, updated_at) VALUES ('a1', 'Review flare timing', 'journal', 'j1', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO next_actions (id, title, created_at, updated_at) VALUES ('a2', 'Crosswind drill', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')"
+  ],
+  "cases": [
+    {
+      "name": "create applies once with its history row and receipt",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "instructor_feedback", "wording": "Flare a little later.", "observedOn": "2026-10-01", "attribution": "instructor_transcribed", "instructorName": "Synthetic CFI" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 1, "skill_evidence_operations": 1, "skill_self_assessments": 0 },
+      "checks": [
+        { "sql": "SELECT skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, action_id, addressed_at FROM skill_observations",
+          "rows": [["builtin.normal_landing", "Normal approach and landing", "j1", "j1", "2026-10-01", "Pattern work", "instructor_feedback", "25bca6948d90fb0e255cad3469b1697f8f05835a2922da60128f7bb3636d696f", "instructor_transcribed", "Synthetic CFI", "Flare a little later.", "2026-10-01", 1, null, null]] },
+        { "sql": "SELECT revision, change_kind, wording, operation_id FROM skill_observation_revisions", "rows": [[1, "created", "Flare a little later.", "10000000-0000-4000-8000-000000000001"]] },
+        { "sql": "SELECT action, subject_id, is_erased FROM skill_evidence_operations", "rows": [["create_observation", "20000000-0000-4000-8000-000000000001", 0]] },
+        { "sql": "SELECT COUNT(*) FROM next_actions WHERE status = 'open' AND completed_at IS NULL", "rows": [[2]] }
+      ]
+    },
+    {
+      "name": "an exact retry replays the stored result and writes nothing",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Flare a little later.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Flare a little later.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "replayed", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 1, "skill_evidence_operations": 1, "skill_self_assessments": 0 },
+      "checks": [{ "sql": "SELECT source_text_sha256 FROM skill_observations", "rows": [[null]] }]
+    },
+    {
+      "name": "a retry after a later edit replays and never re-applies over the edit",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "First wording.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "wording": "Edited wording.", "observedOn": "2026-10-02", "attribution": "instructor_transcribed", "instructorName": "Synthetic CFI" },
+          "expect": { "status": "applied", "result": { "action": "edit_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "First wording.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "replayed", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 2, "skill_evidence_operations": 2, "skill_self_assessments": 0 },
+      "checks": [
+        { "sql": "SELECT wording, observed_on, attribution, instructor_name, revision FROM skill_observations", "rows": [["Edited wording.", "2026-10-02", "instructor_transcribed", "Synthetic CFI", 2]] },
+        { "sql": "SELECT revision, change_kind, wording FROM skill_observation_revisions ORDER BY revision", "rows": [[1, "created", "First wording."], [2, "edited", "Edited wording."]] }
+      ]
+    },
+    {
+      "name": "the same request id with different content is a conflict and writes nothing",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Original.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Changed.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "OPERATION_CONFLICT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Reused observation id.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "OPERATION_CONFLICT" } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 1, "skill_evidence_operations": 1, "skill_self_assessments": 0 },
+      "checks": [{ "sql": "SELECT wording FROM skill_observations", "rows": [["Original."]] }]
+    },
+    {
+      "name": "two edits from the same revision: the first applies, the second is stale",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.crosswind_landing", "journalId": "j2", "sourceField": "none", "wording": "Drifted left.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "wording": "Drifted left on short final.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "edit_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000003", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "wording": "Another device's edit.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "STALE_REVISION" } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000004", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 2, "wording": "Drifted left on short final.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 2, "skill_evidence_operations": 2, "skill_self_assessments": 0 },
+      "checks": [{ "sql": "SELECT wording, revision FROM skill_observations", "rows": [["Drifted left on short final.", 2]] }]
+    },
+    {
+      "name": "linking and marking addressed never touch the action; completing the action never marks addressed",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Flare later.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "link_action", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "actionId": "a1" },
+          "expect": { "status": "applied", "result": { "action": "link_action", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "request": { "action": "link_action", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "actionId": "a1" },
+          "expect": { "status": "replayed", "result": { "action": "link_action", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "request": { "action": "link_action", "operationId": "10000000-0000-4000-8000-000000000003", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 2, "actionId": "a1" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "sql": "UPDATE next_actions SET status = 'completed', completed_at = '2026-10-11T09:00:00.000Z' WHERE id = 'a1'" },
+        { "request": { "action": "set_addressed", "operationId": "10000000-0000-4000-8000-000000000004", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 2, "addressed": false },
+          "expect": { "code": "INVALID_ARGUMENT" } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 2, "skill_evidence_operations": 2, "skill_self_assessments": 0 },
+      "checks": [
+        { "sql": "SELECT action_id, linked_action_id, linked_action_title, addressed_at, revision FROM skill_observations", "rows": [["a1", "a1", "Review flare timing", null, 2]] },
+        { "sql": "SELECT title, status, related_type, related_id FROM next_actions WHERE id = 'a1'", "rows": [["Review flare timing", "completed", "journal", "j1"]] },
+        { "sql": "SELECT revision, change_kind, linked_action_id FROM skill_observation_revisions ORDER BY revision", "rows": [[1, "created", null], [2, "linked_action", "a1"]] }
+      ]
+    },
+    {
+      "name": "marking addressed is her explicit choice, recorded in history, and can be cleared",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "was_difficult", "wording": "Gusty flare.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "set_addressed", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "addressed": true },
+          "expect": { "status": "applied", "result": { "action": "set_addressed", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "request": { "action": "set_addressed", "operationId": "10000000-0000-4000-8000-000000000003", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 2, "addressed": true },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "set_addressed", "operationId": "10000000-0000-4000-8000-000000000004", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 2, "addressed": false },
+          "expect": { "status": "applied", "result": { "action": "set_addressed", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 3 } } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 3, "skill_evidence_operations": 3, "skill_self_assessments": 0 },
+      "checks": [
+        { "sql": "SELECT addressed_at IS NULL, source_text_sha256 FROM skill_observations", "rows": [[1, "2b20aba4e46c8141680b7e41bbc44a7a282ba304944594976e7a353d056444a0"]] },
+        { "sql": "SELECT revision, change_kind, addressed_at IS NULL FROM skill_observation_revisions ORDER BY revision", "rows": [[1, "created", 1], [2, "marked_addressed", 0], [3, "cleared_addressed", 1]] }
+      ]
+    },
+    {
+      "name": "erasing tombstones earlier receipts, removes every history row and blocks resurrection",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Unique wording zq7.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "wording": "Unique wording zq7, edited.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "edit_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "request": { "action": "erase_observation", "operationId": "10000000-0000-4000-8000-000000000003", "observationId": "20000000-0000-4000-8000-000000000001", "confirm": "erase" },
+          "expect": { "status": "applied", "result": { "action": "erase_observation", "observationId": "20000000-0000-4000-8000-000000000001", "erased": true } } },
+        { "request": { "action": "erase_observation", "operationId": "10000000-0000-4000-8000-000000000003", "observationId": "20000000-0000-4000-8000-000000000001", "confirm": "erase" },
+          "expect": { "status": "replayed", "result": { "action": "erase_observation", "observationId": "20000000-0000-4000-8000-000000000001", "erased": true } } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Unique wording zq7.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "ERASED" } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "wording": "Unique wording zq7, edited.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "ERASED" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000004", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Unique wording zq7.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "ERASED" } },
+        { "request": { "action": "erase_observation", "operationId": "10000000-0000-4000-8000-000000000005", "observationId": "20000000-0000-4000-8000-000000000001", "confirm": "erase" },
+          "expect": { "code": "NOT_FOUND" } }
+      ],
+      "rows": { "skill_observations": 0, "skill_observation_revisions": 0, "skill_evidence_operations": 3, "skill_self_assessments": 0 },
+      "checks": [
+        { "sql": "SELECT operation_id, action, is_erased, result_json IS NULL FROM skill_evidence_operations ORDER BY rowid", "rows": [["10000000-0000-4000-8000-000000000001", "create_observation", 1, 1], ["10000000-0000-4000-8000-000000000002", "edit_observation", 1, 1], ["10000000-0000-4000-8000-000000000003", "erase_observation", 0, 0]] },
+        { "sql": "SELECT COUNT(*) FROM journal_entries WHERE id = 'j1' AND instructor_feedback = 'Flare later.'", "rows": [[1]] }
+      ]
+    },
+    {
+      "name": "a replay of a receipt naming another observation is a storage failure, never returned",
+      "valid": false,
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Flare later.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "sql": "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"20000000-0000-4000-8000-000000000099\",\"revision\":1}'" },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Flare later.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "STORAGE_FAILURE" } },
+        { "sql": "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"20000000-0000-4000-8000-000000000001\",\"revision\":1,\"extra\":true}'" },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Flare later.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "STORAGE_FAILURE" } },
+        { "sql": "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"20000000-0000-4000-8000-000000000001\",\"revision\":\"1\"}'" },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Flare later.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "STORAGE_FAILURE" } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 1, "skill_evidence_operations": 1, "skill_self_assessments": 0 },
+      "checks": []
+    },
+    {
+      "name": "a deleted debrief keeps its observations with the snapshot; new ones are refused",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "instructor_feedback", "wording": "Flare later.", "observedOn": "2026-10-01", "attribution": "instructor_transcribed", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "sql": "DELETE FROM journal_entries WHERE id = 'j1'" },
+        { "sql": "INSERT INTO journal_entries (id, date, title, created_at, updated_at) VALUES ('j3', '2026-10-01', 'Pattern work', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')" },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000002", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Another note.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "SOURCE_MISSING" } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 1, "skill_evidence_operations": 1, "skill_self_assessments": 0 },
+      "checks": [{ "sql": "SELECT journal_id, source_journal_id, source_journal_title, source_journal_date FROM skill_observations", "rows": [[null, "j1", "Pattern work", "2026-10-01"]] }]
+    },
+    {
+      "name": "a deleted linked action keeps its name; unlink clears it",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.crosswind_landing", "journalId": "j2", "sourceField": "none", "wording": "Use more aileron.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "link_action", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "actionId": "a2" },
+          "expect": { "status": "applied", "result": { "action": "link_action", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "sql": "DELETE FROM next_actions WHERE id = 'a2'" },
+        { "request": { "action": "link_action", "operationId": "10000000-0000-4000-8000-000000000003", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 2, "actionId": "a2" },
+          "expect": { "code": "NOT_FOUND" } },
+        { "request": { "action": "unlink_action", "operationId": "10000000-0000-4000-8000-000000000004", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 2 },
+          "expect": { "status": "applied", "result": { "action": "unlink_action", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 3 } } },
+        { "request": { "action": "unlink_action", "operationId": "10000000-0000-4000-8000-000000000005", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 3 },
+          "expect": { "code": "INVALID_ARGUMENT" } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 3, "skill_evidence_operations": 3, "skill_self_assessments": 0 },
+      "checks": [
+        { "sql": "SELECT action_id, linked_action_id, linked_action_title FROM skill_observations", "rows": [[null, null, null]] },
+        { "sql": "SELECT revision, change_kind, linked_action_id, linked_action_title FROM skill_observation_revisions ORDER BY revision", "rows": [[1, "created", null, null], [2, "linked_action", "a2", "Crosswind drill"], [3, "unlinked_action", null, null]] }
+      ]
+    },
+    {
+      "name": "custom skills: create, edit, duplicate names, retire, restore",
+      "steps": [
+        { "request": { "action": "create_custom_skill", "operationId": "10000000-0000-4000-8000-000000000001", "skillId": "custom.30000000-0000-4000-8000-000000000001", "label": "Short-field landing", "description": "", "topic": "landings" },
+          "expect": { "status": "applied", "result": { "action": "create_custom_skill", "skillId": "custom.30000000-0000-4000-8000-000000000001", "revision": 1 } } },
+        { "request": { "action": "create_custom_skill", "operationId": "10000000-0000-4000-8000-000000000002", "skillId": "custom.30000000-0000-4000-8000-000000000002", "label": "  short-FIELD   landing ", "description": "", "topic": "landings" },
+          "expect": { "code": "DUPLICATE_LABEL" } },
+        { "request": { "action": "create_custom_skill", "operationId": "10000000-0000-4000-8000-000000000003", "skillId": "custom.30000000-0000-4000-8000-000000000003", "label": "Crosswind landing", "description": "", "topic": "landings" },
+          "expect": { "code": "DUPLICATE_LABEL" } },
+        { "request": { "action": "edit_custom_skill", "operationId": "10000000-0000-4000-8000-000000000004", "skillId": "custom.30000000-0000-4000-8000-000000000001", "expectedRevision": 1, "label": "Short-field landing", "description": "Over a 50-foot obstacle.", "topic": "landings" },
+          "expect": { "status": "applied", "result": { "action": "edit_custom_skill", "skillId": "custom.30000000-0000-4000-8000-000000000001", "revision": 2 } } },
+        { "request": { "action": "edit_custom_skill", "operationId": "10000000-0000-4000-8000-000000000005", "skillId": "builtin.crosswind_landing", "expectedRevision": 1, "label": "Crosswind landings", "description": "", "topic": "landings" },
+          "expect": { "code": "BUILTIN_READ_ONLY" } },
+        { "request": { "action": "retire_skill", "operationId": "10000000-0000-4000-8000-000000000006", "skillId": "custom.30000000-0000-4000-8000-000000000001", "expectedRevision": 2 },
+          "expect": { "status": "applied", "result": { "action": "retire_skill", "skillId": "custom.30000000-0000-4000-8000-000000000001", "revision": 3 } } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000007", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "custom.30000000-0000-4000-8000-000000000001", "journalId": "j1", "sourceField": "none", "wording": "Too fast.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "SKILL_RETIRED" } },
+        { "request": { "action": "edit_custom_skill", "operationId": "10000000-0000-4000-8000-000000000008", "skillId": "custom.30000000-0000-4000-8000-000000000001", "expectedRevision": 3, "label": "Short-field", "description": "", "topic": "landings" },
+          "expect": { "code": "SKILL_RETIRED" } },
+        { "request": { "action": "create_custom_skill", "operationId": "10000000-0000-4000-8000-000000000009", "skillId": "custom.30000000-0000-4000-8000-000000000004", "label": "short-field landing", "description": "", "topic": "performance" },
+          "expect": { "status": "applied", "result": { "action": "create_custom_skill", "skillId": "custom.30000000-0000-4000-8000-000000000004", "revision": 1 } } },
+        { "request": { "action": "restore_skill", "operationId": "10000000-0000-4000-8000-00000000000a", "skillId": "custom.30000000-0000-4000-8000-000000000001", "expectedRevision": 3 },
+          "expect": { "code": "DUPLICATE_LABEL" } },
+        { "request": { "action": "retire_skill", "operationId": "10000000-0000-4000-8000-00000000000b", "skillId": "builtin.taxiing", "expectedRevision": 1 },
+          "expect": { "status": "applied", "result": { "action": "retire_skill", "skillId": "builtin.taxiing", "revision": 2 } } },
+        { "request": { "action": "restore_skill", "operationId": "10000000-0000-4000-8000-00000000000c", "skillId": "builtin.taxiing", "expectedRevision": 1 },
+          "expect": { "code": "STALE_REVISION" } },
+        { "request": { "action": "restore_skill", "operationId": "10000000-0000-4000-8000-00000000000d", "skillId": "builtin.taxiing", "expectedRevision": 2 },
+          "expect": { "status": "applied", "result": { "action": "restore_skill", "skillId": "builtin.taxiing", "revision": 3 } } }
+      ],
+      "rows": { "skill_catalog_entries": 17, "skill_catalog_revisions": 21, "skill_evidence_operations": 6, "skill_observations": 0 },
+      "checks": [
+        { "sql": "SELECT id, label, description, status, revision, catalog_version FROM skill_catalog_entries WHERE origin = 'custom' ORDER BY id", "rows": [["custom.30000000-0000-4000-8000-000000000001", "Short-field landing", "Over a 50-foot obstacle.", "retired", 3, null], ["custom.30000000-0000-4000-8000-000000000004", "short-field landing", "", "active", 1, null]] },
+        { "sql": "SELECT revision, status, catalog_version, changed_by FROM skill_catalog_revisions WHERE skill_id = 'builtin.taxiing' ORDER BY revision", "rows": [[1, "active", 1, "catalog"], [2, "retired", 1, "user"], [3, "active", 1, "user"]] }
+      ]
+    },
+    {
+      "name": "status and confidence are hers, sequenced, and clearable",
+      "steps": [
+        { "request": { "action": "set_status", "operationId": "10000000-0000-4000-8000-000000000001", "skillId": "builtin.steep_turns", "expectedSequence": 0, "status": "learning" },
+          "expect": { "status": "applied", "result": { "action": "set_status", "skillId": "builtin.steep_turns", "sequence": 1 } } },
+        { "request": { "action": "set_status", "operationId": "10000000-0000-4000-8000-000000000002", "skillId": "builtin.steep_turns", "expectedSequence": 0, "status": "practicing" },
+          "expect": { "code": "STALE_REVISION" } },
+        { "request": { "action": "set_status", "operationId": "10000000-0000-4000-8000-000000000003", "skillId": "builtin.steep_turns", "expectedSequence": 1, "status": "learning" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "set_status", "operationId": "10000000-0000-4000-8000-000000000004", "skillId": "builtin.steep_turns", "expectedSequence": 1, "status": null },
+          "expect": { "status": "applied", "result": { "action": "set_status", "skillId": "builtin.steep_turns", "sequence": 2 } } },
+        { "request": { "action": "set_status", "operationId": "10000000-0000-4000-8000-000000000005", "skillId": "builtin.steep_turns", "expectedSequence": 2, "status": "proficient" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "set_confidence", "operationId": "10000000-0000-4000-8000-000000000006", "skillId": "builtin.steep_turns", "expectedSequence": 0, "confidence": 3 },
+          "expect": { "status": "applied", "result": { "action": "set_confidence", "skillId": "builtin.steep_turns", "sequence": 1 } } },
+        { "request": { "action": "set_confidence", "operationId": "10000000-0000-4000-8000-000000000007", "skillId": "builtin.steep_turns", "expectedSequence": 1, "confidence": 6 },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "set_confidence", "operationId": "10000000-0000-4000-8000-000000000008", "skillId": "builtin.no_such_skill", "expectedSequence": 0, "confidence": 2 },
+          "expect": { "code": "NOT_FOUND" } }
+      ],
+      "rows": { "skill_self_assessments": 3, "skill_evidence_operations": 3, "skill_observations": 0 },
+      "checks": [
+        { "sql": "SELECT kind, status, confidence, sequence FROM skill_self_assessments ORDER BY kind, sequence", "rows": [["confidence", null, 3, 1], ["status", "learning", null, 1], ["status", null, null, 2]] }
+      ]
+    },
+    {
+      "name": "strict decoding refuses before any transaction",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "", "verified": true },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "verified_instructor", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "Synthetic CFI" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-00000000000A", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Bell\u0007.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "0050-01-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-02-29", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "   ", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "﻿　", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "Builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "mission", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1.5, "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "edit_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": "1", "wording": "Ok.", "observedOn": "2026-10-01", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "erase_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "confirm": "yes" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "set_addressed", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "expectedRevision": 1, "addressed": 1 },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "sign_off", "operationId": "10000000-0000-4000-8000-000000000001" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_custom_skill", "operationId": "10000000-0000-4000-8000-000000000001", "skillId": "builtin.my_skill", "label": "Mine", "description": "", "topic": "general" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_custom_skill", "operationId": "10000000-0000-4000-8000-000000000001", "skillId": "custom.30000000-0000-4000-8000-000000000001", "label": "123456789012345678901234567890123456789012345678901234567890123456789012345678901", "description": "", "topic": "acs_code" },
+          "expect": { "code": "LIMIT_EXCEEDED" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j1", "sourceField": "none", "wording": "Tab\tand\nnewline are fine.", "observedOn": "2024-02-29", "attribution": "instructor_transcribed", "instructorName": "" },
+          "expect": { "status": "applied", "result": { "action": "create_observation", "observationId": "20000000-0000-4000-8000-000000000001", "revision": 1 } } }
+      ],
+      "rows": { "skill_observations": 1, "skill_observation_revisions": 1, "skill_evidence_operations": 1, "skill_self_assessments": 0 },
+      "checks": [{ "sql": "SELECT wording, observed_on FROM skill_observations", "rows": [["Tab\tand\nnewline are fine.", "2024-02-29"]] }]
+    },
+    {
+      "name": "a source field must have text, and an existing debrief is required",
+      "steps": [
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000001", "observationId": "20000000-0000-4000-8000-000000000001", "skillId": "builtin.normal_landing", "journalId": "j2", "sourceField": "instructor_feedback", "wording": "Ok.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "INVALID_ARGUMENT" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000002", "observationId": "20000000-0000-4000-8000-000000000002", "skillId": "builtin.normal_landing", "journalId": "no-such-debrief", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "SOURCE_MISSING" } },
+        { "request": { "action": "create_observation", "operationId": "10000000-0000-4000-8000-000000000003", "observationId": "20000000-0000-4000-8000-000000000003", "skillId": "builtin.no_such_skill", "journalId": "j1", "sourceField": "none", "wording": "Ok.", "observedOn": "2026-10-03", "attribution": "self_report", "instructorName": "" },
+          "expect": { "code": "NOT_FOUND" } }
+      ],
+      "rows": { "skill_observations": 0, "skill_observation_revisions": 0, "skill_evidence_operations": 0, "skill_self_assessments": 0 },
+      "checks": []
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+[
+  "Migrations 0001-0013 byte-identical with origin/main",
+  "Dependency manifests and lockfiles byte-identical with origin/main",
+  "Migration 0014 byte-identical with accepted candidate; registered hash 34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
+  {
+    "fixture": "validation-cases.json",
+    "matches": [
+      "docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/validation-cases.json"
+    ]
+  },
+  {
+    "fixture": "constraint-cases.json",
+    "matches": [
+      "docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/constraint-cases.json"
+    ]
+  },
+  {
+    "fixture": "writer-populated-schema14.sql",
+    "matches": [
+      "docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/writer-populated-schema14.sql"
+    ]
+  }
+]

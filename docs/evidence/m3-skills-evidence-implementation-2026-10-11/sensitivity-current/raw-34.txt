@@ -1,0 +1,28 @@
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back -- --exact
+# cwd: /private/tmp/m3-current-sensitivity/tree
+
+running 1 test
+test skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back ... FAILED
+
+failures:
+
+---- skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back stdout ----
+
+thread 'skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back' (811984) panicked at src/skill_evidence_tests.rs:546:9:
+assertion `left == right` failed
+  left: [15, 15, 2, 2, 0, 1]
+ right: [15, 15, 1, 1, 0, 1]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.02s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/m3-current-sensitivity/tree/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.74s
+     Running unittests src/lib.rs (/private/tmp/m3-current-sensitivity/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+
+# exit=101

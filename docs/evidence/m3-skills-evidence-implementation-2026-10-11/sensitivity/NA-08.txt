@@ -1,0 +1,49 @@
+# NA-08: receipt subject binding (replay and validation)
+# file: src-tauri/src/skill_evidence.rs
+# test: skill_evidence::tests::shared_operation_contract_native_outcomes
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::shared_operation_contract_native_outcomes -- --exact
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+--- removed
+    if object.get(subject_key).and_then(Value::as_str) != Some(subject) {
+        return Err("The result names a different subject.".into());
+    }
+
++++ added
+
+--- output (last 40 lines)
+running 1 test
+test skill_evidence::tests::shared_operation_contract_native_outcomes ... FAILED
+
+failures:
+
+---- skill_evidence::tests::shared_operation_contract_native_outcomes stdout ----
+
+thread 'skill_evidence::tests::shared_operation_contract_native_outcomes' (665197) panicked at src/skill_evidence_tests.rs:333:13:
+assertion `left == right` failed: a replay of a receipt naming another observation is a storage failure, never returned / step 3
+  left: Object {"result": Object {"action": String("create_observation"), "observationId": String("20000000-0000-4000-8000-000000000099"), "revision": Number(1)}, "status": String("replayed")}
+ right: Object {"code": String("STORAGE_FAILURE")}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::shared_operation_contract_native_outcomes
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.50s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree/src-tauri)
+warning: unused variable: `subject`
+   --> src/skill_evidence.rs:887:5
+    |
+887 |     subject: &str,
+    |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subject`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `her-flight-deck` (lib test) generated 1 warning (1 duplicate)
+warning: `her-flight-deck` (lib) generated 1 warning (run `cargo fix --lib -p her-flight-deck` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.89s
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+# exit=101
+# caught=True
+# restored=True

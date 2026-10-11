@@ -642,6 +642,729 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 13 {
         verify_schema_13_lineage_semantics(connection)?;
     }
+    if newest_migration >= 14 {
+        verify_schema_14_skill_evidence_semantics(connection)?;
+    }
+    Ok(())
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 14: skills and feedback evidence                             */
+/* (TS twin: `validateSkillEvidenceState`)                             */
+/* ------------------------------------------------------------------ */
+
+const SKILL_EVIDENCE_TABLES: [&str; 6] = [
+    "skill_catalog_entries",
+    "skill_catalog_revisions",
+    "skill_observations",
+    "skill_observation_revisions",
+    "skill_self_assessments",
+    "skill_evidence_operations",
+];
+
+const SKILL_EVIDENCE_INDEXES: [(&str, &str); 6] = [
+    ("skill_observations", "idx_skill_observations_page"),
+    ("skill_observations", "idx_skill_observations_skill_page"),
+    ("skill_observations", "idx_skill_observations_journal"),
+    (
+        "skill_observations",
+        "idx_skill_observations_source_journal",
+    ),
+    ("skill_observations", "idx_skill_observations_action"),
+    (
+        "skill_evidence_operations",
+        "idx_skill_evidence_operations_subject",
+    ),
+];
+
+const SKILL_EVIDENCE_TRIGGERS: [&str; 6] = [
+    "trg_skill_catalog_revisions_no_update",
+    "trg_skill_catalog_revisions_no_delete",
+    "trg_skill_observation_revisions_no_update",
+    "trg_skill_observation_revisions_no_partial_delete",
+    "trg_skill_self_assessments_no_update",
+    "trg_skill_self_assessments_no_delete",
+];
+
+type M3Row = Vec<(String, rusqlite::types::Value)>;
+
+fn m3_rows(
+    connection: &Connection,
+    sql: &str,
+    values: &[rusqlite::types::Value],
+) -> Result<Vec<M3Row>, String> {
+    let fail = |e: rusqlite::Error| format!("Could not check skill evidence: {e}");
+    let mut statement = connection.prepare(sql).map_err(fail)?;
+    let names: Vec<String> = statement
+        .column_names()
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    let mapped = statement
+        .query_map(rusqlite::params_from_iter(values.iter()), |r| {
+            let mut out = Vec::with_capacity(names.len());
+            for (i, name) in names.iter().enumerate() {
+                out.push((name.clone(), r.get::<_, rusqlite::types::Value>(i)?));
+            }
+            Ok(out)
+        })
+        .map_err(fail)?;
+    mapped.collect::<Result<Vec<_>, _>>().map_err(fail)
+}
+
+fn m3_get<'a>(row: &'a M3Row, key: &str) -> &'a rusqlite::types::Value {
+    row.iter()
+        .find(|(k, _)| k == key)
+        .map(|(_, v)| v)
+        .unwrap_or(&rusqlite::types::Value::Null)
+}
+
+/// Text form used for comparisons (TS `m3Str`): NULL stays None.
+fn m3_text(value: &rusqlite::types::Value) -> Option<String> {
+    use rusqlite::types::Value as V;
+    match value {
+        V::Null => None,
+        V::Integer(i) => Some(i.to_string()),
+        V::Real(f) => Some(f.to_string()),
+        V::Text(s) => Some(s.clone()),
+        V::Blob(b) => Some(format!("{b:?}")),
+    }
+}
+
+fn m3_int(value: &rusqlite::types::Value) -> i64 {
+    use rusqlite::types::Value as V;
+    match value {
+        V::Integer(i) => *i,
+        V::Text(s) => s.parse().unwrap_or(-1),
+        _ => -1,
+    }
+}
+
+fn m3_field(row: &M3Row, key: &str) -> Option<String> {
+    m3_text(m3_get(row, key))
+}
+
+fn m3_count(
+    connection: &Connection,
+    sql: &str,
+    values: &[rusqlite::types::Value],
+) -> Result<i64, String> {
+    Ok(m3_rows(connection, sql, values)?
+        .first()
+        .map(|r| m3_int(&r[0].1))
+        .unwrap_or(0))
+}
+
+fn m3_value(text: &str) -> rusqlite::types::Value {
+    rusqlite::types::Value::Text(text.to_string())
+}
+
+fn m3_columns(connection: &Connection, table: &str) -> Result<Vec<String>, String> {
+    Ok(m3_rows(
+        connection,
+        &format!("SELECT name, type, \"notnull\" AS required, pk, dflt_value FROM pragma_table_info('{table}') ORDER BY name"),
+        &[],
+    )?
+    .iter()
+    .map(|r| {
+        format!(
+            "{}|{}|{}|{}|{}",
+            m3_field(r, "name").unwrap_or_default(),
+            m3_field(r, "type").unwrap_or_default().to_lowercase(),
+            m3_int(m3_get(r, "required")),
+            m3_int(m3_get(r, "pk")),
+            m3_field(r, "dflt_value").unwrap_or_default()
+        )
+    })
+    .collect())
+}
+
+fn m3_key_indexes(connection: &Connection, table: &str) -> Result<Vec<String>, String> {
+    let mut out = Vec::new();
+    for r in m3_rows(
+        connection,
+        &format!(
+            "SELECT name, origin FROM pragma_index_list('{table}') WHERE origin IN ('pk', 'u')"
+        ),
+        &[],
+    )? {
+        let name = m3_field(&r, "name").unwrap_or_default();
+        let cols: Vec<String> = m3_rows(
+            connection,
+            &format!("SELECT name FROM pragma_index_info('{name}') ORDER BY seqno"),
+            &[],
+        )?
+        .iter()
+        .map(|c| m3_field(c, "name").unwrap_or_default())
+        .collect();
+        out.push(format!(
+            "{}|{}",
+            m3_field(&r, "origin").unwrap_or_default(),
+            cols.join(",")
+        ));
+    }
+    out.sort();
+    Ok(out)
+}
+
+fn m3_master_sql(
+    connection: &Connection,
+    kind: &str,
+    name: &str,
+) -> Result<Option<String>, String> {
+    Ok(m3_rows(
+        connection,
+        "SELECT sql FROM sqlite_master WHERE type = ?1 AND name = ?2",
+        &[m3_value(kind), m3_value(name)],
+    )?
+    .first()
+    .and_then(|r| m3_field(r, "sql")))
+}
+
+fn m3_index_shape(
+    connection: &Connection,
+    table: &str,
+    index: &str,
+) -> Result<Option<String>, String> {
+    let listed = m3_rows(
+        connection,
+        &format!("SELECT \"unique\" AS uniq FROM pragma_index_list('{table}') WHERE name = ?1"),
+        &[m3_value(index)],
+    )?;
+    let Some(first) = listed.first() else {
+        return Ok(None);
+    };
+    let cols: Vec<String> = m3_rows(
+        connection,
+        &format!("SELECT name FROM pragma_index_info('{index}') ORDER BY seqno"),
+        &[],
+    )?
+    .iter()
+    .map(|c| m3_field(c, "name").unwrap_or_default())
+    .collect();
+    Ok(Some(format!(
+        "{}|{}",
+        m3_int(m3_get(first, "uniq")),
+        cols.join(",")
+    )))
+}
+
+/// The schema-14 contract a restored or opened database must meet: exact
+/// shape (columns, defaults, foreign keys, CHECKs, keys, indexes, triggers),
+/// the shipped built-in catalog, contiguous histories whose latest entry is
+/// the head, legal catalog steps with unique active names (M3-R6), receipts
+/// that own exactly the history they name (M3-R5), and history owned by its
+/// receipt (M3-R9). Shared contract:
+/// `fixtures/skill-evidence/validation-cases.json`.
+pub(crate) fn verify_schema_14_skill_evidence_semantics(
+    connection: &Connection,
+) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    verify_skill_evidence_against(connection, &reference)
+}
+
+pub(crate) fn verify_skill_evidence_against(
+    connection: &Connection,
+    reference: &Connection,
+) -> Result<(), String> {
+    use crate::skill_evidence::{
+        decode_result, label_key, ResultValue, ASSESSMENT_ACTIONS, OBSERVATION_HISTORY_ACTIONS,
+        SKILL_ACTIONS,
+    };
+    use rusqlite::types::Value as V;
+
+    // 1. Exact shape.
+    for table in SKILL_EVIDENCE_TABLES {
+        let Some(sql) = m3_master_sql(connection, "table", table)? else {
+            return Err(format!("The database is missing required table: {table}"));
+        };
+        let reference_sql = m3_master_sql(reference, "table", table)?.unwrap_or_default();
+        if m3_columns(connection, table)? != m3_columns(reference, table)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&sql) != check_constraints(&reference_sql) {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+        if m3_key_indexes(connection, table)? != m3_key_indexes(reference, table)? {
+            return Err(format!(
+                "Table {table} keys do not match the registered migration contract."
+            ));
+        }
+    }
+    for (table, index) in SKILL_EVIDENCE_INDEXES {
+        let Some(actual) = m3_index_shape(connection, table, index)? else {
+            return Err(format!("The database is missing required index: {index}"));
+        };
+        if Some(actual) != m3_index_shape(reference, table, index)? {
+            return Err(format!(
+                "Index {index} does not match the registered migration contract."
+            ));
+        }
+    }
+    for trigger in SKILL_EVIDENCE_TRIGGERS {
+        let Some(sql) = m3_master_sql(connection, "trigger", trigger)? else {
+            return Err(format!(
+                "The database is missing required trigger: {trigger}"
+            ));
+        };
+        if normalize_sql(&sql)
+            != normalize_sql(&m3_master_sql(reference, "trigger", trigger)?.unwrap_or_default())
+        {
+            return Err(format!(
+                "Trigger {trigger} does not match the registered migration contract."
+            ));
+        }
+    }
+
+    // 2. Relationships hold (foreign keys are not re-checked by SQLite on restore).
+    for table in SKILL_EVIDENCE_TABLES {
+        if !m3_rows(
+            connection,
+            &format!("SELECT 1 FROM pragma_foreign_key_check('{table}') LIMIT 1"),
+            &[],
+        )?
+        .is_empty()
+        {
+            return Err(format!(
+                "Table {table} has a record pointing at something that does not exist."
+            ));
+        }
+    }
+
+    // 3. The built-in catalog is exactly the shipped one.
+    let shipped = m3_rows(
+        reference,
+        "SELECT * FROM skill_catalog_revisions WHERE revision = 1 AND changed_by = 'catalog'",
+        &[],
+    )?;
+    let builtins = m3_rows(
+        connection,
+        "SELECT id FROM skill_catalog_entries WHERE origin = 'builtin'",
+        &[],
+    )?;
+    let shipped_ids: Vec<Option<String>> =
+        shipped.iter().map(|r| m3_field(r, "skill_id")).collect();
+    if builtins.len() != shipped.len()
+        || builtins
+            .iter()
+            .any(|r| !shipped_ids.contains(&m3_field(r, "id")))
+    {
+        return Err("The built-in skill catalog does not match this version of the app.".into());
+    }
+    for r in &shipped {
+        let id = m3_field(r, "skill_id").unwrap_or_default();
+        let first = m3_rows(
+            connection,
+            "SELECT * FROM skill_catalog_revisions WHERE skill_id = ?1 AND revision = 1",
+            &[m3_value(&id)],
+        )?;
+        let matches = first.first().map(|f| {
+            [
+                "label",
+                "description",
+                "topic",
+                "status",
+                "catalog_version",
+                "changed_by",
+                "changed_at",
+            ]
+            .iter()
+            .all(|k| m3_field(f, k) == m3_field(r, k))
+        });
+        if matches != Some(true) {
+            return Err(format!(
+                "Built-in skill {id} does not match the shipped catalog."
+            ));
+        }
+    }
+    if m3_count(
+        connection,
+        "SELECT COUNT(*) FROM skill_catalog_entries WHERE origin = 'custom'",
+        &[],
+    )? > crate::skill_evidence::MAX_CUSTOM_SKILLS
+    {
+        return Err("There are more custom skills than this app supports.".into());
+    }
+
+    // 4. Skill history: contiguous, head equals latest, pinned built-in wording
+    //    and catalog version, legal steps, unique active names.
+    let mut active_names: Vec<(String, String)> = Vec::new();
+    for skill in m3_rows(
+        connection,
+        "SELECT * FROM skill_catalog_entries ORDER BY id",
+        &[],
+    )? {
+        let id = m3_field(&skill, "id").unwrap_or_default();
+        let history = m3_rows(
+            connection,
+            "SELECT * FROM skill_catalog_revisions WHERE skill_id = ?1 ORDER BY revision",
+            &[m3_value(&id)],
+        )?;
+        if history.len() as i64 != m3_int(m3_get(&skill, "revision"))
+            || history
+                .iter()
+                .enumerate()
+                .any(|(i, h)| m3_int(m3_get(h, "revision")) != i as i64 + 1)
+        {
+            return Err(format!("Skill {id} has gaps in its history."));
+        }
+        let Some(latest) = history.last() else {
+            return Err(format!("Skill {id} has gaps in its history."));
+        };
+        if ["label", "description", "topic", "status", "catalog_version"]
+            .iter()
+            .any(|k| m3_field(latest, k) != m3_field(&skill, k))
+        {
+            return Err(format!(
+                "Skill {id} does not match its latest history entry."
+            ));
+        }
+        let builtin = m3_field(&skill, "origin").as_deref() == Some("builtin");
+        let reference_row = shipped
+            .iter()
+            .find(|r| m3_field(r, "skill_id").as_deref() == Some(id.as_str()));
+        for (i, h) in history.iter().enumerate() {
+            if let Some(r) = reference_row.filter(|_| builtin) {
+                if ["label", "description", "topic", "catalog_version"]
+                    .iter()
+                    .any(|k| m3_field(h, k) != m3_field(r, k))
+                {
+                    return Err(format!("Built-in skill {id} changed its catalog wording."));
+                }
+            }
+            if !builtin && !matches!(m3_get(h, "catalog_version"), V::Null) {
+                return Err(format!("Custom skill {id} has a catalog version."));
+            }
+            if i == 0 {
+                if !builtin
+                    && (m3_field(h, "changed_by").as_deref() != Some("user")
+                        || m3_field(h, "status").as_deref() != Some("active"))
+                {
+                    return Err(format!(
+                        "Custom skill {id} did not start as an active skill of yours."
+                    ));
+                }
+                continue;
+            }
+            let prev = &history[i - 1];
+            if m3_field(h, "changed_by").as_deref() != Some("user") {
+                return Err(format!(
+                    "Skill {id} has a later revision that is not a recorded change."
+                ));
+            }
+            let same_wording = ["label", "description", "topic"]
+                .iter()
+                .all(|k| m3_field(h, k) == m3_field(prev, k));
+            let from = m3_field(prev, "status").unwrap_or_default();
+            let to = m3_field(h, "status").unwrap_or_default();
+            let legal = match (from.as_str(), to.as_str()) {
+                ("active", "active") => !same_wording,
+                ("active", "retired") | ("retired", "active") => same_wording,
+                _ => false,
+            };
+            if !legal {
+                return Err(format!(
+                    "Skill {id} has a history step the app cannot make."
+                ));
+            }
+        }
+        if m3_field(&skill, "status").as_deref() == Some("active") {
+            let key = label_key(&m3_field(&skill, "label").unwrap_or_default());
+            if let Some((_, other)) = active_names.iter().find(|(k, _)| *k == key) {
+                return Err(format!(
+                    "Active skills {other} and {id} have the same name."
+                ));
+            }
+            active_names.push((key, id));
+        }
+    }
+
+    // 5. Observation history: contiguous, head equals latest, no relinking.
+    for obs in m3_rows(connection, "SELECT * FROM skill_observations", &[])? {
+        let id = m3_field(&obs, "id").unwrap_or_default();
+        let history = m3_rows(
+            connection,
+            "SELECT * FROM skill_observation_revisions WHERE observation_id = ?1 ORDER BY revision",
+            &[m3_value(&id)],
+        )?;
+        if history.len() as i64 != m3_int(m3_get(&obs, "revision"))
+            || history
+                .iter()
+                .enumerate()
+                .any(|(i, h)| m3_int(m3_get(h, "revision")) != i as i64 + 1)
+        {
+            return Err(format!("Observation {id} has gaps in its history."));
+        }
+        let Some(latest) = history.last() else {
+            return Err(format!("Observation {id} has gaps in its history."));
+        };
+        if [
+            "wording",
+            "observed_on",
+            "attribution",
+            "instructor_name",
+            "linked_action_id",
+            "linked_action_title",
+            "addressed_at",
+        ]
+        .iter()
+        .any(|k| m3_field(&obs, k) != m3_field(latest, k))
+        {
+            return Err(format!(
+                "Observation {id} does not match its latest history entry."
+            ));
+        }
+        let journal = m3_field(&obs, "journal_id");
+        if journal.is_some() && journal != m3_field(&obs, "source_journal_id") {
+            return Err(format!(
+                "Observation {id} points at a different debrief than it was recorded from."
+            ));
+        }
+    }
+
+    // 6. Self-assessment sequences are contiguous per skill and kind.
+    for g in m3_rows(
+        connection,
+        "SELECT skill_id, kind, COUNT(*) AS n, MIN(sequence) AS lo, MAX(sequence) AS hi FROM skill_self_assessments GROUP BY skill_id, kind",
+        &[],
+    )? {
+        if m3_int(m3_get(&g, "lo")) != 1 || m3_int(m3_get(&g, "hi")) != m3_int(m3_get(&g, "n")) {
+            return Err(format!(
+                "Skill {} has gaps in its {} history.",
+                m3_field(&g, "skill_id").unwrap_or_default(),
+                m3_field(&g, "kind").unwrap_or_default()
+            ));
+        }
+    }
+
+    // 7. Receipts: exact results naming their own subject, owning the history
+    //    row of the kind their action writes; tombstones are non-content
+    //    observation receipts whose subject is gone.
+    let mut live: Vec<(String, String, String, i64)> = Vec::new();
+    for op in m3_rows(
+        connection,
+        "SELECT * FROM skill_evidence_operations ORDER BY rowid",
+        &[],
+    )? {
+        let id = m3_field(&op, "operation_id").unwrap_or_default();
+        let action = m3_field(&op, "action").unwrap_or_default();
+        let subject = m3_field(&op, "subject_id").unwrap_or_default();
+        let present = m3_count(
+            connection,
+            "SELECT COUNT(*) FROM skill_observations WHERE id = ?1",
+            &[m3_value(&subject)],
+        )? > 0;
+        if m3_int(m3_get(&op, "is_erased")) != 0 {
+            if !OBSERVATION_HISTORY_ACTIONS.contains(&action.as_str()) {
+                return Err(format!(
+                    "Operation {id} is erased, but only observation changes can be erased."
+                ));
+            }
+            if present {
+                return Err(format!(
+                    "Operation {id} says its observation was erased, but it is still here."
+                ));
+            }
+            continue;
+        }
+        let value = decode_result(m3_field(&op, "result_json").as_deref(), &action, &subject)
+            .map_err(|e| format!("Operation {id} has an invalid result: {e}"))?;
+        let number = match value {
+            ResultValue::Number(n) => n,
+            ResultValue::Erased => 0,
+        };
+        live.push((id.clone(), action.clone(), subject.clone(), number));
+        if SKILL_ACTIONS.contains(&action.as_str()) {
+            let found = m3_rows(
+                connection,
+                "SELECT * FROM skill_catalog_revisions WHERE skill_id = ?1 AND revision = ?2",
+                &[m3_value(&subject), V::Integer(number)],
+            )?;
+            let Some(row) = found.first().filter(|r| {
+                m3_field(r, "operation_id").as_deref() == Some(id.as_str())
+                    && m3_field(r, "changed_by").as_deref() == Some("user")
+            }) else {
+                return Err(format!(
+                    "Operation {id} does not own the skill history it names."
+                ));
+            };
+            let prev = if number > 1 {
+                m3_rows(
+                    connection,
+                    "SELECT status FROM skill_catalog_revisions WHERE skill_id = ?1 AND revision = ?2",
+                    &[m3_value(&subject), V::Integer(number - 1)],
+                )?
+                .first()
+                .and_then(|r| m3_field(r, "status"))
+            } else {
+                None
+            };
+            let status = m3_field(row, "status").unwrap_or_default();
+            let fits = match action.as_str() {
+                "create_custom_skill" => subject.starts_with("custom.") && status == "active",
+                "edit_custom_skill" => status == "active" && prev.as_deref() == Some("active"),
+                "retire_skill" => status == "retired",
+                _ => status == "active" && prev.as_deref() == Some("retired"),
+            };
+            if !fits {
+                return Err(format!(
+                    "Operation {id} names a skill change of a different kind."
+                ));
+            }
+        } else if OBSERVATION_HISTORY_ACTIONS.contains(&action.as_str()) {
+            if !present {
+                return Err(format!(
+                    "Operation {id} is a live record of an observation that is not here."
+                ));
+            }
+            let found = m3_rows(
+                connection,
+                "SELECT change_kind, operation_id FROM skill_observation_revisions WHERE observation_id = ?1 AND revision = ?2",
+                &[m3_value(&subject), V::Integer(number)],
+            )?;
+            let Some(row) = found
+                .first()
+                .filter(|r| m3_field(r, "operation_id").as_deref() == Some(id.as_str()))
+            else {
+                return Err(format!(
+                    "Operation {id} does not own the observation history it names."
+                ));
+            };
+            let kind = m3_field(row, "change_kind").unwrap_or_default();
+            let fits = match action.as_str() {
+                "create_observation" => kind == "created",
+                "edit_observation" => kind == "edited",
+                "link_action" => kind == "linked_action",
+                "unlink_action" => kind == "unlinked_action",
+                _ => kind == "marked_addressed" || kind == "cleared_addressed",
+            };
+            if !fits {
+                return Err(format!(
+                    "Operation {id} names an observation change of a different kind."
+                ));
+            }
+        } else if ASSESSMENT_ACTIONS.contains(&action.as_str()) {
+            let kind = if action == "set_status" {
+                "status"
+            } else {
+                "confidence"
+            };
+            let found = m3_rows(
+                connection,
+                "SELECT id, operation_id FROM skill_self_assessments WHERE skill_id = ?1 AND kind = ?2 AND sequence = ?3",
+                &[m3_value(&subject), m3_value(kind), V::Integer(number)],
+            )?;
+            let owned = found.first().map(|r| {
+                m3_field(r, "operation_id").as_deref() == Some(id.as_str())
+                    && m3_field(r, "id").as_deref() == Some(id.as_str())
+            });
+            if owned != Some(true) {
+                return Err(format!(
+                    "Operation {id} does not own the self-assessment it names."
+                ));
+            }
+        } else {
+            if present {
+                return Err(format!(
+                    "Operation {id} says it erased an observation that is still here."
+                ));
+            }
+            if m3_count(
+                connection,
+                "SELECT COUNT(*) FROM skill_evidence_operations WHERE subject_id = ?1 AND is_erased = 0 AND action <> 'erase_observation'",
+                &[m3_value(&subject)],
+            )? > 0
+            {
+                return Err(format!(
+                    "Operation {id} erased an observation whose earlier records were not cleared."
+                ));
+            }
+        }
+    }
+
+    // 8. History -> receipt (M3-R9): every operation-owned history row has the
+    //    live receipt that wrote it (same operation, action family, subject and
+    //    revision or sequence). Catalog seeds need none.
+    let owned = |operation: &V, families: &[&str], subject: &V, number: &V| -> bool {
+        let Some(operation) = m3_text(operation) else {
+            return false;
+        };
+        live.iter().any(|(id, action, s, n)| {
+            *id == operation
+                && families.contains(&action.as_str())
+                && Some(s.clone()) == m3_text(subject)
+                && *n == m3_int(number)
+        })
+    };
+    for r in m3_rows(
+        connection,
+        "SELECT skill_id, revision, operation_id FROM skill_catalog_revisions WHERE changed_by = 'user' ORDER BY skill_id, revision",
+        &[],
+    )? {
+        if !owned(
+            m3_get(&r, "operation_id"),
+            &SKILL_ACTIONS,
+            m3_get(&r, "skill_id"),
+            m3_get(&r, "revision"),
+        ) {
+            return Err(format!(
+                "Skill {} revision {} has no matching operation record.",
+                m3_field(&r, "skill_id").unwrap_or_default(),
+                m3_int(m3_get(&r, "revision"))
+            ));
+        }
+    }
+    for r in m3_rows(
+        connection,
+        "SELECT observation_id, revision, operation_id FROM skill_observation_revisions ORDER BY observation_id, revision",
+        &[],
+    )? {
+        if !owned(
+            m3_get(&r, "operation_id"),
+            &OBSERVATION_HISTORY_ACTIONS,
+            m3_get(&r, "observation_id"),
+            m3_get(&r, "revision"),
+        ) {
+            return Err(format!(
+                "Observation {} revision {} has no matching operation record.",
+                m3_field(&r, "observation_id").unwrap_or_default(),
+                m3_int(m3_get(&r, "revision"))
+            ));
+        }
+    }
+    for r in m3_rows(
+        connection,
+        "SELECT skill_id, kind, sequence, operation_id FROM skill_self_assessments ORDER BY skill_id, kind, sequence",
+        &[],
+    )? {
+        let action = if m3_field(&r, "kind").as_deref() == Some("status") {
+            "set_status"
+        } else {
+            "set_confidence"
+        };
+        if !owned(
+            m3_get(&r, "operation_id"),
+            &[action],
+            m3_get(&r, "skill_id"),
+            m3_get(&r, "sequence"),
+        ) {
+            return Err(format!(
+                "Skill {} {} entry {} has no matching operation record.",
+                m3_field(&r, "skill_id").unwrap_or_default(),
+                m3_field(&r, "kind").unwrap_or_default(),
+                m3_int(m3_get(&r, "sequence"))
+            ));
+        }
+    }
     Ok(())
 }
 

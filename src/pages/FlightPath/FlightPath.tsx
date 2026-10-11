@@ -38,6 +38,7 @@ import { useActionOperations } from "@/state/useActions";
 
 import { GoalFormDialog, type GoalDraft } from "./GoalFormDialog";
 import { MilestoneFormDialog, type MilestoneDraft } from "./MilestoneFormDialog";
+import { SkillsSection } from "./skills/SkillsSection";
 import "./flightPath.css";
 
 export function FlightPath() {
@@ -131,6 +132,7 @@ export function FlightPath() {
             }
           />
         </Card>
+        <SkillsSection />
       </>
     );
   }
@@ -215,6 +217,8 @@ export function FlightPath() {
           </p>
         </CardBody>
       </Card>
+
+      <SkillsSection />
 
       <MilestoneFormDialog
         open={editingMilestone !== null}

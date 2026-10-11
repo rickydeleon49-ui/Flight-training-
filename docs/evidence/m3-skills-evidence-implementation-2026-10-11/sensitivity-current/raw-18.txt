@@ -1,0 +1,49 @@
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'a\\ failure\\ after\\ the\\ first\\ writes\\ rolls\\ everything\\ back'
+# cwd: /private/tmp/m3-current-sensitivity/tree
+
+ RUN  v4.1.11 /private/tmp/m3-current-sensitivity/tree
+
+ ❯ src/data/skillEvidenceTransaction.test.ts (24 tests | 2 failed | 22 skipped) 91ms
+     × a failure after the first writes rolls everything back, receipt included (fault seam) 29ms
+     × a failure after the first writes rolls everything back, receipt included (fault seam) 62ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  13:26:24
+   Duration  291ms (transform 97ms, setup 0ms, import 115ms, tests 91ms, environment 0ms)
+
+(node:98884) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence writes (node:sqlite) > a failure after the first writes rolls everything back, receipt included (fault seam)
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence writes (sql.js) > a failure after the first writes rolls everything back, receipt included (fault seam)
+AssertionError: expected [ 15, 15, 2, 2, +0, 1 ] to deeply equal [ 15, 15, 1, 1, +0, 1 ]
+
+- Expected
++ Received
+
+  [
+    15,
+    15,
+-   1,
+-   1,
++   2,
++   2,
+    0,
+    1,
+  ]
+
+ ❯ src/data/skillEvidenceTransaction.test.ts:110:43
+    108|         expect(await codeOf(store.act(request))).toBe("STORAGE_FAILURE…
+    109|         expect(tableCounts(store.engine)).toEqual(before);
+    110|         expect(store.engine.query("SELECT * FROM skill_observations"))…
+       |                                           ^
+    111|       }
+    112|       // Fail the history append of an edit: the head row stays untouc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+# exit=1

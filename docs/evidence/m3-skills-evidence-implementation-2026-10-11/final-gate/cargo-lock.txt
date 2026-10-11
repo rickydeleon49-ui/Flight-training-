@@ -1,0 +1,11 @@
+$ npm run test:cargo-lock
+# cwd: /Users/rickymac/code/Flight-training-m3-implementation
+# SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+
+> her-flight-deck@0.5.3 test:cargo-lock
+> node scripts/test-cargo-lock-sync.mjs
+
+Checking Cargo toolchain and lockfile synchronization (read-only)...
+Cargo lockfile synchronization verified: her-flight-deck is at 0.5.3 in both Cargo.toml and Cargo.lock
+
+# exit=0

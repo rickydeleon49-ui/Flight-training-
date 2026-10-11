@@ -1,0 +1,45 @@
+# TS-11: stale-cursor check
+# file: src/data/skillEvidenceReader.ts
+# test: src/data/skillEvidenceTransaction.test.ts > a date edit crossing the cursor restarts the list
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'a\\ date\\ edit\\ crossing\\ the\\ cursor\\ restarts\\ the\\ list'
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+--- removed
+    if (after !== "out" && after !== side(old)) staleCursor();
++++ added
+    if (false && after !== "out" && after !== side(old)) staleCursor();
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+
+ ❯ src/data/skillEvidenceTransaction.test.ts (24 tests | 2 failed | 22 skipped) 84ms
+     × a date edit crossing the cursor restarts the list instead of repeating or skipping 29ms
+     × a date edit crossing the cursor restarts the list instead of repeating or skipping 55ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  12:00:02
+   Duration  279ms (transform 93ms, setup 0ms, import 112ms, tests 84ms, environment 0ms)
+
+(node:89770) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence reads (node:sqlite) > a date edit crossing the cursor restarts the list instead of repeating or skipping
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence reads (sql.js) > a date edit crossing the cursor restarts the list instead of repeating or skipping
+AssertionError: expected 'applied' to be 'STALE_CURSOR' // Object.is equality
+
+Expected: "STALE_CURSOR"
+Received: "applied"
+
+ ❯ src/data/skillEvidenceTransaction.test.ts:261:97
+    260|       expect(await codeOf(store.page({ skillId: "builtin.normal_landin…
+    261|       // Restarting from the newest shows every observation exactly on…
+    262|       const restarted = await store.page({ skillId: "builtin.normal_la…
+       |                       ^
+    263|       expect(restarted.items.map((i) => i.wording)).toEqual(["Note 1, …
+    264|       expect(await codeOf(store.page({ limit: 51 }))).toBe("LIMIT_EXCE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+# exit=1
+# caught=True
+# restored=True

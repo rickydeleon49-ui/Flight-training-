@@ -18,6 +18,7 @@ import debriefLinks from "../../src-tauri/migrations/0010_debrief_links.sql?raw"
 import practiceSessions from "../../src-tauri/migrations/0011_practice_sessions.sql?raw";
 import cardReviews from "../../src-tauri/migrations/0012_card_reviews.sql?raw";
 import splitSourceLineage from "../../src-tauri/migrations/0013_split_source_lineage.sql?raw";
+import skillsEvidence from "../../src-tauri/migrations/0014_skills_evidence.sql?raw";
 
 export interface Migration {
   version: number;
@@ -39,6 +40,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 11, description: "practice_sessions", sql: practiceSessions },
   { version: 12, description: "card_reviews", sql: cardReviews },
   { version: 13, description: "split_source_lineage", sql: splitSourceLineage },
+  { version: 14, description: "skills_evidence", sql: skillsEvidence },
 ];
 
 /**
