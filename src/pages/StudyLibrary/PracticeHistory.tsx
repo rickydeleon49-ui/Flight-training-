@@ -21,7 +21,7 @@ import type {
   PracticeResponse,
   PracticeTestItem,
 } from "@/domain/types";
-import { formatLongDate } from "@/lib/dates";
+import { formatLongDate, localDayOf } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
 import "./studyLibrary.css";
 
@@ -51,6 +51,16 @@ function useRouteGeneration(key: string) {
   );
 
   return { begin, isCurrent };
+}
+
+/**
+ * "Completed Saturday, October 3". Completion times are stored timestamps, not
+ * calendar days, so they are read as the local day they fell on; one that
+ * can't be read says only "Completed" rather than showing a broken date.
+ */
+function completedText(completedAt: string): string {
+  const day = localDayOf(completedAt);
+  return day ? `Completed ${formatLongDate(day)}` : "Completed";
 }
 
 function errorText(error: unknown, fallback: string): string {
@@ -170,9 +180,7 @@ function HistoryGroupsListPage() {
                       )}
                     </div>
                     {group.latestCompletedAt && (
-                      <p className="tiny dim">
-                        Completed {formatLongDate(group.latestCompletedAt)}
-                      </p>
+                      <p className="tiny dim">{completedText(group.latestCompletedAt)}</p>
                     )}
                     <div>
                       <Link
@@ -408,7 +416,7 @@ function HistoryGroupDetailPage({ historyKey }: { historyKey: string }) {
                       <Badge tone="neutral">Version {attempt.versionNumber}</Badge>
                     </div>
                     <p className="tiny dim">
-                      Completed {formatLongDate(attempt.completedAt)} • {attempt.answeredCount} answered
+                      {completedText(attempt.completedAt)} • {attempt.answeredCount} answered
                       {attempt.dontKnowCount > 0 ? ` • ${attempt.dontKnowCount} don’t know` : ""}
                       {attempt.unansweredCount > 0 ? ` • ${attempt.unansweredCount} unanswered` : ""}
                     </p>
@@ -564,9 +572,7 @@ function AttemptReviewPage({
       <PageHeader
         title={`Review: ${attempt.sourceMaterialTitle}`}
         subtitle={
-          attempt.completedAt
-            ? `Completed ${formatLongDate(attempt.completedAt)}`
-            : "Practice attempt"
+          attempt.completedAt ? completedText(attempt.completedAt) : "Practice attempt"
         }
       />
 

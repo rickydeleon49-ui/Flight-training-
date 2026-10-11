@@ -186,6 +186,13 @@ const LIBRARY_TABLES = [
   { name: 'notes', key: ['id'] },
 ];
 const HISTORY_TABLES = [...VISIBLE_HISTORY_TABLES, ...OPERATION_TABLES, ...LIBRARY_TABLES];
+/**
+ * The backup receipt: app_metadata keys the app writes only after an export has finished
+ * (src/data/repositories/appRepository.ts), so an archive can never hold the values its own
+ * export wrote. Only the restore contract sets them aside, by exact name, while every other
+ * app_metadata key is still compared row by row. Every other contract protects them as usual.
+ */
+const BACKUP_RECEIPT_KEYS = ['last_complete_backup_at', 'last_complete_backup_path', 'last_complete_backup_version'];
 const RETAINED_NAMES = HISTORY_TABLES.map(t => t.name);
 /** A gate that claims populated data needs that data actually present in the baseline. */
 const POPULATION_REQUIREMENT = ['practice_attempts', 'practice_responses', 'card_review_state', 'card_review_events'];
@@ -668,6 +675,52 @@ function digestTable(db, table, declaredKey) {
   return { rowCount: cells.length, sha256: digestRows(table, cols, primaryKey, cells), columns: cols, primaryKey };
 }
 
+/**
+ * One framed digest per app_metadata row, keyed by its key, so the restore contract can set
+ * the backup receipt aside by name and still compare every other row. Digests only: values
+ * such as the saved backup path never enter a receipt.
+ */
+function metadataKeyDigests(db) {
+  const info = columnsOf(db, 'app_metadata');
+  const cols = info.map(r => r.name);
+  const primaryKey = info.filter(r => r.pk > 0).sort((a, b) => a.pk - b.pk).map(r => r.name);
+  if (!sameList(primaryKey, ['key'])) fail(`app_metadata: primary key [${primaryKey.join(',')}] is not [key]`);
+  const keyIndex = cols.indexOf('key');
+  const out = {};
+  for (const raw of prepared(db, `SELECT ${typedSelect(cols)} FROM "app_metadata" ORDER BY "key" ASC`).all()) {
+    if (raw[`T${keyIndex}`] !== 'text') fail('app_metadata has a key that is not text');
+    const cells = cols.map((c, i) => encodeCell(raw[`T${i}`], raw[`V${i}`], raw[`H${i}`]));
+    out[String(raw[`V${keyIndex}`])] = digestRows('app_metadata', cols, primaryKey, [cells]);
+  }
+  return out;
+}
+
+function isKeyDigestMap(map) {
+  return !!map && typeof map === 'object' && !Array.isArray(map) && Object.values(map).every(isHex64);
+}
+
+/** Restore only: compare app_metadata as the archive holds it, setting aside the backup receipt by name. */
+function backupReceiptComparison(before, after) {
+  const policy = 'restore compares the archive contents: the backup-receipt keys the export wrote after creating the archive are set aside by exact name; every other app_metadata key is compared row by row';
+  if (!isKeyDigestMap(before?.keyDigests) || !isKeyDigestMap(after?.keyDigests)) {
+    return { applied: false, excludedKeys: BACKUP_RECEIPT_KEYS, policy, reason: 'one or both snapshots predate per-key app_metadata digests, so app_metadata is compared strictly; recapture both snapshots to apply the receipt exclusion' };
+  }
+  const x = before.keyDigests, y = after.keyDigests;
+  const has = (m, k) => Object.prototype.hasOwnProperty.call(m, k);
+  const otherKeys = [...new Set([...Object.keys(x), ...Object.keys(y)])].filter(k => !BACKUP_RECEIPT_KEYS.includes(k)).sort();
+  const otherKeysChanged = otherKeys.filter(k => !has(x, k) || !has(y, k) || x[k] !== y[k]);
+  return {
+    applied: true,
+    excludedKeys: BACKUP_RECEIPT_KEYS,
+    policy,
+    receiptKeysBefore: BACKUP_RECEIPT_KEYS.filter(k => has(x, k)),
+    receiptKeysAfter: BACKUP_RECEIPT_KEYS.filter(k => has(y, k)),
+    otherKeysCompared: otherKeys.length,
+    otherKeysChanged,
+    otherKeysIdentical: otherKeysChanged.length === 0,
+  };
+}
+
 function actualPrimaryKey(db, table) {
   return columnsOf(db, table).filter(r => r.pk > 0).sort((a, b) => a.pk - b.pk).map(r => r.name);
 }
@@ -714,6 +767,7 @@ function buildSnapshot(db, profile, dbPath, extra) {
   for (const t of HISTORY_TABLES) {
     history[t.name] = tableExists(db, t.name) ? digestTable(db, t.name, t.key) : { rowCount: 0, sha256: null, absent: true };
   }
+  if (history.app_metadata.absent !== true) history.app_metadata.keyDigests = metadataKeyDigests(db);
   const schema13Tables = {};
   for (const name of SCHEMA13_TABLES) {
     schema13Tables[name] = tableExists(db, name) ? { absent: false, ...digestTable(db, name) } : { absent: true, rowCount: 0 };
@@ -919,6 +973,11 @@ function validateSnapshot(side, snap) {
     }
     const extra = Object.keys(snap.history).filter(k => !RETAINED_NAMES.includes(k));
     if (extra.length) p.push(`unexpected table entries ${extra.join(',')}`);
+    const meta = snap.history.app_metadata;
+    if (meta && meta.keyDigests !== undefined) {
+      if (!isKeyDigestMap(meta.keyDigests)) p.push('app_metadata.keyDigests is not a map of 64-hex digests');
+      else if (Object.keys(meta.keyDigests).length !== meta.rowCount) p.push(`app_metadata.keyDigests lists ${Object.keys(meta.keyDigests).length} keys but the table has ${meta.rowCount} rows`);
+    }
   }
 
   if (!snap.schema13Tables || typeof snap.schema13Tables !== 'object' || Array.isArray(snap.schema13Tables)) p.push('schema-13 table facts are missing');
@@ -1042,14 +1101,23 @@ function compare(opts) {
   if (a.ownerUid !== b.ownerUid) diffs.push(`library owner uid changed ${a.ownerUid} -> ${b.ownerUid}`);
 
   // Retained library digests — every inventoried table, not only the visible history.
-  const changedTables = RETAINED_NAMES.filter(name => !entryEqual(a.history[name], b.history[name]));
+  const tablesDiffering = RETAINED_NAMES.filter(name => !entryEqual(a.history[name], b.history[name]));
+  // A restore baseline captured after the export carries the backup receipt the export wrote
+  // once the archive existed. Restore compares what the archive holds: app_metadata passes only
+  // when every key other than the receipt is identical row by row.
+  const receipt = purpose === 'restore' ? backupReceiptComparison(a.history.app_metadata, b.history.app_metadata) : null;
+  const receiptOnly = receipt?.applied === true && receipt.otherKeysIdentical && tablesDiffering.includes('app_metadata');
+  const changedTables = receiptOnly ? tablesDiffering.filter(name => name !== 'app_metadata') : tablesDiffering;
   const historyUnchanged = changedTables.length === 0;
   for (const name of changedTables) {
     diffs.push(`${name}: before ${a.history[name].rowCount}/${a.history[name].sha256 ?? 'absent'} after ${b.history[name].rowCount}/${b.history[name].sha256 ?? 'absent'}`);
   }
+  if (receipt?.applied && !receipt.otherKeysIdentical) diffs.push(`app_metadata: keys other than the backup receipt differ (${receipt.otherKeysChanged.join(', ')})`);
+  if (receiptOnly) notes.push(`restore: app_metadata differs only in the backup receipt (${BACKUP_RECEIPT_KEYS.join(', ')}), which the export writes after creating the archive; every other app_metadata key matched`);
   const columnDrift = subset ? [] : RETAINED_NAMES.filter(name => (a.history[name].columns ?? []).join() !== (b.history[name].columns ?? []).join());
   for (const name of columnDrift) diffs.push(`${name}: column identity/order changed`);
-  sections.retainedTables = { compared: RETAINED_NAMES.length, changed: changedTables, columnDrift };
+  sections.retainedTables = { compared: RETAINED_NAMES.length, changed: changedTables, columnDrift, receiptOnlyDifference: receiptOnly ? ['app_metadata'] : [] };
+  if (receipt) sections.backupReceipt = { ...receipt, receiptOnlyDifference: receiptOnly };
 
   // Managed document bytes.
   const fileDiffs = [];
@@ -1887,6 +1955,118 @@ function selfCheck() {
 
     const receiptAlias = refusal(() => compare({ before: paths.s12Initial, after: path.join(dir, 's12-again.json'), purpose: 'history', jsonOut: paths.s12Initial }));
     add('output: compare --json cannot overwrite an input receipt', receiptAlias.refused && /protected input/.test(receiptAlias.message), receiptAlias.message);
+
+    /* ============================ restore baseline vs. backup receipt ============================ */
+    // Installed verification (2026-10-11) compared a restored library with a baseline captured
+    // after the export, which had written last_complete_backup_* once the archive existed.
+    {
+      const rDir = path.join(dir, 'receipt');
+      fs.mkdirSync(rDir);
+      const rRoot = newScratchRoot(rDir);
+      const rDb = buildSchema12Profile(rRoot, migDir);
+      const rUid = fs.statSync(rDb).uid;
+      const setMeta = (rows, del = []) => {
+        const d = new DatabaseSync(rDb);
+        for (const [k, v] of rows) d.prepare('INSERT INTO app_metadata (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(k, v);
+        for (const k of del) d.prepare('DELETE FROM app_metadata WHERE key = ?').run(k);
+        d.close();
+      };
+      const snap = (name) => { const p = path.join(rDir, `${name}.json`); return { p, s: takeSnapshot(rRoot, rUid, p) }; };
+      const cmp = (before, after, purpose, name) => compare({ before, after, purpose, jsonOut: path.join(rDir, `cmp-${name}.json`) });
+      const receiptRows = [['last_complete_backup_at', '2026-10-11T12:00:00.000Z'], ['last_complete_backup_version', '0.9.0'], ['last_complete_backup_path', '/synthetic/backups/hfd.zip']];
+
+      // Archive state: one ordinary metadata row. The export then writes the receipt.
+      setMeta([['daily_plan_session', '{"synthetic":true}']]);
+      const archiveState = snap('archive-state');
+      setMeta(receiptRows);
+      const postExport = snap('post-export');
+      add('receipt: snapshots record one digest per app_metadata key, digests only',
+        Object.keys(postExport.s.history.app_metadata.keyDigests).length === postExport.s.history.app_metadata.rowCount
+          && BACKUP_RECEIPT_KEYS.every(k => isHex64(postExport.s.history.app_metadata.keyDigests[k]))
+          && !fs.readFileSync(postExport.p, 'utf8').includes('/synthetic/backups/hfd.zip'),
+        { keys: Object.keys(postExport.s.history.app_metadata.keyDigests) });
+
+      // Restore = the archive's bytes back in place, then the real 0013.
+      setMeta([], BACKUP_RECEIPT_KEYS);
+      const r = new DatabaseSync(rDb);
+      applyMigrations(r, migDir, RETAINED_SCHEMA_VERSION + 1, CURRENT_SCHEMA_VERSION, true);
+      r.close();
+      const restored = snap('restored');
+      const pass = cmp(postExport.p, restored.p, 'restore', 'receipt-pass');
+      add('receipt: restore passes against a post-export baseline when only the backup receipt differs, and says so',
+        pass.verdict === 'PASS' && pass.sections.backupReceipt.applied === true && pass.sections.backupReceipt.receiptOnlyDifference === true
+          && pass.sections.retainedTables.receiptOnlyDifference.join() === 'app_metadata' && pass.sections.backupReceipt.receiptKeysBefore.length === 3
+          && pass.sections.backupReceipt.receiptKeysAfter.length === 0 && pass.notes.some(n => /backup receipt/.test(n)),
+        { verdict: pass.verdict, diffs: pass.diffs, backupReceipt: pass.sections.backupReceipt });
+      const archivePass = cmp(archiveState.p, restored.p, 'restore', 'receipt-archive');
+      add('receipt: restore against the archive-state baseline passes with nothing set aside',
+        archivePass.verdict === 'PASS' && archivePass.sections.backupReceipt.receiptOnlyDifference === false, { diffs: archivePass.diffs });
+
+      for (const purpose of ['unchanged', 'history']) {
+        const strict = cmp(postExport.p, archiveState.p, purpose, `receipt-${purpose}`);
+        add(`receipt: the ${purpose} contract still protects the backup receipt (exclusion is restore-only)`,
+          strict.verdict === 'FAIL' && strict.sections.retainedTables.changed.includes('app_metadata') && strict.sections.backupReceipt === undefined,
+          { verdict: strict.verdict, diffs: strict.diffs });
+      }
+
+      // Every other app_metadata key stays strict under restore: changed, added and removed.
+      const restoredMeta = (name, rows, del) => { setMeta(rows, del); const out = snap(name); setMeta([], rows.map(([k]) => k)); return out; };
+      const changed = restoredMeta('restored-meta-changed', [['daily_plan_session', '{"synthetic":false}']], []);
+      setMeta([['daily_plan_session', '{"synthetic":true}']]);
+      const cmpChanged = cmp(postExport.p, changed.p, 'restore', 'receipt-other-changed');
+      add('receipt: a changed non-receipt app_metadata value still fails restore, naming the key',
+        cmpChanged.verdict === 'FAIL' && cmpChanged.diffs.some(d => /keys other than the backup receipt differ \(daily_plan_session\)/.test(d))
+          && cmpChanged.sections.retainedTables.changed.includes('app_metadata'),
+        { diffs: cmpChanged.diffs });
+      const added = restoredMeta('restored-meta-added', [['synthetic_extra', 'x']], []);
+      const cmpAdded = cmp(postExport.p, added.p, 'restore', 'receipt-other-added');
+      add('receipt: an extra non-receipt app_metadata key still fails restore',
+        cmpAdded.verdict === 'FAIL' && cmpAdded.diffs.some(d => /synthetic_extra/.test(d)), { diffs: cmpAdded.diffs });
+      setMeta([], ['daily_plan_session']);
+      const removed = snap('restored-meta-removed');
+      setMeta([['daily_plan_session', '{"synthetic":true}']]);
+      const cmpRemoved = cmp(postExport.p, removed.p, 'restore', 'receipt-other-removed');
+      add('receipt: a missing non-receipt app_metadata key still fails restore',
+        cmpRemoved.verdict === 'FAIL' && cmpRemoved.diffs.some(d => /daily_plan_session/.test(d)), { diffs: cmpRemoved.diffs });
+
+      // Records and PDFs stay strict alongside a receipt-only metadata difference.
+      const attempt = new DatabaseSync(rDb);
+      attempt.prepare("UPDATE practice_attempts SET score_percent = 49.5 WHERE id = 'a1'").run();
+      attempt.close();
+      const recordChanged = snap('restored-record-changed');
+      const cmpRecord = cmp(postExport.p, recordChanged.p, 'restore', 'receipt-record');
+      add('receipt: a changed restored record still fails restore beside a receipt-only metadata difference',
+        cmpRecord.verdict === 'FAIL' && cmpRecord.sections.retainedTables.changed.join() === 'practice_attempts', { diffs: cmpRecord.diffs });
+      const fix = new DatabaseSync(rDb);
+      fix.prepare("UPDATE practice_attempts SET score_percent = 50.5 WHERE id = 'a1'").run();
+      fix.close();
+      fs.writeFileSync(path.join(rRoot, DOCUMENTS_DIR, 'one.pdf'), 'SYNTH one, altered');
+      const pdfChanged = snap('restored-pdf-changed');
+      const cmpPdf = cmp(postExport.p, pdfChanged.p, 'restore', 'receipt-pdf');
+      add('receipt: changed PDF bytes still fail restore beside a receipt-only metadata difference',
+        cmpPdf.verdict === 'FAIL' && cmpPdf.filesUnchanged === false && cmpPdf.sections.retainedTables.changed.length === 0, { diffs: cmpPdf.diffs });
+
+      // Older snapshots (no per-key digests) keep the strict result, so earlier evidence reads the same.
+      const strip = (p, name) => { const s = JSON.parse(fs.readFileSync(p, 'utf8')); delete s.history.app_metadata.keyDigests; const out = path.join(rDir, `${name}.json`); fs.writeFileSync(out, JSON.stringify(s)); return out; };
+      const cmpLegacy = cmp(strip(postExport.p, 'post-export-legacy'), restored.p, 'restore', 'receipt-legacy');
+      add('receipt: a baseline without per-key digests is compared strictly and fails, with the reason recorded',
+        cmpLegacy.verdict === 'FAIL' && cmpLegacy.sections.backupReceipt.applied === false && /predate/.test(cmpLegacy.sections.backupReceipt.reason)
+          && cmpLegacy.sections.retainedTables.changed.includes('app_metadata'),
+        { verdict: cmpLegacy.verdict, backupReceipt: cmpLegacy.sections.backupReceipt });
+
+      // Per-key digests must agree with the table they describe.
+      const forged = JSON.parse(fs.readFileSync(restored.p, 'utf8'));
+      forged.history.app_metadata.keyDigests.synthetic_ghost = 'a'.repeat(64);
+      const forgedPath = path.join(rDir, 'restored-forged.json');
+      fs.writeFileSync(forgedPath, JSON.stringify(forged));
+      const forgedRefusal = refusal(() => cmp(postExport.p, forgedPath, 'restore', 'receipt-forged'));
+      add('receipt: per-key digests that disagree with the table row count are refused',
+        forgedRefusal.refused && /keyDigests lists/.test(forgedRefusal.message), forgedRefusal.message);
+      const repoSrc = fs.readFileSync(path.join(process.cwd(), 'src', 'data', 'repositories', 'appRepository.ts'), 'utf8');
+      add('anchor: the excluded receipt keys are exactly the backup keys appRepository.ts writes',
+        BACKUP_RECEIPT_KEYS.every(k => repoSrc.includes(`"${k}"`)) && [...repoSrc.matchAll(/"(last_complete_backup_[a-z_]+)"/g)].map(m => m[1]).sort().join() === BACKUP_RECEIPT_KEYS.join(),
+        { found: [...repoSrc.matchAll(/"(last_complete_backup_[a-z_]+)"/g)].map(m => m[1]) });
+    }
 
     /* ============================ environment + drift anchors ============================ */
     const realInspection = inspectAppProcesses();
