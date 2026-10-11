@@ -1,0 +1,344 @@
+TAP version 13
+# Subtest: [control] validated physical index and complete nested parent range work
+ok 1 - [control] validated physical index and complete nested parent range work
+  ---
+  duration_ms: 0.562916
+  type: 'test'
+  ...
+# Subtest: [control] explicit abort refuses obsolete opener success
+ok 2 - [control] explicit abort refuses obsolete opener success
+  ---
+  duration_ms: 0.137
+  type: 'test'
+  ...
+# Subtest: [M4-R5] unsafe integer totals cannot validate a physical destination
+not ok 3 - [M4-R5] unsafe integer totals cannot validate a physical destination
+  ---
+  duration_ms: 0.423666
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:17:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:18:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R5] integer sourcePage without coordinate provenance remains unresolved
+not ok 4 - [M4-R5] integer sourcePage without coordinate provenance remains unresolved
+  ---
+  duration_ms: 0.206167
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:20:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    42 !== null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 42
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:21:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R5] explicit physical zero cannot become a resolved destination
+not ok 5 - [M4-R5] explicit physical zero cannot become a resolved destination
+  ---
+  duration_ms: 0.080917
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:23:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:24:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R5] parent ranges cannot concatenate string coordinates
+not ok 6 - [M4-R5] parent ranges cannot concatenate string coordinates
+  ---
+  duration_ms: 0.051292
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:26:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:27:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R5] parent range length must match child length
+not ok 7 - [M4-R5] parent range length must match child length
+  ---
+  duration_ms: 0.081583
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:29:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:30:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R5] root destination cannot exceed known root page count
+not ok 8 - [M4-R5] root destination cannot exceed known root page count
+  ---
+  duration_ms: 0.042541
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:32:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:33:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R5] reverse translation includes the destination child identity
+not ok 9 - [M4-R5] reverse translation includes the destination child identity
+  ---
+  duration_ms: 0.223333
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:35:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'child'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'child'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:36:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R6] same-hash revalidation cannot verify an out-of-bounds bookmark
+not ok 10 - [M4-R6] same-hash revalidation cannot verify an out-of-bounds bookmark
+  ---
+  duration_ms: 0.222042
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:38:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    'verified'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'verified'
+  actual: 'verified'
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:41:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R7] later missing-path request supersedes earlier pending opener
+not ok 11 - [M4-R7] later missing-path request supersedes earlier pending opener
+  ---
+  duration_ms: 0.180958
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:43:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:46:21)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R7] failing another material cannot expose prior material requested page
+not ok 12 - [M4-R7] failing another material cannot expose prior material requested page
+  ---
+  duration_ms: 0.16
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:48:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    42 !== null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 42
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:51:9)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R7] malformed destination is refused before invoking opener
+not ok 13 - [M4-R7] malformed destination is refused before invoking opener
+  ---
+  duration_ms: 0.056375
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:53:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:55:9)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R7] successful open exercises injected durable persistence
+not ok 14 - [M4-R7] successful open exercises injected durable persistence
+  ---
+  duration_ms: 0.051791
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:57:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:59:41)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R8] custom parser cannot establish page-tree consistency
+not ok 15 - [M4-R8] custom parser cannot establish page-tree consistency
+  ---
+  duration_ms: 0.501875
+  type: 'test'
+  location: '/private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:61:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-corrections-rereview/diagnostics.test.mjs:67:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 2
+# fail 13
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67.73075

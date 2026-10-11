@@ -1,0 +1,4 @@
+PASS: Malformed content hash correctly rejected by CHECK constraint.
+PASS: Originating content hash preserved; bookmark correctly transitioned to 'unverified'.
+PASS: ON DELETE CASCADE cleaned up all dependent navigation records.
+All SQLite candidate migration checks passed successfully.

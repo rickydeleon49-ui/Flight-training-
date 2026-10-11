@@ -1,0 +1,15 @@
+=== Baseline Verification Receipt ===
+Date: 2026-10-11T18:05:00Z
+Worktree: /Users/rickymac/code/Flight-training-m4-viewer-evaluation
+Branch: codex/m4-navigation-viewer-evaluation
+Base Commit: c28ab8482c8635b0b2bf74686b081e02bf448f65
+Remote HEAD: c28ab8482c8635b0b2bf74686b081e02bf448f65
+Production Git Status (tracked files diff): clean (0 tracked files modified)
+--- Untracked Deliverables ---
+?? docs/M4_CONDITIONAL_IMPLEMENTATION_PROMPT_2026-10-11.md
+?? docs/M4_DOCUMENT_NAVIGATION_AND_VIEWER_EVALUATION_2026-10-11.md
+?? docs/M4_DOCUMENT_NAVIGATION_SCOPE_CORRECTIONS_PROMPT_2026-10-11.md
+?? docs/M4_DOCUMENT_NAVIGATION_SCOPE_CORRECTIONS_REPORT_2026-10-11.md
+?? docs/M4_DOCUMENT_NAVIGATION_SCOPE_REVIEW_2026-10-11.md
+?? docs/evidence/m4-document-navigation-eval-2026-10-11/
+?? docs/evidence/m4-document-navigation-scope-review-2026-10-11/

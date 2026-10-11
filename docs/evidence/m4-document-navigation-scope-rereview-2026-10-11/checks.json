@@ -1,0 +1,48 @@
+{
+  "node": "v22.23.3",
+  "checks": [
+    {
+      "name": "submitted-suites",
+      "command": [
+        "/opt/homebrew/opt/node@22/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "docs/evidence/m4-document-navigation-eval-2026-10-11/proof/proof.test.mjs",
+        "docs/evidence/m4-document-navigation-eval-2026-10-11/proof/databaseVerification.test.mjs"
+      ],
+      "cwd": "/tmp/hfd-m4-corrections-rereview/submitted",
+      "exit": 0
+    },
+    {
+      "name": "frozen-current",
+      "command": [
+        "/opt/homebrew/opt/node@22/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "frozen-current.test.mjs"
+      ],
+      "cwd": "/tmp/hfd-m4-corrections-rereview",
+      "exit": 0
+    },
+    {
+      "name": "diagnostics",
+      "command": [
+        "/opt/homebrew/opt/node@22/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "diagnostics.test.mjs"
+      ],
+      "cwd": "/tmp/hfd-m4-corrections-rereview",
+      "exit": 1
+    },
+    {
+      "name": "python-probe",
+      "command": [
+        "python3",
+        "docs/evidence/m4-document-navigation-eval-2026-10-11/scripts/verify_schema_probe.py"
+      ],
+      "cwd": "/tmp/hfd-m4-corrections-rereview/submitted",
+      "exit": 0
+    }
+  ]
+}

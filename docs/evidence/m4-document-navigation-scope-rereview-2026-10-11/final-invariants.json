@@ -1,0 +1,19 @@
+{
+  "subject": {
+    "path": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation",
+    "head": "c28ab8482c8635b0b2bf74686b081e02bf448f65",
+    "status": "?? docs/M4_CONDITIONAL_IMPLEMENTATION_PROMPT_2026-10-11.md\n?? docs/M4_DOCUMENT_NAVIGATION_AND_VIEWER_EVALUATION_2026-10-11.md\n?? docs/M4_DOCUMENT_NAVIGATION_SCOPE_CORRECTIONS_PROMPT_2026-10-11.md\n?? docs/M4_DOCUMENT_NAVIGATION_SCOPE_CORRECTIONS_REPORT_2026-10-11.md\n?? docs/M4_DOCUMENT_NAVIGATION_SCOPE_REVIEW_2026-10-11.md\n?? docs/evidence/m4-document-navigation-eval-2026-10-11/\n?? docs/evidence/m4-document-navigation-scope-review-2026-10-11/\n"
+  },
+  "primary": {
+    "path": "/Users/rickymac/code/Flight-training-",
+    "head": "42c2df50683a42e574c2844c11cc0e8a6f9eaa69",
+    "status": " M STATUS.md\n M docs/PROJECT_HANDOFF.md\n?? docs/MAC_SCHEMA13_INSTALLED_RESULTS_2026-10-10.md\n?? docs/evidence/mac-schema13-installed-results-2026-10-10/\n"
+  },
+  "m3-preparation": {
+    "path": "/Users/rickymac/code/Flight-training-m3-skills-scope",
+    "head": "48fa47d9d035b2636b72fd6692930d85f4992bb9",
+    "status": " M ROADMAP.md\n M STATUS.md\n M docs/PROJECT_HANDOFF.md\n?? docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md\n?? docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md\n?? docs/M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md\n?? docs/M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md\n?? docs/evidence/m3-skills-evidence-scope-2026-10-10/\n?? docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/\n?? docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/\n"
+  },
+  "submitted_paths_reverified": 25,
+  "subject_production_and_shared_tracking_diff": "empty"
+}

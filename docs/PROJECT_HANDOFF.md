@@ -1,3 +1,11 @@
+## M4 corrected preparation independent re-review — 11 October 2026
+
+**CORRECTIONS REQUIRED: M4-R5–R8.** The original ten diagnostics now pass against current source (frozen test bytes unchanged); submitted proof/SQLite tests 15 passed and Python probe3 checks passed. Independent new diagnostics reproduce13 failures with2 valid controls. Remaining work: complete numeric provenance/range validation, persisted replacement/restore proof, opener intent/save ownership, and truthful parser/artifact evidence plus conditional handoff.
+
+- [Independent re-review](M4_DOCUMENT_NAVIGATION_SCOPE_REREVIEW_2026-10-11.md).
+- [One active model-neutral correction assignment](M4_DOCUMENT_NAVIGATION_SCOPE_REMAINING_CORRECTIONS_PROMPT_2026-10-11.md).
+- 25 submitted paths frozen;21 current and29 earlier-review checksums verify. Review snapshot publication is not acceptance of M4 production. OD-1–OD-10 remain proposed; candidate migration remains unregistered. Claude's M3 production approval remains active. Protected dirty worktrees untouched; G1–G3 deferred/unexecuted/unverified.
+
 ## M3 production slice authorized — 11 October 2026
 
 **Owner-approved M3-D1–D9 as written.** The owner approved the implementation task after independent corrected-scope acceptance. [Decision record](M3_SKILLS_EVIDENCE_OWNER_APPROVAL_2026-10-11.md); [one active model-neutral production assignment](M3_SKILLS_EVIDENCE_PRODUCTION_START_PROMPT_2026-10-11.md). Both former conditional gates are satisfied; earlier PROPOSED/pending-approval entries remain historical.
