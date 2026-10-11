@@ -1,3 +1,38 @@
+## M3 corrected scope/prototype accepted — 11 October 2026
+
+**Preparation ACCEPTED; production awaits owner approval of M3-D1–D9.** M3-R8–R10 closed: independent 192 prototype tests / 3 opt-in skips, strict typecheck, 8 native tests, 7 TS/UI + 2 native frozen diagnostics, all exit 0; 7 independently sampled decisive reversions caught. 190 submitted hashes / 57 latest and 60 current-scope checksums / 7 document hashes / 30 anchors verify. Earlier correction history remains preserved.
+
+- [Acceptance](docs/M3_SKILLS_EVIDENCE_SCOPE_ACCEPTANCE_2026-10-11.md).
+- [Nine proposed defaults](docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md); [conditional production assignment](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md) activates only after owner approval.
+- No production migration/dependency/app source change; candidate0014 unregistered. Native production writer/readers unbuilt; UI evidence jsdom. G1–G3 deferred/unexecuted/unverified. Both dirty worktrees preserved.
+
+## M3 remaining corrections M3-R8–R10 — 2026-10-11
+
+**Corrected, pending independent re-review.** The interrupted R8–R10 package is complete, uncommitted and unpushed (`codex/m3-skills-evidence-scope`, base `48fa47d`).
+
+**The three fixes:**
+- **M3-R8:** the form acknowledges the **complete** draft (wording, date, who said it, instructor name, skill and debrief) on every submission path. It keeps every changed field and names what is unsaved.
+- **M3-R9:** both validators require history → receipt ownership as well as receipt → history. Incomplete hand-written controls were given their real receipts, and a real-writer library fixture was added.
+- **M3-R10:** a confirmed erasure evicts that observation's loaded history, cursor and list entry and re-reads the summary. Late answers cannot restore it; outages keep loaded pages.
+
+**Results:**
+- **192** prototype tests pass (3 opt-in skipped); typecheck is clean; **8** native tests pass.
+- **85 + 29** shared cases agree on node:sqlite, sql.js and rusqlite.
+- The re-review's frozen diagnostics pass **7/7** and **2/2**.
+- **17/17** decisive reversions are caught. One equivalent mutant is reported and explained.
+- Fixtures regenerate byte for byte; restore validation is about 3–9% slower.
+
+**First-review diagnostics:** five fail on the current source. They are R2a's invalid setup, R4 ×2 on the superseded unpaged API, and the built-in retirement control, whose missing receipt R9 now refuses. Valid equivalents pass on all engines.
+
+**Links:**
+- Report: [M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md](docs/M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md).
+- Evidence: [m3-skills-evidence-scope-remaining-corrections-2026-10-11](docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/README.md).
+
+**Still true:**
+- M3-D1–D9 remain **PROPOSED**; candidate 0014 is unchanged and unregistered; production is unchanged.
+- The native writer and readers are unbuilt, and the UI evidence is jsdom only.
+- G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; post-receipt recovery remains BLOCKED / source-covered.
+
 ## M3 interrupted correction package — 11 October 2026
 
 **INCOMPLETE; continuation required.** The local R8–R10 code and tests pass a bounded independent completion audit: 191 prototype tests / 3 opt-in skips, strict typecheck, 8 native tests, 7 TS/UI and 2 native frozen diagnostics, all exit 0. The historical-equivalent diagnostic receipts, targeted new sensitivity proofs, current regeneration/validation-performance receipts, report/tracking updates and final manifests remain unfinished. Current checkpoint: 145/145 paths; production anchors: 30/30 unchanged. No source acceptance or implementation integration.

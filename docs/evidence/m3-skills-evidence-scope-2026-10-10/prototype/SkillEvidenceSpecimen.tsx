@@ -7,6 +7,8 @@
  */
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
+import { canonicalJson } from "@/logic/cardIdentity";
+
 import { createEvidenceController, type EvidenceClient, type ObservationDraft, type SaveOutcome } from "./evidenceController";
 import type { Attribution, EvidenceItem, ObservationRevision, SkillListEntry, SkillSummary } from "./types";
 
@@ -179,8 +181,26 @@ export function SkillEvidenceSpecimen({ client, skills, debrief, newId, initialS
   );
 }
 
-/** What the form says after an earlier submission, rather than the current wording, was stored. */
-type FollowUp = null | { kind: "earlier" } | { kind: "erased" };
+/** What the form says after an earlier submission, rather than the current draft, was stored. */
+type FollowUp = null | { kind: "earlier"; changed: string[] } | { kind: "erased" };
+
+interface Fields {
+  wording: string;
+  observedOn: string;
+  attribution: Attribution;
+  instructorName: string;
+}
+
+const FIELD_WORDS: Record<keyof Fields, string> = {
+  wording: "the wording",
+  observedOn: "the date",
+  attribution: "who said it",
+  instructorName: "the instructor name",
+};
+
+function joinWords(words: string[]): string {
+  return words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)!}`;
+}
 
 function ObservationForm({
   controller,
@@ -194,116 +214,136 @@ function ObservationForm({
   saving: boolean;
 }) {
   const ids = useId();
-  const [attribution, setAttribution] = useState<Attribution>("instructor_transcribed");
-  const [wording, setWording] = useState("");
-  const [instructorName, setInstructorName] = useState("");
-  const [observedOn, setObservedOn] = useState(debrief.date);
-  const [followUp, setFollowUp] = useState<FollowUp>(null);
-  const length = Array.from(wording).length;
-  const draftKey = `${debrief.journalId}:${skillId}`;
-  // The wording on screen now, so a late answer can tell whether she kept typing.
-  const latest = useRef(wording);
+  const [fields, setFields] = useState<Fields>({ wording: "", observedOn: debrief.date, attribution: "instructor_transcribed", instructorName: "" });
+  // The complete live draft, updated synchronously in every change handler
+  // (never in an effect), so an answer that lands right after an edit still
+  // compares against what is on screen (M3-R8).
+  const live = useRef(fields);
+  const change = (patch: Partial<Fields>) => {
+    live.current = { ...live.current, ...patch };
+    setFields(live.current);
+  };
+  // Answers for an earlier draft, or for a form that is gone, must not touch this one.
+  const epoch = useRef(0);
+  const mounted = useRef(false);
   useEffect(() => {
-    latest.current = wording;
-  }, [wording]);
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const [followUp, setFollowUp] = useState<FollowUp>(null);
+  const length = Array.from(fields.wording).length;
+  // One key per form instance: a remounted form never inherits another instance's draft.
+  const draftKey = `${debrief.journalId}:${skillId}:${ids}`;
 
-  const draft: ObservationDraft = {
+  /** The whole draft: content plus the skill and debrief it is bound to. */
+  const draftOf = (f: Fields): ObservationDraft => ({
     skillId,
     journalId: debrief.journalId,
     sourceField: "none",
-    wording,
-    observedOn,
-    attribution,
-    instructorName: attribution === "instructor_transcribed" ? instructorName : "",
-  };
+    wording: f.wording,
+    observedOn: f.observedOn,
+    attribution: f.attribution,
+    instructorName: f.attribution === "instructor_transcribed" ? f.instructorName : "",
+  });
 
+  function submit(path: "create" | "replace" | "new") {
+    if (path === "new") {
+      if (!controller.startNewDraft(draftKey)) return;
+      epoch.current += 1;
+    }
+    const draft = draftOf(live.current);
+    const fingerprint = canonicalJson(draft);
+    const mine = epoch.current;
+    const pending = path === "replace" ? controller.reviseSaved(draftKey, draft) : controller.saveObservation(draftKey, draft);
+    void pending.then((outcome) => afterSave(outcome, fingerprint, mine));
+  }
+
+  /** Fields of the live draft that differ from what this form last stored. */
+  function unsavedFields(): string[] {
+    const saved = controller.savedContent(draftKey);
+    if (!saved) return [];
+    const now = draftOf(live.current);
+    return (Object.keys(FIELD_WORDS) as (keyof Fields)[]).filter((k) => saved[k] !== now[k]).map((k) => FIELD_WORDS[k]);
+  }
+
+  /**
+   * Clear only what was acknowledged, and only if the complete live draft is
+   * still exactly what was submitted. Anything else keeps every field and
+   * says what is not saved.
+   */
+  function afterSave(outcome: SaveOutcome, submitted: string, mine: number) {
+    if (!mounted.current || mine !== epoch.current) return;
+    if (outcome.kind === "saved" && canonicalJson(draftOf(live.current)) === submitted) {
+      epoch.current += 1;
+      controller.startNewDraft(draftKey);
+      change({ wording: "" }); // date and attribution stay for the next note
+      setFollowUp(null);
+    } else if (outcome.kind === "saved" || outcome.kind === "earlier_saved") {
+      setFollowUp({ kind: "earlier", changed: unsavedFields() });
+    } else if (outcome.kind === "erased") {
+      setFollowUp({ kind: "erased" });
+    }
+  }
+
+  const unsaved = followUp?.kind === "earlier" ? followUp.changed : [];
   return (
     <form
       aria-labelledby={`${ids}-legend-form`}
       onSubmit={(e) => {
         e.preventDefault();
-        const submitted = draft.wording;
-        void controller.saveObservation(draftKey, draft).then((outcome) => afterSave(outcome, submitted));
+        submit("create");
       }}
     >
       <h3 id={`${ids}-legend-form`}>Add an observation from “{debrief.title || "Lesson debrief"}”</h3>
       <fieldset>
         <legend>Who said it?</legend>
         <label>
-          <input type="radio" name={`${ids}-attr`} checked={attribution === "instructor_transcribed"} onChange={() => setAttribution("instructor_transcribed")} />
+          <input type="radio" name={`${ids}-attr`} checked={fields.attribution === "instructor_transcribed"} onChange={() => change({ attribution: "instructor_transcribed" })} />
           My instructor (I'm writing down what they said)
         </label>
         <label>
-          <input type="radio" name={`${ids}-attr`} checked={attribution === "self_report"} onChange={() => setAttribution("self_report")} />
+          <input type="radio" name={`${ids}-attr`} checked={fields.attribution === "self_report"} onChange={() => change({ attribution: "self_report" })} />
           Me (my own observation)
         </label>
       </fieldset>
-      {attribution === "instructor_transcribed" && (
+      {fields.attribution === "instructor_transcribed" && (
         <>
           <label htmlFor={`${ids}-name`}>Instructor name (optional)</label>
-          <input id={`${ids}-name`} value={instructorName} maxLength={120} onChange={(e) => setInstructorName(e.target.value)} />
+          <input id={`${ids}-name`} value={fields.instructorName} maxLength={120} onChange={(e) => change({ instructorName: e.target.value })} />
         </>
       )}
       <label htmlFor={`${ids}-wording`}>What was said or noticed</label>
-      <textarea id={`${ids}-wording`} value={wording} onChange={(e) => setWording(e.target.value)} aria-describedby={`${ids}-count`} />
+      <textarea id={`${ids}-wording`} value={fields.wording} onChange={(e) => change({ wording: e.target.value })} aria-describedby={`${ids}-count`} />
       <p id={`${ids}-count`}>{length} of 2000 characters</p>
       <label htmlFor={`${ids}-date`}>Date observed</label>
-      <input id={`${ids}-date`} type="date" value={observedOn} onChange={(e) => setObservedOn(e.target.value)} />
-      <button type="submit" disabled={saving || wording.trim() === "" || length > 2000}>
+      <input id={`${ids}-date`} type="date" value={fields.observedOn} onChange={(e) => change({ observedOn: e.target.value })} />
+      <button type="submit" disabled={saving || fields.wording.trim() === "" || length > 2000}>
         {saving ? "Saving…" : "Save observation"}
       </button>
       {followUp && (
-        <div aria-label="Your new wording">
+        <div aria-label="Your unsaved changes">
           <p>
-            {followUp.kind === "earlier"
-              ? "The wording in the box above isn't saved yet."
-              : "The wording in the box above isn't saved."}
+            {followUp.kind === "erased"
+              ? "What's in the form above isn't saved."
+              : unsaved.length > 0
+                ? `Not saved yet: your changes to ${joinWords(unsaved)}.`
+                : "What's in the form above isn't saved yet."}
           </p>
           {followUp.kind === "earlier" && (
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => {
-                const submitted = draft.wording;
-                void controller.reviseSaved(draftKey, draft).then((outcome) => afterSave(outcome, submitted));
-              }}
-            >
-              Replace the saved wording with this
-            </button>
+            <>
+              <p id={`${ids}-replace-hint`}>Replacing updates the saved observation to match everything in the form: wording, date, who said it and instructor name.</p>
+              <button type="button" disabled={saving} aria-describedby={`${ids}-replace-hint`} onClick={() => submit("replace")}>
+                Replace the saved wording with this
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => {
-              if (!controller.startNewDraft(draftKey)) return;
-              const submitted = draft.wording;
-              void controller.saveObservation(draftKey, draft).then((outcome) => afterSave(outcome, submitted));
-            }}
-          >
+          <button type="button" disabled={saving} onClick={() => submit("new")}>
             Save it as a new observation
           </button>
         </div>
       )}
     </form>
   );
-
-  /**
-   * Clear only what was acknowledged, and only if she has not typed since.
-   * Anything else keeps her words and explains what did (or did not) save.
-   */
-  function afterSave(outcome: SaveOutcome, submitted: string) {
-    if (outcome.kind === "saved") {
-      if (latest.current === submitted) {
-        setWording("");
-        setFollowUp(null);
-        controller.startNewDraft(draftKey);
-      } else {
-        setFollowUp({ kind: "earlier" });
-      }
-    } else if (outcome.kind === "earlier_saved") {
-      setFollowUp({ kind: "earlier" });
-    } else if (outcome.kind === "erased") {
-      setFollowUp({ kind: "erased" });
-    }
-  }
 }

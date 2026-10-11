@@ -1,0 +1,818 @@
+# variant: R10-1 (M3-R10) an ERASED older-history page keeps the loaded versions and cursor
+# file: prototype/evidenceController.ts
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx -t Show older versions after an erasure clears the versions and the list item --reporter=verbose
+# cwd: <scratch copy>
+ope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] an answer for a form that was replaced (skill switched away and back) cannot clear the newer form
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] Show older versions after an erasure clears the versions and the list item, and says it was erased 1119ms
+   → Unable to find an element with the text: This observation was erased.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Earlier versions"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mEarlier versions[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mWe couldn't load older versions right now.[0m
+  [36m</p>[39m
+  [36m<ol[39m
+    [33maria-label[39m=[32m"Versions"[39m
+  [36m>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m25[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 24[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m24[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 23[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m23[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 22[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m22[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 21[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m21[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 20[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m20[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 19[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m19[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 18[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m18[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 17[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m17[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 16[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m16[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 15[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m15[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 14[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m14[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 13[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m13[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 12[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m12[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 11[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m11[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 10[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m10[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 9[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m9[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 8[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m8[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 7[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m7[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 6[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m6[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 5[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+  [36m</ol>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mShow older versions[0m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mClose[0m
+  [36m</button>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Earlier versions"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mEarlier versions[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mWe couldn't load older versions right now.[0m
+  [36m</p>[39m
+  [36m<ol[39m
+    [33maria-label[39m=[32m"Versions"[39m
+  [36m>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m25[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 24[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m24[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 23[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m23[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 22[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m22[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 21[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m21[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 20[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m20[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 19[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m19[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 18[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m18[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 17[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m17[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 16[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m16[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 15[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m15[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 14[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m14[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 13[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m13[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 12[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m12[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 11[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m11[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 10[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m10[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 9[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m9[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 8[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m8[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 7[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m7[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 6[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m6[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 5[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+  [36m</ol>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mShow older versions[0m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mClose[0m
+  [36m</button>[39m
+[36m</section>[39m
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  10:04:45
+   Duration  1.73s (transform 194ms, setup 0ms, import 284ms, tests 1.12s, environment 238ms)
+
+[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 14[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m14[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 13[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m13[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 12[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m12[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 11[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m11[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 10[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m10[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 9[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m9[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 8[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m8[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 7[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m7[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 6[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+    [36m<li>[39m
+      [36m<p>[39m
+        [0mVersion [0m
+        [0m6[0m
+        [0m · [0m
+        [0mEdited[0m
+        [0m · [0m
+        [0m2026-10-01[0m
+      [36m</p>[39m
+      [36m<blockquote>[39m
+        [0mPrivate edit 5[0m
+      [36m</blockquote>[39m
+    [36m</li>[39m
+  [36m</ol>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mShow older versions[0m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mClose[0m
+  [36m</button>[39m
+[36m</section>[39m
+ ❯ waitForWrapper ../../../../../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx:280:26
+    278|     await ctx.store.act({ action: "erase_observation", operationId: uu…
+    279|     fireEvent.click(within(region).getByRole("button", { name: "Show o…
+    280|     await within(region).findByText("This observation was erased.");
+       |                          ^
+    281|     expect(within(region).queryByRole("list")).toBeNull();
+    282|     expect(within(region).queryByRole("button", { name: "Show older ve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts -t confirmed erased history discards loaded text and cursor --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/rsens
+
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] confirmed erased history discards loaded text and cursor (review case), and leaves the list 63ms
+   → expected { …(8) } to deeply equal { …(8) }
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] opening the history of an observation erased elsewhere evicts it from the list and the summary
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] unrelated observations, and their history, stay
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held older history page that arrives after the erasure is known cannot republish it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held evidence page read before the erasure cannot put the erased observation back in the list
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] an erasure answer that lands after a route change leaves the new skill alone
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a save whose earlier request turns out erased evicts that observation too
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary older-history read error preserves loaded history for retry (review control)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary failure opening history keeps the observation listed
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  10:04:47
+   Duration  397ms (transform 180ms, setup 0ms, import 240ms, tests 66ms, environment 0ms)
+
+(node:63633) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] confirmed erased history discards loaded text and cursor (review case), and leaves the list
+AssertionError: expected { …(8) } to deeply equal { …(8) }
+
+- Expected
++ Received
+
+  {
+-   "currentRevision": null,
+-   "erased": true,
+-   "error": "This observation was erased.",
+-   "items": [],
++   "currentRevision": 2,
++   "erased": false,
++   "error": "We couldn't load older versions right now.",
++   "items": [
++     {
++       "addressedAt": null,
++       "attribution": "instructor_transcribed",
++       "changeKind": "edited",
++       "instructorName": "Synthetic CFI",
++       "linkedActionId": null,
++       "linkedActionTitle": null,
++       "observedOn": "2026-10-01",
++       "recordedAt": "2026-10-11T17:04:47.936Z",
++       "revision": 2,
++       "wording": "Latest Private history wording",
++     },
++   ],
+    "loadingMore": false,
+-   "nextCursor": null,
++   "nextCursor": "[\"history\",\"00000000-0000-4000-8000-000000000005\",2]",
+    "observationId": "00000000-0000-4000-8000-000000000005",
+-   "status": "error",
++   "status": "ready",
+  }
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts:64:34
+     62|     const writes = vi.spyOn(x.client, "act");
+     63|     await c.loadOlderHistory();
+     64|     expect(c.getState().history).toEqual({
+       |                                  ^
+     65|       observationId: o.observationId, status: "error", erased: true, i…
+     66|       error: "This observation was erased.",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+# restored-sha-matches=True

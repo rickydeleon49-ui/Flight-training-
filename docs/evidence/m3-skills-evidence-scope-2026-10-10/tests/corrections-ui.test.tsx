@@ -159,7 +159,7 @@ describe("M3-R2c draft retention in the rendered form", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save observation" }));
     await screen.findByText("Your earlier save had already gone through, so it was kept.");
     await waitFor(() => expect(text.value).toBe("New unsaved wording"));
-    expect(screen.getByText("The wording in the box above isn't saved yet.")).toBeTruthy();
+    expect(screen.getByText("Not saved yet: your changes to the wording.")).toBeTruthy();
     expect(ctx.engine.query("SELECT wording FROM skill_observations")).toEqual([{ wording: "Earlier wording" }]);
   });
 
@@ -199,7 +199,7 @@ describe("M3-R2c draft retention in the rendered form", () => {
     await act(async () => gate.resolve());
     await screen.findByText("Saved.");
     expect(text.value).toBe("Saved words, and more typed meanwhile");
-    expect(screen.getByText("The wording in the box above isn't saved yet.")).toBeTruthy();
+    expect(screen.getByText("Not saved yet: your changes to the wording.")).toBeTruthy();
   });
 });
 

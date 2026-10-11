@@ -1,0 +1,26 @@
+$ env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test rereview_diagnostics
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2
+# utc: 2026-10-11T08:00:53Z
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running tests/rereview_diagnostics.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2-target/debug/deps/rereview_diagnostics-c21468c460879acc)
+
+running 2 tests
+test control_valid_populated_fixture ... ok
+test r9_operation_owned_history_requires_its_receipt ... FAILED
+
+failures:
+
+---- r9_operation_owned_history_requires_its_receipt stdout ----
+
+thread 'r9_operation_owned_history_requires_its_receipt' (358129) panicked at tests/rereview_diagnostics.rs:11:2:
+missing receipt left its observation history accepted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    r9_operation_owned_history_requires_its_receipt
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+error: test failed, to rerun pass `--test rereview_diagnostics`
+# exit=101

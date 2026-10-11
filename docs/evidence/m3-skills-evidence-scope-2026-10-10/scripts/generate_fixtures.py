@@ -50,6 +50,9 @@ VALIDATION = [
     {"name": "retired custom skill with history", "category": "control", "sql": [
         f"UPDATE skill_catalog_entries SET status = 'retired', retired_at = '{T}', revision = 2 WHERE id = '{CUSTOM}'",
         f"INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('{CUSTOM}', 2, 'Short-field landing', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-0000000000e2', '{T}')",
+        # M3-R9 (2026-10-11): the retirement's own receipt, which the first
+        # version of this hand-written control omitted.
+        f"INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000e2', 'retire_skill', '{H}', '{CUSTOM}', '{T}', '{{\"action\":\"retire_skill\",\"revision\":2,\"skillId\":\"{CUSTOM}\"}}', 0)",
     ], "expect": "accept"},
     # Exact schema.
     {"name": "missing table", "category": "schema", "sql": ["DROP TABLE skill_self_assessments"], "expect": "refuse"},
@@ -136,20 +139,30 @@ def custom_rev(id_, revision, label, status, op_id, cv="NULL", by="user"):
             f"VALUES ('{id_}', {revision}, '{q(label)}', '', 'landings', '{status}', {cv}, '{by}', {op_value}, '{T}')")
 
 
+def skill_receipt(op_id, action, skill_id, revision):
+    return receipt(op_id, action, skill_id, result(action=action, revision=revision, skillId=skill_id))
+
+
 def custom_skill(id_, label, op_id, status="active"):
-    rows = [custom_head(id_, label, status, 1 if status == "active" else 2), custom_rev(id_, 1, label, "active", op_id)]
+    """A custom skill as the writer leaves it, with the receipts that own its history (M3-R9)."""
+    rows = [custom_head(id_, label, status, 1 if status == "active" else 2), custom_rev(id_, 1, label, "active", op_id),
+            skill_receipt(op_id, "create_custom_skill", id_, 1)]
     if status == "retired":
-        rows.append(custom_rev(id_, 2, label, "retired", op(int(op_id[-12:], 16) + 0x800)))
+        retire = op(int(op_id[-12:], 16) + 0x800)
+        rows += [custom_rev(id_, 2, label, "retired", retire), skill_receipt(retire, "retire_skill", id_, 2)]
     return rows
 
 
-def builtin_step(id_, revision, status, op_id):
-    """A built-in retire/restore step: head first, then its revision copied from the head."""
+def builtin_step(id_, revision, status, op_id, with_receipt=True):
+    """A built-in retire/restore step: head first, then its revision copied from the head, then its receipt."""
     retired = f"'{T}'" if status == "retired" else "NULL"
-    return [
+    rows = [
         f"UPDATE skill_catalog_entries SET status = '{status}', retired_at = {retired}, revision = {revision} WHERE id = '{id_}'",
         f"INSERT INTO skill_catalog_revisions SELECT id, {revision}, label, description, topic, status, catalog_version, 'user', '{op_id}', '{T}' FROM skill_catalog_entries WHERE id = '{id_}'",
     ]
+    if with_receipt:
+        rows.append(skill_receipt(op_id, "retire_skill" if status == "retired" else "restore_skill", id_, revision))
+    return rows
 
 
 def set_result(op_id, json_text):
@@ -197,10 +210,7 @@ VALIDATION += [
         receipt(op(0x122), "restore_skill", CUSTOM, result(action="restore_skill", revision=4, skillId=CUSTOM)),
     ], "expect": "accept"},
     {"name": "[M3-R6] a built-in retired and restored keeps its catalog wording", "category": "control", "sql":
-        builtin_step("builtin.go_around", 2, "retired", op(0x130)) + builtin_step("builtin.go_around", 3, "active", op(0x131)) + [
-        receipt(op(0x130), "retire_skill", "builtin.go_around", result(action="retire_skill", revision=2, skillId="builtin.go_around")),
-        receipt(op(0x131), "restore_skill", "builtin.go_around", result(action="restore_skill", revision=3, skillId="builtin.go_around")),
-    ], "expect": "accept"},
+        builtin_step("builtin.go_around", 2, "retired", op(0x130)) + builtin_step("builtin.go_around", 3, "active", op(0x131)), "expect": "accept"},
     {"name": "[M3-R6] a retired skill's name may be reused by an active skill", "category": "control", "sql":
         builtin_step("builtin.go_around", 2, "retired", op(0x132)) + custom_skill(C2, "  go-AROUND ", op(0x133)), "expect": "accept"},
     {"name": "[M3-R6] two retired skills may share a name", "category": "control", "sql":
@@ -265,30 +275,33 @@ VALIDATION += [
         f"INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '{op(0x150)}', '{T}' FROM skill_catalog_entries WHERE id = 'builtin.normal_landing'"], "expect": "refuse"},
     {"name": "[M3-R6] built-in retirement that also rewrites the description", "category": "catalog-pinned", "sql": [
         f"UPDATE skill_catalog_entries SET status = 'retired', retired_at = '{T}', description = 'Changed.', revision = 2 WHERE id = 'builtin.go_around'",
-        f"INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '{op(0x151)}', '{T}' FROM skill_catalog_entries WHERE id = 'builtin.go_around'"], "expect": "refuse"},
+        f"INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '{op(0x151)}', '{T}' FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+        skill_receipt(op(0x151), "retire_skill", "builtin.go_around", 2)], "expect": "refuse"},
     {"name": "[M3-R6] built-in history and head move to another catalog version", "category": "catalog-pinned", "sql": [
         f"UPDATE skill_catalog_entries SET status = 'retired', retired_at = '{T}', catalog_version = 2, revision = 2 WHERE id = 'builtin.go_around'",
-        f"INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '{op(0x152)}', '{T}' FROM skill_catalog_entries WHERE id = 'builtin.go_around'"], "expect": "refuse"},
+        f"INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '{op(0x152)}', '{T}' FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+        skill_receipt(op(0x152), "retire_skill", "builtin.go_around", 2)], "expect": "refuse"},
     {"name": "[M3-R6] built-in head changes catalog version without history", "category": "catalog-pinned", "sql": [
         "UPDATE skill_catalog_entries SET catalog_version = 2 WHERE id = 'builtin.go_around'"], "expect": "refuse"},
     {"name": "[M3-R6] a built-in 'edit' that changes nothing", "category": "catalog-pinned", "sql": [
         "UPDATE skill_catalog_entries SET revision = 2 WHERE id = 'builtin.go_around'",
-        f"INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '{op(0x153)}', '{T}' FROM skill_catalog_entries WHERE id = 'builtin.go_around'"], "expect": "refuse"},
+        f"INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '{op(0x153)}', '{T}' FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+        skill_receipt(op(0x153), "edit_custom_skill", "builtin.go_around", 2)], "expect": "refuse"},
     {"name": "[M3-R6] custom revision carrying a catalog version", "category": "catalog-pinned", "sql": [
-        custom_rev(CUSTOM, 2, "Short-field landing", "retired", op(0x154), cv="1"),
+        custom_rev(CUSTOM, 2, "Short-field landing", "retired", op(0x154), cv="1"), skill_receipt(op(0x154), "retire_skill", CUSTOM, 2),
         f"UPDATE skill_catalog_entries SET status = 'retired', retired_at = '{T}', revision = 2 WHERE id = '{CUSTOM}'"], "expect": "refuse"},
     {"name": "[M3-R6] custom skill whose first revision claims to come from the catalog", "category": "catalog-pinned", "sql": [
         custom_head(C2, "From nowhere"), custom_rev(C2, 1, "From nowhere", "active", None, by="catalog")], "expect": "refuse"},
     {"name": "[M3-R6] retiring an already retired skill", "category": "catalog-pinned", "sql": [
-        custom_rev(CUSTOM, 2, "Short-field landing", "retired", op(0x155)),
-        custom_rev(CUSTOM, 3, "Short-field landing", "retired", op(0x156)),
+        custom_rev(CUSTOM, 2, "Short-field landing", "retired", op(0x155)), skill_receipt(op(0x155), "retire_skill", CUSTOM, 2),
+        custom_rev(CUSTOM, 3, "Short-field landing", "retired", op(0x156)), skill_receipt(op(0x156), "retire_skill", CUSTOM, 3),
         f"UPDATE skill_catalog_entries SET status = 'retired', retired_at = '{T}', revision = 3 WHERE id = '{CUSTOM}'"], "expect": "refuse"},
     {"name": "[M3-R6] retiring and renaming in one step", "category": "catalog-pinned", "sql": [
-        custom_rev(CUSTOM, 2, "Renamed on retire", "retired", op(0x157)),
+        custom_rev(CUSTOM, 2, "Renamed on retire", "retired", op(0x157)), skill_receipt(op(0x157), "retire_skill", CUSTOM, 2),
         f"UPDATE skill_catalog_entries SET label = 'Renamed on retire', status = 'retired', retired_at = '{T}', revision = 2 WHERE id = '{CUSTOM}'"], "expect": "refuse"},
     {"name": "[M3-R6] restoring and renaming in one step", "category": "catalog-pinned", "sql": [
-        custom_rev(CUSTOM, 2, "Short-field landing", "retired", op(0x158)),
-        custom_rev(CUSTOM, 3, "Renamed on restore", "active", op(0x159)),
+        custom_rev(CUSTOM, 2, "Short-field landing", "retired", op(0x158)), skill_receipt(op(0x158), "retire_skill", CUSTOM, 2),
+        custom_rev(CUSTOM, 3, "Renamed on restore", "active", op(0x159)), skill_receipt(op(0x159), "restore_skill", CUSTOM, 3),
         f"UPDATE skill_catalog_entries SET label = 'Renamed on restore', revision = 3 WHERE id = '{CUSTOM}'"], "expect": "refuse"},
 
     # Active-name uniqueness under labelKey (NFC, JS whitespace, lower case).
@@ -304,6 +317,47 @@ VALIDATION += [
         custom_skill(C2, "ΟΔΟΣ", op(0x165)) + custom_skill(C3, "οδος", op(0x166)), "expect": "refuse"},
     {"name": "[M3-R6] a built-in restored into a name now active elsewhere", "category": "catalog-names", "sql":
         builtin_step("builtin.go_around", 2, "retired", op(0x167)) + custom_skill(C4, "Go-around", op(0x168)) + builtin_step("builtin.go_around", 3, "active", op(0x169)), "expect": "refuse"},
+]
+
+# ---------------------------------------------------------------------------
+# M3-R9 (2026-10-11): history -> receipt ownership. Every operation-owned
+# history row needs the live receipt that wrote it, one-to-one.
+OBS_REV3_REUSING_OP3 = [
+    f"INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('{OBS}', 3, 'edited', 'Flare a little later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '{OP3}', '{T}')",
+    f"UPDATE skill_observations SET wording = 'Flare a little later.', revision = 3 WHERE id = '{OBS}'",
+]
+VALIDATION += [
+    {"name": "[M3-R9] observation history whose create receipt was removed (review case)", "category": "history-ownership",
+     "sql": [f"DELETE FROM skill_evidence_operations WHERE operation_id = '{OP2}'"], "expect": "refuse"},
+    {"name": "[M3-R9] a later observation revision whose receipt was removed", "category": "history-ownership",
+     "sql": [f"DELETE FROM skill_evidence_operations WHERE operation_id = '{OP3}'"], "expect": "refuse"},
+    {"name": "[M3-R9] an edit revision whose receipt was removed (earlier receipts intact)", "category": "history-ownership",
+     "sql": OBS_EDIT_3 + [f"DELETE FROM skill_evidence_operations WHERE operation_id = '{E3}'"], "expect": "refuse"},
+    {"name": "[M3-R9] a custom catalog revision whose receipt was removed", "category": "history-ownership",
+     "sql": [f"DELETE FROM skill_evidence_operations WHERE operation_id = '{OP1}'"], "expect": "refuse"},
+    {"name": "[M3-R9] a built-in retirement revision without its receipt", "category": "history-ownership",
+     "sql": builtin_step("builtin.go_around", 2, "retired", op(0x170), with_receipt=False), "expect": "refuse"},
+    {"name": "[M3-R9] a status entry whose receipt was removed", "category": "history-ownership",
+     "sql": [f"DELETE FROM skill_evidence_operations WHERE operation_id = '{OP4}'"], "expect": "refuse"},
+    {"name": "[M3-R9] a cleared confidence entry without its receipt", "category": "history-ownership",
+     "sql": [f"INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('{op(0x171)}', 'builtin.go_around', 'confidence', NULL, NULL, 1, '{op(0x171)}', '{T}')"], "expect": "refuse"},
+    {"name": "[M3-R9] one operation claims two observation revisions", "category": "history-ownership",
+     "sql": OBS_REV3_REUSING_OP3, "expect": "refuse"},
+    {"name": "[M3-R9] a status entry reuses an observation change's operation", "category": "history-ownership",
+     "sql": [f"INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('{op(0x172)}', 'builtin.normal_landing', 'status', 'learning', NULL, 2, '{OP3}', '{T}')"], "expect": "refuse"},
+    {"name": "[M3-R9] a catalog revision reuses an observation's create operation", "category": "history-ownership",
+     "sql": [custom_rev(CUSTOM, 2, "Short-field landing", "retired", OP2),
+             f"UPDATE skill_catalog_entries SET status = 'retired', retired_at = '{T}', revision = 2 WHERE id = '{CUSTOM}'"], "expect": "refuse"},
+    {"name": "[M3-R9] history owned by an operation whose receipt is a tombstone", "category": "history-ownership",
+     "sql": [
+         f"INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('{OBS}', 3, 'edited', 'Flare a little later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '{op(0x173)}', '{T}')",
+         f"UPDATE skill_observations SET wording = 'Flare a little later.', revision = 3 WHERE id = '{OBS}'",
+         receipt(op(0x173), "edit_observation", GONE, None, 1)], "expect": "refuse"},
+    {"name": "[M3-R9] status history mixed up between two skills' receipts", "category": "history-ownership",
+     "sql": [f"UPDATE skill_evidence_operations SET subject_id = 'builtin.go_around', result_json = '{q(result(action='set_status', sequence=1, skillId='builtin.go_around'))}' WHERE operation_id = '{OP4}'"], "expect": "refuse"},
+    # Controls: catalog seeds, earlier receipts and erasure tombstones stay valid.
+    {"name": "[M3-R9] catalog seeds need no receipt; every user change has one", "category": "control",
+     "sql": builtin_step("builtin.go_around", 2, "retired", op(0x174)), "expect": "accept"},
 ]
 
 LONG = "substr(replace(hex(zeroblob(1001)), '0', 'a'), 1, 2001)"

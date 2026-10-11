@@ -232,6 +232,7 @@ export async function validateSkillEvidenceState(query: ValidationQuery, referen
   //    debrief or action, because the row they name never changes. Erasure:
   //    tombstones are non-content observation receipts whose subject is gone;
   //    a live erase receipt leaves no live receipt for its subject.
+  const live = new Map<string, { action: ActionName; subject: string; n: number }>();
   for (const op of await rows(query, "SELECT * FROM skill_evidence_operations ORDER BY rowid")) {
     const id = String(op["operation_id"]);
     const action = String(op["action"]) as ActionName;
@@ -249,6 +250,7 @@ export async function validateSkillEvidenceState(query: ValidationQuery, referen
       if (error instanceof ResultShapeError) refuse(`Operation ${id} has an invalid result: ${error.message}`);
       throw error;
     }
+    live.set(id, { action, subject, n: Number(result["revision"] ?? result["sequence"] ?? 0) });
     if (SKILL_ACTIONS.has(action)) {
       const revision = Number(result["revision"]);
       const [row] = await rows(query, "SELECT * FROM skill_catalog_revisions WHERE skill_id = ? AND revision = ?", [subject, revision]);
@@ -278,6 +280,35 @@ export async function validateSkillEvidenceState(query: ValidationQuery, referen
       if ((await count(query, "SELECT COUNT(*) AS n FROM skill_evidence_operations WHERE subject_id = ? AND is_erased = 0 AND action <> 'erase_observation'", [subject])) > 0) {
         refuse(`Operation ${id} erased an observation whose earlier records were not cleared.`);
       }
+    }
+  }
+
+  // 8. History -> receipt (M3-R9). Every operation-owned history row has the
+  //    live receipt that wrote it: same operation, an action of that family,
+  //    the same subject and the same revision or sequence. With step 7 this is
+  //    one-to-one, so a missing receipt or a reused operation id is refused.
+  //    Catalog seeds (changed_by 'catalog', no operation) need none; erased
+  //    observations have no history left, only their non-content tombstones.
+  const owned = (operationId: unknown, families: ReadonlySet<ActionName> | ActionName, subject: unknown, n: unknown) => {
+    const receipt = live.get(String(operationId));
+    if (!receipt) return false;
+    const familyOk = typeof families === "string" ? receipt.action === families : families.has(receipt.action);
+    return familyOk && receipt.subject === String(subject) && receipt.n === Number(n);
+  };
+  for (const r of await rows(query, "SELECT skill_id, revision, operation_id FROM skill_catalog_revisions WHERE changed_by = 'user' ORDER BY skill_id, revision")) {
+    if (!owned(r["operation_id"], SKILL_ACTIONS, r["skill_id"], r["revision"])) {
+      refuse(`Skill ${String(r["skill_id"])} revision ${String(r["revision"])} has no matching operation record.`);
+    }
+  }
+  for (const r of await rows(query, "SELECT observation_id, revision, operation_id FROM skill_observation_revisions ORDER BY observation_id, revision")) {
+    if (!owned(r["operation_id"], OBSERVATION_HISTORY_ACTIONS, r["observation_id"], r["revision"])) {
+      refuse(`Observation ${String(r["observation_id"])} revision ${String(r["revision"])} has no matching operation record.`);
+    }
+  }
+  for (const r of await rows(query, "SELECT skill_id, kind, sequence, operation_id FROM skill_self_assessments ORDER BY skill_id, kind, sequence")) {
+    const action: ActionName = r["kind"] === "status" ? "set_status" : "set_confidence";
+    if (!owned(r["operation_id"], action, r["skill_id"], r["sequence"])) {
+      refuse(`Skill ${String(r["skill_id"])} ${String(r["kind"])} entry ${String(r["sequence"])} has no matching operation record.`);
     }
   }
 }

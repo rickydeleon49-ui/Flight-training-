@@ -1,0 +1,19 @@
+$ env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test contract
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2
+# utc: 2026-10-11T08:00:47Z
+   Compiling m3-skills-evidence-native v0.0.0 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2/docs/evidence/m3-skills-evidence-scope-2026-10-10/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.48s
+     Running tests/contract.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2-target/debug/deps/contract-7ca0310e3f516164)
+
+running 7 tests
+test engine_is_the_apps_bundled_sqlite ... ok
+test a_failed_candidate_migration_leaves_schema_13_untouched ... ok
+test the_candidate_refuses_a_library_newer_than_itself ... ok
+test populated_schema13_upgrades_with_every_retained_row_identical ... ok
+test backup_api_copy_restores_validated_and_identical ... ok
+test shared_constraint_contract_native_outcomes ... ok
+test shared_validation_contract_native_outcomes ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.65s
+
+# exit=0

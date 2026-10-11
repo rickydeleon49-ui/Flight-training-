@@ -584,6 +584,7 @@ pub fn verify_schema_14_skill_evidence_semantics(conn: &Connection, reference: &
 
     // 7. Receipts: exact results, own subject, owned history of the right kind;
     //    tombstones are non-content observation receipts whose subject is gone.
+    let mut live: Vec<(String, String, String, i64)> = Vec::new();
     for op in rows(conn, "SELECT * FROM skill_evidence_operations ORDER BY rowid", &[])? {
         let id = text(get(&op, "operation_id")).unwrap_or_default();
         let action = text(get(&op, "action")).unwrap_or_default();
@@ -604,6 +605,7 @@ pub fn verify_schema_14_skill_evidence_semantics(conn: &Connection, reference: &
             ResultValue::Number(n) => n,
             ResultValue::Erased => 0,
         };
+        live.push((id.clone(), action.clone(), subject.clone(), number));
         if SKILL_ACTIONS.contains(&action.as_str()) {
             let row = rows(conn, "SELECT * FROM skill_catalog_revisions WHERE skill_id = ?1 AND revision = ?2", &[subject.clone().into(), number.into()])?;
             let Some(row) = row.first() else {
@@ -677,6 +679,45 @@ pub fn verify_schema_14_skill_evidence_semantics(conn: &Connection, reference: &
             {
                 return Err(format!("Operation {id} erased an observation whose earlier records were not cleared."));
             }
+        }
+    }
+
+    // 8. History -> receipt (TS step 8): every operation-owned history row has
+    //    the live receipt that wrote it (same operation, action family, subject
+    //    and revision or sequence). Catalog seeds need none.
+    let owned = |operation: &Value, families: &[&str], subject: &Value, n: &Value| -> bool {
+        let Some(operation) = text(operation) else { return false };
+        live.iter().any(|(id, action, s, number)| {
+            *id == operation && families.contains(&action.as_str()) && Some(s.clone()) == text(subject) && *number == int(n)
+        })
+    };
+    for r in rows(conn, "SELECT skill_id, revision, operation_id FROM skill_catalog_revisions WHERE changed_by = 'user' ORDER BY skill_id, revision", &[])? {
+        if !owned(get(&r, "operation_id"), &SKILL_ACTIONS, get(&r, "skill_id"), get(&r, "revision")) {
+            return Err(format!(
+                "Skill {} revision {} has no matching operation record.",
+                text(get(&r, "skill_id")).unwrap_or_default(),
+                int(get(&r, "revision"))
+            ));
+        }
+    }
+    for r in rows(conn, "SELECT observation_id, revision, operation_id FROM skill_observation_revisions ORDER BY observation_id, revision", &[])? {
+        if !owned(get(&r, "operation_id"), &OBSERVATION_HISTORY_ACTIONS, get(&r, "observation_id"), get(&r, "revision")) {
+            return Err(format!(
+                "Observation {} revision {} has no matching operation record.",
+                text(get(&r, "observation_id")).unwrap_or_default(),
+                int(get(&r, "revision"))
+            ));
+        }
+    }
+    for r in rows(conn, "SELECT skill_id, kind, sequence, operation_id FROM skill_self_assessments ORDER BY skill_id, kind, sequence", &[])? {
+        let action = if text(get(&r, "kind")).as_deref() == Some("status") { "set_status" } else { "set_confidence" };
+        if !owned(get(&r, "operation_id"), &[action], get(&r, "skill_id"), get(&r, "sequence")) {
+            return Err(format!(
+                "Skill {} {} entry {} has no matching operation record.",
+                text(get(&r, "skill_id")).unwrap_or_default(),
+                text(get(&r, "kind")).unwrap_or_default(),
+                int(get(&r, "sequence"))
+            ));
         }
     }
     Ok(())

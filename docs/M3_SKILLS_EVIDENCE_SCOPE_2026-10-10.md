@@ -1,8 +1,15 @@
 # M3 skills and feedback evidence: scope, contracts and prototype (10 October 2026)
 
-**State: CORRECTED (M3-R1–R7), pending independent re-review. M3-D1–D9 remain PROPOSED, pending owner approval.** No production code, migration, dependency or registry changed. Candidate SQL and prototype code live only in [`docs/evidence/m3-skills-evidence-scope-2026-10-10/`](evidence/m3-skills-evidence-scope-2026-10-10/README.md).
+**State: CORRECTED (M3-R1–R10), pending independent re-review. M3-D1–D9 remain PROPOSED, pending owner approval.** No production code, migration, dependency or registry changed. Candidate SQL and prototype code live only in [`docs/evidence/m3-skills-evidence-scope-2026-10-10/`](evidence/m3-skills-evidence-scope-2026-10-10/README.md).
 
 **Corrections, 11 October 2026.** The [independent review](M3_SKILLS_EVIDENCE_SCOPE_REVIEW_2026-10-10.md) found seven defects (M3-R1–R7). They are corrected in place in the prototype, candidate fixtures and native proof, and in this document's §4 and §6–§11. The issue-to-fix report is [`M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md`](M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md), and the new receipts are in [`docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/`](evidence/m3-skills-evidence-scope-corrections-2026-10-11/README.md). The original receipts and the review's frozen diagnostics are preserved unchanged. Candidate migration 0014 did not change.
+
+**Remaining corrections, 11 October 2026.** The [independent re-review](M3_SKILLS_EVIDENCE_SCOPE_REREVIEW_2026-10-11.md) verified R1–R7 and found three narrower defects:
+- **M3-R8:** the form compared only wording before clearing a draft.
+- **M3-R9:** restore validation checked receipt → history but not history → receipt.
+- **M3-R10:** a confirmed erasure left already-loaded wording on screen.
+
+They are corrected in §4, §8, §9 and §10, and in the prototype, fixtures and native proof. The report is [`M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md`](M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md), with receipts in [`docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/`](evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/README.md).
 
 **Where this was done:**
 - Worktree: `/Users/rickymac/code/Flight-training-m3-skills-scope`
@@ -78,7 +85,8 @@ Ordinary implementation choices (ids, indexes, page sizes, error wording) are th
      - **Came from:** none, or Instructor feedback / What went well / What was difficult / What you practiced.
      - **Date observed:** defaults to the debrief date.
    - Save is disabled while that skill's save is in flight. A second click joins the save already in flight; it never creates a second observation.
-   - **After an uncertain save** (the app could not confirm it), trying again resolves the earlier save first. If she changed the wording meanwhile and the earlier save turns out to have gone through, it says *"Your earlier save had already gone through, so it was kept."* Her new wording stays in the box with *"The wording in the box above isn't saved yet."* and two explicit choices: **Replace the saved wording with this** (an edit) or **Save it as a new observation**. If the earlier save went through and was later erased, nothing is recreated; her wording stays, with **Save it as a new observation**.
+   - **Whole-draft acknowledgment (M3-R8).** After a save, the form clears only if everything in it (wording, date, who said it, instructor name, and the skill and debrief it is bound to) is still exactly what was saved. Then only the wording clears; the date and attribution stay for the next note. If any field changed while the save was in flight, every field is kept and the same choices are offered. **Replace the saved wording with this** updates the saved observation to match the whole form. This applies equally to saving, replacing and saving as a new observation.
+   - **After an uncertain save** (the app could not confirm it), trying again resolves the earlier save first. If she changed the wording meanwhile and the earlier save turns out to have gone through, it says *"Your earlier save had already gone through, so it was kept."* Everything she has in the form stays (wording, date, who said it and instructor name), with a line naming exactly what isn't saved, such as *"Not saved yet: your changes to the date."*, and two explicit choices: **Replace the saved wording with this** (an edit) or **Save it as a new observation**. If the earlier save went through and was later erased, nothing is recreated; her wording stays, with **Save it as a new observation**.
 2. **Skill page**, a "Skills" view inside Flight Path, `/flight-path/skills/:skillId`:
    - **Summary:**
      - Your status (or Not set), with a menu to change it.
@@ -252,8 +260,22 @@ There is one entry point, `executeSkillEvidenceAction(action)`, natively `save_s
   | `erased` | The earlier save landed and was erased. |
   | `refused` | Definitive; nothing was written. A refusal frees the next submission to use new ids. An id clash stays blocked with an explicit way forward. |
 
-  The form clears only wording that was acknowledged and unchanged since it was submitted; anything else is kept and explained. `reviseSaved` (an edit with the saved revision) and `startNewDraft` are the explicit next steps.
+  `reviseSaved` (an edit with the saved revision) and `startNewDraft` are the explicit next steps. `savedContent(key)` returns what the key last stored, so the form can say exactly which fields are unsaved.
+- **Form ownership (corrected for M3-R8).** These rules apply to all three submission paths (create, replace and save as new):
+  - each submission captures the canonical fingerprint of the **complete** draft;
+  - the live draft is updated synchronously in each field's change handler, never in an effect, so an answer that lands right after an edit still compares against what is on screen;
+  - the form clears and starts a new draft only when the complete live draft equals the submitted one;
+  - draft keys are scoped to the form instance, so a remounted form never inherits another instance's record;
+  - an epoch counter and a mounted flag drop answers for an earlier draft or a gone form.
 - **Refresh after an acknowledged write.** The write is never resent. If the refresh fails, the screen says it was saved and offers a read-only refresh.
+
+**Confirmed erasure (corrected for M3-R10).** When a read or write answer says `ERASED` (opening or paging history, or a save whose earlier request was erased), that observation is evicted at once:
+- its loaded revisions, cursor and current revision are cleared, and its pending history answers become obsolete;
+- it leaves the visible evidence list, and the summary is re-read (reads only; nothing is resent);
+- the history panel says "This observation was erased.";
+- ids are never reused, so an erased id stays filtered from later list pages and history answers for the controller's lifetime.
+
+A temporary read failure is **not** erasure: loaded versions and the cursor stay for retry, and unrelated observations are untouched.
 
 **Lifecycle.** `activate()`/`deactivate()` are symmetric. The specimen declares the lifecycle effect before the load effect, so a StrictMode replay (setup → cleanup → setup on one instance) restores publication before loading. Requests from the replayed generation are dropped, and the live generation publishes. A real unmount leaves every late answer obsolete. A new client gets a new controller. StrictMode and meaningful cleanup are both kept.
 
@@ -278,14 +300,32 @@ The production hook (`src/state/useSkillEvidence.ts`) follows these rules. It al
   - **receipts (M3-R5):**
     - each live receipt's result is decoded exactly for its action, names the receipt's own subject, and points at the history row (catalog revision, observation revision of the right change kind, or self-assessment) that this same operation wrote;
     - earlier receipts stay valid after later edits, a cleared status, or a deleted debrief or action;
-    - tombstones are non-content observation receipts whose subject is gone, and a live erase receipt leaves no live receipt for its subject.
-- **Shared contract:** 72 validation cases (the original 25, plus 9 controls and 38 R5/R6 cases including the review's three) and 29 constraint cases, with identical outcomes on all three engines.
+    - tombstones are non-content observation receipts whose subject is gone, and a live erase receipt leaves no live receipt for its subject;
+  - **history → receipt (M3-R9):** every operation-owned history row (user catalog revisions, observation revisions and self-assessments) must have the live receipt that wrote it: the same operation, an action of that family, the same subject and the same revision or sequence. Combined with receipt → history this is one-to-one, so a removed receipt or a reused operation id is refused. Catalog seeds (`changed_by` catalog, no operation) need none, and erased observations keep only their non-content tombstones;
+- **Shared contract:** 85 validation cases (the original 25; 9 controls and 38 R5/R6 cases added on 11 October; then 1 control and 12 R9 `history-ownership` cases) and 29 constraint cases, with identical outcomes on all three engines.
+  - For R9, hand-written controls that lacked their owning receipts were given them: the original `retired custom skill with history` control and the R6 helper-built cases.
+  - A library written by the real candidate writer (`fixtures/writer-populated-schema14.sql`, regenerated byte for byte) is accepted on all three engines, and refused when any single history-owning receipt is removed.
 - **Older binaries:** the shipped schema-13 TS driver refuses a 14 library ("newer format") and leaves its bytes unchanged. The shipped native ceiling test passes unchanged (receipt 09). The candidate refuses 15.
 - **Backups:** format v2 still fits, because the database schema is bumped independently. A genuine schema-13 backup restores into the candidate and gains 14 with every row kept. Round trips node→node, node→sql.js, sql.js→node and the rusqlite backup API are byte-for-row identical. A backup with altered evidence is refused before anything would be replaced.
 
 ## 10. Prototype results (focused; source-level only)
 
-### Corrected results (11 October 2026)
+### Remaining corrections M3-R8–R10 (11 October 2026)
+
+Exact commands, output and exits are in the [remaining-corrections receipts](evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/README.md). The [report](M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md) maps each finding to its fix and tests.
+
+| Check | Result |
+| --- | --- |
+| Corrected submission reproduced (disposable copy) | 162 passed / 2 skipped; tsc clean; native 7. Re-review diagnostics: 6 failed / 1 outage control passed (TS/UI) and 1 failed / 1 control passed (native) |
+| Final prototype Vitest (13 files) | **192 passed**, 3 opt-in skipped (benchmark and two fixture regenerators), exit 0 |
+| Strict typecheck | exit 0 |
+| Native crate (fresh target) | **8 passed** |
+| Shared contract | 85 validation + 29 constraint cases, identical on node:sqlite, sql.js and rusqlite. The real-writer library is accepted on all three and refused without any of its history-owning receipts |
+| Re-review's frozen diagnostics, current source | **7/7** TS/UI and **2/2** native pass |
+| New tests on the corrected submission | 24 TS failures (10 passes are controls or already-correct guards); natively, 11 of the 12 new R9 negatives wrongly accepted and the writer-library test fails |
+| Sensitivity | **17 of 17 decisive reversions caught** by behaviour assertions. One further reversion (live draft published from an effect) is an *equivalent* mutant under React 19, which flushes discrete-input effects synchronously; it is reported, not counted. All files restored |
+| Restore validation timing | about 3–9% slower than before (257.9 ms at 10,000 observations on node:sqlite, was 244.9); pages unchanged |
+
 
 Exact commands, output and exits are in the [corrections receipts](evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/). The [report](M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md) maps every finding to its fix and tests.
 
@@ -346,6 +386,8 @@ Page latency stays flat with size (keyset). Restore validation is linear, about 
 
 ## 11. Limitations (honest)
 
+- **R8 timing is safe by construction, not by a distinguishing test.** The live draft is updated in each change handler. The alternative (publishing it from an effect) behaves identically under React 19 and jsdom, because discrete-input effects flush synchronously, so no rendered test can tell them apart.
+- **R9 preserves the review's frozen control unchanged.** The frozen built-in retirement control lacks its owning receipt, so it is now refused. A derived copy with that one receipt added passes on all three engines.
 - **Corrections are source-level.** The controller, form and history view are proven on real node:sqlite and sql.js stores and in jsdom, including real `React.StrictMode`. The native readers (paged history, fenced cursors) and the native writer are specified in the implementation prompt, not built.
 - **The stale-cursor check is conservative.** An edit that brings a row back into a filtered list below the cursor restarts the list even when that row was never shown. Cursors are session-local, and a restore reloads the screen.
 - **Case mapping follows each runtime's Unicode tables.** `labelKey` lower-cases with JavaScript (V8/ICU) and Rust `std`. The shared fixtures prove parity for NFC, whitespace (including U+0085 and U+FEFF), German ß and Greek final sigma, but characters newer than one runtime's Unicode version could differ.

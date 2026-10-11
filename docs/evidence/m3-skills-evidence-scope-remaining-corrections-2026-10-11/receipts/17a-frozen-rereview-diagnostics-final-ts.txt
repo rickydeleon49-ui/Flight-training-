@@ -1,0 +1,24 @@
+$ PATH=/opt/homebrew/opt/node@22/bin:$PATH node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx --reporter=verbose
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/final-diag
+# utc: 2026-10-11T17:05:52Z
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/final-diag
+
+(node:64406) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts > remaining receipt ownership (node:sqlite) > [M3-R9] receipt removal cannot leave an accepted operation-owned history orphan 40ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts > remaining receipt ownership (sql.js) > [M3-R9] receipt removal cannot leave an accepted operation-owned history orphan 77ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts > [M3-R10] confirmed erased history discards loaded text and cursor 13ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts > [control] a temporary older-history read error preserves loaded history for retry 12ms
+(node:64405) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx > whole draft acknowledgment (date) > [M3-R8] changed metadata while saving preserves the unsaved complete draft 109ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx > whole draft acknowledgment (attribution) > [M3-R8] changed metadata while saving preserves the unsaved complete draft 35ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx > whole draft acknowledgment (instructor name) > [M3-R8] changed metadata while saving preserves the unsaved complete draft 34ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  10:05:52
+   Duration  791ms (transform 369ms, setup 0ms, import 523ms, tests 321ms, environment 263ms)
+
+# exit=0

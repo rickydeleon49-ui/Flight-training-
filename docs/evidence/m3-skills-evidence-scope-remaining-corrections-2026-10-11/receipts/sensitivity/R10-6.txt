@@ -1,0 +1,196 @@
+# variant: R10-6 (M3-R10) a temporary older-history failure is treated as erasure (control guard)
+# file: prototype/evidenceController.ts
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts -t a temporary older-history read error preserves loaded history for retry --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/rsens
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] confirmed erased history discards loaded text and cursor (review case), and leaves the list
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] opening the history of an observation erased elsewhere evicts it from the list and the summary
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] unrelated observations, and their history, stay
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held older history page that arrives after the erasure is known cannot republish it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held evidence page read before the erasure cannot put the erased observation back in the list
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] an erasure answer that lands after a route change leaves the new skill alone
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a save whose earlier request turns out erased evicts that observation too
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary older-history read error preserves loaded history for retry (review control) 30ms
+   → expected { …(8) } to match object { …(4) }
+(4 matching properties omitted from actual)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary failure opening history keeps the observation listed
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  10:04:54
+   Duration  333ms (transform 167ms, setup 0ms, import 220ms, tests 30ms, environment 0ms)
+
+(node:63664) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary older-history read error preserves loaded history for retry (review control)
+AssertionError: expected { …(8) } to match object { …(4) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "erased": false,
+-   "error": "We couldn't load older versions right now.",
+-   "items": [
+-     {
+-       "addressedAt": null,
+-       "attribution": "instructor_transcribed",
+-       "changeKind": "edited",
+-       "instructorName": "Synthetic CFI",
+-       "linkedActionId": null,
+-       "linkedActionTitle": null,
+-       "observedOn": "2026-10-01",
+-       "recordedAt": "2026-10-11T17:04:55.016Z",
+-       "revision": 2,
+-       "wording": "Latest Latest safe wording",
+-     },
+-   ],
+-   "nextCursor": "[\"history\",\"00000000-0000-4000-8000-000000000005\",2]",
++   "erased": true,
++   "error": "This observation was erased.",
++   "items": [],
++   "nextCursor": null,
+  }
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts:206:34
+    204|     x.client.history = () => Promise.reject(new Error("temporary read …
+    205|     await c.loadOlderHistory();
+    206|     expect(c.getState().history).toMatchObject({ items: loaded.items, …
+       |                                  ^
+    207|     expect(c.getState().items.map((i) => i.id)).toEqual([o.observation…
+    208|     x.client.history = history;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx -t a temporary failure loading older versions keeps the loaded versions on screen --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/rsens
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > date changed while saving > [M3-R8] a date change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > attribution changed while saving > [M3-R8] a attribution change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > instructor name changed while saving > [M3-R8] a instructor name change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] several changes at once (date, who said it and wording) are all kept and named
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made in the same turn as the acknowledgment is still compared (no delayed publication)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [control] an unchanged draft is cleared after its save, and the next note is a new observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Replace: a change made while the replacement is saving is kept and offered again
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Save as new: a change made while the new observation is saving is kept, and Replace targets the new one
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made while the refresh after an acknowledged save is held is kept
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] an answer for a form that was replaced (skill switched away and back) cannot clear the newer form
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] Show older versions after an erasure clears the versions and the list item, and says it was erased
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen 1118ms
+   → Unable to find an element with the text: We couldn't load older versions right now.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Earlier versions"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mEarlier versions[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mThis observation was erased.[0m
+  [36m</p>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mClose[0m
+  [36m</button>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Earlier versions"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mEarlier versions[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mThis observation was erased.[0m
+  [36m</p>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mClose[0m
+  [36m</button>[39m
+[36m</section>[39m
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  10:04:55
+   Duration  1.73s (transform 192ms, setup 0ms, import 281ms, tests 1.12s, environment 240ms)
+
+(node:63667) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen
+TestingLibraryElementError: Unable to find an element with the text: We couldn't load older versions right now.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Earlier versions"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mEarlier versions[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mThis observation was erased.[0m
+  [36m</p>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mClose[0m
+  [36m</button>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Earlier versions"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mEarlier versions[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mThis observation was erased.[0m
+  [36m</p>[39m
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mClose[0m
+  [36m</button>[39m
+[36m</section>[39m
+ ❯ waitForWrapper ../../../../../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx:323:26
+    321|     ctx.client.history = () => Promise.reject(new Error("temporary out…
+    322|     fireEvent.click(within(region).getByRole("button", { name: "Show o…
+    323|     await within(region).findByText("We couldn't load older versions r…
+       |                          ^
+    324|     expect(within(region).getByText("Private edit 24")).toBeTruthy();
+    325|     expect(within(region).getByRole("button", { name: "Show older vers…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+# restored-sha-matches=True

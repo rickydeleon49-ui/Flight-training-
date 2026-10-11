@@ -1,0 +1,44 @@
+{
+  "verdict": "ACCEPT scope/prototype corrections; production awaits owner defaults",
+  "submitted_paths": 190,
+  "production_anchors": 30,
+  "remaining_pack_checksums": 57,
+  "current_scope_pack_checksums": 60,
+  "document_hashes": 7,
+  "independent_checks": {
+    "prototype": {
+      "exit": 0,
+      "passed": 192,
+      "skipped": 3
+    },
+    "typecheck": {
+      "exit": 0
+    },
+    "native": {
+      "exit": 0,
+      "passed": 8
+    },
+    "frozen_ts_ui": {
+      "exit": 0,
+      "passed": 7
+    },
+    "frozen_native": {
+      "exit": 0,
+      "passed": 2
+    },
+    "sampled_sensitivity": {
+      "exit": 0,
+      "variants": 7,
+      "caught": 7
+    }
+  },
+  "sampled_variants": [
+    "R8-1",
+    "R8-3",
+    "R8-4",
+    "R9-1",
+    "R9-N1",
+    "R10-3",
+    "R10-6"
+  ]
+}

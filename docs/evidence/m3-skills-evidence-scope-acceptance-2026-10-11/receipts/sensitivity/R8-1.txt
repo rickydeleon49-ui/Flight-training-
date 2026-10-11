@@ -1,0 +1,623 @@
+# variant: R8-1 (M3-R8) the form compares only the wording before clearing
+# file: prototype/SkillEvidenceSpecimen.tsx
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx -t during the save keeps the complete draft --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-final-review-sensitive-copy
+
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > date changed while saving > [M3-R8] a date change during the save keeps the complete draft, stores the original, and Replace applies it 99ms
+   → expected '' to be 'Keep the complete draft' // Object.is equality
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > attribution changed while saving > [M3-R8] a attribution change during the save keeps the complete draft, stores the original, and Replace applies it 32ms
+   → expected '' to be 'Keep the complete draft' // Object.is equality
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > instructor name changed while saving > [M3-R8] a instructor name change during the save keeps the complete draft, stores the original, and Replace applies it 29ms
+   → expected '' to be 'Keep the complete draft' // Object.is equality
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] several changes at once (date, who said it and wording) are all kept and named
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made in the same turn as the acknowledgment is still compared (no delayed publication)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [control] an unchanged draft is cleared after its save, and the next note is a new observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Replace: a change made while the replacement is saving is kept and offered again
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Save as new: a change made while the new observation is saving is kept, and Replace targets the new one
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made while the refresh after an acknowledged save is held is kept
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] an answer for a form that was replaced (skill switched away and back) cannot clear the newer form
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] Show older versions after an erasure clears the versions and the list item, and says it was erased
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 skipped (14)
+   Start at  10:35:57
+   Duration  758ms (transform 184ms, setup 0ms, import 268ms, tests 160ms, environment 237ms)
+
+(node:68939) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > date changed while saving > [M3-R8] a date change during the save keeps the complete draft, stores the original, and Replace applies it
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > attribution changed while saving > [M3-R8] a attribution change during the save keeps the complete draft, stores the original, and Replace applies it
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > instructor name changed while saving > [M3-R8] a instructor name change during the save keeps the complete draft, stores the original, and Replace applies it
+AssertionError: expected '' to be 'Keep the complete draft' // Object.is equality
+
+- Expected
++ Received
+
+- Keep the complete draft
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx:115:31
+    113|       await ctx.release();
+    114|       await screen.findByText("Saved.");
+    115|       expect(wording().value).toBe("Keep the complete draft");
+       |                               ^
+    116|       expect(screen.getByText(`Not saved yet: your changes to ${words}…
+    117|       expect(ctx.rows()).toEqual([ORIGINAL]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+# exit=1 caught=True
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx -t several changes at once --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-final-review-sensitive-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > date changed while saving > [M3-R8] a date change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > attribution changed while saving > [M3-R8] a attribution change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > instructor name changed while saving > [M3-R8] a instructor name change during the save keeps the complete draft, stores the original, and Replace applies it
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] several changes at once (date, who said it and wording) are all kept and named 94ms
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made in the same turn as the acknowledgment is still compared (no delayed publication)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [control] an unchanged draft is cleared after its save, and the next note is a new observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Replace: a change made while the replacement is saving is kept and offered again
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Save as new: a change made while the new observation is saving is kept, and Replace targets the new one
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made while the refresh after an acknowledged save is held is kept
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] an answer for a form that was replaced (skill switched away and back) cannot clear the newer form
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] Show older versions after an erasure clears the versions and the list item, and says it was erased
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 13 skipped (14)
+   Start at  10:35:58
+   Duration  664ms (transform 172ms, setup 0ms, import 254ms, tests 95ms, environment 231ms)
+
+(node:68942) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+# exit=0 caught=False
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx -t Replace: a change made while the replacement is saving --reporter=verbose
+# cwd: <scratch copy>
+e[39m=[32m"builtin.emergency_approach"[39m
+        [36m>[39m
+          [0mEmergency approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.go_around"[39m
+        [36m>[39m
+          [0mGo-around[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.ground_reference"[39m
+        [36m>[39m
+          [0mGround reference maneuvers[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_landing"[39m
+        [36m>[39m
+          [0mNormal approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+        [36m>[39m
+          [0mNormal takeoff and climb[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+        [36m>[39m
+          [0mPreflight inspection[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.radio_communications"[39m
+        [36m>[39m
+          [0mRadio communications[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.slow_flight"[39m
+        [36m>[39m
+          [0mSlow flight[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.stalls"[39m
+        [36m>[39m
+          [0mStalls and recovery[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.steep_turns"[39m
+        [36m>[39m
+          [0mSteep turns[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.taxiing"[39m
+        [36m>[39m
+          [0mTaxiing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+        [36m>[39m
+          [0mTraffic pattern[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.checklist_use"[39m
+        [36m>[39m
+          [0mUsing checklists[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+        [36m>[39m
+          [0mWeather decisions[0m
+        [36m</option>[39m
+      [36m</select>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Summary"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mYour status: [0m
+          [0mNot set[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mYour confidence: [0m
+          [0mNot rated[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mOnly a few observations so far: not enough to show a pattern.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"muted"[39m
+        [36m>[39m
+          [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33maria-labelledby[39m=[32m"_r_1_-legend-form"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"_r_1_-legend-form"[39m
+        [36m>[39m
+          [0mAdd an observation from “[0m
+          [0mPattern work[0m
+          [0m”[0m
+        [36m</h3>[39m
+        [36m<fieldset>[39m
+          [36m<legend>[39m
+            [0mWho said it?[0m
+          [36m</legend>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mchecked[39m=[32m""[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0mMy instructor (I'm writing down what they said)[0m
+          [36m</label>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0mMe (my own observation)[0m
+          [36m</label>[39m
+        [36m</fieldset>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-name"[39m
+        [36m>[39m
+          [0mInstructor name (optional)[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mid[39m=[32m"_r_1_-name"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-wording"[39m
+        [36m>[39m
+          [0mWhat was said or noticed[0m
+        [36m</label>[39m
+        [36m<textarea[39m
+          [33maria-describedby[39m=[32m"_r_1_-count"[39m
+          [33mid[39m=[32m"_r_1_-wording"[39m
+        [36m/>[39m
+        [36m<p[39m
+          [33mid[39m=[32m"_r_1_-count"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m of 2000 characters[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-date"[39m
+        [36m>[39m
+          [0mDate observed[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mid[39m=[32m"_r_1_-date"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m"2026-10-02"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSave observation[0m
+        [36m</button>[39m
+      [36m</form>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mSaved.[0m
+      [36m</p>[39m
+      [36m<ol[39m
+        [33maria-label[39m=[32m"Evidence history"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mInstructor feedback, as you wrote it down[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<blockquote>[39m
+            [0mKeep the complete draft[0m
+          [36m</blockquote>[39m
+          [36m<p>[39m
+            [0mFrom “Pattern work”, 2026-10-01[0m
+          [36m</p>[39m
+        [36m</li>[39m
+      [36m</ol>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"_r_0_-title"[39m
+      [33mclass[39m=[32m"card"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mid[39m=[32m"_r_0_-title"[39m
+      [36m>[39m
+        [0mSkill evidence[0m
+      [36m</h2>[39m
+      [36m<label[39m
+        [33mfor[39m=[32m"_r_0_-skill"[39m
+      [36m>[39m
+        [0mSkill[0m
+      [36m</label>[39m
+      [36m<select[39m
+        [33mid[39m=[32m"_r_0_-skill"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+        [36m>[39m
+          [0mCrosswind landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+        [36m>[39m
+          [0mEmergency approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.go_around"[39m
+        [36m>[39m
+          [0mGo-around[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.ground_reference"[39m
+        [36m>[39m
+          [0mGround reference maneuvers[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_landing"[39m
+        [36m>[39m
+          [0mNormal approach and landing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+        [36m>[39m
+          [0mNormal takeoff and climb[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+        [36m>[39m
+          [0mPreflight inspection[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.radio_communications"[39m
+        [36m>[39m
+          [0mRadio communications[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.slow_flight"[39m
+        [36m>[39m
+          [0mSlow flight[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.stalls"[39m
+        [36m>[39m
+          [0mStalls and recovery[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.steep_turns"[39m
+        [36m>[39m
+          [0mSteep turns[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.taxiing"[39m
+        [36m>[39m
+          [0mTaxiing[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+        [36m>[39m
+          [0mTraffic pattern[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.checklist_use"[39m
+        [36m>[39m
+          [0mUsing checklists[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+        [36m>[39m
+          [0mWeather decisions[0m
+        [36m</option>[39m
+      [36m</select>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Summary"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mYour status: [0m
+          [0mNot set[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mYour confidence: [0m
+          [0mNot rated[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0mOnly a few observations so far: not enough to show a pattern.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"muted"[39m
+        [36m>[39m
+          [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33maria-labelledby[39m=[32m"_r_1_-legend-form"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"_r_1_-legend-form"[39m
+        [36m>[39m
+          [0mAdd an observation from “[0m
+          [0mPattern work[0m
+          [0m”[0m
+        [36m</h3>[39m
+        [36m<fieldset>[39m
+          [36m<legend>[39m
+            [0mWho said it?[0m
+          [36m</legend>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mchecked[39m=[32m""[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0mMy instructor (I'm writing down what they said)[0m
+          [36m</label>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0mMe (my own observation)[0m
+          [36m</label>[39m
+        [36m</fieldset>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-name"[39m
+        [36m>[39m
+          [0mInstructor name (optional)[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mid[39m=[32m"_r_1_-name"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-wording"[39m
+        [36m>[39m
+          [0mWhat was said or noticed[0m
+        [36m</label>[39m
+        [36m<textarea[39m
+          [33maria-describedby[39m=[32m"_r_1_-count"[39m
+          [33mid[39m=[32m"_r_1_-wording"[39m
+        [36m/>[39m
+        [36m<p[39m
+          [33mid[39m=[32m"_r_1_-count"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m of 2000 characters[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-date"[39m
+        [36m>[39m
+          [0mDate observed[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mid[39m=[32m"_r_1_-date"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m"2026-10-02"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSave observation[0m
+        [36m</button>[39m
+      [36m</form>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mSaved.[0m
+      [36m</p>[39m
+      [36m<ol[39m
+        [33maria-label[39m=[32m"Evidence history"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mInstructor feedback, as you wrote it down[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<blockquote>[39m
+            [0mKeep the complete draft[0m
+          [36m</blockquote>[39m
+          [36m<p>[39m
+            [0mFrom “Pattern work”, 2026-10-01[0m
+          [36m</p>[39m
+        [36m</li>[39m
+      [36m</ol>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Save as new: a change made while the new observation is saving is kept, and Replace targets the new one
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made while the refresh after an acknowledged save is held is kept
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] an answer for a form that was replaced (skill switched away and back) cannot clear the newer form
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] Show older versions after an erasure clears the versions and the list item, and says it was erased
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  10:35:59
+   Duration  1.66s (transform 171ms, setup 0ms, import 250ms, tests 1.10s, environment 228ms)
+
+or a proficiency rating.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33maria-labelledby[39m=[32m"_r_1_-legend-form"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"_r_1_-legend-form"[39m
+        [36m>[39m
+          [0mAdd an observation from “[0m
+          [0mPattern work[0m
+          [0m”[0m
+        [36m</h3>[39m
+        [36m<fieldset>[39m
+          [36m<legend>[39m
+            [0mWho said it?[0m
+          [36m</legend>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mchecked[39m=[32m""[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0mMy instructor (I'm writing down what they said)[0m
+          [36m</label>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mname[39m=[32m"_r_1_-attr"[39m
+              [33mtype[39m=[32m"radio"[39m
+            [36m/>[39m
+            [0mMe (my own observation)[0m
+          [36m</label>[39m
+        [36m</fieldset>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-name"[39m
+        [36m>[39m
+          [0mInstructor name (optional)[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mid[39m=[32m"_r_1_-name"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-wording"[39m
+        [36m>[39m
+          [0mWhat was said or noticed[0m
+        [36m</label>[39m
+        [36m<textarea[39m
+          [33maria-describedby[39m=[32m"_r_1_-count"[39m
+          [33mid[39m=[32m"_r_1_-wording"[39m
+        [36m/>[39m
+        [36m<p[39m
+          [33mid[39m=[32m"_r_1_-count"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m of 2000 characters[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_-date"[39m
+        [36m>[39m
+          [0mDate observed[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mid[39m=[32m"_r_1_-date"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m"2026-10-02"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSave observation[0m
+        [36m</button>[39m
+      [36m</form>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mSaved.[0m
+      [36m</p>[39m
+      [36m<ol[39m
+        [33maria-label[39m=[32m"Evidence history"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mInstructor feedback, as you wrote it down[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<blockquote>[39m
+            [0mKeep the complete draft[0m
+          [36m</blockquote>[39m
+          [36m<p>[39m
+            [0mFrom “Pattern work”, 2026-10-01[0m
+          [36m</p>[39m
+        [36m</li>[39m
+      [36m</ol>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx:179:34
+    177|     await ctx.release();
+    178|     ctx.hold();
+    179|     fireEvent.click(await screen.findByRole("button", { name: "Replace…
+       |                                  ^
+    180|     fireEvent.click(instructorRadio()); // already selected: no change
+    181|     fireEvent.change(nameInput(), { target: { value: "Later name" } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+# restored-sha-matches=True
