@@ -1,0 +1,119 @@
+{
+  "passed": 13,
+  "failed": 0,
+  "results": [
+    {
+      "name": "success",
+      "pass_": true,
+      "exit": 0,
+      "calls": [
+        "attach",
+        "copy",
+        "detach"
+      ],
+      "output": "OK: verified installation /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-ymea9dht/Applications/HFD-NEW-36a7b39\n"
+    },
+    {
+      "name": "bad-dmg",
+      "pass_": true,
+      "exit": 2,
+      "calls": [],
+      "output": "REFUSED: DMG hash mismatch; nothing mounted or copied\n"
+    },
+    {
+      "name": "bad-mount",
+      "pass_": true,
+      "exit": 2,
+      "calls": [
+        "attach",
+        "detach"
+      ],
+      "output": "REFUSED: mounted executable hash mismatch; nothing copied\n"
+    },
+    {
+      "name": "copy-fail",
+      "pass_": true,
+      "exit": 2,
+      "calls": [
+        "attach",
+        "copy",
+        "detach"
+      ],
+      "output": "REFUSED: command failed/interrupted: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-1ce4e3zo/tools/copy -R /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-1ce4e3zo/Downloads/workspace/evidence/run-A/mount-NEW-o2Mp9r/Her Flight Deck.app /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-1ce4e3zo/Applications/HFD-NEW-36a7b39 (exit 1, ) ; preserve task-owned destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-1ce4e3zo/Applications/HFD-NEW-36a7b39\n"
+    },
+    {
+      "name": "bad-copy",
+      "pass_": true,
+      "exit": 2,
+      "calls": [
+        "attach",
+        "copy",
+        "detach"
+      ],
+      "output": "REFUSED: installed hash mismatch; preserve partial destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-cb6k40l_/Applications/HFD-NEW-36a7b39; preserve task-owned destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-cb6k40l_/Applications/HFD-NEW-36a7b39\n"
+    },
+    {
+      "name": "attach-fail",
+      "pass_": true,
+      "exit": 2,
+      "calls": [
+        "attach",
+        "detach"
+      ],
+      "output": "REFUSED: command failed/interrupted: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-c99q4zo4/tools/hdiutil attach -readonly -nobrowse -mountpoint /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-c99q4zo4/Downloads/workspace/evidence/run-A/mount-NEW-EsBdbH /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-c99q4zo4/kit/installers/NEW-schema13-36a7b39-adhoc.dmg (exit 1, ) \n"
+    },
+    {
+      "name": "admin",
+      "pass_": true,
+      "exit": 2,
+      "calls": [],
+      "output": "REFUSED: admin membership or account inspection error\n"
+    },
+    {
+      "name": "group-error",
+      "pass_": true,
+      "exit": 2,
+      "calls": [],
+      "output": "REFUSED: admin membership or account inspection error\n"
+    },
+    {
+      "name": "process-error",
+      "pass_": true,
+      "exit": 2,
+      "calls": [],
+      "output": "REFUSED: app running or process inspection error\n"
+    },
+    {
+      "name": "existing",
+      "pass_": true,
+      "exit": 2,
+      "calls": [],
+      "output": "REFUSED: installation destination exists; preserve it; preserve task-owned destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-uwl_8wcl/Applications/HFD-NEW-36a7b39\n"
+    },
+    {
+      "name": "dangling",
+      "pass_": true,
+      "exit": 2,
+      "calls": [],
+      "output": "REFUSED: symlink component /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-ktzvnd9c/Applications/HFD-NEW-36a7b39; preserve task-owned destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-ktzvnd9c/Applications/HFD-NEW-36a7b39\n"
+    },
+    {
+      "name": "symlink-parent",
+      "pass_": true,
+      "exit": 2,
+      "calls": [],
+      "output": "REFUSED: symlink component /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-27vvj_5s/Applications\n"
+    },
+    {
+      "name": "interrupt",
+      "pass_": true,
+      "exit": 2,
+      "calls": [
+        "attach",
+        "copy",
+        "detach"
+      ],
+      "output": "REFUSED: command failed/interrupted: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-yw9m91lt/tools/copy -R /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-yw9m91lt/Downloads/workspace/evidence/run-A/mount-NEW-e0s05N/Her Flight Deck.app /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-yw9m91lt/Applications/HFD-NEW-36a7b39 (exit null, SIGTERM) ; preserve task-owned destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-test-yw9m91lt/Applications/HFD-NEW-36a7b39\n"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+e1a016cd3c4aff7169dab762cf6059a32922efb0bfb37c55837e13b9be40e658  ./bin/hfd-operator.sh
+d97e410e48077453a037dd84bd87e4e2ab45d5ca99d926bb81d74b894824a0b8  ./bin/mac-schema13-profile-snapshot.mjs
+f344903a99443ce3e4622ff88076138e55d585a3b319295591da399089ca9d92  ./README-START-HERE.md
+b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d  ./fixtures/synthetic-illustrated-charts.pdf
+0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1  ./fixtures/synthetic-long-manual.pdf
+f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134  ./fixtures/synthetic-small-checklist.pdf
+190f8dd051cd44358fb29e70ca98738ee90f702057625e0b4553383240710dcf  ./env.sh
+d5101e8c58c70c21943295bb22ec5c88394c8db81aeec402bd8f7836612e1f99  ./packet/02-flashcards-and-test.json
+b3ead8139049d2fe829469744ff5a3394e145a3cb0ad09d8ca5ac9ae9f65f334  ./installers/NEW-schema13-36a7b39-adhoc.dmg
+ddb0594e351e0cd90a9fd0ede4824c1fd6fe3cb043d523a31939988fc0077c62  ./installers/OLD-schema12-2a6a415-adhoc.dmg

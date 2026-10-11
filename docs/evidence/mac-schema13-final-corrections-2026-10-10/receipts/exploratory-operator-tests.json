@@ -1,0 +1,240 @@
+{
+  "passed": 39,
+  "failed": 0,
+  "results": [
+    {
+      "name": "fresh owned workspace creation",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: fresh workspace /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace\n"
+    },
+    {
+      "name": "existing workspace preserved",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: workspace exists; preserve it and resume the original run\n"
+    },
+    {
+      "name": "fresh run output creation",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: fresh run run-A\n"
+    },
+    {
+      "name": "existing run refused",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: run already exists; resume without overwriting\n"
+    },
+    {
+      "name": "wrong uid refusal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: must run as uid 502 (hfdtest)\n"
+    },
+    {
+      "name": "admin refusal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: admin account or account inspection failed (exit 0)\n"
+    },
+    {
+      "name": "account inspector error refusal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: admin account or account inspection failed (exit 2)\n"
+    },
+    {
+      "name": "process inspector error refusal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: app running or process inspection failed (bundle exit 2)\n"
+    },
+    {
+      "name": "running app refusal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: app running or process inspection failed (bundle exit 0)\n"
+    },
+    {
+      "name": "ownership refusal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: ownership mismatch: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads\n"
+    },
+    {
+      "name": "allowed fresh copy retains complete source",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: copy completed: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/source -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/copied\n"
+    },
+    {
+      "name": "allowed move retains complete destination",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: move completed: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/copied -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/moved\n"
+    },
+    {
+      "name": "existing destination preserved",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: destination already exists; refusing overwrite or nesting\n"
+    },
+    {
+      "name": "self nesting refused",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: self-nesting refused\n"
+    },
+    {
+      "name": "source traversal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: path contains traversal or empty component\n"
+    },
+    {
+      "name": "destination traversal",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: path contains traversal or empty component\n"
+    },
+    {
+      "name": "symlink destination parent refuses escape",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: symlink component: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/link\n"
+    },
+    {
+      "name": "symlink source refused",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: symlink component: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/source-link\n"
+    },
+    {
+      "name": "dangling destination preserved",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: symlink component: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/dangling\n"
+    },
+    {
+      "name": "copy failure reported and source preserved",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: copy failed; source retained, partial destination may exist at /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/profiles/copyfail\n"
+    },
+    {
+      "name": "profile env override refused",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: profiles cannot redefine the approved lane\n"
+    },
+    {
+      "name": "workspace env override refused",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: workspace cannot redefine the approved lane\n"
+    },
+    {
+      "name": "block spaced path exact 700",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: blocked backups; explicit recovery record /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/evidence/run-A/backup-20261011T051835Z-27510.txt\n"
+    },
+    {
+      "name": "repeated block refused",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: backups already write-blocked\n"
+    },
+    {
+      "name": "explicit recovery exact 700",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: restored exact mode 700 using /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/evidence/run-A/backup-20261011T051835Z-27510.txt (safe repeated recovery)\n"
+    },
+    {
+      "name": "same-operation repeated recovery",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: restored exact mode 700 using /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/evidence/run-A/backup-20261011T051835Z-27510.txt (safe repeated recovery)\n"
+    },
+    {
+      "name": "block spaced path exact 750",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: blocked backups; explicit recovery record /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/evidence/run-A/backup-20261011T051835Z-27613.txt\n"
+    },
+    {
+      "name": "repeated block refused",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: backups already write-blocked\n"
+    },
+    {
+      "name": "explicit recovery exact 750",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: restored exact mode 750 using /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/evidence/run-A/backup-20261011T051835Z-27613.txt (safe repeated recovery)\n"
+    },
+    {
+      "name": "same-operation repeated recovery",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: restored exact mode 750 using /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/evidence/run-A/backup-20261011T051835Z-27613.txt (safe repeated recovery)\n"
+    },
+    {
+      "name": "cross-run record refuses and preserves 0550",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: record is not this run\u2019s active operation\n"
+    },
+    {
+      "name": "missing run refusal preserves mode",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: record run/operation/format mismatch\n"
+    },
+    {
+      "name": "duplicate run refusal preserves mode",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: duplicate record key: RUN_ID\n"
+    },
+    {
+      "name": "wrong operation refusal preserves mode",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: record run/operation/format mismatch\n"
+    },
+    {
+      "name": "missing identity refusal preserves mode",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: record mode/identity missing or invalid\n"
+    },
+    {
+      "name": "invalid octal refusal preserves mode",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: record mode/identity missing or invalid\n"
+    },
+    {
+      "name": "interrupted operation explicit resume restores 0750",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: restored exact mode 750 using /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-operator-final-nce2vyqx/Downloads/workspace/evidence/run-B/backup-20261011T051835Z-27727.txt (safe repeated recovery)\n"
+    },
+    {
+      "name": "replacement inode refuses",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: replacement directory identity mismatch\n"
+    },
+    {
+      "name": "actual production entry cannot impersonate uid/root via environment",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: must run as uid 502 (hfdtest)\n"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "total": 6,
+  "allFlippedToFail": true,
+  "results": [
+    {
+      "mutation": "R9-account",
+      "exit": 1,
+      "flipped": true,
+      "failingAssertions": [
+        "wrong uid refusal",
+        "wrong account name refused"
+      ],
+      "stderr": ""
+    },
+    {
+      "mutation": "R9-run-binding",
+      "exit": 1,
+      "flipped": true,
+      "failingAssertions": [
+        "cross-run record refuses and preserves 0550",
+        "missing run refusal preserves mode",
+        "duplicate run refusal preserves mode",
+        "wrong operation refusal preserves mode",
+        "missing identity refusal preserves mode",
+        "invalid octal refusal preserves mode"
+      ],
+      "stderr": ""
+    },
+    {
+      "mutation": "R10-complete-facts",
+      "exit": 1,
+      "flipped": true,
+      "failingAssertions": [
+        "upgrade refuses empty definitions",
+        "restore refuses empty definitions",
+        "unchanged refuses empty definitions",
+        "upgrade refuses one missing definition",
+        "restore refuses one missing definition",
+        "unchanged refuses one missing definition",
+        "upgrade refuses object count mismatch",
+        "restore refuses object count mismatch",
+        "unchanged refuses object count mismatch",
+        "upgrade refuses definition object mismatch",
+        "restore refuses definition object mismatch",
+        "unchanged refuses definition object mismatch",
+        "upgrade refuses definition digest missing",
+        "restore refuses definition digest missing",
+        "unchanged refuses definition digest missing",
+        "unchanged refuses ledger rows absent",
+        "upgrade refuses ledger digest absent",
+        "restore refuses ledger digest absent",
+        "unchanged refuses ledger digest absent",
+        "upgrade refuses schema13 columns missing",
+        "restore refuses schema13 columns missing",
+        "upgrade refuses schema13 key missing",
+        "restore refuses schema13 key missing",
+        "upgrade refuses table inventory incomplete",
+        "restore refuses table inventory incomplete",
+        "unchanged refuses table inventory incomplete"
+      ],
+      "stderr": "(node:39080) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    },
+    {
+      "mutation": "R10-checksum",
+      "exit": 1,
+      "flipped": true,
+      "failingAssertions": [
+        "upgrade rejects actual wrong migration13 checksum",
+        "restore rejects actual wrong migration13 checksum"
+      ],
+      "stderr": "(node:39081) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    },
+    {
+      "mutation": "R11-mounted-hash",
+      "exit": 1,
+      "flipped": true,
+      "failingAssertions": [
+        "bad-mount"
+      ],
+      "stderr": ""
+    },
+    {
+      "mutation": "R11-detach",
+      "exit": 1,
+      "flipped": true,
+      "failingAssertions": [
+        "success",
+        "old-success",
+        "bad-mount",
+        "copy-fail",
+        "bad-copy",
+        "attach-fail",
+        "interrupt"
+      ],
+      "stderr": ""
+    }
+  ]
+}

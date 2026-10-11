@@ -1,0 +1,37 @@
+{
+  "source": "/Users/rickymac/code/Flight-training-/scripts/mac-schema13-profile-snapshot.mjs",
+  "passed": 7,
+  "failed": 0,
+  "results": [
+    {
+      "name": "[control] real populated schema12 to real schema13 upgrade passes",
+      "pass": true
+    },
+    {
+      "name": "[control] unchanged real schema13 profile passes",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R8] an added pending operation cannot pass unchanged",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R8] an added lineage row cannot pass unchanged",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R8] changed schema objects cannot pass unchanged",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R8] upgrade requires all indexes actually created by 0013",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R8] restore requires all indexes actually created by 0013",
+      "pass": true
+    }
+  ]
+}
+(node:36540) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

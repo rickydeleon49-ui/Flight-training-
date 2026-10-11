@@ -1,0 +1,28 @@
+{
+  "passed": 5,
+  "failed": 0,
+  "results": [
+    {
+      "name": "control: complete real upgrade passes",
+      "pass": true
+    },
+    {
+      "name": "control: complete real restore passes",
+      "pass": true
+    },
+    {
+      "name": "upgrade: incomplete v3 definition anchors cannot certify PASS",
+      "pass": true
+    },
+    {
+      "name": "restore: incomplete v3 definition anchors cannot certify PASS",
+      "pass": true
+    },
+    {
+      "name": "restore: actual ledger missing migration13 cannot certify schema13 restore",
+      "pass": true
+    }
+  ]
+}
+(node:37482) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

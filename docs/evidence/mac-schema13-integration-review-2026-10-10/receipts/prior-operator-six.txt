@@ -1,0 +1,43 @@
+{
+  "source": "docs/evidence/mac-schema13-final-corrections-2026-10-10/hfd-operator.sh",
+  "passed": 6,
+  "failed": 0,
+  "results": [
+    {
+      "name": "[control] an allowed fresh copy preserves the source",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: copy completed: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-52u9hwdr/kit/profiles/source -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-52u9hwdr/kit/profiles/control\n"
+    },
+    {
+      "name": "[control] backup block succeeds and removes owner write",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: blocked backups; explicit recovery record /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-52u9hwdr/kit/evidence/run-A/backup-20261011T054057Z-36569.txt\n"
+    },
+    {
+      "name": "[MACV-R7] unblock round-trips a path with Application Support spaces",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: restored exact mode 700 using /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-52u9hwdr/kit/evidence/run-A/backup-20261011T054057Z-36569.txt (safe repeated recovery)\n"
+    },
+    {
+      "name": "[MACV-R7] account-inspection failure must refuse before copying",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: admin account or account inspection failed (exit 2)\n"
+    },
+    {
+      "name": "[MACV-R7] dot-dot operands cannot escape the profiles directory",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: path contains traversal or empty component\n"
+    },
+    {
+      "name": "[MACV-R7] a symlink destination parent cannot escape the policy root",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: symlink component: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-52u9hwdr/kit/profiles/link\n"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "actualUid": 501,
+  "passed": 4,
+  "failed": 0,
+  "results": [
+    {
+      "name": "shipped CLI environment cannot impersonate authorized uid and override roots",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: must run as uid 502 (hfdtest)\n"
+    },
+    {
+      "name": "control: environment adapter reaches positive backup block",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: blocked backups; explicit recovery record /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-extra-__4hjlm6/evidence/run-A/backup-20261011T054059Z-37388.txt\n"
+    },
+    {
+      "name": "control: explicit same-run restoration roundtrips",
+      "pass_": true,
+      "exit": 0,
+      "output": "OK: restored exact mode 700 using /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-extra-__4hjlm6/evidence/run-A/backup-20261011T054059Z-37388.txt (safe repeated recovery)\n"
+    },
+    {
+      "name": "cross-run old record must refuse and preserve current blocked mode",
+      "pass_": true,
+      "exit": 2,
+      "output": "REFUSED: record is not this run\u2019s active operation\n"
+    }
+  ]
+}

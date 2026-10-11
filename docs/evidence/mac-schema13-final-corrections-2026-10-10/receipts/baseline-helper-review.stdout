@@ -1,0 +1,29 @@
+{
+  "passed": 2,
+  "failed": 3,
+  "results": [
+    {
+      "name": "control: complete real upgrade passes",
+      "pass": true
+    },
+    {
+      "name": "control: complete real restore passes",
+      "pass": true
+    },
+    {
+      "name": "upgrade: incomplete v3 definition anchors cannot certify PASS",
+      "pass": false,
+      "error": "Expected \"actual\" to be strictly unequal to:\n\n'PASS'"
+    },
+    {
+      "name": "restore: incomplete v3 definition anchors cannot certify PASS",
+      "pass": false,
+      "error": "Expected \"actual\" to be strictly unequal to:\n\n'PASS'"
+    },
+    {
+      "name": "restore: actual ledger missing migration13 cannot certify schema13 restore",
+      "pass": false,
+      "error": "Expected \"actual\" to be strictly unequal to:\n\n'PASS'"
+    }
+  ]
+}
