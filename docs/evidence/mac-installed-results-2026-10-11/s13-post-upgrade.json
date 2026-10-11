@@ -1,0 +1,2088 @@
+{
+  "schema": "hfd-mac-profile-snapshot/3",
+  "takenAt": "2026-10-11T23:22:13.087Z",
+  "profile": "/Users/rickymac/Library/Application Support/com.herflightdeck.app",
+  "database": "her-flight-deck.db",
+  "openMode": "read-only",
+  "ownerUid": 501,
+  "isolation": {
+    "operator": true,
+    "approvedRoot": "/Users/rickymac/Library/Application Support/com.herflightdeck.app",
+    "approvedUid": 501,
+    "expectedUid": 501,
+    "processInspection": {
+      "state": "stopped",
+      "controlled": false,
+      "probes": [
+        {
+          "label": "bundle-path",
+          "state": "stopped"
+        },
+        {
+          "label": "executable-name",
+          "state": "stopped"
+        }
+      ],
+      "pids": []
+    },
+    "testFixture": false
+  },
+  "helper": {
+    "node": "v22.23.3",
+    "snapshotSchema": "hfd-mac-profile-snapshot/3",
+    "currentSchemaVersion": 13
+  },
+  "ledger": {
+    "table": "_sqlx_migrations",
+    "columns": [
+      "version",
+      "description",
+      "installed_on",
+      "success",
+      "checksum",
+      "execution_time"
+    ],
+    "maxVersion": 13,
+    "versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "rowCount": 13,
+    "rowDigest": "3d1226e9c4817d4ded6f86d264def684e87775b5f8f0ed07ee54343057502c19",
+    "rows": [
+      {
+        "version": {
+          "t": "integer",
+          "v": "1"
+        },
+        "description": {
+          "t": "text",
+          "v": "696E697469616C5F736368656D61"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "93C1DB5721E76F0FF078D761E1AE069B36626E920BDB49265D02BC74814F561C7E2B420977D5FC926DB9F15DB9A95BA9"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "1207541"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "2"
+        },
+        "description": {
+          "t": "text",
+          "v": "70726F66696C655F64657461696C73"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "C6CC6C4112643AE87A5FDF215872DED1A5CEFF38F073322D80AFD25C52542BC29085D11D6462AA0A60939A163E450831"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "1049875"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "3"
+        },
+        "description": {
+          "t": "text",
+          "v": "706572736F6E616C5F6E6F7465"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "D5DBEE28E67EDF579DB4629ECED09C2FEACD074BEDE3C98B254DE607F093502E760241C8237D2AE56307012EF93BCDF0"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "362875"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "4"
+        },
+        "description": {
+          "t": "text",
+          "v": "6170705F6D65746164617461"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "E82EF2F34AA05D649802B6F80DF89A74A9BECD8257ED5A8B91A213207088FD14EC86F134E4856EEFAD2162DAB9B3CEDC"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "296583"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "5"
+        },
+        "description": {
+          "t": "text",
+          "v": "666C696768745F6C6F67"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "45D523CA5F335FE34A4596E6C34FE59152053340870FF957ECC56AE270D9455D71958EA23918E3005AB42D64B4AC08D0"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "3153792"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "6"
+        },
+        "description": {
+          "t": "text",
+          "v": "70696C6F745F746F6F6C6B6974"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "5F2D9AA61FFFCBCF919717132169DBC47E92D87536404C11F746C7F3627776E65F386805875A0C024D1B107BAECAA021"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "345458"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "7"
+        },
+        "description": {
+          "t": "text",
+          "v": "61695F7374756479"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "84C78321F2AC121D6488226C8DC71353E0E881874DFF728CF52F9DD978D52134125B9BED5A32BEDE8F23DB8439D7A9C6"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "283750"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "8"
+        },
+        "description": {
+          "t": "text",
+          "v": "6E6F746573"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "CEFB3B37E17D4B79FD2B1D420A9C1C5A14197C49637F2E06B9F05AD62D7A8C043C09440D7FBA8AE1ED1A7B8375EC388B"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "330375"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "9"
+        },
+        "description": {
+          "t": "text",
+          "v": "70726163746963655F7465737473"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "F505734E62DAE5F968DF88C7AE9CC6A2B3639410CBB70926E3FB80781A7ED829A1DE6123C0E89A859A262148542B4789"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "252791"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "10"
+        },
+        "description": {
+          "t": "text",
+          "v": "646562726965665F6C696E6B73"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "E46FD0D95B4C0171624CEC7266539806ABD7FCD08995BDCB2F2EDDAE3407536ADD3D00EB0EA1D48F841485E37D8F3677"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "1701750"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "11"
+        },
+        "description": {
+          "t": "text",
+          "v": "70726163746963655F73657373696F6E73"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "0A6FA68D41A86A8CBE80373AEC85CBFEAF7924DD011CAB30CABE8E831CE2B856AF4AFFE4BA62B780437092D408738E1C"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "1640083"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "12"
+        },
+        "description": {
+          "t": "text",
+          "v": "636172645F72657669657773"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A31373A3336"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "B237F42428E37F818FA41DA4E58A577505F1C0049A4E8E103AC81849AECF808BE4A1A5FA535960025770B6C80316DA0E"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "668833"
+        }
+      },
+      {
+        "version": {
+          "t": "integer",
+          "v": "13"
+        },
+        "description": {
+          "t": "text",
+          "v": "73706C69745F736F757263655F6C696E65616765"
+        },
+        "installed_on": {
+          "t": "text",
+          "v": "323032362D31302D31312032333A32323A3035"
+        },
+        "success": {
+          "t": "integer",
+          "v": "1"
+        },
+        "checksum": {
+          "t": "blob",
+          "v": "F126DEADC4C31C153CD7DC3AC081A4CEBE58BC2DBC260BCD386ABC210E0D1FC22707BC7C7D62A73B9D124FDB625DF03D"
+        },
+        "execution_time": {
+          "t": "integer",
+          "v": "536916"
+        }
+      }
+    ]
+  },
+  "history": {
+    "study_materials": {
+      "rowCount": 11,
+      "sha256": "8a408cb3e39b07c90c1c84047d739d55cdf8ad16ce71ab6172c61372902d1a50",
+      "columns": [
+        "id",
+        "title",
+        "material_type",
+        "topic",
+        "review_status",
+        "priority",
+        "goal_id",
+        "event_id",
+        "notes",
+        "file_path",
+        "original_file_name",
+        "file_size",
+        "created_at",
+        "updated_at",
+        "last_reviewed_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "tags": {
+      "rowCount": 9,
+      "sha256": "ea455e8b39158285784a409ba1e6987043b7f7e358e76b5a1d3bce0d34827322",
+      "columns": [
+        "id",
+        "name",
+        "created_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "material_tags": {
+      "rowCount": 15,
+      "sha256": "85d26bf5b95fa7d22bf659a2d5a4a7f39ff1a13971f3c17efe1a000856eba5c9",
+      "columns": [
+        "material_id",
+        "tag_id"
+      ],
+      "primaryKey": [
+        "material_id",
+        "tag_id"
+      ]
+    },
+    "practice_tests": {
+      "rowCount": 1,
+      "sha256": "92c530f7dbe9a63b00c5b9286550458470c3ed4148d09a8434771f8ea034562b",
+      "columns": [
+        "source_material_id",
+        "title",
+        "questions_json",
+        "provider",
+        "model",
+        "generated_at",
+        "updated_at",
+        "legacy_migrated_at",
+        "legacy_error"
+      ],
+      "primaryKey": [
+        "source_material_id"
+      ]
+    },
+    "practice_test_versions": {
+      "rowCount": 1,
+      "sha256": "87d6cc56ac1740fcfd6c982bb4ad33f9a84be1a7ae61ed09dd53fd4ee0944034",
+      "columns": [
+        "id",
+        "source_material_id",
+        "history_key",
+        "source_material_title",
+        "version_number",
+        "provider",
+        "model",
+        "title",
+        "content_hash",
+        "created_at",
+        "is_active"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "practice_test_items": {
+      "rowCount": 2,
+      "sha256": "d7eae9a7722ea4b640b52c48732d58e2f67ba962f3d953906a7d9950a1fc32ec",
+      "columns": [
+        "id",
+        "version_id",
+        "ordinal",
+        "question_text",
+        "options_json",
+        "correct_index",
+        "explanation",
+        "source_page"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "practice_attempts": {
+      "rowCount": 1,
+      "sha256": "e447271347894ba1625542182e02f640bc349a5b1d998af9945d4f51c6f5c448",
+      "columns": [
+        "id",
+        "version_id",
+        "source_material_id",
+        "source_material_title",
+        "started_at",
+        "completed_at",
+        "status",
+        "revision",
+        "total_questions",
+        "answered_count",
+        "correct_count",
+        "incorrect_count",
+        "dont_know_count",
+        "score_percent"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "practice_responses": {
+      "rowCount": 2,
+      "sha256": "2bdb16a4290256779dc7e621ca30a4c37dcf6550d2392f4867acc9170d2125ad",
+      "columns": [
+        "id",
+        "attempt_id",
+        "item_id",
+        "selected_index",
+        "is_dont_know",
+        "is_correct",
+        "answered_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "card_review_generations": {
+      "rowCount": 0,
+      "sha256": "4dc94f3d1dab53f773a7ff5b4637c4167a2f978131be1fc2e0cbfad18af88327",
+      "columns": [
+        "source_material_id",
+        "generation"
+      ],
+      "primaryKey": [
+        "source_material_id"
+      ]
+    },
+    "card_versions": {
+      "rowCount": 1,
+      "sha256": "d75d98f8a096b14e8400eb6f6e30491c6edead403200008fd0812390fe002dfe",
+      "columns": [
+        "id",
+        "source_material_id",
+        "content_hash",
+        "card_count",
+        "provider",
+        "created_at",
+        "first_reviewed_at",
+        "is_active"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "card_items": {
+      "rowCount": 3,
+      "sha256": "3d3a6730595a210f4c399b69ab08481827ec60985f6023b5148ee42f92dd14ef",
+      "columns": [
+        "id",
+        "version_id",
+        "ordinal",
+        "front",
+        "back",
+        "source_page"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "card_review_state": {
+      "rowCount": 1,
+      "sha256": "b30c6187c3b5fb22337d37415392bb66c07a61c72e3a2721c1746aee3fb3bd9a",
+      "columns": [
+        "item_id",
+        "source_material_id",
+        "scheduler_version",
+        "step",
+        "due_at",
+        "last_reviewed_at",
+        "reps",
+        "lapses",
+        "suspended",
+        "flag",
+        "revision"
+      ],
+      "primaryKey": [
+        "item_id"
+      ]
+    },
+    "card_review_events": {
+      "rowCount": 1,
+      "sha256": "d3001440b629b7097b28d6e97fc90866d82650131b5dce3ea6336f04931f1b1b",
+      "columns": [
+        "id",
+        "item_id",
+        "generation",
+        "rating",
+        "reviewed_at",
+        "scheduler_version",
+        "prior_state_json",
+        "next_state_json"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "practice_session_operations": {
+      "rowCount": 4,
+      "sha256": "7843b98733f6dce1cd603e471bb6ed989ffe1e94c6a26c3bc70a99d1cf9e6ed0",
+      "columns": [
+        "operation_id",
+        "action",
+        "request_hash",
+        "applied_at",
+        "result_json",
+        "history_key",
+        "attempt_id",
+        "is_erased"
+      ],
+      "primaryKey": [
+        "operation_id"
+      ]
+    },
+    "card_review_operations": {
+      "rowCount": 1,
+      "sha256": "9a11ae06bf9d8b765261f5da1c28ae8f7adbe4abeb2c85ca1340a4c60b44be53",
+      "columns": [
+        "operation_id",
+        "action",
+        "source_material_id",
+        "generation",
+        "request_hash",
+        "applied_at",
+        "is_erased",
+        "result_json"
+      ],
+      "primaryKey": [
+        "operation_id"
+      ]
+    },
+    "debrief_operations": {
+      "rowCount": 0,
+      "sha256": "5f3d7a79e140291569eb4e178da0ae1a0b71841cd87c199b257665403afe9d5c",
+      "columns": [
+        "id",
+        "journal_id",
+        "applied_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "settings": {
+      "rowCount": 1,
+      "sha256": "60fc38b8afe798092b5cb77efbdb4640cd0e340fac8c594e39c1e334e462cecc",
+      "columns": [
+        "id",
+        "pilot_name",
+        "certificate_goal",
+        "current_focus",
+        "current_milestone_id",
+        "created_at",
+        "updated_at",
+        "flight_school",
+        "instructor_name",
+        "home_airport",
+        "aircraft_type",
+        "training_started_on",
+        "medical_expiry",
+        "accent_color",
+        "why_note",
+        "photo"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "milestones": {
+      "rowCount": 9,
+      "sha256": "73b13df63775eddadb9b0deccdc3664f9d34585c4664aff064d6c45602bfaa0d",
+      "columns": [
+        "id",
+        "title",
+        "description",
+        "position",
+        "status",
+        "target_date",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "goals": {
+      "rowCount": 9,
+      "sha256": "a94eb3eea19e07fe2f16b5dc838d0d6257f3b81ae9d3516b746988ac4220d6a3",
+      "columns": [
+        "id",
+        "milestone_id",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "target_date",
+        "notes",
+        "confidence",
+        "created_at",
+        "updated_at",
+        "completed_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "goal_checklist_items": {
+      "rowCount": 36,
+      "sha256": "ebaad902d109207f1c2ce439ea29412cd374831afeeccf3fcf62bbd686df1cdd",
+      "columns": [
+        "id",
+        "goal_id",
+        "title",
+        "done",
+        "position",
+        "created_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "schedule_events": {
+      "rowCount": 0,
+      "sha256": "0e72ab5f08ecb4b486d1e5702ef8f8b7ccbd317f28048e5a32a8ded8d65966f9",
+      "columns": [
+        "id",
+        "title",
+        "event_type",
+        "date",
+        "start_time",
+        "end_time",
+        "location",
+        "instructor",
+        "notes",
+        "goal_id",
+        "estimated_cost",
+        "actual_cost",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "event_prep_items": {
+      "rowCount": 0,
+      "sha256": "5e9e7b41ea9fc824aa7560087b9fb7a8b557ab51414ee7b6bb75c7b50d8e175f",
+      "columns": [
+        "id",
+        "event_id",
+        "title",
+        "done",
+        "position",
+        "created_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "event_materials": {
+      "rowCount": 0,
+      "sha256": "4e0d621454dd5a5deba8852d030dd0514b7e04cb4d85a1a1bd602ef549122095",
+      "columns": [
+        "event_id",
+        "material_id"
+      ],
+      "primaryKey": [
+        "event_id",
+        "material_id"
+      ]
+    },
+    "next_actions": {
+      "rowCount": 0,
+      "sha256": "6db6b2cf81855ab5c0b554d19f381eb21c4e0b76eaccf7efd168afa75445e8a6",
+      "columns": [
+        "id",
+        "title",
+        "description",
+        "category",
+        "priority",
+        "status",
+        "due_date",
+        "estimated_minutes",
+        "related_type",
+        "related_id",
+        "created_at",
+        "updated_at",
+        "completed_at",
+        "material_id",
+        "source_material_id"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "journal_entries": {
+      "rowCount": 0,
+      "sha256": "c0d1dad575100a12b0ba5f93229dd74fa9a3d25722cc03f7b71c74832c40bc80",
+      "columns": [
+        "id",
+        "event_id",
+        "date",
+        "title",
+        "mission",
+        "practiced",
+        "went_well",
+        "was_difficult",
+        "instructor_feedback",
+        "questions_for_next_time",
+        "confidence",
+        "goal_id",
+        "created_at",
+        "updated_at",
+        "aircraft_type",
+        "aircraft_id",
+        "departure_airport",
+        "arrival_airport",
+        "instructor_name",
+        "total_time",
+        "dual_received",
+        "solo_time",
+        "pic_time",
+        "cross_country_time",
+        "night_time",
+        "actual_instrument_time",
+        "simulated_instrument_time",
+        "day_landings",
+        "night_landings"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "journal_materials": {
+      "rowCount": 0,
+      "sha256": "699d439597bdc4ecb5b2c87aeb433dba83e1356d1e9a41505d2d9cf6f34c3389",
+      "columns": [
+        "journal_id",
+        "material_id"
+      ],
+      "primaryKey": [
+        "journal_id",
+        "material_id"
+      ]
+    },
+    "questions": {
+      "rowCount": 0,
+      "sha256": "3b30bee1b74a3d7468a373c72c74b2ea419d2e8ca6c805cd5439964da6f8afa8",
+      "columns": [
+        "id",
+        "text",
+        "topic",
+        "event_id",
+        "material_id",
+        "journal_id",
+        "status",
+        "answer",
+        "created_at",
+        "updated_at",
+        "answered_at",
+        "source_journal_id",
+        "source_material_id",
+        "source_event_id"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "transactions": {
+      "rowCount": 0,
+      "sha256": "1d6c7ed06982bbbbcc61e87d2fa03949a8fb0404bb3d2855a5518ddb8213fecd",
+      "columns": [
+        "id",
+        "type",
+        "amount",
+        "date",
+        "category",
+        "description",
+        "notes",
+        "event_id",
+        "goal_id",
+        "source",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "fund_goals": {
+      "rowCount": 0,
+      "sha256": "2f05bdb84fef46454ed94819d08d72fec30bd16a1ced73b56b495ea74f33774f",
+      "columns": [
+        "id",
+        "title",
+        "target",
+        "active",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "app_metadata": {
+      "rowCount": 5,
+      "sha256": "7b0f0aa4093fe2d6b4f72c81bbc23894cd0c003b48edf2bc3eb43ba019acae4d",
+      "columns": [
+        "key",
+        "value"
+      ],
+      "primaryKey": [
+        "key"
+      ]
+    },
+    "pilot_toolkit": {
+      "rowCount": 0,
+      "sha256": "16faef0655bd472ea6073319cb37475b8552ab50f5889ff3685c1010fc992a17",
+      "columns": [
+        "id",
+        "state_json",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    },
+    "ai_study_sets": {
+      "rowCount": 1,
+      "sha256": "e40bd69c1cb7187f98a4934ae1203a14ae1b8f1955d2bf3d46a9fa37cc9c8929",
+      "columns": [
+        "source_material_id",
+        "title",
+        "summary",
+        "sections_json",
+        "flashcards_json",
+        "source_notes",
+        "provider",
+        "model",
+        "generated_at",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "source_material_id"
+      ]
+    },
+    "notes": {
+      "rowCount": 0,
+      "sha256": "93714ab7ad6bab83b4c2a5aa90a5d8709fd9613679b97a36859b61708e6e1473",
+      "columns": [
+        "id",
+        "title",
+        "body",
+        "pinned",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "id"
+      ]
+    }
+  },
+  "schema13Tables": {
+    "material_split_lineage": {
+      "absent": false,
+      "rowCount": 0,
+      "sha256": "3af3178b8e471ed38944bf4c7beda47c842f770d3c3a9370d5578f945c13e1c6",
+      "columns": [
+        "material_id",
+        "parent_material_id",
+        "root_material_id",
+        "source_page_start",
+        "source_page_end",
+        "parent_page_start",
+        "parent_page_end",
+        "child_page_count",
+        "source_file_name",
+        "source_title",
+        "source_content_sha256",
+        "source_total_pages",
+        "parent_file_name",
+        "parent_title",
+        "parent_content_sha256",
+        "parent_total_pages",
+        "nested_level",
+        "created_at"
+      ],
+      "primaryKey": [
+        "material_id"
+      ]
+    },
+    "split_operation_log": {
+      "absent": false,
+      "rowCount": 0,
+      "sha256": "6c737a49d40b7c3f132c2d8b026c993a86152091deff911ef1b29331ad81be70",
+      "columns": [
+        "operation_id",
+        "source_material_id",
+        "receipt_canonical_json",
+        "receipt_hash",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": [
+        "operation_id"
+      ]
+    }
+  },
+  "inventory": {
+    "retainedTables": [
+      "ai_study_sets",
+      "app_metadata",
+      "card_items",
+      "card_review_events",
+      "card_review_generations",
+      "card_review_operations",
+      "card_review_state",
+      "card_versions",
+      "debrief_operations",
+      "event_materials",
+      "event_prep_items",
+      "fund_goals",
+      "goal_checklist_items",
+      "goals",
+      "journal_entries",
+      "journal_materials",
+      "material_tags",
+      "milestones",
+      "next_actions",
+      "notes",
+      "pilot_toolkit",
+      "practice_attempts",
+      "practice_responses",
+      "practice_session_operations",
+      "practice_test_items",
+      "practice_test_versions",
+      "practice_tests",
+      "questions",
+      "schedule_events",
+      "settings",
+      "study_materials",
+      "tags",
+      "transactions"
+    ],
+    "schema13Tables": [
+      "material_split_lineage",
+      "split_operation_log"
+    ],
+    "presentRetained": [
+      "ai_study_sets",
+      "app_metadata",
+      "card_items",
+      "card_review_events",
+      "card_review_generations",
+      "card_review_operations",
+      "card_review_state",
+      "card_versions",
+      "debrief_operations",
+      "event_materials",
+      "event_prep_items",
+      "fund_goals",
+      "goal_checklist_items",
+      "goals",
+      "journal_entries",
+      "journal_materials",
+      "material_tags",
+      "milestones",
+      "next_actions",
+      "notes",
+      "pilot_toolkit",
+      "practice_attempts",
+      "practice_responses",
+      "practice_session_operations",
+      "practice_test_items",
+      "practice_test_versions",
+      "practice_tests",
+      "questions",
+      "schedule_events",
+      "settings",
+      "study_materials",
+      "tags",
+      "transactions"
+    ],
+    "missingRetained": [],
+    "databaseTables": [
+      "_sqlx_migrations",
+      "ai_study_sets",
+      "app_metadata",
+      "card_items",
+      "card_review_events",
+      "card_review_generations",
+      "card_review_operations",
+      "card_review_state",
+      "card_versions",
+      "debrief_operations",
+      "event_materials",
+      "event_prep_items",
+      "fund_goals",
+      "goal_checklist_items",
+      "goals",
+      "journal_entries",
+      "journal_materials",
+      "material_split_lineage",
+      "material_tags",
+      "milestones",
+      "next_actions",
+      "notes",
+      "pilot_toolkit",
+      "practice_attempts",
+      "practice_responses",
+      "practice_session_operations",
+      "practice_test_items",
+      "practice_test_versions",
+      "practice_tests",
+      "questions",
+      "schedule_events",
+      "settings",
+      "split_operation_log",
+      "study_materials",
+      "tags",
+      "transactions"
+    ],
+    "unexpectedTables": [],
+    "complete": true
+  },
+  "schemaObjects": {
+    "count": 80,
+    "names": [
+      "_sqlx_migrations",
+      "ai_study_sets",
+      "app_metadata",
+      "card_items",
+      "card_review_events",
+      "card_review_generations",
+      "card_review_operations",
+      "card_review_state",
+      "card_versions",
+      "debrief_operations",
+      "event_materials",
+      "event_prep_items",
+      "fund_goals",
+      "goal_checklist_items",
+      "goals",
+      "idx_actions_due",
+      "idx_actions_material",
+      "idx_actions_related",
+      "idx_actions_status",
+      "idx_card_events_item",
+      "idx_card_ops_material",
+      "idx_card_state_due",
+      "idx_checklist_goal",
+      "idx_events_date",
+      "idx_events_status",
+      "idx_goals_milestone",
+      "idx_goals_status",
+      "idx_journal_date",
+      "idx_materials_goal",
+      "idx_materials_status",
+      "idx_materials_topic",
+      "idx_notes_pinned_updated",
+      "idx_practice_attempts_material",
+      "idx_practice_attempts_version",
+      "idx_practice_items_version",
+      "idx_practice_ops_attempt",
+      "idx_practice_ops_history",
+      "idx_practice_responses_attempt",
+      "idx_practice_versions_history",
+      "idx_prep_event",
+      "idx_questions_status",
+      "idx_split_lineage_parent",
+      "idx_split_lineage_root",
+      "idx_split_operation_source",
+      "idx_split_operation_status",
+      "idx_transactions_date",
+      "idx_transactions_one_lesson_cost",
+      "idx_transactions_type",
+      "journal_entries",
+      "journal_materials",
+      "material_split_lineage",
+      "material_tags",
+      "milestones",
+      "next_actions",
+      "notes",
+      "pilot_toolkit",
+      "practice_attempts",
+      "practice_responses",
+      "practice_session_operations",
+      "practice_test_items",
+      "practice_test_versions",
+      "practice_tests",
+      "questions",
+      "schedule_events",
+      "settings",
+      "split_operation_log",
+      "study_materials",
+      "tags",
+      "transactions",
+      "trg_card_ops_material_delete",
+      "trg_cleanup_material_delete",
+      "trg_enforce_response_item_version_insert",
+      "trg_enforce_response_item_version_update",
+      "trg_event_delete_questions",
+      "trg_journal_delete_questions",
+      "trg_material_delete_actions",
+      "trg_material_delete_questions",
+      "uq_active_card_version",
+      "uq_active_practice_version",
+      "uq_single_in_progress_attempt"
+    ],
+    "digest": "680c1888d6dcdb212c5adcde9c190347da6e3a5536dcac85ea13190908b867b8",
+    "objects": [
+      {
+        "type": "index",
+        "name": "idx_actions_due",
+        "sql": "CREATE INDEX idx_actions_due ON next_actions(due_date)"
+      },
+      {
+        "type": "index",
+        "name": "idx_actions_material",
+        "sql": "CREATE INDEX idx_actions_material ON next_actions(material_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_actions_related",
+        "sql": "CREATE INDEX idx_actions_related ON next_actions(related_type, related_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_actions_status",
+        "sql": "CREATE INDEX idx_actions_status ON next_actions(status)"
+      },
+      {
+        "type": "index",
+        "name": "idx_card_events_item",
+        "sql": "CREATE INDEX idx_card_events_item\n    ON card_review_events(item_id, reviewed_at)"
+      },
+      {
+        "type": "index",
+        "name": "idx_card_ops_material",
+        "sql": "CREATE INDEX idx_card_ops_material\n    ON card_review_operations(source_material_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_card_state_due",
+        "sql": "CREATE INDEX idx_card_state_due\n    ON card_review_state(source_material_id, suspended, due_at)"
+      },
+      {
+        "type": "index",
+        "name": "idx_checklist_goal",
+        "sql": "CREATE INDEX idx_checklist_goal ON goal_checklist_items(goal_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_events_date",
+        "sql": "CREATE INDEX idx_events_date ON schedule_events(date)"
+      },
+      {
+        "type": "index",
+        "name": "idx_events_status",
+        "sql": "CREATE INDEX idx_events_status ON schedule_events(status)"
+      },
+      {
+        "type": "index",
+        "name": "idx_goals_milestone",
+        "sql": "CREATE INDEX idx_goals_milestone ON goals(milestone_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_goals_status",
+        "sql": "CREATE INDEX idx_goals_status ON goals(status)"
+      },
+      {
+        "type": "index",
+        "name": "idx_journal_date",
+        "sql": "CREATE INDEX idx_journal_date ON journal_entries(date)"
+      },
+      {
+        "type": "index",
+        "name": "idx_materials_goal",
+        "sql": "CREATE INDEX idx_materials_goal ON study_materials(goal_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_materials_status",
+        "sql": "CREATE INDEX idx_materials_status ON study_materials(review_status)"
+      },
+      {
+        "type": "index",
+        "name": "idx_materials_topic",
+        "sql": "CREATE INDEX idx_materials_topic ON study_materials(topic)"
+      },
+      {
+        "type": "index",
+        "name": "idx_notes_pinned_updated",
+        "sql": "CREATE INDEX idx_notes_pinned_updated ON notes(pinned DESC, updated_at DESC)"
+      },
+      {
+        "type": "index",
+        "name": "idx_practice_attempts_material",
+        "sql": "CREATE INDEX idx_practice_attempts_material\n    ON practice_attempts(source_material_id, status)"
+      },
+      {
+        "type": "index",
+        "name": "idx_practice_attempts_version",
+        "sql": "CREATE INDEX idx_practice_attempts_version\n    ON practice_attempts(version_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_practice_items_version",
+        "sql": "CREATE INDEX idx_practice_items_version\n    ON practice_test_items(version_id, ordinal)"
+      },
+      {
+        "type": "index",
+        "name": "idx_practice_ops_attempt",
+        "sql": "CREATE INDEX idx_practice_ops_attempt\n    ON practice_session_operations(attempt_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_practice_ops_history",
+        "sql": "CREATE INDEX idx_practice_ops_history\n    ON practice_session_operations(history_key)"
+      },
+      {
+        "type": "index",
+        "name": "idx_practice_responses_attempt",
+        "sql": "CREATE INDEX idx_practice_responses_attempt\n    ON practice_responses(attempt_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_practice_versions_history",
+        "sql": "CREATE INDEX idx_practice_versions_history\n    ON practice_test_versions(history_key)"
+      },
+      {
+        "type": "index",
+        "name": "idx_prep_event",
+        "sql": "CREATE INDEX idx_prep_event ON event_prep_items(event_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_questions_status",
+        "sql": "CREATE INDEX idx_questions_status ON questions(status)"
+      },
+      {
+        "type": "index",
+        "name": "idx_split_lineage_parent",
+        "sql": "CREATE INDEX idx_split_lineage_parent ON material_split_lineage(parent_material_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_split_lineage_root",
+        "sql": "CREATE INDEX idx_split_lineage_root ON material_split_lineage(root_material_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_split_operation_source",
+        "sql": "CREATE INDEX idx_split_operation_source ON split_operation_log(source_material_id)"
+      },
+      {
+        "type": "index",
+        "name": "idx_split_operation_status",
+        "sql": "CREATE INDEX idx_split_operation_status ON split_operation_log(status)"
+      },
+      {
+        "type": "index",
+        "name": "idx_transactions_date",
+        "sql": "CREATE INDEX idx_transactions_date ON transactions(date)"
+      },
+      {
+        "type": "index",
+        "name": "idx_transactions_one_lesson_cost",
+        "sql": "CREATE UNIQUE INDEX idx_transactions_one_lesson_cost\n  ON transactions(event_id)\n  WHERE source = 'lesson_cost' AND event_id IS NOT NULL"
+      },
+      {
+        "type": "index",
+        "name": "idx_transactions_type",
+        "sql": "CREATE INDEX idx_transactions_type ON transactions(type)"
+      },
+      {
+        "type": "index",
+        "name": "uq_active_card_version",
+        "sql": "CREATE UNIQUE INDEX uq_active_card_version\n    ON card_versions(source_material_id)\n    WHERE is_active = 1"
+      },
+      {
+        "type": "index",
+        "name": "uq_active_practice_version",
+        "sql": "CREATE UNIQUE INDEX uq_active_practice_version\n    ON practice_test_versions(source_material_id)\n    WHERE is_active = 1 AND source_material_id IS NOT NULL"
+      },
+      {
+        "type": "index",
+        "name": "uq_single_in_progress_attempt",
+        "sql": "CREATE UNIQUE INDEX uq_single_in_progress_attempt\n    ON practice_attempts(source_material_id)\n    WHERE status = 'in_progress' AND source_material_id IS NOT NULL"
+      },
+      {
+        "type": "table",
+        "name": "_sqlx_migrations",
+        "sql": "CREATE TABLE _sqlx_migrations (\n    version BIGINT PRIMARY KEY,\n    description TEXT NOT NULL,\n    installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    success BOOLEAN NOT NULL,\n    checksum BLOB NOT NULL,\n    execution_time BIGINT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "ai_study_sets",
+        "sql": "CREATE TABLE ai_study_sets (\n  source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n  title              TEXT NOT NULL DEFAULT '',\n  summary            TEXT NOT NULL DEFAULT '',\n  sections_json      TEXT NOT NULL DEFAULT '[]',\n  flashcards_json    TEXT NOT NULL DEFAULT '[]',\n  source_notes       TEXT NOT NULL DEFAULT '',\n  provider           TEXT NOT NULL DEFAULT 'gemini',\n  model              TEXT NOT NULL DEFAULT '',\n  generated_at       TEXT NOT NULL,\n  updated_at         TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "app_metadata",
+        "sql": "CREATE TABLE app_metadata (\n  key   TEXT PRIMARY KEY,\n  value TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "card_items",
+        "sql": "CREATE TABLE card_items (\n    id          TEXT PRIMARY KEY,\n    version_id  TEXT NOT NULL REFERENCES card_versions(id) ON DELETE CASCADE,\n    ordinal     INTEGER NOT NULL CHECK (ordinal >= 0),\n    front       TEXT NOT NULL,\n    back        TEXT NOT NULL,\n    source_page INTEGER,\n    UNIQUE (version_id, ordinal)\n)"
+      },
+      {
+        "type": "table",
+        "name": "card_review_events",
+        "sql": "CREATE TABLE card_review_events (\n    id                TEXT PRIMARY KEY,\n    item_id           TEXT NOT NULL REFERENCES card_items(id) ON DELETE CASCADE,\n    generation        INTEGER NOT NULL CHECK (generation >= 0),\n    rating            TEXT NOT NULL CHECK (rating IN ('again', 'hard', 'good', 'easy')),\n    reviewed_at       TEXT NOT NULL,\n    scheduler_version TEXT NOT NULL,\n    prior_state_json  TEXT NOT NULL,\n    next_state_json   TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "card_review_generations",
+        "sql": "CREATE TABLE card_review_generations (\n    source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n    generation         INTEGER NOT NULL CHECK (generation >= 0)\n)"
+      },
+      {
+        "type": "table",
+        "name": "card_review_operations",
+        "sql": "CREATE TABLE card_review_operations (\n    operation_id       TEXT PRIMARY KEY,\n    action             TEXT NOT NULL CHECK (action IN ('rate', 'suspend', 'resume', 'flag', 'unflag', 'reset')),\n    source_material_id TEXT NOT NULL,\n    generation         INTEGER NOT NULL CHECK (generation >= 0),\n    request_hash       TEXT NOT NULL,\n    applied_at         TEXT NOT NULL,\n    is_erased          INTEGER NOT NULL DEFAULT 0 CHECK (is_erased IN (0, 1)),\n    result_json        TEXT,\n    CHECK ((is_erased = 1) = (result_json IS NULL))\n)"
+      },
+      {
+        "type": "table",
+        "name": "card_review_state",
+        "sql": "CREATE TABLE card_review_state (\n    item_id            TEXT PRIMARY KEY REFERENCES card_items(id) ON DELETE CASCADE,\n    source_material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n    scheduler_version  TEXT NOT NULL,\n    step               INTEGER NOT NULL CHECK (step BETWEEN -1 AND 7),\n    due_at             TEXT,\n    last_reviewed_at   TEXT,\n    reps               INTEGER NOT NULL DEFAULT 0 CHECK (reps >= 0),\n    lapses             INTEGER NOT NULL DEFAULT 0 CHECK (lapses >= 0),\n    suspended          INTEGER NOT NULL DEFAULT 0 CHECK (suspended IN (0, 1)),\n    flag               TEXT CHECK (flag IN ('wrong_answer', 'unclear', 'not_in_source')),\n    revision           INTEGER NOT NULL CHECK (revision >= 1),\n    CHECK ((due_at IS NULL) = (last_reviewed_at IS NULL)),\n    CHECK (due_at IS NOT NULL OR (reps = 0 AND step = -1))\n)"
+      },
+      {
+        "type": "table",
+        "name": "card_versions",
+        "sql": "CREATE TABLE card_versions (\n    id                 TEXT PRIMARY KEY,\n    source_material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n    content_hash       TEXT NOT NULL,\n    card_count         INTEGER NOT NULL CHECK (card_count BETWEEN 1 AND 500),\n    provider           TEXT NOT NULL CHECK (provider IN ('gemini', 'import')),\n    created_at         TEXT NOT NULL,\n    first_reviewed_at  TEXT,\n    is_active          INTEGER NOT NULL CHECK (is_active IN (0, 1)),\n    UNIQUE (source_material_id, content_hash)\n)"
+      },
+      {
+        "type": "table",
+        "name": "debrief_operations",
+        "sql": "CREATE TABLE debrief_operations (\n    id         TEXT PRIMARY KEY,\n    journal_id TEXT NOT NULL,\n    applied_at TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "event_materials",
+        "sql": "CREATE TABLE event_materials (\n  event_id    TEXT NOT NULL REFERENCES schedule_events(id) ON DELETE CASCADE,\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  PRIMARY KEY (event_id, material_id)\n)"
+      },
+      {
+        "type": "table",
+        "name": "event_prep_items",
+        "sql": "CREATE TABLE event_prep_items (\n  id         TEXT PRIMARY KEY,\n  event_id   TEXT NOT NULL REFERENCES schedule_events(id) ON DELETE CASCADE,\n  title      TEXT NOT NULL,\n  done       INTEGER NOT NULL DEFAULT 0,\n  position   INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "fund_goals",
+        "sql": "CREATE TABLE fund_goals (\n  id         TEXT PRIMARY KEY,\n  title      TEXT NOT NULL,\n  target     INTEGER NOT NULL,\n  active     INTEGER NOT NULL DEFAULT 1,\n  created_at TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "goal_checklist_items",
+        "sql": "CREATE TABLE goal_checklist_items (\n  id         TEXT PRIMARY KEY,\n  goal_id    TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,\n  title      TEXT NOT NULL,\n  done       INTEGER NOT NULL DEFAULT 0,\n  position   INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "goals",
+        "sql": "CREATE TABLE goals (\n  id           TEXT PRIMARY KEY,\n  milestone_id TEXT REFERENCES milestones(id) ON DELETE SET NULL,\n  title        TEXT NOT NULL,\n  description  TEXT NOT NULL DEFAULT '',\n  status       TEXT NOT NULL DEFAULT 'not_started',\n  priority     TEXT NOT NULL DEFAULT 'important',\n  target_date  TEXT,\n  notes        TEXT NOT NULL DEFAULT '',\n  confidence   INTEGER,\n  created_at   TEXT NOT NULL,\n  updated_at   TEXT NOT NULL,\n  completed_at TEXT\n)"
+      },
+      {
+        "type": "table",
+        "name": "journal_entries",
+        "sql": "CREATE TABLE journal_entries (\n  id                      TEXT PRIMARY KEY,\n  event_id                TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  date                    TEXT NOT NULL,\n  title                   TEXT NOT NULL DEFAULT '',\n  mission                 TEXT NOT NULL DEFAULT '',\n  practiced               TEXT NOT NULL DEFAULT '',\n  went_well               TEXT NOT NULL DEFAULT '',\n  was_difficult           TEXT NOT NULL DEFAULT '',\n  instructor_feedback     TEXT NOT NULL DEFAULT '',\n  questions_for_next_time TEXT NOT NULL DEFAULT '',\n  confidence              INTEGER,\n  goal_id                 TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  created_at              TEXT NOT NULL,\n  updated_at              TEXT NOT NULL\n, aircraft_type TEXT NOT NULL DEFAULT '', aircraft_id TEXT NOT NULL DEFAULT '', departure_airport TEXT NOT NULL DEFAULT '', arrival_airport TEXT NOT NULL DEFAULT '', instructor_name TEXT NOT NULL DEFAULT '', total_time REAL, dual_received REAL, solo_time REAL, pic_time REAL, cross_country_time REAL, night_time REAL, actual_instrument_time REAL, simulated_instrument_time REAL, day_landings INTEGER, night_landings INTEGER)"
+      },
+      {
+        "type": "table",
+        "name": "journal_materials",
+        "sql": "CREATE TABLE journal_materials (\n  journal_id  TEXT NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  PRIMARY KEY (journal_id, material_id)\n)"
+      },
+      {
+        "type": "table",
+        "name": "material_split_lineage",
+        "sql": "CREATE TABLE material_split_lineage (\n  material_id            TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  parent_material_id     TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  root_material_id       TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  source_page_start      INTEGER NOT NULL CHECK (TYPEOF(source_page_start) = 'integer' AND source_page_start >= 1),\n  source_page_end        INTEGER NOT NULL CHECK (TYPEOF(source_page_end) = 'integer' AND source_page_end >= source_page_start),\n  parent_page_start      INTEGER CHECK (parent_page_start IS NULL OR (TYPEOF(parent_page_start) = 'integer' AND parent_page_start >= 1)),\n  parent_page_end        INTEGER CHECK (parent_page_end IS NULL OR (TYPEOF(parent_page_end) = 'integer' AND parent_page_end >= parent_page_start)),\n  child_page_count       INTEGER NOT NULL CHECK (TYPEOF(child_page_count) = 'integer' AND child_page_count >= 1),\n  source_file_name       TEXT NOT NULL,\n  source_title           TEXT NOT NULL,\n  source_content_sha256  TEXT,\n  source_total_pages     INTEGER CHECK (source_total_pages IS NULL OR (TYPEOF(source_total_pages) = 'integer' AND source_total_pages >= source_page_end)),\n  parent_file_name       TEXT,\n  parent_title           TEXT,\n  parent_content_sha256  TEXT,\n  parent_total_pages     INTEGER CHECK (parent_total_pages IS NULL OR (TYPEOF(parent_total_pages) = 'integer' AND (parent_page_end IS NULL OR parent_total_pages >= parent_page_end))),\n  nested_level           INTEGER NOT NULL DEFAULT 1 CHECK (TYPEOF(nested_level) = 'integer' AND nested_level >= 1),\n  created_at             TEXT NOT NULL,\n  CHECK (material_id != parent_material_id),\n  CHECK (material_id != root_material_id),\n  CHECK (child_page_count = (source_page_end - source_page_start + 1)),\n  CHECK (parent_page_start IS NULL OR child_page_count = (parent_page_end - parent_page_start + 1)),\n  CHECK ((parent_page_start IS NULL AND parent_page_end IS NULL) OR (parent_page_start IS NOT NULL AND parent_page_end IS NOT NULL)),\n  CHECK (\n    (nested_level = 1 AND parent_page_start IS NULL AND parent_page_end IS NULL AND parent_total_pages IS NULL)\n    OR\n    (nested_level > 1 AND parent_page_start IS NOT NULL AND parent_page_end IS NOT NULL AND parent_total_pages IS NOT NULL)\n  )\n)"
+      },
+      {
+        "type": "table",
+        "name": "material_tags",
+        "sql": "CREATE TABLE material_tags (\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  tag_id      TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n  PRIMARY KEY (material_id, tag_id)\n)"
+      },
+      {
+        "type": "table",
+        "name": "milestones",
+        "sql": "CREATE TABLE milestones (\n  id          TEXT PRIMARY KEY,\n  title       TEXT NOT NULL,\n  description TEXT NOT NULL DEFAULT '',\n  position    INTEGER NOT NULL DEFAULT 0,\n  status      TEXT NOT NULL DEFAULT 'not_started',\n  target_date TEXT,\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "next_actions",
+        "sql": "CREATE TABLE next_actions (\n  id                TEXT PRIMARY KEY,\n  title             TEXT NOT NULL,\n  description       TEXT NOT NULL DEFAULT '',\n  category          TEXT NOT NULL DEFAULT 'prepare',\n  priority          TEXT NOT NULL DEFAULT 'important',\n  status            TEXT NOT NULL DEFAULT 'open',\n  due_date          TEXT,\n  estimated_minutes INTEGER,\n  related_type      TEXT,\n  related_id        TEXT,\n  created_at        TEXT NOT NULL,\n  updated_at        TEXT NOT NULL,\n  completed_at      TEXT\n, material_id TEXT REFERENCES study_materials(id) ON DELETE SET NULL, source_material_id TEXT)"
+      },
+      {
+        "type": "table",
+        "name": "notes",
+        "sql": "CREATE TABLE notes (\n  id         TEXT PRIMARY KEY,\n  title      TEXT NOT NULL DEFAULT '',\n  body       TEXT NOT NULL DEFAULT '',\n  pinned     INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "pilot_toolkit",
+        "sql": "CREATE TABLE pilot_toolkit (\n  id TEXT PRIMARY KEY CHECK (id = 'toolkit'),\n  state_json TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "practice_attempts",
+        "sql": "CREATE TABLE practice_attempts (\n    id                    TEXT PRIMARY KEY,\n    version_id            TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE RESTRICT,\n    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n    source_material_title TEXT NOT NULL,\n    started_at            TEXT NOT NULL,\n    completed_at          TEXT,\n    status                TEXT NOT NULL CHECK (status IN ('in_progress', 'completed', 'abandoned')),\n    revision              INTEGER NOT NULL DEFAULT 0 CHECK (revision >= 0),\n    total_questions       INTEGER NOT NULL,\n    answered_count        INTEGER NOT NULL DEFAULT 0,\n    correct_count         INTEGER NOT NULL DEFAULT 0,\n    incorrect_count       INTEGER NOT NULL DEFAULT 0,\n    dont_know_count       INTEGER NOT NULL DEFAULT 0,\n    score_percent         REAL\n)"
+      },
+      {
+        "type": "table",
+        "name": "practice_responses",
+        "sql": "CREATE TABLE practice_responses (\n    id             TEXT PRIMARY KEY,\n    attempt_id     TEXT NOT NULL REFERENCES practice_attempts(id) ON DELETE CASCADE,\n    item_id        TEXT NOT NULL REFERENCES practice_test_items(id) ON DELETE CASCADE,\n    selected_index INTEGER,\n    is_dont_know   INTEGER NOT NULL DEFAULT 0 CHECK (is_dont_know IN (0, 1)),\n    is_correct     INTEGER NOT NULL DEFAULT 0 CHECK (is_correct IN (0, 1)),\n    answered_at    TEXT NOT NULL,\n    UNIQUE(attempt_id, item_id),\n    CHECK (\n        (is_dont_know = 1 AND selected_index IS NULL) OR\n        (is_dont_know = 0 AND selected_index IS NOT NULL AND selected_index >= 0)\n    )\n)"
+      },
+      {
+        "type": "table",
+        "name": "practice_session_operations",
+        "sql": "CREATE TABLE practice_session_operations (\n    operation_id   TEXT PRIMARY KEY,\n    action         TEXT NOT NULL,\n    request_hash   TEXT NOT NULL,\n    applied_at     TEXT NOT NULL,\n    result_json    TEXT NOT NULL,\n    history_key    TEXT NOT NULL,\n    attempt_id     TEXT NOT NULL,\n    is_erased      INTEGER NOT NULL DEFAULT 0 CHECK (is_erased IN (0, 1))\n)"
+      },
+      {
+        "type": "table",
+        "name": "practice_test_items",
+        "sql": "CREATE TABLE practice_test_items (\n    id            TEXT PRIMARY KEY,\n    version_id    TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE CASCADE,\n    ordinal       INTEGER NOT NULL,\n    question_text TEXT NOT NULL,\n    options_json  TEXT NOT NULL,\n    correct_index INTEGER NOT NULL,\n    explanation   TEXT NOT NULL DEFAULT '',\n    source_page   INTEGER,\n    UNIQUE(version_id, ordinal)\n)"
+      },
+      {
+        "type": "table",
+        "name": "practice_test_versions",
+        "sql": "CREATE TABLE practice_test_versions (\n    id                    TEXT PRIMARY KEY,\n    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n    history_key           TEXT NOT NULL,\n    source_material_title TEXT NOT NULL,\n    version_number        INTEGER NOT NULL DEFAULT 1,\n    provider              TEXT NOT NULL DEFAULT 'gemini',\n    model                 TEXT NOT NULL DEFAULT '',\n    title                 TEXT NOT NULL DEFAULT '',\n    content_hash          TEXT NOT NULL,\n    created_at            TEXT NOT NULL,\n    is_active             INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1))\n)"
+      },
+      {
+        "type": "table",
+        "name": "practice_tests",
+        "sql": "CREATE TABLE practice_tests (\n  source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n  title               TEXT NOT NULL DEFAULT '',\n  questions_json      TEXT NOT NULL DEFAULT '[]',\n  provider            TEXT NOT NULL DEFAULT 'gemini',\n  model               TEXT NOT NULL DEFAULT '',\n  generated_at        TEXT NOT NULL,\n  updated_at          TEXT NOT NULL\n, legacy_migrated_at TEXT, legacy_error TEXT)"
+      },
+      {
+        "type": "table",
+        "name": "questions",
+        "sql": "CREATE TABLE questions (\n  id          TEXT PRIMARY KEY,\n  text        TEXT NOT NULL,\n  topic       TEXT NOT NULL DEFAULT 'general',\n  event_id    TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  material_id TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  journal_id  TEXT REFERENCES journal_entries(id) ON DELETE SET NULL,\n  status      TEXT NOT NULL DEFAULT 'to_ask',\n  answer      TEXT NOT NULL DEFAULT '',\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL,\n  answered_at TEXT\n, source_journal_id TEXT, source_material_id TEXT, source_event_id TEXT)"
+      },
+      {
+        "type": "table",
+        "name": "schedule_events",
+        "sql": "CREATE TABLE schedule_events (\n  id             TEXT PRIMARY KEY,\n  title          TEXT NOT NULL,\n  event_type     TEXT NOT NULL DEFAULT 'flight_lesson',\n  date           TEXT NOT NULL,\n  start_time     TEXT,\n  end_time       TEXT,\n  location       TEXT NOT NULL DEFAULT '',\n  instructor     TEXT NOT NULL DEFAULT '',\n  notes          TEXT NOT NULL DEFAULT '',\n  goal_id        TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  estimated_cost INTEGER,\n  actual_cost    INTEGER,\n  status         TEXT NOT NULL DEFAULT 'scheduled',\n  created_at     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "settings",
+        "sql": "CREATE TABLE settings (\n  id                   TEXT PRIMARY KEY,\n  pilot_name           TEXT NOT NULL DEFAULT '',\n  certificate_goal     TEXT NOT NULL DEFAULT 'Private Pilot',\n  current_focus        TEXT NOT NULL DEFAULT '',\n  current_milestone_id TEXT,\n  created_at           TEXT NOT NULL,\n  updated_at           TEXT NOT NULL\n, flight_school       TEXT NOT NULL DEFAULT '', instructor_name     TEXT NOT NULL DEFAULT '', home_airport        TEXT NOT NULL DEFAULT '', aircraft_type       TEXT NOT NULL DEFAULT '', training_started_on TEXT, medical_expiry      TEXT, accent_color        TEXT NOT NULL DEFAULT 'berry', why_note TEXT NOT NULL DEFAULT '', photo    TEXT)"
+      },
+      {
+        "type": "table",
+        "name": "split_operation_log",
+        "sql": "CREATE TABLE split_operation_log (\n  operation_id           TEXT PRIMARY KEY NOT NULL,\n  source_material_id     TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  receipt_canonical_json TEXT NOT NULL,\n  receipt_hash           TEXT NOT NULL,\n  status                 TEXT NOT NULL CHECK (status IN ('pending', 'committed', 'cancelled')),\n  created_at             TEXT NOT NULL,\n  updated_at             TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "study_materials",
+        "sql": "CREATE TABLE study_materials (\n  id                 TEXT PRIMARY KEY,\n  title              TEXT NOT NULL,\n  material_type      TEXT NOT NULL DEFAULT 'study_guide',\n  topic              TEXT NOT NULL DEFAULT 'general',\n  review_status      TEXT NOT NULL DEFAULT 'needs_review',\n  priority           TEXT NOT NULL DEFAULT 'later',\n  goal_id            TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  event_id           TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  notes              TEXT NOT NULL DEFAULT '',\n  file_path          TEXT,\n  original_file_name TEXT,\n  file_size          INTEGER,\n  created_at         TEXT NOT NULL,\n  updated_at         TEXT NOT NULL,\n  last_reviewed_at   TEXT\n)"
+      },
+      {
+        "type": "table",
+        "name": "tags",
+        "sql": "CREATE TABLE tags (\n  id         TEXT PRIMARY KEY,\n  name       TEXT NOT NULL UNIQUE,\n  created_at TEXT NOT NULL\n)"
+      },
+      {
+        "type": "table",
+        "name": "transactions",
+        "sql": "CREATE TABLE transactions (\n  id          TEXT PRIMARY KEY,\n  type        TEXT NOT NULL,\n  amount      INTEGER NOT NULL,\n  date        TEXT NOT NULL,\n  category    TEXT NOT NULL DEFAULT 'other',\n  description TEXT NOT NULL DEFAULT '',\n  notes       TEXT NOT NULL DEFAULT '',\n  event_id    TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  goal_id     TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  source      TEXT NOT NULL DEFAULT 'manual',\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL\n)"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_card_ops_material_delete",
+        "sql": "CREATE TRIGGER trg_card_ops_material_delete\nAFTER DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE card_review_operations\n    SET is_erased = 1, result_json = NULL\n    WHERE source_material_id = OLD.id AND is_erased = 0;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_cleanup_material_delete",
+        "sql": "CREATE TRIGGER trg_cleanup_material_delete\nAFTER DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE practice_session_operations\n    SET is_erased = 1, result_json = 'null'\n    WHERE attempt_id IN (SELECT id FROM practice_attempts\n        WHERE source_material_id IS NULL AND status IN ('in_progress', 'abandoned'));\n\n    DELETE FROM practice_attempts\n    WHERE source_material_id IS NULL AND status IN ('in_progress', 'abandoned');\n\n    UPDATE practice_test_versions\n    SET is_active = 0\n    WHERE source_material_id IS NULL AND is_active = 1;\n\n    DELETE FROM practice_test_versions\n    WHERE source_material_id IS NULL\n      AND id NOT IN (SELECT DISTINCT version_id FROM practice_attempts WHERE status = 'completed');\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_enforce_response_item_version_insert",
+        "sql": "CREATE TRIGGER trg_enforce_response_item_version_insert\nBEFORE INSERT ON practice_responses\nFOR EACH ROW\nBEGIN\n    SELECT RAISE(ABORT, 'Item does not belong to attempt version')\n    WHERE (\n        SELECT version_id FROM practice_attempts WHERE id = NEW.attempt_id\n    ) != (\n        SELECT version_id FROM practice_test_items WHERE id = NEW.item_id\n    );\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_enforce_response_item_version_update",
+        "sql": "CREATE TRIGGER trg_enforce_response_item_version_update\nBEFORE UPDATE OF item_id, attempt_id ON practice_responses\nFOR EACH ROW\nBEGIN\n    SELECT RAISE(ABORT, 'Item does not belong to attempt version')\n    WHERE (\n        SELECT version_id FROM practice_attempts WHERE id = NEW.attempt_id\n    ) != (\n        SELECT version_id FROM practice_test_items WHERE id = NEW.item_id\n    );\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_event_delete_questions",
+        "sql": "CREATE TRIGGER trg_event_delete_questions\nBEFORE DELETE ON schedule_events\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_event_id = OLD.id\n    WHERE event_id = OLD.id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_journal_delete_questions",
+        "sql": "CREATE TRIGGER trg_journal_delete_questions\nBEFORE DELETE ON journal_entries\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_journal_id = OLD.id\n    WHERE journal_id = OLD.id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_material_delete_actions",
+        "sql": "CREATE TRIGGER trg_material_delete_actions\nBEFORE DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE next_actions\n    SET source_material_id = OLD.id\n    WHERE material_id = OLD.id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "trg_material_delete_questions",
+        "sql": "CREATE TRIGGER trg_material_delete_questions\nBEFORE DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_material_id = OLD.id\n    WHERE material_id = OLD.id;\nEND"
+      }
+    ],
+    "definitions": {
+      "idx_actions_due": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_actions_due ON next_actions(due_date)",
+        "digest": "8fd44a6a70200495f0a350e6fdfb3a87cdc359ee01fa79d1fa24d4eb07ae27ec"
+      },
+      "idx_actions_material": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_actions_material ON next_actions(material_id)",
+        "digest": "e09883337736dc744f596765fa85f6b7abe999bab65e5279c244954d52fc72db"
+      },
+      "idx_actions_related": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_actions_related ON next_actions(related_type, related_id)",
+        "digest": "882c9593bf94b444350587c9249da3bc4d44f4ec28a08d58dc270e796a252347"
+      },
+      "idx_actions_status": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_actions_status ON next_actions(status)",
+        "digest": "974eb4d92db46b47e4782ffbcf1f9f89b19f76b2690415c04c9860e460edd8f7"
+      },
+      "idx_card_events_item": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_card_events_item\n    ON card_review_events(item_id, reviewed_at)",
+        "digest": "02e469ca0af8f738bd2c7d694ee7724086d5f2d0eb2c51991c7ece6479613df4"
+      },
+      "idx_card_ops_material": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_card_ops_material\n    ON card_review_operations(source_material_id)",
+        "digest": "968e6c6837813971d71abd35ff805a9c88c61e35a4a0863223f7123d9863839a"
+      },
+      "idx_card_state_due": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_card_state_due\n    ON card_review_state(source_material_id, suspended, due_at)",
+        "digest": "3c401830ec041fade3006179b72e5d0315be90cb34bb294cc038eedcb368e0e9"
+      },
+      "idx_checklist_goal": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_checklist_goal ON goal_checklist_items(goal_id)",
+        "digest": "a72e6e488946bd5157e44a7794c52faa25250213eaffe985c58cfc183367569f"
+      },
+      "idx_events_date": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_events_date ON schedule_events(date)",
+        "digest": "319d2effb5c2d8427f33c99d688355de403136c55bf55be0a7620a568ed9bad9"
+      },
+      "idx_events_status": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_events_status ON schedule_events(status)",
+        "digest": "715a82494801f9abc9c5a8080c59aaec0823e3999352ba973f3fbc07c493e6cf"
+      },
+      "idx_goals_milestone": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_goals_milestone ON goals(milestone_id)",
+        "digest": "42dfa7d4e73123e6d7c5cbf4829ced7fe441cff125819d557f74c8a7dc64025f"
+      },
+      "idx_goals_status": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_goals_status ON goals(status)",
+        "digest": "ff4677e8d2cfa0ecf088a7828118bd1e35fa2d0a8711f0755bed5c018cf275f8"
+      },
+      "idx_journal_date": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_journal_date ON journal_entries(date)",
+        "digest": "f1f4be98aacce5056b8ebc9f55c9581e25c51bf4619a871a70d44e4de9989e2e"
+      },
+      "idx_materials_goal": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_materials_goal ON study_materials(goal_id)",
+        "digest": "58e1b1ced8cd68abe264f1129b1d0cddd863223c52f3a773737eec6e0d94bbe5"
+      },
+      "idx_materials_status": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_materials_status ON study_materials(review_status)",
+        "digest": "e021f2ca29ba1ccc35098b93e409686005463053a5c7c15a1065e73d65a18df9"
+      },
+      "idx_materials_topic": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_materials_topic ON study_materials(topic)",
+        "digest": "d93a43227cd35f2036523f62b8a0b148c6cdd5cc4edcd33587eafa43aad2ebcc"
+      },
+      "idx_notes_pinned_updated": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_notes_pinned_updated ON notes(pinned DESC, updated_at DESC)",
+        "digest": "4d4dc12dd41635aa3a35064b8117a412aa53560ab54ebff465946e5ad8cc64c0"
+      },
+      "idx_practice_attempts_material": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_practice_attempts_material\n    ON practice_attempts(source_material_id, status)",
+        "digest": "a7595b5ed468e72cf92778b3e707aed78797ede8abd7b7d988eca9357be9b3fe"
+      },
+      "idx_practice_attempts_version": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_practice_attempts_version\n    ON practice_attempts(version_id)",
+        "digest": "6371f993096ac24630cbd5d4a7636bcd1ea55dac9ec78acee1110654bbae17a7"
+      },
+      "idx_practice_items_version": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_practice_items_version\n    ON practice_test_items(version_id, ordinal)",
+        "digest": "7b45a1f871aadb2ce295e6d1cc219bbcec22c0a3966a35e975ac29edc1edef98"
+      },
+      "idx_practice_ops_attempt": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_practice_ops_attempt\n    ON practice_session_operations(attempt_id)",
+        "digest": "792a02c23b9e80cff1e364959a4b7431f465d4b516a6cdb4fb170811a5b60a44"
+      },
+      "idx_practice_ops_history": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_practice_ops_history\n    ON practice_session_operations(history_key)",
+        "digest": "de1a8b80a0d3ce428683615d5ca97916be8babf029c2792db1ea2c2cc6a21a11"
+      },
+      "idx_practice_responses_attempt": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_practice_responses_attempt\n    ON practice_responses(attempt_id)",
+        "digest": "8bf564565642e96a27287f87836c09b2cd66bf5a832f1db8e6843e2ca6a105af"
+      },
+      "idx_practice_versions_history": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_practice_versions_history\n    ON practice_test_versions(history_key)",
+        "digest": "ec1654716b5d47e89f6fb609de0050f1e210f0c7e7a4ccbef133713dd83597ac"
+      },
+      "idx_prep_event": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_prep_event ON event_prep_items(event_id)",
+        "digest": "79e075f1ee0f78fc3f6e2c936e58f52bdf743e5eabad538ce4833aa5516d5787"
+      },
+      "idx_questions_status": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_questions_status ON questions(status)",
+        "digest": "cf145d3e6ed4222164f34ef9366741022dcfea16d6bdc07e372c732ef126c5f4"
+      },
+      "idx_split_lineage_parent": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_split_lineage_parent ON material_split_lineage(parent_material_id)",
+        "digest": "721a19b28a503427f83be39b40d9fd3066a84ebd8370d0c600c983bb03d330ba"
+      },
+      "idx_split_lineage_root": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_split_lineage_root ON material_split_lineage(root_material_id)",
+        "digest": "81ba5a7c8a9b06918d72155645edc4ecbb0c78d5af0f87084e3cd547227c8df6"
+      },
+      "idx_split_operation_source": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_split_operation_source ON split_operation_log(source_material_id)",
+        "digest": "ba883bba7c027b431ece7b1bb77d875875928864af9164392db69511ad42051a"
+      },
+      "idx_split_operation_status": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_split_operation_status ON split_operation_log(status)",
+        "digest": "6ad8a2fd09d85ee2add17b84b8fe350eba5810eaf5fc379a72d71fa1148f4cd0"
+      },
+      "idx_transactions_date": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_transactions_date ON transactions(date)",
+        "digest": "e25b4a3c272668b545594aaa316f1ae1f068ad02d526bf819c0bf750b3aabfb6"
+      },
+      "idx_transactions_one_lesson_cost": {
+        "type": "index",
+        "sql": "CREATE UNIQUE INDEX idx_transactions_one_lesson_cost\n  ON transactions(event_id)\n  WHERE source = 'lesson_cost' AND event_id IS NOT NULL",
+        "digest": "12556865de13d50d9ee69177ffe057799750172ae8804b40926cb87c492b1bcf"
+      },
+      "idx_transactions_type": {
+        "type": "index",
+        "sql": "CREATE INDEX idx_transactions_type ON transactions(type)",
+        "digest": "3d79eb9ea6f34c6e68b57fa0f1ab47d31d99b7a0e8d7d2b7e72e02d6981cec4a"
+      },
+      "uq_active_card_version": {
+        "type": "index",
+        "sql": "CREATE UNIQUE INDEX uq_active_card_version\n    ON card_versions(source_material_id)\n    WHERE is_active = 1",
+        "digest": "cf048528780b144e4caf3c115bfc9f322478b728c67ad4b67e0ad3549ce6afbd"
+      },
+      "uq_active_practice_version": {
+        "type": "index",
+        "sql": "CREATE UNIQUE INDEX uq_active_practice_version\n    ON practice_test_versions(source_material_id)\n    WHERE is_active = 1 AND source_material_id IS NOT NULL",
+        "digest": "61441d4b7988dc0dbb827cdb8f12c67ba8c0e388d52e0bf9614998cf4220ab13"
+      },
+      "uq_single_in_progress_attempt": {
+        "type": "index",
+        "sql": "CREATE UNIQUE INDEX uq_single_in_progress_attempt\n    ON practice_attempts(source_material_id)\n    WHERE status = 'in_progress' AND source_material_id IS NOT NULL",
+        "digest": "47f5007688c16e79fb8b43ebd99db36a8a9f892a31239f468b50f65a85489757"
+      },
+      "_sqlx_migrations": {
+        "type": "table",
+        "sql": "CREATE TABLE _sqlx_migrations (\n    version BIGINT PRIMARY KEY,\n    description TEXT NOT NULL,\n    installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    success BOOLEAN NOT NULL,\n    checksum BLOB NOT NULL,\n    execution_time BIGINT NOT NULL\n)",
+        "digest": "461daf5a14e780e18c96917911e9761f986cc7c0f74cb0b9694fe9f7a2ffb3c2"
+      },
+      "ai_study_sets": {
+        "type": "table",
+        "sql": "CREATE TABLE ai_study_sets (\n  source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n  title              TEXT NOT NULL DEFAULT '',\n  summary            TEXT NOT NULL DEFAULT '',\n  sections_json      TEXT NOT NULL DEFAULT '[]',\n  flashcards_json    TEXT NOT NULL DEFAULT '[]',\n  source_notes       TEXT NOT NULL DEFAULT '',\n  provider           TEXT NOT NULL DEFAULT 'gemini',\n  model              TEXT NOT NULL DEFAULT '',\n  generated_at       TEXT NOT NULL,\n  updated_at         TEXT NOT NULL\n)",
+        "digest": "f53884972255306dfcb82be2a1ff320c3f4136b5503a702bc3f578e8994f735a"
+      },
+      "app_metadata": {
+        "type": "table",
+        "sql": "CREATE TABLE app_metadata (\n  key   TEXT PRIMARY KEY,\n  value TEXT NOT NULL\n)",
+        "digest": "23bb5997991e4b2b88a2a72a71d054155138e6f2fb32584928086098b4c9a2d6"
+      },
+      "card_items": {
+        "type": "table",
+        "sql": "CREATE TABLE card_items (\n    id          TEXT PRIMARY KEY,\n    version_id  TEXT NOT NULL REFERENCES card_versions(id) ON DELETE CASCADE,\n    ordinal     INTEGER NOT NULL CHECK (ordinal >= 0),\n    front       TEXT NOT NULL,\n    back        TEXT NOT NULL,\n    source_page INTEGER,\n    UNIQUE (version_id, ordinal)\n)",
+        "digest": "349d5a0840519f9e2bce8087cca7657042a36b944d8a762affb74c407b791f95"
+      },
+      "card_review_events": {
+        "type": "table",
+        "sql": "CREATE TABLE card_review_events (\n    id                TEXT PRIMARY KEY,\n    item_id           TEXT NOT NULL REFERENCES card_items(id) ON DELETE CASCADE,\n    generation        INTEGER NOT NULL CHECK (generation >= 0),\n    rating            TEXT NOT NULL CHECK (rating IN ('again', 'hard', 'good', 'easy')),\n    reviewed_at       TEXT NOT NULL,\n    scheduler_version TEXT NOT NULL,\n    prior_state_json  TEXT NOT NULL,\n    next_state_json   TEXT NOT NULL\n)",
+        "digest": "63940a57248cff4970392872844a61efec8ad43b18231d9c5c8335615b3997f0"
+      },
+      "card_review_generations": {
+        "type": "table",
+        "sql": "CREATE TABLE card_review_generations (\n    source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n    generation         INTEGER NOT NULL CHECK (generation >= 0)\n)",
+        "digest": "10570fd51670b96abc10b490a6a5c00f2fbf3dab1e9df32ecf7cc61744f273f8"
+      },
+      "card_review_operations": {
+        "type": "table",
+        "sql": "CREATE TABLE card_review_operations (\n    operation_id       TEXT PRIMARY KEY,\n    action             TEXT NOT NULL CHECK (action IN ('rate', 'suspend', 'resume', 'flag', 'unflag', 'reset')),\n    source_material_id TEXT NOT NULL,\n    generation         INTEGER NOT NULL CHECK (generation >= 0),\n    request_hash       TEXT NOT NULL,\n    applied_at         TEXT NOT NULL,\n    is_erased          INTEGER NOT NULL DEFAULT 0 CHECK (is_erased IN (0, 1)),\n    result_json        TEXT,\n    CHECK ((is_erased = 1) = (result_json IS NULL))\n)",
+        "digest": "ddf54f7e8fb4da760dc14a377769df078b6c7328aa23f7bf5031af04bd398631"
+      },
+      "card_review_state": {
+        "type": "table",
+        "sql": "CREATE TABLE card_review_state (\n    item_id            TEXT PRIMARY KEY REFERENCES card_items(id) ON DELETE CASCADE,\n    source_material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n    scheduler_version  TEXT NOT NULL,\n    step               INTEGER NOT NULL CHECK (step BETWEEN -1 AND 7),\n    due_at             TEXT,\n    last_reviewed_at   TEXT,\n    reps               INTEGER NOT NULL DEFAULT 0 CHECK (reps >= 0),\n    lapses             INTEGER NOT NULL DEFAULT 0 CHECK (lapses >= 0),\n    suspended          INTEGER NOT NULL DEFAULT 0 CHECK (suspended IN (0, 1)),\n    flag               TEXT CHECK (flag IN ('wrong_answer', 'unclear', 'not_in_source')),\n    revision           INTEGER NOT NULL CHECK (revision >= 1),\n    CHECK ((due_at IS NULL) = (last_reviewed_at IS NULL)),\n    CHECK (due_at IS NOT NULL OR (reps = 0 AND step = -1))\n)",
+        "digest": "447923240db8438b59a5f3c80f2ce47dbf9298d2de44064852468de2dc5c6961"
+      },
+      "card_versions": {
+        "type": "table",
+        "sql": "CREATE TABLE card_versions (\n    id                 TEXT PRIMARY KEY,\n    source_material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n    content_hash       TEXT NOT NULL,\n    card_count         INTEGER NOT NULL CHECK (card_count BETWEEN 1 AND 500),\n    provider           TEXT NOT NULL CHECK (provider IN ('gemini', 'import')),\n    created_at         TEXT NOT NULL,\n    first_reviewed_at  TEXT,\n    is_active          INTEGER NOT NULL CHECK (is_active IN (0, 1)),\n    UNIQUE (source_material_id, content_hash)\n)",
+        "digest": "b7f70c041dbba9014c3825459078cb571fd633fc539b1bdf708915cf4d8d17cb"
+      },
+      "debrief_operations": {
+        "type": "table",
+        "sql": "CREATE TABLE debrief_operations (\n    id         TEXT PRIMARY KEY,\n    journal_id TEXT NOT NULL,\n    applied_at TEXT NOT NULL\n)",
+        "digest": "ac83eb1d4cd7bf18f030222dda178ff394dc7f2a7dbbdc759daaba8975755dcb"
+      },
+      "event_materials": {
+        "type": "table",
+        "sql": "CREATE TABLE event_materials (\n  event_id    TEXT NOT NULL REFERENCES schedule_events(id) ON DELETE CASCADE,\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  PRIMARY KEY (event_id, material_id)\n)",
+        "digest": "a38289e7a69263e8383fc2a75d10dc837eb6efdf656a5a0da818974138ce20e9"
+      },
+      "event_prep_items": {
+        "type": "table",
+        "sql": "CREATE TABLE event_prep_items (\n  id         TEXT PRIMARY KEY,\n  event_id   TEXT NOT NULL REFERENCES schedule_events(id) ON DELETE CASCADE,\n  title      TEXT NOT NULL,\n  done       INTEGER NOT NULL DEFAULT 0,\n  position   INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL\n)",
+        "digest": "07c781b6f2e21d2151d4fd2dab32f77b8fbe964bbe5493772980918741da270a"
+      },
+      "fund_goals": {
+        "type": "table",
+        "sql": "CREATE TABLE fund_goals (\n  id         TEXT PRIMARY KEY,\n  title      TEXT NOT NULL,\n  target     INTEGER NOT NULL,\n  active     INTEGER NOT NULL DEFAULT 1,\n  created_at TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)",
+        "digest": "081ec2b120ba09538fb439d2eac79a81ed4441419c0038ed02e854ce69b5fb23"
+      },
+      "goal_checklist_items": {
+        "type": "table",
+        "sql": "CREATE TABLE goal_checklist_items (\n  id         TEXT PRIMARY KEY,\n  goal_id    TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,\n  title      TEXT NOT NULL,\n  done       INTEGER NOT NULL DEFAULT 0,\n  position   INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL\n)",
+        "digest": "a359e98cbb83317767cfbe3977b7ae1c9132af11ff93e8a66081bb64f8fed2e4"
+      },
+      "goals": {
+        "type": "table",
+        "sql": "CREATE TABLE goals (\n  id           TEXT PRIMARY KEY,\n  milestone_id TEXT REFERENCES milestones(id) ON DELETE SET NULL,\n  title        TEXT NOT NULL,\n  description  TEXT NOT NULL DEFAULT '',\n  status       TEXT NOT NULL DEFAULT 'not_started',\n  priority     TEXT NOT NULL DEFAULT 'important',\n  target_date  TEXT,\n  notes        TEXT NOT NULL DEFAULT '',\n  confidence   INTEGER,\n  created_at   TEXT NOT NULL,\n  updated_at   TEXT NOT NULL,\n  completed_at TEXT\n)",
+        "digest": "3727489a3ef1e1ba21e6895a45d0f1eaeac82228a0f246c293a3fb3642959eec"
+      },
+      "journal_entries": {
+        "type": "table",
+        "sql": "CREATE TABLE journal_entries (\n  id                      TEXT PRIMARY KEY,\n  event_id                TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  date                    TEXT NOT NULL,\n  title                   TEXT NOT NULL DEFAULT '',\n  mission                 TEXT NOT NULL DEFAULT '',\n  practiced               TEXT NOT NULL DEFAULT '',\n  went_well               TEXT NOT NULL DEFAULT '',\n  was_difficult           TEXT NOT NULL DEFAULT '',\n  instructor_feedback     TEXT NOT NULL DEFAULT '',\n  questions_for_next_time TEXT NOT NULL DEFAULT '',\n  confidence              INTEGER,\n  goal_id                 TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  created_at              TEXT NOT NULL,\n  updated_at              TEXT NOT NULL\n, aircraft_type TEXT NOT NULL DEFAULT '', aircraft_id TEXT NOT NULL DEFAULT '', departure_airport TEXT NOT NULL DEFAULT '', arrival_airport TEXT NOT NULL DEFAULT '', instructor_name TEXT NOT NULL DEFAULT '', total_time REAL, dual_received REAL, solo_time REAL, pic_time REAL, cross_country_time REAL, night_time REAL, actual_instrument_time REAL, simulated_instrument_time REAL, day_landings INTEGER, night_landings INTEGER)",
+        "digest": "a439c9cc05c1abeb2169dbf9a82d57126db927fa78d538c23d0acdce7ddc239a"
+      },
+      "journal_materials": {
+        "type": "table",
+        "sql": "CREATE TABLE journal_materials (\n  journal_id  TEXT NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  PRIMARY KEY (journal_id, material_id)\n)",
+        "digest": "9036b46e2cdb7128d6a1a4ab1831c1d1cd53ae8c826a98daf3620f3868c9915c"
+      },
+      "material_split_lineage": {
+        "type": "table",
+        "sql": "CREATE TABLE material_split_lineage (\n  material_id            TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  parent_material_id     TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  root_material_id       TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  source_page_start      INTEGER NOT NULL CHECK (TYPEOF(source_page_start) = 'integer' AND source_page_start >= 1),\n  source_page_end        INTEGER NOT NULL CHECK (TYPEOF(source_page_end) = 'integer' AND source_page_end >= source_page_start),\n  parent_page_start      INTEGER CHECK (parent_page_start IS NULL OR (TYPEOF(parent_page_start) = 'integer' AND parent_page_start >= 1)),\n  parent_page_end        INTEGER CHECK (parent_page_end IS NULL OR (TYPEOF(parent_page_end) = 'integer' AND parent_page_end >= parent_page_start)),\n  child_page_count       INTEGER NOT NULL CHECK (TYPEOF(child_page_count) = 'integer' AND child_page_count >= 1),\n  source_file_name       TEXT NOT NULL,\n  source_title           TEXT NOT NULL,\n  source_content_sha256  TEXT,\n  source_total_pages     INTEGER CHECK (source_total_pages IS NULL OR (TYPEOF(source_total_pages) = 'integer' AND source_total_pages >= source_page_end)),\n  parent_file_name       TEXT,\n  parent_title           TEXT,\n  parent_content_sha256  TEXT,\n  parent_total_pages     INTEGER CHECK (parent_total_pages IS NULL OR (TYPEOF(parent_total_pages) = 'integer' AND (parent_page_end IS NULL OR parent_total_pages >= parent_page_end))),\n  nested_level           INTEGER NOT NULL DEFAULT 1 CHECK (TYPEOF(nested_level) = 'integer' AND nested_level >= 1),\n  created_at             TEXT NOT NULL,\n  CHECK (material_id != parent_material_id),\n  CHECK (material_id != root_material_id),\n  CHECK (child_page_count = (source_page_end - source_page_start + 1)),\n  CHECK (parent_page_start IS NULL OR child_page_count = (parent_page_end - parent_page_start + 1)),\n  CHECK ((parent_page_start IS NULL AND parent_page_end IS NULL) OR (parent_page_start IS NOT NULL AND parent_page_end IS NOT NULL)),\n  CHECK (\n    (nested_level = 1 AND parent_page_start IS NULL AND parent_page_end IS NULL AND parent_total_pages IS NULL)\n    OR\n    (nested_level > 1 AND parent_page_start IS NOT NULL AND parent_page_end IS NOT NULL AND parent_total_pages IS NOT NULL)\n  )\n)",
+        "digest": "89981a172c8f3a88e267024063e01ad417b9fe52a3972fa5a1f26acbdf54b90d"
+      },
+      "material_tags": {
+        "type": "table",
+        "sql": "CREATE TABLE material_tags (\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  tag_id      TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n  PRIMARY KEY (material_id, tag_id)\n)",
+        "digest": "2acf0a6d89ce39200eff147f2c486db1b38a7d13d011b81b52b6f1417610db19"
+      },
+      "milestones": {
+        "type": "table",
+        "sql": "CREATE TABLE milestones (\n  id          TEXT PRIMARY KEY,\n  title       TEXT NOT NULL,\n  description TEXT NOT NULL DEFAULT '',\n  position    INTEGER NOT NULL DEFAULT 0,\n  status      TEXT NOT NULL DEFAULT 'not_started',\n  target_date TEXT,\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL\n)",
+        "digest": "a761cabe582aa3a0f40f56b804c2056280f94a081d5ae8ca1c1766c4045d47e6"
+      },
+      "next_actions": {
+        "type": "table",
+        "sql": "CREATE TABLE next_actions (\n  id                TEXT PRIMARY KEY,\n  title             TEXT NOT NULL,\n  description       TEXT NOT NULL DEFAULT '',\n  category          TEXT NOT NULL DEFAULT 'prepare',\n  priority          TEXT NOT NULL DEFAULT 'important',\n  status            TEXT NOT NULL DEFAULT 'open',\n  due_date          TEXT,\n  estimated_minutes INTEGER,\n  related_type      TEXT,\n  related_id        TEXT,\n  created_at        TEXT NOT NULL,\n  updated_at        TEXT NOT NULL,\n  completed_at      TEXT\n, material_id TEXT REFERENCES study_materials(id) ON DELETE SET NULL, source_material_id TEXT)",
+        "digest": "85822535bc23423c5cc5abacbd5d526ef1e1e2c9b8b68a3e298ff97a28043be8"
+      },
+      "notes": {
+        "type": "table",
+        "sql": "CREATE TABLE notes (\n  id         TEXT PRIMARY KEY,\n  title      TEXT NOT NULL DEFAULT '',\n  body       TEXT NOT NULL DEFAULT '',\n  pinned     INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)",
+        "digest": "ad667675aa87e534ff1b0970249e13baa11c849e979bdd225162b21242dc4f13"
+      },
+      "pilot_toolkit": {
+        "type": "table",
+        "sql": "CREATE TABLE pilot_toolkit (\n  id TEXT PRIMARY KEY CHECK (id = 'toolkit'),\n  state_json TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)",
+        "digest": "f74c2bf810ab8fb3ea086ddc0e72282a7d7d434cf391cb080312dea01660eb8b"
+      },
+      "practice_attempts": {
+        "type": "table",
+        "sql": "CREATE TABLE practice_attempts (\n    id                    TEXT PRIMARY KEY,\n    version_id            TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE RESTRICT,\n    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n    source_material_title TEXT NOT NULL,\n    started_at            TEXT NOT NULL,\n    completed_at          TEXT,\n    status                TEXT NOT NULL CHECK (status IN ('in_progress', 'completed', 'abandoned')),\n    revision              INTEGER NOT NULL DEFAULT 0 CHECK (revision >= 0),\n    total_questions       INTEGER NOT NULL,\n    answered_count        INTEGER NOT NULL DEFAULT 0,\n    correct_count         INTEGER NOT NULL DEFAULT 0,\n    incorrect_count       INTEGER NOT NULL DEFAULT 0,\n    dont_know_count       INTEGER NOT NULL DEFAULT 0,\n    score_percent         REAL\n)",
+        "digest": "df35deee7e3f6bbefce58e365b7e755081390bf27ce0cddd6270d2e9633fe2d0"
+      },
+      "practice_responses": {
+        "type": "table",
+        "sql": "CREATE TABLE practice_responses (\n    id             TEXT PRIMARY KEY,\n    attempt_id     TEXT NOT NULL REFERENCES practice_attempts(id) ON DELETE CASCADE,\n    item_id        TEXT NOT NULL REFERENCES practice_test_items(id) ON DELETE CASCADE,\n    selected_index INTEGER,\n    is_dont_know   INTEGER NOT NULL DEFAULT 0 CHECK (is_dont_know IN (0, 1)),\n    is_correct     INTEGER NOT NULL DEFAULT 0 CHECK (is_correct IN (0, 1)),\n    answered_at    TEXT NOT NULL,\n    UNIQUE(attempt_id, item_id),\n    CHECK (\n        (is_dont_know = 1 AND selected_index IS NULL) OR\n        (is_dont_know = 0 AND selected_index IS NOT NULL AND selected_index >= 0)\n    )\n)",
+        "digest": "5c2e4fb5e14fc32ae3dc128cba036261013e7852b1131dee6084a30cfc5690ea"
+      },
+      "practice_session_operations": {
+        "type": "table",
+        "sql": "CREATE TABLE practice_session_operations (\n    operation_id   TEXT PRIMARY KEY,\n    action         TEXT NOT NULL,\n    request_hash   TEXT NOT NULL,\n    applied_at     TEXT NOT NULL,\n    result_json    TEXT NOT NULL,\n    history_key    TEXT NOT NULL,\n    attempt_id     TEXT NOT NULL,\n    is_erased      INTEGER NOT NULL DEFAULT 0 CHECK (is_erased IN (0, 1))\n)",
+        "digest": "92d22528d57e0c4925e204ffebe9a5d0788e9cceed072c7e53645328000f0298"
+      },
+      "practice_test_items": {
+        "type": "table",
+        "sql": "CREATE TABLE practice_test_items (\n    id            TEXT PRIMARY KEY,\n    version_id    TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE CASCADE,\n    ordinal       INTEGER NOT NULL,\n    question_text TEXT NOT NULL,\n    options_json  TEXT NOT NULL,\n    correct_index INTEGER NOT NULL,\n    explanation   TEXT NOT NULL DEFAULT '',\n    source_page   INTEGER,\n    UNIQUE(version_id, ordinal)\n)",
+        "digest": "b01472c55a481f015e6ee7e0fbabbd00ccf88a1630fe57ff841afb5d933928a8"
+      },
+      "practice_test_versions": {
+        "type": "table",
+        "sql": "CREATE TABLE practice_test_versions (\n    id                    TEXT PRIMARY KEY,\n    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n    history_key           TEXT NOT NULL,\n    source_material_title TEXT NOT NULL,\n    version_number        INTEGER NOT NULL DEFAULT 1,\n    provider              TEXT NOT NULL DEFAULT 'gemini',\n    model                 TEXT NOT NULL DEFAULT '',\n    title                 TEXT NOT NULL DEFAULT '',\n    content_hash          TEXT NOT NULL,\n    created_at            TEXT NOT NULL,\n    is_active             INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1))\n)",
+        "digest": "da9d588d38369e2db81f7909caa4a621ca92f30e77429774f05a0b3c9409be34"
+      },
+      "practice_tests": {
+        "type": "table",
+        "sql": "CREATE TABLE practice_tests (\n  source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n  title               TEXT NOT NULL DEFAULT '',\n  questions_json      TEXT NOT NULL DEFAULT '[]',\n  provider            TEXT NOT NULL DEFAULT 'gemini',\n  model               TEXT NOT NULL DEFAULT '',\n  generated_at        TEXT NOT NULL,\n  updated_at          TEXT NOT NULL\n, legacy_migrated_at TEXT, legacy_error TEXT)",
+        "digest": "601c7d727c4a4ed767b4381938569b920b4933ee647c5e8ede5bcb9d2fcf0f94"
+      },
+      "questions": {
+        "type": "table",
+        "sql": "CREATE TABLE questions (\n  id          TEXT PRIMARY KEY,\n  text        TEXT NOT NULL,\n  topic       TEXT NOT NULL DEFAULT 'general',\n  event_id    TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  material_id TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  journal_id  TEXT REFERENCES journal_entries(id) ON DELETE SET NULL,\n  status      TEXT NOT NULL DEFAULT 'to_ask',\n  answer      TEXT NOT NULL DEFAULT '',\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL,\n  answered_at TEXT\n, source_journal_id TEXT, source_material_id TEXT, source_event_id TEXT)",
+        "digest": "af903898869364ca25004dd5f63fa2e2fa4a070464f65919ba71d4161678a941"
+      },
+      "schedule_events": {
+        "type": "table",
+        "sql": "CREATE TABLE schedule_events (\n  id             TEXT PRIMARY KEY,\n  title          TEXT NOT NULL,\n  event_type     TEXT NOT NULL DEFAULT 'flight_lesson',\n  date           TEXT NOT NULL,\n  start_time     TEXT,\n  end_time       TEXT,\n  location       TEXT NOT NULL DEFAULT '',\n  instructor     TEXT NOT NULL DEFAULT '',\n  notes          TEXT NOT NULL DEFAULT '',\n  goal_id        TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  estimated_cost INTEGER,\n  actual_cost    INTEGER,\n  status         TEXT NOT NULL DEFAULT 'scheduled',\n  created_at     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL\n)",
+        "digest": "4cf67fa80d422f92d705482a77888ddc0fb05fe2a87c5595d0ca321c5bedf09a"
+      },
+      "settings": {
+        "type": "table",
+        "sql": "CREATE TABLE settings (\n  id                   TEXT PRIMARY KEY,\n  pilot_name           TEXT NOT NULL DEFAULT '',\n  certificate_goal     TEXT NOT NULL DEFAULT 'Private Pilot',\n  current_focus        TEXT NOT NULL DEFAULT '',\n  current_milestone_id TEXT,\n  created_at           TEXT NOT NULL,\n  updated_at           TEXT NOT NULL\n, flight_school       TEXT NOT NULL DEFAULT '', instructor_name     TEXT NOT NULL DEFAULT '', home_airport        TEXT NOT NULL DEFAULT '', aircraft_type       TEXT NOT NULL DEFAULT '', training_started_on TEXT, medical_expiry      TEXT, accent_color        TEXT NOT NULL DEFAULT 'berry', why_note TEXT NOT NULL DEFAULT '', photo    TEXT)",
+        "digest": "7266ff7fa26f98b434bc70a36acfd6d9092aa82a682621aef83b75695a3936f3"
+      },
+      "split_operation_log": {
+        "type": "table",
+        "sql": "CREATE TABLE split_operation_log (\n  operation_id           TEXT PRIMARY KEY NOT NULL,\n  source_material_id     TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  receipt_canonical_json TEXT NOT NULL,\n  receipt_hash           TEXT NOT NULL,\n  status                 TEXT NOT NULL CHECK (status IN ('pending', 'committed', 'cancelled')),\n  created_at             TEXT NOT NULL,\n  updated_at             TEXT NOT NULL\n)",
+        "digest": "1fb9cdb1cb17f56b436051284a36ad94ade446ee5916997b6c705486d93d041d"
+      },
+      "study_materials": {
+        "type": "table",
+        "sql": "CREATE TABLE study_materials (\n  id                 TEXT PRIMARY KEY,\n  title              TEXT NOT NULL,\n  material_type      TEXT NOT NULL DEFAULT 'study_guide',\n  topic              TEXT NOT NULL DEFAULT 'general',\n  review_status      TEXT NOT NULL DEFAULT 'needs_review',\n  priority           TEXT NOT NULL DEFAULT 'later',\n  goal_id            TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  event_id           TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  notes              TEXT NOT NULL DEFAULT '',\n  file_path          TEXT,\n  original_file_name TEXT,\n  file_size          INTEGER,\n  created_at         TEXT NOT NULL,\n  updated_at         TEXT NOT NULL,\n  last_reviewed_at   TEXT\n)",
+        "digest": "dd407d35deb69cceb3e5dd232f325fc7f8237f9898387e11a81f2885d8fc53a8"
+      },
+      "tags": {
+        "type": "table",
+        "sql": "CREATE TABLE tags (\n  id         TEXT PRIMARY KEY,\n  name       TEXT NOT NULL UNIQUE,\n  created_at TEXT NOT NULL\n)",
+        "digest": "30105cd5c7484e9021fe09384e5d91735f2b647af5a10f5fb1796c99e4f5bdce"
+      },
+      "transactions": {
+        "type": "table",
+        "sql": "CREATE TABLE transactions (\n  id          TEXT PRIMARY KEY,\n  type        TEXT NOT NULL,\n  amount      INTEGER NOT NULL,\n  date        TEXT NOT NULL,\n  category    TEXT NOT NULL DEFAULT 'other',\n  description TEXT NOT NULL DEFAULT '',\n  notes       TEXT NOT NULL DEFAULT '',\n  event_id    TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  goal_id     TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  source      TEXT NOT NULL DEFAULT 'manual',\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL\n)",
+        "digest": "16b17f6847ba714e449802bfc0a825b41736bb759c4264af92e2bc21b4709ff8"
+      },
+      "trg_card_ops_material_delete": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_card_ops_material_delete\nAFTER DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE card_review_operations\n    SET is_erased = 1, result_json = NULL\n    WHERE source_material_id = OLD.id AND is_erased = 0;\nEND",
+        "digest": "561eeff97ee92fb045960a25f73eb740d3fc78c7111a3f1ddc4c72d5bafebaed"
+      },
+      "trg_cleanup_material_delete": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_cleanup_material_delete\nAFTER DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE practice_session_operations\n    SET is_erased = 1, result_json = 'null'\n    WHERE attempt_id IN (SELECT id FROM practice_attempts\n        WHERE source_material_id IS NULL AND status IN ('in_progress', 'abandoned'));\n\n    DELETE FROM practice_attempts\n    WHERE source_material_id IS NULL AND status IN ('in_progress', 'abandoned');\n\n    UPDATE practice_test_versions\n    SET is_active = 0\n    WHERE source_material_id IS NULL AND is_active = 1;\n\n    DELETE FROM practice_test_versions\n    WHERE source_material_id IS NULL\n      AND id NOT IN (SELECT DISTINCT version_id FROM practice_attempts WHERE status = 'completed');\nEND",
+        "digest": "6e840dfca07ed5343468b84befa2d5dda2756495553c6d6dabb51816d0b09054"
+      },
+      "trg_enforce_response_item_version_insert": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_enforce_response_item_version_insert\nBEFORE INSERT ON practice_responses\nFOR EACH ROW\nBEGIN\n    SELECT RAISE(ABORT, 'Item does not belong to attempt version')\n    WHERE (\n        SELECT version_id FROM practice_attempts WHERE id = NEW.attempt_id\n    ) != (\n        SELECT version_id FROM practice_test_items WHERE id = NEW.item_id\n    );\nEND",
+        "digest": "6a76d4207caaf9f13d1bdc9d093ee09121fd0098bf8a3d2c3a0e9f7093b31bbd"
+      },
+      "trg_enforce_response_item_version_update": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_enforce_response_item_version_update\nBEFORE UPDATE OF item_id, attempt_id ON practice_responses\nFOR EACH ROW\nBEGIN\n    SELECT RAISE(ABORT, 'Item does not belong to attempt version')\n    WHERE (\n        SELECT version_id FROM practice_attempts WHERE id = NEW.attempt_id\n    ) != (\n        SELECT version_id FROM practice_test_items WHERE id = NEW.item_id\n    );\nEND",
+        "digest": "6594b2139f8f061a3186f40611cad557cb0fec4e4f7d965632713ba8b56911bf"
+      },
+      "trg_event_delete_questions": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_event_delete_questions\nBEFORE DELETE ON schedule_events\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_event_id = OLD.id\n    WHERE event_id = OLD.id;\nEND",
+        "digest": "0a9099c47ba2fc3fc3efc9fb920c53cd61d7ef64c662ed67fcceb0852e6e6951"
+      },
+      "trg_journal_delete_questions": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_journal_delete_questions\nBEFORE DELETE ON journal_entries\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_journal_id = OLD.id\n    WHERE journal_id = OLD.id;\nEND",
+        "digest": "01195a14615b2a221f70e2fa9d6b971b94df6b4f11bb25702c3e086194aa1a39"
+      },
+      "trg_material_delete_actions": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_material_delete_actions\nBEFORE DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE next_actions\n    SET source_material_id = OLD.id\n    WHERE material_id = OLD.id;\nEND",
+        "digest": "4f5fff436a3fa7805353ca6f7fe6b687be403e114d317ca2af313dcaa48c04fd"
+      },
+      "trg_material_delete_questions": {
+        "type": "trigger",
+        "sql": "CREATE TRIGGER trg_material_delete_questions\nBEFORE DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_material_id = OLD.id\n    WHERE material_id = OLD.id;\nEND",
+        "digest": "953f3e00d0639e401140790fd40381385f55524c8f67617e8c01d067ddb9562d"
+      }
+    }
+  },
+  "fileAnchors": [
+    {
+      "relativePath": "documents/79347220-ca50-4c85-8ee4-49d44dff097f-synthetic-small-checklist.pdf",
+      "bytes": 3360,
+      "sha256": "f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134"
+    },
+    {
+      "relativePath": "documents/ca90be52-ea48-41a2-aaa4-0e4fea59a956-synthetic-illustrated-charts.pdf",
+      "bytes": 54032644,
+      "sha256": "b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d"
+    },
+    {
+      "relativePath": "documents/fdaac269-4e46-46c2-a0b4-a5360755bbc6-synthetic-long-manual.pdf",
+      "bytes": 330934,
+      "sha256": "0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1"
+    }
+  ],
+  "runtimeFiles": [
+    {
+      "relativePath": "last-run-version.txt",
+      "bytes": 5,
+      "sha256": "71316bc8acf7d66c92ac8e5db15e366ce33e0dd7048aaac2f8a6aba62d9d0a20"
+    }
+  ],
+  "databaseFileAnchors": [
+    {
+      "relativePath": "her-flight-deck.db",
+      "bytes": 516096,
+      "sha256": "691fe9971b276c5f6d243c8762a48b68e1cad2662bff7c6569330d7f6b19a926"
+    },
+    {
+      "relativePath": "her-flight-deck.db-wal",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "relativePath": "her-flight-deck.db-shm",
+      "bytes": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    }
+  ]
+}

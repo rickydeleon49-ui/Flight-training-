@@ -1,0 +1,221 @@
+{
+  "purpose": "Actual archive payload compared to restored native library; supplements but does not rewrite strict post-export baseline comparison",
+  "tables": [
+    {
+      "table": "ai_study_sets",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "app_metadata",
+      "same": true,
+      "archive_rows": 2,
+      "restored_rows": 2
+    },
+    {
+      "table": "card_items",
+      "same": true,
+      "archive_rows": 3,
+      "restored_rows": 3
+    },
+    {
+      "table": "card_review_events",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "card_review_generations",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "card_review_operations",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "card_review_state",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "card_versions",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "debrief_operations",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "event_materials",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "event_prep_items",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "fund_goals",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "goal_checklist_items",
+      "same": true,
+      "archive_rows": 36,
+      "restored_rows": 36
+    },
+    {
+      "table": "goals",
+      "same": true,
+      "archive_rows": 9,
+      "restored_rows": 9
+    },
+    {
+      "table": "journal_entries",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "journal_materials",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "material_tags",
+      "same": true,
+      "archive_rows": 15,
+      "restored_rows": 15
+    },
+    {
+      "table": "milestones",
+      "same": true,
+      "archive_rows": 9,
+      "restored_rows": 9
+    },
+    {
+      "table": "next_actions",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "notes",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "pilot_toolkit",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "practice_attempts",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "practice_responses",
+      "same": true,
+      "archive_rows": 2,
+      "restored_rows": 2
+    },
+    {
+      "table": "practice_session_operations",
+      "same": true,
+      "archive_rows": 4,
+      "restored_rows": 4
+    },
+    {
+      "table": "practice_test_items",
+      "same": true,
+      "archive_rows": 2,
+      "restored_rows": 2
+    },
+    {
+      "table": "practice_test_versions",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "practice_tests",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "questions",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "schedule_events",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    },
+    {
+      "table": "settings",
+      "same": true,
+      "archive_rows": 1,
+      "restored_rows": 1
+    },
+    {
+      "table": "study_materials",
+      "same": true,
+      "archive_rows": 11,
+      "restored_rows": 11
+    },
+    {
+      "table": "tags",
+      "same": true,
+      "archive_rows": 9,
+      "restored_rows": 9
+    },
+    {
+      "table": "transactions",
+      "same": true,
+      "archive_rows": 0,
+      "restored_rows": 0
+    }
+  ],
+  "files": [
+    {
+      "file": "documents/79347220-ca50-4c85-8ee4-49d44dff097f-synthetic-small-checklist.pdf",
+      "same": true
+    },
+    {
+      "file": "documents/ca90be52-ea48-41a2-aaa4-0e4fea59a956-synthetic-illustrated-charts.pdf",
+      "same": true
+    },
+    {
+      "file": "documents/fdaac269-4e46-46c2-a0b4-a5360755bbc6-synthetic-long-manual.pdf",
+      "same": true
+    }
+  ],
+  "schema_version": 13,
+  "new_lineage_rows": 0,
+  "new_operation_rows": 0,
+  "archive_payload_preserved": true
+}
