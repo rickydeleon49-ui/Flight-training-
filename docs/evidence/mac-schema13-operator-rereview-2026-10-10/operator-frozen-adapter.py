@@ -1,0 +1,41 @@
+"""Disposable operator diagnostics: original command bodies, scratch root/UID constants.
+No real account/profile is accessed or changed. PATH mocks the identity/process probes only.
+"""
+import pathlib,tempfile,subprocess,json,shutil,os
+source=pathlib.Path('docs/evidence/mac-schema13-operator-corrections-2026-10-10/hfd-operator.sh')
+scratch=pathlib.Path(tempfile.mkdtemp(prefix='macv-operator-review-')).resolve()
+kit=scratch/'kit'; tools=scratch/'tools';tools.mkdir();(kit/'bin').mkdir(parents=True)
+(kit/'profiles').mkdir();(kit/'evidence').mkdir()
+root=scratch/'Application Support/com.herflightdeck.app';(root/'backups').mkdir(parents=True)
+root.chmod(0o700);(root/'backups').chmod(0o700)
+script=source.read_text().replace('APPROVED_ROOT="/Users/hfdtest/Library/Application Support/${APP_ID}"',f'APPROVED_ROOT="{root}"')
+op=kit/'bin/hfd-operator.sh';op.write_text(script);op.chmod(0o755)
+def mock(name,body):
+ p=tools/name;p.write_text('#!/bin/bash\n'+body+'\n');p.chmod(0o755)
+mock('id','case "$1" in -u) echo 502;; -un) echo hfdtest;; *) exit 2;; esac')
+mock('dseditgroup','exit "${REVIEW_GROUP_STATUS:-1}"')
+mock('pgrep','exit 1')
+env=dict(os.environ,PATH=str(tools)+':'+os.environ['PATH'])
+results=[]
+def run(*args,extra=None):
+ return subprocess.run([str(op),*map(str,args)],capture_output=True,text=True,env=dict(env,**(extra or {})))
+def case(name,passed,p):results.append({'name':name,'pass':bool(passed),'exit':p.returncode,'output':p.stdout+p.stderr})
+src=kit/'profiles/source';src.mkdir();(src/'owned.txt').write_text('synthetic')
+out=run('copy',src,kit/'profiles/control')
+case('[control] an allowed fresh copy preserves the source',out.returncode==0 and (kit/'profiles/control/owned.txt').read_text()=='synthetic' and src.exists(),out)
+out=run('block-backups')
+case('[control] backup block succeeds and removes owner write',out.returncode==0 and not (root/'backups').stat().st_mode&0o200,out)
+out=run('unblock-backups')
+case('[MACV-R7] unblock round-trips a path with Application Support spaces',out.returncode==0 and (root/'backups').stat().st_mode&0o777==0o700,out)
+(root/'backups').chmod(0o700)
+out=run('copy',root,kit/'profiles/group-error',extra={'REVIEW_GROUP_STATUS':'2'})
+case('[MACV-R7] account-inspection failure must refuse before copying',out.returncode==2 and not (kit/'profiles/group-error').exists(),out)
+outside=kit/'outside';outside.mkdir();(outside/'owned.txt').write_text('task-owned outside policy')
+out=run('copy',str(kit/'profiles')+'/../outside',kit/'profiles/traversal')
+case('[MACV-R7] dot-dot operands cannot escape the profiles directory',out.returncode==2 and not (kit/'profiles/traversal').exists(),out)
+target=scratch/'outside-target';target.mkdir();(kit/'profiles/link').symlink_to(target,target_is_directory=True)
+out=run('copy',src,kit/'profiles/link/escaped')
+case('[MACV-R7] a symlink destination parent cannot escape the policy root',out.returncode==2 and not (target/'escaped').exists(),out)
+shutil.rmtree(scratch)
+print(json.dumps({'source':str(source),'passed':sum(r['pass'] for r in results),'failed':sum(not r['pass'] for r in results),'results':results},indent=2))
+raise SystemExit(0 if all(r['pass'] for r in results) else 1)

@@ -1,0 +1,15 @@
+{
+  "src-tauri/src/storage.rs": "6428393699cf7cbb020a2e62873a97e16290563afaedc88906e34fe899d8275a",
+  "src-tauri/src/backup.rs": "3565ceff2ec3723026b5b110787f1ddebe0e9f901953af076898cbd3c144c7a3",
+  "src-tauri/src/lib.rs": "be26cc6f6b4e8fdf6d028834534150586ad005f7f6138e9bb841e3f28d7b78c6",
+  "src-tauri/tauri.conf.json": "ad24c0c37c69942f0326aa22362935e8a881fa47e35fdafd2042f9dc86ff30b2",
+  "src-tauri/migrations/0011_practice_sessions.sql": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+  "src-tauri/migrations/0012_card_reviews.sql": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e",
+  "src/pages/StudyLibrary/ManualSplitDialog.tsx": "809b00a1683c0dd2865aae7b29489af23bb8a5a1cfab4c5f364c843f46113db5",
+  "src/pages/StudyLibrary/SplitPdfDialog.tsx": "83f8c677085ea5717a55350204f68ed5a8ffb92cc2eec8fbf5e677c86b1ff3a5",
+  "src/pages/StudyLibrary/splitSave.ts": "1d604f3454a24d6dbf6ee7538ee7b3217b7f938669eb2a378c7fe7237afc63c3",
+  "src/pages/StudyLibrary/SplitLineageDetails.tsx": "005e50cc7c43f83b6610fbc8f76a63f95582b5c92bac851b498158101ef68aba",
+  "src/pages/StudyLibrary/StudyLibrary.tsx": "f72faef6d3281be35ed6d352bb6d70de0f1b6173f142915f838f2f8184fcf54f",
+  "src/testing/fixtures/study-packets/02-flashcards-and-test.json": "d5101e8c58c70c21943295bb22ec5c88394c8db81aeec402bd8f7836612e1f99",
+  "scripts/generate-pdf-fixtures.mjs": "a883c135597d1f1554bef7aadbdfa4a46285deb3727a5d3c4ff0563b8aea5823"
+}

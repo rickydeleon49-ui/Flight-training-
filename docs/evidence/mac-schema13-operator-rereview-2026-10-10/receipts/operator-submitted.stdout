@@ -1,0 +1,134 @@
+{
+  "source": "/Users/rickymac/code/Flight-training-/docs/evidence/mac-schema13-operator-corrections-2026-10-10/hfd-operator.sh",
+  "passed": 21,
+  "failed": 0,
+  "total": 21,
+  "results": [
+    {
+      "name": "[control] an allowed fresh copy preserves the source",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: copied /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/source -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/control (source retained)\n"
+    },
+    {
+      "name": "[control] backup block succeeds and removes owner write",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: recorded original mode 700 in /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/evidence/backups-original-mode-20261011T050610Z.txt and removed write permission (now 500)\n"
+    },
+    {
+      "name": "[MACV-R7] unblock round-trips a path with Application Support spaces",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: restored /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/Application Support/com.herflightdeck.app/backups to recorded original mode 700\n"
+    },
+    {
+      "name": "[MACV-R7] account-inspection failure must refuse before copying",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: account inspection failed (/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/tools/dseditgroup exited 2); fail-closed\n"
+    },
+    {
+      "name": "[MACV-R7] dot-dot operands cannot escape the profiles directory",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: source /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/../outside contains traversal components (..)\n"
+    },
+    {
+      "name": "[MACV-R7] a symlink destination parent cannot escape the policy root",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: destination parent /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/link is a symlink; symlink parents cannot escape the policy root\n"
+    },
+    {
+      "name": "[MACV-R7] 0700 -> 0500 -> 0700 restoration preserves exact original mode",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: restored /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/Application Support/com.herflightdeck.app/backups to recorded original mode 700\n"
+    },
+    {
+      "name": "[MACV-R7] non-default original mode 0750 round-trips exactly",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: restored /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/Application Support/com.herflightdeck.app/backups to recorded original mode 750\n"
+    },
+    {
+      "name": "[MACV-R7] safe repeated unblock recovery is idempotent and exits 0",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: directory /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/Application Support/com.herflightdeck.app/backups is already at recorded original mode 700 (safe repeated recovery)\n"
+    },
+    {
+      "name": "[MACV-R7] repeated block-backups refuses recording already-blocked mode",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/Application Support/com.herflightdeck.app/backups is already write-blocked (mode 500); refusing to record a blocked mode as the original\n"
+    },
+    {
+      "name": "[MACV-R7] malformed mode record is refused (fail closed)",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: record /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/evidence/backups-original-mode-99999999T999999Z.txt is malformed or unrecognised format ('')\n"
+    },
+    {
+      "name": "[MACV-R7] unrelated record path is refused",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: record /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/evidence/backups-original-mode-88888888T888888Z.txt names /tmp/unrelated/path, not target /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/Application Support/com.herflightdeck.app/backups\n"
+    },
+    {
+      "name": "[MACV-R7] replacement directory (device:inode mismatch) is refused",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: directory identity mismatch (16777233:7190511 != 16777233:7190538); replacement directory rejected\n"
+    },
+    {
+      "name": "[MACV-R7] admin group member refuses mutating operation (exit 2)",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: hfdtest is a member of admin; the approved lane must be a standard account\n"
+    },
+    {
+      "name": "[MACV-R7] traversal in destination operand is refused",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/../escaped-dst contains traversal components (..)\n"
+    },
+    {
+      "name": "[MACV-R7] symlink source operand is refused",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: source /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/src-link is a symlink; symlinks are rejected\n"
+    },
+    {
+      "name": "[MACV-R7] existing destination copy is refused and preserves destination content",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/existing already exists \u2014 refusing to nest or overwrite; use a new name\n"
+    },
+    {
+      "name": "[MACV-R7] existing destination move is refused and preserves source and destination",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/existing already exists \u2014 refusing to nest or overwrite; use a new name\n"
+    },
+    {
+      "name": "[MACV-R7] allowed move completes and removes source folder",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: moved /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/move-src -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/move-dst\n"
+    },
+    {
+      "name": "[MACV-R7] self-nesting destination inside source is refused",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: destination /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/source/inner is inside source /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/kit/profiles/source \u2014 that would nest a profile inside itself\n"
+    },
+    {
+      "name": "[MACV-R7] copy into user-owned task workspace succeeds cleanly",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: copied /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/Application Support/com.herflightdeck.app -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-gyjvg7ry/workspace/profiles/copied-profile (source retained)\n"
+    }
+  ]
+}

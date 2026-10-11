@@ -1,0 +1,102 @@
+[
+  {
+    "name": "manifest",
+    "args": [
+      "shasum",
+      "-a",
+      "256",
+      "-c",
+      "SHA256SUMS"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-/docs/evidence/mac-schema13-operator-corrections-2026-10-10",
+    "exit": 0
+  },
+  {
+    "name": "selfcheck",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "scripts/mac-schema13-profile-snapshot.mjs",
+      "self-check"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "helper",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "/tmp/mac-schema13-review-2026-10-10/frozen-helper-diagnostics.mjs",
+      "/Users/rickymac/code/Flight-training-/scripts/mac-schema13-profile-snapshot.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "operator-submitted",
+    "args": [
+      "python3",
+      "/Users/rickymac/code/Flight-training-/docs/evidence/mac-schema13-operator-corrections-2026-10-10/operator-diagnostics.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "operator-selftest",
+    "args": [
+      "bash",
+      "/Users/rickymac/code/Flight-training-/docs/evidence/mac-schema13-operator-corrections-2026-10-10/hfd-operator-selftest.sh",
+      "/Users/Shared/hfd-schema13-kit-2026-10-08"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "kit-manifest",
+    "args": [
+      "shasum",
+      "-a",
+      "256",
+      "-c",
+      "TRANSFERSHA256SUMS.txt"
+    ],
+    "cwd": "/Users/Shared/hfd-schema13-kit-2026-10-08",
+    "exit": 0
+  },
+  {
+    "name": "operator-frozen",
+    "args": [
+      "python3",
+      "/tmp/mac-schema13-review-2026-10-10/operator-frozen-adapter.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "prior-ten",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "/Users/rickymac/code/.qwen/tmp/macv2/diagnostics.mjs",
+      "scripts/mac-schema13-profile-snapshot.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "operator-additional",
+    "args": [
+      "python3",
+      "/tmp/mac-schema13-review-2026-10-10/operator-additional.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 1
+  },
+  {
+    "name": "helper-additional",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "/tmp/mac-schema13-review-2026-10-10/helper-additional.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 1
+  }
+]
