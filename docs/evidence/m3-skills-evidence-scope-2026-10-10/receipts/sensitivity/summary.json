@@ -1,0 +1,104 @@
+[
+  {
+    "control": "all named tests pass on the unmodified copy"
+  },
+  {
+    "id": "S1",
+    "reverts": "idempotency: same id, different content is no longer refused",
+    "file": "prototype/skillEvidenceTransaction.ts",
+    "test": "the same request id with different content is refused",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S2",
+    "reverts": "retention: erasing no longer tombstones earlier receipts",
+    "file": "prototype/skillEvidenceTransaction.ts",
+    "test": "an old retry cannot resurrect an erased observation",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S3",
+    "reverts": "attribution: a verified-instructor value is accepted at the boundary",
+    "file": "prototype/skillEvidenceTransaction.ts",
+    "test": "there is no verified-instructor attribution",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S4a",
+    "reverts": "transaction: only the transaction's own ROLLBACK is removed (expected MASKED: the production ConnectionOwner's rollbackIfOpen still rolls back)",
+    "file": "prototype/skillEvidenceTransaction.ts",
+    "test": "leaves no partial change",
+    "exit": 0,
+    "caught": false,
+    "expected": "masked",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S4b",
+    "reverts": "transaction: transaction control is removed, so each statement autocommits",
+    "file": "prototype/skillEvidenceTransaction.ts",
+    "test": "leaves no partial change",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S5",
+    "reverts": "history: an edit no longer appends a revision",
+    "file": "prototype/skillEvidenceTransaction.ts",
+    "test": "editing wording, date and attribution keeps every earlier version",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S6",
+    "reverts": "restore: the validator stops checking append-only triggers",
+    "file": "prototype/skillEvidenceValidation.ts",
+    "test": "node:sqlite gives the listed outcome for every case",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S7",
+    "reverts": "schema: the observation-history update guard is dropped",
+    "file": "candidate/0014_skills_evidence.sql",
+    "test": "history rows cannot be rewritten",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "S8",
+    "reverts": "publication: a late answer for an obsolete request is published",
+    "file": "prototype/evidenceController.ts",
+    "test": "A -> B -> A publishes only the last A answer",
+    "exit": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  }
+]

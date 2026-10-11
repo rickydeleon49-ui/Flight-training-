@@ -1,0 +1,6 @@
+$ cp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/validation-cases.json /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/v.json && cp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/constraint-cases.json /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c.json && python3 -I docs/evidence/m3-skills-evidence-scope-2026-10-10/scripts/generate_fixtures.py && cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/validation-cases.json /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/v.json && cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/constraint-cases.json /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c.json && echo fixtures-byte-identical
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T06:39:03Z
+validation cases: 25, constraint cases: 29
+fixtures-byte-identical
+# exit=0

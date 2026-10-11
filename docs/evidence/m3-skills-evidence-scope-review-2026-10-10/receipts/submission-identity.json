@@ -1,0 +1,8 @@
+{
+  "base": "48fa47d9d035b2636b72fd6692930d85f4992bb9",
+  "evidence_verified": 51,
+  "production_anchors_verified": 30,
+  "submitted_paths_verified_before_and_after_review": 57,
+  "subject_changed_by_reviewer": false,
+  "primary_pending_preflight_changed_by_reviewer": false
+}

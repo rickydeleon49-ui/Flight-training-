@@ -1,0 +1,138 @@
+$ npx vitest run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts --reporter=verbose
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T06:38:53Z
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m3-skills-scope
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/bench.test.ts > benchmarks > records timings for 100 / 2,500 / 5,000 / 10,000 observations on both engines
+(node:46296) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46297) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46299) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/populated-fixture.test.ts > populated schema-13 fixture > regenerates the fixture from the shipped driver
+(node:46294) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46293) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/populated-fixture.test.ts > populated schema-13 fixture > loads into the shipped schema and opens through the shipped production driver 170ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > upgrading a populated schema-13 library > the starting library is genuine: shipped schema 13 with practice, card, debrief and lineage history 80ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (node:sqlite) > walks 53 observations sharing one date and one timestamp without gaps or repeats 96ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > a double submit joins one request: one write, one observation 62ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > Try again after a lost answer resends the same ids, and the store replays instead of duplicating 30ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a retried create writes one observation and replays the same result 103ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > the same request id with different content is refused and changes nothing 66ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a replay after later edits returns the original result and never undoes the edit 24ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (node:sqlite) > orders by observed date, then recording time, newest first; filters by skill, debrief and attribution 59ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (node:sqlite) > rows added or erased between pages never shift what the next page returns 41ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > edited content after an unknown outcome checks first and never duplicates a landed save 72ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > a refusal that wrote nothing lets edited content go out under new ids 15ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > an acknowledged save whose refresh fails says saved; Refresh only reads 31ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > two distinct requests issued together both land, in order 50ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > publication ownership > A -> B -> A publishes only the last A answer 54ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > publication ownership > a page that arrives after the skill changed is dropped; a second Show older waits for the first 55ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > publication ownership > nothing is published after dispose 2ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > upgrading a populated schema-13 library > node:sqlite: adds only the M3 tables and seeded catalog; every retained row is identical 212ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (node:sqlite) > an empty history is one empty page 55ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > covers every invariant category, with controls 2ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > node:sqlite gives the listed outcome for every case 789ms
+(node:46292) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > upgrading a populated schema-13 library > sql.js: adds only the M3 tables and seeded catalog; every retained row is identical 320ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a double-clicked edit with one expected revision applies once; the second is stale 98ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (sql.js) > walks 53 observations sharing one date and one timestamp without gaps or repeats 296ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a retried create writes one observation and replays the same result 296ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > upgrading a populated schema-13 library > a failed upgrade rolls back completely and the library stays schema 13 59ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (sql.js) > orders by observed date, then recording time, newest first; filters by skill, debrief and attribution 165ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > the same request id with different content is refused and changes nothing 157ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a replay after later edits returns the original result and never undoes the edit 45ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > an older app and a newer library > the shipped schema-13 driver refuses a candidate-14 library and leaves its bytes unchanged 222ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > an older app and a newer library > the candidate refuses a library from a version newer than itself 20ms
+stdout | docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > query plans > node:sqlite: skill pages and full pages read through the candidate indexes, not a table scan
+plan(skill page): SEARCH s USING INDEX sqlite_autoindex_skill_catalog_entries_1 (id=?) | SEARCH o USING INDEX idx_skill_observations_skill_page (skill_id=? AND (observed_on,created_at,id)<(?,?,?)) | SEARCH j USING INDEX sqlite_autoindex_journal_entries_1 (id=?) LEFT-JOIN | SEARCH a USING INDEX sqlite_autoindex_next_actions_1 (id=?) LEFT-JOIN
+plan(all page):   SCAN o USING INDEX idx_skill_observations_page | SEARCH s USING INDEX sqlite_autoindex_skill_catalog_entries_1 (id=?) | SEARCH j USING INDEX sqlite_autoindex_journal_entries_1 (id=?) LEFT-JOIN | SEARCH a USING INDEX sqlite_autoindex_next_actions_1 (id=?) LEFT-JOIN
+
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (sql.js) > rows added or erased between pages never shift what the next page returns 134ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > evidence history pages (sql.js) > an empty history is one empty page 43ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts > query plans > node:sqlite: skill pages and full pages read through the candidate indexes, not a table scan 109ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > two distinct requests issued together both land, in order 113ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a double-clicked edit with one expected revision applies once; the second is stale 44ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > reopening a saved library > node:sqlite: an observation survives close and reopen, and a retry after reopen is still a replay 98ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > backup and restore > node:sqlite backup restores on node:sqlite: validated, and every table identical 235ms
+(node:46298) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > reopening a saved library > sql.js: the exported bytes reopen with the same observation and receipt 143ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > editing wording, date and attribution keeps every earlier version 38ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > a stale edit, a no-op edit and an edit of a missing observation are refused 40ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > history rows cannot be rewritten, even with direct SQL 53ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx > skill evidence panel > shows loading, then an honest empty state with no approval wording 308ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx > skill evidence panel > history explains who said it, a deleted debrief, a renamed skill and a completed action 92ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > backup and restore > node:sqlite backup restores on sql.js: validated, and every table identical 207ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > editing wording, date and attribution keeps every earlier version 50ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx > skill evidence panel > a read error says the data is safe; Try again reads again 117ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > a stale edit, a no-op edit and an edit of a missing observation are refused 111ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > history rows cannot be rewritten, even with direct SQL 75ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > backup and restore > sql.js backup restores on node:sqlite: validated, and every table identical 192ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > a renamed debrief and edited feedback are shown as drift; nothing is relinked 43ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > backup and restore > a backup whose evidence was altered is refused before anything would be replaced 183ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts > backup and restore > an older schema-13 backup restores into the candidate app, gains 14 and keeps every row 110ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx > skill evidence panel > form controls are labelled and the attribution choice is a named group 126ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > deleting the debrief keeps the observation, its wording and the snapshot; a replacement debrief is not adopted 121ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > a retired skill keeps its history, refuses new observations, and can be restored 28ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx > skill evidence panel > two quick submits save one observation and show it 153ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > renaming a custom skill keeps the name it had when each observation was recorded 63ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > built-in names are read-only, active duplicate names are refused, retired duplicates are allowed 101ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > skills are never deleted 39ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx > skill evidence panel > a save whose refresh fails says Saved and offers a refresh that does not save again 210ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx > skill evidence panel > switching skills ignores the earlier skill's late answer 88ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > a renamed debrief and edited feedback are shown as drift; nothing is relinked 66ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > sql.js gives the listed outcome for every case 1642ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > deleting the debrief keeps the observation, its wording and the snapshot; a replacement debrief is not adopted 122ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > a retired skill keeps its history, refuses new observations, and can be restored 78ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > renaming a custom skill keeps the name it had when each observation was recorded 36ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > built-in names are read-only, active duplicate names are refused, retired duplicates are allowed 44ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > skills are never deleted 39ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > there is no verified-instructor attribution, at the boundary or in the table 28ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > completing the linked action, finishing practice or adding observations never sets status, confidence or addressed 68ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared constraint contract > node:sqlite accepts and refuses exactly the listed statements 351ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > status and confidence are separate, explicit and stale-checked 34ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > there is no verified-instructor attribution, at the boundary or in the table 30ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > completing the linked action, finishing practice or adding observations never sets status, confidence or addressed 41ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > status and confidence are separate, explicit and stale-checked 29ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (node:sqlite) > link and mark-addressed are explicit, idempotent, recorded in history, and never change the action 19ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (node:sqlite) > deleting the linked action keeps a named record of it; linking a missing action is refused 36ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (sql.js) > link and mark-addressed are explicit, idempotent, recorded in history, and never change the action 38ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (sql.js) > deleting the linked action keeps a named record of it; linking a missing action is refused 45ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > erases only the selected observation and leaves no wording behind anywhere in the database 64ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > an old retry cannot resurrect an erased observation, and its id cannot be reused 20ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > erasing needs explicit confirmation 25ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > erases only the selected observation and leaves no wording behind anywhere in the database 74ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > an old retry cannot resurrect an erased observation, and its id cannot be reused 66ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > erasing needs explicit confirmation 39ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change 28ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change 22ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "UPDATE skill_observations" leaves no partial change 21ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change 30ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change 27ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "UPDATE skill_observations" leaves no partial change 23ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared constraint contract > sql.js accepts and refuses exactly the listed statements 679ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > wording: 2000 characters is accepted, 2001 refused; empty and control characters refused 19ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > dates, ids and extra fields are refused before any transaction 20ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > one debrief holds at most 50 observations; a library at most 200 custom skills 66ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > page size is bounded at the read boundary and a forged cursor is refused 18ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > wording: 2000 characters is accepted, 2001 refused; empty and control characters refused 38ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > dates, ids and extra fields are refused before any transaction 34ms
+stdout | docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > both engines are the real ones
+engines: node:sqlite 3.53.4, sql.js 3.49.1
+
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > one debrief holds at most 50 observations; a library at most 200 custom skills 74ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > page size is bounded at the read boundary and a forged cursor is refused 42ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > both engines are the real ones 1ms
+
+ Test Files  7 passed | 1 skipped (8)
+      Tests  102 passed | 2 skipped (104)
+   Start at  23:38:54
+   Duration  4.49s (transform 2.63s, setup 0ms, import 4.93s, tests 11.40s, environment 1.06s)
+
+# exit=0

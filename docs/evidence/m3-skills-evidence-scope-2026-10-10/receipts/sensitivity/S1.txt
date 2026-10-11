@@ -1,0 +1,98 @@
+$ npx vitest run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts tests/writes.test.ts -t the same request id with different content is refused --reporter=verbose
+# cwd: <scratch copy>
+# variant: S1 idempotency: same id, different content is no longer refused
+# file: prototype/skillEvidenceTransaction.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sensitivity
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a retried create writes one observation and replays the same result
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > the same request id with different content is refused and changes nothing 25ms
+   → expected OPERATION_CONFLICT, but it succeeded
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a replay after later edits returns the original result and never undoes the edit
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > two distinct requests issued together both land, in order
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a double-clicked edit with one expected revision applies once; the second is stale
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a retried create writes one observation and replays the same result
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > the same request id with different content is refused and changes nothing 49ms
+   → expected OPERATION_CONFLICT, but it succeeded
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a replay after later edits returns the original result and never undoes the edit
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > two distinct requests issued together both land, in order
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a double-clicked edit with one expected revision applies once; the second is stale
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > reopening a saved library > node:sqlite: an observation survives close and reopen, and a retry after reopen is still a replay
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > reopening a saved library > sql.js: the exported bytes reopen with the same observation and receipt
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > editing wording, date and attribution keeps every earlier version
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > a stale edit, a no-op edit and an edit of a missing observation are refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > history rows cannot be rewritten, even with direct SQL
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > editing wording, date and attribution keeps every earlier version
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > a stale edit, a no-op edit and an edit of a missing observation are refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > history rows cannot be rewritten, even with direct SQL
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > a renamed debrief and edited feedback are shown as drift; nothing is relinked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > deleting the debrief keeps the observation, its wording and the snapshot; a replacement debrief is not adopted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > a retired skill keeps its history, refuses new observations, and can be restored
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > renaming a custom skill keeps the name it had when each observation was recorded
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > built-in names are read-only, active duplicate names are refused, retired duplicates are allowed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > skills are never deleted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > a renamed debrief and edited feedback are shown as drift; nothing is relinked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > deleting the debrief keeps the observation, its wording and the snapshot; a replacement debrief is not adopted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > a retired skill keeps its history, refuses new observations, and can be restored
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > renaming a custom skill keeps the name it had when each observation was recorded
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > built-in names are read-only, active duplicate names are refused, retired duplicates are allowed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > skills are never deleted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > there is no verified-instructor attribution, at the boundary or in the table
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > completing the linked action, finishing practice or adding observations never sets status, confidence or addressed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > status and confidence are separate, explicit and stale-checked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > there is no verified-instructor attribution, at the boundary or in the table
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > completing the linked action, finishing practice or adding observations never sets status, confidence or addressed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > status and confidence are separate, explicit and stale-checked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (node:sqlite) > link and mark-addressed are explicit, idempotent, recorded in history, and never change the action
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (node:sqlite) > deleting the linked action keeps a named record of it; linking a missing action is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (sql.js) > link and mark-addressed are explicit, idempotent, recorded in history, and never change the action
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (sql.js) > deleting the linked action keeps a named record of it; linking a missing action is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > erases only the selected observation and leaves no wording behind anywhere in the database
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > an old retry cannot resurrect an erased observation, and its id cannot be reused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > erasing needs explicit confirmation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > erases only the selected observation and leaves no wording behind anywhere in the database
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > an old retry cannot resurrect an erased observation, and its id cannot be reused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > erasing needs explicit confirmation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "UPDATE skill_observations" leaves no partial change
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "UPDATE skill_observations" leaves no partial change
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > wording: 2000 characters is accepted, 2001 refused; empty and control characters refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > dates, ids and extra fields are refused before any transaction
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > one debrief holds at most 50 observations; a library at most 200 custom skills
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > page size is bounded at the read boundary and a forged cursor is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > wording: 2000 characters is accepted, 2001 refused; empty and control characters refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > dates, ids and extra fields are refused before any transaction
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > one debrief holds at most 50 observations; a library at most 200 custom skills
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > page size is bounded at the read boundary and a forged cursor is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > both engines are the real ones
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 59 skipped (61)
+   Start at  23:38:08
+   Duration  368ms (transform 161ms, setup 0ms, import 211ms, tests 75ms, environment 0ms)
+
+(node:44704) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > the same request id with different content is refused and changes nothing
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > the same request id with different content is refused and changes nothing
+Error: expected OPERATION_CONFLICT, but it succeeded
+ ❯ expectCode docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/helpers.ts:193:21
+    191|     (e: unknown) => e as { code?: string; message?: string },
+    192|   );
+    193|   if (!error) throw new Error(`expected ${code}, but it succeeded`);
+       |                     ^
+    194|   if (error.code !== code) throw new Error(`expected ${code}, got ${er…
+    195| }
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts:46:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+# exit=1
+# restored-sha-matches=True
