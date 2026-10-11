@@ -1,5 +1,3 @@
-**10 October M3 skills and feedback evidence: scope and prototype PROPOSED, pending senior review.** Delivered together:
-
 ## M3 scope/prototype independent review — 2026-10-10
 
 **CORRECTIONS REQUIRED: M3-R1–R7.** The original 102 prototype tests, strict typecheck and 7 native tests pass independently, but frozen reviewer diagnostics reproduce 17 TS/UI failures and 3 native failures, with valid controls passing. Fix write/publication ownership, uncertain-save reconciliation and draft retention, StrictMode lifecycle, bounded access to every revision, receipt ownership, restored catalog rules and date-edit pagination before technical acceptance.
@@ -9,6 +7,8 @@
 - Original submission/evidence published for collaboration, **not accepted**. M3-D1–D9 remain PROPOSED; conditional production assignment remains inactive. Candidate 0014 is evidence only, not registered.
 - Original dirty M3 worktree and the primary clone's separate Mac preflight documents were preserved. G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; post-receipt recovery remains BLOCKED / source-covered.
 
+
+**10 October M3 skills and feedback evidence: scope and prototype PROPOSED, pending senior review.** Delivered together:
 - the [scope](M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md): contracts, UI flow, candidate schema and nine PROPOSED owner defaults (M3-D1–D9);
 - the [evidence pack](evidence/m3-skills-evidence-scope-2026-10-10/README.md): candidate migration 0014, a runnable disposable prototype, shared fixtures, a rusqlite twin, receipts and SHA256SUMS;
 - the [conditional implementation prompt](M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md).
