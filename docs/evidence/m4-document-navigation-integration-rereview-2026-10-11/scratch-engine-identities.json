@@ -1,0 +1,13 @@
+{
+  "source": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules",
+  "files": {
+    ".package-lock.json": "467185960c54683f8ae21d4f0e9465916342754df6c2fba24ccc15d677f9fbad",
+    "pdfjs-dist/package.json": "3fcf6a22713e12b62ac8430e54bf00547d664b3248b618aa57915840c7f8b617",
+    "pdfjs-dist/LICENSE": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+    "pdfjs-dist/build/pdf.mjs": "495588717f62303a839e91a5343deebf1b41f52e2f9f6361e73dee6ea6a4355e",
+    "pdfjs-dist/build/pdf.worker.mjs": "f2870db902eaff8397442c912b69459980ac91f6f4b5ed827167b12cf7057930",
+    "@napi-rs/canvas/package.json": "c189bbe7adf9ed5948d3ed82b8fd834b365c5d4adcb9bebe57e2ace3c54a3dff",
+    "@napi-rs/canvas-darwin-arm64/package.json": "0a65e28ddce39049e9ed431c5a7a39f2158194ac2f318ec73cd30bbbbbc25c46"
+  },
+  "note": "Observed installed scratch assets; not submitted package-artifact/license audit. node_modules remains unmodified and excluded from publication."
+}

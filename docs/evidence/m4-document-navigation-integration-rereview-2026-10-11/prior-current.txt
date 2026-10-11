@@ -1,0 +1,120 @@
+TAP version 13
+# Subtest: [control] validated physical index and complete nested parent range work
+ok 1 - [control] validated physical index and complete nested parent range work
+  ---
+  duration_ms: 0.574166
+  type: 'test'
+  ...
+# Subtest: [control] explicit abort refuses obsolete opener success
+ok 2 - [control] explicit abort refuses obsolete opener success
+  ---
+  duration_ms: 0.153833
+  type: 'test'
+  ...
+# Subtest: [M4-R5] unsafe integer totals cannot validate a physical destination
+ok 3 - [M4-R5] unsafe integer totals cannot validate a physical destination
+  ---
+  duration_ms: 0.032375
+  type: 'test'
+  ...
+# Subtest: [M4-R5] integer sourcePage without coordinate provenance remains unresolved
+ok 4 - [M4-R5] integer sourcePage without coordinate provenance remains unresolved
+  ---
+  duration_ms: 0.06425
+  type: 'test'
+  ...
+# Subtest: [M4-R5] explicit physical zero cannot become a resolved destination
+ok 5 - [M4-R5] explicit physical zero cannot become a resolved destination
+  ---
+  duration_ms: 0.050333
+  type: 'test'
+  ...
+# Subtest: [M4-R5] parent ranges cannot concatenate string coordinates
+ok 6 - [M4-R5] parent ranges cannot concatenate string coordinates
+  ---
+  duration_ms: 0.032083
+  type: 'test'
+  ...
+# Subtest: [M4-R5] parent range length must match child length
+ok 7 - [M4-R5] parent range length must match child length
+  ---
+  duration_ms: 0.103333
+  type: 'test'
+  ...
+# Subtest: [M4-R5] root destination cannot exceed known root page count
+ok 8 - [M4-R5] root destination cannot exceed known root page count
+  ---
+  duration_ms: 0.053917
+  type: 'test'
+  ...
+# Subtest: [M4-R5] reverse translation includes the destination child identity
+ok 9 - [M4-R5] reverse translation includes the destination child identity
+  ---
+  duration_ms: 0.177458
+  type: 'test'
+  ...
+# Subtest: [M4-R6] same-hash revalidation cannot verify an out-of-bounds bookmark
+ok 10 - [M4-R6] same-hash revalidation cannot verify an out-of-bounds bookmark
+  ---
+  duration_ms: 0.252916
+  type: 'test'
+  ...
+# Subtest: [M4-R7] later missing-path request supersedes earlier pending opener
+ok 11 - [M4-R7] later missing-path request supersedes earlier pending opener
+  ---
+  duration_ms: 0.087875
+  type: 'test'
+  ...
+# Subtest: [M4-R7] failing another material cannot expose prior material requested page
+ok 12 - [M4-R7] failing another material cannot expose prior material requested page
+  ---
+  duration_ms: 0.101125
+  type: 'test'
+  ...
+# Subtest: [M4-R7] malformed destination is refused before invoking opener
+ok 13 - [M4-R7] malformed destination is refused before invoking opener
+  ---
+  duration_ms: 0.0295
+  type: 'test'
+  ...
+# Subtest: [M4-R7] successful open exercises injected durable persistence
+ok 14 - [M4-R7] successful open exercises injected durable persistence
+  ---
+  duration_ms: 0.038625
+  type: 'test'
+  ...
+# Subtest: [M4-R8] custom parser cannot establish page-tree consistency
+not ok 15 - [M4-R8] custom parser cannot establish page-tree consistency
+  ---
+  duration_ms: 0.883333
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/prior-current.test.mjs:61:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/prior-current.test.mjs:67:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 14
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67.307208
