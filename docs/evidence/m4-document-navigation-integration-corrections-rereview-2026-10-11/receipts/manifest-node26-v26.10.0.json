@@ -1,0 +1,38 @@
+{
+  "target": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation",
+  "generatedAt": "2026-10-11T21:14:29.591Z",
+  "repoHead": "c32918bf1580db5e254712d16c373d301751f0e1",
+  "frozenSubmittedPaths": {
+    "manifest": "docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/submitted-hashes.json",
+    "entries": 32,
+    "unchanged": 30,
+    "changed": [
+      {
+        "path": "docs/M4_DOCUMENT_NAVIGATION_AND_VIEWER_EVALUATION_2026-10-11.md",
+        "expected": "b08140ff4b1b57c70c36284ebfff4c1929047d96eae4220074d3b630045adc2a",
+        "actual": "29d01efea5620eaf8126e7f1a01d80fab23d60e6a191f39c836710f62bf7e1e2"
+      },
+      {
+        "path": "docs/M4_CONDITIONAL_IMPLEMENTATION_PROMPT_2026-10-11.md",
+        "expected": "a32a8897655c88460c81b050a7d53a95fb9b9c0fe397cfa5d3daf7a5c1b5b100",
+        "actual": "3f5c60d5d6ed8dabdcf670b7c6c8cb90151c8c96359e1e6cdc83b8c395952dec"
+      }
+    ],
+    "missing": []
+  },
+  "packSelfManifest": {
+    "manifestPath": "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/SHA256SUMS",
+    "recorded": 26,
+    "deliveredFiles": 27,
+    "matching": 20,
+    "stale": [
+      "receipts/01-toolchain.txt",
+      "receipts/02-baseline.txt",
+      "receipts/03-proof-suite.txt",
+      "receipts/04-hygiene.txt",
+      "receipts/05-diagnostics.txt",
+      "receipts/06-sensitivity-mutants.txt"
+    ],
+    "unrecorded": []
+  }
+}

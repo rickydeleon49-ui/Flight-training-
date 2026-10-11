@@ -1,0 +1,130 @@
+# Reviewer harness: each pdfjs-dist entrypoint in its OWN process (cross-build contamination avoided).
+# committed harness: docs/evidence/m4-document-navigation-integration-corrections-rereview-2026-10-11/pdfjs-one-build.mjs   (harness exits 0 only when every fixture matches expectation)
+# pdfjs root: /Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist  <- the previous round's untracked scratch install; this pack ships no engine of its own (finding R22)
+# fixtures: this pack's fixtures/ (byte-identical to the submitted pack)
+
+===== lane NODE22-v22.23.3 | entrypoint legacy/build/pdf.mjs =====
+{
+ "build": "legacy/build/pdf.mjs",
+ "version": "6.3.289",
+ "engine": "v22.23.3",
+ "status": "PASS",
+ "out": [
+  {
+   "file": "handbook_root_sample.pdf",
+   "pageCount": 50,
+   "matchesExpected": true
+  },
+  {
+   "file": "multi_page_sample.pdf",
+   "pageCount": 10,
+   "matchesExpected": true
+  },
+  {
+   "file": "single_page.pdf",
+   "pageCount": 1,
+   "matchesExpected": true
+  },
+  {
+   "file": "split_part_sample.pdf",
+   "pageCount": 16,
+   "matchesExpected": true
+  },
+  {
+   "file": "malformed_sample.pdf",
+   "rejected": "InvalidPDFException",
+   "message": "Invalid PDF structure.",
+   "asExpected": true
+  }
+ ]
+}
+----- harness exit: 0
+Warning: Indexing all PDF objects
+===== lane NODE22-v22.23.3 | entrypoint build/pdf.mjs =====
+----- harness exit: 1
+Warning: Please use the `legacy` build in Node.js environments.
+file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/build/pdf.mjs:8844
+      Promise.try(action, data.data).then(function (result) {
+                 ^
+
+
+===== lane NODE26-v26.10.0 | entrypoint legacy/build/pdf.mjs =====
+{
+ "build": "legacy/build/pdf.mjs",
+ "version": "6.3.289",
+ "engine": "v26.10.0",
+ "status": "PASS",
+ "out": [
+  {
+   "file": "handbook_root_sample.pdf",
+   "pageCount": 50,
+   "matchesExpected": true
+  },
+  {
+   "file": "multi_page_sample.pdf",
+   "pageCount": 10,
+   "matchesExpected": true
+  },
+  {
+   "file": "single_page.pdf",
+   "pageCount": 1,
+   "matchesExpected": true
+  },
+  {
+   "file": "split_part_sample.pdf",
+   "pageCount": 16,
+   "matchesExpected": true
+  },
+  {
+   "file": "malformed_sample.pdf",
+   "rejected": "InvalidPDFException",
+   "message": "Invalid PDF structure.",
+   "asExpected": true
+  }
+ ]
+}
+----- harness exit: 0
+Warning: Indexing all PDF objects
+===== lane NODE26-v26.10.0 | entrypoint build/pdf.mjs =====
+{
+ "build": "build/pdf.mjs",
+ "version": "6.3.289",
+ "engine": "v26.10.0",
+ "status": "PASS",
+ "out": [
+  {
+   "file": "handbook_root_sample.pdf",
+   "pageCount": 50,
+   "matchesExpected": true
+  },
+  {
+   "file": "multi_page_sample.pdf",
+   "pageCount": 10,
+   "matchesExpected": true
+  },
+  {
+   "file": "single_page.pdf",
+   "pageCount": 1,
+   "matchesExpected": true
+  },
+  {
+   "file": "split_part_sample.pdf",
+   "pageCount": 16,
+   "matchesExpected": true
+  },
+  {
+   "file": "malformed_sample.pdf",
+   "rejected": "InvalidPDFException",
+   "message": "Invalid PDF structure.",
+   "asExpected": true
+  }
+ ]
+}
+----- harness exit: 0
+Warning: Please use the `legacy` build in Node.js environments.
+Warning: Indexing all PDF objects
+
+# CONCLUSION: the same pinned pdfjs-dist@6.3.289 completes all five fixtures on the project Node 22 lane
+# through its documented legacy entrypoint (exit 0); the modern entrypoint dies there with an uncaught
+# Promise.try TypeError (exit 1). The recorded 'Node 22 runtime limitation' is an entrypoint choice inside
+# the scratch demonstration, not a parser-capability or dependency-availability limit.

@@ -54,3 +54,10 @@ mac-schema13-helper-corrections-2026-10-08/receipts/selfcheck-final.json whitesp
 mac-schema13-operator-rereview-2026-10-10/receipts/selfcheck.stdout whitespace=-blank-at-eof
 mac-schema13-operator-rereview-2026-10-10/submitted/docs/evidence/mac-schema13-operator-corrections-2026-10-10/receipts/selfcheck-final.json whitespace=-blank-at-eof
 mac-schema13-operator-rereview-2026-10-10/submitted/docs/evidence/mac-schema13-operator-corrections-2026-10-10/revert-sensitivity.py whitespace=-blank-at-eof,-blank-at-eol
+
+# Preserve the round-2 M4 review pack byte-for-byte: synthetic PDF fixtures, archived submission
+# copies and raw command receipts. Reviewer SHA256SUMS must verify against these exact bytes.
+m4-document-navigation-integration-corrections-rereview-2026-10-11/fixtures/*.pdf binary
+m4-document-navigation-integration-corrections-rereview-2026-10-11/receipts/*.txt -whitespace
+m4-document-navigation-integration-corrections-rereview-2026-10-11/receipts/*.json -whitespace
+m4-document-navigation-integration-corrections-rereview-2026-10-11/submitted/* -whitespace
