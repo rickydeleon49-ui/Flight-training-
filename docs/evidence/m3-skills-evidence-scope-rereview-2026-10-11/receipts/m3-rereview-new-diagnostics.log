@@ -1,0 +1,788 @@
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-corrections-independent-review
+
+(node:55947) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts (4 tests | 3 failed) 132ms
+     × [M3-R9] receipt removal cannot leave an accepted operation-owned history orphan 39ms
+     × [M3-R9] receipt removal cannot leave an accepted operation-owned history orphan 68ms
+   × [M3-R10] confirmed erased history discards loaded text and cursor 13ms
+(node:55946) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx (3 tests | 3 failed) 3170ms
+     × [M3-R8] changed metadata while saving preserves the unsaved complete draft 1100ms
+     × [M3-R8] changed metadata while saving preserves the unsaved complete draft 1033ms
+     × [M3-R8] changed metadata while saving preserves the unsaved complete draft 1035ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts > remaining receipt ownership (node:sqlite) > [M3-R9] receipt removal cannot leave an accepted operation-owned history orphan
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts > remaining receipt ownership (sql.js) > [M3-R9] receipt removal cannot leave an accepted operation-owned history orphan
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts:12:34
+     10|   const x=await setup(name),o=observation('builtin.normal_landing',x.j…
+     11|   await x.store.validate();x.engine.run('DELETE FROM skill_evidence_op…
+     12|   await expect(x.store.validate()).rejects.toThrow();
+       |                                  ^
+     13|  });
+     14| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts > [M3-R10] confirmed erased history discards loaded text and cursor
+AssertionError: expected [ { revision: 2, …(9) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "addressedAt": null,
++     "attribution": "instructor_transcribed",
++     "changeKind": "edited",
++     "instructorName": "Synthetic CFI",
++     "linkedActionId": null,
++     "linkedActionTitle": null,
++     "observedOn": "2026-10-01",
++     "recordedAt": "2026-10-11T07:41:27.185Z",
++     "revision": 2,
++     "wording": "Latest private wording",
++   },
++ ]
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts:22:38
+     20|  await x.store.act({action:'erase_observation',operationId:uuid(),obse…
+     21|  await c.loadOlderHistory();expect(c.getState().history!.error).toBe('…
+     22|  expect(c.getState().history!.items).toEqual([]);expect(c.getState().h…
+       |                                      ^
+     23|  expect(c.getState().items.some(i=>i.id===o.observationId)).toBe(false…
+     24| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx > whole draft acknowledgment (date) > [M3-R8] changed metadata while saving preserves the unsaved complete draft
+AssertionError: expected '' to be 'Keep the complete draft' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"_r_0_-title"[39m
+        [33mclass[39m=[32m"card"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"_r_0_-title"[39m
+        [36m>[39m
+          [0mSkill evidence[0m
+        [36m</h2>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_0_-skill"[39m
+        [36m>[39m
+          [0mSkill[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mid[39m=[32m"_r_0_-skill"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+          [36m>[39m
+            [0mCrosswind landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+          [36m>[39m
+            [0mEmergency approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.go_around"[39m
+          [36m>[39m
+            [0mGo-around[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.ground_reference"[39m
+          [36m>[39m
+            [0mGround reference maneuvers[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_landing"[39m
+          [36m>[39m
+            [0mNormal approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+          [36m>[39m
+            [0mNormal takeoff and climb[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+          [36m>[39m
+            [0mPreflight inspection[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.radio_communications"[39m
+          [36m>[39m
+            [0mRadio communications[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.slow_flight"[39m
+          [36m>[39m
+            [0mSlow flight[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.stalls"[39m
+          [36m>[39m
+            [0mStalls and recovery[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.steep_turns"[39m
+          [36m>[39m
+            [0mSteep turns[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.taxiing"[39m
+          [36m>[39m
+            [0mTaxiing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+          [36m>[39m
+            [0mTraffic pattern[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.checklist_use"[39m
+          [36m>[39m
+            [0mUsing checklists[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+          [36m>[39m
+            [0mWeather decisions[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Summary"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mYour status: [0m
+            [0mNot set[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mYour confidence: [0m
+            [0mNot rated[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mOnly a few observations so far: not enough to show a pattern.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"muted"[39m
+          [36m>[39m
+            [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33maria-labelledby[39m=[32m"_r_1_-legend-form"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mid[39m=[32m"_r_1_-legend-form"[39m
+          [36m>[39m
+            [0mAdd an observation from “[0m
+            [0mPattern work[0m
+            [0m”[0m
+          [36m</h3>[39m
+          [36m<fieldset>[39m
+            [36m<legend>[39m
+              [0mWho said it?[0m
+            [36m</legend>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mchecked[39m=[32m""[39m
+                [33mname[39m=[32m"_r_1_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMy instructor (I'm writing down what they said)[0m
+            [36m</label>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mname[39m=[32m"_r_1_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMe (my own observation)[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-name"[39m
+          [36m>[39m
+            [0mInstructor name (optional)[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_1_-name"[39m
+            [33mmaxlength[39m=[32m"120"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-wording"[39m
+          [36m>[39m
+            [0mWhat was said or noticed[0m
+          [36m</label>[39m
+          [36m<textarea[39m
+            [33maria-describedby[39m=[32m"_r_1_-count"[39m
+            [33mid[39m=[32m"_r_1_-wording"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mid[39m=[32m"_r_1_-count"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m of 2000 characters[0m
+          [36m</p>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-date"[39m
+          [36m>[39m
+            [0mDate observed[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_1_-date"[39m
+            [33mtype[39m=[32m"date"[39m
+            [33mvalue[39m=[32m"2026-10-02"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mSave observation[0m
+          [36m</button>[39m
+        [36m</form>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSaved.[0m
+        [36m</p>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"Evidence history"[39m
+        [36m>[39m
+          [36m<li>[39m
+            [36m<p>[39m
+              [36m<strong>[39m
+                [0mInstructor feedback, as you wrote it down[0m
+              [36m</strong>[39m
+              [0m · [0m
+              [0m2026-10-01[0m
+            [36m</p>[39m
+            [36m<blockquote>[39m
+              [0mKeep the complete draft[0m
+            [36m</blockquote>[39m
+            [36m<p>[39m
+              [0mFrom “Pattern work”, 2026-10-01[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- Keep the complete draft
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx:21:40
+     19|   if(field==='instructor name')fireEvent.change(screen.getByLabelText(…
+     20|   await act(async()=>{release()});await screen.findByText('Saved.');
+     21|   await waitFor(()=>expect(text.value).toBe('Keep the complete draft')…
+       |                                        ^
+     22|   expect(screen.getByRole('button',{name:'Replace the saved wording wi…
+     23|  });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx > whole draft acknowledgment (attribution) > [M3-R8] changed metadata while saving preserves the unsaved complete draft
+AssertionError: expected '' to be 'Keep the complete draft' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"_r_2_-title"[39m
+        [33mclass[39m=[32m"card"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"_r_2_-title"[39m
+        [36m>[39m
+          [0mSkill evidence[0m
+        [36m</h2>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_2_-skill"[39m
+        [36m>[39m
+          [0mSkill[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mid[39m=[32m"_r_2_-skill"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+          [36m>[39m
+            [0mCrosswind landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+          [36m>[39m
+            [0mEmergency approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.go_around"[39m
+          [36m>[39m
+            [0mGo-around[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.ground_reference"[39m
+          [36m>[39m
+            [0mGround reference maneuvers[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_landing"[39m
+          [36m>[39m
+            [0mNormal approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+          [36m>[39m
+            [0mNormal takeoff and climb[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+          [36m>[39m
+            [0mPreflight inspection[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.radio_communications"[39m
+          [36m>[39m
+            [0mRadio communications[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.slow_flight"[39m
+          [36m>[39m
+            [0mSlow flight[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.stalls"[39m
+          [36m>[39m
+            [0mStalls and recovery[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.steep_turns"[39m
+          [36m>[39m
+            [0mSteep turns[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.taxiing"[39m
+          [36m>[39m
+            [0mTaxiing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+          [36m>[39m
+            [0mTraffic pattern[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.checklist_use"[39m
+          [36m>[39m
+            [0mUsing checklists[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+          [36m>[39m
+            [0mWeather decisions[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Summary"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mYour status: [0m
+            [0mNot set[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mYour confidence: [0m
+            [0mNot rated[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mOnly a few observations so far: not enough to show a pattern.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"muted"[39m
+          [36m>[39m
+            [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33maria-labelledby[39m=[32m"_r_3_-legend-form"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mid[39m=[32m"_r_3_-legend-form"[39m
+          [36m>[39m
+            [0mAdd an observation from “[0m
+            [0mPattern work[0m
+            [0m”[0m
+          [36m</h3>[39m
+          [36m<fieldset>[39m
+            [36m<legend>[39m
+              [0mWho said it?[0m
+            [36m</legend>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mchecked[39m=[32m""[39m
+                [33mname[39m=[32m"_r_3_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMy instructor (I'm writing down what they said)[0m
+            [36m</label>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mname[39m=[32m"_r_3_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMe (my own observation)[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_3_-wording"[39m
+          [36m>[39m
+            [0mWhat was said or noticed[0m
+          [36m</label>[39m
+          [36m<textarea[39m
+            [33maria-describedby[39m=[32m"_r_3_-count"[39m
+            [33mid[39m=[32m"_r_3_-wording"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mid[39m=[32m"_r_3_-count"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m of 2000 characters[0m
+          [36m</p>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_3_-date"[39m
+          [36m>[39m
+            [0mDate observed[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_3_-date"[39m
+            [33mtype[39m=[32m"date"[39m
+            [33mvalue[39m=[32m"2026-10-01"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mSave observation[0m
+          [36m</button>[39m
+        [36m</form>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSaved.[0m
+        [36m</p>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"Evidence history"[39m
+        [36m>[39m
+          [36m<li>[39m
+            [36m<p>[39m
+              [36m<strong>[39m
+                [0mInstructor feedback, as you wrote it down[0m
+              [36m</strong>[39m
+              [0m · [0m
+              [0m2026-10-01[0m
+            [36m</p>[39m
+            [36m<blockquote>[39m
+              [0mKeep the complete draft[0m
+            [36m</blockquote>[39m
+            [36m<p>[39m
+              [0mFrom “Pattern work”, 2026-10-01[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- Keep the complete draft
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx:21:40
+     19|   if(field==='instructor name')fireEvent.change(screen.getByLabelText(…
+     20|   await act(async()=>{release()});await screen.findByText('Saved.');
+     21|   await waitFor(()=>expect(text.value).toBe('Keep the complete draft')…
+       |                                        ^
+     22|   expect(screen.getByRole('button',{name:'Replace the saved wording wi…
+     23|  });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx > whole draft acknowledgment (instructor name) > [M3-R8] changed metadata while saving preserves the unsaved complete draft
+AssertionError: expected '' to be 'Keep the complete draft' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"_r_4_-title"[39m
+        [33mclass[39m=[32m"card"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"_r_4_-title"[39m
+        [36m>[39m
+          [0mSkill evidence[0m
+        [36m</h2>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_4_-skill"[39m
+        [36m>[39m
+          [0mSkill[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mid[39m=[32m"_r_4_-skill"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+          [36m>[39m
+            [0mCrosswind landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+          [36m>[39m
+            [0mEmergency approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.go_around"[39m
+          [36m>[39m
+            [0mGo-around[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.ground_reference"[39m
+          [36m>[39m
+            [0mGround reference maneuvers[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_landing"[39m
+          [36m>[39m
+            [0mNormal approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+          [36m>[39m
+            [0mNormal takeoff and climb[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+          [36m>[39m
+            [0mPreflight inspection[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.radio_communications"[39m
+          [36m>[39m
+            [0mRadio communications[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.slow_flight"[39m
+          [36m>[39m
+            [0mSlow flight[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.stalls"[39m
+          [36m>[39m
+            [0mStalls and recovery[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.steep_turns"[39m
+          [36m>[39m
+            [0mSteep turns[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.taxiing"[39m
+          [36m>[39m
+            [0mTaxiing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+          [36m>[39m
+            [0mTraffic pattern[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.checklist_use"[39m
+          [36m>[39m
+            [0mUsing checklists[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+          [36m>[39m
+            [0mWeather decisions[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Summary"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mYour status: [0m
+            [0mNot set[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mYour confidence: [0m
+            [0mNot rated[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mOnly a few observations so far: not enough to show a pattern.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"muted"[39m
+          [36m>[39m
+            [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33maria-labelledby[39m=[32m"_r_5_-legend-form"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mid[39m=[32m"_r_5_-legend-form"[39m
+          [36m>[39m
+            [0mAdd an observation from “[0m
+            [0mPattern work[0m
+            [0m”[0m
+          [36m</h3>[39m
+          [36m<fieldset>[39m
+            [36m<legend>[39m
+              [0mWho said it?[0m
+            [36m</legend>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mchecked[39m=[32m""[39m
+                [33mname[39m=[32m"_r_5_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMy instructor (I'm writing down what they said)[0m
+            [36m</label>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mname[39m=[32m"_r_5_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMe (my own observation)[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_5_-name"[39m
+          [36m>[39m
+            [0mInstructor name (optional)[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_5_-name"[39m
+            [33mmaxlength[39m=[32m"120"[39m
+            [33mvalue[39m=[32m"Different instructor"[39m
+          [36m/>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_5_-wording"[39m
+          [36m>[39m
+            [0mWhat was said or noticed[0m
+          [36m</label>[39m
+          [36m<textarea[39m
+            [33maria-describedby[39m=[32m"_r_5_-count"[39m
+            [33mid[39m=[32m"_r_5_-wording"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mid[39m=[32m"_r_5_-count"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m of 2000 characters[0m
+          [36m</p>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_5_-date"[39m
+          [36m>[39m
+            [0mDate observed[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_5_-date"[39m
+            [33mtype[39m=[32m"date"[39m
+            [33mvalue[39m=[32m"2026-10-01"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mSave observation[0m
+          [36m</button>[39m
+        [36m</form>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSaved.[0m
+        [36m</p>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"Evidence history"[39m
+        [36m>[39m
+          [36m<li>[39m
+            [36m<p>[39m
+              [36m<strong>[39m
+                [0mInstructor feedback, as you wrote it down[0m
+              [36m</strong>[39m
+              [0m · [0m
+              [0m2026-10-01[0m
+            [36m</p>[39m
+            [36m<blockquote>[39m
+              [0mKeep the complete draft[0m
+            [36m</blockquote>[39m
+            [36m<p>[39m
+              [0mFrom “Pattern work”, 2026-10-01[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- Keep the complete draft
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx:21:40
+     19|   if(field==='instructor name')fireEvent.change(screen.getByLabelText(…
+     20|   await act(async()=>{release()});await screen.findByText('Saved.');
+     21|   await waitFor(()=>expect(text.value).toBe('Keep the complete draft')…
+       |                                        ^
+     22|   expect(screen.getByRole('button',{name:'Replace the saved wording wi…
+     23|  });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 1 passed (7)
+   Start at  00:41:26
+   Duration  3.74s (transform 330ms, setup 0ms, import 463ms, tests 3.30s, environment 250ms)
+

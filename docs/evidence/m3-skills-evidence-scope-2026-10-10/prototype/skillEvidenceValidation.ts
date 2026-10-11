@@ -19,6 +19,16 @@ import {
   type ValidationQuery,
 } from "@/data/practiceStateValidation";
 
+import {
+  ASSESSMENT_ACTIONS,
+  OBSERVATION_HISTORY_ACTIONS,
+  ResultShapeError,
+  SKILL_ACTIONS,
+  decodeStoredResult,
+} from "./skillEvidenceResult";
+import { labelKey } from "./skillEvidenceTransaction";
+import type { ActionName } from "./types";
+
 export const CANDIDATE_VERSION = 14;
 
 export const M3_TABLES = [
@@ -155,12 +165,45 @@ export async function validateSkillEvidenceState(query: ValidationQuery, referen
   }
   if ((await count(query, "SELECT COUNT(*) AS n FROM skill_catalog_entries WHERE origin = 'custom'")) > MAX_CUSTOM_SKILLS) refuse("There are more custom skills than this app supports.");
 
-  // 4. Skill history is contiguous and its latest entry is the current skill.
-  for (const skill of await rows(query, "SELECT * FROM skill_catalog_entries")) {
-    const history = await rows(query, "SELECT * FROM skill_catalog_revisions WHERE skill_id = ? ORDER BY revision", [String(skill["id"])]);
-    if (history.length !== Number(skill["revision"]) || history.some((h, i) => Number(h["revision"]) !== i + 1)) refuse(`Skill ${String(skill["id"])} has gaps in its history.`);
+  // 4. Skill history is contiguous, its latest entry is the current skill, and
+  //    every step is a change the write path can make:
+  //    - built-in wording (label, description, topic) and catalog version are
+  //      pinned in every revision and the head; only retire/restore changes them;
+  //    - custom revisions carry no catalog version and are all the learner's;
+  //    - active -> active changes wording (an edit); active <-> retired keeps it.
+  //    Active names are unique under the write path's normalization (labelKey:
+  //    NFC, trimmed, whitespace collapsed, lower-cased). Retired names may repeat.
+  const pinned = ["label", "description", "topic", "catalog_version"] as const;
+  const wording = ["label", "description", "topic"] as const;
+  const activeNames = new Map<string, string>();
+  for (const skill of await rows(query, "SELECT * FROM skill_catalog_entries ORDER BY id")) {
+    const id = String(skill["id"]);
+    const history = await rows(query, "SELECT * FROM skill_catalog_revisions WHERE skill_id = ? ORDER BY revision", [id]);
+    if (history.length !== Number(skill["revision"]) || history.some((h, i) => Number(h["revision"]) !== i + 1)) refuse(`Skill ${id} has gaps in its history.`);
     const latest = history.at(-1)!;
-    if (["label", "description", "topic", "status"].some((k) => str(latest[k]) !== str(skill[k]))) refuse(`Skill ${String(skill["id"])} does not match its latest history entry.`);
+    if (["label", "description", "topic", "status", "catalog_version"].some((k) => str(latest[k]) !== str(skill[k]))) refuse(`Skill ${id} does not match its latest history entry.`);
+    const builtin = skill["origin"] === "builtin";
+    const ref = builtin ? shipped.get(id)! : null;
+    history.forEach((h, i) => {
+      if (ref && pinned.some((k) => str(h[k]) !== str(ref[k]))) refuse(`Built-in skill ${id} changed its catalog wording.`);
+      if (!builtin && h["catalog_version"] != null) refuse(`Custom skill ${id} has a catalog version.`);
+      if (i === 0) {
+        if (!builtin && (h["changed_by"] !== "user" || h["status"] !== "active")) refuse(`Custom skill ${id} did not start as an active skill of yours.`);
+        return;
+      }
+      const prev = history[i - 1]!;
+      if (h["changed_by"] !== "user") refuse(`Skill ${id} has a later revision that is not a recorded change.`);
+      const sameWording = wording.every((k) => str(h[k]) === str(prev[k]));
+      const step = `${String(prev["status"])}>${String(h["status"])}`;
+      const legal = step === "active>active" ? !sameWording : (step === "active>retired" || step === "retired>active") && sameWording;
+      if (!legal) refuse(`Skill ${id} has a history step the app cannot make.`);
+    });
+    if (skill["status"] === "active") {
+      const key = labelKey(String(skill["label"]));
+      const other = activeNames.get(key);
+      if (other !== undefined) refuse(`Active skills ${other} and ${id} have the same name.`);
+      activeNames.set(key, id);
+    }
   }
 
   // 5. Observation history is contiguous and its latest entry is the current observation.
@@ -182,20 +225,59 @@ export async function validateSkillEvidenceState(query: ValidationQuery, referen
     if (Number(group["lo"]) !== 1 || Number(group["hi"]) !== Number(group["n"])) refuse(`Skill ${String(group["skill_id"])} has gaps in its ${String(group["kind"])} history.`);
   }
 
-  // 7. Receipts: live receipts carry a result for their own action; erased
-  //    subjects are really gone.
-  for (const op of await rows(query, "SELECT * FROM skill_evidence_operations")) {
+  // 7. Receipts. A live receipt's result is decoded exactly for its action,
+  //    names the receipt's own subject, and points at the history row that
+  //    this same operation wrote, of the kind that action writes. Earlier
+  //    receipts stay valid after later edits, a cleared status, or a deleted
+  //    debrief or action, because the row they name never changes. Erasure:
+  //    tombstones are non-content observation receipts whose subject is gone;
+  //    a live erase receipt leaves no live receipt for its subject.
+  for (const op of await rows(query, "SELECT * FROM skill_evidence_operations ORDER BY rowid")) {
     const id = String(op["operation_id"]);
-    if (Number(op["is_erased"]) === 0) {
-      let result: unknown;
-      try {
-        result = JSON.parse(String(op["result_json"]));
-      } catch {
-        refuse(`Operation ${id} has an unreadable result.`);
+    const action = String(op["action"]) as ActionName;
+    const subject = String(op["subject_id"]);
+    const observationPresent = async () => (await count(query, "SELECT COUNT(*) AS n FROM skill_observations WHERE id = ?", [subject])) > 0;
+    if (Number(op["is_erased"]) !== 0) {
+      if (!OBSERVATION_HISTORY_ACTIONS.has(action)) refuse(`Operation ${id} is erased, but only observation changes can be erased.`);
+      if (await observationPresent()) refuse(`Operation ${id} says its observation was erased, but it is still here.`);
+      continue;
+    }
+    let result: Record<string, unknown>;
+    try {
+      result = decodeStoredResult(op["result_json"], { action, subjectId: subject }) as unknown as Record<string, unknown>;
+    } catch (error) {
+      if (error instanceof ResultShapeError) refuse(`Operation ${id} has an invalid result: ${error.message}`);
+      throw error;
+    }
+    if (SKILL_ACTIONS.has(action)) {
+      const revision = Number(result["revision"]);
+      const [row] = await rows(query, "SELECT * FROM skill_catalog_revisions WHERE skill_id = ? AND revision = ?", [subject, revision]);
+      if (!row || row["operation_id"] !== id || row["changed_by"] !== "user") refuse(`Operation ${id} does not own the skill history it names.`);
+      const [prev] = revision > 1 ? await rows(query, "SELECT status FROM skill_catalog_revisions WHERE skill_id = ? AND revision = ?", [subject, revision - 1]) : [];
+      const fits =
+        action === "create_custom_skill" ? String(subject).startsWith("custom.") && row["status"] === "active"
+        : action === "edit_custom_skill" ? row["status"] === "active" && prev?.["status"] === "active"
+        : action === "retire_skill" ? row["status"] === "retired"
+        : row["status"] === "active" && prev?.["status"] === "retired";
+      if (!fits) refuse(`Operation ${id} names a skill change of a different kind.`);
+    } else if (OBSERVATION_HISTORY_ACTIONS.has(action)) {
+      if (!(await observationPresent())) refuse(`Operation ${id} is a live record of an observation that is not here.`);
+      const [row] = await rows(query, "SELECT change_kind, operation_id FROM skill_observation_revisions WHERE observation_id = ? AND revision = ?", [subject, Number(result["revision"])]);
+      const kinds: Record<string, string[]> = {
+        create_observation: ["created"], edit_observation: ["edited"], link_action: ["linked_action"], unlink_action: ["unlinked_action"],
+        set_addressed: ["marked_addressed", "cleared_addressed"],
+      };
+      if (!row || row["operation_id"] !== id) refuse(`Operation ${id} does not own the observation history it names.`);
+      if (!kinds[action]!.includes(String(row["change_kind"]))) refuse(`Operation ${id} names an observation change of a different kind.`);
+    } else if (ASSESSMENT_ACTIONS.has(action)) {
+      const kind = action === "set_status" ? "status" : "confidence";
+      const [row] = await rows(query, "SELECT id, operation_id FROM skill_self_assessments WHERE skill_id = ? AND kind = ? AND sequence = ?", [subject, kind, Number(result["sequence"])]);
+      if (!row || row["operation_id"] !== id || row["id"] !== id) refuse(`Operation ${id} does not own the self-assessment it names.`);
+    } else {
+      if (await observationPresent()) refuse(`Operation ${id} says it erased an observation that is still here.`);
+      if ((await count(query, "SELECT COUNT(*) AS n FROM skill_evidence_operations WHERE subject_id = ? AND is_erased = 0 AND action <> 'erase_observation'", [subject])) > 0) {
+        refuse(`Operation ${id} erased an observation whose earlier records were not cleared.`);
       }
-      if (result === null || typeof result !== "object" || (result as Record<string, unknown>)["action"] !== op["action"]) refuse(`Operation ${id} has a result for a different action.`);
-    } else if ((await count(query, "SELECT COUNT(*) AS n FROM skill_observations WHERE id = ?", [String(op["subject_id"])])) > 0) {
-      refuse(`Operation ${id} says its observation was erased, but it is still here.`);
     }
   }
 }

@@ -1,0 +1,423 @@
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx -t \[M3-R2c\] discovering an earlier save keeps the newly edited unsaved wording --reporter=verbose
+# cwd: <scratch copy>
+# variant: C7 (M3-R2) the form clears its wording when an earlier save is found
+# file: prototype/SkillEvidenceSpecimen.tsx
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sens-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R3 React StrictMode lifecycle > [M3-R3] under real StrictMode the live replay generation finishes loading
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R3 React StrictMode lifecycle > [M3-R3] held reads: the obsolete replay read is dropped and the live one publishes, in either order
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R3 React StrictMode lifecycle > [M3-R3] after a real unmount, late answers publish nothing
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R3 React StrictMode lifecycle > [M3-R3] a new client gets a new live controller; the old one's late answers are dropped
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R3 React StrictMode lifecycle > [M3-R3] under StrictMode a save works end to end and the form clears only the saved wording
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R2c draft retention in the rendered form > [M3-R2c] discovering an earlier save keeps the newly edited unsaved wording and says what saved 1120ms
+   → expected '' to be 'New unsaved wording' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"_r_0_-title"[39m
+        [33mclass[39m=[32m"card"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"_r_0_-title"[39m
+        [36m>[39m
+          [0mSkill evidence[0m
+        [36m</h2>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_0_-skill"[39m
+        [36m>[39m
+          [0mSkill[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mid[39m=[32m"_r_0_-skill"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.crosswind_landing"[39m
+          [36m>[39m
+            [0mCrosswind landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.emergency_approach"[39m
+          [36m>[39m
+            [0mEmergency approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.go_around"[39m
+          [36m>[39m
+            [0mGo-around[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.ground_reference"[39m
+          [36m>[39m
+            [0mGround reference maneuvers[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_landing"[39m
+          [36m>[39m
+            [0mNormal approach and landing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.normal_takeoff"[39m
+          [36m>[39m
+            [0mNormal takeoff and climb[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.preflight_inspection"[39m
+          [36m>[39m
+            [0mPreflight inspection[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.radio_communications"[39m
+          [36m>[39m
+            [0mRadio communications[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.slow_flight"[39m
+          [36m>[39m
+            [0mSlow flight[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.stalls"[39m
+          [36m>[39m
+            [0mStalls and recovery[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.steep_turns"[39m
+          [36m>[39m
+            [0mSteep turns[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.taxiing"[39m
+          [36m>[39m
+            [0mTaxiing[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.traffic_pattern"[39m
+          [36m>[39m
+            [0mTraffic pattern[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.checklist_use"[39m
+          [36m>[39m
+            [0mUsing checklists[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"builtin.weather_decisions"[39m
+          [36m>[39m
+            [0mWeather decisions[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Summary"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mYour status: [0m
+            [0mNot set[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mYour confidence: [0m
+            [0mNot rated[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mOnly a few observations so far: not enough to show a pattern.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"muted"[39m
+          [36m>[39m
+            [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33maria-labelledby[39m=[32m"_r_1_-legend-form"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mid[39m=[32m"_r_1_-legend-form"[39m
+          [36m>[39m
+            [0mAdd an observation from “[0m
+            [0mPattern work[0m
+            [0m”[0m
+          [36m</h3>[39m
+          [36m<fieldset>[39m
+            [36m<legend>[39m
+              [0mWho said it?[0m
+            [36m</legend>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mchecked[39m=[32m""[39m
+                [33mname[39m=[32m"_r_1_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMy instructor (I'm writing down what they said)[0m
+            [36m</label>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mname[39m=[32m"_r_1_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMe (my own observation)[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-name"[39m
+          [36m>[39m
+            [0mInstructor name (optional)[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_1_-name"[39m
+            [33mmaxlength[39m=[32m"120"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-wording"[39m
+          [36m>[39m
+            [0mWhat was said or noticed[0m
+          [36m</label>[39m
+          [36m<textarea[39m
+            [33maria-describedby[39m=[32m"_r_1_-count"[39m
+            [33mid[39m=[32m"_r_1_-wording"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mid[39m=[32m"_r_1_-count"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m of 2000 characters[0m
+          [36m</p>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-date"[39m
+          [36m>[39m
+            [0mDate observed[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_1_-date"[39m
+            [33mtype[39m=[32m"date"[39m
+            [33mvalue[39m=[32m"2026-10-01"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mSave observation[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Your new wording"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0mThe wording in the box above isn't saved yet.[0m
+            [36m</p>[39m
+            [36m<button[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mReplace the saved wording with this[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSave it as a new observation[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mYour earlier save had already gone through, so it was kept.[0m
+        [36m</p>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"Evidence history"[39m
+        [36m>[39m
+          [36m<li>[39m
+            [36m<p>[39m
+              [36m<strong>[39m
+                [0mInstructor feedback, as you wrote it down[0m
+              [36m</strong>[39m
+              [0m · [0m
+              [0m2026-10-01[0m
+            [36m</p>[39m
+            [36m<blockquote>[39m
+              [0mEarlier wording[0m
+            [36m</blockquote>[39m
+            [36m<p>[39m
+              [0mFrom “Pattern work”, 2026-10-01[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R2c draft retention in the rendered form > [M3-R2c] 'Replace the saved wording with this' edits the saved observation, then the form clears
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R2c draft retention in the rendered form > [M3-R2c] 'Save it as a new observation' is an explicit fresh observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R2c draft retention in the rendered form > [M3-R2] wording changed while a save is in flight is kept, not cleared
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx > M3-R4 history view > [M3-R4] Show older versions reaches the earliest wording after more than 100 revisions
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  00:34:56
+   Duration  1.71s (transform 177ms, setup 0ms, import 262ms, tests 1.12s, environment 239ms)
+
+     [36m>[39m
+            [0mWeather decisions[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Summary"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mYour status: [0m
+            [0mNot set[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mYour confidence: [0m
+            [0mNot rated[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mOnly a few observations so far: not enough to show a pattern.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"muted"[39m
+          [36m>[39m
+            [0mThis is your own record. It isn't an instructor sign-off or a proficiency rating.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33maria-labelledby[39m=[32m"_r_1_-legend-form"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mid[39m=[32m"_r_1_-legend-form"[39m
+          [36m>[39m
+            [0mAdd an observation from “[0m
+            [0mPattern work[0m
+            [0m”[0m
+          [36m</h3>[39m
+          [36m<fieldset>[39m
+            [36m<legend>[39m
+              [0mWho said it?[0m
+            [36m</legend>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mchecked[39m=[32m""[39m
+                [33mname[39m=[32m"_r_1_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMy instructor (I'm writing down what they said)[0m
+            [36m</label>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mname[39m=[32m"_r_1_-attr"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [0mMe (my own observation)[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-name"[39m
+          [36m>[39m
+            [0mInstructor name (optional)[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_1_-name"[39m
+            [33mmaxlength[39m=[32m"120"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-wording"[39m
+          [36m>[39m
+            [0mWhat was said or noticed[0m
+          [36m</label>[39m
+          [36m<textarea[39m
+            [33maria-describedby[39m=[32m"_r_1_-count"[39m
+            [33mid[39m=[32m"_r_1_-wording"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mid[39m=[32m"_r_1_-count"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m of 2000 characters[0m
+          [36m</p>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"_r_1_-date"[39m
+          [36m>[39m
+            [0mDate observed[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mid[39m=[32m"_r_1_-date"[39m
+            [33mtype[39m=[32m"date"[39m
+            [33mvalue[39m=[32m"2026-10-01"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mSave observation[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Your new wording"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0mThe wording in the box above isn't saved yet.[0m
+            [36m</p>[39m
+            [36m<button[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mReplace the saved wording with this[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSave it as a new observation[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mYour earlier save had already gone through, so it was kept.[0m
+        [36m</p>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"Evidence history"[39m
+        [36m>[39m
+          [36m<li>[39m
+            [36m<p>[39m
+              [36m<strong>[39m
+                [0mInstructor feedback, as you wrote it down[0m
+              [36m</strong>[39m
+              [0m · [0m
+              [0m2026-10-01[0m
+            [36m</p>[39m
+            [36m<blockquote>[39m
+              [0mEarlier wording[0m
+            [36m</blockquote>[39m
+            [36m<p>[39m
+              [0mFrom “Pattern work”, 2026-10-01[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- New unsaved wording
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx:161:44
+    159|     fireEvent.click(screen.getByRole("button", { name: "Save observati…
+    160|     await screen.findByText("Your earlier save had already gone throug…
+    161|     await waitFor(() => expect(text.value).toBe("New unsaved wording")…
+       |                                            ^
+    162|     expect(screen.getByText("The wording in the box above isn't saved …
+    163|     expect(ctx.engine.query("SELECT wording FROM skill_observations"))…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../../../../Users/rickymac/code/Flight-training-/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1
+# restored-sha-matches=True

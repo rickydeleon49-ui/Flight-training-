@@ -1,0 +1,23 @@
+   Compiling m3-skills-evidence-native v0.0.0 (/private/tmp/hfd-m3-corrections-independent-review/docs/evidence/m3-skills-evidence-scope-2026-10-10/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/rereview_diagnostics.rs (/tmp/hfd-m3-rereview-native-target/debug/deps/rereview_diagnostics-c21468c460879acc)
+
+running 2 tests
+test control_valid_populated_fixture ... ok
+test r9_operation_owned_history_requires_its_receipt ... FAILED
+
+failures:
+
+---- r9_operation_owned_history_requires_its_receipt stdout ----
+
+thread 'r9_operation_owned_history_requires_its_receipt' (330963) panicked at tests/rereview_diagnostics.rs:11:2:
+missing receipt left its observation history accepted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    r9_operation_owned_history_requires_its_receipt
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+error: test failed, to rerun pass `--test rereview_diagnostics`

@@ -1,0 +1,56 @@
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts -t A -> B -> A publishes only the last A answer --reporter=verbose
+# cwd: <scratch copy>
+# variant: S8 (original) publication: a late answer for an obsolete request is published
+# file: prototype/evidenceController.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sens-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > a double submit joins one request: one write, one observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > Try again after a lost answer resends the same ids, and the store replays instead of duplicating
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > edited content after an unknown outcome checks first and never duplicates a landed save
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > a refusal that wrote nothing lets edited content go out under new ids
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > operation ownership > an acknowledged save whose refresh fails says saved; Refresh only reads
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > publication ownership > A -> B -> A publishes only the last A answer 59ms
+   → expected { skillId: 'builtin.go_around', …(11) } to match object { skillId: 'builtin.go_around', …(1) }
+(10 matching properties omitted from actual)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > publication ownership > a page that arrives after the skill changed is dropped; a second Show older waits for the first
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > publication ownership > nothing is published after dispose
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  00:34:52
+   Duration  369ms (transform 168ms, setup 0ms, import 222ms, tests 59ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts > publication ownership > A -> B -> A publishes only the last A answer
+AssertionError: expected { skillId: 'builtin.go_around', …(11) } to match object { skillId: 'builtin.go_around', …(1) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "items": [
+      {
+-       "id": "second-A",
++       "id": "first-A",
+      },
+    ],
+    "skillId": "builtin.go_around",
+  }
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts:152:26
+    150|     answers.A[0]!.resolve({ items: [item("first-A")], nextCursor: null…
+    151|     await new Promise((r) => setTimeout(r, 0));
+    152|     expect(c.getState()).toMatchObject({ skillId: "builtin.go_around",…
+       |                          ^
+    153|   });
+    154|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1
+# restored-sha-matches=True

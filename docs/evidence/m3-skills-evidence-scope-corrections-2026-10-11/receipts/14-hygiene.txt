@@ -1,0 +1,6 @@
+$ git diff --check && echo 'tracked diff: no whitespace errors'; bad=0; for f in $(git ls-files --others --exclude-standard docs); do if grep -nE '[[:space:]]+$' "$f" >/dev/null; then echo "trailing whitespace: $f"; bad=1; fi; if [ -s "$f" ] && [ "$(tail -c1 "$f" | xxd -p)" != '0a' ]; then echo "no final newline: $f"; bad=1; fi; done; echo "untracked files checked: $(git ls-files --others --exclude-standard docs | wc -l | tr -d ' ')"; exit $bad
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T07:35:30Z
+tracked diff: no whitespace errors
+untracked files checked: 119
+# exit=0

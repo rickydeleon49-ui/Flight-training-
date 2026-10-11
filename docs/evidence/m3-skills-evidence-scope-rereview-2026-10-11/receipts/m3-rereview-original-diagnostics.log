@@ -1,0 +1,51 @@
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-corrections-independent-review
+
+(node:55894) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55895) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts (19 tests | 3 failed) 414ms
+     × [M3-R2a] changed draft after unknown then erase cannot resurrect the erased save 13ms
+     × [M3-R4] earliest wording remains reachable after 100 later revisions 22ms
+     × [M3-R4] earliest wording remains reachable after 100 later revisions 77ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R2a] changed draft after unknown then erase cannot resurrect the erased save
+SkillEvidenceError: erase_observation takes exactly: action, operationId, observationId, confirm.
+ ❯ refuse docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceTransaction.ts:82:9
+     80|
+     81| function refuse(code: SkillEvidenceError["code"], message: string): ne…
+     82|   throw new SkillEvidenceError(code, message);
+       |         ^
+     83| }
+     84|
+ ❯ decodeSkillEvidenceAction docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceTransaction.ts:119:5
+ ❯ executeSkillEvidenceAction docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceTransaction.ts:290:18
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/candidateEngine.ts:175:29
+ ❯ src/data/connectionOwner.ts:528:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (node:sqlite) > [M3-R4] earliest wording remains reachable after 100 later revisions
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (sql.js) > [M3-R4] earliest wording remains reachable after 100 later revisions
+SkillEvidenceError: observationId must be a UUID v4.
+ ❯ readObservationHistory docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceReader.ts:405:11
+    403| export async function readObservationHistory(query: Query, input: Obse…
+    404|   if (typeof input?.observationId !== "string" || !UUID_V4.test(input.…
+    405|     throw new SkillEvidenceError("INVALID_ARGUMENT", "observationId mu…
+       |           ^
+    406|   }
+    407|   const limit = historyLimit(input.limit);
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/candidateEngine.ts:179:47
+ ❯ src/data/connectionOwner.ts:528:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 18 passed (21)
+   Start at  00:40:24
+   Duration  727ms (transform 333ms, setup 0ms, import 474ms, tests 542ms, environment 248ms)
+

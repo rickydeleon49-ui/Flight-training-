@@ -19,7 +19,7 @@ import candidateSql from "../candidate/0014_skills_evidence.sql?raw";
 import { listSkills, readEvidencePage, readObservationHistory, readSkillSummary } from "./skillEvidenceReader";
 import { executeSkillEvidenceAction, type TransactionOptions } from "./skillEvidenceTransaction";
 import { CANDIDATE_VERSION, validateCandidateDatabase } from "./skillEvidenceValidation";
-import type { EvidencePageInput, SkillEvidenceOutcome } from "./types";
+import type { EvidencePageInput, ObservationHistoryInput, SkillEvidenceOutcome } from "./types";
 
 export const CANDIDATE_SQL: string = candidateSql;
 export const WASM = `${process.cwd()}/node_modules/sql.js/dist/sql-wasm.wasm`;
@@ -157,7 +157,8 @@ export interface CandidateStore {
   page(input?: EvidencePageInput): ReturnType<typeof readEvidencePage>;
   summary(skillId: string): ReturnType<typeof readSkillSummary>;
   skills(options?: { includeRetired?: boolean }): ReturnType<typeof listSkills>;
-  history(observationId: string): ReturnType<typeof readObservationHistory>;
+  /** One bounded page of an observation's history (newest first; follow nextCursor to revision 1). */
+  history(input: ObservationHistoryInput): ReturnType<typeof readObservationHistory>;
   validate(): Promise<void>;
 }
 
@@ -175,7 +176,7 @@ export async function openCandidateStore(engine: Engine, options: { migrate?: bo
     page: (input = {}) => owner.exclusive(() => readEvidencePage(q, input)),
     summary: (skillId) => owner.exclusive(() => readSkillSummary(q, skillId)),
     skills: (opts) => owner.exclusive(() => listSkills(q, opts)),
-    history: (id) => owner.exclusive(() => readObservationHistory(q, id)),
+    history: (input) => owner.exclusive(() => readObservationHistory(q, input)),
     validate: () => owner.exclusive(() => validateCandidateDatabase(q, ref)),
   };
 }

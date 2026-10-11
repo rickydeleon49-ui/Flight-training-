@@ -1,0 +1,57 @@
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts -t node:sqlite gives the listed outcome for every case --reporter=verbose
+# cwd: <scratch copy>
+# variant: C11 (M3-R5) TS: the result subject is not bound to the receipt
+# file: prototype/skillEvidenceResult.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sens-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > covers every invariant category, with controls
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > node:sqlite gives the listed outcome for every case 500ms
+   → expected [ …(72) ] to deeply equal [ …(72) ]
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > sql.js gives the listed outcome for every case
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared constraint contract > node:sqlite accepts and refuses exactly the listed statements
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared constraint contract > sql.js accepts and refuses exactly the listed statements
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  00:35:01
+   Duration  696ms (transform 91ms, setup 0ms, import 111ms, tests 500ms, environment 0ms)
+
+(node:54667) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > node:sqlite gives the listed outcome for every case
+AssertionError: expected [ …(72) ] to deeply equal [ …(72) ]
+
+- Expected
++ Received
+
+@@ -31,11 +31,11 @@
+    "[M3-R6] a built-in retired and restored keeps its catalog wording: accept",
+    "[M3-R6] a retired skill's name may be reused by an active skill: accept",
+    "[M3-R6] two retired skills may share a name: accept",
+    "[M3-R6] names that differ after normalization stay distinct (Straße / STRASSE): accept",
+    "[M3-R6] U+0085 is not whitespace to labelKey, so it does not collide: accept",
+-   "[M3-R5] create receipt whose result names a different observation (review case): refuse",
++   "[M3-R5] create receipt whose result names a different observation (review case): accept",
+    "[M3-R5] receipt subject differs from the subject its result names: refuse",
+    "[M3-R5] result without its revision: refuse",
+    "[M3-R5] result with an extra field: refuse",
+    "[M3-R5] revision stored as text: refuse",
+    "[M3-R5] revision zero: refuse",
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts:65:24
+     63|         }
+     64|       }
+     65|       expect(outcomes).toEqual(VALIDATION.cases.map((c) => `${c.name}:…
+       |                        ^
+     66|     });
+     67|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1
+# restored-sha-matches=True

@@ -1,6 +1,11 @@
 /**
  * Source-level timings (Node 22 on this Mac; not WKWebView, not an installed
- * app). Opt-in: M3_BENCH=1. Writes receipts/bench-results.json.
+ * app). Opt-in: M3_BENCH=1. Writes the corrections pack's
+ * receipts/bench-results.json (the original pack's receipt is preserved).
+ *
+ * Corrections (M3-R4, M3-R7) add: a second page read after 100 wording edits
+ * since its cursor's fence (the stale-cursor check), and a walk of one
+ * observation's 1,000 revisions at 100 per page.
  *
  * Dataset per size: 15 built-in + 200 custom skills, 400 debriefs, N
  * observations written through the real candidate transaction (one act each),
@@ -15,7 +20,7 @@ import { candidateReference } from "../prototype/candidateEngine";
 import { uuid } from "./helpers";
 
 const SIZES = [100, 2_500, 5_000, 10_000];
-const OUT = `${process.cwd()}/docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/bench-results.json`;
+const OUT = `${process.cwd()}/docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/bench-results.json`;
 
 function stats(samples: number[]) {
   const sorted = [...samples].sort((a, b) => a - b);
@@ -84,6 +89,18 @@ describe.runIf(process.env["M3_BENCH"] === "1")("benchmarks", () => {
           cursor = page.nextCursor;
         } while (cursor);
         expect(seen).toBe(size);
+        // A second page after 100 edits committed since its cursor's fence (none crosses it).
+        const firstOfTwo = await store.page({ limit: 20 });
+        const half = await store.page({ limit: 50 });
+        const edited = [...half.items, ...(half.nextCursor ? (await store.page({ limit: 50, cursor: half.nextCursor })).items : [])];
+        for (const item of edited) {
+          await store.act({
+            action: "edit_observation", operationId: uuid(), observationId: item.id, expectedRevision: item.revision,
+            wording: `${item.wording} (reworded)`, observedOn: item.observedOn, attribution: item.attribution, instructorName: item.instructorName,
+          });
+        }
+        const afterEdits: number[] = [];
+        for (let r = 0; r < 20; r++) afterEdits.push((await time(() => store.page({ limit: 20, cursor: firstOfTwo.nextCursor })))[0]);
         const reference = await candidateReference();
         const [validateMs] = await time(() => validateCandidateDatabase((s, p) => engine.query(s, p), reference));
         const row = {
@@ -91,12 +108,47 @@ describe.runIf(process.env["M3_BENCH"] === "1")("benchmarks", () => {
           write: stats(writes), firstPage20: stats(firstPage), skillPage20: stats(skillPage), summary: stats(summary),
           fullWalk50: { pages: walk.length, ...stats(walk), totalMs: +walk.reduce((a, b) => a + b, 0).toFixed(1) },
           restoreValidationMs: +validateMs.toFixed(1),
+          secondPageAfter100Edits: stats(afterEdits),
         };
         results.push(row);
         console.log(JSON.stringify(row));
         engine.close();
       }
     }
-    writeFileSync(OUT, `${JSON.stringify({ node: process.version, platform: `${process.platform}-${process.arch}`, results }, null, 2)}\n`);
+    // One observation with 1,000 revisions, walked at 100 per page to revision 1.
+    const history: unknown[] = [];
+    for (const engineName of ["node:sqlite", "sql.js"] as EngineName[]) {
+      const engine = await openEngine(engineName);
+      const store = await openCandidateStore(engine);
+      engine.run("INSERT INTO journal_entries (id, date, title, created_at, updated_at) VALUES ('bench-j', '2026-09-01', 'Lesson', 'x', 'x')", []);
+      const observationId = uuid();
+      await store.act({
+        action: "create_observation", operationId: uuid(), observationId, skillId: "builtin.normal_landing", journalId: "bench-j",
+        sourceField: "none", wording: "Revision 1", observedOn: "2026-09-01", attribution: "self_report", instructorName: "",
+      });
+      for (let revision = 1; revision < 1000; revision++) {
+        await store.act({
+          action: "edit_observation", operationId: uuid(), observationId, expectedRevision: revision,
+          wording: `Revision ${revision + 1}`, observedOn: "2026-09-01", attribution: "self_report", instructorName: "",
+        });
+      }
+      const pages: number[] = [];
+      let cursor: string | null = null;
+      let seen = 0;
+      let earliest = "";
+      do {
+        const [ms, page] = await time(() => store.history({ observationId, cursor, limit: 100 }));
+        pages.push(ms);
+        seen += page.items.length;
+        earliest = page.items.at(-1)?.wording ?? earliest;
+        cursor = page.nextCursor;
+      } while (cursor);
+      expect([seen, earliest]).toEqual([1000, "Revision 1"]);
+      const row = { engine: engineName, revisions: 1000, historyWalk100: { pages: pages.length, ...stats(pages), totalMs: +pages.reduce((a, b) => a + b, 0).toFixed(1) } };
+      history.push(row);
+      console.log(JSON.stringify(row));
+      engine.close();
+    }
+    writeFileSync(OUT, `${JSON.stringify({ node: process.version, platform: `${process.platform}-${process.arch}`, results, history }, null, 2)}\n`);
   }, 900_000);
 });

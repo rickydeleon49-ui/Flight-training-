@@ -77,6 +77,8 @@ describe("operation ownership", () => {
   });
 
   it("edited content after an unknown outcome checks first and never duplicates a landed save", async () => {
+    // Corrected (M3-R2c): the earlier save is reported as the EARLIER draft
+    // saved; the different wording is not reported as saved.
     const { client, journalId, engine } = await realClient();
     const real = client.act;
     client.act = async (a) => {
@@ -88,7 +90,8 @@ describe("operation ownership", () => {
     await c.submitObservation("d", draft(journalId));
     client.act = real;
     const act = vi.spyOn(client, "act");
-    expect(await c.submitObservation("d", draft(journalId, "Different words now."))).toBe(true);
+    const outcome = await c.saveObservation("d", draft(journalId, "Different words now."));
+    expect(outcome).toMatchObject({ kind: "earlier_saved", revision: 1, justNow: false });
     expect(act).not.toHaveBeenCalled();
     expect(c.getState().notice).toBe("already_saved");
     expect(engine.query("SELECT wording FROM skill_observations")).toEqual([{ wording: "Look further down the runway." }]);
@@ -134,7 +137,7 @@ describe("publication ownership", () => {
       act: async () => {
         throw new Error("unused");
       },
-      history: async () => [],
+      history: async () => ({ observationId: "", currentRevision: 0, items: [], nextCursor: null }),
     };
     const c = createEvidenceController(client, { newId: uuid });
     const item = (id: string) => ({ id }) as never;
@@ -161,7 +164,7 @@ describe("publication ownership", () => {
       act: async () => {
         throw new Error("unused");
       },
-      history: async () => [],
+      history: async () => ({ observationId: "", currentRevision: 0, items: [], nextCursor: null }),
     };
     const c = createEvidenceController(client, { newId: uuid });
     void c.open("builtin.go_around");
@@ -184,7 +187,7 @@ describe("publication ownership", () => {
       act: async () => {
         throw new SkillEvidenceError("STORAGE_FAILURE", "x");
       },
-      history: async () => [],
+      history: async () => ({ observationId: "", currentRevision: 0, items: [], nextCursor: null }),
     };
     const c = createEvidenceController(client, { newId: uuid });
     const listener = vi.fn();

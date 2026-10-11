@@ -1,0 +1,35 @@
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-independent-review
+
+(node:55978) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics-valid-erase.test.ts (19 tests | 1 failed | 18 skipped) 26ms
+     × [M3-R2a] changed draft after unknown then erase cannot resurrect the erased save 26ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics-valid-erase.test.ts > review: controller ownership > [M3-R2a] changed draft after unknown then erase cannot resurrect the erased save
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics-valid-erase.test.ts:60:23
+     58|   x.client.act=real; const write=vi.spyOn(x.client,'act');
+     59|   const result=await c.submitObservation('d',draft(x.journalId,'Edited…
+     60|   expect(n(x.engine)).toBe(0); expect(write).not.toHaveBeenCalled(); e…
+       |                       ^
+     61|  });
+     62|  it('[M3-R2b] empty history is not proof that a still-pending uncertai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  00:41:28
+   Duration  322ms (transform 166ms, setup 0ms, import 213ms, tests 26ms, environment 0ms)
+
