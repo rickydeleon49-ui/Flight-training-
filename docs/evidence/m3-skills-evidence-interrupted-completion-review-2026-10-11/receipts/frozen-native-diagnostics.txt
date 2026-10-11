@@ -7,4 +7,3 @@ test control_valid_populated_fixture ... ok
 test r9_operation_owned_history_requires_its_receipt ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
-

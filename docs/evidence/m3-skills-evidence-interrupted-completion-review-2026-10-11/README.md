@@ -6,7 +6,7 @@ This pack freezes 145 current in-flight paths, independently records 191 prototy
 
 - `interrupted-submission-hashes.json`: the local interrupted worktree checkpoint, not the earlier 127-path published submission.
 - `scripts/verify_interrupted_checkpoint.py`: read-only verifier; supply `/Users/rickymac/code/Flight-training-m3-skills-scope` as its argument.
-- `commands.txt`, `results.json`, `receipts/`: exact bounded checks and outputs; the typecheck receipt is intentionally empty.
+- `commands.txt`, `results.json`, `receipts/`: exact bounded checks and outputs; the typecheck receipt is intentionally empty. Only surplus trailing blank lines are removed from the new audit output copies for repository whitespace hygiene; original scratch outputs remain untouched.
 - `diagnostic-hashes.json`: exact frozen diagnostics copied only into the disposable test tree.
 - `SHA256SUMS`: every file in this audit pack except the checksum file itself.
 
