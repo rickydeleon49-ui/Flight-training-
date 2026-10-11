@@ -1,0 +1,45 @@
+# TS-13: history-cursor binding
+# file: src/data/skillEvidenceReader.ts
+# test: src/data/skillEvidenceTransaction.test.ts > cursors bind to their observation
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'cursors\\ bind\\ to\\ their\\ observation'
+# cwd: /private/tmp/m3-completion-sensitivity/tree
+--- removed
+if (id !== observationId) throw new SkillEvidenceError(
++++ added
+if (false && id !== observationId) throw new SkillEvidenceError(
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/m3-completion-sensitivity/tree
+
+ ❯ src/data/skillEvidenceTransaction.test.ts (24 tests | 2 failed | 22 skipped) 136ms
+     × every revision past one hundred is reachable with no gap or repeat; cursors bind to their observation 51ms
+     × every revision past one hundred is reachable with no gap or repeat; cursors bind to their observation 85ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  13:16:25
+   Duration  354ms (transform 106ms, setup 0ms, import 128ms, tests 136ms, environment 0ms)
+
+(node:95138) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence writes (node:sqlite) > every revision past one hundred is reachable with no gap or repeat; cursors bind to their observation
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence writes (sql.js) > every revision past one hundred is reachable with no gap or repeat; cursors bind to their observation
+AssertionError: expected 'applied' to be 'INVALID_ARGUMENT' // Object.is equality
+
+Expected: "INVALID_ARGUMENT"
+Received: "applied"
+
+ ❯ src/data/skillEvidenceTransaction.test.ts:193:144
+    195|     });
+    196|
+    197|     it("an erase leaves no trace of the wording in any table; its hist…
+       |                                                                                                  ^
+    198|       const store = await fresh(engineName);
+    199|       const first = createRequest({ wording: "Secret phrase qx91." });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+# exit=1
+# caught=True
+# restored=True

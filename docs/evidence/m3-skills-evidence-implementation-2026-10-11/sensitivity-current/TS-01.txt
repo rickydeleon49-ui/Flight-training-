@@ -1,0 +1,53 @@
+# TS-01: idempotency conflict check
+# file: src/data/skillEvidenceTransaction.ts
+# test: src/data/skillEvidenceOperations.test.ts > node:sqlite gives every listed outcome, row count and check
+$ npx vitest run src/data/skillEvidenceOperations.test.ts -t 'node:sqlite\\ gives\\ every\\ listed\\ outcome,\\ row\\ count\\ and\\ check'
+# cwd: /private/tmp/m3-current-sensitivity/tree
+--- removed
+if (receipt["request_hash"] !== requestHash) refuse(
++++ added
+if (false && receipt["request_hash"] !== requestHash) refuse(
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/m3-current-sensitivity/tree
+
+ ❯ src/data/skillEvidenceOperations.test.ts (3 tests | 1 failed | 2 skipped) 82ms
+     × node:sqlite gives every listed outcome, row count and check 81ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  13:26:22
+   Duration  277ms (transform 90ms, setup 0ms, import 109ms, tests 82ms, environment 0ms)
+
+(node:98832) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceOperations.test.ts > shared skill-evidence write contract > node:sqlite gives every listed outcome, row count and check
+AssertionError: the same request id with different content is a conflict and writes nothing / step 2: expected { Object (status, result) } to deeply equal { code: 'OPERATION_CONFLICT' }
+
+- Expected
++ Received
+
+  {
+-   "code": "OPERATION_CONFLICT",
++   "result": {
++     "action": "create_observation",
++     "observationId": "20000000-0000-4000-8000-000000000001",
++     "revision": 1,
++   },
++   "status": "replayed",
+  }
+
+ ❯ src/data/skillEvidenceOperations.test.ts:64:36
+     62|               },
+     63|             );
+     64|             expect(outcome, label).toEqual(step.expect);
+       |                                    ^
+     65|           }
+     66|           for (const [table, n] of Object.entries(testCase.rows)) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+# exit=1
+# caught=True
+# restored=True

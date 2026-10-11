@@ -1,0 +1,58 @@
+{
+  "src-tauri/src/skill_evidence_tests.rs": {
+    "before": "ce62f68c3de66a8a2d945f228182fe06a9e2b79695849492122ea2127518477e",
+    "after": "7ba7b2c36010a2ea9abc208ac7bc21cdc7f854ae2fd85cc7e8f6b925e2e01cf1"
+  },
+  "src/data/skillEvidenceTransaction.test.ts": {
+    "before": "486ea49fd74b23eb63e907a5ebc032a2d78abecb16176cf620f4faa51929453b",
+    "after": "a32e022d2a7da9a69ebdde8bde579fcffe4d53ad3364f514eb92110a45ac1de0"
+  },
+  "src/pages/FlightJournal/JournalEntryDetail.tsx": {
+    "before": "40c118cd92e6f9baab86f18cc37c50582f3f9341747051e724fdf9349efc7776",
+    "after": "aaa6b77ca8178ce2f0c94b04e6cf039b67f4becdd783cbda8c15772096c82821"
+  },
+  "src/pages/FlightPath/skills/EvidenceList.tsx": {
+    "before": "3515caecbb82193d8c7fbe44b5ab1a18f0562042a0f963f4081682ef5ce5a8c8",
+    "after": "f9707290bee7c29fd4591de5b4b197961cb77d61cbc2d8e1a57852bf0c073a34"
+  },
+  "src/pages/FlightPath/skills/ObservationForm.tsx": {
+    "before": "e021dddbee5c82549b54e2c63764d5235d87200423f75532d73b632c398a95f8",
+    "after": "1fe45b83bf4f37cc254a6152b248eb635e21782116081d513e0ecece4f5d7a2f"
+  },
+  "src/pages/FlightPath/skills/SkillPage.tsx": {
+    "before": "ad2b1c1b2b43526791605cc8206a9d10ce0c882c4eab53594dd7dae66c92bf3d",
+    "after": "3edb1b75c73e52750ef0f8a1c86b8a5ae72d0adda3b1f6977e5fb96ec6e4217e"
+  },
+  "src/pages/FlightPath/skills/SkillsSection.tsx": {
+    "before": "ec3a91d154efc2d806150e4bf28e7adf97bb42dc246e7177cdfbf4687454e355",
+    "after": "37bbfa973c9a37a578ca360c5c33219629322a57281bd44a7f00ef3a5a153423"
+  },
+  "src/pages/FlightPath/skills/remaining-ui.test.ts": {
+    "before": "1324533448d5406e15e9c5d043b74e9f8d3580f243328859513f9fbc7e24c84b",
+    "after": "8998a0f6677a061382c8bd4c1a8d7d3df2813241542a0637e2f057b81a2d2b38"
+  },
+  "src/pages/FlightPath/skills/skillScreens.test.ts": {
+    "before": "e5bda06617bb76833483325edf6588b8bdc3e2420c216615c78acd8a55f11402",
+    "after": "06ad5a46ed8bcb26831a85cac02fe76c916f8b8a5983a2efe71387686532ddd4"
+  },
+  "src/state/skillEvidence/catalog-recovery.test.ts": {
+    "before": null,
+    "after": "e0f45afb7b90aaa5c157dc66b64881724561b16337336e0593a7d96c8a0a9964"
+  },
+  "src/state/skillEvidence/controller.test.ts": {
+    "before": "4f5530694a809a13c44be67962e1cad81ec5db862c14f8fa671f18cb54af79cd",
+    "after": "2431f6e4685b7ac257765175766d0e5fff707da9489e81c7214a86b92b1f4a81"
+  },
+  "src/state/skillEvidence/production-controller.test.ts": {
+    "before": "ffd7cd4f0d2b0e02636a4ab4772ffae9cd60a084168412c732a1f46b384ea185",
+    "after": "1194804b5a6537037b5105a2f1edad82dcf1e0a64bd4f59e8de0cea491d79407"
+  },
+  "src/state/useSkillEvidence.ts": {
+    "before": "12adebecbdd535468a6ab63659f68ef8a88f2acce5e1ff757220b8ef8d6fe298",
+    "after": "dbd394376871b141bbb1f3c22e5e6ea7bb119f0b84863520d5467db09dbf5165"
+  },
+  "src/state/useSkillList.ts": {
+    "before": "95bbaeb5176d6b2a2544c8fbecf91ef342dd82ce1bc168f04dc2e1b30c0de01f",
+    "after": "bc4ea2e9e88800e518c546393cc283e12817d6f83421ab936c6924faccad40d9"
+  }
+}

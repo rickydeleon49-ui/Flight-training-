@@ -1,0 +1,37 @@
+# NA-03: attribution decoding
+# file: src-tauri/src/skill_evidence.rs
+# test: skill_evidence::tests::shared_operation_contract_native_outcomes
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::shared_operation_contract_native_outcomes -- --exact
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+--- removed
+        .filter(|a| *a == "self_report" || *a == "instructor_transcribed")
+
++++ added
+
+--- output (last 40 lines)
+running 1 test
+test skill_evidence::tests::shared_operation_contract_native_outcomes ... FAILED
+
+failures:
+
+---- skill_evidence::tests::shared_operation_contract_native_outcomes stdout ----
+
+thread 'skill_evidence::tests::shared_operation_contract_native_outcomes' (661481) panicked at src/skill_evidence_tests.rs:333:13:
+assertion `left == right` failed: strict decoding refuses before any transaction / step 3
+  left: Object {"code": String("STORAGE_FAILURE")}
+ right: Object {"code": String("INVALID_ARGUMENT")}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::shared_operation_contract_native_outcomes
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.79s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.16s
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+# exit=101
+# caught=True
+# restored=True

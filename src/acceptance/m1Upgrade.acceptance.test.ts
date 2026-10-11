@@ -124,7 +124,7 @@ describe("M1 D7 acceptance: upgrading an existing dataset through migration 10",
   it("keeps every v9 record, adds D6 without inventing anything, and never reruns migrations", async () => {
     // Build the shipped v9 database and fill it.
     const v9 = await openRaw(path);
-    await applyMigrations((sql) => v9.exec(sql), new Set([10, 11, 12, 13]));
+    await applyMigrations((sql) => v9.exec(sql), new Set([10, 11, 12, 13, 14]));
     for (const sql of V9_DATASET) v9.exec(sql);
     const v9Columns = columnsOf(v9);
     expect(v9Columns.next_actions).not.toContain("material_id");

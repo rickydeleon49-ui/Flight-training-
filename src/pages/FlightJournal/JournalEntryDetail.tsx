@@ -17,6 +17,7 @@ import { actionsFor } from "@/logic/actions";
 import { flightRoute, hasFlightLogData } from "@/logic/flightLog";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
+import { SkillEvidenceCard } from "@/pages/FlightPath/skills/SkillEvidenceCard";
 
 import "./journal.css";
 
@@ -153,6 +154,8 @@ export function JournalEntryDetail() {
               </CardBody>
             </Card>
           ) : null}
+
+          <SkillEvidenceCard key={entry.id} entry={entry} title={entry.title || event?.title || "Lesson debrief"} />
         </div>
 
         <div className="detail__column">
@@ -286,7 +289,7 @@ export function JournalEntryDetail() {
       <ConfirmDialog
         open={confirmingDelete}
         title="Delete this entry?"
-        message="The debrief is removed. Actions and questions it created are kept."
+        message="The debrief is removed. Actions and questions it created are kept, and so are skill observations you recorded from it."
         onConfirm={() => {
           setConfirmingDelete(false);
           deleteWithUndo({

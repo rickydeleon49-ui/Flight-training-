@@ -1,0 +1,338 @@
+{
+  "controls": [
+    {
+      "test": "src/data/skillEvidenceOperations.test.ts > node:sqlite gives every listed outcome, row count and check",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "src/data/skillEvidenceTransaction.test.ts > a failure after the first writes rolls everything back",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "src/data/skillEvidenceValidationParity.test.ts > node:sqlite gives the listed outcome for every case",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "src/data/skillEvidenceTransaction.test.ts > labelKey normalizes like the native label_key",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "src/data/skillEvidenceTransaction.test.ts > a date edit crossing the cursor restarts the list",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "src/data/skillEvidenceTransaction.test.ts > cursors bind to their observation",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "src/state/skillEvidence/corrections-controller.test.ts > [M3-R1a] an acknowledged save keeps its draft identity",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "src/state/skillEvidence/corrections-controller.test.ts > [M3-R1b] a late A acknowledgment cannot clear B's saving lock",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "skill_evidence::tests::shared_operation_contract_native_outcomes",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "skill_evidence::tests::shared_validation_contract_native_outcomes",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "skill_evidence::tests::label_keys_match_the_typescript_normalization",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters",
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "test": "skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat",
+      "exit": 0,
+      "passed": true
+    }
+  ],
+  "variants": [
+    {
+      "id": "TS-01",
+      "guard": "idempotency conflict check",
+      "file": "src/data/skillEvidenceTransaction.ts",
+      "test": "src/data/skillEvidenceOperations.test.ts > node:sqlite gives every listed outcome, row count and check",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-02",
+      "guard": "tombstoning on erase",
+      "file": "src/data/skillEvidenceTransaction.ts",
+      "test": "src/data/skillEvidenceOperations.test.ts > node:sqlite gives every listed outcome, row count and check",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-03",
+      "guard": "attribution decoding",
+      "file": "src/data/skillEvidenceTransaction.ts",
+      "test": "src/data/skillEvidenceOperations.test.ts > node:sqlite gives every listed outcome, row count and check",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-04",
+      "guard": "transaction control (a failure commits instead of rolling back)",
+      "file": "src/data/skillEvidenceTransaction.ts",
+      "test": "src/data/skillEvidenceTransaction.test.ts > a failure after the first writes rolls everything back",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-05",
+      "guard": "history append on change",
+      "file": "src/data/skillEvidenceTransaction.ts",
+      "test": "src/data/skillEvidenceOperations.test.ts > node:sqlite gives every listed outcome, row count and check",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-06",
+      "guard": "validator trigger checks",
+      "file": "src/data/practiceStateValidation.ts",
+      "test": "src/data/skillEvidenceValidationParity.test.ts > node:sqlite gives the listed outcome for every case",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-07",
+      "guard": "receipt subject binding (replay and validation)",
+      "file": "src/data/skillEvidenceResult.ts",
+      "test": "src/data/skillEvidenceOperations.test.ts > node:sqlite gives every listed outcome, row count and check",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-08",
+      "guard": "history -> receipt ownership (M3-R9)",
+      "file": "src/data/practiceStateValidation.ts",
+      "test": "src/data/skillEvidenceValidationParity.test.ts > node:sqlite gives the listed outcome for every case",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-09",
+      "guard": "pinned built-in catalog wording",
+      "file": "src/data/practiceStateValidation.ts",
+      "test": "src/data/skillEvidenceValidationParity.test.ts > node:sqlite gives the listed outcome for every case",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-10",
+      "guard": "labelKey NFC normalization",
+      "file": "src/data/skillEvidenceTransaction.ts",
+      "test": "src/data/skillEvidenceTransaction.test.ts > labelKey normalizes like the native label_key",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-11",
+      "guard": "stale-cursor check",
+      "file": "src/data/skillEvidenceReader.ts",
+      "test": "src/data/skillEvidenceTransaction.test.ts > a date edit crossing the cursor restarts the list",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-12",
+      "guard": "cursor filter binding",
+      "file": "src/data/skillEvidenceReader.ts",
+      "test": "src/data/skillEvidenceTransaction.test.ts > a date edit crossing the cursor restarts the list",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-13",
+      "guard": "history-cursor binding",
+      "file": "src/data/skillEvidenceReader.ts",
+      "test": "src/data/skillEvidenceTransaction.test.ts > cursors bind to their observation",
+      "exit": 0,
+      "caught": false,
+      "restored": true
+    },
+    {
+      "id": "TS-14",
+      "guard": "draft-identity retention after acknowledgment",
+      "file": "src/state/useSkillEvidence.ts",
+      "test": "src/state/skillEvidence/corrections-controller.test.ts > [M3-R1a] an acknowledged save keeps its draft identity",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "TS-15",
+      "guard": "write ownership by list (skill)",
+      "file": "src/state/useSkillEvidence.ts",
+      "test": "src/state/skillEvidence/corrections-controller.test.ts > [M3-R1b] a late A acknowledgment cannot clear B's saving lock",
+      "exit": 1,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-01",
+      "guard": "idempotency conflict check",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::shared_operation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-02",
+      "guard": "tombstoning on erase",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::shared_operation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-03",
+      "guard": "attribution decoding",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::shared_operation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-04",
+      "guard": "strict decoding (deny_unknown_fields)",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::shared_operation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-05",
+      "guard": "transaction control (no immediate transaction)",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::a_failure_after_the_first_writes_rolls_everything_back",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-06",
+      "guard": "history append on change",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::shared_operation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-07",
+      "guard": "validator trigger checks",
+      "file": "src-tauri/src/backup.rs",
+      "test": "skill_evidence::tests::shared_validation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-08",
+      "guard": "receipt subject binding (replay and validation)",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::shared_operation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-09",
+      "guard": "history -> receipt ownership (M3-R9)",
+      "file": "src-tauri/src/backup.rs",
+      "test": "skill_evidence::tests::shared_validation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-10",
+      "guard": "pinned built-in catalog wording",
+      "file": "src-tauri/src/backup.rs",
+      "test": "skill_evidence::tests::shared_validation_contract_native_outcomes",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-11",
+      "guard": "label_key JavaScript whitespace set",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::label_keys_match_the_typescript_normalization",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-12",
+      "guard": "stale-cursor check",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-13",
+      "guard": "cursor filter binding",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters",
+      "exit": 101,
+      "caught": true,
+      "restored": true
+    },
+    {
+      "id": "NA-14",
+      "guard": "history-cursor binding",
+      "file": "src-tauri/src/skill_evidence.rs",
+      "test": "skill_evidence::tests::every_revision_is_reachable_past_one_hundred_with_no_gap_or_repeat",
+      "exit": 0,
+      "caught": false,
+      "restored": true
+    }
+  ],
+  "result": "2 problem(s)"
+}

@@ -13,6 +13,7 @@ const FlightJournal = lazy(() => import("@/pages/FlightJournal/FlightJournal").t
 const JournalEntryDetail = lazy(() => import("@/pages/FlightJournal/JournalEntryDetail").then((m) => ({ default: m.JournalEntryDetail })));
 const JournalForm = lazy(() => import("@/pages/FlightJournal/JournalForm").then((m) => ({ default: m.JournalForm })));
 const FlightPath = lazy(() => import("@/pages/FlightPath/FlightPath").then((m) => ({ default: m.FlightPath })));
+const SkillPage = lazy(() => import("@/pages/FlightPath/skills/SkillPage").then((m) => ({ default: m.SkillPage })));
 const Notes = lazy(() => import("@/pages/Notes/Notes").then((m) => ({ default: m.Notes })));
 const Questions = lazy(() => import("@/pages/Questions/Questions").then((m) => ({ default: m.Questions })));
 const PilotToolkit = lazy(() => import("@/pages/PilotToolkit/PilotToolkit").then((m) => ({ default: m.PilotToolkit })));
@@ -58,6 +59,7 @@ function Gate() {
         <Route element={<AppShell />}>
           <Route index element={<FlightDeck />} />
           <Route path="flight-path" element={<FlightPath />} />
+          <Route path="flight-path/skills/:skillId" element={<SkillPage />} />
           <Route path="study" element={<StudyLibrary />} />
           <Route path="study/history" element={<PracticeHistory />} />
           <Route path="study/history/:historyKey" element={<PracticeHistory />} />

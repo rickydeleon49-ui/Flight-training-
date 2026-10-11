@@ -19,6 +19,7 @@ import { toolkitRepository } from "./toolkitRepository";
 import { practiceSessionRepository } from "./practiceSessionRepository";
 import { cardReviewRepository } from "./cardReviewRepository";
 import { cardLibraryRepository } from "./cardLibraryRepository";
+import { skillEvidenceRepository } from "./skillEvidenceRepository";
 
 export interface Repositories {
   app: ReturnType<typeof appRepository>;
@@ -36,6 +37,7 @@ export interface Repositories {
   practiceSessions: ReturnType<typeof practiceSessionRepository>;
   cardReviews: ReturnType<typeof cardReviewRepository>;
   cardLibrary: ReturnType<typeof cardLibraryRepository>;
+  skillEvidence: ReturnType<typeof skillEvidenceRepository>;
 }
 
 export function createRepositories(db: SqlDatabase): Repositories {
@@ -55,6 +57,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
     practiceSessions: practiceSessionRepository(db),
     cardReviews: cardReviewRepository(db),
     cardLibrary: cardLibraryRepository(db),
+    skillEvidence: skillEvidenceRepository(db),
   };
 }
 

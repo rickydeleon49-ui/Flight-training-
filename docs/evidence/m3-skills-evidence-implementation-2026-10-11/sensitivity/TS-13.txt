@@ -1,0 +1,23 @@
+# TS-13: history-cursor binding
+# file: src/data/skillEvidenceReader.ts
+# test: src/data/skillEvidenceTransaction.test.ts > cursors bind to their observation
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'cursors\\ bind\\ to\\ their\\ observation'
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+--- removed
+if (id !== observationId) throw new SkillEvidenceError(
++++ added
+if (false && id !== observationId) throw new SkillEvidenceError(
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 22 skipped (24)
+   Start at  12:00:03
+   Duration  322ms (transform 97ms, setup 0ms, import 117ms, tests 123ms, environment 0ms)
+
+(node:89816) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+# exit=0
+# caught=False
+# restored=True

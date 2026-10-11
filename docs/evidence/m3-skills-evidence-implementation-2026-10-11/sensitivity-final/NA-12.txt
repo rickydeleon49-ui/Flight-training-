@@ -1,0 +1,47 @@
+# NA-12: stale-cursor check
+# file: src-tauri/src/skill_evidence.rs
+# test: skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters -- --exact
+# cwd: /private/tmp/m3-completion-sensitivity/tree
+--- removed
+        if after != "out" && after != side(&pair[0]) {
+            return Err(Code::StaleCursor);
+        }
+
++++ added
+
+--- output (last 40 lines)
+running 1 test
+test skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters ... FAILED
+
+failures:
+
+---- skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters stdout ----
+
+thread 'skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters' (774306) panicked at src/skill_evidence_tests.rs:883:10:
+called `Result::unwrap_err()` on an `Ok` value: Object {"items": Array [Object {"action": Object {"kind": String("none")}, "addressedAt": Null, "attribution": String("self_report"), "createdAt": String("2026-10-11T20:17:29.008Z"), "id": String("20000000-0000-4000-8000-000000000002"), "instructorName": String(""), "observedOn": String("2026-10-02"), "revision": Number(1), "skillId": String("builtin.normal_landing"), "skillLabel": String("Normal approach and landing"), "skillLabelAtRecording": String("Normal approach and landing"), "skillRetired": Bool(false), "source": Object {"currentDate": String("2026-10-01"), "currentTitle": String("Pattern work"), "journalId": String("j1"), "kind": String("present"), "renamed": Bool(false), "textChanged": Null}, "sourceSnapshot": Object {"date": String("2026-10-01"), "field": String("none"), "title": String("Pattern work")}, "updatedAt": String("2026-10-11T20:17:29.008Z"), "wording": String("Note 2")}], "nextCursor": Null}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.03s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/m3-completion-sensitivity/tree/src-tauri)
+warning: unused variable: `after`
+    --> src/skill_evidence.rs:1896:13
+     |
+1896 |         let after = side(&pair[1]);
+     |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_after`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `her-flight-deck` (lib test) generated 1 warning (1 duplicate)
+warning: `her-flight-deck` (lib) generated 1 warning (run `cargo fix --lib -p her-flight-deck` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.10s
+     Running unittests src/lib.rs (/private/tmp/m3-completion-sensitivity/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+# exit=101
+# caught=True
+# restored=True

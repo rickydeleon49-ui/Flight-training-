@@ -1,0 +1,13 @@
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'labelKey\\ normalizes\\ like\\ the\\ native\\ label_key'
+# cwd: /private/tmp/m3-current-sensitivity/tree
+
+ RUN  v4.1.11 /private/tmp/m3-current-sensitivity/tree
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 23 skipped (24)
+   Start at  13:26:04
+   Duration  208ms (transform 102ms, setup 0ms, import 122ms, tests 2ms, environment 0ms)
+
+
+# exit=0

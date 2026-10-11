@@ -1,0 +1,57 @@
+# TS-04: transaction control (a failure commits instead of rolling back)
+# file: src/data/skillEvidenceTransaction.ts
+# test: src/data/skillEvidenceTransaction.test.ts > a failure after the first writes rolls everything back
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'a\\ failure\\ after\\ the\\ first\\ writes\\ rolls\\ everything\\ back'
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+--- removed
+      await exec("ROLLBACK");
+    } catch {
+      // The original error is the one worth reporting.
++++ added
+      await exec("COMMIT");
+    } catch {
+      // The original error is the one worth reporting.
+--- output (last 40 lines)
+     × a failure after the first writes rolls everything back, receipt included (fault seam) 29ms
+     × a failure after the first writes rolls everything back, receipt included (fault seam) 59ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  11:59:56
+   Duration  290ms (transform 98ms, setup 0ms, import 118ms, tests 89ms, environment 0ms)
+
+(node:89576) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence writes (node:sqlite) > a failure after the first writes rolls everything back, receipt included (fault seam)
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence writes (sql.js) > a failure after the first writes rolls everything back, receipt included (fault seam)
+AssertionError: expected [ 15, 15, 2, 2, +0, 1 ] to deeply equal [ 15, 15, 1, 1, +0, 1 ]
+
+- Expected
++ Received
+
+  [
+    15,
+    15,
+-   1,
+-   1,
++   2,
++   2,
+    0,
+    1,
+  ]
+
+ ❯ src/data/skillEvidenceTransaction.test.ts:110:43
+    108|         expect(await codeOf(store.act(request))).toBe("STORAGE_FAILURE…
+    109|         expect(tableCounts(store.engine)).toEqual(before);
+    110|         expect(store.engine.query("SELECT * FROM skill_observations"))…
+       |                                           ^
+    111|       }
+    112|       // Fail the history append of an edit: the head row stays untouc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+# exit=1
+# caught=True
+# restored=True

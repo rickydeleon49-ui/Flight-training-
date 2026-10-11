@@ -1,0 +1,40 @@
+# NA-11: label_key JavaScript whitespace set
+# file: src-tauri/src/skill_evidence.rs
+# test: skill_evidence::tests::label_keys_match_the_typescript_normalization
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::label_keys_match_the_typescript_normalization -- --exact
+# cwd: /private/tmp/m3-completion-sensitivity/tree
+--- removed
+    for c in js_trim(&nfc).chars() {
+        if is_js_space(c) {
+
++++ added
+    for c in nfc.trim().chars() {
+        if c.is_whitespace() {
+
+--- output (last 40 lines)
+running 1 test
+test skill_evidence::tests::label_keys_match_the_typescript_normalization ... FAILED
+
+failures:
+
+---- skill_evidence::tests::label_keys_match_the_typescript_normalization stdout ----
+
+thread 'skill_evidence::tests::label_keys_match_the_typescript_normalization' (773538) panicked at src/skill_evidence_tests.rs:400:5:
+assertion `left == right` failed
+  left: "a b c\u{feff}"
+ right: "a b c"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::label_keys_match_the_typescript_normalization
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.00s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/m3-completion-sensitivity/tree/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.70s
+     Running unittests src/lib.rs (/private/tmp/m3-completion-sensitivity/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+# exit=101
+# caught=True
+# restored=True

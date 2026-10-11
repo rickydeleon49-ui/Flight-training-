@@ -1250,3 +1250,215 @@ export interface ToolkitState {
   careerSummary: string;
   nextCareerStep: string;
 }
+
+/* ------------------------------------------------------------------ */
+/* M3: skills and feedback evidence (schema 14)                        */
+/* ------------------------------------------------------------------ */
+/*
+ * The write and read contract of docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md
+ * (§6, §7), carried over from the accepted prototype. The native twin is
+ * `src-tauri/src/skill_evidence.rs`; the browser/test twin is
+ * `src/data/skillEvidenceTransaction.ts` and `skillEvidenceReader.ts`.
+ */
+
+/** Who the wording comes from. There is deliberately no verified-instructor kind (M3-D3). */
+export type SkillAttribution = "self_report" | "instructor_transcribed";
+/** The debrief field an observation was noted from, fingerprinted and never copied (M3-D4). */
+export type SkillSourceField = "instructor_feedback" | "went_well" | "was_difficult" | "practiced" | "none";
+/** Her own label. Evidence never sets it, and there is no "proficient" or "ready" (M3-D2). */
+export type SkillStatusLabel = "learning" | "practicing" | "needs_review";
+export type SkillOrigin = "builtin" | "custom";
+
+interface SkillEvidenceActionBase {
+  /** UUID v4 minted once per deliberate request and kept for its retries. */
+  operationId: string;
+}
+
+export type SkillEvidenceAction =
+  | (SkillEvidenceActionBase & { action: "create_custom_skill"; skillId: string; label: string; description: string; topic: Topic })
+  | (SkillEvidenceActionBase & {
+      action: "edit_custom_skill";
+      skillId: string;
+      expectedRevision: number;
+      label: string;
+      description: string;
+      topic: Topic;
+    })
+  | (SkillEvidenceActionBase & { action: "retire_skill" | "restore_skill"; skillId: string; expectedRevision: number })
+  | (SkillEvidenceActionBase & {
+      action: "create_observation";
+      observationId: string;
+      skillId: string;
+      journalId: string;
+      sourceField: SkillSourceField;
+      wording: string;
+      observedOn: string;
+      attribution: SkillAttribution;
+      instructorName: string;
+    })
+  | (SkillEvidenceActionBase & {
+      action: "edit_observation";
+      observationId: string;
+      expectedRevision: number;
+      wording: string;
+      observedOn: string;
+      attribution: SkillAttribution;
+      instructorName: string;
+    })
+  | (SkillEvidenceActionBase & { action: "link_action"; observationId: string; expectedRevision: number; actionId: string })
+  | (SkillEvidenceActionBase & { action: "unlink_action"; observationId: string; expectedRevision: number })
+  | (SkillEvidenceActionBase & { action: "set_addressed"; observationId: string; expectedRevision: number; addressed: boolean })
+  | (SkillEvidenceActionBase & { action: "set_status"; skillId: string; expectedSequence: number; status: SkillStatusLabel | null })
+  | (SkillEvidenceActionBase & { action: "set_confidence"; skillId: string; expectedSequence: number; confidence: number | null })
+  | (SkillEvidenceActionBase & { action: "erase_observation"; observationId: string; confirm: "erase" });
+
+export type SkillEvidenceActionName = SkillEvidenceAction["action"];
+
+export type SkillEvidenceResult =
+  | { action: "create_custom_skill" | "edit_custom_skill" | "retire_skill" | "restore_skill"; skillId: string; revision: number }
+  | {
+      action: "create_observation" | "edit_observation" | "link_action" | "unlink_action" | "set_addressed";
+      observationId: string;
+      revision: number;
+    }
+  | { action: "set_status" | "set_confidence"; skillId: string; sequence: number }
+  | { action: "erase_observation"; observationId: string; erased: true };
+
+/** What a write returns: `replayed` means the same request had already committed. */
+export interface SkillEvidenceOutcome {
+  status: "applied" | "replayed";
+  result: SkillEvidenceResult;
+}
+
+export type SkillEvidenceErrorCode =
+  | "INVALID_ARGUMENT"
+  | "LIMIT_EXCEEDED"
+  | "NOT_FOUND"
+  | "SOURCE_MISSING"
+  | "SKILL_RETIRED"
+  | "BUILTIN_READ_ONLY"
+  | "DUPLICATE_LABEL"
+  | "STALE_REVISION"
+  | "OPERATION_CONFLICT"
+  | "ERASED"
+  /** A history page cursor whose list changed underneath it; restart from the newest. */
+  | "STALE_CURSOR"
+  | "STORAGE_FAILURE";
+
+export interface EvidencePageInput {
+  skillId?: string | null;
+  journalId?: string | null;
+  attribution?: SkillAttribution | null;
+  /**
+   * Opaque cursor from the previous page, or null for the first page. It is
+   * bound to the filters above and to a change fence: reusing it with other
+   * filters is INVALID_ARGUMENT, and after an edit that crossed it, STALE_CURSOR.
+   */
+  cursor?: string | null;
+  limit?: number;
+}
+
+export type EvidenceSourceState =
+  /** The debrief still exists; `renamed`/`textChanged` describe drift since recording. */
+  | { kind: "present"; journalId: string; currentTitle: string; currentDate: string; renamed: boolean; textChanged: boolean | null }
+  /** The debrief was deleted; the snapshot is all that remains. */
+  | { kind: "deleted"; sourceJournalId: string };
+
+export type EvidenceActionLink =
+  | { kind: "none" }
+  | { kind: "linked"; actionId: string; title: string; actionStatus: "open" | "completed" | "dismissed" }
+  | { kind: "deleted"; formerActionId: string; formerTitle: string };
+
+export interface EvidenceItem {
+  id: string;
+  skillId: string;
+  skillLabel: string;
+  skillLabelAtRecording: string;
+  skillRetired: boolean;
+  wording: string;
+  observedOn: string;
+  attribution: SkillAttribution;
+  instructorName: string;
+  revision: number;
+  source: EvidenceSourceState;
+  sourceSnapshot: { title: string; date: string; field: SkillSourceField };
+  action: EvidenceActionLink;
+  addressedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EvidencePage {
+  items: EvidenceItem[];
+  nextCursor: string | null;
+}
+
+export interface SkillSummary {
+  skillId: string;
+  label: string;
+  origin: SkillOrigin;
+  retired: boolean;
+  revision: number;
+  /** Her own label, or null when never set or cleared. Evidence never sets it. */
+  status: SkillStatusLabel | null;
+  statusSequence: number;
+  /** Her own 1-5 rating, separate from status. */
+  confidence: number | null;
+  confidenceSequence: number;
+  observationCount: number;
+  selfReportCount: number;
+  instructorTranscribedCount: number;
+  distinctDebriefs: number;
+  lastObservedOn: string | null;
+  /** "none": no observations; "limited": fewer than 3 or from one debrief; "recorded": otherwise. */
+  evidence: "none" | "limited" | "recorded";
+}
+
+export interface ObservationHistoryInput {
+  observationId: string;
+  /** Opaque cursor from the previous history page, bound to this observation. */
+  cursor?: string | null;
+  /** 1-100, default 20. */
+  limit?: number;
+}
+
+export type ObservationChangeKind =
+  | "created"
+  | "edited"
+  | "linked_action"
+  | "unlinked_action"
+  | "marked_addressed"
+  | "cleared_addressed";
+
+export interface ObservationRevision {
+  revision: number;
+  changeKind: ObservationChangeKind;
+  wording: string;
+  observedOn: string;
+  attribution: SkillAttribution;
+  instructorName: string;
+  linkedActionId: string | null;
+  linkedActionTitle: string | null;
+  addressedAt: string | null;
+  recordedAt: string;
+}
+
+export interface ObservationHistoryPage {
+  observationId: string;
+  /** The observation's current revision when this page was read. */
+  currentRevision: number;
+  /** Newest first. */
+  items: ObservationRevision[];
+  /** Older revisions remain; null when revision 1 is on this page. */
+  nextCursor: string | null;
+}
+
+export interface SkillListEntry {
+  id: string;
+  label: string;
+  description: string;
+  origin: SkillOrigin;
+  topic: Topic;
+  retired: boolean;
+  revision: number;
+}

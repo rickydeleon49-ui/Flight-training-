@@ -1,0 +1,52 @@
+# TS-15: write ownership by list (skill)
+# file: src/state/useSkillEvidence.ts
+# test: src/state/skillEvidence/corrections-controller.test.ts > [M3-R1b] a late A acknowledgment cannot clear B's saving lock
+$ npx vitest run src/state/skillEvidence/corrections-controller.test.ts -t "\\[M3\\-R1b\\]\\ a\\ late\\ A\\ acknowledgment\\ cannot\\ clear\\ B's\\ saving\\ lock"
+# cwd: /private/tmp/m3-current-sensitivity/tree
+--- removed
+active && record.lifetime === lifetime && state.scope === record.scope;
++++ added
+active && record.lifetime === lifetime;
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/m3-current-sensitivity/tree
+
+ ❯ src/state/skillEvidence/corrections-controller.test.ts (19 tests | 1 failed | 18 skipped) 31ms
+     × [M3-R1b] a late A acknowledgment cannot clear B's saving lock, announce on B, or refresh B 30ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  13:26:33
+   Duration  312ms (transform 162ms, setup 0ms, import 197ms, tests 31ms, environment 0ms)
+
+(node:99090) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/skillEvidence/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1b] a late A acknowledgment cannot clear B's saving lock, announce on B, or refresh B
+AssertionError: expected { Object (scope, status, ...) } to match object { scope: 'skill:builtin.stalls', …(3) }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "notice": null,
++   "notice": "saved",
+    "saving": true,
+    "scope": "skill:builtin.stalls",
+    "writeError": null,
+  }
+
+ ❯ src/state/skillEvidence/corrections-controller.test.ts:101:26
+     99|     a.resolve(created(requests[0]!));
+    100|     expect(await fa).toMatchObject({ kind: "saved" });
+    101|     expect(c.getState()).toMatchObject({ scope: `skill:${"builtin.stal…
+       |                          ^
+    102|     expect(reads).not.toHaveBeenCalled();
+    103|     b.resolve(created(requests[1]!));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+# exit=1
+# caught=True
+# restored=True

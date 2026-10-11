@@ -14,9 +14,19 @@
 import { canonicalJson, isValidCardText, MAX_BACK_CHARS, MAX_FRONT_CHARS, MAX_SOURCE_PAGE, sha256Hex } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, stepDelayMs } from "@/logic/cardScheduler";
 
+import type { SkillEvidenceActionName } from "@/domain/types";
+
 import type { SqlValue } from "./db";
 import { MIGRATIONS } from "./migrations";
 import { codePointLength } from "./practiceSessionTransaction";
+import {
+  ASSESSMENT_ACTIONS,
+  OBSERVATION_HISTORY_ACTIONS,
+  ResultShapeError,
+  SKILL_ACTIONS,
+  decodeStoredResult,
+} from "./skillEvidenceResult";
+import { labelKey } from "./skillEvidenceTransaction";
 
 export type ValidationQuery = (
   sql: string,
@@ -228,6 +238,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 11) await validatePracticeState(query, reference);
   if (newest >= 12) await validateCardReviewState(query, reference);
   if (newest >= 13) await validateSplitLineageState(query, reference);
+  if (newest >= 14) await validateSkillEvidenceState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -995,6 +1006,345 @@ export async function validateSplitLineageState(query: ValidationQuery, referenc
     const hash = text(row, "receipt_hash");
     if (!LOWER_HEX_64.test(hash) || operation !== hash || (await sha256Hex(text(row, "receipt_canonical_json"))) !== hash) {
       refuse(`Split record ${operation} does not match its receipt.`);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 14: skills and feedback evidence                             */
+/* (native twin: `verify_schema_14_skill_evidence_semantics`)          */
+/* ------------------------------------------------------------------ */
+
+export const SKILL_EVIDENCE_TABLES = [
+  "skill_catalog_entries",
+  "skill_catalog_revisions",
+  "skill_observations",
+  "skill_observation_revisions",
+  "skill_self_assessments",
+  "skill_evidence_operations",
+] as const;
+
+export const SKILL_EVIDENCE_INDEXES = [
+  ["skill_observations", "idx_skill_observations_page"],
+  ["skill_observations", "idx_skill_observations_skill_page"],
+  ["skill_observations", "idx_skill_observations_journal"],
+  ["skill_observations", "idx_skill_observations_source_journal"],
+  ["skill_observations", "idx_skill_observations_action"],
+  ["skill_evidence_operations", "idx_skill_evidence_operations_subject"],
+] as const;
+
+export const SKILL_EVIDENCE_TRIGGERS = [
+  "trg_skill_catalog_revisions_no_update",
+  "trg_skill_catalog_revisions_no_delete",
+  "trg_skill_observation_revisions_no_update",
+  "trg_skill_observation_revisions_no_partial_delete",
+  "trg_skill_self_assessments_no_update",
+  "trg_skill_self_assessments_no_delete",
+] as const;
+
+const MAX_CUSTOM_SKILLS = 200;
+
+const m3Str = (v: unknown) => (v == null ? null : String(v));
+
+async function m3Count(q: ValidationQuery, sql: string, params: SqlValue[] = []): Promise<number> {
+  const [row] = await q(sql, params);
+  return row ? Number(Object.values(row)[0]) : 0;
+}
+
+async function m3ForeignKeys(q: ValidationQuery, table: string): Promise<string[]> {
+  const list = await q(
+    `SELECT id, "table" AS parent, "from" AS child, "to" AS target, on_update, on_delete, "match" AS matching
+       FROM pragma_foreign_key_list('${table}') ORDER BY id, seq`,
+    [],
+  );
+  const grouped = new Map<number, string[]>();
+  for (const r of list) {
+    const id = Number(r["id"]);
+    const head = [
+      String(r["parent"]).toLowerCase(),
+      String(r["on_update"]).toUpperCase(),
+      String(r["on_delete"]).toUpperCase(),
+      String(r["matching"]).toUpperCase(),
+    ].join("|");
+    const entry = grouped.get(id) ?? [head];
+    entry.push(`${String(r["child"]).toLowerCase()}>${m3Str(r["target"])?.toLowerCase() ?? ""}`);
+    grouped.set(id, entry);
+  }
+  return [...grouped.values()].map((e) => e.join("|")).sort();
+}
+
+async function m3Columns(q: ValidationQuery, table: string): Promise<string[]> {
+  return (await q(`SELECT name, type, "notnull" AS required, pk, dflt_value FROM pragma_table_info('${table}') ORDER BY name`, [])).map(
+    (r) => `${String(r["name"])}|${String(r["type"]).toLowerCase()}|${Number(r["required"])}|${Number(r["pk"])}|${m3Str(r["dflt_value"]) ?? ""}`,
+  );
+}
+
+async function m3MasterSql(q: ValidationQuery, type: "table" | "trigger", name: string): Promise<string | null> {
+  const [r] = await q("SELECT sql FROM sqlite_master WHERE type = ? AND name = ?", [type, name]);
+  return r ? String(r["sql"]) : null;
+}
+
+/** Primary-key and UNIQUE constraint indexes, by columns (names are generated). */
+async function m3KeyIndexes(q: ValidationQuery, table: string): Promise<string[]> {
+  const out: string[] = [];
+  for (const r of await q(`SELECT name, origin FROM pragma_index_list('${table}') WHERE origin IN ('pk', 'u')`, [])) {
+    const cols = (await q(`SELECT name FROM pragma_index_info('${String(r["name"])}') ORDER BY seqno`, [])).map((c) => String(c["name"]));
+    out.push(`${String(r["origin"])}|${cols.join(",")}`);
+  }
+  return out.sort();
+}
+
+async function m3IndexShape(q: ValidationQuery, table: string, index: string): Promise<string | null> {
+  const [listed] = await q(`SELECT "unique" AS uniq FROM pragma_index_list('${table}') WHERE name = ?`, [index]);
+  if (!listed) return null;
+  const cols = (await q(`SELECT name FROM pragma_index_info('${index}') ORDER BY seqno`, [])).map((r) => String(r["name"]));
+  return `${Number(listed["uniq"])}|${cols.join(",")}`;
+}
+
+/**
+ * The schema-14 contract a restored or opened database must meet: exact
+ * shape (columns, defaults, foreign keys, CHECKs, keys, indexes, triggers),
+ * the shipped built-in catalog, contiguous histories whose latest entry is the
+ * head, legal catalog steps with unique active names (M3-R6), receipts that
+ * own exactly the history they name (M3-R5) and history owned by its receipt
+ * (M3-R9). Shared contract: `src-tauri/fixtures/skill-evidence/validation-cases.json`.
+ */
+export async function validateSkillEvidenceState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  // 1. Exact table shape.
+  for (const table of SKILL_EVIDENCE_TABLES) {
+    const sql = await m3MasterSql(query, "table", table);
+    if (sql === null) refuse(`The database is missing required table: ${table}`);
+    const refSql = (await m3MasterSql(reference, "table", table))!;
+    if (!same(await m3Columns(query, table), await m3Columns(reference, table))) {
+      refuse(`Table ${table} columns do not match the registered migration contract.`);
+    }
+    if (!same(await m3ForeignKeys(query, table), await m3ForeignKeys(reference, table))) {
+      refuse(`Table ${table} foreign keys do not match the registered migration contract.`);
+    }
+    if (!same(checkConstraints(sql), checkConstraints(refSql))) refuse(`Table ${table} CHECK constraints do not match the registered migration contract.`);
+    if (!same(await m3KeyIndexes(query, table), await m3KeyIndexes(reference, table))) {
+      refuse(`Table ${table} keys do not match the registered migration contract.`);
+    }
+  }
+  for (const [table, index] of SKILL_EVIDENCE_INDEXES) {
+    const actual = await m3IndexShape(query, table, index);
+    if (actual === null) refuse(`The database is missing required index: ${index}`);
+    if (actual !== (await m3IndexShape(reference, table, index))) refuse(`Index ${index} does not match the registered migration contract.`);
+  }
+  for (const trigger of SKILL_EVIDENCE_TRIGGERS) {
+    const sql = await m3MasterSql(query, "trigger", trigger);
+    if (sql === null) refuse(`The database is missing required trigger: ${trigger}`);
+    if (normalizeSql(sql) !== normalizeSql((await m3MasterSql(reference, "trigger", trigger))!)) {
+      refuse(`Trigger ${trigger} does not match the registered migration contract.`);
+    }
+  }
+
+  // 2. Relationships hold (foreign keys are not re-checked by SQLite on restore).
+  for (const table of SKILL_EVIDENCE_TABLES) {
+    if ((await query(`SELECT 1 FROM pragma_foreign_key_check('${table}') LIMIT 1`, [])).length > 0) {
+      refuse(`Table ${table} has a record pointing at something that does not exist.`);
+    }
+  }
+
+  // 3. The built-in catalog is exactly the shipped one: no unknown, no missing
+  //    ids, and revision 1 of each is the shipped text.
+  const shipped = new Map<string, Record<string, unknown>>();
+  for (const r of await reference("SELECT * FROM skill_catalog_revisions WHERE revision = 1 AND changed_by = 'catalog'", [])) {
+    shipped.set(String(r["skill_id"]), r);
+  }
+  const builtins = await query("SELECT id FROM skill_catalog_entries WHERE origin = 'builtin'", []);
+  if (builtins.length !== shipped.size || builtins.some((r) => !shipped.has(String(r["id"])))) {
+    refuse("The built-in skill catalog does not match this version of the app.");
+  }
+  for (const [id, ref] of shipped) {
+    const [first] = await query("SELECT * FROM skill_catalog_revisions WHERE skill_id = ? AND revision = 1", [id]);
+    if (!first || ["label", "description", "topic", "status", "catalog_version", "changed_by", "changed_at"].some((k) => m3Str(first[k]) !== m3Str(ref[k]))) {
+      refuse(`Built-in skill ${id} does not match the shipped catalog.`);
+    }
+  }
+  if ((await m3Count(query, "SELECT COUNT(*) AS n FROM skill_catalog_entries WHERE origin = 'custom'")) > MAX_CUSTOM_SKILLS) {
+    refuse("There are more custom skills than this app supports.");
+  }
+
+  // 4. Skill history is contiguous, its latest entry is the current skill, and
+  //    every step is a change the write path can make:
+  //    - built-in wording (label, description, topic) and catalog version are
+  //      pinned in every revision and the head; only retire/restore changes them;
+  //    - custom revisions carry no catalog version and are all hers;
+  //    - active -> active changes wording (an edit); active <-> retired keeps it.
+  //    Active names are unique under the write path's labelKey (NFC, trimmed,
+  //    whitespace collapsed, lower-cased). Retired names may repeat.
+  const pinned = ["label", "description", "topic", "catalog_version"] as const;
+  const wording = ["label", "description", "topic"] as const;
+  const activeNames = new Map<string, string>();
+  for (const skill of await query("SELECT * FROM skill_catalog_entries ORDER BY id", [])) {
+    const id = String(skill["id"]);
+    const history = await query("SELECT * FROM skill_catalog_revisions WHERE skill_id = ? ORDER BY revision", [id]);
+    if (history.length !== Number(skill["revision"]) || history.some((h, i) => Number(h["revision"]) !== i + 1)) {
+      refuse(`Skill ${id} has gaps in its history.`);
+    }
+    const latest = history.at(-1)!;
+    if (["label", "description", "topic", "status", "catalog_version"].some((k) => m3Str(latest[k]) !== m3Str(skill[k]))) {
+      refuse(`Skill ${id} does not match its latest history entry.`);
+    }
+    const builtin = skill["origin"] === "builtin";
+    const ref = builtin ? shipped.get(id)! : null;
+    history.forEach((h, i) => {
+      if (ref && pinned.some((k) => m3Str(h[k]) !== m3Str(ref[k]))) refuse(`Built-in skill ${id} changed its catalog wording.`);
+      if (!builtin && h["catalog_version"] != null) refuse(`Custom skill ${id} has a catalog version.`);
+      if (i === 0) {
+        if (!builtin && (h["changed_by"] !== "user" || h["status"] !== "active")) refuse(`Custom skill ${id} did not start as an active skill of yours.`);
+        return;
+      }
+      const prev = history[i - 1]!;
+      if (h["changed_by"] !== "user") refuse(`Skill ${id} has a later revision that is not a recorded change.`);
+      const sameWording = wording.every((k) => m3Str(h[k]) === m3Str(prev[k]));
+      const step = `${String(prev["status"])}>${String(h["status"])}`;
+      const legal = step === "active>active" ? !sameWording : (step === "active>retired" || step === "retired>active") && sameWording;
+      if (!legal) refuse(`Skill ${id} has a history step the app cannot make.`);
+    });
+    if (skill["status"] === "active") {
+      const key = labelKey(String(skill["label"]));
+      const other = activeNames.get(key);
+      if (other !== undefined) refuse(`Active skills ${other} and ${id} have the same name.`);
+      activeNames.set(key, id);
+    }
+  }
+
+  // 5. Observation history is contiguous and its latest entry is the current observation.
+  for (const obs of await query("SELECT * FROM skill_observations", [])) {
+    const id = String(obs["id"]);
+    const history = await query("SELECT * FROM skill_observation_revisions WHERE observation_id = ? ORDER BY revision", [id]);
+    if (history.length !== Number(obs["revision"]) || history.some((h, i) => Number(h["revision"]) !== i + 1)) {
+      refuse(`Observation ${id} has gaps in its history.`);
+    }
+    const latest = history.at(-1)!;
+    const fields = ["wording", "observed_on", "attribution", "instructor_name", "linked_action_id", "linked_action_title", "addressed_at"];
+    if (fields.some((k) => m3Str(obs[k]) !== m3Str(latest[k]))) refuse(`Observation ${id} does not match its latest history entry.`);
+    if (obs["journal_id"] != null && obs["journal_id"] !== obs["source_journal_id"]) {
+      refuse(`Observation ${id} points at a different debrief than it was recorded from.`);
+    }
+  }
+
+  // 6. Self-assessment sequences are contiguous per skill and kind.
+  for (const group of await query(
+    "SELECT skill_id, kind, COUNT(*) AS n, MIN(sequence) AS lo, MAX(sequence) AS hi FROM skill_self_assessments GROUP BY skill_id, kind",
+    [],
+  )) {
+    if (Number(group["lo"]) !== 1 || Number(group["hi"]) !== Number(group["n"])) {
+      refuse(`Skill ${String(group["skill_id"])} has gaps in its ${String(group["kind"])} history.`);
+    }
+  }
+
+  // 7. Receipts. A live receipt's result is decoded exactly for its action,
+  //    names the receipt's own subject, and points at the history row that
+  //    this same operation wrote, of the kind that action writes. Earlier
+  //    receipts stay valid after later edits, a cleared status, or a deleted
+  //    debrief or action, because the row they name never changes. Erasure:
+  //    tombstones are non-content observation receipts whose subject is gone;
+  //    a live erase receipt leaves no live receipt for its subject.
+  const live = new Map<string, { action: SkillEvidenceActionName; subject: string; n: number }>();
+  for (const op of await query("SELECT * FROM skill_evidence_operations ORDER BY rowid", [])) {
+    const id = String(op["operation_id"]);
+    const action = String(op["action"]) as SkillEvidenceActionName;
+    const subject = String(op["subject_id"]);
+    const observationPresent = async () => (await m3Count(query, "SELECT COUNT(*) AS n FROM skill_observations WHERE id = ?", [subject])) > 0;
+    if (Number(op["is_erased"]) !== 0) {
+      if (!OBSERVATION_HISTORY_ACTIONS.has(action)) refuse(`Operation ${id} is erased, but only observation changes can be erased.`);
+      if (await observationPresent()) refuse(`Operation ${id} says its observation was erased, but it is still here.`);
+      continue;
+    }
+    let result: Record<string, unknown>;
+    try {
+      result = decodeStoredResult(op["result_json"], { action, subjectId: subject }) as unknown as Record<string, unknown>;
+    } catch (error) {
+      if (error instanceof ResultShapeError) refuse(`Operation ${id} has an invalid result: ${error.message}`);
+      throw error;
+    }
+    live.set(id, { action, subject, n: Number(result["revision"] ?? result["sequence"] ?? 0) });
+    if (SKILL_ACTIONS.has(action)) {
+      const revision = Number(result["revision"]);
+      const [row] = await query("SELECT * FROM skill_catalog_revisions WHERE skill_id = ? AND revision = ?", [subject, revision]);
+      if (!row || row["operation_id"] !== id || row["changed_by"] !== "user") refuse(`Operation ${id} does not own the skill history it names.`);
+      const [prev] =
+        revision > 1 ? await query("SELECT status FROM skill_catalog_revisions WHERE skill_id = ? AND revision = ?", [subject, revision - 1]) : [];
+      const fits =
+        action === "create_custom_skill" ? subject.startsWith("custom.") && row["status"] === "active"
+        : action === "edit_custom_skill" ? row["status"] === "active" && prev?.["status"] === "active"
+        : action === "retire_skill" ? row["status"] === "retired"
+        : row["status"] === "active" && prev?.["status"] === "retired";
+      if (!fits) refuse(`Operation ${id} names a skill change of a different kind.`);
+    } else if (OBSERVATION_HISTORY_ACTIONS.has(action)) {
+      if (!(await observationPresent())) refuse(`Operation ${id} is a live record of an observation that is not here.`);
+      const [row] = await query(
+        "SELECT change_kind, operation_id FROM skill_observation_revisions WHERE observation_id = ? AND revision = ?",
+        [subject, Number(result["revision"])],
+      );
+      const kinds: Record<string, string[]> = {
+        create_observation: ["created"],
+        edit_observation: ["edited"],
+        link_action: ["linked_action"],
+        unlink_action: ["unlinked_action"],
+        set_addressed: ["marked_addressed", "cleared_addressed"],
+      };
+      if (!row || row["operation_id"] !== id) refuse(`Operation ${id} does not own the observation history it names.`);
+      if (!kinds[action]!.includes(String(row["change_kind"]))) refuse(`Operation ${id} names an observation change of a different kind.`);
+    } else if (ASSESSMENT_ACTIONS.has(action)) {
+      const kind = action === "set_status" ? "status" : "confidence";
+      const [row] = await query(
+        "SELECT id, operation_id FROM skill_self_assessments WHERE skill_id = ? AND kind = ? AND sequence = ?",
+        [subject, kind, Number(result["sequence"])],
+      );
+      if (!row || row["operation_id"] !== id || row["id"] !== id) refuse(`Operation ${id} does not own the self-assessment it names.`);
+    } else {
+      if (await observationPresent()) refuse(`Operation ${id} says it erased an observation that is still here.`);
+      if (
+        (await m3Count(
+          query,
+          "SELECT COUNT(*) AS n FROM skill_evidence_operations WHERE subject_id = ? AND is_erased = 0 AND action <> 'erase_observation'",
+          [subject],
+        )) > 0
+      ) {
+        refuse(`Operation ${id} erased an observation whose earlier records were not cleared.`);
+      }
+    }
+  }
+
+  // 8. History -> receipt (M3-R9). Every operation-owned history row has the
+  //    live receipt that wrote it: same operation, an action of that family,
+  //    the same subject and the same revision or sequence. With step 7 this is
+  //    one-to-one, so a missing receipt or a reused operation id is refused.
+  //    Catalog seeds (changed_by 'catalog', no operation) need none; erased
+  //    observations have no history left, only their non-content tombstones.
+  const owned = (operationId: unknown, families: ReadonlySet<SkillEvidenceActionName> | SkillEvidenceActionName, subject: unknown, n: unknown) => {
+    const receipt = live.get(String(operationId));
+    if (!receipt) return false;
+    const familyOk = typeof families === "string" ? receipt.action === families : families.has(receipt.action);
+    return familyOk && receipt.subject === String(subject) && receipt.n === Number(n);
+  };
+  for (const r of await query(
+    "SELECT skill_id, revision, operation_id FROM skill_catalog_revisions WHERE changed_by = 'user' ORDER BY skill_id, revision",
+    [],
+  )) {
+    if (!owned(r["operation_id"], SKILL_ACTIONS, r["skill_id"], r["revision"])) {
+      refuse(`Skill ${String(r["skill_id"])} revision ${String(r["revision"])} has no matching operation record.`);
+    }
+  }
+  for (const r of await query(
+    "SELECT observation_id, revision, operation_id FROM skill_observation_revisions ORDER BY observation_id, revision",
+    [],
+  )) {
+    if (!owned(r["operation_id"], OBSERVATION_HISTORY_ACTIONS, r["observation_id"], r["revision"])) {
+      refuse(`Observation ${String(r["observation_id"])} revision ${String(r["revision"])} has no matching operation record.`);
+    }
+  }
+  for (const r of await query(
+    "SELECT skill_id, kind, sequence, operation_id FROM skill_self_assessments ORDER BY skill_id, kind, sequence",
+    [],
+  )) {
+    const action: SkillEvidenceActionName = r["kind"] === "status" ? "set_status" : "set_confidence";
+    if (!owned(r["operation_id"], action, r["skill_id"], r["sequence"])) {
+      refuse(`Skill ${String(r["skill_id"])} ${String(r["kind"])} entry ${String(r["sequence"])} has no matching operation record.`);
     }
   }
 }

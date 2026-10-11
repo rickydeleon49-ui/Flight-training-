@@ -1,0 +1,164 @@
+{
+  "baseline": [
+    "INSERT INTO journal_entries (id, date, title, instructor_feedback, created_at, updated_at) VALUES ('j1', '2026-10-01', 'Pattern work', 'Flare later.', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO journal_entries (id, date, title, created_at, updated_at) VALUES ('j2', '2026-10-03', 'Crosswind', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO next_actions (id, title, related_type, related_id, created_at, updated_at) VALUES ('a1', 'Review flare timing', 'journal', 'j1', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 'custom', NULL, 'Short-field landing', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+    "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 1, 'Short-field landing', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-0000000000a1', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, action_id, linked_action_id, linked_action_title, addressed_at, created_at, updated_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 'builtin.normal_landing', 'Normal approach and landing', 'j1', 'j1', '2026-10-01', 'Pattern work', 'instructor_feedback', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'instructor_transcribed', 'Synthetic CFI', 'Flare later.', '2026-10-01', 2, 'a1', 'a1', 'Review flare timing', NULL, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 1, 'created', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', NULL, NULL, NULL, '00000000-0000-4000-8000-0000000000a2', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 2, 'linked_action', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '00000000-0000-4000-8000-0000000000a3', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('00000000-0000-4000-8000-0000000000a4', 'builtin.normal_landing', 'status', 'practicing', NULL, 1, '00000000-0000-4000-8000-0000000000a4', '2026-10-10T09:00:00.000Z')",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a1', 'create_custom_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'custom.00000000-0000-4000-8000-0000000000c1', '2026-10-10T09:00:00.000Z', '{\"action\":\"create_custom_skill\",\"revision\":1,\"skillId\":\"custom.00000000-0000-4000-8000-0000000000c1\"}', 0)",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a2', 'create_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":1}', 0)",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a3', 'link_action', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":2}', 0)",
+    "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-0000000000a4', 'set_status', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'builtin.normal_landing', '2026-10-10T09:00:00.000Z', '{\"action\":\"set_status\",\"sequence\":1,\"skillId\":\"builtin.normal_landing\"}', 0)"
+  ],
+  "cases": [
+    {
+      "name": "valid observation insert",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c1', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', '', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "ok"
+    },
+    {
+      "name": "invalid calendar date",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c2', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', '', 'Note.', '2026-02-30', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "non-date text as date",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c3', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', '', 'Note.', 'yesterday', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "verified attribution",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c4', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'instructor_verified', '', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "instructor name on a self-report",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c5', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', 'Someone', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "instructor name on transcribed feedback",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c6', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'instructor_transcribed', 'Synthetic CFI', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "ok"
+    },
+    {
+      "name": "journal link differs from recorded source",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c7', 'builtin.go_around', 'Go-around', 'j2', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', '', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "source field without its fingerprint",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c8', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'instructor_feedback', NULL, 'self_report', '', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "malformed fingerprint",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c9', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'instructor_feedback', 'ABC', 'self_report', '', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "wording of 2001 characters",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c10', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', '', substr(replace(hex(zeroblob(1001)), '0', 'a'), 1, 2001), '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "blank wording",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c11', 'builtin.go_around', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', '', '   ', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "unknown skill (foreign key)",
+      "sql": "INSERT INTO skill_observations (id, skill_id, skill_label_snapshot, journal_id, source_journal_id, source_journal_date, source_journal_title, source_field, source_text_sha256, attribution, instructor_name, wording, observed_on, revision, created_at, updated_at) VALUES ('c12', 'builtin.nope', 'Go-around', 'j1', 'j1', '2026-10-01', 'Pattern work', 'none', NULL, 'self_report', '', 'Note.', '2026-10-01', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "relink an existing observation to another debrief",
+      "sql": "UPDATE skill_observations SET journal_id = 'j2' WHERE id = '00000000-0000-4000-8000-0000000000b1'",
+      "expect": "error"
+    },
+    {
+      "name": "action link without its snapshot",
+      "sql": "UPDATE skill_observations SET action_id = 'a1', linked_action_id = NULL, linked_action_title = NULL WHERE id = '00000000-0000-4000-8000-0000000000b1'",
+      "expect": "error"
+    },
+    {
+      "name": "rewrite observation history",
+      "sql": "UPDATE skill_observation_revisions SET wording = 'x'",
+      "expect": "error"
+    },
+    {
+      "name": "delete part of an observation's history",
+      "sql": "DELETE FROM skill_observation_revisions WHERE observation_id = '00000000-0000-4000-8000-0000000000b1' AND revision = 2",
+      "expect": "error"
+    },
+    {
+      "name": "erase an observation with its history",
+      "sql": "DELETE FROM skill_observations WHERE id = '00000000-0000-4000-8000-0000000000b1'",
+      "expect": "ok"
+    },
+    {
+      "name": "delete a skill",
+      "sql": "DELETE FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+      "expect": "error"
+    },
+    {
+      "name": "rewrite catalog history",
+      "sql": "UPDATE skill_catalog_revisions SET label = 'x' WHERE skill_id = 'builtin.go_around'",
+      "expect": "error"
+    },
+    {
+      "name": "custom skill with a built-in id",
+      "sql": "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at) VALUES ('builtin.mine', 'custom', NULL, 'Mine', '', 'general', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "retired without a retirement time",
+      "sql": "UPDATE skill_catalog_entries SET status = 'retired' WHERE id = 'custom.00000000-0000-4000-8000-0000000000c1'",
+      "expect": "error"
+    },
+    {
+      "name": "unknown topic",
+      "sql": "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at) VALUES ('custom.x', 'custom', NULL, 'X', '', 'aerobatics', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "confidence outside 1-5",
+      "sql": "INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('x1', 'builtin.go_around', 'confidence', NULL, 6, 1, 'x1', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "status value on a confidence entry",
+      "sql": "INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('x2', 'builtin.go_around', 'confidence', 'learning', NULL, 1, 'x2', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "a proficiency status",
+      "sql": "INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('x3', 'builtin.go_around', 'status', 'proficient', NULL, 1, 'x3', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "duplicate self-assessment sequence",
+      "sql": "INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('x4', 'builtin.normal_landing', 'status', 'learning', NULL, 1, 'x4', '2026-10-10T09:00:00.000Z')",
+      "expect": "error"
+    },
+    {
+      "name": "erased receipt that still holds a result",
+      "sql": "UPDATE skill_evidence_operations SET is_erased = 1 WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'",
+      "expect": "error"
+    },
+    {
+      "name": "deleting the debrief clears only the live link",
+      "sql": "DELETE FROM journal_entries WHERE id = 'j1'",
+      "expect": "ok"
+    },
+    {
+      "name": "deleting the action clears only the live link",
+      "sql": "DELETE FROM next_actions WHERE id = 'a1'",
+      "expect": "ok"
+    }
+  ]
+}

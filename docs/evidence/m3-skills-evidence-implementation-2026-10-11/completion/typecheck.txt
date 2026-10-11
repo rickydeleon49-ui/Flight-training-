@@ -1,0 +1,9 @@
+$ npm run typecheck
+# cwd: /Users/rickymac/code/Flight-training-m3-implementation
+# SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+
+> her-flight-deck@0.5.3 typecheck
+> tsc --noEmit
+
+
+# exit=0
