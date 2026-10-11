@@ -109,3 +109,13 @@ docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/05-validator-na
 docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/10-npm-test-full.txt -whitespace
 docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/sensitivity/S4-hash-nullness-tier-heuristic.txt -whitespace
 docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/sensitivity/S5-receipt-shape-allows-extra-provenance.txt -whitespace
+# Preserve raw hdiutil mount receipts verbatim (its progress table pads with spaces).
+# Only these two evidence files are exempt; reports, code and scripts keep normal checks.
+docs/evidence/mac-schema13-preparation-corrections-2026-10-08/receipts/NEW-schema13-36a7b39-adhoc.dmg.attach.txt -whitespace
+docs/evidence/mac-schema13-preparation-corrections-2026-10-08/receipts/OLD-schema12-2a6a415-adhoc.dmg.attach.txt -whitespace
+# Preserve these submitted historical artifacts byte-for-byte (raw EOF spacing and frozen test copy).
+# Active helpers, tests, walkthrough and reports retain normal whitespace checks.
+docs/evidence/mac-schema13-final-corrections-2026-10-10/receipts/exploratory-helper-first.json -whitespace
+docs/evidence/mac-schema13-final-corrections-2026-10-10/receipts/helper-selfcheck.stdout -whitespace
+docs/evidence/mac-schema13-operator-corrections-2026-10-10/receipts/selfcheck-final.json -whitespace
+docs/evidence/mac-schema13-operator-corrections-2026-10-10/revert-sensitivity.py -whitespace

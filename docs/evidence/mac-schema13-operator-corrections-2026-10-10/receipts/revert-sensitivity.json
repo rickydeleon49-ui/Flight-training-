@@ -1,0 +1,56 @@
+{
+  "schema": "hfd-revert-sensitivity/1",
+  "totalReverts": 7,
+  "allFlippedToFail": true,
+  "reverts": [
+    {
+      "id": "R7-M1",
+      "domain": "MACV-R7",
+      "targetAssertion": "[MACV-R7] account-inspection failure must refuse before copying",
+      "flippedToFail": true,
+      "detail": "dseditgroup exit 2 treated as non-admin"
+    },
+    {
+      "id": "R7-M2",
+      "domain": "MACV-R7",
+      "targetAssertion": "[MACV-R7] dot-dot operands cannot escape the profiles directory",
+      "flippedToFail": true,
+      "detail": "traversal components allowed in source"
+    },
+    {
+      "id": "R7-M3",
+      "domain": "MACV-R7",
+      "targetAssertion": "[MACV-R7] a symlink destination parent cannot escape the policy root",
+      "flippedToFail": true,
+      "detail": "symlink destination parent allowed to escape"
+    },
+    {
+      "id": "R7-M4",
+      "domain": "MACV-R7",
+      "targetAssertion": "[MACV-R7] unblock round-trips a path with Application Support spaces",
+      "flippedToFail": true,
+      "detail": "whitespace splitting on record path"
+    },
+    {
+      "id": "R8-M1",
+      "domain": "MACV-R8",
+      "targetAssertion": "[MACV-R8] an added pending operation cannot pass unchanged",
+      "flippedToFail": true,
+      "detail": "ignored schema-13 table content digests in unchanged"
+    },
+    {
+      "id": "R8-M2",
+      "domain": "MACV-R8",
+      "targetAssertion": "[MACV-R8] upgrade requires all indexes actually created by 0013",
+      "flippedToFail": true,
+      "detail": "ignored 0013 index set in upgrade contract"
+    },
+    {
+      "id": "R8-M3",
+      "domain": "MACV-R8",
+      "targetAssertion": "[MACV-R8] restore requires all indexes actually created by 0013",
+      "flippedToFail": true,
+      "detail": "ignored 0013 index set in restore contract"
+    }
+  ]
+}

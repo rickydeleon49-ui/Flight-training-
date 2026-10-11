@@ -1,0 +1,41 @@
+{
+  "initialFrozenMatches": 30,
+  "anchors": {
+    "src-tauri/src/storage.rs": true,
+    "src-tauri/src/backup.rs": true,
+    "src-tauri/src/lib.rs": true,
+    "src-tauri/tauri.conf.json": true,
+    "src-tauri/migrations/0011_practice_sessions.sql": true,
+    "src-tauri/migrations/0012_card_reviews.sql": true,
+    "src/pages/StudyLibrary/ManualSplitDialog.tsx": true,
+    "src/pages/StudyLibrary/SplitPdfDialog.tsx": true,
+    "src/pages/StudyLibrary/splitSave.ts": true,
+    "src/pages/StudyLibrary/SplitLineageDetails.tsx": true,
+    "src/pages/StudyLibrary/StudyLibrary.tsx": true,
+    "src/testing/fixtures/study-packets/02-flashcards-and-test.json": true,
+    "scripts/generate-pdf-fixtures.mjs": true
+  },
+  "priorFrozenFilesPreserved": 27,
+  "candidates": {
+    "NEW-schema13-36a7b39.dmg": {
+      "path": "/Users/rickymac/code/.qwen/tmp/schema13-candidates/NEW-schema13-36a7b39.dmg",
+      "sha256": "6aecab8608224f9e3f272dff1b8ace4f23d699566329ef1d24e5ab95bb1b0c99",
+      "matches": true
+    },
+    "OLD-schema12-2a6a415.dmg": {
+      "path": "/Users/rickymac/code/.qwen/tmp/schema13-candidates/OLD-schema12-2a6a415.dmg",
+      "sha256": "455eb12d3f906fd60cef529e2aca464c98ae81e36e48c62d8afd73a092681fcd",
+      "matches": true
+    },
+    "NEW-schema13-36a7b39-adhoc.dmg": {
+      "path": "/Users/rickymac/code/.qwen/tmp/schema13-candidates/NEW-schema13-36a7b39-adhoc.dmg",
+      "sha256": "b3ead8139049d2fe829469744ff5a3394e145a3cb0ad09d8ca5ac9ae9f65f334",
+      "matches": true
+    },
+    "OLD-schema12-2a6a415-adhoc.dmg": {
+      "path": "/Users/rickymac/code/.qwen/tmp/schema13-candidates/OLD-schema12-2a6a415-adhoc.dmg",
+      "sha256": "ddb0594e351e0cd90a9fd0ede4824c1fd6fe3cb043d523a31939988fc0077c62",
+      "matches": true
+    }
+  }
+}

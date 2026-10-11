@@ -1,0 +1,14 @@
+{
+  "evidenceEntriesBeforeThisReceipt": 65,
+  "evidenceVerified": true,
+  "sourcePaths": 23,
+  "sourceVerified": true,
+  "stagedToolingAndWalkthroughMatch": true,
+  "editableWhitespaceClean": true,
+  "HEAD": "36a7b39",
+  "branch": "main",
+  "stagedPaths": [],
+  "committed": false,
+  "pushed": false,
+  "physicalGates": "UNEXECUTED/UNVERIFIED"
+}

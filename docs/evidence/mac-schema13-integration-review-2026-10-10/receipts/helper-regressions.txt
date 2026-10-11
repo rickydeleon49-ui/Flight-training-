@@ -1,0 +1,184 @@
+{
+  "passed": 44,
+  "failed": 0,
+  "results": [
+    {
+      "name": "pin equals shipped SQLx SHA384",
+      "pass": true
+    },
+    {
+      "name": "complete upgrade control",
+      "pass": true
+    },
+    {
+      "name": "complete restore control",
+      "pass": true
+    },
+    {
+      "name": "unchanged complete schema13 control",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses empty definitions",
+      "pass": true
+    },
+    {
+      "name": "restore refuses empty definitions",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses empty definitions",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses one missing definition",
+      "pass": true
+    },
+    {
+      "name": "restore refuses one missing definition",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses one missing definition",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses object count mismatch",
+      "pass": true
+    },
+    {
+      "name": "restore refuses object count mismatch",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses object count mismatch",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses definition object mismatch",
+      "pass": true
+    },
+    {
+      "name": "restore refuses definition object mismatch",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses definition object mismatch",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses definition digest missing",
+      "pass": true
+    },
+    {
+      "name": "restore refuses definition digest missing",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses definition digest missing",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses ledger rows absent",
+      "pass": true
+    },
+    {
+      "name": "restore refuses ledger rows absent",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses ledger rows absent",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses ledger digest absent",
+      "pass": true
+    },
+    {
+      "name": "restore refuses ledger digest absent",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses ledger digest absent",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses ledger max inconsistent",
+      "pass": true
+    },
+    {
+      "name": "restore refuses ledger max inconsistent",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses ledger max inconsistent",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses schema13 columns missing",
+      "pass": true
+    },
+    {
+      "name": "restore refuses schema13 columns missing",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses schema13 columns missing",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses schema13 key missing",
+      "pass": true
+    },
+    {
+      "name": "restore refuses schema13 key missing",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses schema13 key missing",
+      "pass": true
+    },
+    {
+      "name": "upgrade refuses table inventory incomplete",
+      "pass": true
+    },
+    {
+      "name": "restore refuses table inventory incomplete",
+      "pass": true
+    },
+    {
+      "name": "unchanged refuses table inventory incomplete",
+      "pass": true
+    },
+    {
+      "name": "upgrade rejects actual missing migration13",
+      "pass": true
+    },
+    {
+      "name": "restore rejects actual missing migration13",
+      "pass": true
+    },
+    {
+      "name": "upgrade rejects actual failed migration13",
+      "pass": true
+    },
+    {
+      "name": "restore rejects actual failed migration13",
+      "pass": true
+    },
+    {
+      "name": "upgrade rejects actual wrong migration13 checksum",
+      "pass": true
+    },
+    {
+      "name": "restore rejects actual wrong migration13 checksum",
+      "pass": true
+    },
+    {
+      "name": "old receipt stays partial and cannot certify gate",
+      "pass": true
+    }
+  ]
+}
+(node:37483) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

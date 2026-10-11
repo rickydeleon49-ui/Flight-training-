@@ -1,0 +1,11 @@
+./README-START-HERE.md: OK
+./bin/hfd-install-candidate.mjs: OK
+./bin/hfd-operator.sh: OK
+./bin/mac-schema13-profile-snapshot.mjs: OK
+./env.sh: OK
+./fixtures/synthetic-illustrated-charts.pdf: OK
+./fixtures/synthetic-long-manual.pdf: OK
+./fixtures/synthetic-small-checklist.pdf: OK
+./installers/NEW-schema13-36a7b39-adhoc.dmg: OK
+./installers/OLD-schema12-2a6a415-adhoc.dmg: OK
+./packet/02-flashcards-and-test.json: OK

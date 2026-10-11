@@ -1,0 +1,14 @@
+{
+  "source-hashes.json": {
+    "count": 23,
+    "failures": []
+  },
+  "production-anchors.json": {
+    "count": 13,
+    "failures": []
+  },
+  "evidence": {
+    "count": 66,
+    "failures": []
+  }
+}

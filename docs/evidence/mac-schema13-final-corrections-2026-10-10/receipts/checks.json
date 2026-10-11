@@ -1,0 +1,147 @@
+[
+  {
+    "name": "helper-selfcheck",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "scripts/mac-schema13-profile-snapshot.mjs",
+      "self-check"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "prior-helper-seven",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/prior-helper-diagnostics.mjs",
+      "scripts/mac-schema13-profile-snapshot.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "prior-frozen-ten",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/prior-frozen-ten.mjs",
+      "scripts/mac-schema13-profile-snapshot.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "prior-operator-six",
+    "args": [
+      "python3",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/prior-operator-adapter.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "operator-regressions",
+    "args": [
+      "python3",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/operator-tests.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "operator-review-final",
+    "args": [
+      "python3",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/operator-review-adapter.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "helper-review",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/helper-review-diagnostics.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "helper-regressions",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/helper-regressions.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "installer-regressions",
+    "args": [
+      "python3",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/install-tests.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "sensitivity",
+    "args": [
+      "python3",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/sensitivity.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "operator-syntax",
+    "args": [
+      "/bin/bash",
+      "-n",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/hfd-operator.sh"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "installer-syntax",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "--check",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/hfd-install-candidate.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 0
+  },
+  {
+    "name": "baseline-helper-review",
+    "args": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "/tmp/hfd-r9-r11/helper-baseline-adapter.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 1,
+    "expectedExit": 1
+  },
+  {
+    "name": "baseline-operator-review",
+    "args": [
+      "python3",
+      "docs/evidence/mac-schema13-final-corrections-2026-10-10/operator-review-diagnostics.py"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-",
+    "exit": 1,
+    "expectedExit": 1
+  },
+  {
+    "name": "kit-verify",
+    "args": [
+      "shasum",
+      "-a",
+      "256",
+      "-c",
+      "TRANSFERSHA256SUMS.txt"
+    ],
+    "cwd": "/Users/Shared/hfd-schema13-kit-2026-10-08",
+    "exit": 0
+  }
+]

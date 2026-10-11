@@ -1,0 +1,49 @@
+{
+  "source": "/Users/rickymac/code/Flight-training-/scripts/mac-schema13-profile-snapshot.mjs",
+  "passed": 10,
+  "failed": 0,
+  "results": [
+    {
+      "name": "[control] no-match exit 1 permits a scratch root",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R4] a matched live app must refuse before copying/reading",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R4] process-inspection exit 2 must fail closed",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R4] output cannot overwrite the input database",
+      "pass": true
+    },
+    {
+      "name": "[control] unchanged history-only comparison passes",
+      "pass": true
+    },
+    {
+      "name": "[control] an ordinary changed history row is detected",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R5] Step C default compare must accept unchanged schema 12",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R5] Step D restore comparison must detect a changed document",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R5] snapshots missing every required history table cannot pass",
+      "pass": true
+    },
+    {
+      "name": "[MACV-R5] TEXT changed after embedded NUL must change its digest",
+      "pass": true
+    }
+  ]
+}
+(node:36544) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
