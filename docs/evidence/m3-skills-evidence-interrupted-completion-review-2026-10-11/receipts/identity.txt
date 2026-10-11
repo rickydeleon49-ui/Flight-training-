@@ -1,0 +1,3 @@
+Current interrupted checkpoint: 145/145 paths verified before and after independent checks.
+Production anchors: 30/30 match current subject and base 48fa47d9d035b2636b72fd6692930d85f4992bb9.
+Subject was read only. Verification used /tmp/hfd-m3-interrupted-review.

@@ -1,3 +1,11 @@
+## M3 interrupted correction package — 11 October 2026
+
+**INCOMPLETE; continuation required.** The local R8–R10 code and tests pass a bounded independent completion audit: 191 prototype tests / 3 opt-in skips, strict typecheck, 8 native tests, 7 TS/UI and 2 native frozen diagnostics, all exit 0. The historical-equivalent diagnostic receipts, targeted new sensitivity proofs, current regeneration/validation-performance receipts, report/tracking updates and final manifests remain unfinished. Current checkpoint: 145/145 paths; production anchors: 30/30 unchanged. No source acceptance or implementation integration.
+
+- [Completion review](docs/M3_SKILLS_EVIDENCE_INTERRUPTED_WORK_COMPLETION_REVIEW_2026-10-11.md).
+- [One active model-neutral continuation](docs/M3_SKILLS_EVIDENCE_REMAINING_PACKAGE_CONTINUATION_PROMPT_2026-10-11.md), superseding the prior prompt for resuming this interrupted package.
+- In-flight implementation remains local/uncommitted; both dirty worktrees preserved. M3 defaults remain proposed; candidate 0014 unregistered; G1–G3 deferred/unexecuted/unverified.
+
 ## M3 scope independent re-review — 11 October 2026
 
 **CORRECTIONS REQUIRED, narrowed to M3-R8–R10.** Independently verified corrected baseline: 162 prototype tests passed / 2 opt-in skipped, strict typecheck clean, native 7 passed; earlier native diagnostics 5 passed. Most R1–R7 work is verified and retained. Remaining issues: full-draft metadata acknowledgment (R8), reverse history-to-receipt validation (R9), and cached-content eviction after confirmed erasure (R10). New diagnostics reproduce 6 TS/UI failures and 1 native failure with positive controls passing.
