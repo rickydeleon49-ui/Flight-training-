@@ -1,0 +1,41 @@
+{
+  "repoHead": "c32918bf1580db5e254712d16c373d301751f0e1",
+  "migrationsOnAcceptedMain": [
+    "0001_initial_schema.sql",
+    "0002_profile_details.sql",
+    "0003_personal_note.sql",
+    "0004_app_metadata.sql",
+    "0005_flight_log.sql",
+    "0006_pilot_toolkit.sql",
+    "0007_ai_study.sql",
+    "0008_notes.sql",
+    "0009_practice_tests.sql",
+    "0010_debrief_links.sql",
+    "0011_practice_sessions.sql",
+    "0012_card_reviews.sql",
+    "0013_split_source_lineage.sql",
+    "0014_skills_evidence.sql"
+  ],
+  "submissionPremise": {
+    "filter": "<= 13 (as delivered in databaseLifecycle.test.mjs)",
+    "migrations": 13,
+    "lastMigration": "0013_split_source_lineage.sql",
+    "tables": 38,
+    "bookmarkStatus": "verified",
+    "readingStatus": "active",
+    "candidateNumberClash": false
+  },
+  "acceptedMain": {
+    "filter": "<= 14 (includes M3 migration 0014)",
+    "migrations": 14,
+    "lastMigration": "0014_skills_evidence.sql",
+    "tables": 44,
+    "bookmarkStatus": "verified",
+    "readingStatus": "active",
+    "candidateNumberClash": false
+  },
+  "candidateCoexistsWithAcceptedMain": true,
+  "submittedSuiteWouldAssertThirteen": "assert.equal(names.length, 13) — passes on a stale base, silently skips 0014 on current main"
+}
+(node:11678) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -1,0 +1,16 @@
+# Reviewer capture: the SUBMITTED PDF.js demonstration executed unchanged on the project Node 22 lane.
+# harness: /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/docs/evidence/m4-document-navigation-integration-corrections-rereview-2026-10-11/pdfjs-submitted-demo.mjs (committed in this pack)
+# command: cd /Users/rickymac/code/Flight-training-m4-viewer-evaluation && /opt/homebrew/opt/node@22/bin/node /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/docs/evidence/m4-document-navigation-integration-corrections-rereview-2026-10-11/pdfjs-submitted-demo.mjs /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/docs/evidence/m4-document-navigation-integration-corrections-rereview-2026-10-11/fixtures
+# cwd must be the implementation worktree because the submitted module resolves its engine there (finding R22).
+# Expectation if this were a disclosed skip: a result object and 'DEMONSTRATION COMPLETED NORMALLY'.
+Warning: Please use the `legacy` build in Node.js environments.
+file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/build/pdf.mjs:8844
+      Promise.try(action, data.data).then(function (result) {
+                 ^
+
+TypeError: Promise.try is not a function
+    at #onMessage (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/build/pdf.mjs:8844:18)
+    at file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/build/pdf.mjs:8723:18
+
+Node.js v22.23.3
+# process exit: 1
