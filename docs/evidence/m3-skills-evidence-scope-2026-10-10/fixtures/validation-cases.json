@@ -245,6 +245,454 @@
         "UPDATE skill_evidence_operations SET is_erased = 1, result_json = NULL WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'"
       ],
       "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] earlier receipts stay valid after a later edit, a cleared status and a deleted debrief and action",
+      "category": "control",
+      "sql": [
+        "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 3, 'edited', 'Flare a little later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '00000000-0000-4000-8000-000000000103', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_observations SET wording = 'Flare a little later.', revision = 3 WHERE id = '00000000-0000-4000-8000-0000000000b1'",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000103', 'edit_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"edit_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":3}', 0)",
+        "INSERT INTO skill_self_assessments (id, skill_id, kind, status, confidence, sequence, operation_id, set_at) VALUES ('00000000-0000-4000-8000-000000000104', 'builtin.normal_landing', 'status', NULL, NULL, 2, '00000000-0000-4000-8000-000000000104', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000104', 'set_status', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'builtin.normal_landing', '2026-10-10T09:00:00.000Z', '{\"action\":\"set_status\",\"sequence\":2,\"skillId\":\"builtin.normal_landing\"}', 0)",
+        "DELETE FROM next_actions WHERE id = 'a1'",
+        "DELETE FROM journal_entries WHERE id = 'j1'"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R5] two links by different operations each own their own revision",
+      "category": "control",
+      "sql": [
+        "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 3, 'unlinked_action', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', NULL, NULL, NULL, '00000000-0000-4000-8000-000000000105', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 4, 'linked_action', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '00000000-0000-4000-8000-000000000106', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_observations SET revision = 4 WHERE id = '00000000-0000-4000-8000-0000000000b1'",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000105', 'unlink_action', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"unlink_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":3}', 0)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000106', 'link_action', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":4}', 0)"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R5] a complete erase: non-content tombstones and the erase receipt",
+      "category": "control",
+      "sql": [
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000110', 'create_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', NULL, 1)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000111', 'edit_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', NULL, 1)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000112', 'erase_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', '{\"action\":\"erase_observation\",\"erased\":true,\"observationId\":\"00000000-0000-4000-8000-0000000000d1\"}', 0)"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R5] custom edit, retire and restore receipts own their history",
+      "category": "control",
+      "sql": [
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 2, 'Short-field approach', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000120', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 3, 'Short-field approach', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-000000000121', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 4, 'Short-field approach', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000122', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_catalog_entries SET label = 'Short-field approach', revision = 4 WHERE id = 'custom.00000000-0000-4000-8000-0000000000c1'",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000120', 'edit_custom_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'custom.00000000-0000-4000-8000-0000000000c1', '2026-10-10T09:00:00.000Z', '{\"action\":\"edit_custom_skill\",\"revision\":2,\"skillId\":\"custom.00000000-0000-4000-8000-0000000000c1\"}', 0)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000121', 'retire_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'custom.00000000-0000-4000-8000-0000000000c1', '2026-10-10T09:00:00.000Z', '{\"action\":\"retire_skill\",\"revision\":3,\"skillId\":\"custom.00000000-0000-4000-8000-0000000000c1\"}', 0)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000122', 'restore_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'custom.00000000-0000-4000-8000-0000000000c1', '2026-10-10T09:00:00.000Z', '{\"action\":\"restore_skill\",\"revision\":4,\"skillId\":\"custom.00000000-0000-4000-8000-0000000000c1\"}', 0)"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R6] a built-in retired and restored keeps its catalog wording",
+      "category": "control",
+      "sql": [
+        "UPDATE skill_catalog_entries SET status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', revision = 2 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000130', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+        "UPDATE skill_catalog_entries SET status = 'active', retired_at = NULL, revision = 3 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 3, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000131', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000130', 'retire_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'builtin.go_around', '2026-10-10T09:00:00.000Z', '{\"action\":\"retire_skill\",\"revision\":2,\"skillId\":\"builtin.go_around\"}', 0)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000131', 'restore_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'builtin.go_around', '2026-10-10T09:00:00.000Z', '{\"action\":\"restore_skill\",\"revision\":3,\"skillId\":\"builtin.go_around\"}', 0)"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R6] a retired skill's name may be reused by an active skill",
+      "category": "control",
+      "sql": [
+        "UPDATE skill_catalog_entries SET status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', revision = 2 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000132', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, '  go-AROUND ', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, '  go-AROUND ', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000133', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R6] two retired skills may share a name",
+      "category": "control",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, 'Old drill', '', 'landings', 'retired', 2, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, 'Old drill', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000134', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 2, 'Old drill', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-000000000934', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 'custom', NULL, 'old  DRILL', '', 'landings', 'retired', 2, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 1, 'old  DRILL', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000135', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 2, 'old  DRILL', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-000000000935', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R6] names that differ after normalization stay distinct (Stra\u00dfe / STRASSE)",
+      "category": "control",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, 'Stra\u00dfe', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, 'Stra\u00dfe', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000136', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 'custom', NULL, 'STRASSE', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 1, 'STRASSE', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000137', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R6] U+0085 is not whitespace to labelKey, so it does not collide",
+      "category": "control",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, 'Steep\u0085turns', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, 'Steep\u0085turns', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000138', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "[M3-R5] create receipt whose result names a different observation (review case)",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-000000000b22\",\"revision\":1}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] receipt subject differs from the subject its result names",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET subject_id = '00000000-0000-4000-8000-000000000b22' WHERE operation_id = '00000000-0000-4000-8000-0000000000a3'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] result without its revision",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\"}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] result with an extra field",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":1,\"verified\":true}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] revision stored as text",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":\"1\"}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] revision zero",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":0}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a3'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] fractional revision",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":2.5}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a3'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] a create result claiming revision 2",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":2}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] status result naming another skill",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"set_status\",\"sequence\":1,\"skillId\":\"builtin.go_around\"}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a4'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] erase result without erased: true",
+      "category": "receipt-shape",
+      "sql": [
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000110', 'create_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', NULL, 1)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000111', 'edit_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', NULL, 1)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000112', 'erase_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', '{\"action\":\"erase_observation\",\"erased\":false,\"observationId\":\"00000000-0000-4000-8000-0000000000d1\"}', 0)"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] result that is not an object",
+      "category": "receipt-shape",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '[]' WHERE operation_id = '00000000-0000-4000-8000-0000000000a2'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] link receipt names a revision another operation wrote",
+      "category": "receipt-ownership",
+      "sql": [
+        "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 3, 'edited', 'Flare a little later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '00000000-0000-4000-8000-000000000103', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_observations SET wording = 'Flare a little later.', revision = 3 WHERE id = '00000000-0000-4000-8000-0000000000b1'",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000103', 'edit_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"edit_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":3}', 0)",
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":3}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a3'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] link receipt names a later link of the same kind another operation wrote",
+      "category": "receipt-ownership",
+      "sql": [
+        "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 3, 'unlinked_action', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', NULL, NULL, NULL, '00000000-0000-4000-8000-000000000105', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_observation_revisions (observation_id, revision, change_kind, wording, observed_on, attribution, instructor_name, linked_action_id, linked_action_title, addressed_at, operation_id, recorded_at) VALUES ('00000000-0000-4000-8000-0000000000b1', 4, 'linked_action', 'Flare later.', '2026-10-01', 'instructor_transcribed', 'Synthetic CFI', 'a1', 'Review flare timing', NULL, '00000000-0000-4000-8000-000000000106', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_observations SET revision = 4 WHERE id = '00000000-0000-4000-8000-0000000000b1'",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000105', 'unlink_action', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"unlink_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":3}', 0)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000106', 'link_action', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":4}', 0)",
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":4}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a3'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] receipt names a revision that does not exist",
+      "category": "receipt-ownership",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":9}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a3'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] receipt action differs from the change it names",
+      "category": "receipt-ownership",
+      "sql": [
+        "UPDATE skill_evidence_operations SET action = 'unlink_action', result_json = '{\"action\":\"unlink_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000b1\",\"revision\":2}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a3'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] status receipt names a sequence it did not write",
+      "category": "receipt-ownership",
+      "sql": [
+        "UPDATE skill_evidence_operations SET result_json = '{\"action\":\"set_status\",\"sequence\":2,\"skillId\":\"builtin.normal_landing\"}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a4'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] confidence receipt naming a status entry",
+      "category": "receipt-ownership",
+      "sql": [
+        "UPDATE skill_evidence_operations SET action = 'set_confidence', result_json = '{\"action\":\"set_confidence\",\"sequence\":1,\"skillId\":\"builtin.normal_landing\"}' WHERE operation_id = '00000000-0000-4000-8000-0000000000a4'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] live receipt for an observation that is not here (orphan)",
+      "category": "receipt-ownership",
+      "sql": [
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000140', 'create_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', '{\"action\":\"create_observation\",\"observationId\":\"00000000-0000-4000-8000-0000000000d1\",\"revision\":1}', 0)"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] skill receipt names a catalog revision it did not write",
+      "category": "receipt-ownership",
+      "sql": [
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000141', 'create_custom_skill', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'custom.00000000-0000-4000-8000-0000000000c1', '2026-10-10T09:00:00.000Z', '{\"action\":\"create_custom_skill\",\"revision\":1,\"skillId\":\"custom.00000000-0000-4000-8000-0000000000c1\"}', 0)"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] erase receipt while the observation is still here",
+      "category": "receipt-ownership",
+      "sql": [
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000142', 'erase_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000b1', '2026-10-10T09:00:00.000Z', '{\"action\":\"erase_observation\",\"erased\":true,\"observationId\":\"00000000-0000-4000-8000-0000000000b1\"}', 0)"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] erase that left a live receipt for its subject",
+      "category": "receipt-ownership",
+      "sql": [
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000110', 'create_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', NULL, 1)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000111', 'link_action', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', '{\"action\":\"link_action\",\"observationId\":\"00000000-0000-4000-8000-0000000000d1\",\"revision\":2}', 0)",
+        "INSERT INTO skill_evidence_operations (operation_id, action, request_hash, subject_id, applied_at, result_json, is_erased) VALUES ('00000000-0000-4000-8000-000000000112', 'erase_observation', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '00000000-0000-4000-8000-0000000000d1', '2026-10-10T09:00:00.000Z', '{\"action\":\"erase_observation\",\"erased\":true,\"observationId\":\"00000000-0000-4000-8000-0000000000d1\"}', 0)"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R5] a skill change cannot be a tombstone",
+      "category": "receipt-ownership",
+      "sql": [
+        "UPDATE skill_evidence_operations SET is_erased = 1, result_json = NULL WHERE operation_id = '00000000-0000-4000-8000-0000000000a1'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] later built-in revision replaces the pinned label (review case)",
+      "category": "catalog-pinned",
+      "sql": [
+        "UPDATE skill_catalog_entries SET label = 'Forged label', revision = 2 WHERE id = 'builtin.normal_landing'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000150', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.normal_landing'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] built-in retirement that also rewrites the description",
+      "category": "catalog-pinned",
+      "sql": [
+        "UPDATE skill_catalog_entries SET status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', description = 'Changed.', revision = 2 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000151', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] built-in history and head move to another catalog version",
+      "category": "catalog-pinned",
+      "sql": [
+        "UPDATE skill_catalog_entries SET status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', catalog_version = 2, revision = 2 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000152', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] built-in head changes catalog version without history",
+      "category": "catalog-pinned",
+      "sql": [
+        "UPDATE skill_catalog_entries SET catalog_version = 2 WHERE id = 'builtin.go_around'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] a built-in 'edit' that changes nothing",
+      "category": "catalog-pinned",
+      "sql": [
+        "UPDATE skill_catalog_entries SET revision = 2 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000153', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] custom revision carrying a catalog version",
+      "category": "catalog-pinned",
+      "sql": [
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 2, 'Short-field landing', '', 'landings', 'retired', 1, 'user', '00000000-0000-4000-8000-000000000154', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_catalog_entries SET status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', revision = 2 WHERE id = 'custom.00000000-0000-4000-8000-0000000000c1'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] custom skill whose first revision claims to come from the catalog",
+      "category": "catalog-pinned",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, 'From nowhere', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, 'From nowhere', '', 'landings', 'active', NULL, 'catalog', NULL, '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] retiring an already retired skill",
+      "category": "catalog-pinned",
+      "sql": [
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 2, 'Short-field landing', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-000000000155', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 3, 'Short-field landing', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-000000000156', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_catalog_entries SET status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', revision = 3 WHERE id = 'custom.00000000-0000-4000-8000-0000000000c1'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] retiring and renaming in one step",
+      "category": "catalog-pinned",
+      "sql": [
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 2, 'Renamed on retire', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-000000000157', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_catalog_entries SET label = 'Renamed on retire', status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', revision = 2 WHERE id = 'custom.00000000-0000-4000-8000-0000000000c1'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] restoring and renaming in one step",
+      "category": "catalog-pinned",
+      "sql": [
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 2, 'Short-field landing', '', 'landings', 'retired', NULL, 'user', '00000000-0000-4000-8000-000000000158', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c1', 3, 'Renamed on restore', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000159', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_catalog_entries SET label = 'Renamed on restore', revision = 3 WHERE id = 'custom.00000000-0000-4000-8000-0000000000c1'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] spaced upper-case custom collides with an active built-in (review case)",
+      "category": "catalog-names",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, '  NORMAL   approach and landing  ', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, '  NORMAL   approach and landing  ', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000160', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] decomposed upper-case name collides with a composed one (NFC)",
+      "category": "catalog-names",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, 'Caf\u00e9 approach', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, 'Caf\u00e9 approach', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000161', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 'custom', NULL, 'CAFE\u0301 APPROACH', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 1, 'CAFE\u0301 APPROACH', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000162', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] no-break and ideographic spaces collide with an active built-in",
+      "category": "catalog-names",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, 'Crosswind\u00a0\u3000landing', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, 'Crosswind\u00a0\u3000landing', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000163', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] byte-order marks around a name collide (JS whitespace)",
+      "category": "catalog-names",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, '\ufeffGo-around\ufeff', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, '\ufeffGo-around\ufeff', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000164', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] final sigma: \u039f\u0394\u039f\u03a3 collides with \u03bf\u03b4\u03bf\u03c2",
+      "category": "catalog-names",
+      "sql": [
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 'custom', NULL, '\u039f\u0394\u039f\u03a3', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c2', 1, '\u039f\u0394\u039f\u03a3', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000165', '2026-10-10T09:00:00.000Z')",
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 'custom', NULL, '\u03bf\u03b4\u03bf\u03c2', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c3', 1, '\u03bf\u03b4\u03bf\u03c2', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000166', '2026-10-10T09:00:00.000Z')"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "[M3-R6] a built-in restored into a name now active elsewhere",
+      "category": "catalog-names",
+      "sql": [
+        "UPDATE skill_catalog_entries SET status = 'retired', retired_at = '2026-10-10T09:00:00.000Z', revision = 2 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 2, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000167', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_entries (id, origin, catalog_version, label, description, topic, status, revision, created_at, updated_at, retired_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c4', 'custom', NULL, 'Go-around', '', 'landings', 'active', 1, '2026-10-10T09:00:00.000Z', '2026-10-10T09:00:00.000Z', NULL)",
+        "INSERT INTO skill_catalog_revisions (skill_id, revision, label, description, topic, status, catalog_version, changed_by, operation_id, changed_at) VALUES ('custom.00000000-0000-4000-8000-0000000000c4', 1, 'Go-around', '', 'landings', 'active', NULL, 'user', '00000000-0000-4000-8000-000000000168', '2026-10-10T09:00:00.000Z')",
+        "UPDATE skill_catalog_entries SET status = 'active', retired_at = NULL, revision = 3 WHERE id = 'builtin.go_around'",
+        "INSERT INTO skill_catalog_revisions SELECT id, 3, label, description, topic, status, catalog_version, 'user', '00000000-0000-4000-8000-000000000169', '2026-10-10T09:00:00.000Z' FROM skill_catalog_entries WHERE id = 'builtin.go_around'"
+      ],
+      "expect": "refuse"
     }
   ]
 }

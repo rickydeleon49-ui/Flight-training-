@@ -13,3 +13,8 @@ description = "DISPOSABLE M3 prototype: candidate schema-14 constraints and sema
 # rusqlite 0.32.1 + libsqlite3-sys 0.30.1 "bundled" via sqlx; serde_json 1.0.151).
 rusqlite = { version = "=0.32.1", features = ["backup", "bundled"] }
 serde_json = "=1.0.151"
+# The app's own NFC implementation and version (src-tauri/Cargo.toml pins
+# unicode-normalization =0.1.25; MIT OR Apache-2.0). Needed only so the native
+# validator applies the write path's label normalization (labelKey) exactly.
+# Not a new dependency of the app.
+unicode-normalization = "=0.1.25"

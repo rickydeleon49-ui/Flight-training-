@@ -1,6 +1,8 @@
 # M3 skills and feedback evidence: scope, contracts and prototype (10 October 2026)
 
-**State: PROPOSED, pending senior scope review and owner approval of M3-D1–D9.** No production code, migration, dependency or registry changed. Candidate SQL and prototype code live only in [`docs/evidence/m3-skills-evidence-scope-2026-10-10/`](evidence/m3-skills-evidence-scope-2026-10-10/README.md).
+**State: CORRECTED (M3-R1–R7), pending independent re-review. M3-D1–D9 remain PROPOSED, pending owner approval.** No production code, migration, dependency or registry changed. Candidate SQL and prototype code live only in [`docs/evidence/m3-skills-evidence-scope-2026-10-10/`](evidence/m3-skills-evidence-scope-2026-10-10/README.md).
+
+**Corrections, 11 October 2026.** The [independent review](M3_SKILLS_EVIDENCE_SCOPE_REVIEW_2026-10-10.md) found seven defects (M3-R1–R7). They are corrected in place in the prototype, candidate fixtures and native proof, and in this document's §4 and §6–§11. The issue-to-fix report is [`M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md`](M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md), and the new receipts are in [`docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/`](evidence/m3-skills-evidence-scope-corrections-2026-10-11/README.md). The original receipts and the review's frozen diagnostics are preserved unchanged. Candidate migration 0014 did not change.
 
 **Where this was done:**
 - Worktree: `/Users/rickymac/code/Flight-training-m3-skills-scope`
@@ -56,7 +58,7 @@ Readiness views, ACS mappings and AI extraction come later.
 | **M3-D2** | Skill status | Learning / Practicing / Needs review, **set only by her**, with "Not set" as the default and a way to clear it. Evidence, quizzes, cards and actions never change it. There is no "proficient", "ready" or "complete" state. | Status means what she says it means; the app never implies an instructor's judgement. |
 | **M3-D3** | Attribution | Two kinds only: **"My own observation"** (`self_report`) and **"My instructor said (as I wrote it down)"** (`instructor_transcribed`), with an optional instructor name she types. **No verified-instructor state** exists in storage, the interface or restore. | Honest on a single-user local app with no identity mechanism. A verified kind would need a separately scoped, reviewed mechanism. |
 | **M3-D4** | Creating observations | Only deliberately, one at a time, against a debrief she picked. She may say which debrief field it came from (its text is fingerprinted, never copied). There is **no automatic backfill, AI extraction or creation from quiz or action results**. Limits: wording 1–2,000 characters (≤ 8,000 bytes); 50 per debrief. | Existing debriefs stay valid and usable. Nothing appears that she did not record. |
-| **M3-D5** | Edits and history | Every change appends a history entry: wording, date, attribution, name, link and addressed state. Earlier versions are always visible. The **skill and source debrief are fixed** after creation; to move one, erase it and record it again. An edit based on an old version is refused, and she is asked to reload. | History is intelligible and nothing is silently rewritten or relinked. |
+| **M3-D5** | Edits and history | Every change appends a history entry: wording, date, attribution, name, link and addressed state. Earlier versions are always visible, back to the first wording (read in pages of at most 100). The **skill and source debrief are fixed** after creation; to move one, erase it and record it again. An edit based on an old version is refused, and she is asked to reload. | History is intelligible and nothing is silently rewritten or relinked. |
 | **M3-D6** | When sources change | **Deleting a debrief keeps its observations** with a snapshot of the debrief's title and date, shown as "from a debrief that was deleted". They are never re-attached to another debrief. A renamed debrief shows its new and recorded names; an edited source field shows "edited since you recorded this". **Deleting a linked action** keeps its name in the observation. **Skills are never deleted**, only retired (hidden from the picker, history kept, restorable). | Matches the accepted split-lineage (SL-D5) and question-provenance behaviour. Deleting a lesson never quietly destroys feedback history. |
 | **M3-D7** | Erasure and retention | Kept until she chooses otherwise; nothing expires automatically. **Erase permanently** works on one observation, with explicit confirmation. It removes its wording and every history entry. Only non-content tombstones remain (ids, request hash, time), so a late retry can never bring it back. Erasing does not touch the debrief. Backups made earlier still contain the observation, and the confirmation says so. | A clear, bounded privacy control, separate from deleting a lesson. Needs owner approval because it sets retention policy. |
 | **M3-D8** | Follow-up actions and "addressed" | She can link one existing action, and later unlink it. **"Mark addressed"** is her own explicit choice, recorded in history. **Completing the action never marks the feedback addressed.** The page says so: "Finishing it doesn't mean this was resolved in flight." Repeating the same request replays it; a conflicting one is refused. | Keeps "I did the homework" separate from "the problem is solved in the airplane". |
@@ -75,7 +77,8 @@ Ordinary implementation choices (ids, indexes, page sizes, error wording) are th
      - **What was said or noticed:** a textarea with a live count out of 2,000.
      - **Came from:** none, or Instructor feedback / What went well / What was difficult / What you practiced.
      - **Date observed:** defaults to the debrief date.
-   - Save is disabled while saving. A second click joins the save already in flight.
+   - Save is disabled while that skill's save is in flight. A second click joins the save already in flight; it never creates a second observation.
+   - **After an uncertain save** (the app could not confirm it), trying again resolves the earlier save first. If she changed the wording meanwhile and the earlier save turns out to have gone through, it says *"Your earlier save had already gone through, so it was kept."* Her new wording stays in the box with *"The wording in the box above isn't saved yet."* and two explicit choices: **Replace the saved wording with this** (an edit) or **Save it as a new observation**. If the earlier save went through and was later erased, nothing is recreated; her wording stays, with **Save it as a new observation**.
 2. **Skill page**, a "Skills" view inside Flight Path, `/flight-path/skills/:skillId`:
    - **Summary:**
      - Your status (or Not set), with a menu to change it.
@@ -93,7 +96,7 @@ Ordinary implementation choices (ids, indexes, page sizes, error wording) are th
      - **Edit:** stale edits ask her to reload.
      - **Link a follow-up:** picks from her existing actions.
      - **Mark addressed / Not addressed.**
-     - **View history:** every version, newest first, up to 100.
+     - **View earlier versions:** every version, newest first, 20 per page (at most 100), with **Show older versions** until the first wording.
      - **Erase permanently:** a confirm dialog that names what will be erased and notes that earlier backups still contain it.
 3. **Skills list**, in Flight Path:
    - Active skills grouped by the existing broad Topic, each with its status and evidence sentence.
@@ -105,6 +108,7 @@ Ordinary implementation choices (ids, indexes, page sizes, error wording) are th
    - Empty: "No observations for this skill yet. Add one from a lesson debrief."
    - Read error: "We couldn't load this right now. Your saved observations are safe.", with **Try again** (read only).
    - Saved but the list could not refresh: "Saved. We couldn't refresh the list.", with **Refresh list** (read only, never resaves).
+   - The list changed while paging (an edited date crossed the page boundary): "Your evidence changed while you were looking through it, so the list starts again from the newest." The list reloads from the first page; it never shows an observation twice or skips one.
    - Write refusal: the plain message for its code.
    - Browser mode works on the sql.js twin. Nothing needs a provider or a network connection.
 
@@ -155,7 +159,7 @@ There is one entry point, `executeSkillEvidenceAction(action)`, natively `save_s
    - real calendar dates.
 2. Canonical JSON (the existing `canonicalJson`) is bounded to **16 KiB**, then hashed with SHA-256.
 3. **`BEGIN IMMEDIATE`** on the one owned connection. Inside it:
-   - **Receipt lookup.** A known id with the same hash → `replayed`, returning the stored result with no write. A different hash → `OPERATION_CONFLICT`. An erased tombstone → `ERASED`.
+   - **Receipt lookup.** A known id with the same hash → `replayed`, returning the stored result with no write. A different hash → `OPERATION_CONFLICT`. An erased tombstone → `ERASED`. The stored result is decoded exactly for its action (exact keys, value types and ranges) and must name the request's own subject; a damaged receipt is `STORAGE_FAILURE`, never returned as if it were true (M3-R5).
    - **All safety checks before the first write:**
      - existence → `NOT_FOUND` / `SOURCE_MISSING`;
      - retired skill → `SKILL_RETIRED`;
@@ -184,33 +188,74 @@ There is one entry point, `executeSkillEvidenceAction(action)`, natively `save_s
 | Skill retired | Hidden from pickers; history and existing observations stay readable; new observations → `SKILL_RETIRED`; restore re-checks name duplicates. |
 | Erase | Earlier receipts for the subject become tombstones, then the observation is deleted (its history cascades), then the erase receipt is written. Later replays → `ERASED`; reusing the id → `ERASED`. |
 | Acknowledged write, failed refresh | The result is final. The screen says "Saved" and the reload is retried read-only. **A read retry never resends a write.** |
+| Replay of a damaged receipt | `STORAGE_FAILURE`: a result naming another subject, or with missing, extra or mistyped fields, is never returned. |
 
 ## 7. Read contract
 
 **`readEvidencePage({ skillId?, journalId?, attribution?, cursor?, limit })`:**
-- Order: `observed_on` DESC, `created_at` DESC, `id` DESC.
-- Keyset cursor: an opaque JSON triple, validated strictly; a forged cursor → `INVALID_ARGUMENT`.
+- Order: `observed_on` DESC, `created_at` DESC, `id` DESC. The order is chronological as before; it did not change.
 - Page size: 1–50, default 20; outside that → `LIMIT_EXCEEDED`, enforced at the read boundary.
 - Each item joins the current skill, debrief and action. The source fingerprint is recomputed only for the visible page.
-- Rows added or erased between pages never shift the next page.
+- **Cursor (corrected, M3-R7).** An opaque, strictly validated JSON value: `[2, skillId, journalId, attribution, observed_on, created_at, id, fence]`.
+  - **Bound to its normalized filters** (absent and empty are the same). Reusing it with other filters → `INVALID_ARGUMENT`. A forged or malformed cursor, or a fence beyond the current one → `INVALID_ARGUMENT`.
+  - **Fence:** the highest receipt rowid when the page was read, read on the same serialized connection as the page. Receipts are never deleted, so rowids only grow.
+  - **Before the next page,** every `edit_observation` committed after the fence is checked against the cursor. Each edit puts its observation on one side of the cursor before and after: *seen* (at or above it), *unseen* (below it) or *out* (not matching the filters). An edit that lands a still-matching observation on a different side → **`STALE_CURSOR`**, because it could repeat a row already shown or skip one never shown. A row re-entering the filters counts, because it may have been shown earlier.
+  - **Harmless, so the cursor stays valid:** wording-only edits, date edits that stay on their side, edits in another list, leaving the filters, new rows and erasures. A newly recorded row newer than the cursor appears on the next first page (the controller refreshes after its own writes).
+  - The controller treats `STALE_CURSOR` (or a refused cursor) by **restarting from the first page**, with a notice; it never appends a stale page. Deduplicating ids would not be enough, because it cannot recover a skipped row.
+  - The check is conservative: a harmless re-entry below the cursor also restarts. Cursors are session-local; after a restore the app reloads.
 
-**Plans** (node:sqlite, recorded in receipt 03):
+**Plans** (node:sqlite, recorded in the receipts):
 - Skill pages: `SEARCH o USING INDEX idx_skill_observations_skill_page (skill_id=? AND (observed_on,created_at,id)<(?,?,?))`.
 - Full pages: `SCAN o USING INDEX idx_skill_observations_page`.
 - Neither uses a temporary B-tree.
+- Edits after a fence: `SEARCH skill_evidence_operations USING INTEGER PRIMARY KEY (rowid>?)`. The fence is the table's maximum rowid. No new index is needed and the candidate migration is unchanged.
+
+**`readObservationHistory({ observationId, cursor?, limit })` (corrected, M3-R4):**
+- One bounded page of revisions, newest first: 1–100 per page, default 20 (`LIMIT_EXCEEDED` outside). **100 is a page size, not a lifetime limit:** following `nextCursor` reaches revision 1, with no gap or repeat. Every stored revision is kept; there is no edit cap.
+- Returns `{ observationId, currentRevision, items, nextCursor }`.
+- Cursor `["history", observationId, beforeRevision]`, bound to the observation: another observation's cursor → `INVALID_ARGUMENT`; `beforeRevision` must be 2…current.
+- Revisions are append-only, so newer revisions never move older pages.
+- An erased observation → `ERASED`; an unknown one → `NOT_FOUND`. Absence is never confused with erasure.
+- **API change:** the submitted `readObservationHistory(id)` returned at most the newest 100 revisions as an array. The review's frozen R4 diagnostic uses that legacy call and is kept unchanged; it now fails on the changed argument. The permanent equivalent follows pages to revision 1.
 
 **Other reads:**
 - **`readSkillSummary(skillId)`:** the latest status and confidence with their sequences, counts by attribution, distinct debriefs and the last observed date. Evidence is `none`, `limited` (< 3 observations, or < 2 debriefs) or `recorded`. No other derived field exists.
-- `listSkills({ includeRetired })` and `readObservationHistory(id)` (≤ 100 revisions).
+- `listSkills({ includeRetired })`.
 
 ## 8. Operation and publication ownership
 
-[`prototype/evidenceController.ts`](evidence/m3-skills-evidence-scope-2026-10-10/prototype/evidenceController.ts) is the reference.
+[`prototype/evidenceController.ts`](evidence/m3-skills-evidence-scope-2026-10-10/prototype/evidenceController.ts) is the reference (corrected for M3-R1–R3).
 
-- **Generation.** Each open of a skill starts a new generation. Answers from older generations are dropped, so A→B→A shows only the last A answer. Late pages after a switch are dropped. A second "Show older" waits for the first. Nothing publishes after dispose (unmount).
-- **Draft ids.** A draft keeps its operation and observation ids while its content is unchanged; Try again resends them and the store replays. A second click joins the save in flight.
-- **Changed content after an unknown outcome.** The controller first reads whether the earlier observation exists. If it does, it reports "Your earlier save had already gone through" and never sends a second, different create. A definite refusal frees the draft to go out under new ids.
+**Reads**
+- **Generation.** Each open of a skill and each first-page refresh starts a new read generation. Answers from older generations are dropped, so A→B→A shows only the last A answer. Late pages after a switch are dropped.
+- **Older-page lock.** A second "Show older" waits for the first. Every first-page generation change (open, refresh, refresh after a save, restart) releases the lock, and the late older page is dropped.
+- **Stale cursor.** A `STALE_CURSOR` restarts the list from the newest, with a notice.
+- **Revision history** has its own generation and pages to revision 1.
+
+**Writes.** There is one ownership record per form draft key.
+- **Draft identity.** A record keeps the exact create request (operation id, observation id and content) until it is resolved. A second submit of the same content joins the request in flight, or returns its settled result, including while the refresh after it is pending. Acknowledgment alone never resets a draft; only an explicit new-draft transition does (the form does this when it clears the wording it saved).
+- **Ownership by skill.** A write's notice, error, saving lock and follow-up refresh belong to the skill it was made for. A late answer for skill A never clears B's lock, announces on B or refreshes B. "Saving" is per skill on screen, not one global flag.
+- **Uncertain outcome (lost acknowledgment, transport timeout).** It is resolved before anything new is sent:
+  - **Same content:** the exact original request is resent, and the store replays it if it landed.
+  - **Changed content:** the earlier observation id is read.
+    - *Present* → the earlier save landed. The ids are minted for that request and can never be reused, so presence is proof.
+    - *`ERASED`* → it landed and was erased. Nothing is recreated, and further sends are refused until she explicitly starts a new observation.
+    - *`NOT_FOUND`* → this is **not** proof of failure, because the write may still be queued. The exact original request is replayed as a fence through the serialized writer: it either commits now or replays, and any delayed original then replays too.
+  - Pending writes cannot coexist with a changed create: a changed submit waits for the in-flight request, then is decided.
+- **Explicit outcomes.**
+
+  | Outcome | Meaning |
+  | --- | --- |
+  | `saved` | This exact draft is stored. |
+  | `earlier_saved` | An earlier submission is stored; the submitted wording was not sent. `justNow` says whether the fence stored it. |
+  | `unknown` | Still undetermined; the draft and the original request are kept. |
+  | `erased` | The earlier save landed and was erased. |
+  | `refused` | Definitive; nothing was written. A refusal frees the next submission to use new ids. An id clash stays blocked with an explicit way forward. |
+
+  The form clears only wording that was acknowledged and unchanged since it was submitted; anything else is kept and explained. `reviseSaved` (an edit with the saved revision) and `startNewDraft` are the explicit next steps.
 - **Refresh after an acknowledged write.** The write is never resent. If the refresh fails, the screen says it was saved and offers a read-only refresh.
+
+**Lifecycle.** `activate()`/`deactivate()` are symmetric. The specimen declares the lifecycle effect before the load effect, so a StrictMode replay (setup → cleanup → setup on one instance) restores publication before loading. Requests from the replayed generation are dropped, and the live generation publishes. A real unmount leaves every late answer obsolete. A new client gets a new controller. StrictMode and meaningful cleanup are both kept.
 
 The production hook (`src/state/useSkillEvidence.ts`) follows these rules. It also advances on `dataRevision`, so a debrief deletion elsewhere refreshes the visible page.
 
@@ -223,17 +268,55 @@ The production hook (`src/state/useSkillEvidence.ts`) follows these rules. It al
   - `foreign_key_check` clean;
   - built-in catalog equal to the shipped one (no unknown or missing ids, revision 1 text exact);
   - custom skills ≤ 200;
-  - contiguous skill, observation and self-assessment histories whose latest entry equals the head;
+  - contiguous skill, observation and self-assessment histories whose latest entry equals the head (including the catalog version);
+  - **catalog semantics on restored state (M3-R6):**
+    - built-in label, description, topic and catalog version pinned in every revision and the head, with only retire/restore steps after revision 1;
+    - custom revisions all the learner's, with no catalog version;
+    - every later step one the write path can make: active→active changes wording (an edit), active↔retired keeps it, and retired→retired is refused;
+  - **unique active names** under the write path's `labelKey` (NFC, JavaScript whitespace trimmed and collapsed, lower-cased), natively with the app's own `unicode-normalization` 0.1.25 and the same explicit whitespace set. Retired names may repeat, and a restore into an active name is refused;
   - no relinked debrief;
-  - live receipts holding results for their own action;
-  - erased tombstones whose subject is really gone.
-- **Shared contract:** 25 validation cases and 29 constraint cases, with identical outcomes on all three engines.
+  - **receipts (M3-R5):**
+    - each live receipt's result is decoded exactly for its action, names the receipt's own subject, and points at the history row (catalog revision, observation revision of the right change kind, or self-assessment) that this same operation wrote;
+    - earlier receipts stay valid after later edits, a cleared status, or a deleted debrief or action;
+    - tombstones are non-content observation receipts whose subject is gone, and a live erase receipt leaves no live receipt for its subject.
+- **Shared contract:** 72 validation cases (the original 25, plus 9 controls and 38 R5/R6 cases including the review's three) and 29 constraint cases, with identical outcomes on all three engines.
 - **Older binaries:** the shipped schema-13 TS driver refuses a 14 library ("newer format") and leaves its bytes unchanged. The shipped native ceiling test passes unchanged (receipt 09). The candidate refuses 15.
 - **Backups:** format v2 still fits, because the database schema is bumped independently. A genuine schema-13 backup restores into the candidate and gains 14 with every row kept. Round trips node→node, node→sql.js, sql.js→node and the rusqlite backup API are byte-for-row identical. A backup with altered evidence is refused before anything would be replaced.
 
 ## 10. Prototype results (focused; source-level only)
 
-Exact commands, output and exits are in [`receipts/`](evidence/m3-skills-evidence-scope-2026-10-10/receipts/).
+### Corrected results (11 October 2026)
+
+Exact commands, output and exits are in the [corrections receipts](evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/). The [report](M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md) maps every finding to its fix and tests.
+
+| Check | Result |
+| --- | --- |
+| Frozen submission reproduced (disposable copy) | 102 passed / 2 skipped; tsc clean; native 7 passed; review diagnostics 17 failed / 4 passed (TS/UI) and 3 failed / 2 passed (native), exactly as reviewed |
+| Corrected prototype Vitest (10 files) | **162 passed**, 2 opt-in skipped, exit 0 |
+| Corrected strict typecheck | exit 0 |
+| Corrected native crate | **7 passed**, exit 0. The shared contract is now 72 validation + 29 constraint cases, with identical outcomes on node:sqlite, sql.js and rusqlite |
+| Review's frozen native diagnostics on the corrected code | **5 passed** |
+| Review's frozen TS/UI diagnostics on the corrected code | **18 passed / 3 failed.** The two R4 cases call the replaced legacy `history(id)` (documented API change; the paged equivalent passes). R2a's own setup sends an invalid erase request (`expectedRevision` instead of `confirm: "erase"`) that the submitted decoder also refused. With only that argument corrected, R2a fails on the frozen code (the observation is recreated) and passes on the corrected code |
+| New regressions on the frozen code | 53 of 65 fail (the 12 that pass are positive controls); natively, 37 of the 38 new negative fixture cases are wrongly accepted |
+| Reversions | 32 variants on the corrected code. The 9 original S1–S8 variants: 8 caught, and S4a still masked by `ConnectionOwner`'s rollback. **23 new variants (18 TS, 5 native): all caught** by their named tests |
+| Candidate 0014 and production anchors | Candidate byte-identical to the submission; 30/30 anchors identical to `48fa47d` and `origin/main` |
+
+**Benchmarks after correction** (same dataset and method; full data in the corrections pack's `bench-results.json`):
+
+| Engine | Observations | Page of 20 median (was) | Full walk at 50, per page (was) | Restore validation (was) | Second page after 100 edits since its fence |
+| --- | --- | --- | --- | --- | --- |
+| node:sqlite | 100 | 0.125 ms (0.111) | 0.328 ms (0.239) | 17.2 ms (11.4) | 1.26 ms |
+| node:sqlite | 10,000 | 0.111 ms (0.102) | 0.202 ms (0.186) | 244.9 ms (167.2) | 1.22 ms |
+| sql.js | 10,000 | 0.236 ms (0.233) | 0.497 ms (0.480) | 380.7 ms (261.6) | 1.96 ms |
+
+- **Pages** stay flat with size; the fence adds one maximum-rowid lookup.
+- **The stale-cursor check** costs about 0.012 ms (node:sqlite) or 0.02 ms (sql.js) per edit committed since the previous page.
+- **Restore validation** grows about 45%, to roughly 24 ms per 1,000 observations on node:sqlite and 38 ms on sql.js, because every receipt's owned row is looked up. It stays linear. These runs also include 100 extra edits.
+- **History:** 1,000 revisions walk to revision 1 in 10 pages of 100 (median 0.13 ms on node:sqlite, 0.31 ms on sql.js).
+
+### Original submission results (10 October 2026)
+
+Exact commands, output and exits are in [`receipts/`](evidence/m3-skills-evidence-scope-2026-10-10/receipts/). The review's findings supersede these readiness claims.
 
 | Check | Result |
 | --- | --- |
@@ -263,6 +346,12 @@ Page latency stays flat with size (keyset). Restore validation is linear, about 
 
 ## 11. Limitations (honest)
 
+- **Corrections are source-level.** The controller, form and history view are proven on real node:sqlite and sql.js stores and in jsdom, including real `React.StrictMode`. The native readers (paged history, fenced cursors) and the native writer are specified in the implementation prompt, not built.
+- **The stale-cursor check is conservative.** An edit that brings a row back into a filtered list below the cursor restarts the list even when that row was never shown. Cursors are session-local, and a restore reloads the screen.
+- **Case mapping follows each runtime's Unicode tables.** `labelKey` lower-cases with JavaScript (V8/ICU) and Rust `std`. The shared fixtures prove parity for NFC, whitespace (including U+0085 and U+FEFF), German ß and Greek final sigma, but characters newer than one runtime's Unicode version could differ.
+- **Two frozen diagnostics cannot pass as written:**
+  - R4 uses the replaced `history(id)` API; the paged equivalent is a permanent test.
+  - R2a's setup erase is invalid under the submitted contract. A copy with that single argument corrected is in the corrections pack, and the frozen file is unchanged.
 - **Native writes are not prototyped.** The write path is prototyped in TypeScript on real node:sqlite and sql.js connections. The native writer (Rust, pinned connection) is specified here and in the implementation prompt but not built. The rusqlite crate proves the constraints, validator, upgrade and backup copy, not the native write transaction.
 - **Bookkeeping differs.** The prototype records migrations in `schema_migrations`, like the TS drivers. The desktop app records them in `_sqlx_migrations` with its SHA-384 checksum, which production registration must add.
 - **Test-only UI.** The UI is a jsdom specimen with no routing, styling review or installed-WebKit behaviour. Benchmarks are Node-only and source-level.

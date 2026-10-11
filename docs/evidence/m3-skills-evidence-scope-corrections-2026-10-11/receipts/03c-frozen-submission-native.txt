@@ -1,0 +1,42 @@
+$ env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen-only-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test contract
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen
+# utc: 2026-10-11T07:29:52Z
+   Compiling version_check v0.9.5
+   Compiling zerocopy v0.8.56
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.12
+   Compiling once_cell v1.21.4
+   Compiling cfg-if v1.0.4
+   Compiling vcpkg v0.2.15
+   Compiling pkg-config v0.3.34
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.151
+   Compiling cc v1.4.5
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling ahash v0.8.12
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling smallvec v1.16.0
+   Compiling fallible-iterator v0.3.0
+   Compiling bitflags v2.13.1
+   Compiling libsqlite3-sys v0.30.1
+   Compiling hashbrown v0.14.5
+   Compiling hashlink v0.9.1
+   Compiling rusqlite v0.32.1
+   Compiling m3-skills-evidence-native v0.0.0 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen/docs/evidence/m3-skills-evidence-scope-2026-10-10/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.82s
+     Running tests/contract.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen-only-target/debug/deps/contract-68cbe35ac1b00cd7)
+
+running 7 tests
+test engine_is_the_apps_bundled_sqlite ... ok
+test a_failed_candidate_migration_leaves_schema_13_untouched ... ok
+test the_candidate_refuses_a_library_newer_than_itself ... ok
+test populated_schema13_upgrades_with_every_retained_row_identical ... ok
+test backup_api_copy_restores_validated_and_identical ... ok
+test shared_constraint_contract_native_outcomes ... ok
+test shared_validation_contract_native_outcomes ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+
+# exit=0

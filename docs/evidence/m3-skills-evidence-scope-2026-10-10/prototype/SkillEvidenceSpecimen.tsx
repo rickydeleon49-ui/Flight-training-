@@ -5,12 +5,21 @@
  * elements and the app's existing CSS class names; it is not wired into any
  * route and is exercised only by tests/ui.test.tsx (jsdom).
  */
-import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
-import { createEvidenceController, type EvidenceClient, type ObservationDraft } from "./evidenceController";
-import type { Attribution, EvidenceItem, SkillListEntry, SkillSummary } from "./types";
+import { createEvidenceController, type EvidenceClient, type ObservationDraft, type SaveOutcome } from "./evidenceController";
+import type { Attribution, EvidenceItem, ObservationRevision, SkillListEntry, SkillSummary } from "./types";
 
 const STATUS_WORDS = { learning: "Learning", practicing: "Practicing", needs_review: "Needs review" } as const;
+
+const CHANGE_WORDS: Record<ObservationRevision["changeKind"], string> = {
+  created: "Recorded",
+  edited: "Edited",
+  linked_action: "Follow-up linked",
+  unlinked_action: "Follow-up unlinked",
+  marked_addressed: "Marked addressed",
+  cleared_addressed: "Addressed mark removed",
+};
 
 export function attributionText(item: Pick<EvidenceItem, "attribution" | "instructorName">): string {
   if (item.attribution === "self_report") return "Your note";
@@ -57,10 +66,16 @@ export function SkillEvidenceSpecimen({ client, skills, debrief, newId, initialS
   const [skillId, setSkillId] = useState(initialSkillId);
   const ids = useId();
 
+  // Lifecycle first, so a StrictMode setup replay restores publication
+  // before the load below runs; the matching cleanup makes every earlier
+  // request obsolete (and, on a real unmount, keeps it that way).
+  useEffect(() => {
+    controller.activate();
+    return () => controller.deactivate();
+  }, [controller]);
   useEffect(() => {
     void controller.open(skillId);
   }, [controller, skillId]);
-  useEffect(() => () => controller.dispose(), [controller]);
 
   return (
     <section aria-labelledby={`${ids}-title`} className="card">
@@ -88,6 +103,8 @@ export function SkillEvidenceSpecimen({ client, skills, debrief, newId, initialS
 
       {state.notice === "saved" && <p role="status">Saved.</p>}
       {state.notice === "already_saved" && <p role="status">Your earlier save had already gone through, so it was kept.</p>}
+      {state.notice === "earlier_saved_now" && <p role="status">Your earlier wording has now been saved.</p>}
+      {state.listNotice === "restarted" && <p role="status">Your evidence changed while you were looking through it, so the list starts again from the newest.</p>}
       {state.notice === "saved_stale" && (
         <p role="status">
           Saved. We couldn't refresh the list.{" "}
@@ -117,6 +134,11 @@ export function SkillEvidenceSpecimen({ client, skills, debrief, newId, initialS
               {item.skillLabelAtRecording !== item.skillLabel && <p>Recorded under the skill name “{item.skillLabelAtRecording}”.</p>}
               {actionText(item) && <p>{actionText(item)}</p>}
               {item.addressedAt && <p>You marked this addressed.</p>}
+              {item.revision > 1 && (
+                <button type="button" onClick={() => void controller.openHistory(item.id)}>
+                  View earlier versions
+                </button>
+              )}
             </li>
           ))}
         </ol>
@@ -126,9 +148,39 @@ export function SkillEvidenceSpecimen({ client, skills, debrief, newId, initialS
           {state.loadingMore ? "Loading…" : "Show older"}
         </button>
       )}
+      {state.history && (
+        <section aria-label="Earlier versions">
+          <h3>Earlier versions</h3>
+          {state.history.status === "loading" && <p role="status">Loading earlier versions…</p>}
+          {state.history.error && <p role="alert">{state.history.error}</p>}
+          {state.history.items.length > 0 && (
+            <ol aria-label="Versions">
+              {state.history.items.map((version) => (
+                <li key={version.revision}>
+                  <p>
+                    Version {version.revision} · {CHANGE_WORDS[version.changeKind]} · {version.observedOn}
+                  </p>
+                  <blockquote>{version.wording}</blockquote>
+                </li>
+              ))}
+            </ol>
+          )}
+          {state.history.nextCursor && (
+            <button type="button" disabled={state.history.loadingMore} onClick={() => void controller.loadOlderHistory()}>
+              {state.history.loadingMore ? "Loading…" : "Show older versions"}
+            </button>
+          )}
+          <button type="button" onClick={() => controller.closeHistory()}>
+            Close
+          </button>
+        </section>
+      )}
     </section>
   );
 }
+
+/** What the form says after an earlier submission, rather than the current wording, was stored. */
+type FollowUp = null | { kind: "earlier" } | { kind: "erased" };
 
 function ObservationForm({
   controller,
@@ -146,7 +198,14 @@ function ObservationForm({
   const [wording, setWording] = useState("");
   const [instructorName, setInstructorName] = useState("");
   const [observedOn, setObservedOn] = useState(debrief.date);
+  const [followUp, setFollowUp] = useState<FollowUp>(null);
   const length = Array.from(wording).length;
+  const draftKey = `${debrief.journalId}:${skillId}`;
+  // The wording on screen now, so a late answer can tell whether she kept typing.
+  const latest = useRef(wording);
+  useEffect(() => {
+    latest.current = wording;
+  }, [wording]);
 
   const draft: ObservationDraft = {
     skillId,
@@ -163,9 +222,8 @@ function ObservationForm({
       aria-labelledby={`${ids}-legend-form`}
       onSubmit={(e) => {
         e.preventDefault();
-        void controller.submitObservation(`${debrief.journalId}:${skillId}`, draft).then((ok) => {
-          if (ok) setWording("");
-        });
+        const submitted = draft.wording;
+        void controller.saveObservation(draftKey, draft).then((outcome) => afterSave(outcome, submitted));
       }}
     >
       <h3 id={`${ids}-legend-form`}>Add an observation from “{debrief.title || "Lesson debrief"}”</h3>
@@ -194,6 +252,58 @@ function ObservationForm({
       <button type="submit" disabled={saving || wording.trim() === "" || length > 2000}>
         {saving ? "Saving…" : "Save observation"}
       </button>
+      {followUp && (
+        <div aria-label="Your new wording">
+          <p>
+            {followUp.kind === "earlier"
+              ? "The wording in the box above isn't saved yet."
+              : "The wording in the box above isn't saved."}
+          </p>
+          {followUp.kind === "earlier" && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                const submitted = draft.wording;
+                void controller.reviseSaved(draftKey, draft).then((outcome) => afterSave(outcome, submitted));
+              }}
+            >
+              Replace the saved wording with this
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => {
+              if (!controller.startNewDraft(draftKey)) return;
+              const submitted = draft.wording;
+              void controller.saveObservation(draftKey, draft).then((outcome) => afterSave(outcome, submitted));
+            }}
+          >
+            Save it as a new observation
+          </button>
+        </div>
+      )}
     </form>
   );
+
+  /**
+   * Clear only what was acknowledged, and only if she has not typed since.
+   * Anything else keeps her words and explains what did (or did not) save.
+   */
+  function afterSave(outcome: SaveOutcome, submitted: string) {
+    if (outcome.kind === "saved") {
+      if (latest.current === submitted) {
+        setWording("");
+        setFollowUp(null);
+        controller.startNewDraft(draftKey);
+      } else {
+        setFollowUp({ kind: "earlier" });
+      }
+    } else if (outcome.kind === "earlier_saved") {
+      setFollowUp({ kind: "earlier" });
+    } else if (outcome.kind === "erased") {
+      setFollowUp({ kind: "erased" });
+    }
+  }
 }

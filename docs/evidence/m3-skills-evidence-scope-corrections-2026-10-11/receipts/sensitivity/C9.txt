@@ -1,0 +1,74 @@
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts -t \[M3-R4\] the earliest wording is reachable through bounded pages after 100 later revisions --reporter=verbose
+# cwd: <scratch copy>
+# variant: C9 (M3-R4) history pages offer no way to older revisions
+# file: prototype/skillEvidenceReader.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sens-copy
+
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] the earliest wording is reachable through bounded pages after 100 later revisions 38ms
+   → expected 1 to be 2 // Object.is equality
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] a page holds 1-100 versions; the default is 20
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] a history cursor is bound to its observation and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] newer revisions never move older pages; an erased observation is ERASED, an unknown one NOT_FOUND
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] the earliest wording is reachable through bounded pages after 100 later revisions 75ms
+   → expected 1 to be 2 // Object.is equality
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] a page holds 1-100 versions; the default is 20
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] a history cursor is bound to its observation and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] newer revisions never move older pages; an erased observation is ERASED, an unknown one NOT_FOUND
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] a seen observation moved below the cursor is refused as STALE_CURSOR, never repeated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] an unseen observation moved above the cursor is refused, never silently skipped
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] same-date ties: moving a seen row of a tied date below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] wording-only edits, edits that stay on their side, inserts and erasures keep the cursor valid, with no repeat or gap
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] an edit in another skill's list does not disturb this list's cursor
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] with an attribution filter, an attribution edit that brings a seen row back below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] a cursor is bound to its normalized filters and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] restarting after STALE_CURSOR walks every observation exactly once
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] a seen observation moved below the cursor is refused as STALE_CURSOR, never repeated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] an unseen observation moved above the cursor is refused, never silently skipped
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] same-date ties: moving a seen row of a tied date below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] wording-only edits, edits that stay on their side, inserts and erasures keep the cursor valid, with no repeat or gap
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] an edit in another skill's list does not disturb this list's cursor
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] with an attribution filter, an attribution edit that brings a seen row back below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] a cursor is bound to its normalized filters and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] restarting after STALE_CURSOR walks every observation exactly once
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 controller restart > [M3-R7] Show older after a crossing edit restarts the list from the newest, with no repeat
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 controller restart > [M3-R7] a late older page from before a restart is dropped
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 query plans > node:sqlite: the fence and edits-after-fence lookups are rowid searches, not scans
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (node:sqlite) > [M3-R5] replaying a receipt whose result names another observation is STORAGE_FAILURE, not that identity
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (node:sqlite) > [M3-R5] earlier receipts still replay after later edits, a cleared status and a deleted debrief
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (sql.js) > [M3-R5] replaying a receipt whose result names another observation is STORAGE_FAILURE, not that identity
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (sql.js) > [M3-R5] earlier receipts still replay after later edits, a cleared status and a deleted debrief
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 29 skipped (31)
+   Start at  00:34:59
+   Duration  423ms (transform 169ms, setup 0ms, import 223ms, tests 114ms, environment 0ms)
+
+(node:54652) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] the earliest wording is reachable through bounded pages after 100 later revisions
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] the earliest wording is reachable through bounded pages after 100 later revisions
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts:61:24
+     59|     expect(Number(x.engine.query("SELECT COUNT(*) AS n FROM skill_obse…
+     60|     const full = await walkHistory(x.store, o.observationId, LIMITS.re…
+     61|     expect(full.pages).toBe(2);
+       |                        ^
+     62|     expect(full.revisions).toEqual(Array.from({ length: 101 }, (_, i) …
+     63|     expect(full.wordings.at(-1)).toBe("Earliest wording");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+# exit=1
+# restored-sha-matches=True

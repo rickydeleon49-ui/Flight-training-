@@ -1,0 +1,6 @@
+$ S=$(mktemp -d); cp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/validation-cases.json docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/constraint-cases.json $S/ && python3 -I docs/evidence/m3-skills-evidence-scope-2026-10-10/scripts/generate_fixtures.py && cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/validation-cases.json $S/validation-cases.json && cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/constraint-cases.json $S/constraint-cases.json && echo 'both fixtures regenerate byte-identically'; rm -rf $S
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T07:30:40Z
+validation cases: 72, constraint cases: 29
+both fixtures regenerate byte-identically
+# exit=0

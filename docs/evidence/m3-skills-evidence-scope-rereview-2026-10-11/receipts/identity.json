@@ -1,0 +1,9 @@
+{
+  "submitted_paths": 127,
+  "correction_evidence_checksums": 64,
+  "current_scope_pack_checksums": 56,
+  "document_hashes": 6,
+  "production_anchors_matching_source_and_origin_main": 30,
+  "candidate_0014_matches_prior_submission": true,
+  "all_submitted_paths_unchanged_after_review": true
+}

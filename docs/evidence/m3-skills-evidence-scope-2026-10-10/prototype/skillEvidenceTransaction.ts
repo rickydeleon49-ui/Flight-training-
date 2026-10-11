@@ -13,7 +13,9 @@
  *   transaction; its canonical JSON (<= 16 KiB) is hashed.
  * - A known operation id with the same hash replays the stored result and
  *   writes nothing; a different hash is OPERATION_CONFLICT; an id whose
- *   subject was erased is ERASED (never resurrected).
+ *   subject was erased is ERASED (never resurrected). A replayed result is
+ *   decoded exactly (skillEvidenceResult.ts) and must name the request's own
+ *   subject; a damaged receipt is STORAGE_FAILURE, never returned as truth.
  * - Every check needed for safety runs inside BEGIN IMMEDIATE before the first
  *   write. Any failure rolls back everything, including the receipt.
  * - Every change appends one history row; history rows are never rewritten.
@@ -23,6 +25,7 @@ import { canonicalJson, sha256Hex } from "@/logic/cardIdentity";
 import type { SqlValue } from "@/data/db";
 import type { Topic } from "@/domain/types";
 
+import { ResultShapeError, decodeStoredResult, subjectOf } from "./skillEvidenceResult";
 import {
   LIMITS,
   SOURCE_FIELD_COLUMNS,
@@ -295,14 +298,25 @@ export async function executeSkillEvidenceAction(
   try {
     // 0. Replay, conflict or erased.
     const receipt = await one(
-      "SELECT request_hash, result_json, is_erased FROM skill_evidence_operations WHERE operation_id = ?",
+      "SELECT action, subject_id, request_hash, result_json, is_erased FROM skill_evidence_operations WHERE operation_id = ?",
       [action.operationId],
     );
     if (receipt) {
       if (receipt["request_hash"] !== requestHash) refuse("OPERATION_CONFLICT", "That request id was already used for a different change.");
       if (Number(receipt["is_erased"]) === 1) refuse("ERASED", "What that request changed has since been erased.");
+      const subjectId = subjectOf(action);
+      if (receipt["action"] !== action.action || receipt["subject_id"] !== subjectId) {
+        refuse("STORAGE_FAILURE", "The saved record of that change is damaged.");
+      }
+      let result: SkillEvidenceResult;
+      try {
+        result = decodeStoredResult(receipt["result_json"], { action: action.action, subjectId });
+      } catch (error) {
+        if (error instanceof ResultShapeError) refuse("STORAGE_FAILURE", "The saved record of that change is damaged.");
+        throw error;
+      }
       await exec("COMMIT");
-      return { status: "replayed", result: JSON.parse(String(receipt["result_json"])) as SkillEvidenceResult };
+      return { status: "replayed", result };
     }
 
     const { result, subjectId } = await apply(run, one, query, action, timestamp);

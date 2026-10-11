@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Engine, EngineName } from "../prototype/candidateEngine";
-import { pageQuery } from "../prototype/skillEvidenceReader";
+import { encodeCursor, pageQuery } from "../prototype/skillEvidenceReader";
 import { candidateWithDebrief, clock, observation, uuid } from "./helpers";
 
 const engines: EngineName[] = ["node:sqlite", "sql.js"];
@@ -109,7 +109,10 @@ describe("query plans", () => {
       const { sql, params } = pageQuery(input);
       return ctx.engine.query(`EXPLAIN QUERY PLAN ${sql}`, params).map((r) => String(r["detail"])).join(" | ");
     };
-    const skill = plan({ skillId: "builtin.normal_landing", cursor: JSON.stringify(["2026-10-01", "2026-10-10T00:00:00.000Z", "z"]) });
+    const cursor = encodeCursor({
+      filters: { skillId: "builtin.normal_landing", journalId: null, attribution: null }, o: "2026-10-01", c: "2026-10-10T00:00:00.000Z", i: "z", fence: 0,
+    });
+    const skill = plan({ skillId: "builtin.normal_landing", cursor });
     const all = plan({});
     console.log(`plan(skill page): ${skill}`);
     console.log(`plan(all page):   ${all}`);

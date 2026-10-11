@@ -1,0 +1,48 @@
+$ env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen-only-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test review_diagnostics
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen
+# utc: 2026-10-11T07:29:59Z
+   Compiling m3-skills-evidence-native v0.0.0 (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen/docs/evidence/m3-skills-evidence-scope-2026-10-10/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running tests/review_diagnostics.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen-only-target/debug/deps/review_diagnostics-50c3074e8d91a457)
+
+running 5 tests
+test control_builtin_retirement ... ok
+test r5_foreign_receipt_result ... FAILED
+test control_valid_candidate ... ok
+test r6b_normalized_active_label_collision ... FAILED
+test r6a_later_builtin_relabel ... FAILED
+
+failures:
+
+---- r5_foreign_receipt_result stdout ----
+
+thread 'r5_foreign_receipt_result' (312274) panicked at tests/review_diagnostics.rs:12:2:
+assertion `left == right` failed: "[M3-R5] receipt with correct action but foreign observation result is refused"
+  left: "accept"
+ right: "refuse"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- r6b_normalized_active_label_collision stdout ----
+
+thread 'r6b_normalized_active_label_collision' (312276) panicked at tests/review_diagnostics.rs:12:2:
+assertion `left == right` failed: "[M3-R6b] normalized active custom and built-in label collision is refused"
+  left: "accept"
+ right: "refuse"
+
+---- r6a_later_builtin_relabel stdout ----
+
+thread 'r6a_later_builtin_relabel' (312275) panicked at tests/review_diagnostics.rs:12:2:
+assertion `left == right` failed: "[M3-R6a] later built-in revision cannot replace the pinned catalog label"
+  left: "accept"
+ right: "refuse"
+
+
+failures:
+    r5_foreign_receipt_result
+    r6a_later_builtin_relabel
+    r6b_normalized_active_label_collision
+
+test result: FAILED. 2 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+error: test failed, to rerun pass `--test review_diagnostics`
+# exit=101

@@ -7,6 +7,7 @@
 //! and calls it from `verify_application_connection` for `newest >= 14`.
 
 use rusqlite::{params_from_iter, types::Value, Connection};
+use unicode_normalization::UnicodeNormalization;
 
 /// The shipped migrations 0001-0013, read from the repository unchanged.
 pub const SHIPPED: [&str; 13] = [
@@ -57,6 +58,102 @@ pub const M3_TRIGGERS: [&str; 6] = [
 ];
 
 const MAX_CUSTOM_SKILLS: i64 = 200;
+
+/// JavaScript's `\s` and `String.prototype.trim` set (ECMAScript WhiteSpace and
+/// LineTerminator). Deliberately not `char::is_whitespace`, which differs at
+/// U+0085 and U+FEFF.
+fn is_js_space(c: char) -> bool {
+    matches!(
+        c,
+        '\u{9}'..='\u{d}' | ' ' | '\u{a0}' | '\u{1680}' | '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}'
+    )
+}
+
+/// The write path's duplicate-name key (TS `labelKey`): NFC, trimmed, runs of
+/// whitespace collapsed to one space, then lower-cased.
+pub fn label_key(label: &str) -> String {
+    let nfc: String = label.nfc().collect();
+    let mut collapsed = String::with_capacity(nfc.len());
+    let mut in_space = false;
+    for c in nfc.trim_matches(is_js_space).chars() {
+        if is_js_space(c) {
+            if !in_space {
+                collapsed.push(' ');
+            }
+            in_space = true;
+        } else {
+            collapsed.push(c);
+            in_space = false;
+        }
+    }
+    collapsed.to_lowercase()
+}
+
+pub const SKILL_ACTIONS: [&str; 4] = ["create_custom_skill", "edit_custom_skill", "retire_skill", "restore_skill"];
+pub const OBSERVATION_HISTORY_ACTIONS: [&str; 5] = ["create_observation", "edit_observation", "link_action", "unlink_action", "set_addressed"];
+pub const ASSESSMENT_ACTIONS: [&str; 2] = ["set_status", "set_confidence"];
+
+/// The decoded number a result carries (`revision` or `sequence`), or the erase flag.
+#[derive(Debug, PartialEq, Eq)]
+pub enum ResultValue {
+    Number(i64),
+    Erased,
+}
+
+const MAX_SAFE: f64 = 9_007_199_254_740_991.0;
+
+/// TS `Number.isSafeInteger(v) && v >= 1`, applied to a JSON number.
+fn positive(v: &serde_json::Value) -> Option<i64> {
+    let f = v.as_f64()?;
+    if !v.is_number() || f.fract() != 0.0 || !(1.0..=MAX_SAFE).contains(&f) {
+        return None;
+    }
+    Some(f as i64)
+}
+
+/// Exact result decoding (TS `decodeStoredResult`): exactly the keys of the
+/// action, the right types and ranges, and the receipt's own subject.
+pub fn decode_result(text: Option<&str>, action: &str, subject: &str) -> Result<ResultValue, String> {
+    let parsed: serde_json::Value = serde_json::from_str(text.ok_or("The result is missing.")?).map_err(|_| "The result is not readable.")?;
+    let object = parsed.as_object().ok_or("A result must be an object.")?;
+    let (subject_key, value_key) = if SKILL_ACTIONS.contains(&action) {
+        ("skillId", "revision")
+    } else if OBSERVATION_HISTORY_ACTIONS.contains(&action) {
+        ("observationId", "revision")
+    } else if ASSESSMENT_ACTIONS.contains(&action) {
+        ("skillId", "sequence")
+    } else if action == "erase_observation" {
+        ("observationId", "erased")
+    } else {
+        return Err("Unknown action.".into());
+    };
+    let mut keys: Vec<&str> = object.keys().map(String::as_str).collect();
+    keys.sort_unstable();
+    let mut wanted = vec!["action", subject_key, value_key];
+    wanted.sort_unstable();
+    if keys != wanted {
+        return Err(format!("A {action} result has exactly: {}.", wanted.join(", ")));
+    }
+    if object.get("action").and_then(|a| a.as_str()) != Some(action) {
+        return Err("The result belongs to a different action.".into());
+    }
+    if object.get(subject_key).and_then(|s| s.as_str()) != Some(subject) {
+        return Err("The result names a different subject.".into());
+    }
+    if action == "erase_observation" {
+        return if object.get("erased") == Some(&serde_json::Value::Bool(true)) {
+            Ok(ResultValue::Erased)
+        } else {
+            Err("An erase result must say erased: true.".into())
+        };
+    }
+    let n = positive(&object[value_key]).ok_or(format!("{value_key} must be a positive whole number."))?;
+    let creates = action == "create_custom_skill" || action == "create_observation";
+    if value_key == "revision" && (if creates { n != 1 } else { n < 2 }) {
+        return Err("The result revision does not fit its action.".into());
+    }
+    Ok(ResultValue::Number(n))
+}
 
 /// Apply 0001-0013 (and optionally the candidate, possibly edited) with the
 /// same `schema_migrations` bookkeeping as the TS adapters. The candidate runs
@@ -396,16 +493,57 @@ pub fn verify_schema_14_skill_evidence_semantics(conn: &Connection, reference: &
         return Err("There are more custom skills than this app supports.".into());
     }
 
-    // 4. Skill history.
-    for skill in rows(conn, "SELECT * FROM skill_catalog_entries", &[])? {
+    // 4. Skill history: contiguous, head equals latest, pinned built-in
+    //    wording and catalog version, legal steps, unique active names.
+    let mut active_names: Vec<(String, String)> = Vec::new();
+    for skill in rows(conn, "SELECT * FROM skill_catalog_entries ORDER BY id", &[])? {
         let id = text(get(&skill, "id")).unwrap_or_default();
         let history = rows(conn, "SELECT * FROM skill_catalog_revisions WHERE skill_id = ?1 ORDER BY revision", &[id.clone().into()])?;
         if history.len() as i64 != int(get(&skill, "revision")) || history.iter().enumerate().any(|(i, h)| int(get(h, "revision")) != i as i64 + 1) {
             return Err(format!("Skill {id} has gaps in its history."));
         }
         let latest = history.last().unwrap();
-        if ["label", "description", "topic", "status"].iter().any(|k| text(get(latest, k)) != text(get(&skill, k))) {
+        if ["label", "description", "topic", "status", "catalog_version"].iter().any(|k| text(get(latest, k)) != text(get(&skill, k))) {
             return Err(format!("Skill {id} does not match its latest history entry."));
+        }
+        let builtin = text(get(&skill, "origin")).as_deref() == Some("builtin");
+        let reference_row = shipped.iter().find(|r| text(get(r, "skill_id")).as_deref() == Some(id.as_str()));
+        for (i, h) in history.iter().enumerate() {
+            if let Some(r) = reference_row.filter(|_| builtin) {
+                if ["label", "description", "topic", "catalog_version"].iter().any(|k| text(get(h, k)) != text(get(r, k))) {
+                    return Err(format!("Built-in skill {id} changed its catalog wording."));
+                }
+            }
+            if !builtin && !matches!(get(h, "catalog_version"), Value::Null) {
+                return Err(format!("Custom skill {id} has a catalog version."));
+            }
+            if i == 0 {
+                if !builtin && (text(get(h, "changed_by")).as_deref() != Some("user") || text(get(h, "status")).as_deref() != Some("active")) {
+                    return Err(format!("Custom skill {id} did not start as an active skill of yours."));
+                }
+                continue;
+            }
+            let prev = &history[i - 1];
+            if text(get(h, "changed_by")).as_deref() != Some("user") {
+                return Err(format!("Skill {id} has a later revision that is not a recorded change."));
+            }
+            let same_wording = ["label", "description", "topic"].iter().all(|k| text(get(h, k)) == text(get(prev, k)));
+            let step = (text(get(prev, "status")).unwrap_or_default(), text(get(h, "status")).unwrap_or_default());
+            let legal = match (step.0.as_str(), step.1.as_str()) {
+                ("active", "active") => !same_wording,
+                ("active", "retired") | ("retired", "active") => same_wording,
+                _ => false,
+            };
+            if !legal {
+                return Err(format!("Skill {id} has a history step the app cannot make."));
+            }
+        }
+        if text(get(&skill, "status")).as_deref() == Some("active") {
+            let key = label_key(&text(get(&skill, "label")).unwrap_or_default());
+            if let Some((_, other)) = active_names.iter().find(|(k, _)| *k == key) {
+                return Err(format!("Active skills {other} and {id} have the same name."));
+            }
+            active_names.push((key, id));
         }
     }
 
@@ -444,17 +582,101 @@ pub fn verify_schema_14_skill_evidence_semantics(conn: &Connection, reference: &
         }
     }
 
-    // 7. Receipts.
-    for op in rows(conn, "SELECT * FROM skill_evidence_operations", &[])? {
+    // 7. Receipts: exact results, own subject, owned history of the right kind;
+    //    tombstones are non-content observation receipts whose subject is gone.
+    for op in rows(conn, "SELECT * FROM skill_evidence_operations ORDER BY rowid", &[])? {
         let id = text(get(&op, "operation_id")).unwrap_or_default();
-        if int(get(&op, "is_erased")) == 0 {
-            let parsed: Option<serde_json::Value> = text(get(&op, "result_json")).and_then(|s| serde_json::from_str(&s).ok());
-            let action = parsed.as_ref().and_then(|v| v.as_object()).and_then(|o| o.get("action")).and_then(|a| a.as_str()).map(String::from);
-            if action != text(get(&op, "action")) {
-                return Err(format!("Operation {id} has a result for a different action."));
+        let action = text(get(&op, "action")).unwrap_or_default();
+        let subject = text(get(&op, "subject_id")).unwrap_or_default();
+        let present = count(conn, "SELECT COUNT(*) FROM skill_observations WHERE id = ?1", &[subject.clone().into()])? > 0;
+        if int(get(&op, "is_erased")) != 0 {
+            if !OBSERVATION_HISTORY_ACTIONS.contains(&action.as_str()) {
+                return Err(format!("Operation {id} is erased, but only observation changes can be erased."));
             }
-        } else if count(conn, "SELECT COUNT(*) FROM skill_observations WHERE id = ?1", &[text(get(&op, "subject_id")).unwrap_or_default().into()])? > 0 {
-            return Err(format!("Operation {id} says its observation was erased, but it is still here."));
+            if present {
+                return Err(format!("Operation {id} says its observation was erased, but it is still here."));
+            }
+            continue;
+        }
+        let value = decode_result(text(get(&op, "result_json")).as_deref(), &action, &subject)
+            .map_err(|e| format!("Operation {id} has an invalid result: {e}"))?;
+        let number = match value {
+            ResultValue::Number(n) => n,
+            ResultValue::Erased => 0,
+        };
+        if SKILL_ACTIONS.contains(&action.as_str()) {
+            let row = rows(conn, "SELECT * FROM skill_catalog_revisions WHERE skill_id = ?1 AND revision = ?2", &[subject.clone().into(), number.into()])?;
+            let Some(row) = row.first() else {
+                return Err(format!("Operation {id} does not own the skill history it names."));
+            };
+            if text(get(row, "operation_id")).as_deref() != Some(id.as_str()) || text(get(row, "changed_by")).as_deref() != Some("user") {
+                return Err(format!("Operation {id} does not own the skill history it names."));
+            }
+            let prev = if number > 1 {
+                rows(conn, "SELECT status FROM skill_catalog_revisions WHERE skill_id = ?1 AND revision = ?2", &[subject.clone().into(), (number - 1).into()])?
+                    .first()
+                    .and_then(|r| text(get(r, "status")))
+            } else {
+                None
+            };
+            let status = text(get(row, "status")).unwrap_or_default();
+            let fits = match action.as_str() {
+                "create_custom_skill" => subject.starts_with("custom.") && status == "active",
+                "edit_custom_skill" => status == "active" && prev.as_deref() == Some("active"),
+                "retire_skill" => status == "retired",
+                _ => status == "active" && prev.as_deref() == Some("retired"),
+            };
+            if !fits {
+                return Err(format!("Operation {id} names a skill change of a different kind."));
+            }
+        } else if OBSERVATION_HISTORY_ACTIONS.contains(&action.as_str()) {
+            if !present {
+                return Err(format!("Operation {id} is a live record of an observation that is not here."));
+            }
+            let row = rows(
+                conn,
+                "SELECT change_kind, operation_id FROM skill_observation_revisions WHERE observation_id = ?1 AND revision = ?2",
+                &[subject.clone().into(), number.into()],
+            )?;
+            let Some(row) = row.first().filter(|r| text(get(r, "operation_id")).as_deref() == Some(id.as_str())) else {
+                return Err(format!("Operation {id} does not own the observation history it names."));
+            };
+            let kind = text(get(row, "change_kind")).unwrap_or_default();
+            let fits = match action.as_str() {
+                "create_observation" => kind == "created",
+                "edit_observation" => kind == "edited",
+                "link_action" => kind == "linked_action",
+                "unlink_action" => kind == "unlinked_action",
+                _ => kind == "marked_addressed" || kind == "cleared_addressed",
+            };
+            if !fits {
+                return Err(format!("Operation {id} names an observation change of a different kind."));
+            }
+        } else if ASSESSMENT_ACTIONS.contains(&action.as_str()) {
+            let kind = if action == "set_status" { "status" } else { "confidence" };
+            let row = rows(
+                conn,
+                "SELECT id, operation_id FROM skill_self_assessments WHERE skill_id = ?1 AND kind = ?2 AND sequence = ?3",
+                &[subject.clone().into(), kind.to_string().into(), number.into()],
+            )?;
+            let owned = row
+                .first()
+                .map(|r| text(get(r, "operation_id")).as_deref() == Some(id.as_str()) && text(get(r, "id")).as_deref() == Some(id.as_str()));
+            if owned != Some(true) {
+                return Err(format!("Operation {id} does not own the self-assessment it names."));
+            }
+        } else {
+            if present {
+                return Err(format!("Operation {id} says it erased an observation that is still here."));
+            }
+            if count(
+                conn,
+                "SELECT COUNT(*) FROM skill_evidence_operations WHERE subject_id = ?1 AND is_erased = 0 AND action <> 'erase_observation'",
+                &[subject.clone().into()],
+            )? > 0
+            {
+                return Err(format!("Operation {id} erased an observation whose earlier records were not cleared."));
+            }
         }
     }
     Ok(())

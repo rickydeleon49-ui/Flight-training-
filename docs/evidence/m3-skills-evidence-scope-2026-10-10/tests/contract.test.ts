@@ -33,7 +33,11 @@ const engines: EngineName[] = ["node:sqlite", "sql.js"];
 describe("shared schema-14 validation contract", () => {
   it("covers every invariant category, with controls", () => {
     expect(new Set(VALIDATION.cases.map((c) => c.category))).toEqual(
-      new Set(["control", "schema", "schema-check", "schema-fk", "schema-key", "schema-index", "schema-trigger", "catalog", "history", "relationships", "receipts"]),
+      new Set([
+        "control", "schema", "schema-check", "schema-fk", "schema-key", "schema-index", "schema-trigger", "catalog", "history", "relationships", "receipts",
+        // M3-R5 / M3-R6 corrections.
+        "receipt-shape", "receipt-ownership", "catalog-pinned", "catalog-names",
+      ]),
     );
   });
 

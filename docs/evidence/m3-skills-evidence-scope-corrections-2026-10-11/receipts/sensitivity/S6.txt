@@ -1,0 +1,59 @@
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts -t node:sqlite gives the listed outcome for every case --reporter=verbose
+# cwd: <scratch copy>
+# variant: S6 (original) restore: the validator stops checking append-only triggers
+# file: prototype/skillEvidenceValidation.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sens-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > covers every invariant category, with controls
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > node:sqlite gives the listed outcome for every case 468ms
+   → expected [ …(72) ] to deeply equal [ …(72) ]
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > sql.js gives the listed outcome for every case
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared constraint contract > node:sqlite accepts and refuses exactly the listed statements
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared constraint contract > sql.js accepts and refuses exactly the listed statements
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  00:34:51
+   Duration  663ms (transform 92ms, setup 0ms, import 112ms, tests 468ms, environment 0ms)
+
+(node:54609) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts > shared schema-14 validation contract > node:sqlite gives the listed outcome for every case
+AssertionError: expected [ …(72) ] to deeply equal [ …(72) ]
+
+- Expected
++ Received
+
+@@ -11,12 +11,12 @@
+    "deleting a debrief would cascade-delete its evidence: refuse",
+    "retiring is replaced by cascade-deleting a skill: refuse",
+    "self-assessment sequence uniqueness removed: refuse",
+    "page index missing: refuse",
+    "page index on the wrong columns: refuse",
+-   "append-only trigger missing: refuse",
+-   "append-only trigger weakened: refuse",
++   "append-only trigger missing: accept",
++   "append-only trigger weakened: accept",
+    "unknown built-in skill id: refuse",
+    "built-in renamed without a history entry: refuse",
+    "observation history gap: refuse",
+    "current wording differs from its latest history entry: refuse",
+    "addressed state not recorded in history: refuse",
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts:65:24
+     63|         }
+     64|       }
+     65|       expect(outcomes).toEqual(VALIDATION.cases.map((c) => `${c.name}:…
+       |                        ^
+     66|     });
+     67|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1
+# restored-sha-matches=True

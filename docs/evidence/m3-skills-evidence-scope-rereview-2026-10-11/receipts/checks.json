@@ -1,0 +1,72 @@
+{
+  "node": "/opt/homebrew/opt/node@22/bin/node",
+  "native_env": {
+    "PATH": "/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin",
+    "CARGO_TARGET_DIR": "/tmp/hfd-m3-rereview-native-target"
+  },
+  "checks": [
+    {
+      "receipt": "m3-rereview-baseline.log",
+      "command": "node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts",
+      "exit": 0,
+      "result": "162 passed / 2 skipped",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-tsc.log",
+      "command": "node node_modules/typescript/bin/tsc --noEmit -p docs/evidence/m3-skills-evidence-scope-2026-10-10/tsconfig.json",
+      "exit": 0,
+      "result": "strict typecheck clean",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-native.log",
+      "command": "cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml",
+      "exit": 0,
+      "result": "7 passed",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-original-diagnostics.log",
+      "command": "node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-ui-diagnostics.test.tsx",
+      "exit": 1,
+      "result": "18 passed / 3 failed",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-old-native-diagnostics.log",
+      "command": "cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test review_diagnostics",
+      "exit": 0,
+      "result": "5 passed",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-valid-erase.log",
+      "command": "node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics-valid-erase.test.ts -t M3-R2a",
+      "exit": 0,
+      "result": "1 passed / 18 filtered skips",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-valid-erase-frozen.log",
+      "command": "node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics-valid-erase.test.ts -t M3-R2a",
+      "exit": 1,
+      "result": "1 failed / 18 filtered skips",
+      "cwd": "/tmp/hfd-m3-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-new-diagnostics.log",
+      "command": "node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx",
+      "exit": 1,
+      "result": "6 failed / 1 control passed",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    },
+    {
+      "receipt": "m3-rereview-new-native.log",
+      "command": "cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test rereview_diagnostics",
+      "exit": 101,
+      "result": "1 failed / 1 control passed",
+      "cwd": "/tmp/hfd-m3-corrections-independent-review"
+    }
+  ]
+}

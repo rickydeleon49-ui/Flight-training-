@@ -1,0 +1,64 @@
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts -t \[M3-R1a\] an acknowledged save keeps its draft identity while its refresh is held --reporter=verbose
+# cwd: <scratch copy>
+# variant: C1 (M3-R1) an acknowledged save forgets its draft identity
+# file: prototype/evidenceController.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sens-copy
+
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1a] an acknowledged save keeps its draft identity while its refresh is held: a repeat submit writes nothing 78ms
+   → expected { kind: 'saved', …(2) } to deeply equal { kind: 'saved', …(2) }
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1a] only an explicit new draft starts a fresh observation under the same key
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1b] a late A acknowledgment cannot clear B's saving lock, announce on B, or refresh B
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1b] a late A refusal cannot put an error or unlock on B
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1b] A -> B -> A: A's late save lands on A again and announces there, never on B
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1b] two draft keys on one skill keep the lock until both settle
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1] the same submit fired twice in one event turn joins one request
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1] a failed refresh after an acknowledged save stays 'saved'; recovery only reads
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 paging locks > [M3-R1c] a refresh that supersedes a held older page releases its lock; Show older works again
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 paging locks > [M3-R1c] a save's refresh also releases the older-page lock
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2a] a changed draft after an unknown outcome and an erase cannot recreate the erased save
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2a] the same content after an unknown outcome and an erase is refused as ERASED by the store
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2b] empty history is not proof: a still-pending original is fenced by replay, so there is one observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2] a held pending commit: a changed submit waits for it, then reports the earlier save without a second create
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2] a failed reconciliation keeps the draft and the original request; nothing is sent
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2] an earlier save is never reported as saving the new words; the explicit edit replaces them
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2] an ordinary validation refusal writes nothing and lets the next submission go out under new ids
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2] an id clash is an intelligible refusal with an explicit way forward
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R2 uncertain saves > [M3-R2] Try again with the same content replays the exact original request
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  00:34:53
+   Duration  390ms (transform 174ms, setup 0ms, import 228ms, tests 79ms, environment 0ms)
+
+(node:54618) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts > M3-R1 write ownership > [M3-R1a] an acknowledged save keeps its draft identity while its refresh is held: a repeat submit writes nothing
+AssertionError: expected { kind: 'saved', …(2) } to deeply equal { kind: 'saved', …(2) }
+
+- Expected
++ Received
+
+  {
+    "kind": "saved",
+-   "observationId": "00000000-0000-4000-8000-000000000004",
++   "observationId": "00000000-0000-4000-8000-000000000006",
+    "revision": 1,
+  }
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts:63:15
+     61|     const [a, b] = await Promise.all([first, second]);
+     62|     expect(a).toMatchObject({ kind: "saved", revision: 1 });
+     63|     expect(b).toEqual(a);
+       |               ^
+     64|     expect(write).toHaveBeenCalledTimes(1);
+     65|     expect(observations(x.engine)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1
+# restored-sha-matches=True

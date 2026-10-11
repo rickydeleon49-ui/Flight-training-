@@ -26,8 +26,13 @@ export const LIMITS = {
   /** History page size: default 20, at most 50. */
   pageDefault: 20,
   pageMax: 50,
-  /** Revisions returned with one observation's history. */
-  revisionsMax: 100,
+  /**
+   * Observation history page size: default 20, at most 100 per page. This is
+   * a page bound, not a lifetime visibility limit: every stored revision is
+   * reachable by following the history cursor.
+   */
+  revisionPageDefault: 20,
+  revisionPageMax: 100,
   /** Observations recorded against one debrief. */
   observationsPerDebrief: 50,
 } as const;
@@ -113,6 +118,8 @@ export type SkillEvidenceErrorCode =
   | "STALE_REVISION"
   | "OPERATION_CONFLICT"
   | "ERASED"
+  /** A history page cursor whose list changed underneath it (an edit crossed it); restart from the newest. */
+  | "STALE_CURSOR"
   | "STORAGE_FAILURE";
 
 export class SkillEvidenceError extends Error {
@@ -131,7 +138,11 @@ export interface EvidencePageInput {
   skillId?: string | null;
   journalId?: string | null;
   attribution?: Attribution | null;
-  /** Opaque cursor from the previous page, or null for the first page. */
+  /**
+   * Opaque cursor from the previous page, or null for the first page. It is
+   * bound to the filters above and to a change fence; reusing it with other
+   * filters is INVALID_ARGUMENT, and after an edit that crossed it, STALE_CURSOR.
+   */
   cursor?: string | null;
   limit?: number;
 }
@@ -190,6 +201,24 @@ export interface SkillSummary {
   lastObservedOn: string | null;
   /** "none": no observations; "limited": fewer than 3 or from one debrief; "recorded": otherwise. */
   evidence: "none" | "limited" | "recorded";
+}
+
+export interface ObservationHistoryInput {
+  observationId: string;
+  /** Opaque cursor from the previous history page, bound to this observation. */
+  cursor?: string | null;
+  /** 1-100, default 20. */
+  limit?: number;
+}
+
+export interface ObservationHistoryPage {
+  observationId: string;
+  /** The observation's current revision when this page was read. */
+  currentRevision: number;
+  /** Newest first. */
+  items: ObservationRevision[];
+  /** Older revisions remain; null when revision 1 is on this page. */
+  nextCursor: string | null;
 }
 
 export interface ObservationRevision {

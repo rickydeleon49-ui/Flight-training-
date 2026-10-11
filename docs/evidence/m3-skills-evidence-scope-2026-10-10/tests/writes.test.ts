@@ -127,7 +127,7 @@ describe.each(engines)("edits and history (%s)", (name) => {
       action: "edit_observation", operationId: uuid(), observationId: request.observationId, expectedRevision: 1,
       wording: "Flare started too high, about ten feet.", observedOn: "2026-10-02", attribution: "instructor_transcribed", instructorName: "Synthetic CFI",
     }, { now: c.now });
-    const history = await store.history(request.observationId);
+    const { items: history } = await store.history({ observationId: request.observationId });
     expect(history.map((h) => [h.revision, h.changeKind, h.wording, h.observedOn, h.attribution, h.instructorName])).toEqual([
       [2, "edited", "Flare started too high, about ten feet.", "2026-10-02", "instructor_transcribed", "Synthetic CFI"],
       [1, "created", "I flared too high.", "2026-10-01", "self_report", ""],
@@ -277,7 +277,7 @@ describe.each(engines)("follow-up actions (%s)", (name) => {
     await store.act(mark);
     expect((await store.act(mark)).status).toBe("replayed");
     expect(engine.query("SELECT * FROM next_actions WHERE id = ?", [actionId])).toEqual(actionBefore);
-    expect((await store.history(request.observationId)).map((h) => h.changeKind)).toEqual(["marked_addressed", "linked_action", "created"]);
+    expect((await store.history({ observationId: request.observationId })).items.map((h) => h.changeKind)).toEqual(["marked_addressed", "linked_action", "created"]);
     await expectCode(store.act({ ...mark, operationId: uuid(), expectedRevision: 3 }), "INVALID_ARGUMENT");
   });
 
