@@ -1,0 +1,115 @@
+*.sql text eol=lf
+# Keep the executable hashbang and upstream license bytes stable on Windows.
+scripts/mac-readiness-preflight.mjs text eol=lf
+public/THIRD_PARTY_NOTICES.txt text eol=lf
+.claude/hooks/*.sh text eol=lf
+# Preserve exact bytes of immutable Slice B execution receipts, including
+# trailing blank lines. Source and ordinary documentation checks stay enabled.
+docs/evidence/structured-study-import-slice-b-2026-10-04/gate/*.txt whitespace=-blank-at-eof
+docs/evidence/structured-study-import-slice-b-acceptance-2026-10-04/slice-b-rereview-focused-*.txt whitespace=-blank-at-eof
+
+# Preserve exact reviewed scope/evidence bytes, including raw tool output whitespace.
+docs/M2_SPLIT_LINEAGE_SCOPE_2026-10-08.md -whitespace
+docs/evidence/m2-split-lineage-implementation-2026-10-08/implementer-partial/tracked.diff -whitespace
+docs/evidence/m2-split-lineage-implementation-2026-10-08/receipts/final/05-build.txt -whitespace
+docs/evidence/m2-split-lineage-implementation-2026-10-08/receipts/sensitivity/S4-hash-nullness-tier-heuristic.txt -whitespace
+docs/evidence/m2-split-lineage-implementation-2026-10-08/receipts/sensitivity/S5-receipt-shape-allows-extra-provenance.txt -whitespace
+docs/evidence/m2-split-lineage-round2-review-2026-10-08/evidence/receipts/diag-frozen2-baseline.txt -whitespace
+docs/evidence/m2-split-lineage-round2-review-2026-10-08/evidence/receipts/review.txt -whitespace
+docs/evidence/m2-split-lineage-round3-review-2026-10-08/evidence/receipts/review.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/frozen2-importonly.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-1.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-10.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-11.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-12.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-2.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-3.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-4.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-5.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-6.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-7.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-8.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-9.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/review3-importonly.txt -whitespace
+docs/evidence/m2-split-lineage-round4-review-2026-10-08/evidence/receipts/review4.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/frozen2.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-1.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-10.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-11.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-12.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-13.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-14.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-2.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-3.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-4.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-5.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-6.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-7.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-8.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/mutations-rerun/mutations/mutant-9.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/review2.txt -whitespace
+docs/evidence/m2-split-lineage-round5-review-2026-10-08/evidence/receipts/review3.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round2-2026-10-08/receipts/diagnostics-baseline.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/diagnostics-baseline.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-1.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-2.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-3.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-4.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-5.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-6.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-7.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round3-2026-10-08/receipts/mutations/mutant-8.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/diagnostics-baseline.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/diagnostics-round2-superseded.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-1.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-10.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-11.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-12.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-2.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-3.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-4.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-5.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-6.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-7.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-8.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round4-2026-10-08/receipts/mutations/mutant-9.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/diagnostics-baseline.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/diagnostics-frozen-round2.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/diagnostics-round2-reviewer.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/diagnostics-round3-reviewer.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-1.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-10.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-11.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-12.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-13.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-14.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-2.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-3.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-4.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-5.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-6.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-7.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-8.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations-run2/mutations/mutant-9.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-1.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-10.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-11.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-12.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-13.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-14.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-2.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-3.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-4.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-5.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-6.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-7.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-8.txt -whitespace
+docs/evidence/m2-split-lineage-scope-round5-2026-10-08/receipts/mutations/mutant-9.txt -whitespace
+docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/05-validator-native.txt -whitespace
+docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/10-npm-test-full.txt -whitespace
+docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/sensitivity/S4-hash-nullness-tier-heuristic.txt -whitespace
+docs/evidence/m2-split-lineage-source-review-2026-10-08/receipts/sensitivity/S5-receipt-shape-allows-extra-provenance.txt -whitespace
+# Preserve raw hdiutil mount receipts verbatim (its progress table pads with spaces).
+# Only these two evidence files are exempt; reports, code and scripts keep normal checks.
+docs/evidence/mac-schema13-preparation-corrections-2026-10-08/receipts/NEW-schema13-36a7b39-adhoc.dmg.attach.txt -whitespace
+docs/evidence/mac-schema13-preparation-corrections-2026-10-08/receipts/OLD-schema12-2a6a415-adhoc.dmg.attach.txt -whitespace

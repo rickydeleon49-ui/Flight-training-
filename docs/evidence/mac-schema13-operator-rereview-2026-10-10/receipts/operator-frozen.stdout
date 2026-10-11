@@ -1,0 +1,43 @@
+{
+  "source": "docs/evidence/mac-schema13-operator-corrections-2026-10-10/hfd-operator.sh",
+  "passed": 6,
+  "failed": 0,
+  "results": [
+    {
+      "name": "[control] an allowed fresh copy preserves the source",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: copied /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-e0w0xnwj/kit/profiles/source -> /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-e0w0xnwj/kit/profiles/control (source retained)\n"
+    },
+    {
+      "name": "[control] backup block succeeds and removes owner write",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: recorded original mode 700 in /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-e0w0xnwj/kit/evidence/backups-original-mode-20261011T050753Z.txt and removed write permission (now 500)\n"
+    },
+    {
+      "name": "[MACV-R7] unblock round-trips a path with Application Support spaces",
+      "pass": true,
+      "exit": 0,
+      "output": "OK: restored /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-e0w0xnwj/Application Support/com.herflightdeck.app/backups to recorded original mode 700\n"
+    },
+    {
+      "name": "[MACV-R7] account-inspection failure must refuse before copying",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: account inspection failed (/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-e0w0xnwj/tools/dseditgroup exited 2); fail-closed\n"
+    },
+    {
+      "name": "[MACV-R7] dot-dot operands cannot escape the profiles directory",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: source /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-e0w0xnwj/kit/profiles/../outside contains traversal components (..)\n"
+    },
+    {
+      "name": "[MACV-R7] a symlink destination parent cannot escape the policy root",
+      "pass": true,
+      "exit": 2,
+      "output": "REFUSED: destination parent /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/macv-operator-review-e0w0xnwj/kit/profiles/link is a symlink; symlink parents cannot escape the policy root\n"
+    }
+  ]
+}
