@@ -1,0 +1,153 @@
+TAP version 13
+# (node:80351) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: M4-DB-LC-1: Shipped schema 0001-0013 upgrade to candidate 0015 retains existing rows
+ok 1 - M4-DB-LC-1: Shipped schema 0001-0013 upgrade to candidate 0015 retains existing rows
+  ---
+  duration_ms: 39.79975
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-2: Close and reopen verifies durable persistence across connections
+ok 2 - M4-DB-LC-2: Close and reopen verifies durable persistence across connections
+  ---
+  duration_ms: 39.191667
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-3: Content replacement A/50 -> B/10 marks old bookmarks unverified and creates mixed generations
+ok 3 - M4-DB-LC-3: Content replacement A/50 -> B/10 marks old bookmarks unverified and creates mixed generations
+  ---
+  duration_ms: 32.622833
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-4: Bounded revalidation: same hash cannot verify an out-of-bounds bookmark
+ok 4 - M4-DB-LC-4: Bounded revalidation: same hash cannot verify an out-of-bounds bookmark
+  ---
+  duration_ms: 31.444084
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-5: Multi-table transaction rollback restores state on failure
+ok 5 - M4-DB-LC-5: Multi-table transaction rollback restores state on failure
+  ---
+  duration_ms: 30.59775
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-6: ON DELETE CASCADE cleans up all dependent navigation rows
+ok 6 - M4-DB-LC-6: ON DELETE CASCADE cleans up all dependent navigation rows
+  ---
+  duration_ms: 32.308416
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-7: Disposable backup and restore preserves authoritative rows and triggers revalidation on drift
+ok 7 - M4-DB-LC-7: Disposable backup and restore preserves authoritative rows and triggers revalidation on drift
+  ---
+  duration_ms: 35.945834
+  type: 'test'
+  ...
+# Warning: Please use the `legacy` build in Node.js environments.
+# Subtest: M4-P1: Strict Safe Integer Page Validation & Clamping (R5)
+ok 8 - M4-P1: Strict Safe Integer Page Validation & Clamping (R5)
+  ---
+  duration_ms: 0.985375
+  type: 'test'
+  ...
+# Subtest: M4-P2: Provenance-Aware Reference Resolution & Bounded Label Maps (R5)
+ok 9 - M4-P2: Provenance-Aware Reference Resolution & Bounded Label Maps (R5)
+  ---
+  duration_ms: 0.314042
+  type: 'test'
+  ...
+# Subtest: M4-P3: Split-Lineage Coordinate Space & Navigation Safety (R5)
+ok 10 - M4-P3: Split-Lineage Coordinate Space & Navigation Safety (R5)
+  ---
+  duration_ms: 0.225458
+  type: 'test'
+  ...
+# Subtest: M4-P4: Content Drift Detection & Bounded Bookmark Revalidation (R6)
+ok 11 - M4-P4: Content Drift Detection & Bounded Bookmark Revalidation (R6)
+  ---
+  duration_ms: 0.182666
+  type: 'test'
+  ...
+# Subtest: M4-P5: Native Jump Fallback Messaging (R5)
+ok 12 - M4-P5: Native Jump Fallback Messaging (R5)
+  ---
+  duration_ms: 0.12125
+  type: 'test'
+  ...
+# Subtest: M4-P6: WebKit & Engine Boundary Audit with Primary Sources (R8)
+ok 13 - M4-P6: WebKit & Engine Boundary Audit with Primary Sources (R8)
+  ---
+  duration_ms: 0.042958
+  type: 'test'
+  ...
+# Subtest: M4-P7: Evaluated Real PDF Parser Demonstration (pdfjs-dist 6.3.289) (R8)
+not ok 14 - M4-P7: Evaluated Real PDF Parser Demonstration (pdfjs-dist 6.3.289) (R8)
+  ---
+  duration_ms: 39.085791
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/submitted/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/proof/proof.test.mjs:201:1'
+  failureType: 'unhandledRejection'
+  error: 'Promise.try is not a function'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    #onMessage (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/build/pdf.mjs:8844:18)
+    file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/build/pdf.mjs:8723:18
+  ...
+# Subtest: M4-P8: Opener Lifecycle State Machine, Supersession & Injected Persistence (R7)
+ok 15 - M4-P8: Opener Lifecycle State Machine, Supersession & Injected Persistence (R7)
+  ---
+  duration_ms: 1.747208
+  type: 'test'
+  ...
+# Subtest: M4-P9: Replay of All 10 Historical Review Diagnostics Cases
+ok 16 - M4-P9: Replay of All 10 Historical Review Diagnostics Cases
+  ---
+  duration_ms: 0.529542
+  type: 'test'
+  ...
+# Subtest: M4-P10: Replay of All 13 Rereview Diagnostics Cases Against Corrected Models
+ok 17 - M4-P10: Replay of All 13 Rereview Diagnostics Cases Against Corrected Models
+  ---
+  duration_ms: 0.973958
+  type: 'test'
+  ...
+# Subtest: Mutant 1: Provenance guard sensitivity (numeric without provenance)
+ok 18 - Mutant 1: Provenance guard sensitivity (numeric without provenance)
+  ---
+  duration_ms: 0.558333
+  type: 'test'
+  ...
+# Subtest: Mutant 2: Bounded revalidation guard sensitivity (page > totalPages)
+ok 19 - Mutant 2: Bounded revalidation guard sensitivity (page > totalPages)
+  ---
+  duration_ms: 0.087417
+  type: 'test'
+  ...
+# Subtest: Mutant 3: Intent advancement guard sensitivity (supersession on invalid request)
+ok 20 - Mutant 3: Intent advancement guard sensitivity (supersession on invalid request)
+  ---
+  duration_ms: 0.249791
+  type: 'test'
+  ...
+# Subtest: Mutant 4: Safe integer validation sensitivity (fractions & unsafe integers)
+ok 21 - Mutant 4: Safe integer validation sensitivity (fractions & unsafe integers)
+  ---
+  duration_ms: 0.081583
+  type: 'test'
+  ...
+# Subtest: Mutant 5: Deleted root guard sensitivity
+ok 22 - Mutant 5: Deleted root guard sensitivity
+  ---
+  duration_ms: 0.180333
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 21
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 328.0345

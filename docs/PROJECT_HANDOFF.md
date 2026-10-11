@@ -1,3 +1,11 @@
+## M4 integrated preparation re-review — 11 October 2026
+
+**CORRECTIONS REQUIRED: M4-R9–R12.** Retain the original behavior fixes and genuine PDF.js/file-backed SQLite demonstrations. Submitted22 tests pass on disclosed Node26; Node22 has a preserved scratch PDF.js Promise.try failure. Earlier current-source diagnostics10 pass; previous adapted cases14 pass/1 historical scanner failure legitimately superseded by real parser proof. New integration diagnostics14 failures/2 controls cover incomplete destinations, non-atomic identity/navigation validity and obsolete durable-save commits.
+
+- [Independent integration re-review](M4_DOCUMENT_NAVIGATION_INTEGRATION_REREVIEW_2026-10-11.md).
+- [One active model-neutral integrated correction assignment](M4_DOCUMENT_NAVIGATION_INTEGRATION_CORRECTIONS_PROMPT_2026-10-11.md).
+- 32 current submitted paths frozen;28 current,40 previous and29 first-review checksums verify; original receipts/manifest6/6 archived exactly. Review snapshots are not M4 production acceptance. OD-1–OD-10 proposed; candidate unregistered. M3's production approval remains active; primary/M3 dirty worktrees untouched. G1–G3 deferred/unexecuted/unverified.
+
 ## M4 corrected preparation independent re-review — 11 October 2026
 
 **CORRECTIONS REQUIRED: M4-R5–R8.** The original ten diagnostics now pass against current source (frozen test bytes unchanged); submitted proof/SQLite tests 15 passed and Python probe3 checks passed. Independent new diagnostics reproduce13 failures with2 valid controls. Remaining work: complete numeric provenance/range validation, persisted replacement/restore proof, opener intent/save ownership, and truthful parser/artifact evidence plus conditional handoff.

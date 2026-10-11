@@ -1,0 +1,7 @@
+{
+  "submitted_paths_reverified": 32,
+  "subject_production_and_tracking_diff": "empty",
+  "no_subject_writes": true,
+  "primary_and_m3_worktrees": "untouched by reviewer",
+  "candidate": "unchanged/unregistered; no physical installed test or provider call"
+}

@@ -1,0 +1,374 @@
+TAP version 13
+# (node:82296) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [control] bounded physical reference and complete nested translation work
+ok 1 - [control] bounded physical reference and complete nested translation work
+  ---
+  duration_ms: 0.8175
+  type: 'test'
+  ...
+# Subtest: [control] newer missing-path intent still blocks obsolete opener
+ok 2 - [control] newer missing-path intent still blocks obsolete opener
+  ---
+  duration_ms: 0.2195
+  type: 'test'
+  ...
+# Subtest: [M4-R9] unknown and invalid totals cannot resolve physical destinations
+not ok 3 - [M4-R9] unknown and invalid totals cannot resolve physical destinations
+  ---
+  duration_ms: 0.556292
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:27:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    undefined
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:28:72)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R9] label maps without bounds cannot resolve a verified destination
+not ok 4 - [M4-R9] label maps without bounds cannot resolve a verified destination
+  ---
+  duration_ms: 0.135667
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:30:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:31:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R9] genuine first-level nullable parent metadata permits root navigation
+not ok 5 - [M4-R9] genuine first-level nullable parent metadata permits root navigation
+  ---
+  duration_ms: 0.077583
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:33:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:35:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R9] live root translation requires complete range metadata
+not ok 6 - [M4-R9] live root translation requires complete range metadata
+  ---
+  duration_ms: 0.063833
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:37:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:38:53)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R9] reverse translation cannot succeed without destination identity
+not ok 7 - [M4-R9] reverse translation cannot succeed without destination identity
+  ---
+  duration_ms: 0.117333
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:41:50)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R9] translated arithmetic must remain a safe integer
+not ok 8 - [M4-R9] translated arithmetic must remain a safe integer
+  ---
+  duration_ms: 0.055917
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:43:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:45:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] persisted bookmark cannot default verified outside active bounds
+not ok 9 - [M4-R10] persisted bookmark cannot default verified outside active bounds
+  ---
+  duration_ms: 11.973084
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:47:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    'verified'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'verified'
+  actual: 'verified'
+  operator: 'notStrictEqual'
+  stack: |-
+    file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:49:9
+    withDb (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:16:152)
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:47:86)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] identity replacement atomically invalidates bookmark and reading state
+not ok 10 - [M4-R10] identity replacement atomically invalidates bookmark and reading state
+  ---
+  duration_ms: 7.907375
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:51:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    'verified'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'verified'
+  actual: 'verified'
+  operator: 'notStrictEqual'
+  stack: |-
+    file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:54:9
+    withDb (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:16:152)
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:51:92)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] reading state cannot be active outside persisted content bounds
+not ok 11 - [M4-R10] reading state cannot be active outside persisted content bounds
+  ---
+  duration_ms: 6.282375
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:57:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    'active'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'active'
+  actual: 'active'
+  operator: 'notStrictEqual'
+  stack: |-
+    file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:59:9
+    withDb (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:16:152)
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:57:85)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] unknown bounds cannot reverify a matching-hash bookmark
+not ok 12 - [M4-R10] unknown bounds cannot reverify a matching-hash bookmark
+  ---
+  duration_ms: 0.160917
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:61:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    'verified'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'verified'
+  actual: 'verified'
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:63:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R11] same material with different content cannot inherit prior requested page
+not ok 13 - [M4-R11] same material with different content cannot inherit prior requested page
+  ---
+  duration_ms: 0.233083
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:65:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    42 !== null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 42
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:68:9)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R11] held old save commits after newer save and must be fenced
+not ok 14 - [M4-R11] held old save commits after newer save and must be fenced
+  ---
+  duration_ms: 0.222084
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:71:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    42 !== 3
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 3
+  actual: 42
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:74:187)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R11] public progress accessor must not leak A after failed B
+not ok 15 - [M4-R11] public progress accessor must not leak A after failed B
+  ---
+  duration_ms: 0.657667
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:76:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    42 !== null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 42
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:78:55)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R11] opener refuses out-of-bounds destination before native invocation
+not ok 16 - [M4-R11] opener refuses out-of-bounds destination before native invocation
+  ---
+  duration_ms: 0.0735
+  type: 'test'
+  location: '/private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:80:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/hfd-m4-final-rereview/diagnostics.test.mjs:82:9)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 2
+# fail 14
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 125.89825

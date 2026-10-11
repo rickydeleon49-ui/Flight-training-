@@ -1,0 +1,92 @@
+{
+  "pack": "m4-document-navigation-scope-remaining-corrections-2026-10-11",
+  "issues": {
+    "M4-R5": {
+      "title": "Complete Destination Resolution & Coordinate Provenance",
+      "findings": [
+        "validatePageIndex accepted unsafe integer totals (MAX_SAFE_INTEGER + 1)",
+        "parsePageReference(42) inferred physical destination without coordinate provenance",
+        "parsePageReference('0', { provenance: 'physical_index' }) resolved page zero",
+        "translateSplitCoordinates concatenated string parent start ('21' + 3 = 211)",
+        "Parent range length mismatch (21-22 vs 16 pages) was accepted",
+        "Root destination exceeded known root page count (103 > 100)",
+        "Reverse root_to_child translation omitted child destination material ID"
+      ],
+      "fixes": [
+        "Enforced Number.isSafeInteger consistently across all page counts, requests, and lineage fields",
+        "Required explicit provenance for numeric references; numbers without provenance remain unresolved",
+        "Rejected physical page zero and non-positive safe integers",
+        "Enforced Number.isSafeInteger on parent and root range coordinates; prevented string concatenation",
+        "Validated parent and root range lengths match childPageCount",
+        "Validated root destinations against known sourceTotalPages",
+        "Included destination material ID in all directions, including root_to_child"
+      ],
+      "tests": [
+        "proof/proof.test.mjs (M4-P1, M4-P2, M4-P3, M4-P5, M4-P9, M4-P10)",
+        "proof/sensitivity.test.mjs (Mutant 1, Mutant 4, Mutant 5)"
+      ]
+    },
+    "M4-R6": {
+      "title": "Durable Navigation State, Revalidation & File-Backed Lifecycle",
+      "findings": [
+        "Matching hash alone re-verified out-of-bounds bookmark (page 42 in 10-page doc)",
+        "Previous SQLite tests were in-memory only without close/reopen, mixed generations, or rollback"
+      ],
+      "fixes": [
+        "Bounded revalidation: bookmarks exceeding document totalPages cannot become verified",
+        "Built DocumentPersistenceProtocol for file-backed SQLite lifecycle",
+        "Tested close and reopen across database connections",
+        "Tested content replacement A/50 -> B/10 with mixed bookmark generations",
+        "Tested multi-table transaction rollback restoring previous state",
+        "Tested ON DELETE CASCADE cleanup",
+        "Tested backup and restore with disk drift revalidation"
+      ],
+      "tests": [
+        "proof/proof.test.mjs (M4-P4)",
+        "proof/databaseLifecycle.test.mjs (M4-DB-LC-1 through M4-DB-LC-7)",
+        "proof/sensitivity.test.mjs (Mutant 2)"
+      ]
+    },
+    "M4-R7": {
+      "title": "Opener Lifecycle State Machine, Supersession & Durable Persistence",
+      "findings": [
+        "Newer failed request (e.g. missing path) did not advance intent and failed to supersede older pending open",
+        "Failing material B leaked material A's requested page through global lastRequestedPage",
+        "Destination NaN was not pre-validated before calling opener",
+        "Injected persistence boundary was absent"
+      ],
+      "fixes": [
+        "Advanced intent generation ID at the very start of requestOpen before input validation",
+        "Cleared stale notice immediately on all paths",
+        "Scoped last requested progress by material ID",
+        "Pre-validated physical destinations (safe integer >= 1) before invoking opener",
+        "Added injectedPersistence parameter and called it upon opener resolution",
+        "Handled save errors with clear notice ('opened but position not saved') without replaying opener"
+      ],
+      "tests": [
+        "proof/proof.test.mjs (M4-P8, M4-P10)",
+        "proof/sensitivity.test.mjs (Mutant 3)"
+      ]
+    },
+    "M4-R8": {
+      "title": "Truthful Research, Real Parser Proof, and Conditional Handoff",
+      "findings": [
+        "Custom regex scanner could not detect page-tree corruption (/Count 99 with 50 leaves)",
+        "PDFium license attribution omitted redistribution conditions",
+        "Safari 16.4 was assumed macOS 13+ only, contradicting WebKit release notes"
+      ],
+      "fixes": [
+        "Replaced custom parser claim with real evaluated engine (pdfjs-dist 6.3.289) in scratch dependencies",
+        "Demonstrated real page tree resolution: PDF.js warned of invalid /Count 99 and resolved actual 50 pages",
+        "Demonstrated graceful rejection of malformed_sample.pdf (InvalidPDFException)",
+        "Inspected PDFium LICENSE: documented 3-clause BSD redistribution plus Apache-2.0 and third-party notices",
+        "Corrected Safari 16.4 facts: available on Big Sur and Monterey with WASM SIMD; system WKWebView runtime compatibility remains unverified without physical device testing",
+        "Synchronized conditional implementation prompt and evaluation report"
+      ],
+      "tests": [
+        "proof/realParserDemonstration.mjs",
+        "proof/proof.test.mjs (M4-P6, M4-P7)"
+      ]
+    }
+  }
+}

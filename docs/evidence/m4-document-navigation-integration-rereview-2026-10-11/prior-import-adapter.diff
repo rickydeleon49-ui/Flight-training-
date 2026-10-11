@@ -1,0 +1,24 @@
+--- prior-original.test.mjs
++++ prior-current.test.mjs
+@@ -1,9 +1,9 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+ import fs from 'node:fs';
+-import {validatePageIndex, parsePageReference, translateSplitCoordinates, reconcileBookmarksOnContentDrift} from './submitted/docs/evidence/m4-document-navigation-eval-2026-10-11/proof/contractModel.mjs';
+-import {OpenerController} from './submitted/docs/evidence/m4-document-navigation-eval-2026-10-11/proof/openerController.mjs';
+-import {StructuralPdfParser} from './submitted/docs/evidence/m4-document-navigation-eval-2026-10-11/proof/pdfParserDemonstration.mjs';
++import {validatePageIndex, parsePageReference, translateSplitCoordinates, reconcileBookmarksOnContentDrift} from './submitted/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/proof/contractModel.mjs';
++import {OpenerController} from './submitted/docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/proof/openerController.mjs';
++import {StructuralPdfParser} from '../m4-document-navigation-scope-rereview-2026-10-11/submitted/docs/evidence/m4-document-navigation-eval-2026-10-11/proof/pdfParserDemonstration.mjs';
+ const lineage={materialId:'child',rootMaterialId:'root',parentMaterialId:'parent',sourcePageStart:101,sourcePageEnd:116,sourceTotalPages:200,parentPageStart:21,parentPageEnd:36,parentTotalPages:50,childPageCount:16,nestedLevel:2};
+ const material={id:'A',title:'A',filePath:'a.pdf',totalPages:50,contentSha256:'a'.repeat(64)};
+ function held(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
+@@ -59,7 +59,7 @@
+  await c.requestOpen(material,3);assert.equal(writes,1);
+ });
+ test('[M4-R8] custom parser cannot establish page-tree consistency',()=>{
+- const b=fs.readFileSync(new URL('./submitted/docs/evidence/m4-document-navigation-eval-2026-10-11/fixtures/handbook_root_sample.pdf',import.meta.url));
++ const b=fs.readFileSync(new URL('../m4-document-navigation-scope-rereview-2026-10-11/submitted/docs/evidence/m4-document-navigation-eval-2026-10-11/fixtures/handbook_root_sample.pdf',import.meta.url));
+  // Same-width corruption keeps object offsets unchanged: 50 actual leaves, declared /Count 99.
+  const corrupted=Buffer.from(b.toString('latin1').replace('/Count 50','/Count 99'),'latin1');
+  const p=new StructuralPdfParser(corrupted);let refused=false;
