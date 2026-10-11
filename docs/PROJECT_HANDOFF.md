@@ -1,3 +1,9 @@
+## M3 production slice authorized — 11 October 2026
+
+**Owner-approved M3-D1–D9 as written.** The owner approved the implementation task after independent corrected-scope acceptance. [Decision record](M3_SKILLS_EVIDENCE_OWNER_APPROVAL_2026-10-11.md); [one active model-neutral production assignment](M3_SKILLS_EVIDENCE_PRODUCTION_START_PROMPT_2026-10-11.md). Both former conditional gates are satisfied; earlier PROPOSED/pending-approval entries remain historical.
+
+Implement one complete native/TypeScript/UI slice from current main in an isolated worktree, preserving the primary and preparation checkouts and parallel M4 work. Copy accepted fixtures, retain reviewed recovery contracts, and leave the implementation uncommitted/unpushed for independent review. No production code is implemented by this approval publication. G1–G3 remain deferred/unexecuted/unverified; M4, installed testing, signing and release are separate.
+
 ## M3 corrected scope/prototype accepted — 11 October 2026
 
 **Preparation ACCEPTED; production awaits owner approval of M3-D1–D9.** M3-R8–R10 closed: independent 192 prototype tests / 3 opt-in skips, strict typecheck, 8 native tests, 7 TS/UI + 2 native frozen diagnostics, all exit 0; 7 independently sampled decisive reversions caught. 190 submitted hashes / 57 latest and 60 current-scope checksums / 7 document hashes / 30 anchors verify. Earlier correction history remains preserved.
