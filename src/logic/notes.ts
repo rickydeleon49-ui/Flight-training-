@@ -5,7 +5,8 @@
  * blank and the text is often one line. These turn whatever she typed into
  * something a list, a search result, and an undo bar can all show.
  */
-import type { Note } from "@/domain/types";
+import type { IsoDate, Note } from "@/domain/types";
+import { formatLongDate, localDayOf } from "@/lib/dates";
 
 /** Shown when a note has no title and no text worth quoting. */
 export const UNTITLED_NOTE = "Untitled note";
@@ -51,4 +52,21 @@ export function searchNotes(notes: Note[], query: string): Note[] {
       note.title.toLowerCase().includes(trimmed) ||
       note.body.toLowerCase().includes(trimmed),
   );
+}
+
+/**
+ * The date line under a note, e.g. "Saturday, October 3 · edited Sunday, October 4".
+ *
+ * Notes store UTC timestamps, so both are read as the local day they fell on:
+ * a note written at 9 PM in California belongs to that evening, not to the
+ * next day in UTC. The "edited" part appears only when the local days differ.
+ * A timestamp that can't be read is left out rather than shown as a broken
+ * date; null means there is nothing to show.
+ */
+export function noteDateLine(note: Note, today: IsoDate): string | null {
+  const written = localDayOf(note.createdAt);
+  const changed = localDayOf(note.updatedAt);
+  if (!written) return changed ? `Edited ${formatLongDate(changed, today)}` : null;
+  if (!changed || changed === written) return formatLongDate(written, today);
+  return `${formatLongDate(written, today)} · edited ${formatLongDate(changed, today)}`;
 }
