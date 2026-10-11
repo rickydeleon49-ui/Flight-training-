@@ -1,0 +1,5 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": { "baseUrl": "../../..", "paths": { "@/*": ["./src/*"] }, "types": ["node"] },
+  "include": ["prototype", "tests", "vitest.config.ts", "../../../src/vite-env.d.ts"]
+}

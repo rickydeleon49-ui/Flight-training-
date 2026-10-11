@@ -1,0 +1,31 @@
+$ git rev-parse --abbrev-ref HEAD; git rev-parse HEAD origin/main; git log --oneline -1; git status --short; ls src-tauri/migrations; git diff --quiet origin/main -- src src-tauri package.json package-lock.json vite.config.ts tsconfig.json && echo 'production source/registry/dependencies identical to origin/main'; echo "registered migrations: $(grep -c '{ version: ' src/data/migrations.ts)"; grep -n 'CURRENT_SCHEMA_VERSION: i64' src-tauri/src/lib.rs; grep -rln '0014\|skills_evidence\|skill_observations' src src-tauri/src src-tauri/migrations src/data/migration-checksums.json || echo 'no candidate reference in production source'
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T06:43:26Z
+codex/m3-skills-evidence-scope
+48fa47d9d035b2636b72fd6692930d85f4992bb9
+48fa47d9d035b2636b72fd6692930d85f4992bb9
+48fa47d Continue roadmap with M3 skills evidence scope and prototype assignment (#132)
+ M ROADMAP.md
+ M STATUS.md
+ M docs/PROJECT_HANDOFF.md
+?? docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md
+?? docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md
+?? docs/evidence/m3-skills-evidence-scope-2026-10-10/
+0001_initial_schema.sql
+0002_profile_details.sql
+0003_personal_note.sql
+0004_app_metadata.sql
+0005_flight_log.sql
+0006_pilot_toolkit.sql
+0007_ai_study.sql
+0008_notes.sql
+0009_practice_tests.sql
+0010_debrief_links.sql
+0011_practice_sessions.sql
+0012_card_reviews.sql
+0013_split_source_lineage.sql
+production source/registry/dependencies identical to origin/main
+registered migrations: 13
+28:pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 13;
+no candidate reference in production source
+# exit=0

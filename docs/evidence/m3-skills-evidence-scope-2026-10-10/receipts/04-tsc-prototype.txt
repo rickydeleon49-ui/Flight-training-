@@ -1,0 +1,5 @@
+$ npx tsc --noEmit -p docs/evidence/m3-skills-evidence-scope-2026-10-10/tsconfig.json && echo tsc-ok
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T06:38:59Z
+tsc-ok
+# exit=0

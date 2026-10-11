@@ -1,0 +1,15 @@
+[package]
+name = "m3-skills-evidence-native"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "DISPOSABLE M3 prototype: candidate schema-14 constraints and semantic validator on the app's own rusqlite/bundled SQLite."
+
+# Standalone: not a member of the app's crate and never linked into it.
+[workspace]
+
+[dependencies]
+# Exactly the versions and SQLite build the app resolves (src-tauri/Cargo.lock:
+# rusqlite 0.32.1 + libsqlite3-sys 0.30.1 "bundled" via sqlx; serde_json 1.0.151).
+rusqlite = { version = "=0.32.1", features = ["backup", "bundled"] }
+serde_json = "=1.0.151"

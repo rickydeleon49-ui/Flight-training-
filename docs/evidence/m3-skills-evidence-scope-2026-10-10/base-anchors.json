@@ -1,0 +1,125 @@
+{
+  "base": "48fa47d9d035b2636b72fd6692930d85f4992bb9",
+  "files": {
+    "src/data/migrations.ts": {
+      "sha256": "42067adb029c0710a0b76143c8b5c456761fd612766afe0e4f39078498aa671b",
+      "equalsBase48fa47d": true
+    },
+    "src/data/migration-checksums.json": {
+      "sha256": "aeae3451229000628bcd4ddd32cff60fca155f9529a7501709cdf54c78109b3d",
+      "equalsBase48fa47d": true
+    },
+    "src/data/db.ts": {
+      "sha256": "078583f19d1f27260e73a391ad8d278811d243af9c2c41d81ead51cce1866a4d",
+      "equalsBase48fa47d": true
+    },
+    "src/data/connectionOwner.ts": {
+      "sha256": "f2a7d480b8acc0428dbb0043d6cffe396dc7dee197bc20cad9ddf2ad0f32f948",
+      "equalsBase48fa47d": true
+    },
+    "src/data/debriefTransaction.ts": {
+      "sha256": "6423cc14f9d88a1ba7bf7bc4c2e9d8fbd329179ec84a9211fbce912a560c65cc",
+      "equalsBase48fa47d": true
+    },
+    "src/data/practiceStateValidation.ts": {
+      "sha256": "a7fe66b998f47dce65c5da2bd01d263278717f41dbb3f84ae142efca0d56e9a2",
+      "equalsBase48fa47d": true
+    },
+    "src/data/testing/nodeSqliteDb.ts": {
+      "sha256": "157fb5be98f1d024d9c51c8dc1b9c8ff47d5dff6e8db256dd02a4608d8b12b2c",
+      "equalsBase48fa47d": true
+    },
+    "src/data/repositories/index.ts": {
+      "sha256": "50af32ca74b05f7f093823b5e44b3e4ecd86590ad8798ed4982abc87872eecc7",
+      "equalsBase48fa47d": true
+    },
+    "src/data/repositories/practiceSessionRepository.ts": {
+      "sha256": "a03ff3162d036fa29b7a3a9623a54c3a764a7f729719b23f3bc75d43c68f6b26",
+      "equalsBase48fa47d": true
+    },
+    "src/logic/cardIdentity.ts": {
+      "sha256": "3835c35c9e0857bfb017b2929eb5b1015438cffe7659bd5b2e1f35cd4969e18d",
+      "equalsBase48fa47d": true
+    },
+    "src/domain/types.ts": {
+      "sha256": "da9e9d64907274f3ad240917d891cc2e68cf5cbb50f3751c3ae5a2cbf9bf2e50",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/src/lib.rs": {
+      "sha256": "be26cc6f6b4e8fdf6d028834534150586ad005f7f6138e9bb841e3f28d7b78c6",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/src/backup.rs": {
+      "sha256": "3565ceff2ec3723026b5b110787f1ddebe0e9f901953af076898cbd3c144c7a3",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/Cargo.lock": {
+      "sha256": "3879a066bc51493f2d13958ad41dbcca9ac658cd2f509c60a2c160a6392f4277",
+      "equalsBase48fa47d": true
+    },
+    "package-lock.json": {
+      "sha256": "b9e294fdea62f3bb7dde79465adab7ac3ee0fcaa437753bf2b1a60fb502ac613",
+      "equalsBase48fa47d": true
+    },
+    "vite.config.ts": {
+      "sha256": "35abf47745973f2396fdcdd2f32eba4ac97827ea08455fbcd0c5cc0eff7257bd",
+      "equalsBase48fa47d": true
+    },
+    "tsconfig.json": {
+      "sha256": "8d456b4deae1d71bfa0b5f678b83b2ca03d6b50ded2d1f195d945f989d5d8e6f",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0001_initial_schema.sql": {
+      "sha256": "5fdd18155dd3276d1ba774d65995b0d6280bbc9be7f3703d8033801e0068e718",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0002_profile_details.sql": {
+      "sha256": "be29f442d881071e82a54fc75b92aab015f68d2b86b49c56999c8635c1ea184b",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0003_personal_note.sql": {
+      "sha256": "9d6915cd98fb8232b3fca5e720f4ac09f0380d0881bd88823f44232676a7f48f",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0004_app_metadata.sql": {
+      "sha256": "3ec0833f36eea7612dc3ce5aa576623676e6b9918ddb7421c346064afd8bdbe5",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0005_flight_log.sql": {
+      "sha256": "1f724ad96211107e5ba7c6fe412627e448d249697fe7245e7f3d44060ad0d24b",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0006_pilot_toolkit.sql": {
+      "sha256": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0007_ai_study.sql": {
+      "sha256": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0008_notes.sql": {
+      "sha256": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0009_practice_tests.sql": {
+      "sha256": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0010_debrief_links.sql": {
+      "sha256": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0011_practice_sessions.sql": {
+      "sha256": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0012_card_reviews.sql": {
+      "sha256": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e",
+      "equalsBase48fa47d": true
+    },
+    "src-tauri/migrations/0013_split_source_lineage.sql": {
+      "sha256": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106",
+      "equalsBase48fa47d": true
+    }
+  }
+}
