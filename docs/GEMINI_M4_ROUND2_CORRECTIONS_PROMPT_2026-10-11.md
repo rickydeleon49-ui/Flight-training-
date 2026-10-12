@@ -1,6 +1,6 @@
 # Gemini: M4 round-2 integration corrections R13–R22
 
-ACTIVE, 11 October 2026. Owner assignment: Gemini implements; Claude reviews while Codex is unavailable (see [reviewer switch](REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md)). This is a wrapper around the existing model-neutral assignment. It adds who does what and where the work currently stands. It changes no requirement.
+**Superseded** by [round 3](GEMINI_M4_ROUND3_CORRECTIONS_PROMPT_2026-10-11.md) after [review](M4_ROUND2_CORRECTIONS_REVIEW_2026-10-11.md). Originally ACTIVE, 11 October 2026. Owner assignment: Gemini implements; Claude reviews while Codex is unavailable (see [reviewer switch](REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md)). This is a wrapper around the existing model-neutral assignment. It adds who does what and where the work currently stands. It changes no requirement.
 
 ## Read first, in this order
 
