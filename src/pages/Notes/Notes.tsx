@@ -17,8 +17,8 @@ import {
   TrashIcon,
 } from "@/components/ui";
 import type { Note } from "@/domain/types";
-import { formatLongDate, todayIso } from "@/lib/dates";
-import { noteHeading, notePreview, searchNotes } from "@/logic/notes";
+import { todayIso } from "@/lib/dates";
+import { noteDateLine, noteHeading, notePreview, searchNotes } from "@/logic/notes";
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
 import { isText, useRememberedState } from "@/state/useRememberedState";
@@ -31,9 +31,6 @@ interface NoteDraft {
 }
 
 const EMPTY_DRAFT: NoteDraft = { title: "", body: "" };
-
-/** Notes carry a full timestamp; the day is the part worth reading. */
-const dayOf = (timestamp: string): string => timestamp.slice(0, 10);
 
 /**
  * Notes — the one screen that asks nothing before she writes.
@@ -237,8 +234,7 @@ function NoteRow({
   const { mutate } = useAppData();
   const heading = noteHeading(note);
   const preview = notePreview(note);
-  const written = dayOf(note.createdAt);
-  const changed = dayOf(note.updatedAt);
+  const dateLine = noteDateLine(note, today);
 
   return (
     <article className={`note-row${note.pinned ? " note-row--pinned" : ""}`}>
@@ -250,11 +246,7 @@ function NoteRow({
         {preview ? (
           <p className="note-row__body wrap-anywhere">{preview}</p>
         ) : null}
-        <p className="tiny dim">
-          {changed === written
-            ? formatLongDate(written, today)
-            : `${formatLongDate(written, today)} · edited ${formatLongDate(changed, today)}`}
-        </p>
+        {dateLine ? <p className="tiny dim">{dateLine}</p> : null}
       </div>
 
       <div className="note-row__tools">
