@@ -1,3 +1,5 @@
+**11 October reviewer switch:** Claude reviews while Codex is unavailable (rule 4); Gemini implements [M4 round-2 corrections](GEMINI_M4_ROUND2_CORRECTIONS_PROMPT_2026-10-11.md). #142 accepted, branch updated, check passed; #144 accepted as self-review and replaced by #146 on main. Owner confirmed Claude as the Git coordinator (merger) for now. [Review](REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md).
+
 ## Installed findings source fix accepted — 11 October 2026
 
 PR #143 merged as `b178066` after independent review and exact-head required CI. The practice-history timestamp fix passes 10 focused regressions; the old screen fails the three rendered cases with the observed malformed-date symptom. Restore sets aside only three post-export receipt keys and protects all other metadata/records/files. Original PR #142 snapshots retain their FAIL/diffs. Historical helper: 98/99 checks on Node22/26; the schema13-vs-live14 anchor already fails on base (85/86). One nonblocking valid `__proto__` metadata-key omission is assigned to the next helper task; it causes refusal, not a false PASS or data loss.
