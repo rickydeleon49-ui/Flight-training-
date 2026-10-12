@@ -1,3 +1,9 @@
+## Local workspace maintenance — 11 October 2026
+
+Primary main is clean and synchronized to `8a260c0` after preserving the unpublished October 10 preflight on a recovery branch and verified local bundle. Four retired C2/lineage checkouts are removed with source refs, useful receipts and the historical installer preserved. Gemini's active M4 and all other dirty/handoff checkouts are untouched. PR #142 is now merged; PR #143 and #146 fixes are merged. PR #148 remains the open M4 R23–R27 correction handoff, not an accepted production change. Older entries below describe their original snapshots.
+
+[Cleanup/current-state report](docs/LOCAL_WORKSPACE_REVIEW_AND_CLEANUP_2026-10-11.md). No installed/release gates are closed by this cleanup.
+
 ## Reviewer switch and open-PR review — 11 October 2026
 
 **Claude is temporary reviewer while Codex is unavailable (owner assignment); Gemini is assigned M4 round-2 corrections R13–R22.** #142 accepted independently; its branch is updated onto main and its check passed. #143 merged after an independent review; Claude's self-review missed the `__proto__` key edge case. #144 accepted as self-review and replaced by #146 on `bf5cf59` (3038 tests pass). The owner confirmed Claude as the single Git coordinator (merger) for now. [Review](docs/REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md) · [Gemini assignment](docs/GEMINI_M4_ROUND2_CORRECTIONS_PROMPT_2026-10-11.md).
