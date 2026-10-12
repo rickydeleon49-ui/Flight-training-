@@ -1,0 +1,15 @@
+$ npx vitest run src/lib/dates.test.ts src/pages/StudyLibrary/PracticeHistoryDates.test.ts
+# cwd: /Users/rickymac/code/Flight-training-pr142-fixes
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-pr142-fixes
+
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  16:51:55
+   Duration  877ms (transform 223ms, setup 0ms, import 351ms, tests 126ms, environment 341ms)
+
+(node:8663) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+# exit=0
