@@ -1,0 +1,719 @@
+$ /opt/homebrew/opt/node@22/bin/node /var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-pr143-review-55jddz3t/baseline-helper.mjs self-check
+# cwd: /Users/rickymac/code/Flight-training-pr142-fixes
+{
+  "schema": "hfd-mac-profile-snapshot-selfcheck/3",
+  "node": "v22.23.3",
+  "counts": {
+    "checks": 86,
+    "passed": 85,
+    "failed": 1
+  },
+  "inventory": {
+    "retainedTables": 33,
+    "schema13Tables": 2
+  },
+  "checks": [
+    {
+      "name": "ledger is the desktop _sqlx_migrations table at schema 12",
+      "pass": true,
+      "detail": {
+        "table": "_sqlx_migrations",
+        "maxVersion": 12,
+        "rows": 12
+      }
+    },
+    {
+      "name": "inventory is the shipped schema: 33 retained tables, none missing, no unexpected objects",
+      "pass": true,
+      "detail": {
+        "retained": 33,
+        "unexpected": []
+      }
+    },
+    {
+      "name": "operation-ledger tables are part of the retained inventory",
+      "pass": true
+    },
+    {
+      "name": "schema-13 tables are reported absent at schema 12",
+      "pass": true
+    },
+    {
+      "name": "baseline is populated with the completed attempt, responses, card state and card event",
+      "pass": true,
+      "detail": [
+        "practice_attempts=1",
+        "practice_responses=1",
+        "card_review_state=1",
+        "card_review_events=1"
+      ]
+    },
+    {
+      "name": "snapshot records a confirmed stopped app",
+      "pass": true
+    },
+    {
+      "name": "every declared key equals the real primary key in the shipped schema",
+      "pass": true,
+      "detail": {
+        "drift": []
+      }
+    },
+    {
+      "name": "digest: TEXT differing only after an embedded NUL changes its digest",
+      "pass": true,
+      "detail": {
+        "storedBefore": "6265666F7265006F6E65",
+        "storedAfter": "6265666F72650074776F"
+      }
+    },
+    {
+      "name": "digest: control: identical content digests identically regardless of insert order",
+      "pass": true
+    },
+    {
+      "name": "digest: each storage type hashes distinctly (NULL, INTEGER, REAL, TEXT, BLOB, empty TEXT)",
+      "pass": true,
+      "detail": [
+        "null/null:94668843",
+        "integer/integer:8c72fa8d",
+        "real/real:7af69a6f",
+        "text/text:8b003100",
+        "blob/blob:d5db923c",
+        "emptytext/text:45f07234"
+      ]
+    },
+    {
+      "name": "digest: full 64-bit INTEGERs and -0.0 vs 0.0 are distinguished",
+      "pass": true
+    },
+    {
+      "name": "digest: BLOB byte changes are detected",
+      "pass": true
+    },
+    {
+      "name": "digest: control separators inside a value cannot imitate another row/column layout",
+      "pass": true
+    },
+    {
+      "name": "digest: table identity is part of the frame (same rows in another table differ)",
+      "pass": true
+    },
+    {
+      "name": "digest: a table without a primary key is refused instead of hashed in arbitrary order",
+      "pass": true,
+      "detail": "REFUSED: table probe has no primary key — refusing an unordered digest"
+    },
+    {
+      "name": "digest: a declared key that is not the real primary key is refused",
+      "pass": true,
+      "detail": "REFUSED: probe: declared key [id,other] is not the real primary key [id]"
+    },
+    {
+      "name": "digest: digesting a table that does not exist is refused",
+      "pass": true,
+      "detail": "REFUSED: table nosuchtable has no columns (it does not exist)"
+    },
+    {
+      "name": "production classifier: only the documented no-match status is stopped",
+      "pass": true,
+      "detail": [
+        {
+          "expected": "stopped",
+          "got": "stopped"
+        },
+        {
+          "expected": "running",
+          "got": "running"
+        },
+        {
+          "expected": "running",
+          "got": "running"
+        },
+        {
+          "expected": "error",
+          "got": "error"
+        },
+        {
+          "expected": "error",
+          "got": "error"
+        },
+        {
+          "expected": "error",
+          "got": "error"
+        },
+        {
+          "expected": "unavailable",
+          "got": "unavailable"
+        },
+        {
+          "expected": "unavailable",
+          "got": "unavailable"
+        },
+        {
+          "expected": "malformed",
+          "got": "malformed"
+        },
+        {
+          "expected": "malformed",
+          "got": "malformed"
+        },
+        {
+          "expected": "malformed",
+          "got": "malformed"
+        },
+        {
+          "expected": "malformed",
+          "got": "malformed"
+        }
+      ]
+    },
+    {
+      "name": "production guard: a matched pid from real pgrep text refuses before any read",
+      "pass": true,
+      "detail": [
+        {
+          "expectedState": "running",
+          "gotState": "running",
+          "refused": true,
+          "message": "REFUSED: an app is still running (pid(s) 4242) — quit both apps and confirm before snapshotting",
+          "pass": true
+        },
+        {
+          "expectedState": "running",
+          "gotState": "running",
+          "refused": true,
+          "message": "REFUSED: an app is still running (pid(s) 4242 4343) — quit both apps and confirm before snapshotting",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "production guard: an unusable or unparseable inspection answer refuses fail closed, and only exit 1 permits",
+      "pass": true,
+      "detail": [
+        {
+          "expectedState": "stopped",
+          "gotState": "stopped",
+          "refused": false,
+          "message": "",
+          "pass": true
+        },
+        {
+          "expectedState": "error",
+          "gotState": "error",
+          "refused": true,
+          "message": "REFUSED: process inspection did not confirm a stopped app (error) — inability to inspect is not proof that nothing is running",
+          "pass": true
+        },
+        {
+          "expectedState": "error",
+          "gotState": "error",
+          "refused": true,
+          "message": "REFUSED: process inspection did not confirm a stopped app (error) — inability to inspect is not proof that nothing is running",
+          "pass": true
+        },
+        {
+          "expectedState": "unavailable",
+          "gotState": "unavailable",
+          "refused": true,
+          "message": "REFUSED: process inspection did not confirm a stopped app (unavailable) — inability to inspect is not proof that nothing is running",
+          "pass": true
+        },
+        {
+          "expectedState": "malformed",
+          "gotState": "malformed",
+          "refused": true,
+          "message": "REFUSED: process inspection did not confirm a stopped app (malformed) — inability to inspect is not proof that nothing is running",
+          "pass": true
+        },
+        {
+          "expectedState": "malformed",
+          "gotState": "malformed",
+          "refused": true,
+          "message": "REFUSED: process inspection did not confirm a stopped app (malformed) — inability to inspect is not proof that nothing is running",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "guard: inspection state \"running\" refuses the snapshot",
+      "pass": true,
+      "detail": "REFUSED: an app is still running (pid(s) 4321) — quit both apps and confirm before snapshotting"
+    },
+    {
+      "name": "guard: \"running\" refusal leaves the database bytes untouched and writes no receipt",
+      "pass": true
+    },
+    {
+      "name": "guard: inspection state \"error\" refuses the snapshot",
+      "pass": true,
+      "detail": "REFUSED: process inspection did not confirm a stopped app (error: bundle-path: inspection exited 2) — inability to inspect is not proof that nothing is running"
+    },
+    {
+      "name": "guard: \"error\" refusal leaves the database bytes untouched and writes no receipt",
+      "pass": true
+    },
+    {
+      "name": "guard: inspection state \"unavailable\" refuses the snapshot",
+      "pass": true,
+      "detail": "REFUSED: process inspection did not confirm a stopped app (unavailable) — inability to inspect is not proof that nothing is running"
+    },
+    {
+      "name": "guard: \"unavailable\" refusal leaves the database bytes untouched and writes no receipt",
+      "pass": true
+    },
+    {
+      "name": "guard: inspection state \"malformed\" refuses the snapshot",
+      "pass": true,
+      "detail": "REFUSED: process inspection did not confirm a stopped app (malformed) — inability to inspect is not proof that nothing is running"
+    },
+    {
+      "name": "guard: \"malformed\" refusal leaves the database bytes untouched and writes no receipt",
+      "pass": true
+    },
+    {
+      "name": "guard: a confirmed-stopped inspection permits the snapshot (control)",
+      "pass": true
+    },
+    {
+      "name": "guard: with the database unreadable a running-app refusal still comes from the guard (no open/copy attempted)",
+      "pass": true,
+      "detail": "REFUSED: an app is still running (pid(s) 4321) — quit both apps and confirm before snapshotting"
+    },
+    {
+      "name": "guard: refusal creates no WAL-copy scratch directory",
+      "pass": true,
+      "detail": {
+        "baselineLeaks": 0,
+        "leakedWhileUnreadable": 0
+      }
+    },
+    {
+      "name": "copy: a failed WAL copy refuses and removes its scratch directory",
+      "pass": true,
+      "detail": {
+        "message": "REFUSED: the library could not be copied for a quiescent read (EACCES: permission denied, open '<scratch>/wal/com.herflightdeck.app/her-flight-deck.db-wal') — nothing was read from it and the scratch copy was removed",
+        "leaks": 0
+      }
+    },
+    {
+      "name": "wal: committed frames are read from a copy while the original main database bytes stay unchanged",
+      "pass": true,
+      "detail": {
+        "mode": "wal-copy-snapshot (12392 bytes of WAL read from a copy; originals re-hashed unchanged)",
+        "tags": 1
+      }
+    },
+    {
+      "name": "guard: a non-profile directory is refused",
+      "pass": true,
+      "detail": "REFUSED: internal test root <scratch>/not-a-profile is not a com.herflightdeck.app directory"
+    },
+    {
+      "name": "guard: a missing root is refused",
+      "pass": true,
+      "detail": "REFUSED: internal test root <scratch>/does-not-exist is not a com.herflightdeck.app directory"
+    },
+    {
+      "name": "guard: a symlinked profile root is refused by the production guard",
+      "pass": true,
+      "detail": "REFUSED: profile root <scratch>/symlink-root is a symlink — refusing to follow it"
+    },
+    {
+      "name": "guard: a mismatched owner uid is refused",
+      "pass": true,
+      "detail": "REFUSED: database is owned by uid 501, expected 999 — wrong user or wrong root"
+    },
+    {
+      "name": "guard: a symlinked managed document is refused",
+      "pass": true,
+      "detail": "REFUSED: managed file documents/evil.pdf is a symlink — refusing an aliased document"
+    },
+    {
+      "name": "output: --json cannot overwrite the input database (path/inode alias)",
+      "pass": true,
+      "detail": "REFUSED: snapshot output <scratch>/com.herflightdeck.app/her-flight-deck.db aliases protected input <scratch>/com.herflightdeck.app"
+    },
+    {
+      "name": "output: every input byte of the database is identical after the refusal",
+      "pass": true
+    },
+    {
+      "name": "output: --json inside the profile root is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot output <scratch>/com.herflightdeck.app/documents/report.json aliases protected input <scratch>/com.herflightdeck.app"
+    },
+    {
+      "name": "output: a relative --json path is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot output must be an absolute path, got report.json"
+    },
+    {
+      "name": "output: a hard link to the database is detected as an alias",
+      "pass": true,
+      "detail": "REFUSED: snapshot output <scratch>/db-hardlink is a hard link to protected input <scratch>/com.herflightdeck.app/her-flight-deck.db"
+    },
+    {
+      "name": "output: the alias test is self-cleaning, so the scratch database is single-linked again",
+      "pass": true,
+      "detail": {
+        "nlink": 1
+      }
+    },
+    {
+      "name": "output: a symlinked destination is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot output <scratch>/out-link.json is a symlink"
+    },
+    {
+      "name": "output: an existing destination is refused when freshness is required (CLI mode)",
+      "pass": true,
+      "detail": "REFUSED: snapshot output <scratch>/existing.json already exists; evidence is never clobbered — choose a fresh path"
+    },
+    {
+      "name": "output: the refused clobber attempt left the previous evidence intact",
+      "pass": true
+    },
+    {
+      "name": "operator: the CLI path refuses any root that is not the approved lane",
+      "pass": true,
+      "detail": "REFUSED: database is owned by uid 501, expected 502 — wrong user or wrong root"
+    },
+    {
+      "name": "operator: nothing on argv can retarget the approved uid",
+      "pass": true,
+      "detail": "REFUSED: snapshot: --expect-uid cannot retarget the approved lane; only uid 502 is allowed"
+    },
+    {
+      "name": "operator: parseArgs never produces an internal test context",
+      "pass": true,
+      "detail": [
+        "mode",
+        "expectUid",
+        "expectProfile",
+        "jsonOut",
+        "historyOnly",
+        "purpose",
+        "before",
+        "after"
+      ]
+    },
+    {
+      "name": "contract unchanged: two schema-12 captures pass without demanding schema-13 tables or version 13",
+      "pass": true,
+      "detail": {
+        "verdict": "PASS",
+        "ledger": 12
+      }
+    },
+    {
+      "name": "contract history: explicitly partial and never gate eligible, even when clean",
+      "pass": true,
+      "detail": {
+        "verdict": "PARTIAL",
+        "gateEligible": false
+      }
+    },
+    {
+      "name": "contract history: --history-only still resolves to the partial history contract",
+      "pass": true
+    },
+    {
+      "name": "contract upgrade: real 0013 keeps every retained table and document identical and shows both new tables + ledger 13",
+      "pass": true,
+      "detail": {
+        "verdict": "PASS",
+        "diffs": []
+      }
+    },
+    {
+      "name": "contract restore: a restored schema-12 library migrated to 13 passes with identical history and documents",
+      "pass": true,
+      "detail": {
+        "diffs": []
+      }
+    },
+    {
+      "name": "contract unchanged: a real migration is not \"nothing changed\" — it fails on the ledger and presence facts",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "ledger: ledger max version changed 12 -> 13",
+          "ledger: ledger recorded version list changed 1,2,3,4,5,6,7,8,9,10,11,12 -> 1,2,3,4,5,6,7,8,9,10,11,12,13",
+          "ledger: ledger rows changed",
+          "schema-13 table presence changed (material_split_lineage,split_operation_log absent -> none absent)",
+          "schema objects digest changed (before 6e9feb1908bb215c183b479001e8cbc90e6a5f5de4038536acb79ed237249adf after eb72c8615b6e43732cd4843eac834016928b7cc743a1f772f70c2528c6ea86de)",
+          "schema objects added: idx_split_lineage_parent,idx_split_lineage_root,idx_split_operation_source,idx_split_operation_status,material_split_lineage,split_operation_log"
+        ]
+      }
+    },
+    {
+      "name": "contract upgrade: a changed document fails even when every retained digest is identical",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "files: file bytes changed documents/one.pdf (9B -> 18B)"
+        ]
+      }
+    },
+    {
+      "name": "contract restore: a changed document fails even when every retained digest is identical",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "files: file bytes changed documents/one.pdf (9B -> 18B)"
+        ]
+      }
+    },
+    {
+      "name": "contract unchanged: a modified retained row is reported by name",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "practice_responses: before 1/00b9a6d9700ff6cc06d23bdcec587fe1da1604ea1ba2e795145365dc98f85095 after 1/2350e311971c89a3d785f875134a0ecccedea8811d8c6428a9fc95ea51618c04"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8 control: unchanged real schema13 profile passes",
+      "pass": true
+    },
+    {
+      "name": "MACV-R8: an added pending operation cannot pass unchanged",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "split_operation_log: before 0/6c737a49d40b7c3f132c2d8b026c993a86152091deff911ef1b29331ad81be70 after 1/293a620831e3567de4b5975561fa8ce0040bd0e27ed42f7a64a408a30f4dd5b1"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: updated operation status (pending -> completed) cannot pass unchanged",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "split_operation_log: before 1/293a620831e3567de4b5975561fa8ce0040bd0e27ed42f7a64a408a30f4dd5b1 after 1/378a06bfac27f2b2ca04249f90f4c4a71af21b7eb9f4e2f3137defeaa32ec80b"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: deleted operation row cannot pass unchanged",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "split_operation_log: before 1/293a620831e3567de4b5975561fa8ce0040bd0e27ed42f7a64a408a30f4dd5b1 after 0/6c737a49d40b7c3f132c2d8b026c993a86152091deff911ef1b29331ad81be70"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: prepopulated split_operation_log row fails upgrade (expected empty)",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "new schema-13 table split_operation_log has 1 rows, expected 0 for upgrade baseline"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: residual split_operation_log row fails restore (expected empty)",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "restored library has residual split_operation_log rows (1), expected 0"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: an added lineage row cannot pass unchanged",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "material_split_lineage: before 0/3af3178b8e471ed38944bf4c7beda47c842f770d3c3a9370d5578f945c13e1c6 after 1/01f431d0764cbcfe0ae4cd6bb8de062c3bbbf0562114e8858e0a09ba53f90730"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: residual material_split_lineage row fails restore (expected empty)",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "restored library has residual material_split_lineage rows (1), expected 0"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: changed schema objects (added index) cannot pass unchanged",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "schema objects digest changed (before eb72c8615b6e43732cd4843eac834016928b7cc743a1f772f70c2528c6ea86de after 998079a5d5dc021974e93d39a1ab61c82950c5a2864cf7fb35a65011fad1c6d1)",
+          "schema objects added: idx_review_schema_change"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: upgrade requires all indexes actually created by 0013",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "schema objects missing from migration 0013: idx_split_operation_status"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: restore requires all indexes actually created by 0013",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "restored library is missing required schema-13 objects: idx_split_operation_status"
+        ]
+      }
+    },
+    {
+      "name": "MACV-R8: altered index definition fails upgrade",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "schema object idx_split_operation_status definition does not match shipped migration 0013"
+        ]
+      }
+    },
+    {
+      "name": "contract upgrade: an empty library cannot certify populated-data retention",
+      "pass": true,
+      "detail": {
+        "diffs": [
+          "baseline has no practice_attempts, practice_responses, card_review_state, card_review_events rows — an empty library cannot prove populated-data retention",
+          "baseline has no managed document files"
+        ]
+      }
+    },
+    {
+      "name": "frozen compatibility: a schema-12 pair in the declared-subset form still reports the unchanged result the review asserts",
+      "pass": true
+    },
+    {
+      "name": "frozen compatibility: the restore purpose still detects the changed document in the subset form",
+      "pass": true
+    },
+    {
+      "name": "validation: a snapshot missing every retained table entry is refused, not passed",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — before: missing required table entry study_materials; before: missing required table entry tags; before: missing required table entry material_tags; before: missing required table entry practice_tests; before: missing required table entry practice_test_versions; before: missing required table entry practice_test_items; before: missing required table entry practice_attempts; before: missing required table entry practice_responses; before: missing required table entry card_review_generations; before: missing required table entry card_versions; before: missing required table entry card_items; before: missing required table entry card_review_state; before: missing required table entry card_review_events; before: missing required table entry practice_session_operations; before: missing required table entry card_review_operations; before: missing required table entry debrief_operations; before: missing required table entry settings; before: missing required table entry milestones; before: missing required table entry goals; before: missing required table entry goal_checklist_items; before: missing required table entry schedule_events; before: missing required table entry event_prep_items; before: missing required table entry event_materials; before: missing required table entry next_actions; before: missing required table entry journal_entries; before: missing required table entry journal_materials; before: missing required table entry questions; before: missing required table entry transactions; before: missing required table entry fund_goals; before: missing required table entry app_metadata; before: missing required table entry pilot_toolkit; before: missing required table entry ai_study_sets; before: missing required table entry notes; after: missing required table entry study_materials; after: missing required table entry tags; after: missing required table entry material_tags; after: missing required table entry practice_tests; after: missing required table entry practice_test_versions; after: missing required table entry practice_test_items; after: missing required table entry practice_attempts; after: missing required table entry practice_responses; after: missing required table entry card_review_generations; after: missing required table entry card_versions; after: missing required table entry card_items; after: missing required table entry card_review_state; after: missing required table entry card_review_events; after: missing required table entry practice_session_operations; after: missing required table entry card_review_operations; after: missing required table entry debrief_operations; after: missing required table entry settings; after: missing required table entry milestones; after: missing required table entry goals; after: missing required table entry goal_checklist_items; after: missing required table entry schedule_events; after: missing required table entry event_prep_items; after: missing required table entry event_materials; after: missing required table entry next_actions; after: missing required table entry journal_entries; after: missing required table entry journal_materials; after: missing required table entry questions; after: missing required table entry transactions; after: missing required table entry fund_goals; after: missing required table entry app_metadata; after: missing required table entry pilot_toolkit; after: missing required table entry ai_study_sets; after: missing required table entry notes"
+    },
+    {
+      "name": "validation: a missing required table in one snapshot is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — before: required table settings is absent"
+    },
+    {
+      "name": "validation: a malformed digest is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — before: tags.sha256 is not 64 lowercase hex digits"
+    },
+    {
+      "name": "validation: a snapshot with no recorded migration versions is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — before: ledger.versions is empty — a migrated library always records the versions it applied"
+    },
+    {
+      "name": "validation: an incomplete v2 inventory is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: inventory is incomplete (missing notes; unexpected none)"
+    },
+    {
+      "name": "validation: an unknown purpose is refused",
+      "pass": true,
+      "detail": "REFUSED: unknown purpose \"whatever\" (expected unchanged|upgrade|restore|history)"
+    },
+    {
+      "name": "output: compare --json cannot overwrite an input receipt",
+      "pass": true,
+      "detail": "REFUSED: compare output <scratch>/s12-initial.json aliases protected input <scratch>/s12-initial.json"
+    },
+    {
+      "name": "environment: real process inspection result is recorded (never assumed stopped)",
+      "pass": true,
+      "detail": {
+        "state": "stopped",
+        "controlled": false,
+        "probes": [
+          {
+            "label": "bundle-path",
+            "state": "stopped"
+          },
+          {
+            "label": "executable-name",
+            "state": "stopped"
+          }
+        ],
+        "pids": []
+      }
+    },
+    {
+      "name": "anchor: CURRENT_SCHEMA_VERSION in the shipped source still equals this helper's constant",
+      "pass": false,
+      "detail": {
+        "found": "14"
+      }
+    },
+    {
+      "name": "anchor: the recorded schema-13 object list equals what migration 0013 actually creates",
+      "pass": true,
+      "detail": {
+        "created": [
+          "idx_split_lineage_parent",
+          "idx_split_lineage_root",
+          "idx_split_operation_source",
+          "idx_split_operation_status",
+          "material_split_lineage",
+          "split_operation_log"
+        ],
+        "expected": [
+          "idx_split_lineage_parent",
+          "idx_split_lineage_root",
+          "idx_split_operation_source",
+          "idx_split_operation_status",
+          "material_split_lineage",
+          "split_operation_log"
+        ]
+      }
+    },
+    {
+      "name": "upgrade added exactly one ledger row (12 -> 13) with the earlier rows untouched",
+      "pass": true,
+      "detail": {
+        "versions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      }
+    },
+    {
+      "name": "scratch leak check: no WAL-copy scratch directory survived the run",
+      "pass": true,
+      "detail": {
+        "before": 0,
+        "after": 0
+      }
+    }
+  ],
+  "allPassed": false
+}
+
+(node:8802) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+# exit=1

@@ -1,3 +1,11 @@
+## Installed findings source fix accepted — 11 October 2026
+
+PR #143 merged as `b178066` after independent review and exact-head required CI. The practice-history timestamp fix passes 10 focused regressions; the old screen fails the three rendered cases with the observed malformed-date symptom. Restore sets aside only three post-export receipt keys and protects all other metadata/records/files. Original PR #142 snapshots retain their FAIL/diffs. Historical helper: 98/99 checks on Node22/26; the schema13-vs-live14 anchor already fails on base (85/86). One nonblocking valid `__proto__` metadata-key omission is assigned to the next helper task; it causes refusal, not a false PASS or data loss.
+
+[Independent review](docs/PR143_PRACTICE_DATE_RESTORE_REVIEW_2026-10-11.md) · [One source-only schema-14 verification preparation assignment](docs/MAC_SCHEMA14_VERIFICATION_PREPARATION_PROMPT_2026-10-11.md).
+
+PR #142's owner-authorized administrator-account synthetic schema12→13 results are separate installed evidence, still an open evidence PR. They do not cover the current M3 schema14 binary or close standard-account/mid-save/signing/release gates. No installed re-run is performed by this review. M4 remains separately in flight; protected dirty checkouts and prior evidence are preserved.
+
 ## M4 integration corrections re-reviewed (round 2) — 11 October 2026
 
 **CORRECTIONS REQUIRED: M4-R13–R22 (5 P1, 5 P2).** M3 production is integrated: PR #140 merged as `c32918b` with the required check passing for the published head, so accepted main now ships migration 0014. Retained and independently re-verified from this M4 round: count/malformed refusals, first-level nullable schema-13 lineage, direction-specific ranges, `ROOT_DELETED`/`PARENT_DELETED` guidance, single-transaction replacement with trigger-fault rollback, populated-before-DDL upgrade, file-backed reopen, real-file backup/drift/restore, cascade, content-scoped progress, pre-opener bounds refusal, `retrySave()` without opener replay, real disposable module-copy mutants, and the pinned scratch artifact audit (its recorded `pdf.mjs` digest equals the bytes that executed). The three suites pass identically on Node 22.23.3 and Node 26.10.0 (21/7/2, exit 0).
