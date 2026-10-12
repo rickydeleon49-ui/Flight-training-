@@ -1,0 +1,43 @@
+[
+  {
+    "file": "hfdbackup-schema13.hfdbackup",
+    "sha256": "8a14bbc50fcb5f6ae3c14d961bbc6463b6ea34dc1d3de446f182153596987627",
+    "zip_integrity_error": null,
+    "entries": [
+      "manifest.json",
+      "her-flight-deck.db",
+      "documents/2ad25f10-130b-4375-9d94-acd9d07e522d-Synthetic A sibling 1-5.pdf",
+      "documents/65ac22da-e611-41dc-8cf9-2e2b78afa195-Synthetic A pages 3-7.pdf",
+      "documents/67d106dc-6ff7-44f3-8f76-a07a13a2d6e9-Synthetic A sibling 6-10.pdf",
+      "documents/79347220-ca50-4c85-8ee4-49d44dff097f-synthetic-small-checklist.pdf",
+      "documents/79b28103-0744-4e8e-a3db-de1a7fc80e7a-Synthetic C2 41-60.pdf",
+      "documents/81db70d6-ea6b-466e-b52a-d57f64ce819f-Synthetic P 101-300.pdf",
+      "documents/96f8e531-b168-4ddc-81ec-f044ad4af784-Synthetic C1 20-40.pdf",
+      "documents/aecec8b2-fc28-49dd-bb35-a873804f2148-Synthetic retry 3-7.pdf",
+      "documents/b74cbb91-4398-447d-82a2-3cdeb36e2274-part-1-synthetic-long-manual - Part 1.pdf",
+      "documents/b74cbb91-4398-447d-82a2-3cdeb36e2274-part-2-synthetic-long-manual - Part 2.pdf",
+      "documents/ca90be52-ea48-41a2-aaa4-0e4fea59a956-synthetic-illustrated-charts.pdf",
+      "documents/f237854e-65b5-419d-bbe5-d27015e55400-part-1-synthetic-illustrated-charts - Part 1.pdf",
+      "documents/f237854e-65b5-419d-bbe5-d27015e55400-part-2-synthetic-illustrated-charts - Part 2.pdf",
+      "documents/fdaac269-4e46-46c2-a0b4-a5360755bbc6-synthetic-long-manual.pdf",
+      "integrity.json"
+    ],
+    "data_payload_files": 15,
+    "non_manifest_entries": 16
+  },
+  {
+    "file": "hfdbackup-schema12.hfdbackup",
+    "sha256": "6845044f4743b9a4031fd2a9170b76ff9e217bc8a801b8022ce3c143726b3155",
+    "zip_integrity_error": null,
+    "entries": [
+      "manifest.json",
+      "her-flight-deck.db",
+      "documents/79347220-ca50-4c85-8ee4-49d44dff097f-synthetic-small-checklist.pdf",
+      "documents/ca90be52-ea48-41a2-aaa4-0e4fea59a956-synthetic-illustrated-charts.pdf",
+      "documents/fdaac269-4e46-46c2-a0b4-a5360755bbc6-synthetic-long-manual.pdf",
+      "integrity.json"
+    ],
+    "data_payload_files": 4,
+    "non_manifest_entries": 5
+  }
+]

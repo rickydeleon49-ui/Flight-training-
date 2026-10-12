@@ -1,0 +1,119 @@
+{
+  "schema": "hfd-mac-profile-compare/3",
+  "purpose": "restore",
+  "contract": "a genuine schema-12 backup restored and migrated to schema-13",
+  "gateEligible": true,
+  "complete": true,
+  "before": "/private/tmp/flight-training-current-account-20261011/workspace/evidence/run-current-account-20261011/s12-populated.json",
+  "after": "/private/tmp/flight-training-current-account-20261011/workspace/evidence/run-current-account-20261011/s13-restored.json",
+  "verdict": "FAIL",
+  "retainedHistoryUnchanged": false,
+  "retainedMeaning": "retained history and managed file bytes across the migration/restore",
+  "historyUnchanged": false,
+  "filesUnchanged": true,
+  "protectedDataUnchanged": false,
+  "baselinePopulated": true,
+  "sections": {
+    "retainedTables": {
+      "compared": 33,
+      "changed": [
+        "app_metadata"
+      ],
+      "columnDrift": []
+    },
+    "files": {
+      "before": 3,
+      "after": 3,
+      "changed": []
+    },
+    "ledger": {
+      "before": {
+        "table": "_sqlx_migrations",
+        "maxVersion": 12,
+        "versions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "after": {
+        "table": "_sqlx_migrations",
+        "maxVersion": 13,
+        "versions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      "diffs": []
+    },
+    "schema13": {
+      "absentBefore": [
+        "material_split_lineage",
+        "split_operation_log"
+      ],
+      "absentAfter": [],
+      "diffs": []
+    },
+    "population": {
+      "required": [
+        "practice_attempts",
+        "practice_responses",
+        "card_review_state",
+        "card_review_events"
+      ],
+      "diffs": []
+    },
+    "schemaObjects": {
+      "added": [
+        "idx_split_lineage_parent",
+        "idx_split_lineage_root",
+        "idx_split_operation_source",
+        "idx_split_operation_status",
+        "material_split_lineage",
+        "split_operation_log"
+      ],
+      "removed": [],
+      "unexpected": [],
+      "digestBefore": "ce034cbb86f2c054239238a8a2bb1864cd481af68008a71421e8378f8b12d2c5",
+      "digestAfter": "680c1888d6dcdb212c5adcde9c190347da6e3a5536dcac85ea13190908b867b8",
+      "diffs": []
+    },
+    "isolation": {
+      "diffs": []
+    },
+    "databaseFiles": {
+      "informational": true,
+      "changed": [
+        "database-file: file bytes changed her-flight-deck.db (483328B -> 483328B)",
+        "database-file: file bytes changed her-flight-deck.db-shm (32768B -> 32768B)",
+        "database-file: file bytes changed her-flight-deck.db-wal (0B -> 61832B)"
+      ]
+    }
+  },
+  "notes": [
+    "database file bytes changed; the logical content digests are the authority"
+  ],
+  "diffs": [
+    "app_metadata: before 5/7b0f0aa4093fe2d6b4f72c81bbc23894cd0c003b48edf2bc3eb43ba019acae4d after 2/920d9cf5f75dc03052b52ad2fa3162318578342422690f59f9dabb3c7ab1bf3d"
+  ]
+}

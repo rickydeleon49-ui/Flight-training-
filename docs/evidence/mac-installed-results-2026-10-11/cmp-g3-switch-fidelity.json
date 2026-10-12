@@ -1,0 +1,103 @@
+{
+  "schema": "hfd-mac-profile-compare/3",
+  "purpose": "unchanged",
+  "contract": "protected library invariance: the same data before and after",
+  "gateEligible": true,
+  "complete": true,
+  "before": "/private/tmp/flight-training-current-account-20261011/workspace/evidence/run-current-account-20261011/s12-populated.json",
+  "after": "/private/tmp/flight-training-current-account-20261011/workspace/evidence/run-current-account-20261011/s12-before-refusal.json",
+  "verdict": "PASS",
+  "retainedHistoryUnchanged": true,
+  "retainedMeaning": "every protected fact of the library: retained tables, schema-13 tables, managed file bytes, ledger, and schema objects",
+  "historyUnchanged": true,
+  "filesUnchanged": true,
+  "protectedDataUnchanged": true,
+  "sections": {
+    "retainedTables": {
+      "compared": 33,
+      "changed": [],
+      "columnDrift": []
+    },
+    "files": {
+      "before": 3,
+      "after": 3,
+      "changed": []
+    },
+    "ledger": {
+      "before": {
+        "table": "_sqlx_migrations",
+        "maxVersion": 12,
+        "versions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "after": {
+        "table": "_sqlx_migrations",
+        "maxVersion": 12,
+        "versions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "diffs": []
+    },
+    "schema13": {
+      "absentBefore": [
+        "material_split_lineage",
+        "split_operation_log"
+      ],
+      "absentAfter": [
+        "material_split_lineage",
+        "split_operation_log"
+      ],
+      "diffs": []
+    },
+    "population": {
+      "required": [
+        "practice_attempts",
+        "practice_responses",
+        "card_review_state",
+        "card_review_events"
+      ],
+      "diffs": []
+    },
+    "schemaObjects": {
+      "added": [],
+      "removed": [],
+      "unexpected": [],
+      "digestBefore": "ce034cbb86f2c054239238a8a2bb1864cd481af68008a71421e8378f8b12d2c5",
+      "digestAfter": "ce034cbb86f2c054239238a8a2bb1864cd481af68008a71421e8378f8b12d2c5",
+      "diffs": []
+    },
+    "isolation": {
+      "diffs": []
+    },
+    "databaseFiles": {
+      "informational": true,
+      "changed": []
+    }
+  },
+  "notes": [],
+  "diffs": []
+}
