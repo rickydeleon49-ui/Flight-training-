@@ -1,0 +1,130 @@
+TAP version 13
+# {"case":"R28-tokens","olderToken":1,"newerToken":1}
+# {"case":"R28","oldResult":{"success":true,"state":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 10.","saved":true,"saveError":null,"persistedStatus":"active","lastRequestedPage":10,"confirmedRead":false},"newResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":10,"persistedPage":10},"finalPage":10}
+# {"case":"R29","result":{"success":true,"state":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 42.","saved":true,"saveError":null,"persistedStatus":"active","lastRequestedPage":42,"confirmedRead":false},"finalPage":42,"controllerState":"opened"}
+# {"case":"R30-normal","oldResult":{"success":true,"state":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 10.","saved":true,"saveError":null,"persistedStatus":"active","lastRequestedPage":10,"confirmedRead":false},"durablePage":20,"controllerPage":10}
+# {"case":"R30-retry","late":{"success":true,"lastRequestedPage":42,"persistedStatus":"active"},"durablePage":20,"controllerPage":42}
+# {"case":"R30-failure","durablePage":20,"controllerState":"aborted","notice":null}
+# (node:25385) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [M4-R28] overlapping controllers with earlier completion still retain later request
+not ok 1 - [M4-R28] overlapping controllers with earlier completion still retain later request
+  ---
+  duration_ms: 39.469042
+  type: 'test'
+  location: '<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:30:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [M4-R28] later request must save even when earlier completion lands first
+
+    10 !== 20
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 20
+  actual: 10
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:45:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [M4-R29] abort while persistence is pending cannot change the saved page
+not ok 2 - [M4-R29] abort while persistence is pending cannot change the saved page
+  ---
+  duration_ms: 5.152291
+  type: 'test'
+  location: '<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:49:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [M4-R29] abort must fence an already pending persistence operation before commit
+
+    42 !== 5
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 5
+  actual: 42
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:57:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+not ok 3 - [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.060084
+  type: 'test'
+  location: '<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:61:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [M4-R30] stale acknowledged operation must not replace winning controller progress
+
+    10 !== 20
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 20
+  actual: 10
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:71:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+not ok 4 - [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.629917
+  type: 'test'
+  location: '<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:76:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [M4-R30] retry must recheck immutable operation ownership after its await
+
+    42 !== 20
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 20
+  actual: 42
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:91:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R30] obsolete opener failure must leave the winner notice and state intact
+not ok 5 - [M4-R30] obsolete opener failure must leave the winner notice and state intact
+  ---
+  duration_ms: 5.145542
+  type: 'test'
+  location: '<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:95:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [M4-R30] superseded failure must not abort the winning route
+    + actual - expected
+
+    + 'aborted'
+    - 'opened'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'opened'
+  actual: 'aborted'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://<review-checkout>/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:105:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 0
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 122.544583
