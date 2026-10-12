@@ -10,6 +10,15 @@ Audited accepted main at `8a260c0b32bc213850ed85bf9488d6ef571354a9`.
 - Gemini is actively working in the M4 evaluation checkout. [PR #148](https://github.com/rickydeleon49-ui/Flight-training-/pull/148), head `3039d7807be3bc859812565ee7f606da2d9314c3`, is an open documentation handoff with passing CI. Its reviewer requests M4-R23–R27: durable ownership across restarts/controllers, original retry ownership, truthful test/mutant traceability, missing lifecycle regressions and measured runner receipts. Those findings are attributed to that review; this cleanup did not independently rerun its reproductions or accept the in-flight source.
 - The source-only [schema-14 verification preparation assignment](MAC_SCHEMA14_VERIFICATION_PREPARATION_PROMPT_2026-10-11.md) remains available. No competing assignment or implementation was started.
 
+## Dependency alerts requiring separate triage
+
+GitHub's current open-alert list was read after the initial report push. Accepted lockfiles confirm:
+
+- [Alert #2](https://github.com/rickydeleon49-ui/Flight-training-/security/dependabot/2): development dependency `source-map-js@1.2.1`, high severity; indexed source-map offsets can cause event-loop denial of service. GitHub lists `1.2.2` as the first patched version.
+- [Alert #1](https://github.com/rickydeleon49-ui/Flight-training-/security/dependabot/1): `glib@0.18.5` in Cargo.lock, medium severity; unsound iterator implementations. GitHub lists `0.20.0` as the first patched version.
+
+These are confirmed dependency alerts, not demonstrated exploitation of this Mac app. Platform applicability and the compatible Tauri/transitive upgrade path require a focused follow-up. No dependency, lockfile or production changes were made, and no competing task was assigned while Gemini is working.
+
 ## Cleanup completed
 
 The primary checkout was stranded at `42c2df5` by four unpublished preflight entries. All 15 affected files were hash-checked and copied to a recovery archive. Their exact working state was committed on `codex/archive-local-preflight-2026-10-11` at `a3f2ce80147b3df445b80290e2ba83833b602f7e`, with a separately verified Git bundle. Main was then fast-forwarded to `8a260c0`; tracked/untracked status is clean.
