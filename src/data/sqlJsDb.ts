@@ -421,6 +421,45 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         return readLibraryRecentReviews(query, input);
       });
     },
+    saveSkillEvidenceAtomically(
+      action: import("@/domain/types").SkillEvidenceAction,
+    ): Promise<import("@/domain/types").SkillEvidenceOutcome> {
+      return owner.exclusive(() =>
+        durableWrite(async () => {
+          const { executeSkillEvidenceAction } = await import("./skillEvidenceTransaction");
+          return executeSkillEvidenceAction(exec, run, query, action);
+        }),
+      );
+    },
+    /** Skill-evidence reads: owned like every other call, never exported or stored. */
+    readSkillEvidencePage(input: import("@/domain/types").EvidencePageInput) {
+      return owner.exclusive(async () => {
+        if (connectionBroken) throw connectionBroken;
+        const { readEvidencePage } = await import("./skillEvidenceReader");
+        return readEvidencePage(query, input);
+      });
+    },
+    readSkillSummary(skillId: string) {
+      return owner.exclusive(async () => {
+        if (connectionBroken) throw connectionBroken;
+        const { readSkillSummary } = await import("./skillEvidenceReader");
+        return readSkillSummary(query, skillId);
+      });
+    },
+    listSkills(options: { includeRetired?: boolean }) {
+      return owner.exclusive(async () => {
+        if (connectionBroken) throw connectionBroken;
+        const { listSkills } = await import("./skillEvidenceReader");
+        return listSkills(query, options);
+      });
+    },
+    readObservationHistory(input: import("@/domain/types").ObservationHistoryInput) {
+      return owner.exclusive(async () => {
+        if (connectionBroken) throw connectionBroken;
+        const { readObservationHistory } = await import("./skillEvidenceReader");
+        return readObservationHistory(query, input);
+      });
+    },
     /** Every acknowledged write is already stored; this re-stores and reports failure. */
     persist(): Promise<void> {
       return owner.exclusive(() => {

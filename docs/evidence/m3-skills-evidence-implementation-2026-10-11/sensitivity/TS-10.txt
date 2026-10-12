@@ -1,0 +1,42 @@
+# TS-10: labelKey NFC normalization
+# file: src/data/skillEvidenceTransaction.ts
+# test: src/data/skillEvidenceTransaction.test.ts > labelKey normalizes like the native label_key
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'labelKey\\ normalizes\\ like\\ the\\ native\\ label_key'
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+--- removed
+return label.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
++++ added
+return label.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+
+ ❯ src/data/skillEvidenceTransaction.test.ts (24 tests | 1 failed | 23 skipped) 4ms
+     × labelKey normalizes like the native label_key 4ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 skipped (24)
+   Start at  12:00:02
+   Duration  204ms (transform 94ms, setup 0ms, import 114ms, tests 4ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceTransaction.test.ts > canonical request hash > labelKey normalizes like the native label_key
+AssertionError: expected 'café' to be 'café' // Object.is equality
+
+Expected: "café"
+Received: "café"
+
+ ❯ src/data/skillEvidenceTransaction.test.ts:81:31
+     79|   it("labelKey normalizes like the native label_key", () => {
+     80|     expect(labelKey("  Short-FIELD \t landing ")).toBe("short-field la…
+     81|     expect(labelKey("Café")).toBe(labelKey("Café"));
+       |                               ^
+     82|     expect(labelKey("A B　C﻿")).toBe("a b c");
+     83|     expect(labelKey("﻿Go
+around")).toBe("go around");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+# exit=1
+# caught=True
+# restored=True

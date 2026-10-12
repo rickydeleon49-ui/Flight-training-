@@ -1,0 +1,14 @@
+{
+  "checked": "2026-10-11",
+  "sources": [
+    {
+      "url": "https://webkit.org/blog/13966/webkit-features-in-safari-16-4/",
+      "finding": "Safari 16.4 available on Monterey and Big Sur; its release includes WebAssembly SIMD. No installed WKWebView claim inferred."
+    },
+    {
+      "url": "https://pdfium.googlesource.com/pdfium/+/refs/heads/main/LICENSE",
+      "blob": "161ca160d6fa51df6e3e594aeb2b1097b55e3866",
+      "finding": "Contains PDFium redistribution conditions and Apache text; cannot substitute for exact WASM distribution notices."
+    }
+  ]
+}

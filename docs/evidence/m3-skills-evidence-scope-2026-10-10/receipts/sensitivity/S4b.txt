@@ -1,0 +1,302 @@
+$ npx vitest run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts tests/writes.test.ts -t leaves no partial change --reporter=verbose
+# cwd: <scratch copy>
+# variant: S4b transaction: transaction control is removed, so each statement autocommits
+# file: prototype/skillEvidenceTransaction.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sensitivity
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a retried create writes one observation and replays the same result
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > the same request id with different content is refused and changes nothing
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a replay after later edits returns the original result and never undoes the edit
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > two distinct requests issued together both land, in order
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (node:sqlite) > a double-clicked edit with one expected revision applies once; the second is stale
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a retried create writes one observation and replays the same result
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > the same request id with different content is refused and changes nothing
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a replay after later edits returns the original result and never undoes the edit
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > two distinct requests issued together both land, in order
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > creation and retries (sql.js) > a double-clicked edit with one expected revision applies once; the second is stale
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > reopening a saved library > node:sqlite: an observation survives close and reopen, and a retry after reopen is still a replay
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > reopening a saved library > sql.js: the exported bytes reopen with the same observation and receipt
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > editing wording, date and attribution keeps every earlier version
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > a stale edit, a no-op edit and an edit of a missing observation are refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (node:sqlite) > history rows cannot be rewritten, even with direct SQL
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > editing wording, date and attribution keeps every earlier version
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > a stale edit, a no-op edit and an edit of a missing observation are refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > edits and history (sql.js) > history rows cannot be rewritten, even with direct SQL
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > a renamed debrief and edited feedback are shown as drift; nothing is relinked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > deleting the debrief keeps the observation, its wording and the snapshot; a replacement debrief is not adopted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > a retired skill keeps its history, refuses new observations, and can be restored
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > renaming a custom skill keeps the name it had when each observation was recorded
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > built-in names are read-only, active duplicate names are refused, retired duplicates are allowed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (node:sqlite) > skills are never deleted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > a renamed debrief and edited feedback are shown as drift; nothing is relinked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > deleting the debrief keeps the observation, its wording and the snapshot; a replacement debrief is not adopted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > a retired skill keeps its history, refuses new observations, and can be restored
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > renaming a custom skill keeps the name it had when each observation was recorded
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > built-in names are read-only, active duplicate names are refused, retired duplicates are allowed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > sources and skills that change (sql.js) > skills are never deleted
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > there is no verified-instructor attribution, at the boundary or in the table
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > completing the linked action, finishing practice or adding observations never sets status, confidence or addressed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (node:sqlite) > status and confidence are separate, explicit and stale-checked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > there is no verified-instructor attribution, at the boundary or in the table
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > completing the linked action, finishing practice or adding observations never sets status, confidence or addressed
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > no manufactured approval or proficiency (sql.js) > status and confidence are separate, explicit and stale-checked
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (node:sqlite) > link and mark-addressed are explicit, idempotent, recorded in history, and never change the action
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (node:sqlite) > deleting the linked action keeps a named record of it; linking a missing action is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (sql.js) > link and mark-addressed are explicit, idempotent, recorded in history, and never change the action
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > follow-up actions (sql.js) > deleting the linked action keeps a named record of it; linking a missing action is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > erases only the selected observation and leaves no wording behind anywhere in the database
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > an old retry cannot resurrect an erased observation, and its id cannot be reused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (node:sqlite) > erasing needs explicit confirmation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > erases only the selected observation and leaves no wording behind anywhere in the database
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > an old retry cannot resurrect an erased observation, and its id cannot be reused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > explicit erasure (sql.js) > erasing needs explicit confirmation
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change 29ms
+   → expected [ [ { …(20) } ], [], [] ] to deeply equal [ [], [], [] ]
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change 11ms
+   → expected [ [ { …(20) } ], [ { …(12) } ], [] ] to deeply equal [ [], [], [] ]
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "UPDATE skill_observations" leaves no partial change 12ms
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change 55ms
+   → expected [ [ { …(20) } ], [], [] ] to deeply equal [ [], [], [] ]
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change 21ms
+   → expected [ [ { …(20) } ], [ { …(12) } ], [] ] to deeply equal [ [], [], [] ]
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "UPDATE skill_observations" leaves no partial change 20ms
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > wording: 2000 characters is accepted, 2001 refused; empty and control characters refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > dates, ids and extra fields are refused before any transaction
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > one debrief holds at most 50 observations; a library at most 200 custom skills
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (node:sqlite) > page size is bounded at the read boundary and a forged cursor is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > wording: 2000 characters is accepted, 2001 refused; empty and control characters refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > dates, ids and extra fields are refused before any transaction
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > one debrief holds at most 50 observations; a library at most 200 custom skills
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > limits at the write boundary (sql.js) > page size is bounded at the read boundary and a forged cursor is refused
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > both engines are the real ones
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed | 55 skipped (61)
+   Start at  23:38:11
+   Duration  446ms (transform 160ms, setup 0ms, import 212ms, tests 149ms, environment 0ms)
+
+(node:44793) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change
+AssertionError: expected [ [ { …(20) } ], [], [] ] to deeply equal [ [], [], [] ]
+
+- Expected
++ Received
+
+  [
+-   [],
++   [
++     {
++       "action_id": null,
++       "addressed_at": null,
++       "attribution": "instructor_transcribed",
++       "created_at": "2026-10-11T06:38:11.841Z",
++       "id": "00000000-0000-4000-8000-000000000005",
++       "instructor_name": "Synthetic CFI",
++       "journal_id": "00000000-0000-4000-8000-000000000001",
++       "linked_action_id": null,
++       "linked_action_title": null,
++       "observed_on": "2026-10-01",
++       "revision": 1,
++       "skill_id": "builtin.normal_landing",
++       "skill_label_snapshot": "Normal approach and landing",
++       "source_field": "instructor_feedback",
++       "source_journal_date": "2026-10-01",
++       "source_journal_id": "00000000-0000-4000-8000-000000000001",
++       "source_journal_title": "Pattern work",
++       "source_text_sha256": "50ff9b9d9b79fe435ae1a897e57e6f39c7838e56de5ecf53e15afe33e5eb022d",
++       "updated_at": "2026-10-11T06:38:11.841Z",
++       "wording": "Look further down the runway in the flare.",
++     },
++   ],
+    [],
+    [],
+  ]
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts:363:21
+    361|       engine.beforeStatement = undefined;
+    362|       const after = ["skill_observations", "skill_observation_revision…
+    363|       expect(after).toEqual(before);
+       |                     ^
+    364|       // The same request then succeeds normally: the failure left no …
+    365|       expect((await store.act(request)).status).toBe("applied");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (node:sqlite) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change
+AssertionError: expected [ [ { …(20) } ], [ { …(12) } ], [] ] to deeply equal [ [], [], [] ]
+
+- Expected
++ Received
+
+  [
+-   [],
+-   [],
++   [
++     {
++       "action_id": null,
++       "addressed_at": null,
++       "attribution": "instructor_transcribed",
++       "created_at": "2026-10-11T06:38:11.857Z",
++       "id": "00000000-0000-4000-8000-00000000000a",
++       "instructor_name": "Synthetic CFI",
++       "journal_id": "00000000-0000-4000-8000-000000000006",
++       "linked_action_id": null,
++       "linked_action_title": null,
++       "observed_on": "2026-10-01",
++       "revision": 1,
++       "skill_id": "builtin.normal_landing",
++       "skill_label_snapshot": "Normal approach and landing",
++       "source_field": "instructor_feedback",
++       "source_journal_date": "2026-10-01",
++       "source_journal_id": "00000000-0000-4000-8000-000000000006",
++       "source_journal_title": "Pattern work",
++       "source_text_sha256": "50ff9b9d9b79fe435ae1a897e57e6f39c7838e56de5ecf53e15afe33e5eb022d",
++       "updated_at": "2026-10-11T06:38:11.857Z",
++       "wording": "Look further down the runway in the flare.",
++     },
++   ],
++   [
++     {
++       "addressed_at": null,
++       "attribution": "instructor_transcribed",
++       "change_kind": "created",
++       "instructor_name": "Synthetic CFI",
++       "linked_action_id": null,
++       "linked_action_title": null,
++       "observation_id": "00000000-0000-4000-8000-00000000000a",
++       "observed_on": "2026-10-01",
++       "operation_id": "00000000-0000-4000-8000-000000000009",
++       "recorded_at": "2026-10-11T06:38:11.857Z",
++       "revision": 1,
++       "wording": "Look further down the runway in the flare.",
++     },
++   ],
+    [],
+  ]
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts:363:21
+    361|       engine.beforeStatement = undefined;
+    362|       const after = ["skill_observations", "skill_observation_revision…
+    363|       expect(after).toEqual(before);
+       |                     ^
+    364|       // The same request then succeeds normally: the failure left no …
+    365|       expect((await store.act(request)).status).toBe("applied");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_observation_revisions" leaves no partial change
+AssertionError: expected [ [ { …(20) } ], [], [] ] to deeply equal [ [], [], [] ]
+
+- Expected
++ Received
+
+  [
+-   [],
++   [
++     {
++       "action_id": null,
++       "addressed_at": null,
++       "attribution": "instructor_transcribed",
++       "created_at": "2026-10-11T06:38:11.921Z",
++       "id": "00000000-0000-4000-8000-000000000015",
++       "instructor_name": "Synthetic CFI",
++       "journal_id": "00000000-0000-4000-8000-000000000011",
++       "linked_action_id": null,
++       "linked_action_title": null,
++       "observed_on": "2026-10-01",
++       "revision": 1,
++       "skill_id": "builtin.normal_landing",
++       "skill_label_snapshot": "Normal approach and landing",
++       "source_field": "instructor_feedback",
++       "source_journal_date": "2026-10-01",
++       "source_journal_id": "00000000-0000-4000-8000-000000000011",
++       "source_journal_title": "Pattern work",
++       "source_text_sha256": "50ff9b9d9b79fe435ae1a897e57e6f39c7838e56de5ecf53e15afe33e5eb022d",
++       "updated_at": "2026-10-11T06:38:11.921Z",
++       "wording": "Look further down the runway in the flare.",
++     },
++   ],
+    [],
+    [],
+  ]
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts:363:21
+    361|       engine.beforeStatement = undefined;
+    362|       const after = ["skill_observations", "skill_observation_revision…
+    363|       expect(after).toEqual(before);
+       |                     ^
+    364|       // The same request then succeeds normally: the failure left no …
+    365|       expect((await store.act(request)).status).toBe("applied");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts > all-or-nothing writes (sql.js) > a failure at "INSERT INTO skill_evidence_operations" leaves no partial change
+AssertionError: expected [ [ { …(20) } ], [ { …(12) } ], [] ] to deeply equal [ [], [], [] ]
+
+- Expected
++ Received
+
+  [
+-   [],
+-   [],
++   [
++     {
++       "action_id": null,
++       "addressed_at": null,
++       "attribution": "instructor_transcribed",
++       "created_at": "2026-10-11T06:38:11.944Z",
++       "id": "00000000-0000-4000-8000-00000000001a",
++       "instructor_name": "Synthetic CFI",
++       "journal_id": "00000000-0000-4000-8000-000000000016",
++       "linked_action_id": null,
++       "linked_action_title": null,
++       "observed_on": "2026-10-01",
++       "revision": 1,
++       "skill_id": "builtin.normal_landing",
++       "skill_label_snapshot": "Normal approach and landing",
++       "source_field": "instructor_feedback",
++       "source_journal_date": "2026-10-01",
++       "source_journal_id": "00000000-0000-4000-8000-000000000016",
++       "source_journal_title": "Pattern work",
++       "source_text_sha256": "50ff9b9d9b79fe435ae1a897e57e6f39c7838e56de5ecf53e15afe33e5eb022d",
++       "updated_at": "2026-10-11T06:38:11.944Z",
++       "wording": "Look further down the runway in the flare.",
++     },
++   ],
++   [
++     {
++       "addressed_at": null,
++       "attribution": "instructor_transcribed",
++       "change_kind": "created",
++       "instructor_name": "Synthetic CFI",
++       "linked_action_id": null,
++       "linked_action_title": null,
++       "observation_id": "00000000-0000-4000-8000-00000000001a",
++       "observed_on": "2026-10-01",
++       "operation_id": "00000000-0000-4000-8000-000000000019",
++       "recorded_at": "2026-10-11T06:38:11.944Z",
++       "revision": 1,
++       "wording": "Look further down the runway in the flare.",
++     },
++   ],
+    [],
+  ]
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts:363:21
+    361|       engine.beforeStatement = undefined;
+    362|       const after = ["skill_observations", "skill_observation_revision…
+    363|       expect(after).toEqual(before);
+       |                     ^
+    364|       // The same request then succeeds normally: the failure left no …
+    365|       expect((await store.act(request)).status).toBe("applied");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+# exit=1
+# restored-sha-matches=True

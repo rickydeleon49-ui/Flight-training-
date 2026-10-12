@@ -1,0 +1,5 @@
+$ PATH=/opt/homebrew/opt/node@22/bin:$PATH node node_modules/typescript/bin/tsc --noEmit -p docs/evidence/m3-skills-evidence-scope-2026-10-10/tsconfig.json && echo tsc-ok
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2
+# utc: 2026-10-11T08:00:46Z
+tsc-ok
+# exit=0

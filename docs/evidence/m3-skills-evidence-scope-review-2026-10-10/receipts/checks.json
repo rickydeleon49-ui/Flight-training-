@@ -1,0 +1,48 @@
+{
+  "cwd": "/tmp/hfd-m3-independent-review",
+  "test_copy": "archive of 48fa47d plus all 57 frozen submitted paths; node_modules symlink reused from primary with unchanged package/lock anchors",
+  "checks": [
+    {
+      "check": "submitted Vitest",
+      "command": "/opt/homebrew/opt/node@22/bin/node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts",
+      "exit": 0,
+      "receipt": "m3-baseline-vitest.log",
+      "result": "102 passed / 2 opt-in skipped"
+    },
+    {
+      "check": "submitted typecheck",
+      "command": "/opt/homebrew/opt/node@22/bin/node node_modules/typescript/bin/tsc --noEmit -p docs/evidence/m3-skills-evidence-scope-2026-10-10/tsconfig.json",
+      "exit": 0,
+      "receipt": "m3-typecheck.log",
+      "result": "clean"
+    },
+    {
+      "check": "native setup first attempt",
+      "command": "env PATH=/Users/rickymac/.cargo/bin:/opt/homebrew/bin:/usr/bin:/bin CARGO_TARGET_DIR=/tmp/hfd-m3-native-review-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml",
+      "exit": 127,
+      "receipt": "m3-native.log",
+      "result": "cargo not on that PATH; setup corrected, not a product finding"
+    },
+    {
+      "check": "submitted native baseline",
+      "command": "env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin CARGO_TARGET_DIR=/tmp/hfd-m3-native-review-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml",
+      "exit": 0,
+      "receipt": "m3-native-baseline.log",
+      "result": "7 passed"
+    },
+    {
+      "check": "frozen reviewer TS/UI diagnostics",
+      "command": "/opt/homebrew/opt/node@22/bin/node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-ui-diagnostics.test.tsx",
+      "exit": 1,
+      "receipt": "m3-review-diagnostics.log",
+      "result": "17 failed / 4 passed"
+    },
+    {
+      "check": "frozen reviewer native diagnostics",
+      "command": "env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin CARGO_TARGET_DIR=/tmp/hfd-m3-native-review-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test review_diagnostics",
+      "exit": 101,
+      "receipt": "m3-native-diagnostics.log",
+      "result": "3 failed / 2 passed"
+    }
+  ]
+}

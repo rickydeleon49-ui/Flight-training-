@@ -1,0 +1,50 @@
+{
+  "executed_from": "/tmp/hfd-m4-final-rereview/submitted",
+  "node22": "/opt/homebrew/opt/node@22/bin/node",
+  "node26": "/opt/homebrew/bin/node",
+  "suite_commands": [
+    "node --test --test-reporter=tap docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/proof/proof.test.mjs docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/proof/databaseLifecycle.test.mjs docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/proof/sensitivity.test.mjs",
+    "node22 --test --test-reporter=tap prior-current.test.mjs",
+    "node22 --test --test-reporter=tap historical-current.test.mjs",
+    "node22 --test --test-reporter=tap diagnostics.test.mjs"
+  ],
+  "checks": [
+    {
+      "name": "submitted-node26",
+      "runtime": "v26.10.0",
+      "exit": 0,
+      "passed": 22,
+      "failed": 0
+    },
+    {
+      "name": "submitted-tests",
+      "runtime": "v22.23.3",
+      "exit": 1,
+      "passed": 21,
+      "failed": 1,
+      "reason": "PDF.js worker throws Promise.try is not a function; unhandled rejection; preserved as runtime limitation"
+    },
+    {
+      "name": "prior-current",
+      "runtime": "v22.23.3",
+      "exit": 1,
+      "passed": 14,
+      "failed": 1,
+      "reason": "Only historical custom-scanner test fails by assertion. Current real PDF.js proof supersedes scanner, as allowed by assignment."
+    },
+    {
+      "name": "historical-current",
+      "runtime": "v22.23.3",
+      "exit": 0,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "name": "diagnostics",
+      "runtime": "v22.23.3",
+      "exit": 1,
+      "passed": 2,
+      "failed": 14
+    }
+  ]
+}

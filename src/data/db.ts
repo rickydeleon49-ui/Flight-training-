@@ -89,6 +89,26 @@ export interface SqlDatabase {
   readLibraryRecentReviews?(
     input: import("@/domain/types").LibraryRecentReviewsInput,
   ): Promise<import("@/domain/types").LibraryRecentReviewsResult>;
+  /**
+   * One skill-evidence action (M3) as a single-connection immediate
+   * transaction. There is deliberately no fallback: without it, skill-evidence
+   * writes refuse.
+   */
+  saveSkillEvidenceAtomically?(
+    action: import("@/domain/types").SkillEvidenceAction,
+  ): Promise<import("@/domain/types").SkillEvidenceOutcome>;
+  /** One bounded, fenced page of evidence (M3). Read-only. */
+  readSkillEvidencePage?(
+    input: import("@/domain/types").EvidencePageInput,
+  ): Promise<import("@/domain/types").EvidencePage>;
+  /** One skill's summary, or null when it does not exist (M3). Read-only. */
+  readSkillSummary?(skillId: string): Promise<import("@/domain/types").SkillSummary | null>;
+  /** The skill catalog for pickers and lists (M3). Read-only. */
+  listSkills?(options: { includeRetired?: boolean }): Promise<import("@/domain/types").SkillListEntry[]>;
+  /** One bounded page of an observation's history, newest first (M3). Read-only. */
+  readObservationHistory?(
+    input: import("@/domain/types").ObservationHistoryInput,
+  ): Promise<import("@/domain/types").ObservationHistoryPage>;
 }
 
 export interface PracticeTestSaveOperation {

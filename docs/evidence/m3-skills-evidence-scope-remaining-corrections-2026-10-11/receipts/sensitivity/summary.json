@@ -1,0 +1,399 @@
+[
+  {
+    "control": "all 32 named checks pass on the unmodified final copy, each selecting at least one test"
+  },
+  {
+    "id": "R8-1",
+    "finding": "M3-R8",
+    "reverts": "the form compares only the wording before clearing",
+    "file": "prototype/SkillEvidenceSpecimen.tsx",
+    "checks": [
+      {
+        "check": "tests/remaining-ui.test.tsx :: during the save keeps the complete draft",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-ui.test.tsx :: several changes at once",
+        "exit": 0,
+        "caught": false
+      },
+      {
+        "check": "tests/remaining-ui.test.tsx :: Replace: a change made while the replacement is saving",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R8-2",
+    "finding": "M3-R8",
+    "reverts": "the live draft is published from an effect (delayed), not in the change handler",
+    "file": "prototype/SkillEvidenceSpecimen.tsx",
+    "checks": [
+      {
+        "check": "tests/remaining-ui.test.tsx :: a change made in the same turn as the acknowledgment is still compared",
+        "exit": 0,
+        "caught": false
+      }
+    ],
+    "caughtBy": 0,
+    "caught": false,
+    "expected": "equivalent",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R8-3",
+    "finding": "M3-R8",
+    "reverts": "answers for an earlier draft (or a gone form) are not ignored",
+    "file": "prototype/SkillEvidenceSpecimen.tsx",
+    "checks": [
+      {
+        "check": "tests/remaining-ui.test.tsx :: a joined duplicate submit's answer cannot raise a follow-up",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R8-4",
+    "finding": "M3-R8",
+    "reverts": "one draft key shared by every form instance for a debrief and skill",
+    "file": "prototype/SkillEvidenceSpecimen.tsx",
+    "checks": [
+      {
+        "check": "tests/remaining-ui.test.tsx :: an answer for a form that was replaced",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-1",
+    "finding": "M3-R9",
+    "reverts": "TS: observation revisions need no receipt",
+    "file": "prototype/skillEvidenceValidation.ts",
+    "checks": [
+      {
+        "check": "tests/contract.test.ts :: node:sqlite gives the listed outcome for every case",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-validation.test.ts :: losing any receipt that owns history is refused",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-validation.test.ts :: receipt removal cannot leave",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 3,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-2",
+    "finding": "M3-R9",
+    "reverts": "TS: user catalog revisions need no receipt",
+    "file": "prototype/skillEvidenceValidation.ts",
+    "checks": [
+      {
+        "check": "tests/contract.test.ts :: sql.js gives the listed outcome for every case",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-validation.test.ts :: losing any receipt that owns history is refused",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-3",
+    "finding": "M3-R9",
+    "reverts": "TS: self-assessments need no receipt",
+    "file": "prototype/skillEvidenceValidation.ts",
+    "checks": [
+      {
+        "check": "tests/contract.test.ts :: node:sqlite gives the listed outcome for every case",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-validation.test.ts :: losing any receipt that owns history is refused",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-4",
+    "finding": "M3-R9",
+    "reverts": "TS: a receipt may own any revision of its subject (operation reuse)",
+    "file": "prototype/skillEvidenceValidation.ts",
+    "checks": [
+      {
+        "check": "tests/contract.test.ts :: sql.js gives the listed outcome for every case",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-N1",
+    "finding": "M3-R9",
+    "reverts": "native: observation revisions need no receipt",
+    "file": "native/src/lib.rs",
+    "checks": [
+      {
+        "check": "cargo:contract :: shared_validation_contract_native_outcomes",
+        "exit": 101,
+        "caught": true
+      },
+      {
+        "check": "cargo:contract :: writer_library_requires_the_receipt_of_every_history_row",
+        "exit": 101,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-N2",
+    "finding": "M3-R9",
+    "reverts": "native: user catalog revisions need no receipt",
+    "file": "native/src/lib.rs",
+    "checks": [
+      {
+        "check": "cargo:contract :: shared_validation_contract_native_outcomes",
+        "exit": 101,
+        "caught": true
+      },
+      {
+        "check": "cargo:contract :: writer_library_requires_the_receipt_of_every_history_row",
+        "exit": 101,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-N3",
+    "finding": "M3-R9",
+    "reverts": "native: self-assessments need no receipt",
+    "file": "native/src/lib.rs",
+    "checks": [
+      {
+        "check": "cargo:contract :: shared_validation_contract_native_outcomes",
+        "exit": 101,
+        "caught": true
+      },
+      {
+        "check": "cargo:contract :: writer_library_requires_the_receipt_of_every_history_row",
+        "exit": 101,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R9-N4",
+    "finding": "M3-R9",
+    "reverts": "native: a receipt may own any revision of its subject (operation reuse)",
+    "file": "native/src/lib.rs",
+    "checks": [
+      {
+        "check": "cargo:contract :: shared_validation_contract_native_outcomes",
+        "exit": 101,
+        "caught": true
+      }
+    ],
+    "caughtBy": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R10-1",
+    "finding": "M3-R10",
+    "reverts": "an ERASED older-history page keeps the loaded versions and cursor",
+    "file": "prototype/evidenceController.ts",
+    "checks": [
+      {
+        "check": "tests/remaining-ui.test.tsx :: Show older versions after an erasure clears the versions and the list item",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-controller.test.ts :: confirmed erased history discards loaded text and cursor",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R10-2",
+    "finding": "M3-R10",
+    "reverts": "eviction leaves the erased observation in the visible list",
+    "file": "prototype/evidenceController.ts",
+    "checks": [
+      {
+        "check": "tests/remaining-controller.test.ts :: opening the history of an observation erased elsewhere evicts it",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-controller.test.ts :: a save whose earlier request turns out erased evicts",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R10-3",
+    "finding": "M3-R10",
+    "reverts": "a late older-history page for an erased observation is still published",
+    "file": "prototype/evidenceController.ts",
+    "checks": [
+      {
+        "check": "tests/remaining-ui.test.tsx :: a held older page that lands after the erasure is known",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-controller.test.ts :: a held older history page that arrives after the erasure is known",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R10-4",
+    "finding": "M3-R10",
+    "reverts": "later evidence pages are not filtered for erased observations",
+    "file": "prototype/evidenceController.ts",
+    "checks": [
+      {
+        "check": "tests/remaining-controller.test.ts :: a held evidence page read before the erasure cannot put the erased observation back",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 1,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R10-5",
+    "finding": "M3-R10",
+    "reverts": "the summary is not re-read after an eviction",
+    "file": "prototype/evidenceController.ts",
+    "checks": [
+      {
+        "check": "tests/remaining-controller.test.ts :: opening the history of an observation erased elsewhere evicts it",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-ui.test.tsx :: Show older versions after an erasure clears the versions and the list item",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  },
+  {
+    "id": "R10-6",
+    "finding": "M3-R10",
+    "reverts": "a temporary older-history failure is treated as erasure (control guard)",
+    "file": "prototype/evidenceController.ts",
+    "checks": [
+      {
+        "check": "tests/remaining-controller.test.ts :: a temporary older-history read error preserves loaded history for retry",
+        "exit": 1,
+        "caught": true
+      },
+      {
+        "check": "tests/remaining-ui.test.tsx :: a temporary failure loading older versions keeps the loaded versions on screen",
+        "exit": 1,
+        "caught": true
+      }
+    ],
+    "caughtBy": 2,
+    "caught": true,
+    "expected": "caught",
+    "asExpected": true,
+    "restored": true
+  }
+]

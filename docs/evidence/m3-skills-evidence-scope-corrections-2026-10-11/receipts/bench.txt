@@ -1,0 +1,15 @@
+$ PATH=/opt/homebrew/opt/node@22/bin:$PATH M3_BENCH=1 node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/bench.test.ts
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T07:27:15Z
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m3-skills-scope
+
+(node:52216) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  00:27:15
+   Duration  7.89s (transform 163ms, setup 0ms, import 213ms, tests 7.60s, environment 0ms)
+
+# exit=0

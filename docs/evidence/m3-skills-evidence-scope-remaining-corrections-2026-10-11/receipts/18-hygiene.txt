@@ -1,0 +1,7 @@
+$ git diff --check && echo 'tracked diff: no whitespace errors'; keep='docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/receipts/04a-new-regressions-on-frozen-corrected-submission-ts.txt'; bad=0; for f in $(git ls-files --others --exclude-standard docs); do if grep -nE '[[:space:]]+$' "$f" >/dev/null; then if [ "$f" = "$keep" ]; then echo "raw test output preserved byte-for-byte (checkpoint file, not edited): $f"; else echo "trailing whitespace: $f"; bad=1; fi; fi; if [ -s "$f" ] && [ "$(tail -c1 "$f" | xxd -p)" != '0a' ]; then echo "no final newline: $f"; bad=1; fi; done; echo "untracked files checked: $(git ls-files --others --exclude-standard docs | wc -l | tr -d ' ')"; exit $bad
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T17:08:33Z
+tracked diff: no whitespace errors
+raw test output preserved byte-for-byte (checkpoint file, not edited): docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/receipts/04a-new-regressions-on-frozen-corrected-submission-ts.txt
+untracked files checked: 181
+# exit=0

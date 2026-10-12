@@ -1,0 +1,44 @@
+=== M4 Corrected Proof Execution Receipt ===
+Timestamp: 2026-10-11T18:04:48.253Z
+Command: node --test docs/evidence/m4-document-navigation-eval-2026-10-11/proof/proof.test.mjs
+Exit Code: 0
+--- Proof Suite Output ---
+✔ M4-P1: Physical Page Indexing & Safe Clamping (0.608375ms)
+✔ M4-P2: Provenance-Aware Page Reference Resolution & Printed Labels (0.184334ms)
+✔ M4-P3: Split-Lineage Coordinate Space & Navigation Safety (0.138834ms)
+✔ M4-P4: Content Replacement, Strict Hash Validation & Drift Invalidation (0.2475ms)
+✔ M4-P5: Native Jump Fallback Messaging (0.04775ms)
+✔ M4-P6: WebKit & Engine Boundary Audit (Unverified Disclosures) (0.02975ms)
+✔ M4-P7: Synthetic PDF Structural Parser Demonstration (0.781041ms)
+✔ M4-P8: Injected Opener Controller State Machine & Honest Reading State (0.135833ms)
+✔ M4-P9: Database Candidate Migration 0015 Verification (9.221083ms)
+✔ M4-P10: Corrected Execution of the 10 Review Diagnostics Cases (0.100625ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.190583
+
+--- Database Verification Output ---
+✔ M4-DB-1: Upgrade retains pre-existing schema-13 rows (5.220041ms)
+✔ M4-DB-2: Strict hash validation rejects malformed SHA-256 (4.492084ms)
+✔ M4-DB-3: Bookmarks bind to originating content hash and detect drift (4.504083ms)
+✔ M4-DB-4: ON DELETE CASCADE cleans up navigation records on material removal (4.380625ms)
+✔ M4-DB-5: Transaction rollback restores previous state on failed update (4.626417ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 98.982292
+
+--- Python Schema Probe Output ---
+PASS: Malformed content hash correctly rejected by CHECK constraint.
+PASS: Originating content hash preserved; bookmark correctly transitioned to 'unverified'.
+PASS: ON DELETE CASCADE cleaned up all dependent navigation records.
+All SQLite candidate migration checks passed successfully.

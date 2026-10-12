@@ -20,6 +20,8 @@ import { executeMaterialSave, executeMaterialsBatch } from "../materialTransacti
 import { executeStructuredImport } from "../structuredImportTransaction";
 import { executeCardReviewAction } from "../cardReviewTransaction";
 import { readLibraryRecentReviews, readLibraryReviewDue } from "../cardLibraryReader";
+import { executeSkillEvidenceAction } from "../skillEvidenceTransaction";
+import { listSkills, readEvidencePage, readObservationHistory, readSkillSummary } from "../skillEvidenceReader";
 import {
   executeEraseHistoryAction,
   executeLegacyConversion,
@@ -177,6 +179,23 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
       input: import("@/domain/types").LibraryRecentReviewsInput,
     ): Promise<import("@/domain/types").LibraryRecentReviewsResult> {
       return owner.exclusive(() => readLibraryRecentReviews(query, input));
+    },
+    saveSkillEvidenceAtomically(
+      action: import("@/domain/types").SkillEvidenceAction,
+    ): Promise<import("@/domain/types").SkillEvidenceOutcome> {
+      return owner.exclusive(() => executeSkillEvidenceAction(exec, run, query, action));
+    },
+    readSkillEvidencePage(input: import("@/domain/types").EvidencePageInput) {
+      return owner.exclusive(() => readEvidencePage(query, input));
+    },
+    readSkillSummary(skillId: string) {
+      return owner.exclusive(() => readSkillSummary(query, skillId));
+    },
+    listSkills(options: { includeRetired?: boolean }) {
+      return owner.exclusive(() => listSkills(query, options));
+    },
+    readObservationHistory(input: import("@/domain/types").ObservationHistoryInput) {
+      return owner.exclusive(() => readObservationHistory(query, input));
     },
     close() {
       db.close();

@@ -1,0 +1,7 @@
+R8-1: CAUGHT by 2/3 checks (expected caught); restored=True
+R8-3: CAUGHT by 1/1 checks (expected caught); restored=True
+R8-4: CAUGHT by 1/1 checks (expected caught); restored=True
+R9-1: CAUGHT by 3/3 checks (expected caught); restored=True
+R9-N1: CAUGHT by 2/2 checks (expected caught); restored=True
+R10-3: CAUGHT by 2/2 checks (expected caught); restored=True
+R10-6: CAUGHT by 2/2 checks (expected caught); restored=True

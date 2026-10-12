@@ -1,3 +1,5 @@
+> **DEFERRED by owner on 10 October 2026.** Do not execute this assignment or request an hfdtest login until the owner resumes installed verification. See [owner decision](MAC_INSTALLED_VERIFICATION_OWNER_DEFERRAL_2026-10-10.md). The preserved assignment below remains historical.
+
 # Mac installed verification — model-neutral continuation prompt
 
 You are continuing Her Flight Deck on this Mac. Preparation corrections MACV-R1–R11 are accepted for integration. Your assignment is to help execute and document the physical installed G1–G3 checks using the existing exact local candidates. Do not start another preparation audit or new roadmap implementation.

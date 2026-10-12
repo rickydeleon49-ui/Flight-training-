@@ -56,6 +56,42 @@ export function formatLongDate(date: IsoDate, today: IsoDate = todayIso()): stri
   return `${weekday}, ${month} ${d.getDate()}${sameYear ? "" : `, ${d.getFullYear()}`}`;
 }
 
+const CALENDAR_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
+const TIMESTAMP =
+  /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)(Z|[+-]\d{2}:?\d{2})?$/i;
+
+function isRealCalendarDay(day: string): boolean {
+  const match = CALENDAR_DAY.exec(day);
+  if (!match) return false;
+  const [year, month, date] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const check = new Date(Date.UTC(year, month - 1, date));
+  return (
+    check.getUTCFullYear() === year &&
+    check.getUTCMonth() === month - 1 &&
+    check.getUTCDate() === date
+  );
+}
+
+/**
+ * The local calendar day a stored timestamp falls on, or null when it can't be
+ * read. Accepts ISO 8601 ('2026-10-01T18:30:00.000Z', with or without an
+ * offset), SQLite's UTC form ('2026-10-01 18:30:00') and a bare calendar day.
+ * Timestamps without an offset are UTC, as SQLite writes them. The string is
+ * rebuilt in strict ISO form before parsing, because WebKit refuses the
+ * space-separated form that V8 accepts.
+ */
+export function localDayOf(timestamp: string | null | undefined): IsoDate | null {
+  if (typeof timestamp !== "string") return null;
+  const text = timestamp.trim();
+  if (CALENDAR_DAY.test(text)) return isRealCalendarDay(text) ? text : null;
+  const match = TIMESTAMP.exec(text);
+  if (!match || !isRealCalendarDay(match[1]!)) return null;
+  const rawOffset = match[3]?.toUpperCase() ?? "Z";
+  const offset = rawOffset === "Z" ? "Z" : rawOffset.replace(/^([+-]\d{2}):?(\d{2})$/, "$1:$2");
+  const parsed = new Date(`${match[1]}T${match[2]}${offset}`);
+  return Number.isNaN(parsed.getTime()) ? null : todayIso(parsed);
+}
+
 /** e.g. "Sep 6". */
 export function formatShortDate(date: IsoDate): string {
   const d = parseIsoDate(date);

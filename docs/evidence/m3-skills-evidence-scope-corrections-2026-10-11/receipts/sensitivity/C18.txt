@@ -1,0 +1,78 @@
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts -t \[M3-R7\] Show older after a crossing edit restarts the list from the newest --reporter=verbose
+# cwd: <scratch copy>
+# variant: C18 (M3-R7) the controller appends after a stale cursor instead of restarting
+# file: prototype/evidenceController.ts
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/sens-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] the earliest wording is reachable through bounded pages after 100 later revisions
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] a page holds 1-100 versions; the default is 20
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] a history cursor is bound to its observation and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (node:sqlite) > [M3-R4] newer revisions never move older pages; an erased observation is ERASED, an unknown one NOT_FOUND
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] the earliest wording is reachable through bounded pages after 100 later revisions
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] a page holds 1-100 versions; the default is 20
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] a history cursor is bound to its observation and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R4 complete revision access (sql.js) > [M3-R4] newer revisions never move older pages; an erased observation is ERASED, an unknown one NOT_FOUND
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] a seen observation moved below the cursor is refused as STALE_CURSOR, never repeated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] an unseen observation moved above the cursor is refused, never silently skipped
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] same-date ties: moving a seen row of a tied date below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] wording-only edits, edits that stay on their side, inserts and erasures keep the cursor valid, with no repeat or gap
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] an edit in another skill's list does not disturb this list's cursor
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] with an attribution filter, an attribution edit that brings a seen row back below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] a cursor is bound to its normalized filters and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (node:sqlite) > [M3-R7] restarting after STALE_CURSOR walks every observation exactly once
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] a seen observation moved below the cursor is refused as STALE_CURSOR, never repeated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] an unseen observation moved above the cursor is refused, never silently skipped
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] same-date ties: moving a seen row of a tied date below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] wording-only edits, edits that stay on their side, inserts and erasures keep the cursor valid, with no repeat or gap
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] an edit in another skill's list does not disturb this list's cursor
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] with an attribution filter, an attribution edit that brings a seen row back below the cursor is detected
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] a cursor is bound to its normalized filters and validated
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 date edits while paging (sql.js) > [M3-R7] restarting after STALE_CURSOR walks every observation exactly once
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 controller restart > [M3-R7] Show older after a crossing edit restarts the list from the newest, with no repeat 30ms
+   → expected { …(12) } to match object { listNotice: 'restarted', …(2) }
+(24 matching properties omitted from actual)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 controller restart > [M3-R7] a late older page from before a restart is dropped
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 query plans > node:sqlite: the fence and edits-after-fence lookups are rowid searches, not scans
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (node:sqlite) > [M3-R5] replaying a receipt whose result names another observation is STORAGE_FAILURE, not that identity
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (node:sqlite) > [M3-R5] earlier receipts still replay after later edits, a cleared status and a deleted debrief
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (sql.js) > [M3-R5] replaying a receipt whose result names another observation is STORAGE_FAILURE, not that identity
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R5 replay trusts only a decoded result (sql.js) > [M3-R5] earlier receipts still replay after later edits, a cleared status and a deleted debrief
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+   Start at  00:35:07
+   Duration  334ms (transform 166ms, setup 0ms, import 219ms, tests 31ms, environment 0ms)
+
+(node:54689) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts > M3-R7 controller restart > [M3-R7] Show older after a crossing edit restarts the list from the newest, with no repeat
+AssertionError: expected { …(12) } to match object { listNotice: 'restarted', …(2) }
+(24 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "listNotice": "restarted",
++   "listNotice": null,
+    "loadingMore": false,
+    "status": "ready",
+  }
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts:248:26
+    246|     await x.store.act(edit(rows[0]!, 1, { observedOn: "2026-09-30" }));
+    247|     await c.loadMore();
+    248|     expect(c.getState()).toMatchObject({ listNotice: "restarted", load…
+       |                          ^
+    249|     expect(c.getState().items.map((i) => i.id)).toEqual([rows[1]!.obse…
+    250|     await c.loadMore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1
+# restored-sha-matches=True

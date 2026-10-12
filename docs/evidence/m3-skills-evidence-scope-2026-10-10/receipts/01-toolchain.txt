@@ -1,0 +1,16 @@
+$ node --version; npm --version; rustc --version; cargo --version; xcrun --sdk macosx --show-sdk-path; sw_vers; uname -m; node -e "const {DatabaseSync}=require('node:sqlite');console.log('node:sqlite',new DatabaseSync(':memory:').prepare('select sqlite_version() v').get().v)" 2>/dev/null; node -e "console.log('sql.js', require('./node_modules/sql.js/package.json').version)"; node -e "console.log('vitest', require('./node_modules/vitest/package.json').version, 'react', require('./node_modules/react/package.json').version)"
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T06:38:52Z
+v22.23.3
+10.9.9
+rustc 1.99.0 (b940084d7 2026-09-28)
+cargo 1.99.0 (5f94df478 2026-08-27)
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+arm64
+node:sqlite 3.53.4
+sql.js 1.14.2
+vitest 4.1.11 react 19.2.8
+# exit=0

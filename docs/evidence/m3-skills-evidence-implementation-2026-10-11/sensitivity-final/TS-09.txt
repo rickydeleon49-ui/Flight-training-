@@ -1,0 +1,53 @@
+# TS-09: pinned built-in catalog wording
+# file: src/data/practiceStateValidation.ts
+# test: src/data/skillEvidenceValidationParity.test.ts > node:sqlite gives the listed outcome for every case
+$ npx vitest run src/data/skillEvidenceValidationParity.test.ts -t 'node:sqlite\\ gives\\ the\\ listed\\ outcome\\ for\\ every\\ case'
+# cwd: /private/tmp/m3-completion-sensitivity/tree
+--- removed
+if (ref && pinned.some((k) => m3Str(h[k]) !== m3Str(ref[k]))) refuse(
++++ added
+if (false && ref && pinned.some((k) => m3Str(h[k]) !== m3Str(ref[k]))) refuse(
+--- output (last 40 lines)
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  13:16:22
+   Duration  908ms (transform 111ms, setup 0ms, import 136ms, tests 679ms, environment 0ms)
+
+(node:95061) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceValidationParity.test.ts > shared schema-14 validation contract > node:sqlite gives the listed outcome for every case
+AssertionError: expected [ …(85) ] to deeply equal [ …(85) ]
+
+- Expected
++ Received
+
+@@ -55,11 +55,11 @@
+    "[M3-R5] erase receipt while the observation is still here: refuse",
+    "[M3-R5] erase that left a live receipt for its subject: refuse",
+    "[M3-R5] a skill change cannot be a tombstone: refuse",
+    "[M3-R6] later built-in revision replaces the pinned label (review case): refuse",
+    "[M3-R6] built-in retirement that also rewrites the description: refuse",
+-   "[M3-R6] built-in history and head move to another catalog version: refuse",
++   "[M3-R6] built-in history and head move to another catalog version: accept",
+    "[M3-R6] built-in head changes catalog version without history: refuse",
+    "[M3-R6] a built-in 'edit' that changes nothing: refuse",
+    "[M3-R6] custom revision carrying a catalog version: refuse",
+    "[M3-R6] custom skill whose first revision claims to come from the catalog: refuse",
+    "[M3-R6] retiring an already retired skill: refuse",
+
+ ❯ src/data/skillEvidenceValidationParity.test.ts:66:24
+     64|         }
+     65|       }
+     66|       expect(outcomes).toEqual(VALIDATION.cases.map((c) => `${c.name}:…
+       |                        ^
+     67|     });
+     68|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+# exit=1
+# caught=True
+# restored=True

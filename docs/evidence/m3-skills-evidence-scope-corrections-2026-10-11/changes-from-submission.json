@@ -1,0 +1,358 @@
+{
+  "base": "48fa47d9d035b2636b72fd6692930d85f4992bb9",
+  "submitted": {
+    "ROADMAP.md": {
+      "submitted": "82e0ae77bbf341f5372fab63098e2dc70d9c54ca295cdf4913b3b578149b2f9e",
+      "current": "2c6b0c5232122cf4b895dcb202cada743d77e84cca758ca2a77abc312d00449c",
+      "status": "history prepended (review entry, then correction entry)"
+    },
+    "STATUS.md": {
+      "submitted": "01f73673aa7eb8993805aa831d022905477373c4e042ab4baa043c1aacb911b5",
+      "current": "924d2900a00393b7533215e24abf5c1ee7e80f09e1dc06619512b41a7aa4af02",
+      "status": "history prepended (review entry, then correction entry)"
+    },
+    "docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md": {
+      "submitted": "7578fafae991c3d471623772926ba4b820430b329d5990a5513a246529149b25",
+      "current": "a9ead04f2b61523e309fc7c9fefc9301f0ac224fb8cc460c662021621f2127ea",
+      "status": "corrected"
+    },
+    "docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md": {
+      "submitted": "9f9fc3c27912126b300bd3555930dac2c142946ce419b1bbd87db21b8c04ddef",
+      "current": "c4ae90c2f8ba668510449355fc594f643df93d4dc8a4c3a3b264aadcab2ff7ce",
+      "status": "corrected"
+    },
+    "docs/PROJECT_HANDOFF.md": {
+      "submitted": "e39fa64d83d65d1aa6182735139c5484caf6f21ab399a22aa02428bf644079df",
+      "current": "67bcfb31717c95d7b05936eebc850dbb8f5d256f5cb969317ed250383c5c7b84",
+      "status": "history prepended (review entry, then correction entry)"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/README.md": {
+      "submitted": "1f58889e6c87f6e281d08aebc7f6a0fac1e7b65cce4fe633aebb21b816409b7d",
+      "current": "cc64eb8ed2b39e1ddab4eb4a2ad2344417dc72c61ff302ddcca36744e7b9b983",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/SHA256SUMS": {
+      "submitted": "2797828f524555dd5afd33fd11cec6a7dc6f7773864f5273d122190c7bab0f95",
+      "current": "2797828f524555dd5afd33fd11cec6a7dc6f7773864f5273d122190c7bab0f95",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/base-anchors.json": {
+      "submitted": "d3ec2c661b5fe303d44ff224b336b59cb4b9a513d21aa88d1835d8bdc7816b29",
+      "current": "d3ec2c661b5fe303d44ff224b336b59cb4b9a513d21aa88d1835d8bdc7816b29",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/candidate/0014_skills_evidence.sql": {
+      "submitted": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
+      "current": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/constraint-cases.json": {
+      "submitted": "d8130b25dbfd66a9aa51fc8e4649d682e919815a3bf8b0cbf08c52382b8b2bdb",
+      "current": "d8130b25dbfd66a9aa51fc8e4649d682e919815a3bf8b0cbf08c52382b8b2bdb",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/populated-schema13.sql": {
+      "submitted": "d3cf870839534cb75848c08a119b4100d080fb160c46a1657a375a28bcb1f644",
+      "current": "d3cf870839534cb75848c08a119b4100d080fb160c46a1657a375a28bcb1f644",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/validation-cases.json": {
+      "submitted": "47551585f08e1155e5b4548e265e193c8ca77ca9b2c686a2764c378a52f7e429",
+      "current": "c040ecd7566441ccf79c34f06d4a697f6ec055ad7f8023f2e9639ec435a8b57e",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock": {
+      "submitted": "d3b765b76f0ad2b5e64b9c0b9da1db9584b9ee2dff864e8b7e4d2ca251a55deb",
+      "current": "7a618afdba6cb74bd0bebf82d676d155ada732d2c0448068d4f1b1f1531509f7",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml": {
+      "submitted": "82874aae64ee3887e14e9b0567341bc67e1804e8e7e98082a9f71392ce222c7e",
+      "current": "c07f19594b37c991705184d6a370ee43f86c08050faa0f116d406f22f6d2cf8c",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/native/src/lib.rs": {
+      "submitted": "826e2f2ace4debba10234ce422d571ed311ffbaaa4ba39c838c7413234ea9e0b",
+      "current": "dac37b8cfa4cf8368463cde56267ea7efbb64de1837c91e2c318a613eb1bb23d",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/native/tests/contract.rs": {
+      "submitted": "2a0c3c61e40896e72f9383bd93d148d9319c50951639d17a22f8ac863d3ea1e3",
+      "current": "2a0c3c61e40896e72f9383bd93d148d9319c50951639d17a22f8ac863d3ea1e3",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/SkillEvidenceSpecimen.tsx": {
+      "submitted": "5b8509432bcab67f410b991e8c6670bd69b087d943930e0ba363097e64227851",
+      "current": "d93f7d031a2b91077706b455990c9177b547b6f359771239ae68600270570831",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/candidateEngine.ts": {
+      "submitted": "3c30c334c4b17b16e77614ce8deb83bc7489bc48880a1c28da90f2b9cdeff49c",
+      "current": "38bb49f31bb227283fc78b32f6baeb7e0ba0fad92b3a129ce3f7613261360ca2",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/evidenceController.ts": {
+      "submitted": "8c716312cc52d74b3d1aed87eaa612127bce52e1e4663cd076e3b9fec3cd59ba",
+      "current": "f0d903890264ddbadcfcaa1c3f04bfd048080b8daf42c8d6cb9f52c6111e3596",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceReader.ts": {
+      "submitted": "38f1d9ca1a69d2d4e1f6293510b9c739ec41789cd32d7290f8aaf0bdc0acfaa4",
+      "current": "ea144394ee80cb37bf00c143049935ae502fcec78dd55707cb669ef58d2725d6",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceTransaction.ts": {
+      "submitted": "0eb127027942478bbd2eae7b8f2a999ba11b1516be05a6134bf883e6e5cdaf70",
+      "current": "0618f04c373bba31b6c80e6137cddc2b5f2dfc6a65dc6bb5d8edeae6fb7ce0fb",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceValidation.ts": {
+      "submitted": "bae2ca079c88c90965094d327d04d757208eabff9bd17720bc856cb94b7be149",
+      "current": "af83c7a6d74654a25b33f4f1587193589cdae9e86f3b96845a986f1a4ec435d5",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/types.ts": {
+      "submitted": "69ea57ce2d7a3e8d9cbba553aed8acf0e0a1b29b44fdfd65210a45c2674a46b9",
+      "current": "ec02e6fcdc4f0325f3919944f8a19c29afea59098128f6a3ddb50875318cc267",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/01-toolchain.txt": {
+      "submitted": "03c3b0b42dd22b656ba5512a4d71a90c2bb34ff0f57bc95370ab0aad7cc8b5aa",
+      "current": "03c3b0b42dd22b656ba5512a4d71a90c2bb34ff0f57bc95370ab0aad7cc8b5aa",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/02-baseline.txt": {
+      "submitted": "dc0cd1206f8951ae4b703210886dd0ec0ad4078afc4d619613d42c111f6bb78c",
+      "current": "dc0cd1206f8951ae4b703210886dd0ec0ad4078afc4d619613d42c111f6bb78c",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/03-vitest-prototype.txt": {
+      "submitted": "bd5e0ae27bc1e7554b404343b34e45bff8fe98d6ddd4b2151772778419fb463b",
+      "current": "bd5e0ae27bc1e7554b404343b34e45bff8fe98d6ddd4b2151772778419fb463b",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/04-tsc-prototype.txt": {
+      "submitted": "da9c6f13f263711dcd4072f1a24adc36b0644d407d20428ca9744aa83856e346",
+      "current": "da9c6f13f263711dcd4072f1a24adc36b0644d407d20428ca9744aa83856e346",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/05-native-crate.txt": {
+      "submitted": "05d4d36e9f8833fc25c9b1bd52b051c6e9ebe640b1c7644b94b4122f82ed21cb",
+      "current": "05d4d36e9f8833fc25c9b1bd52b051c6e9ebe640b1c7644b94b4122f82ed21cb",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/06-fixtures-regenerate-identical.txt": {
+      "submitted": "31fe0fccc9fe56b9b730eb25b0ea067a34b4af2e9e00434acf7356bd64fad741",
+      "current": "31fe0fccc9fe56b9b730eb25b0ea067a34b4af2e9e00434acf7356bd64fad741",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/07-production-migration-guards.txt": {
+      "submitted": "6b03633ff7dc733a3e068da6152ce5a4deb3eb1927c062d4833d035256d870b9",
+      "current": "6b03633ff7dc733a3e068da6152ce5a4deb3eb1927c062d4833d035256d870b9",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/08-hygiene.txt": {
+      "submitted": "25944fb65269f99bfaab919bfe7f6c0038fec7b29d28786f490906ce526e7bb4",
+      "current": "25944fb65269f99bfaab919bfe7f6c0038fec7b29d28786f490906ce526e7bb4",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/09-native-app-future-schema-refusal.txt": {
+      "submitted": "ed2e6e68654a5bb195ead270c483603c8da284e0f8ed66f8142d1b33d137f82e",
+      "current": "ed2e6e68654a5bb195ead270c483603c8da284e0f8ed66f8142d1b33d137f82e",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/bench-results.json": {
+      "submitted": "d71d34aa0338af13c2c5c8194a6d2cc037127642cfd6a547cce1afb508bbe359",
+      "current": "d71d34aa0338af13c2c5c8194a6d2cc037127642cfd6a547cce1afb508bbe359",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/bench.txt": {
+      "submitted": "e852d3ef606a7713eee1c6da3a8292626790aef3b45d289753eb1c041f5ffbba",
+      "current": "e852d3ef606a7713eee1c6da3a8292626790aef3b45d289753eb1c041f5ffbba",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S1.txt": {
+      "submitted": "1658f4ed8f053df0c36670a297548c2a6d1796e90354362e51e417b9bcd4e293",
+      "current": "1658f4ed8f053df0c36670a297548c2a6d1796e90354362e51e417b9bcd4e293",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S2.txt": {
+      "submitted": "188b2312d473eb6be098f9fda3bb58013b7340dc29607304a902e1c2237c3823",
+      "current": "188b2312d473eb6be098f9fda3bb58013b7340dc29607304a902e1c2237c3823",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S3.txt": {
+      "submitted": "f8ec7f13573022f2f8e55cb84db78a31931e9d8ab76ebc8439a9a8b3fe3d1e02",
+      "current": "f8ec7f13573022f2f8e55cb84db78a31931e9d8ab76ebc8439a9a8b3fe3d1e02",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S4a.txt": {
+      "submitted": "c0122c5ee4697f4a5a8171c6e2e1b831f788d6e810740a7694b94e2a6290de9c",
+      "current": "c0122c5ee4697f4a5a8171c6e2e1b831f788d6e810740a7694b94e2a6290de9c",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S4b.txt": {
+      "submitted": "bb094a9642bc113de95c22bec6b25a7bdbdafb4e0d5c3dafe9040a4a1215bb04",
+      "current": "bb094a9642bc113de95c22bec6b25a7bdbdafb4e0d5c3dafe9040a4a1215bb04",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S5.txt": {
+      "submitted": "7abd487b379e449f2d5d4016a8aef3601ef02143eef6eeace50386b8ffe3e0a6",
+      "current": "7abd487b379e449f2d5d4016a8aef3601ef02143eef6eeace50386b8ffe3e0a6",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S6.txt": {
+      "submitted": "0963924bc63091610fe5bd65a9b2cbebeeb992262d2a603178f5c41b7458df46",
+      "current": "0963924bc63091610fe5bd65a9b2cbebeeb992262d2a603178f5c41b7458df46",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S7.txt": {
+      "submitted": "10baf07951f9bb0e2e17d510920cb729d6d25cd742516edc961dc6132eef94c2",
+      "current": "10baf07951f9bb0e2e17d510920cb729d6d25cd742516edc961dc6132eef94c2",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/S8.txt": {
+      "submitted": "ab24b1361dfca32416e173dfba8d22f13d33952f2616e11ef7be8caefcc97f5e",
+      "current": "ab24b1361dfca32416e173dfba8d22f13d33952f2616e11ef7be8caefcc97f5e",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/receipts/sensitivity/summary.json": {
+      "submitted": "52d84013573d249c0c5622d37b591eb13549ce1436c1ff6ade43c27da8dd8701",
+      "current": "52d84013573d249c0c5622d37b591eb13549ce1436c1ff6ade43c27da8dd8701",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/scripts/generate_fixtures.py": {
+      "submitted": "a127544980bf97df0c8c11f219085aef0b188fbff3b4d36da00bae584bb37217",
+      "current": "9e4f0cd117eb20784628f56cb16df13f3a2eb7aefc65abec3c90dc0740912f61",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/scripts/run_sensitivity.py": {
+      "submitted": "783e89aecc2fbed631b61557df41ef6fb260ace244ce4b1bba31746099ea993b",
+      "current": "783e89aecc2fbed631b61557df41ef6fb260ace244ce4b1bba31746099ea993b",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/bench.test.ts": {
+      "submitted": "2509523a15de7c456ff5a91a27351db149f00e00fb867c2e465b560ab31942fc",
+      "current": "195b101a3b0fec50e2a24f8e59aa505fd7f9e287164de15262a834193dabb257",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts": {
+      "submitted": "cc27b2d4db5e2e12d13adec4648bad45efbade8da0607a73dedf5d2e090c6f8e",
+      "current": "915aa2164cded1a35ae56262a3537996509fd2f69df71923bd8c03d48a90d2ec",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts": {
+      "submitted": "638c679c7cf503b12d2c35fe8055a88b4e07e90238c6a07cd31e7c85df51245d",
+      "current": "035f5b5f541eab66b9123d62de498a3f69a37998cfac632e656cf60acf42cee3",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/helpers.ts": {
+      "submitted": "251701355da50f74883b6fad743f356cc0a142254564b1611337f55d38df242b",
+      "current": "251701355da50f74883b6fad743f356cc0a142254564b1611337f55d38df242b",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts": {
+      "submitted": "30713008beee64f61d3e900e9367170345461ba34c3fbbc917b509fe4a58168b",
+      "current": "5b077dc8ad11e4a7222e66baefc175c59e4ea5b658d347e68ba184060f91481e",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/populated-fixture.test.ts": {
+      "submitted": "6745db57c57816a0540f9b5dc5d9374e7e9b9a5959294acf9dd71d26633d1e19",
+      "current": "6745db57c57816a0540f9b5dc5d9374e7e9b9a5959294acf9dd71d26633d1e19",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx": {
+      "submitted": "f597a7fc71f7602f3620ca11e75e3f70de58cd6138c274dd1bb3f60350b94274",
+      "current": "f597a7fc71f7602f3620ca11e75e3f70de58cd6138c274dd1bb3f60350b94274",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts": {
+      "submitted": "a110b7ce80dc3c0e87a29b158835297eba1412a4da78822b2376a29f06fdaa61",
+      "current": "a110b7ce80dc3c0e87a29b158835297eba1412a4da78822b2376a29f06fdaa61",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts": {
+      "submitted": "30bf272ac83a8687e90309be830f46d8768d368bf3f70f019b0143b4cbbfaf1d",
+      "current": "99aa7b73ca3d6d94fd65e892502c92c20c105fcae0656db88dd46ff8b8a8bc33",
+      "status": "corrected"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tsconfig.json": {
+      "submitted": "e02239e615eeccad5b4957442b1f237050b30460cfb1ad780672e657cc05fc33",
+      "current": "e02239e615eeccad5b4957442b1f237050b30460cfb1ad780672e657cc05fc33",
+      "status": "unchanged"
+    },
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts": {
+      "submitted": "a0452221657f6eca595d3311e8408c607b254d5de6ec0f43cf9a55800d03c10f",
+      "current": "a0452221657f6eca595d3311e8408c607b254d5de6ec0f43cf9a55800d03c10f",
+      "status": "unchanged"
+    }
+  },
+  "added": {
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceResult.ts": "fc489588e4c49c362258a50b004caceab3f1419c91a4666c915cf5d920f55ae0",
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts": "45b5149e40d9866c2893c1f252023451f114545c69c76e0441a408204b29b054",
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts": "9deaac833d0488fdafc3d4ccc10e84ab1b6dd13f55f310ee735602e3bc7a2821",
+    "docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx": "936f6b7708a2056c5b57c5c463790df346728b734640732ec4c8da6f9464a5b4",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/README.md": "221bca9f0d346b050ff7e5495cbf703f857fbe17f812b4895607f36393f1383e",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/diagnostic-equivalents/review-diagnostics-valid-erase.test.ts": "a5de8be4e76b0f073f254930528c6f86631f6f7bdf084d597ffcb088253a6633",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/00-submission-identity-and-anchors.txt": "e47b29159049fe29f3ad1c4199ab366e70404a5ad96ee7b3bf5f19d2c176bf09",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/01-toolchain.txt": "7afc6a1291d9c8287a7ca9d3adb91a6218223f7793255aec388d19c0a2c95389",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/02-baseline-production-unchanged.txt": "221c1d6ce0fbbc345ff8af8b530ac3379d8c3dab625778cee51adaa7545b95f1",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/03a-frozen-submission-vitest.txt": "60ac0f71197d172949de77be60d1624a8725a6f8ee5bfa4201f5357ebdd23c4b",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/03b-frozen-submission-tsc.txt": "bdfd6260cd7cf1bff3c3efd01f72cb07af02036a227aa76de61a7d9c0b7ac8c7",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/03c-frozen-submission-native.txt": "e47d5f8c27664729c4cc7b063371fbdc0bf44a579cbc9ea4410794360bd2f52e",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/04a-frozen-review-diagnostics-ts.txt": "3280775042804898c57f97f6e4dae3d504f83b8cfdb5a6e82f0aec2e3a36f0ff",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/04b-frozen-review-diagnostics-native.txt": "b8520bf40b0a8e6b6cf65324cb04a67cddd40400808ea9482fff11768d233931",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/05-new-regressions-on-frozen-submission-ts.txt": "0286d97db01ee19b24bcb6ff3aa1335ecccd16341a459d87ca3338e1583eeef0",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/06-new-fixtures-on-frozen-submission-native.txt": "2f5a2d4b950152b5140b30b285b42f2b7c8988fdbf720585863d0fbf0e7b3292",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/07-vitest-corrected.txt": "732db459f5883bbf14185901e4ce73bdd45983c4115f9107bb84ea72710435c0",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/08-tsc-corrected.txt": "b396d3b013b3447824966fad55dc4ae0b29b9a1693dad54791959254f281a684",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/09-native-corrected.txt": "282f350a5cef6820ae62f7c974be915c351004abf017af99efc068c6d3c9aeec",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/10-reviewer-diagnostics-on-corrected-ts.txt": "de11d7130bcd6fcb6dd56270a77ef19a3353d46c78a1f1c07fd20753f0920124",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/11a-r2a-valid-erase-equivalent-on-frozen.txt": "f4b8ec95f50604025d6de4a07c090141eb00186a1c9c52c3cf527ae4ff4b5f47",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/11b-r2a-valid-erase-equivalent-on-corrected.txt": "449317675c3a520284477900e1c1154decf5514accd6f38576f49feac0f91b78",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/12-reviewer-diagnostics-on-corrected-native.txt": "5259dc30fb8d72c6c9f0135354b195f364a781e6a5856b2c6823b48db49823b9",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/13-fixtures-regenerate-identical.txt": "57913d0cb106375e2fa74315ad0352db62606ae45c23a7284c07a54cdd82a497",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/14-hygiene.txt": "e93ed3a4c042ee16236a997482eed014f09aee89026a6fecbf0efbf25f76747c",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/bench-results.json": "f800f206faf11c8fe40c1d14e6611afbbfcfdf07255064028d7cbd21b8c7888f",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/bench.txt": "f93ae5630cc98137f6043de335c1676855554cc8db4e68bae7a9d86d30c411ff",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C1.txt": "abe20d9edd7e6bb20a0bb3b74f850ff3a3b429b65a35bac6298eb36a38f74d4d",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C10.txt": "07e5261454be4f090ef6f4c494707e1953c68c244510421f10c3d535086c649f",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C11.txt": "c3c62562093c35b4b7e18979b2279c050c10a10bed48a224801a527c3c20c296",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C12.txt": "1d0385d332afa4d4643af8058da7e5f94ae05d9f4c8af7f6cc978e1a2358bccb",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C13.txt": "4f128aaeae1f1dae22750bf6a20e59b6b6ead2e0a110ff3fa3d9c8ee375fd18b",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C14.txt": "270c0605e439312e32225e07cd78169b4d54ffe65577c91070350e0cd1a35b21",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C15.txt": "ea1f51f3d8b1205f83172accca07ef1668d231c92fd518f2c46d6ba65b2d54be",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C16.txt": "c9654b5c90b186502232cc7826a9b30b5e63a8beeffd4b26a76e0144b9f52851",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C17.txt": "b49359c9a93af810aaa56224712e8c96fc7199887e442b2493aa078dceb6bfce",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C18.txt": "72125e649633aadfeb8589b6985cadb4cca97cd68965d15880db848a2cc32e1a",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C2.txt": "904d31b855d386a06ef8f7bad690a7b9f2c002eff541a4955bc096ac32be5208",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C3.txt": "530d079e38302115be69b484624c36cce23729c06645adb2e1cef9b59d2f7298",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C4.txt": "fafbfdd93c0d1327f02b991ae0ad20cc4fba3f6cbaf7b6ff1914e0b870932328",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C5.txt": "3cff288589842fe5e86c91b414a2e32944fef4bc01909238be24984a54bb4767",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C6.txt": "ab69f3c9df424d0f35ddde91bcbee46d2b7a4adc7dc0b3f2f7e968936d1e4544",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C7.txt": "8243540f723ee013afe7268d61b93d3a3698606276e4a82e41002395e7ef4ddd",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C8.txt": "f8bd72379f6bfe91a648b332eea7082bdebbfbf7738f861e5799600028466070",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/C9.txt": "ba798036e2934a97d1742838fc14cd825d3ab8dada81c8e86902ad07f8a7852b",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/N1.txt": "d372f784ba7608ce3e9f0d7511fb8f1f6d9baa65acc60954cb2a10f35597ba65",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/N2.txt": "579ff6a8b73f475699528c485d6564d0b270272691949c4c54e2c7a0f04eb3d7",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/N3.txt": "8220e8bbed546317f2313f28bd978b4afaea665f14e1c897a6c369eef0e19611",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/N4.txt": "390db78b21b59721c330a1f7739562eba107ce64b8b5d55aecd6e2910bf78a1e",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/N5.txt": "f5c43a0d844376ffb1702cbda28dfa03b62b7fa5d0dca5364808eab9d51fbbe5",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S1.txt": "3d4186c7f1cb9ce2be4d7f66f0e4492c3e470992ac9a1a40066067e4a0f20635",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S2.txt": "66c7a0f901209360d1d2651671b157d4bfba69467ceb1e525e7cc07156b59797",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S3.txt": "886da3b9badd0ff0f2c18ce21efb515e8f2671078544412b3a77638a15e06550",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S4a.txt": "cc005b8ce95e464d58fea3fddccf9a85deea0196ab83a228fdcf281208f8ca15",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S4b.txt": "0423423a5e59133736694ff8f42707ea62c58aeeb884d6b14d476e5bb798cd52",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S5.txt": "8bb6d1e5117cdaedda80141a91a718956623f730c8ed426466e3c5e92b7a10c0",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S6.txt": "d4617d6d4bb20e7f1291e68ba5cdb2a74ae5c79f53c733aff59496c1ccb0176c",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S7.txt": "e7e51d04005807d05b0d15e33ce24c90c2a5d538eee82748cab2e9c7c64ce7b2",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/S8.txt": "0156ce31ee7566f18f0ed869ff1f4e9a71900c03d0b44b56c0053e2dd92a170f",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/run.log": "1c672ad2cd24e75d5ab77d0ca4a24e5ae757c30712d6dd7baef2b54f3b17dc4b",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/receipts/sensitivity/summary.json": "976506c2f625e88cbff7a69f345abefe24d6db0e29517de9320e0df2a59080ae",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/scripts/receipt.sh": "05318411b91d49533191f51e95231d58e936f39746133feffb4208d6a9b988f2",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/scripts/run_correction_sensitivity.py": "fe7ac3cc14ed4342bd7b63b4a815bd7e18345769260ec54882e8315d99781be9",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/scripts/verify_submission_identity.py": "f771f84e129d7918aa8dcf4b205e108ccc29b964b37e24c9c4f0e5c8a09a1ab1",
+    "docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/scripts/write_manifests.py": "82c2876d0865b12249f23410f16170aee7b4ef55236b2e4d925fff8a5941ce74",
+    "docs/M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md": "87d5c9624b79b72367e8391106903c7e1dc12220086eb57062f5797536c49ac0"
+  }
+}

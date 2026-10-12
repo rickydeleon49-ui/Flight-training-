@@ -1,0 +1,13 @@
+   Compiling m3-skills-evidence-native v0.0.0 (/private/tmp/hfd-m3-corrections-independent-review/docs/evidence/m3-skills-evidence-scope-2026-10-10/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/review_diagnostics.rs (/tmp/hfd-m3-rereview-native-target/debug/deps/review_diagnostics-0c82d5f3c2731dfe)
+
+running 5 tests
+test r6a_later_builtin_relabel ... ok
+test control_builtin_retirement ... ok
+test r5_foreign_receipt_result ... ok
+test r6b_normalized_active_label_collision ... ok
+test control_valid_candidate ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+

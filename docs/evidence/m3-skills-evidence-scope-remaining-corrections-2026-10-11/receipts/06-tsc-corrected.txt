@@ -1,0 +1,5 @@
+$ PATH=/opt/homebrew/opt/node@22/bin:$PATH node node_modules/typescript/bin/tsc --noEmit -p docs/evidence/m3-skills-evidence-scope-2026-10-10/tsconfig.json && echo tsc-ok
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T08:01:41Z
+tsc-ok
+# exit=0

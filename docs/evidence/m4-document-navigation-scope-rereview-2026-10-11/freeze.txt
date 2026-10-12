@@ -1,0 +1,14 @@
+Frozen current paths: 25
+Changed original paths: [
+  "docs/M4_DOCUMENT_NAVIGATION_AND_VIEWER_EVALUATION_2026-10-11.md",
+  "docs/M4_CONDITIONAL_IMPLEMENTATION_PROMPT_2026-10-11.md",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/README.md",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/SHA256SUMS",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/candidate/candidate_migration_0015.sql",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/proof/contractModel.mjs",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/proof/proof.test.mjs",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/receipts/02-baseline.txt",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/receipts/03-proof-suite.txt",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/receipts/04-hygiene.txt",
+  "docs/evidence/m4-document-navigation-eval-2026-10-11/scripts/run_proof.mjs"
+]

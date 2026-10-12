@@ -1,0 +1,37 @@
+# NA-13: cursor filter binding
+# file: src-tauri/src/skill_evidence.rs
+# test: skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters
+$ cargo test --locked --manifest-path src-tauri/Cargo.toml skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters -- --exact
+# cwd: /private/tmp/m3-current-sensitivity/tree
+--- removed
+            if cursor.filters != filters {
+                return Err(Code::InvalidArgument);
+            }
+
++++ added
+
+--- output (last 40 lines)
+running 1 test
+test skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters ... FAILED
+
+failures:
+
+---- skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters stdout ----
+
+thread 'skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters' (819475) panicked at src/skill_evidence_tests.rs:855:10:
+called `Result::unwrap_err()` on an `Ok` value: Object {"items": Array [], "nextCursor": Null}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    skill_evidence::tests::stale_cursors_restart_and_cursors_are_bound_to_their_filters
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 470 filtered out; finished in 0.03s
+
+   Compiling her-flight-deck v0.5.3 (/private/tmp/m3-current-sensitivity/tree/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.87s
+     Running unittests src/lib.rs (/private/tmp/m3-current-sensitivity/target/debug/deps/her_flight_deck_lib-70a0f6104ab4340e)
+error: test failed, to rerun pass `--lib`
+# exit=101
+# caught=True
+# restored=True

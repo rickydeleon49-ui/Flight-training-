@@ -1,0 +1,26 @@
+{
+  "submitted_count": 32,
+  "manifests": [
+    {
+      "pack": "m4-document-navigation-scope-remaining-corrections-2026-10-11",
+      "count": 28,
+      "mismatches": []
+    },
+    {
+      "pack": "m4-document-navigation-scope-rereview-2026-10-11",
+      "count": 40,
+      "mismatches": []
+    },
+    {
+      "pack": "m4-document-navigation-scope-review-2026-10-11",
+      "count": 29,
+      "mismatches": []
+    },
+    {
+      "pack": "m4-document-navigation-eval-2026-10-11",
+      "count": 21,
+      "mismatches": []
+    }
+  ],
+  "archived_originals": "6/6 byte identical"
+}

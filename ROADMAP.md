@@ -1,3 +1,119 @@
+## M3 production implementation reviewed and completed — 11 October 2026
+
+The authorized first production slice is complete: migration 14, native/TS/browser transactions and restore guards, skills/debrief UI, history and explicit follow-up/status/confidence. Codex took over the interrupted implementation at the owner's request, fixed confirmed retry/draft/provenance/navigation defects, completed the browser-driver checks, strengthened two masked history-cursor regressions and finished evidence/benchmarks. Final local gate receipts and integration conditions are in the [review and completion report](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_REVIEW_AND_COMPLETION_2026-10-11.md). GitHub merge requires required checks for the exact published head.
+
+M3-D1–D9 approval persists; shared accepted fixtures, shipped migrations and dependencies are preserved. M4 remains separately assigned preparation with OD-1–OD-10 proposed. G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; this is source-level work, not installed/signing/release acceptance. [Next model-neutral reviewer handoff](docs/M3_COMPLETION_NEXT_REVIEWER_PROMPT_2026-10-11.md).
+
+## M3 production slice authorized — 11 October 2026
+
+**Owner-approved M3-D1–D9 as written.** The owner approved the implementation task after independent corrected-scope acceptance. [Decision record](docs/M3_SKILLS_EVIDENCE_OWNER_APPROVAL_2026-10-11.md); [one active model-neutral production assignment](docs/M3_SKILLS_EVIDENCE_PRODUCTION_START_PROMPT_2026-10-11.md). Both former conditional gates are satisfied; earlier PROPOSED/pending-approval entries remain historical.
+
+Implement one complete native/TypeScript/UI slice from current main in an isolated worktree, preserving the primary and preparation checkouts and parallel M4 work. Copy accepted fixtures, retain reviewed recovery contracts, and leave the implementation uncommitted/unpushed for independent review. No production code is implemented by this approval publication. G1–G3 remain deferred/unexecuted/unverified; M4, installed testing, signing and release are separate.
+
+## M3 corrected scope/prototype accepted — 11 October 2026
+
+**Preparation ACCEPTED; production awaits owner approval of M3-D1–D9.** M3-R8–R10 closed: independent 192 prototype tests / 3 opt-in skips, strict typecheck, 8 native tests, 7 TS/UI + 2 native frozen diagnostics, all exit 0; 7 independently sampled decisive reversions caught. 190 submitted hashes / 57 latest and 60 current-scope checksums / 7 document hashes / 30 anchors verify. Earlier correction history remains preserved.
+
+- [Acceptance](docs/M3_SKILLS_EVIDENCE_SCOPE_ACCEPTANCE_2026-10-11.md).
+- [Nine proposed defaults](docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md); [conditional production assignment](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md) activates only after owner approval.
+- No production migration/dependency/app source change; candidate0014 unregistered. Native production writer/readers unbuilt; UI evidence jsdom. G1–G3 deferred/unexecuted/unverified. Both dirty worktrees preserved.
+
+## M3 remaining corrections M3-R8–R10 — 2026-10-11
+
+**Corrected, pending independent re-review.** The interrupted R8–R10 package is complete, uncommitted and unpushed (`codex/m3-skills-evidence-scope`, base `48fa47d`).
+
+**The three fixes:**
+- **M3-R8:** the form acknowledges the **complete** draft (wording, date, who said it, instructor name, skill and debrief) on every submission path. It keeps every changed field and names what is unsaved.
+- **M3-R9:** both validators require history → receipt ownership as well as receipt → history. Incomplete hand-written controls were given their real receipts, and a real-writer library fixture was added.
+- **M3-R10:** a confirmed erasure evicts that observation's loaded history, cursor and list entry and re-reads the summary. Late answers cannot restore it; outages keep loaded pages.
+
+**Results:**
+- **192** prototype tests pass (3 opt-in skipped); typecheck is clean; **8** native tests pass.
+- **85 + 29** shared cases agree on node:sqlite, sql.js and rusqlite.
+- The re-review's frozen diagnostics pass **7/7** and **2/2**.
+- **17/17** decisive reversions are caught. One equivalent mutant is reported and explained.
+- Fixtures regenerate byte for byte; restore validation is about 3–9% slower.
+
+**First-review diagnostics:** five fail on the current source. They are R2a's invalid setup, R4 ×2 on the superseded unpaged API, and the built-in retirement control, whose missing receipt R9 now refuses. Valid equivalents pass on all engines.
+
+**Links:**
+- Report: [M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md](docs/M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_REPORT_2026-10-11.md).
+- Evidence: [m3-skills-evidence-scope-remaining-corrections-2026-10-11](docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/README.md).
+
+**Still true:**
+- M3-D1–D9 remain **PROPOSED**; candidate 0014 is unchanged and unregistered; production is unchanged.
+- The native writer and readers are unbuilt, and the UI evidence is jsdom only.
+- G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; post-receipt recovery remains BLOCKED / source-covered.
+
+## M3 scope independent re-review — 11 October 2026
+
+**CORRECTIONS REQUIRED, narrowed to M3-R8–R10.** Independently verified corrected baseline: 162 prototype tests passed / 2 opt-in skipped, strict typecheck clean, native 7 passed; earlier native diagnostics 5 passed. Most R1–R7 work is verified and retained. Remaining issues: full-draft metadata acknowledgment (R8), reverse history-to-receipt validation (R9), and cached-content eviction after confirmed erasure (R10). New diagnostics reproduce 6 TS/UI failures and 1 native failure with positive controls passing.
+
+The reviewer corrected the earlier R2a diagnostic's invalid erase setup; the valid-argument equivalent fails on original source and passes on corrected source. The old unpaged R4 API is intentionally superseded. Do not reopen those settled corrections.
+
+- [Independent re-review](docs/M3_SKILLS_EVIDENCE_SCOPE_REREVIEW_2026-10-11.md).
+- [One active model-neutral correction assignment](docs/M3_SKILLS_EVIDENCE_SCOPE_REMAINING_CORRECTIONS_PROMPT_2026-10-11.md).
+- Correction submission published for collaboration, not accepted production code. M3-D1–D9 remain PROPOSED. Candidate 0014 remains unchanged/unregistered. G1–G3 deferred/unexecuted/unverified; post-receipt recovery blocked/source-covered. Both active dirty worktrees preserved.
+
+## M3 scope/prototype corrections M3-R1–R7 — 2026-10-11
+
+**Corrected, pending independent re-review.** All seven review findings are fixed together in the scope/prototype worktree (`codex/m3-skills-evidence-scope`, base `48fa47d`). The work is uncommitted and unpushed.
+
+**Before editing:**
+- the 57 frozen submitted hashes, the 51 original checksums and the 30 production anchors were verified;
+- the frozen state was reproduced exactly (102 passed; review diagnostics 17 failed / 4 passed in TS/UI and 3 failed / 2 passed natively).
+
+**Results on the corrected code:**
+- **162** prototype tests pass (2 opt-in skipped); strict typecheck is clean; **7** native tests pass.
+- **72** validation and **29** constraint cases agree on node:sqlite, sql.js and rusqlite.
+- The review's native diagnostics pass **5/5**; its TS/UI diagnostics pass **18/21**.
+  - The two R4 cases call the deliberately replaced unpaged `history(id)`; the paged equivalent passes.
+  - R2a's own setup sends an invalid erase request. With only that argument corrected, it fails on the frozen code and passes on the corrected code.
+- 23 new reversions are all caught; S1–S8 were rechecked (S4a still masked by `ConnectionOwner`).
+- Benchmarks were re-run for the changed paths.
+
+**Links:**
+- Report: [M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md](docs/M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_REPORT_2026-10-11.md).
+- Evidence: [m3-skills-evidence-scope-corrections-2026-10-11](docs/evidence/m3-skills-evidence-scope-corrections-2026-10-11/README.md).
+- Corrected [scope](docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md) and [conditional implementation prompt](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md).
+
+**Still true:**
+- M3-D1–D9 remain **PROPOSED**, pending owner approval.
+- Candidate 0014 is unchanged and unregistered.
+- Production code, migrations 0001–0013, dependencies and release configuration are unchanged.
+- The native writer is specified, not built; the UI evidence is jsdom only.
+- G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; post-receipt recovery remains BLOCKED / source-covered.
+- The primary clone's Mac preflight work was left untouched.
+
+## M3 scope/prototype independent review — 2026-10-10
+
+**CORRECTIONS REQUIRED: M3-R1–R7.** The original 102 prototype tests, strict typecheck and 7 native tests pass independently, but frozen reviewer diagnostics reproduce 17 TS/UI failures and 3 native failures, with valid controls passing. Fix write/publication ownership, uncertain-save reconciliation and draft retention, StrictMode lifecycle, bounded access to every revision, receipt ownership, restored catalog rules and date-edit pagination before technical acceptance.
+
+- Review: [M3_SKILLS_EVIDENCE_SCOPE_REVIEW_2026-10-10.md](docs/M3_SKILLS_EVIDENCE_SCOPE_REVIEW_2026-10-10.md).
+- Next model-neutral task: [M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_PROMPT_2026-10-10.md](docs/M3_SKILLS_EVIDENCE_SCOPE_CORRECTIONS_PROMPT_2026-10-10.md).
+- Original submission/evidence published for collaboration, **not accepted**. M3-D1–D9 remain PROPOSED; conditional production assignment remains inactive. Candidate 0014 is evidence only, not registered.
+- Original dirty M3 worktree and the primary clone's separate Mac preflight documents were preserved. G1–G3 remain DEFERRED / UNEXECUTED / UNVERIFIED; post-receipt recovery remains BLOCKED / source-covered.
+
+
+**10 October M3 skills and feedback evidence: scope and prototype PROPOSED, pending senior review.** Delivered together:
+- the [scope](docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md): contracts, UI flow, candidate schema and nine PROPOSED owner defaults (M3-D1–D9);
+- the [evidence pack](docs/evidence/m3-skills-evidence-scope-2026-10-10/README.md): candidate migration 0014, a runnable disposable prototype, shared fixtures, a rusqlite twin, receipts and SHA256SUMS;
+- the [conditional implementation prompt](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_PROMPT_2026-10-10.md).
+
+Results:
+- Prototype tests: 102 passed on node:sqlite and sql.js (jsdom for the UI); prototype typecheck exit 0.
+- Native crate: 7 passed on the app's own rusqlite 0.32.1 with bundled SQLite.
+- Shared contracts: 25 validation and 29 constraint cases agree on all three engines.
+- Genuine populated schema 13 → 14 upgrade keeps every retained row; a failed upgrade rolls back.
+- Backup/restore round trips match; a tampered backup is refused; the shipped schema-13 driver refuses 14 with its bytes unchanged.
+- Reversions: 8 caught, 1 masked as expected.
+- Source-level benchmarks to 10,000 observations: pages flat at about 0.1–0.23 ms.
+- One NULL-unsafe CHECK was found and fixed during prototyping.
+
+Production source, registry and dependencies are unchanged (`origin/main` `48fa47d`). Work is in worktree `/Users/rickymac/code/Flight-training-m3-skills-scope`, branch `codex/m3-skills-evidence-scope`, uncommitted and unpushed. New M3 retention and product defaults need scope acceptance and owner approval before production. Installed G1–G3 stay DEFERRED/UNEXECUTED/UNVERIFIED; post-receipt recovery stays BLOCKED/source-covered. No app launch, provider call, installer, signing or release.
+
+**10 October active roadmap continuation — M3 skills and feedback evidence:** The owner requested continuing the roadmap after deferring installed Mac verification. [Next model-neutral assignment](docs/M3_SKILLS_EVIDENCE_SCOPE_PROMPT_2026-10-10.md): deliver one scope/runnable disposable prototype/candidate-schema/conditional implementation package linking debrief observations to stable skills and follow-up actions, with honest attribution and retained history. New M3 defaults remain proposed until reviewed and approved; no production migration is activated by this handoff. Accepted M1/M2 source is preserved; remaining M2 UX requirements must be recorded rather than assumed complete. G1–G3 stay deferred/unexecuted/unverified; signing/release gates remain separate.
+
 **8 October C2 production source accepted for integration:** C2SRC-R1/R2 closed. All 32 source hashes, 57 original and 30 correction evidence checksums verify. Independent affected/frozen tests: 112 passed / 1 skipped; typecheck/build pass. R2's prior baseline precondition error is corrected in the acceptance; semantic revert independently fails at the real assertion. Submitted final gate: 2,808 frontend pass / 5 skips / zero unhandled; 420 Rust pass / 6 ignored. [Source acceptance](docs/M2_CARD_REVIEW_C2_SOURCE_ACCEPTANCE_2026-10-08.md); containing source PR supplies exact-head CI and merge. Library-wide views are complete; split lineage and installed/platform M2 acceptance remain. [Next model-neutral split-lineage scope/proof assignment](docs/M2_SPLIT_LINEAGE_SCOPE_PROMPT_2026-10-08.md). Earlier pending C2 rows are historical after merge. No signing/release activation.
 
 **7 October C2 final-corrections re-review:** 34 submitted hashes verify; all 37 frozen cases and 24 submitted proof cases pass. Preserve filters, current-content revalidation, event identity, basic Retry, history/upgrade proof, actual batching and mutation survival enforcement. Focused follow-up: two controls pass / nine assertions fail across pending consumption/history cursor ownership (R8), authoritative reset/order and synchronous ownership (R9), and unenforced card/raw-byte caps (R4). Owner mutation still fails with its injected mutation removed. [Specific review](docs/M2_CARD_REVIEW_C2_FINAL_REVIEW_2026-10-07.md); [one focused read-pipeline assignment](docs/M2_CARD_REVIEW_C2_READ_PIPELINE_CORRECTIONS_PROMPT_2026-10-07.md). C2 scope remains unaccepted and D1–D9 proposed; C1 remains accepted. The original dirty clone and all prior evidence are preserved. No production/installed/release work authorized.
@@ -188,6 +304,8 @@ Automatic split parts retain per-part guides and gain parent/source page-range m
 - Benchmark 100/2,500/5,000 materials and 10,000 review items; query/paginate history rather than loading it all in `AppDataContext`.
 
 ## 8. M3 — Skills and feedback evidence
+
+**11 October delivered first production slice:** the 15 built-in/custom catalog, deliberately attributed debrief observations, append-only paged history, deletion snapshots and irreversible erasure, explicit follow-up links/addressed choice, and separate status/confidence now have native, TypeScript, browser and UI implementations. [Completion review](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_REVIEW_AND_COMPLETION_2026-10-11.md) records the gate and exact GitHub integration conditions. ACS mappings, automatic extraction, verified-instructor input and flight-proficiency recommendations are not added by this slice. Installed G1–G3 remain deferred/unexecuted/unverified.
 
 Use a small versioned catalog with stable IDs and optional ACS mappings. Verify mappings against the [FAA ACS index](https://www.faa.gov/training_testing/testing/acs); broad library topics remain unchanged. Allow custom skills without claiming they are official ACS elements.
 

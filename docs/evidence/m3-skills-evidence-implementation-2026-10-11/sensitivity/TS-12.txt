@@ -1,0 +1,45 @@
+# TS-12: cursor filter binding
+# file: src/data/skillEvidenceReader.ts
+# test: src/data/skillEvidenceTransaction.test.ts > a date edit crossing the cursor restarts the list
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'a\\ date\\ edit\\ crossing\\ the\\ cursor\\ restarts\\ the\\ list'
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+--- removed
+if (!sameFilters(c.filters, filters)) {
++++ added
+if (false && !sameFilters(c.filters, filters)) {
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-sens/tree
+
+ ❯ src/data/skillEvidenceTransaction.test.ts (24 tests | 2 failed | 22 skipped) 86ms
+     × a date edit crossing the cursor restarts the list instead of repeating or skipping 29ms
+     × a date edit crossing the cursor restarts the list instead of repeating or skipping 56ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  12:00:03
+   Duration  290ms (transform 99ms, setup 0ms, import 119ms, tests 86ms, environment 0ms)
+
+(node:89793) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence reads (node:sqlite) > a date edit crossing the cursor restarts the list instead of repeating or skipping
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence reads (sql.js) > a date edit crossing the cursor restarts the list instead of repeating or skipping
+AssertionError: expected 'applied' to be 'INVALID_ARGUMENT' // Object.is equality
+
+Expected: "INVALID_ARGUMENT"
+Received: "applied"
+
+ ❯ src/data/skillEvidenceTransaction.test.ts:253:92
+    253|       const forged = JSON.parse(cursor);
+    254|       forged[7] = 999;
+    255|       expect(await codeOf(store.page({ skillId: "builtin.normal_landin…
+       |                            ^
+    256|       await store.act(edit(ids[0]!, 1, "Note 1, reworded"));
+    257|       const second = await store.page({ skillId: "builtin.normal_landi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+# exit=1
+# caught=True
+# restored=True

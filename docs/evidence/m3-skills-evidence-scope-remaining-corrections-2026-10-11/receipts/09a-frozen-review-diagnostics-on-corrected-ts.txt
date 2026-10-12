@@ -1,0 +1,98 @@
+$ PATH=/opt/homebrew/opt/node@22/bin:$PATH node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-ui-diagnostics.test.tsx --reporter=verbose
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c4
+# utc: 2026-10-11T16:59:12Z
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c4
+
+(node:61687) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R1a] acknowledged save retains draft identity while its refresh is held 79ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R1b] late A acknowledgment cannot clear B saving or publish A notice on B 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R1c] refresh superseding a held older page releases its pagination lock 12ms
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R2a] changed draft after unknown then erase cannot resurrect the erased save 13ms
+   → erase_observation takes exactly: action, operationId, observationId, confirm.
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R2b] empty history is not proof that a still-pending uncertain write did not land 12ms
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (node:sqlite) > [M3-R4] earliest wording remains reachable after 100 later revisions 25ms
+   → observationId must be a UUID v4.
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (node:sqlite) > [M3-R7] a date edit between pages cannot return an already-seen observation twice 12ms
+(node:61688) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (sql.js) > [M3-R4] earliest wording remains reachable after 100 later revisions 81ms
+   → observationId must be a UUID v4.
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (sql.js) > [M3-R7] a date edit between pages cannot return an already-seen observation twice 21ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [M3-R5] receipt with correct action but foreign observation result is refused 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [M3-R6a] later built-in revision cannot replace the pinned catalog label 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [M3-R6b] normalized active custom and built-in label collision is refused 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [control] valid candidate accepted 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-ui-diagnostics.test.tsx > [M3-R3] real React StrictMode replay finishes the live evidence load 43ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-ui-diagnostics.test.tsx > [M3-R2c] discovering an earlier save does not discard the newly edited unsaved wording 82ms
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [control] built-in retirement preserving catalog wording accepted 14ms
+   → expected 'refuse' to be 'accept' // Object.is equality
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [M3-R5] receipt with correct action but foreign observation result is refused 21ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [M3-R6a] later built-in revision cannot replace the pinned catalog label 20ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [M3-R6b] normalized active custom and built-in label collision is refused 19ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [control] valid candidate accepted 18ms
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [control] built-in retirement preserving catalog wording accepted 18ms
+   → expected 'refuse' to be 'accept' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R2a] changed draft after unknown then erase cannot resurrect the erased save
+SkillEvidenceError: erase_observation takes exactly: action, operationId, observationId, confirm.
+ ❯ refuse docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceTransaction.ts:82:9
+     80|
+     81| function refuse(code: SkillEvidenceError["code"], message: string): ne…
+     82|   throw new SkillEvidenceError(code, message);
+       |         ^
+     83| }
+     84|
+ ❯ decodeSkillEvidenceAction docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceTransaction.ts:119:5
+ ❯ executeSkillEvidenceAction docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceTransaction.ts:290:18
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/candidateEngine.ts:175:29
+ ❯ src/data/connectionOwner.ts:528:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'INVALID_ARGUMENT' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (node:sqlite) > [M3-R4] earliest wording remains reachable after 100 later revisions
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (sql.js) > [M3-R4] earliest wording remains reachable after 100 later revisions
+SkillEvidenceError: observationId must be a UUID v4.
+ ❯ readObservationHistory docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceReader.ts:405:11
+    403| export async function readObservationHistory(query: Query, input: Obse…
+    404|   if (typeof input?.observationId !== "string" || !UUID_V4.test(input.…
+    405|     throw new SkillEvidenceError("INVALID_ARGUMENT", "observationId mu…
+       |           ^
+    406|   }
+    407|   const limit = historyLimit(input.limit);
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/candidateEngine.ts:179:47
+ ❯ src/data/connectionOwner.ts:528:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'INVALID_ARGUMENT' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [control] built-in retirement preserving catalog wording accepted
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [control] built-in retirement preserving catalog wording accepted
+AssertionError: expected 'refuse' to be 'accept' // Object.is equality
+
+Expected: "accept"
+Received: "refuse"
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts:86:19
+     84|   const x=await setup(name); for(const sql of [...cases.baseline,...en…
+     85|   const verdict=await validateSkillEvidenceState((s,p)=>x.engine.query…
+     86|   expect(verdict).toBe(entry.expect);
+       |                   ^
+     87|  });
+     88| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 16 passed (21)
+   Start at  09:59:12
+   Duration  749ms (transform 337ms, setup 0ms, import 487ms, tests 551ms, environment 252ms)
+
+# exit=1

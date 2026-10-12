@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: control: valid bounded physical page and child-to-root translation
+ok 1 - control: valid bounded physical page and child-to-root translation
+  ---
+  duration_ms: 0.556417
+  type: 'test'
+  ...
+# Subtest: control: root page outside child range is rejected
+ok 2 - control: root page outside child range is rejected
+  ---
+  duration_ms: 0.086666
+  type: 'test'
+  ...
+# Subtest: M4-R2: NaN total page count is rejected
+ok 3 - M4-R2: NaN total page count is rejected
+  ---
+  duration_ms: 0.0335
+  type: 'test'
+  ...
+# Subtest: M4-R2: Infinity total page count is rejected
+ok 4 - M4-R2: Infinity total page count is rejected
+  ---
+  duration_ms: 0.024667
+  type: 'test'
+  ...
+# Subtest: M4-R2: fractional total page count is rejected
+ok 5 - M4-R2: fractional total page count is rejected
+  ---
+  duration_ms: 0.031375
+  type: 'test'
+  ...
+# Subtest: M4-R2: NaN split page cannot produce a successful destination
+ok 6 - M4-R2: NaN split page cannot produce a successful destination
+  ---
+  duration_ms: 0.030583
+  type: 'test'
+  ...
+# Subtest: M4-R2: string split page cannot produce a successful destination
+ok 7 - M4-R2: string split page cannot produce a successful destination
+  ---
+  duration_ms: 0.02325
+  type: 'test'
+  ...
+# Subtest: M4-R2: unknown printed label cannot invent physical page one
+ok 8 - M4-R2: unknown printed label cannot invent physical page one
+  ---
+  duration_ms: 0.104542
+  type: 'test'
+  ...
+# Subtest: M4-R2: numeric printed label without provenance remains unresolved
+ok 9 - M4-R2: numeric printed label without provenance remains unresolved
+  ---
+  duration_ms: 0.183334
+  type: 'test'
+  ...
+# Subtest: M4-R2: deleted root cannot be substituted by immediate parent using root coordinates
+ok 10 - M4-R2: deleted root cannot be substituted by immediate parent using root coordinates
+  ---
+  duration_ms: 0.204125
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.45

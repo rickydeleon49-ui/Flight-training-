@@ -1,0 +1,15 @@
+$ npx vitest run src/state/skillEvidence/corrections-controller.test.ts -t '\\[M3\\-R1a\\]\\ an\\ acknowledged\\ save\\ keeps\\ its\\ draft\\ identity'
+# cwd: /private/tmp/m3-current-sensitivity/tree
+
+ RUN  v4.1.11 /private/tmp/m3-current-sensitivity/tree
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 18 skipped (19)
+   Start at  13:26:06
+   Duration  360ms (transform 168ms, setup 0ms, import 203ms, tests 78ms, environment 0ms)
+
+(node:98731) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+# exit=0

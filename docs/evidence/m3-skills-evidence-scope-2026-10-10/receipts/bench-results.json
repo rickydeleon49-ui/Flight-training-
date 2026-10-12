@@ -1,0 +1,318 @@
+{
+  "node": "v22.23.3",
+  "platform": "darwin-arm64",
+  "results": [
+    {
+      "engine": "node:sqlite",
+      "observations": 100,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 100,
+        "medianMs": 0.104,
+        "p95Ms": 0.146,
+        "maxMs": 0.325
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.111,
+        "p95Ms": 0.404,
+        "maxMs": 0.404
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.06,
+        "p95Ms": 0.09,
+        "maxMs": 0.09
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.031,
+        "p95Ms": 0.124,
+        "maxMs": 0.124
+      },
+      "fullWalk50": {
+        "pages": 2,
+        "n": 2,
+        "medianMs": 0.239,
+        "p95Ms": 0.239,
+        "maxMs": 0.239,
+        "totalMs": 0.4
+      },
+      "restoreValidationMs": 11.4
+    },
+    {
+      "engine": "node:sqlite",
+      "observations": 2500,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 2500,
+        "medianMs": 0.103,
+        "p95Ms": 0.117,
+        "maxMs": 4.764
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.107,
+        "p95Ms": 0.16,
+        "maxMs": 0.16
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.107,
+        "p95Ms": 0.153,
+        "maxMs": 0.153
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.044,
+        "p95Ms": 0.068,
+        "maxMs": 0.068
+      },
+      "fullWalk50": {
+        "pages": 50,
+        "n": 50,
+        "medianMs": 0.195,
+        "p95Ms": 0.225,
+        "maxMs": 3.187,
+        "totalMs": 12.8
+      },
+      "restoreValidationMs": 42.9
+    },
+    {
+      "engine": "node:sqlite",
+      "observations": 5000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 5000,
+        "medianMs": 0.102,
+        "p95Ms": 0.119,
+        "maxMs": 5.928
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.102,
+        "p95Ms": 0.157,
+        "maxMs": 0.157
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.104,
+        "p95Ms": 0.124,
+        "maxMs": 0.124
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.062,
+        "p95Ms": 0.101,
+        "maxMs": 0.101
+      },
+      "fullWalk50": {
+        "pages": 100,
+        "n": 100,
+        "medianMs": 0.184,
+        "p95Ms": 0.218,
+        "maxMs": 2.968,
+        "totalMs": 21.4
+      },
+      "restoreValidationMs": 87.3
+    },
+    {
+      "engine": "node:sqlite",
+      "observations": 10000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 10000,
+        "medianMs": 0.105,
+        "p95Ms": 0.123,
+        "maxMs": 14.884
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.102,
+        "p95Ms": 0.157,
+        "maxMs": 0.157
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.105,
+        "p95Ms": 0.12,
+        "maxMs": 0.12
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.099,
+        "p95Ms": 0.157,
+        "maxMs": 0.157
+      },
+      "fullWalk50": {
+        "pages": 200,
+        "n": 200,
+        "medianMs": 0.186,
+        "p95Ms": 0.214,
+        "maxMs": 3.379,
+        "totalMs": 41.2
+      },
+      "restoreValidationMs": 167.2
+    },
+    {
+      "engine": "sql.js",
+      "observations": 100,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 100,
+        "medianMs": 0.154,
+        "p95Ms": 0.212,
+        "maxMs": 0.478
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.243,
+        "p95Ms": 0.394,
+        "maxMs": 0.394
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.091,
+        "p95Ms": 0.129,
+        "maxMs": 0.129
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.044,
+        "p95Ms": 0.114,
+        "maxMs": 0.114
+      },
+      "fullWalk50": {
+        "pages": 2,
+        "n": 2,
+        "medianMs": 0.514,
+        "p95Ms": 0.514,
+        "maxMs": 0.514,
+        "totalMs": 1
+      },
+      "restoreValidationMs": 13.6
+    },
+    {
+      "engine": "sql.js",
+      "observations": 2500,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 2500,
+        "medianMs": 0.141,
+        "p95Ms": 0.198,
+        "maxMs": 3.142
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.254,
+        "p95Ms": 0.352,
+        "maxMs": 0.352
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.255,
+        "p95Ms": 0.416,
+        "maxMs": 0.416
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.069,
+        "p95Ms": 0.104,
+        "maxMs": 0.104
+      },
+      "fullWalk50": {
+        "pages": 50,
+        "n": 50,
+        "medianMs": 0.54,
+        "p95Ms": 0.633,
+        "maxMs": 0.729,
+        "totalMs": 27.7
+      },
+      "restoreValidationMs": 76.3
+    },
+    {
+      "engine": "sql.js",
+      "observations": 5000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 5000,
+        "medianMs": 0.136,
+        "p95Ms": 0.183,
+        "maxMs": 1.878
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.229,
+        "p95Ms": 0.35,
+        "maxMs": 0.35
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.229,
+        "p95Ms": 0.398,
+        "maxMs": 0.398
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.098,
+        "p95Ms": 0.166,
+        "maxMs": 0.166
+      },
+      "fullWalk50": {
+        "pages": 100,
+        "n": 100,
+        "medianMs": 0.481,
+        "p95Ms": 0.572,
+        "maxMs": 0.661,
+        "totalMs": 49.6
+      },
+      "restoreValidationMs": 135.5
+    },
+    {
+      "engine": "sql.js",
+      "observations": 10000,
+      "skills": 215,
+      "debriefs": 400,
+      "write": {
+        "n": 10000,
+        "medianMs": 0.137,
+        "p95Ms": 0.183,
+        "maxMs": 2.655
+      },
+      "firstPage20": {
+        "n": 20,
+        "medianMs": 0.233,
+        "p95Ms": 0.425,
+        "maxMs": 0.425
+      },
+      "skillPage20": {
+        "n": 20,
+        "medianMs": 0.229,
+        "p95Ms": 0.349,
+        "maxMs": 0.349
+      },
+      "summary": {
+        "n": 20,
+        "medianMs": 0.162,
+        "p95Ms": 0.255,
+        "maxMs": 0.255
+      },
+      "fullWalk50": {
+        "pages": 200,
+        "n": 200,
+        "medianMs": 0.48,
+        "p95Ms": 0.574,
+        "maxMs": 0.698,
+        "totalMs": 98.8
+      },
+      "restoreValidationMs": 261.6
+    }
+  ]
+}

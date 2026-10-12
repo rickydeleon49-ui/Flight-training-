@@ -1,0 +1,57 @@
+[
+  {
+    "name": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 3.89
+  },
+  {
+    "name": "focused",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/data/skillEvidenceBrowserDriver.test.ts",
+      "src/data/skillEvidenceTransaction.test.ts",
+      "src/state/skillEvidence",
+      "src/pages/FlightPath/skills"
+    ],
+    "exit": 0,
+    "seconds": 3.17
+  },
+  {
+    "name": "rust-fmt-apply",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "exit": 0,
+    "seconds": 0.39
+  },
+  {
+    "name": "benchmark",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/data/skillEvidence.bench.test.ts"
+    ],
+    "exit": 0,
+    "seconds": 10.45
+  },
+  {
+    "name": "frontend-all",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exit": 1,
+    "seconds": 80.38
+  }
+]

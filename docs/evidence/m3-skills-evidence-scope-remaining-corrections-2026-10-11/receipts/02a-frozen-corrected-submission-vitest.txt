@@ -1,0 +1,33 @@
+$ PATH=/opt/homebrew/opt/node@22/bin:$PATH node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/bench.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/controller.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-controller.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-reader.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/pagination.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/populated-fixture.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/upgrade-restore.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/writes.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/ui.test.tsx
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2
+# utc: 2026-10-11T08:00:43Z
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/frozen2
+
+(node:58483) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58480) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58485) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58481) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58487) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58484) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58482) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58488) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58486) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58479) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  10 passed | 1 skipped (11)
+      Tests  162 passed | 2 skipped (164)
+   Start at  01:00:43
+   Duration  2.56s (transform 1.61s, setup 0ms, import 2.93s, tests 8.34s, environment 708ms)
+
+# exit=0

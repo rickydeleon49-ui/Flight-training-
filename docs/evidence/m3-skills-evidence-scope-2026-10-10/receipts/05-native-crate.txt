@@ -1,0 +1,31 @@
+$ cd docs/evidence/m3-skills-evidence-scope-2026-10-10/native && SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-native-target cargo test --offline --locked -- --nocapture 2>&1 | grep -v '^\s*Compiling'
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T06:39:01Z
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-native-target/debug/deps/m3_skills_evidence_native-dba5dfb67b569041)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/contract.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m3-native-target/debug/deps/contract-68cbe35ac1b00cd7)
+
+running 7 tests
+rusqlite 0.32.1 bundled SQLite 3.46.0
+test engine_is_the_apps_bundled_sqlite ... ok
+test a_failed_candidate_migration_leaves_schema_13_untouched ... ok
+test the_candidate_refuses_a_library_newer_than_itself ... ok
+test populated_schema13_upgrades_with_every_retained_row_identical ... ok
+test backup_api_copy_restores_validated_and_identical ... ok
+test shared_constraint_contract_native_outcomes ... ok
+test shared_validation_contract_native_outcomes ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.50s
+
+   Doc-tests m3_skills_evidence_native
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+# exit=0

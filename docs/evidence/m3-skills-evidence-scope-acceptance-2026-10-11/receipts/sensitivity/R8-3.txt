@@ -1,0 +1,79 @@
+# variant: R8-3 (M3-R8) answers for an earlier draft (or a gone form) are not ignored
+# file: prototype/SkillEvidenceSpecimen.tsx
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx -t a joined duplicate submit's answer cannot raise a follow-up --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-final-review-sensitive-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > date changed while saving > [M3-R8] a date change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > attribution changed while saving > [M3-R8] a attribution change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > instructor name changed while saving > [M3-R8] a instructor name change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] several changes at once (date, who said it and wording) are all kept and named
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made in the same turn as the acknowledgment is still compared (no delayed publication)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [control] an unchanged draft is cleared after its save, and the next note is a new observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Replace: a change made while the replacement is saving is kept and offered again
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Save as new: a change made while the new observation is saving is kept, and Replace targets the new one
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made while the refresh after an acknowledged save is held is kept
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] an answer for a form that was replaced (skill switched away and back) cannot clear the newer form
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared 114ms
+   → expected <div …(1)><p></p>
+…(3)</div> to be null
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] Show older versions after an erasure clears the versions and the list item, and says it was erased
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  10:36:01
+   Duration  684ms (transform 180ms, setup 0ms, import 261ms, tests 115ms, environment 229ms)
+
+(node:68956) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared
+AssertionError: expected <div …(1)><p></p>
+…(3)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  aria-label="Your unsaved changes"
+>
+  <p>
+    What's in the form above isn't saved yet.
+  </p>
+  <p
+    id="_r_1_-replace-hint"
+  >
+    Replacing updates the saved observation to match everything in the form: wording, date, who said it and instructor name.
+  </p>
+  <button
+    aria-describedby="_r_1_-replace-hint"
+    type="button"
+  >
+    Replace the saved wording with this
+  </button>
+  <button
+    type="button"
+  >
+    Save it as a new observation
+  </button>
+</div>
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx:253:61
+    251|     await waitFor(() => expect(wording().value).toBe(""));
+    252|     await new Promise((r) => setTimeout(r, 10));
+    253|     expect(screen.queryByLabelText("Your unsaved changes")).toBeNull();
+       |                                                             ^
+    254|     expect(ctx.rows()).toEqual([ORIGINAL]);
+    255|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+# restored-sha-matches=True

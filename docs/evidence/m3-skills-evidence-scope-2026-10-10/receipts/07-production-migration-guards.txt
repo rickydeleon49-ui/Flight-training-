@@ -1,0 +1,17 @@
+$ npx vitest run src/data/migrations.test.ts src/data/migrationSafety.test.ts src/data/splitLineageValidationParity.test.ts
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T06:39:03Z
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m3-skills-scope
+
+(node:46488) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46489) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  103 passed (103)
+   Start at  23:39:03
+   Duration  1.12s (transform 163ms, setup 0ms, import 231ms, tests 923ms, environment 0ms)
+
+# exit=0

@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {validatePageIndex,parsePageReference,translateSplitCoordinates} from './submitted/docs/evidence/m4-document-navigation-eval-2026-10-11/proof/contractModel.mjs';
+const lineage={sourcePageStart:101,sourcePageEnd:116,childPageCount:16,rootMaterialId:'root',parentMaterialId:'parent',nestedLevel:2};
+test('control: valid bounded physical page and child-to-root translation',()=>{assert.equal(validatePageIndex(3,16).valid,true);assert.equal(translateSplitCoordinates({direction:'child_to_root',page:3},lineage).rootPage,103);});
+test('control: root page outside child range is rejected',()=>{assert.equal(translateSplitCoordinates({direction:'root_to_child',page:100},lineage).success,false);});
+for (const [name,n] of [['NaN',NaN],['Infinity',Infinity],['fractional',2.5]]) test(`M4-R2: ${name} total page count is rejected`,()=>{assert.equal(validatePageIndex(1,n).valid,false);});
+for (const [name,n] of [['NaN',NaN],['string','3']]) test(`M4-R2: ${name} split page cannot produce a successful destination`,()=>{assert.equal(translateSplitCoordinates({direction:'child_to_root',page:n},lineage).success,false);});
+test('M4-R2: unknown printed label cannot invent physical page one',()=>{assert.equal(parsePageReference('3-12').physicalIndex,null);});
+test('M4-R2: numeric printed label without provenance remains unresolved',()=>{assert.equal(parsePageReference('42').isPureIndex,false);});
+test('M4-R2: deleted root cannot be substituted by immediate parent using root coordinates',()=>{assert.notEqual(translateSplitCoordinates({direction:'child_to_root',page:3},{...lineage,rootMaterialId:null}).sourceMaterialId,'parent');});

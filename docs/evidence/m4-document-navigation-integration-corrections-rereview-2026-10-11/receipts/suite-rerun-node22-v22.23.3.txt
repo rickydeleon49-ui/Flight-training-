@@ -1,0 +1,15 @@
+# Reviewer re-run of the submitted suites — lane node22-v22.23.3 (v22.23.3)
+# cwd: /Users/rickymac/code/Flight-training-m4-viewer-evaluation (submission worktree, read-only: suites use in-memory DBs and mkdtemp scratch only)
+# command: cd /Users/rickymac/code/Flight-training-m4-viewer-evaluation && /opt/homebrew/opt/node@22/bin/node --test <suite>
+## proof.test.mjs -> exit=0
+   # tests 21
+   # pass 21
+   # fail 0
+## databaseLifecycle.test.mjs -> exit=0
+   # tests 7
+   # pass 7
+   # fail 0
+## sensitivityMutants.test.mjs -> exit=0
+   # tests 2
+   # pass 2
+   # fail 0

@@ -1,0 +1,20 @@
+$ python3 -I docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/scripts/verify_rereview_identity.py
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T08:00:23Z
+1. frozen correction-submission paths: 127/127 (124 direct, 3 tracking documents via snapshots)
+2. manifests
+   64/64 corrections-pack entries verify against origin/main
+   56/56 scope-pack entries verify against origin/main
+3. document hashes: 6/6
+4. production anchors: 30/30 identical in the worktree, at 48fa47d and on origin/main
+5. frozen paths changed by the remaining corrections in this worktree:
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/validation-cases.json
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/native/src/lib.rs
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/native/tests/contract.rs
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/SkillEvidenceSpecimen.tsx
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/evidenceController.ts
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/prototype/skillEvidenceValidation.ts
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/scripts/generate_fixtures.py
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/contract.test.ts
+   corrected  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/corrections-ui.test.tsx
+# exit=0

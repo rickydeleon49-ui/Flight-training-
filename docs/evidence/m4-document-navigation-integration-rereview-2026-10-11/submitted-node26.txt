@@ -1,0 +1,145 @@
+TAP version 13
+# Subtest: M4-DB-LC-1: Shipped schema 0001-0013 upgrade to candidate 0015 retains existing rows
+ok 1 - M4-DB-LC-1: Shipped schema 0001-0013 upgrade to candidate 0015 retains existing rows
+  ---
+  duration_ms: 31.383959
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-2: Close and reopen verifies durable persistence across connections
+ok 2 - M4-DB-LC-2: Close and reopen verifies durable persistence across connections
+  ---
+  duration_ms: 30.140667
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-3: Content replacement A/50 -> B/10 marks old bookmarks unverified and creates mixed generations
+ok 3 - M4-DB-LC-3: Content replacement A/50 -> B/10 marks old bookmarks unverified and creates mixed generations
+  ---
+  duration_ms: 29.402667
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-4: Bounded revalidation: same hash cannot verify an out-of-bounds bookmark
+ok 4 - M4-DB-LC-4: Bounded revalidation: same hash cannot verify an out-of-bounds bookmark
+  ---
+  duration_ms: 29.541375
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-5: Multi-table transaction rollback restores state on failure
+ok 5 - M4-DB-LC-5: Multi-table transaction rollback restores state on failure
+  ---
+  duration_ms: 27.835125
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-6: ON DELETE CASCADE cleans up all dependent navigation rows
+ok 6 - M4-DB-LC-6: ON DELETE CASCADE cleans up all dependent navigation rows
+  ---
+  duration_ms: 28.880834
+  type: 'test'
+  ...
+# Subtest: M4-DB-LC-7: Disposable backup and restore preserves authoritative rows and triggers revalidation on drift
+ok 7 - M4-DB-LC-7: Disposable backup and restore preserves authoritative rows and triggers revalidation on drift
+  ---
+  duration_ms: 29.013292
+  type: 'test'
+  ...
+# Warning: Please use the `legacy` build in Node.js environments.
+# Warning: Indexing all PDF objects
+# Warning: checkLastPage - invalid /Pages tree /Count: 99.
+# Subtest: M4-P1: Strict Safe Integer Page Validation & Clamping (R5)
+ok 8 - M4-P1: Strict Safe Integer Page Validation & Clamping (R5)
+  ---
+  duration_ms: 0.345959
+  type: 'test'
+  ...
+# Subtest: M4-P2: Provenance-Aware Reference Resolution & Bounded Label Maps (R5)
+ok 9 - M4-P2: Provenance-Aware Reference Resolution & Bounded Label Maps (R5)
+  ---
+  duration_ms: 0.131167
+  type: 'test'
+  ...
+# Subtest: M4-P3: Split-Lineage Coordinate Space & Navigation Safety (R5)
+ok 10 - M4-P3: Split-Lineage Coordinate Space & Navigation Safety (R5)
+  ---
+  duration_ms: 0.136292
+  type: 'test'
+  ...
+# Subtest: M4-P4: Content Drift Detection & Bounded Bookmark Revalidation (R6)
+ok 11 - M4-P4: Content Drift Detection & Bounded Bookmark Revalidation (R6)
+  ---
+  duration_ms: 0.070666
+  type: 'test'
+  ...
+# Subtest: M4-P5: Native Jump Fallback Messaging (R5)
+ok 12 - M4-P5: Native Jump Fallback Messaging (R5)
+  ---
+  duration_ms: 0.0445
+  type: 'test'
+  ...
+# Subtest: M4-P6: WebKit & Engine Boundary Audit with Primary Sources (R8)
+ok 13 - M4-P6: WebKit & Engine Boundary Audit with Primary Sources (R8)
+  ---
+  duration_ms: 0.030958
+  type: 'test'
+  ...
+# Subtest: M4-P7: Evaluated Real PDF Parser Demonstration (pdfjs-dist 6.3.289) (R8)
+ok 14 - M4-P7: Evaluated Real PDF Parser Demonstration (pdfjs-dist 6.3.289) (R8)
+  ---
+  duration_ms: 33.375166
+  type: 'test'
+  ...
+# Subtest: M4-P8: Opener Lifecycle State Machine, Supersession & Injected Persistence (R7)
+ok 15 - M4-P8: Opener Lifecycle State Machine, Supersession & Injected Persistence (R7)
+  ---
+  duration_ms: 0.16375
+  type: 'test'
+  ...
+# Subtest: M4-P9: Replay of All 10 Historical Review Diagnostics Cases
+ok 16 - M4-P9: Replay of All 10 Historical Review Diagnostics Cases
+  ---
+  duration_ms: 0.063791
+  type: 'test'
+  ...
+# Subtest: M4-P10: Replay of All 13 Rereview Diagnostics Cases Against Corrected Models
+ok 17 - M4-P10: Replay of All 13 Rereview Diagnostics Cases Against Corrected Models
+  ---
+  duration_ms: 0.210583
+  type: 'test'
+  ...
+# Subtest: Mutant 1: Provenance guard sensitivity (numeric without provenance)
+ok 18 - Mutant 1: Provenance guard sensitivity (numeric without provenance)
+  ---
+  duration_ms: 0.332667
+  type: 'test'
+  ...
+# Subtest: Mutant 2: Bounded revalidation guard sensitivity (page > totalPages)
+ok 19 - Mutant 2: Bounded revalidation guard sensitivity (page > totalPages)
+  ---
+  duration_ms: 0.083208
+  type: 'test'
+  ...
+# Subtest: Mutant 3: Intent advancement guard sensitivity (supersession on invalid request)
+ok 20 - Mutant 3: Intent advancement guard sensitivity (supersession on invalid request)
+  ---
+  duration_ms: 0.450542
+  type: 'test'
+  ...
+# Subtest: Mutant 4: Safe integer validation sensitivity (fractions & unsafe integers)
+ok 21 - Mutant 4: Safe integer validation sensitivity (fractions & unsafe integers)
+  ---
+  duration_ms: 0.059667
+  type: 'test'
+  ...
+# Subtest: Mutant 5: Deleted root guard sensitivity
+ok 22 - Mutant 5: Deleted root guard sensitivity
+  ---
+  duration_ms: 0.116083
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 295.743958

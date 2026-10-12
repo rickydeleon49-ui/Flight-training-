@@ -1,0 +1,31 @@
+$ cd docs/evidence/m3-skills-evidence-scope-2026-10-10/native && env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin SDKROOT=$(xcrun --sdk macosx --show-sdk-path) CARGO_TARGET_DIR=/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/native-target cargo test --offline --locked
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T08:01:42Z
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/native-target/debug/deps/m3_skills_evidence_native-0d9609e888378e3c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/contract.rs (/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/native-target/debug/deps/contract-7ca0310e3f516164)
+
+running 8 tests
+test engine_is_the_apps_bundled_sqlite ... ok
+test a_failed_candidate_migration_leaves_schema_13_untouched ... ok
+test the_candidate_refuses_a_library_newer_than_itself ... ok
+test populated_schema13_upgrades_with_every_retained_row_identical ... ok
+test backup_api_copy_restores_validated_and_identical ... ok
+test writer_library_requires_the_receipt_of_every_history_row ... ok
+test shared_constraint_contract_native_outcomes ... ok
+test shared_validation_contract_native_outcomes ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.33s
+
+   Doc-tests m3_skills_evidence_native
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+# exit=0

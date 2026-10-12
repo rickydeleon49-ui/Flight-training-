@@ -1,0 +1,121 @@
+# variant: R10-3 (M3-R10) a late older-history page for an erased observation is still published
+# file: prototype/evidenceController.ts
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx -t a held older page that lands after the erasure is known --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-final-review-sensitive-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > date changed while saving > [M3-R8] a date change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > attribution changed while saving > [M3-R8] a attribution change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > instructor name changed while saving > [M3-R8] a instructor name change during the save keeps the complete draft, stores the original, and Replace applies it
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] several changes at once (date, who said it and wording) are all kept and named
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made in the same turn as the acknowledgment is still compared (no delayed publication)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [control] an unchanged draft is cleared after its save, and the next note is a new observation
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Replace: a change made while the replacement is saving is kept and offered again
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] Save as new: a change made while the new observation is saving is kept, and Replace targets the new one
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a change made while the refresh after an acknowledged save is held is kept
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] an answer for a form that was replaced (skill switched away and back) cannot clear the newer form
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R8 whole-draft acknowledgment > [M3-R8] a joined duplicate submit's answer cannot raise a follow-up on the form the first answer cleared
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] Show older versions after an erasure clears the versions and the list item, and says it was erased
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back 129ms
+   → expected 'Skill evidenceSkillCrosswind landingE…' not to match /Private/
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [control] a temporary failure loading older versions keeps the loaded versions on screen
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  10:36:10
+   Duration  692ms (transform 171ms, setup 0ms, import 251ms, tests 129ms, environment 229ms)
+
+(node:69093) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx > M3-R10 rendered erasure > [M3-R10] a held older page that lands after the erasure is known does not bring the wording back
+AssertionError: expected 'Skill evidenceSkillCrosswind landingE…' not to match /Private/
+
+- Expected:
+/Private/
+
++ Received:
+"Skill evidenceSkillCrosswind landingEmergency approach and landingGo-aroundGround reference maneuversNormal approach and landingNormal takeoff and climbPreflight inspectionRadio communicationsSlow flightStalls and recoverySteep turnsTaxiingTraffic patternUsing checklistsWeather decisionsYour status: Not setYour confidence: Not ratedNo observations yet.This is your own record. It isn't an instructor sign-off or a proficiency rating.Add an observation from “Pattern work”Who said it?My instructor (I'm writing down what they said)Me (my own observation)Instructor name (optional)What was said or noticed0 of 2000 charactersDate observedSave observationNo observations for this skill yet. Add one from a lesson debrief.Earlier versionsThis observation was erased.Version 5 · Edited · 2026-10-01Private edit 4Version 4 · Edited · 2026-10-01Private edit 3Version 3 · Edited · 2026-10-01Private edit 2Version 2 · Edited · 2026-10-01Private edit 1Version 1 · Recorded · 2026-10-01Private earliest wordingClose"
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-ui.test.tsx:311:43
+    309|     await act(async () => releaseOld());
+    310|     await new Promise((r) => setTimeout(r, 10));
+    311|     expect(document.body.textContent).not.toMatch(/Private/);
+       |                                           ^
+    312|   });
+    313|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+$ node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts -t a held older history page that arrives after the erasure is known --reporter=verbose
+# cwd: <scratch copy>
+
+ RUN  v4.1.11 /private/tmp/hfd-m3-final-review-sensitive-copy
+
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] confirmed erased history discards loaded text and cursor (review case), and leaves the list
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] opening the history of an observation erased elsewhere evicts it from the list and the summary
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] unrelated observations, and their history, stay
+ × docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held older history page that arrives after the erasure is known cannot republish it 28ms
+   → expected { …(8) } to match object { erased: true, items: [], …(1) }
+(5 matching properties omitted from actual)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held evidence page read before the erasure cannot put the erased observation back in the list
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] an erasure answer that lands after a route change leaves the new skill alone
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a save whose earlier request turns out erased evicts that observation too
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary older-history read error preserves loaded history for retry (review control)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [control] a temporary failure opening history keeps the observation listed
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  10:36:11
+   Duration  316ms (transform 161ms, setup 0ms, import 209ms, tests 28ms, environment 0ms)
+
+(node:69100) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts > M3-R10 confirmed erasure > [M3-R10] a held older history page that arrives after the erasure is known cannot republish it
+AssertionError: expected { …(8) } to match object { erased: true, items: [], …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "erased": true,
+-   "items": [],
++   "items": [
++     {
++       "addressedAt": null,
++       "attribution": "instructor_transcribed",
++       "changeKind": "created",
++       "instructorName": "Synthetic CFI",
++       "linkedActionId": null,
++       "linkedActionTitle": null,
++       "observedOn": "2026-10-01",
++       "recordedAt": "2026-10-11T17:36:11.788Z",
++       "revision": 1,
++       "wording": "Private history wording",
++     },
++   ],
+    "nextCursor": null,
+  }
+
+ ❯ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/remaining-controller.test.ts:123:34
+    121|     gate.resolve();
+    122|     await older;
+    123|     expect(c.getState().history).toMatchObject({ erased: true, items: …
+       |                                  ^
+    124|     expect(JSON.stringify(c.getState())).not.toMatch(/Private history …
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+# exit=1 caught=True
+# restored-sha-matches=True

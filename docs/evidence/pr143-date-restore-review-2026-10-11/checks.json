@@ -1,0 +1,34 @@
+[
+  {
+    "name": "focused",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/lib/dates.test.ts",
+      "src/pages/StudyLibrary/PracticeHistoryDates.test.ts"
+    ],
+    "exit": 0,
+    "seconds": 1.32
+  },
+  {
+    "name": "helper-node22",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "scripts/mac-schema13-profile-snapshot.mjs",
+      "self-check"
+    ],
+    "exit": 1,
+    "seconds": 0.43
+  },
+  {
+    "name": "helper-node26",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "scripts/mac-schema13-profile-snapshot.mjs",
+      "self-check"
+    ],
+    "exit": 1,
+    "seconds": 0.45
+  }
+]

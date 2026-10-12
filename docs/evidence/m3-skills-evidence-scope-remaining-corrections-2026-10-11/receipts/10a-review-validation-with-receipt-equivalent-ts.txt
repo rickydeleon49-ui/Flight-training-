@@ -1,0 +1,35 @@
+$ cmp docs/evidence/m3-skills-evidence-scope-2026-10-10/fixtures/review-validation-cases.json /Users/rickymac/code/Flight-training-m3-skills-scope/docs/evidence/m3-skills-evidence-scope-remaining-corrections-2026-10-11/diagnostic-equivalents/review-validation-cases-with-receipt.json && echo 'disposable copy: review-validation-cases.json replaced by the with-receipt equivalent'; PATH=/opt/homebrew/opt/node@22/bin:$PATH node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts -t 'semantic restore' --reporter=verbose
+# cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c4
+# utc: 2026-10-11T16:59:26Z
+disposable copy: review-validation-cases.json replaced by the with-receipt equivalent
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/c4
+
+(node:61721) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R1a] acknowledged save retains draft identity while its refresh is held
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R1b] late A acknowledgment cannot clear B saving or publish A notice on B
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R1c] refresh superseding a held older page releases its pagination lock
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R2a] changed draft after unknown then erase cannot resurrect the erased save
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: controller ownership > [M3-R2b] empty history is not proof that a still-pending uncertain write did not land
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (node:sqlite) > [M3-R4] earliest wording remains reachable after 100 later revisions
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (node:sqlite) > [M3-R7] a date edit between pages cannot return an already-seen observation twice
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (sql.js) > [M3-R4] earliest wording remains reachable after 100 later revisions
+ ↓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: retained history and paging (sql.js) > [M3-R7] a date edit between pages cannot return an already-seen observation twice
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [M3-R5] receipt with correct action but foreign observation result is refused 24ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [M3-R6a] later built-in revision cannot replace the pinned catalog label 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [M3-R6b] normalized active custom and built-in label collision is refused 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [control] valid candidate accepted 12ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (node:sqlite) > [control] built-in retirement preserving catalog wording accepted 11ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [M3-R5] receipt with correct action but foreign observation result is refused 55ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [M3-R6a] later built-in revision cannot replace the pinned catalog label 25ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [M3-R6b] normalized active custom and built-in label collision is refused 22ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [control] valid candidate accepted 20ms
+ ✓ docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/review-diagnostics.test.ts > review: semantic restore (sql.js) > [control] built-in retirement preserving catalog wording accepted 19ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed | 9 skipped (19)
+   Start at  09:59:26
+   Duration  510ms (transform 166ms, setup 0ms, import 219ms, tests 213ms, environment 0ms)
+
+# exit=0

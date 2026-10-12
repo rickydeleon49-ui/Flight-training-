@@ -1,0 +1,45 @@
+# TS-12: cursor filter binding
+# file: src/data/skillEvidenceReader.ts
+# test: src/data/skillEvidenceTransaction.test.ts > a date edit crossing the cursor restarts the list
+$ npx vitest run src/data/skillEvidenceTransaction.test.ts -t 'a\\ date\\ edit\\ crossing\\ the\\ cursor\\ restarts\\ the\\ list'
+# cwd: /private/tmp/m3-completion-sensitivity/tree
+--- removed
+if (!sameFilters(c.filters, filters)) {
++++ added
+if (false && !sameFilters(c.filters, filters)) {
+--- output (last 40 lines)
+RUN  v4.1.11 /private/tmp/m3-completion-sensitivity/tree
+
+ ❯ src/data/skillEvidenceTransaction.test.ts (24 tests | 2 failed | 22 skipped) 89ms
+     × a date edit crossing the cursor restarts the list instead of repeating or skipping 30ms
+     × a date edit crossing the cursor restarts the list instead of repeating or skipping 58ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  13:16:25
+   Duration  308ms (transform 104ms, setup 0ms, import 125ms, tests 89ms, environment 0ms)
+
+(node:95121) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence reads (node:sqlite) > a date edit crossing the cursor restarts the list instead of repeating or skipping
+ FAIL  src/data/skillEvidenceTransaction.test.ts > skill evidence reads (sql.js) > a date edit crossing the cursor restarts the list instead of repeating or skipping
+AssertionError: expected 'applied' to be 'INVALID_ARGUMENT' // Object.is equality
+
+Expected: "INVALID_ARGUMENT"
+Received: "applied"
+
+ ❯ src/data/skillEvidenceTransaction.test.ts:254:92
+    254|       const forged = JSON.parse(cursor);
+    255|       forged[7] = 999;
+    256|       expect(await codeOf(store.page({ skillId: "builtin.normal_landin…
+       |                            ^
+    257|       await store.act(edit(ids[0]!, 1, "Note 1, reworded"));
+    258|       const second = await store.page({ skillId: "builtin.normal_landi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+# exit=1
+# caught=True
+# restored=True

@@ -1,0 +1,37 @@
+[
+  {
+    "file": "single_page.pdf",
+    "pages": 1,
+    "bytes": 581,
+    "sha256": "488ad4b627602542ef03ef2a8048bdd26eadd7f979d39759cb6e0903e52d1e5d",
+    "description": "Single-page minimal valid PDF"
+  },
+  {
+    "file": "multi_page_sample.pdf",
+    "pages": 10,
+    "bytes": 3809,
+    "sha256": "c65ea49916fe28d85d4aaf976932d0804ad783ad0d2205d89541a31c22ddafd7",
+    "description": "10-page study document with consecutive pages"
+  },
+  {
+    "file": "handbook_root_sample.pdf",
+    "pages": 50,
+    "bytes": 17878,
+    "sha256": "a3f401a74d18ff0c3fcfd3147abff15ce5a5a63a3ab10d9273c9b69d9c1f0b52",
+    "description": "50-page root handbook simulation (e.g. PHAK chapter 1-5)"
+  },
+  {
+    "file": "split_part_sample.pdf",
+    "pages": 16,
+    "bytes": 5947,
+    "sha256": "e275f3ac0031635ead7afbb98f38489cc3c0b96125933ff2ce4c46c65b62df09",
+    "description": "16-page split part (corresponding to root pages 10..25)"
+  },
+  {
+    "file": "malformed_sample.pdf",
+    "pages": 0,
+    "bytes": 173,
+    "sha256": "ba0a79fd70f1b915bfb81d87b447bf17cade3f452324b7ac7ff85c790291466d",
+    "description": "Corrupted PDF with broken xref and missing object"
+  }
+]

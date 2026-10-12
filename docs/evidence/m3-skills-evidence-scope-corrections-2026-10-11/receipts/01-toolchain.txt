@@ -1,0 +1,22 @@
+$ PATH=/opt/homebrew/opt/node@22/bin:/opt/homebrew/opt/rustup/bin:$PATH; node --version; npm --version; rustc --version; cargo --version; sw_vers; uname -m; xcrun --sdk macosx --show-sdk-version; node -e "const {DatabaseSync}=require('node:sqlite');console.log('node:sqlite', new DatabaseSync(':memory:').prepare('select sqlite_version() v').get().v)"; node -p "'sql.js '+require('./node_modules/sql.js/package.json').version+', vitest '+require('./node_modules/vitest/package.json').version+', react '+require('./node_modules/react/package.json').version+', typescript '+require('./node_modules/typescript/package.json').version"; grep -A1 'name = "unicode-normalization"' docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock src-tauri/Cargo.lock
+# cwd: /Users/rickymac/code/Flight-training-m3-skills-scope
+# utc: 2026-10-11T07:29:36Z
+v22.23.3
+10.9.9
+rustc 1.99.0 (b940084d7 2026-09-28)
+cargo 1.99.0 (5f94df478 2026-08-27)
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+arm64
+27.0
+node:sqlite 3.53.4
+(node:52767) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+sql.js 1.14.2, vitest 4.1.11, react 19.2.8, typescript 5.9.3
+docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock:name = "unicode-normalization"
+docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.lock-version = "0.1.25"
+--
+src-tauri/Cargo.lock:name = "unicode-normalization"
+src-tauri/Cargo.lock-version = "0.1.25"
+# exit=0

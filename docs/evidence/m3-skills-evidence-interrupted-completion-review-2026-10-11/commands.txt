@@ -1,0 +1,18 @@
+Working copy: /tmp/hfd-m3-interrupted-review; subject read-only.
+Production node_modules reused through a symlink; no package installation.
+
+/opt/homebrew/opt/node@22/bin/node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts
+exit 0; 191 passed, 3 opt-in skipped
+
+/opt/homebrew/opt/node@22/bin/node node_modules/typescript/bin/tsc --noEmit -p docs/evidence/m3-skills-evidence-scope-2026-10-10/tsconfig.json
+exit 0; empty output
+
+env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin CARGO_TARGET_DIR=/tmp/hfd-m3-interrupted-native-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml
+exit 0; 8 native tests passed (fresh target)
+
+Copied exact rereview-diagnostics.test.ts, rereview-ui-diagnostics.test.tsx and rereview_diagnostics.rs from published re-review diagnostics into scratch tests only.
+/opt/homebrew/opt/node@22/bin/node node_modules/vitest/vitest.mjs run --config docs/evidence/m3-skills-evidence-scope-2026-10-10/vitest.config.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-diagnostics.test.ts docs/evidence/m3-skills-evidence-scope-2026-10-10/tests/rereview-ui-diagnostics.test.tsx
+exit 0; 7 passed
+
+env PATH=/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/bin:/bin CARGO_TARGET_DIR=/tmp/hfd-m3-interrupted-native-target cargo test --offline --locked --manifest-path docs/evidence/m3-skills-evidence-scope-2026-10-10/native/Cargo.toml --test rereview_diagnostics
+exit 0; 2 passed
