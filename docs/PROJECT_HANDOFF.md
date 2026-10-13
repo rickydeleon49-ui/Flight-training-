@@ -1,3 +1,9 @@
+## MAINT-143-TZ corrected — 12 October 2026
+
+**Corrected, pending independent review; uncommitted and unpushed** (base `3d27ef3`, isolated worktree `agents/task-20261012-210510-179657`). The change is test-only. The date-helper and practice-history suites now set their time zone explicitly with literal boundary days. Practice history also freezes the clock. TZ is restored exactly, and the Notes hook no longer leaves `TZ="undefined"`. The five required suites (dates, practice-history dates, notes, localDay, useLocalToday) pass 43/43 under UTC, Los Angeles and Kiritimati on Node 26 and Node 22. The worktree has no `origin` remote, so the base was checked read-only through the GitHub API: upstream `main` is `3d27ef3`, and no open PR claims the task. A UTC-day reversion fails 10 cases in every zone. [Verification report](MAINT_143_TZ_VERIFICATION_2026-10-12.md).
+
+Only MAINT-143-TZ changes status. MAINT-143-KEYS stays with the schema14 package. M4 R28–R32 and installed/signing/release gates are unchanged.
+
 ## M4 round-3 independent review — 11 October 2026
 
 **CORRECTIONS REQUIRED: M4-R28–R32.** Submitted full runners reproduce 52 passing tests on Node22/26 and delivered checksums verify45/45; five new diagnostics fail on both lanes. Confirmed: duplicate durable ownership across concurrent controllers, pending save surviving abort, stale callback publication, asserted installation/final-verification receipts, and incomplete mutant/count traceability. Sequential restart and simple late-retry fixes are retained; M4 remains evidence-only. Gemini's submission is untouched.

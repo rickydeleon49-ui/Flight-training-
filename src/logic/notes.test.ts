@@ -63,12 +63,15 @@ describe("searchNotes", () => {
  * day disagree every evening. The app stores toISOString(), which is UTC.
  */
 describe("noteDateLine", () => {
+  const hadTz = "TZ" in process.env;
   const originalTz = process.env.TZ;
   beforeAll(() => {
     process.env.TZ = "America/Los_Angeles";
   });
   afterAll(() => {
-    process.env.TZ = originalTz;
+    // Assigning undefined would leave the string "undefined"; remove it instead.
+    if (hadTz) process.env.TZ = originalTz;
+    else delete process.env.TZ;
   });
 
   const today = "2026-10-11";
