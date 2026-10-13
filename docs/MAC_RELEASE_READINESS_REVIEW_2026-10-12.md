@@ -36,6 +36,8 @@ For an owner-only unsigned test build, the signing boundary differs from public 
 
 ## Next action and review limits
 
+All follow-ups are indexed as REL-01–REL-09 in the [Mac release completion track](../ROADMAP.md#mac-release-completion-track--12-october-2026), with ownership, dependencies and completion evidence. Recording the queue does not authorize executing its blocked release steps.
+
 Continue the existing schema14 preparation/maintenance work; review/integrate the results. Then resolve the version/signing decisions, produce one private candidate and test that exact installer. Publish only after the applicable release gates close.
 
 This assessment inspected current GitHub source/PR/CI/release records, release policies, active workflows, local signing identities and target-specific dependency metadata. It performed no builds, installs, launches, profile/database access, signing, workflow dispatch or release mutation. The dirty primary roadmap/continuation work and other agents' checkouts were preserved. This report is a current-state review, not a new competing implementation assignment.
