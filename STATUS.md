@@ -12,6 +12,18 @@ Primary main is clean and synchronized to `8a260c0` after preserving the unpubli
 
 [Cleanup/current-state report](docs/LOCAL_WORKSPACE_REVIEW_AND_CLEANUP_2026-10-11.md). No installed/release gates are closed by this cleanup.
 
+## Historical: M4 round-2 corrections reviewed (Gemini) — 11 October 2026
+
+Historical record retained below; the newer M4 round-4 correction assignment above governs current work.
+
+**CORRECTIONS REQUIRED: M4-R23–R27 (3 P1, 2 P2).** Gemini's round-2 pack reproduces from a clean copy on Node 22.23.3 and 26.10.0: runner exit 0, suites 30/10/3, 43 mapped tests executed, manifest 39/39. The compensating rewrite is gone and R15–R19/R21/R22 are substantively implemented. Blocking problems:
+- After an app restart, every reading-position save is rejected, because the controller's generation restarts at 0 while `owner_generation` is stored (R23).
+- A late `retrySave` overwrites a newer saved page with the obsolete one (R24).
+- None of the 20 test names and none of the mutant names in the report match what actually ran (R25).
+- R13 lifecycle and R14(b) regressions are missing (R26), and some runner receipts still assert PASS or verified before checking (R27).
+
+[Review](docs/M4_ROUND2_CORRECTIONS_REVIEW_2026-10-11.md) · [Gemini round-3 assignment](docs/GEMINI_M4_ROUND3_CORRECTIONS_PROMPT_2026-10-11.md). Still evidence-only; OD-1–OD-10 proposed; G1–G3 deferred.
+
 ## Reviewer switch and open-PR review — 11 October 2026
 
 **Claude is temporary reviewer while Codex is unavailable (owner assignment); Gemini is assigned M4 round-2 corrections R13–R22.** #142 accepted independently; its branch is updated onto main and its check passed. #143 merged after an independent review; Claude's self-review missed the `__proto__` key edge case. #144 accepted as self-review and replaced by #146 on `bf5cf59` (3038 tests pass). The owner confirmed Claude as the single Git coordinator (merger) for now. [Review](docs/REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md) · [Gemini assignment](docs/GEMINI_M4_ROUND2_CORRECTIONS_PROMPT_2026-10-11.md).

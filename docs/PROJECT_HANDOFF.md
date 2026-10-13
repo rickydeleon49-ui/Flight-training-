@@ -12,6 +12,12 @@ Primary main is clean and synchronized to `8a260c0` after preserving the unpubli
 
 [Cleanup/current-state report](LOCAL_WORKSPACE_REVIEW_AND_CLEANUP_2026-10-11.md). No installed/release gates are closed by this cleanup.
 
+## Historical M4 round-2 review
+
+Historical record retained below; the newer M4 round-4 correction assignment above governs current work.
+
+**11 October M4 round-2 review (Gemini submission): CORRECTIONS REQUIRED M4-R23–R27.** Restart and late-retry generation defects; the report's test and mutant names don't match what ran. [Review](M4_ROUND2_CORRECTIONS_REVIEW_2026-10-11.md); [Gemini round-3 assignment](GEMINI_M4_ROUND3_CORRECTIONS_PROMPT_2026-10-11.md).
+
 **11 October reviewer switch:** Claude reviews while Codex is unavailable (rule 4); Gemini implements [M4 round-2 corrections](GEMINI_M4_ROUND2_CORRECTIONS_PROMPT_2026-10-11.md). #142 accepted, branch updated, check passed; #144 accepted as self-review and replaced by #146 on main. Owner confirmed Claude as the Git coordinator (merger) for now. [Review](REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md).
 
 ## Installed findings source fix accepted — 11 October 2026
