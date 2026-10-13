@@ -1,3 +1,11 @@
+## Active M4 continuation after historical review reconciliation — 12 October 2026
+
+Use the [current independent review](docs/M4_DOCUMENT_NAVIGATION_ROUND3_REVIEW_2026-10-11.md) and [round-4 correction assignment R28–R32](docs/M4_DOCUMENT_NAVIGATION_ROUND4_CORRECTIONS_PROMPT_2026-10-11.md). PR #148 preserves the earlier round-2 findings and round-3 prompt as history; it does not reactivate them or accept M4 production.
+
+Before restarting agents, check for an existing M4 owner/run and continue that saved work rather than launch a duplicate. The owner chooses the implementer for each new run. Preserve retained corrections, frozen evidence and protected checkouts. Resolve concurrent durable ownership, abort/pending-save behavior, stale callback publication, truthful execution receipts and complete mutant/count traceability according to R28–R32. Reviewers require actual named passing regressions and final measured manifests; do not reopen retained fixes without new evidence.
+
+M4 stays evidence-only, OD-1–OD-10 stay proposed, and installed/signing/release gates stay deferred. The separate [merged-PR maintenance assignment](docs/MERGED_PR_DATE_METADATA_FIXES_PROMPT_2026-10-12.md) remains queued; coordinate its metadata-key item with the schema14 preparation owner to avoid duplicating work. No new agent run or production integration is authorized merely by these documentation notes.
+
 ## Queued merged-PR maintenance — 12 October 2026
 
 **Owner-authorized; pending implementation.** Complete the two confirmed PR #143 findings before claiming this maintenance work finished. They are separate from Gemini's current M4 correction task.

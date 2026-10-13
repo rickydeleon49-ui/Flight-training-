@@ -1,6 +1,6 @@
 # Gemini: M4 round-3 corrections R23–R27
 
-ACTIVE, 11 October 2026. Implementer: Gemini. Reviewer: Claude. This supersedes the round-2 wrapper for remaining work. Read [the round-2 review](M4_ROUND2_CORRECTIONS_REVIEW_2026-10-11.md) in full first. It contains the exact reproductions.
+**Historical / superseded.** The newer [round-3 independent review](M4_DOCUMENT_NAVIGATION_ROUND3_REVIEW_2026-10-11.md) assigns [round-4 corrections R28–R32](M4_DOCUMENT_NAVIGATION_ROUND4_CORRECTIONS_PROMPT_2026-10-11.md). Use that current model-neutral assignment for new work; retain this earlier prompt and its evidence as history. Originally ACTIVE, 11 October 2026; Gemini implemented and Claude reviewed. This superseded the round-2 wrapper at that time. Read [the round-2 review](M4_ROUND2_CORRECTIONS_REVIEW_2026-10-11.md) in full first. It contains the exact reproductions.
 
 ## Start
 
