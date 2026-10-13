@@ -1,4 +1,12 @@
-## M4 round-2 corrections reviewed (Gemini) — 11 October 2026
+## M4 round-3 independent review — 11 October 2026
+
+**CORRECTIONS REQUIRED: M4-R28–R32.** Submitted full runners reproduce 52 passing tests on Node22/26 and delivered checksums verify45/45; five new diagnostics fail on both lanes. Confirmed: duplicate durable ownership across concurrent controllers, pending save surviving abort, stale callback publication, asserted installation/final-verification receipts, and incomplete mutant/count traceability. Sequential restart and simple late-retry fixes are retained; M4 remains evidence-only. Gemini's submission is untouched.
+
+[Independent review](docs/M4_DOCUMENT_NAVIGATION_ROUND3_REVIEW_2026-10-11.md) · [One model-neutral correction assignment](docs/M4_DOCUMENT_NAVIGATION_ROUND4_CORRECTIONS_PROMPT_2026-10-11.md). Prior ownership/handoff history remains below; integration stays with the current Git coordinator.
+
+## Historical: M4 round-2 corrections reviewed (Gemini) — 11 October 2026
+
+Historical record retained below; the newer M4 round-4 correction assignment above governs current work.
 
 **CORRECTIONS REQUIRED: M4-R23–R27 (3 P1, 2 P2).** Gemini's round-2 pack reproduces from a clean copy on Node 22.23.3 and 26.10.0: runner exit 0, suites 30/10/3, 43 mapped tests executed, manifest 39/39. The compensating rewrite is gone and R15–R19/R21/R22 are substantively implemented. Blocking problems:
 - After an app restart, every reading-position save is rejected, because the controller's generation restarts at 0 while `owner_generation` is stored (R23).

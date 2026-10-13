@@ -1,0 +1,5 @@
+{
+  "scenario": "report adds cited M99_NEVER_EXECUTED without changing tests or map",
+  "runnerExit": 0,
+  "traceabilityReceipt": "=== 08b report and README traceability validation ===\nnode: v22.23.3\ncited tests in report and README: 29 (unexecuted: 0)\n  (all cited tests executed)\ncited mutants in report and README: 10 (unexecuted: 0)\n  (all cited mutants executed)\nRESULT: PASS - every test and mutant cited in report and README executed and passed\n"
+}
