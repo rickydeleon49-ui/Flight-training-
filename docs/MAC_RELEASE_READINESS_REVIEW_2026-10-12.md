@@ -2,6 +2,8 @@
 
 **Verdict: NOT READY for public Mac release.** Accepted source is progressing and its full CI passes. Current-source signed packaging and exact-installer physical verification remain incomplete. This review does not authorize release execution.
 
+**Owner version decision — 12 October 2026:** the next Mac release is **v0.5.4**. The naming decision is complete; application version-file synchronization and exact candidate source selection remain with REL-04. The inspected accepted configuration below still records 0.5.3; it is not a v0.5.4 installer.
+
 ## Verified current state
 
 - Accepted main: `3d27ef3a8ef5131895455bd2346b4f7e0ce20239`; application version remains **0.5.3**, shipped database ceiling **14**.
@@ -15,7 +17,7 @@
 
 | Gate | Current result | What closes it |
 | --- | --- | --- |
-| Distinct version/source identity | Unselected in current accepted configuration; repository still says 0.5.3 | Select a new version and exact accepted source; preserve the frozen old draft. |
+| Distinct version/source identity | Owner selected **v0.5.4**; configuration/source freeze pending | Prepare 0.5.4 through supported version tooling and record the exact accepted source; preserve the frozen old draft. |
 | Signing lane and credentials | Accepted proposal exists, active lane unavailable/unverified | Approve and configure the Developer ID/notarization lane securely, then verify actual candidate signatures/notarization. |
 | Current candidate | No current-main release candidate identified in the reviewed GitHub packaging/draft records | Build one private candidate; record source, run, version, filenames and full hashes. |
 | Installed current-schema verification | No accepted schema14 exact-installer results found | Install the exact intended candidate on an authorized isolated Apple Silicon lane; verify launch, relevant features, upgrade over populated data and older-backup restore. |
@@ -38,6 +40,6 @@ For an owner-only unsigned test build, the signing boundary differs from public 
 
 All follow-ups are indexed as REL-01–REL-09 in the [Mac release completion track](../ROADMAP.md#mac-release-completion-track--12-october-2026), with ownership, dependencies and completion evidence. Recording the queue does not authorize executing its blocked release steps.
 
-Continue the existing schema14 preparation/maintenance work; review/integrate the results. Then resolve the version/signing decisions, produce one private candidate and test that exact installer. Publish only after the applicable release gates close.
+Continue the existing schema14 preparation/maintenance work; review/integrate the results. Prepare the selected v0.5.4 configuration, resolve the signing lane, produce one private candidate and test that exact installer. Publish only after the applicable release gates close.
 
 This assessment inspected current GitHub source/PR/CI/release records, release policies, active workflows, local signing identities and target-specific dependency metadata. It performed no builds, installs, launches, profile/database access, signing, workflow dispatch or release mutation. The dirty primary roadmap/continuation work and other agents' checkouts were preserved. This report is a current-state review, not a new competing implementation assignment.
