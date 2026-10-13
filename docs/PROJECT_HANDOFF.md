@@ -1,3 +1,9 @@
+## M4 round-3 independent review — 11 October 2026
+
+**CORRECTIONS REQUIRED: M4-R28–R32.** Submitted full runners reproduce 52 passing tests on Node22/26 and delivered checksums verify45/45; five new diagnostics fail on both lanes. Confirmed: duplicate durable ownership across concurrent controllers, pending save surviving abort, stale callback publication, asserted installation/final-verification receipts, and incomplete mutant/count traceability. Sequential restart and simple late-retry fixes are retained; M4 remains evidence-only. Gemini's submission is untouched.
+
+[Independent review](M4_DOCUMENT_NAVIGATION_ROUND3_REVIEW_2026-10-11.md) · [One model-neutral correction assignment](M4_DOCUMENT_NAVIGATION_ROUND4_CORRECTIONS_PROMPT_2026-10-11.md). Prior ownership/handoff history remains below; integration stays with the current Git coordinator.
+
 **11 October reviewer switch:** Claude reviews while Codex is unavailable (rule 4); Gemini implements [M4 round-2 corrections](GEMINI_M4_ROUND2_CORRECTIONS_PROMPT_2026-10-11.md). #142 accepted, branch updated, check passed; #144 accepted as self-review and replaced by #146 on main. Owner confirmed Claude as the Git coordinator (merger) for now. [Review](REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md).
 
 ## Installed findings source fix accepted — 11 October 2026

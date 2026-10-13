@@ -1,0 +1,41 @@
+{
+  "reviewSourceUnchanged": true,
+  "localFreezeFilesChecked": 267,
+  "submittedManifestChecks": 45,
+  "fullRunners": {
+    "node22": {
+      "runtime": "22.23.3",
+      "exit": 0,
+      "suites": [
+        39,
+        10,
+        3
+      ],
+      "mappedTests": 52
+    },
+    "node26": {
+      "runtime": "26.10.0",
+      "exit": 0,
+      "suites": [
+        39,
+        10,
+        3
+      ],
+      "mappedTests": 52
+    }
+  },
+  "frozenDiagnostics": {
+    "node22": {
+      "exit": 1,
+      "pass": 0,
+      "fail": 5
+    },
+    "node26": {
+      "exit": 1,
+      "pass": 0,
+      "fail": 5
+    }
+  },
+  "applicationTestsRun": false,
+  "productionFilesEdited": false
+}

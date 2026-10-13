@@ -1,0 +1,16 @@
+{
+  "sourceHead": "c28ab8482c8635b0b2bf74686b081e02bf448f65",
+  "acceptedMain": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
+  "files": {
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs": "da1774973423952b75c7b43280198d70d603ff4d73df17371e6ada4512872e76",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs": "8e19822062c7e7e45258feec662da94e556789c5c2bb9b3df5da048b1c7a38aa",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs": "c3c18d20f30156b5b7360aeb4d206089ee7795911f2b615e0ddc8b530cf90275",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs": "eec1e0e65fe213cb235a48739987fd4a18c4f3c25931bfaaaa92f012d8192ec0",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs": "45a417a2f2eda8dfc02a292d5d9726d013098f21b5620802994511ae3ffc6a3c",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs": "4bdb849d03464e18d13eb1b77987763331fde94d80039f2c7b97564e502bb921",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/README.md": "6628c313a698b62c0d57e902ae78c93410ddf1f0b73b4f4774c921a3cb50a949",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/issue-to-test-map.json": "33b02b39197dc7bc0f621d1c48cf6de0e90bfdced977c83646cb8baca7d1121e",
+    "docs/M4_DOCUMENT_NAVIGATION_INTEGRATION_CORRECTIONS_R2_REPORT_2026-10-11.md": "69e5d0042ce625b7674840b55cac49a2106b5661ee1ea33bc261e297dd55a02c",
+    "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/SHA256SUMS": "87a4ffa90fa44fef2a5ea399d0c0872139d69b5b7931556a4730833b59618798"
+  }
+}

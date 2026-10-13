@@ -1,0 +1,8 @@
+{
+  "scenario": "delivered toolchain receipt modified immediately before actual final shasum check in disposable copy",
+  "runnerExit": 1,
+  "summaryVerified": true,
+  "summaryFailures": [],
+  "verificationReceiptClaimsExitZero": true,
+  "verificationReceiptClaimsPass": true
+}
