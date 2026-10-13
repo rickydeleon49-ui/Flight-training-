@@ -4,6 +4,14 @@
 
 [Independent review](M4_DOCUMENT_NAVIGATION_ROUND3_REVIEW_2026-10-11.md) · [One model-neutral correction assignment](M4_DOCUMENT_NAVIGATION_ROUND4_CORRECTIONS_PROMPT_2026-10-11.md). Prior ownership/handoff history remains below; integration stays with the current Git coordinator.
 
+## Historical: Local workspace maintenance — 11 October 2026
+
+Historical record retained below; the newer M4 round-4 correction assignment above governs current work.
+
+Primary main is clean and synchronized to `8a260c0` after preserving the unpublished October 10 preflight on a recovery branch and verified local bundle. Four retired C2/lineage checkouts are removed with source refs, useful receipts and the historical installer preserved. Gemini's active M4 and all other dirty/handoff checkouts are untouched. PR #142 is now merged; PR #143 and #146 fixes are merged. PR #148 remains the open M4 R23–R27 correction handoff, not an accepted production change. Older entries below describe their original snapshots.
+
+[Cleanup/current-state report](LOCAL_WORKSPACE_REVIEW_AND_CLEANUP_2026-10-11.md). No installed/release gates are closed by this cleanup.
+
 **11 October reviewer switch:** Claude reviews while Codex is unavailable (rule 4); Gemini implements [M4 round-2 corrections](GEMINI_M4_ROUND2_CORRECTIONS_PROMPT_2026-10-11.md). #142 accepted, branch updated, check passed; #144 accepted as self-review and replaced by #146 on main. Owner confirmed Claude as the Git coordinator (merger) for now. [Review](REVIEWER_SWITCH_AND_PR_REVIEW_2026-10-11.md).
 
 ## Installed findings source fix accepted — 11 October 2026
