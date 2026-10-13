@@ -1,0 +1,17 @@
+[
+  {
+    "pack": "m4-document-navigation-integration-rereview-2026-10-11",
+    "publishedFiles": 55,
+    "mismatches": []
+  },
+  {
+    "pack": "m4-document-navigation-scope-rereview-2026-10-11",
+    "publishedFiles": 41,
+    "mismatches": []
+  },
+  {
+    "pack": "m4-document-navigation-scope-review-2026-10-11",
+    "publishedFiles": 30,
+    "mismatches": []
+  }
+]

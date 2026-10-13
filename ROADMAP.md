@@ -1,3 +1,14 @@
+## Queued merged-PR maintenance — 12 October 2026
+
+**Owner-authorized; pending implementation.** Complete the two confirmed PR #143 findings before claiming this maintenance work finished. They are separate from Gemini's current M4 correction task.
+
+| Item | Confirmed finding | Required acceptance |
+| --- | --- | --- |
+| MAINT-143-TZ | Date tests assume noon UTC has the same date in every local zone. Under Pacific/Kiritimati, 3/7 helper cases and 1/3 practice-history cases fail although production conversion is correct. | Control both test suites' time zones explicitly; retain a meaningful local/UTC boundary case; relevant date/Notes/history suites pass under UTC, Los Angeles and Kiritimati. |
+| MAINT-143-KEYS | The snapshot helper's plain object map drops a valid `__proto__` SQLite metadata key: one database row yields zero own digest keys and verification refuses. | Use an own-key-safe map; real SQLite/JSON round-trip and unchanged/restore coverage for `__proto__`, `constructor`, `toString` and Unicode; changed/added/removed non-receipt keys remain protected. |
+
+[Complete model-neutral implementation assignment](docs/MERGED_PR_DATE_METADATA_FIXES_PROMPT_2026-10-12.md). MAINT-143-KEYS is already part of [schema14 verification preparation](docs/MAC_SCHEMA14_VERIFICATION_PREPARATION_PROMPT_2026-10-11.md): claim one owner and reuse that correction if underway. Preserve the historical schema13 ceiling alarm, frozen evidence and exact three-key restore-only exclusion policy. No application build/install/profile/signing/release work is authorized by this queue entry. Earlier roadmap entries below retain their original historical status.
+
 ## M3 production implementation reviewed and completed — 11 October 2026
 
 The authorized first production slice is complete: migration 14, native/TS/browser transactions and restore guards, skills/debrief UI, history and explicit follow-up/status/confidence. Codex took over the interrupted implementation at the owner's request, fixed confirmed retry/draft/provenance/navigation defects, completed the browser-driver checks, strengthened two masked history-cursor regressions and finished evidence/benchmarks. Final local gate receipts and integration conditions are in the [review and completion report](docs/M3_SKILLS_EVIDENCE_IMPLEMENTATION_REVIEW_AND_COMPLETION_2026-10-11.md). GitHub merge requires required checks for the exact published head.
