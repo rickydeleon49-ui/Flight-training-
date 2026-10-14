@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -22,6 +22,13 @@ import type {
   PracticeTestItem,
 } from "@/domain/types";
 import { formatLongDate, localDayOf } from "@/lib/dates";
+import {
+  REVIEW_QUERY_PARAM,
+  buildAttemptReview,
+  reviewEntriesFor,
+  reviewViewFromQuery,
+  type PracticeReviewView,
+} from "@/logic/practiceAttemptReview";
 import { useAppData } from "@/state/AppDataContext";
 import "./studyLibrary.css";
 
@@ -451,6 +458,11 @@ function HistoryGroupDetailPage({ historyKey }: { historyKey: string }) {
   );
 }
 
+const REVIEW_VIEWS: { value: PracticeReviewView; label: string }[] = [
+  { value: "all", label: "All questions" },
+  { value: "missed", label: "Missed or skipped" },
+];
+
 /** Immutable review of a specific completed attempt. */
 function AttemptReviewPage({
   historyKey,
@@ -460,22 +472,42 @@ function AttemptReviewPage({
   attemptId: string;
 }) {
   const { repositories } = useAppData();
-  const [attempt, setAttempt] = useState<PracticeAttempt | null>(null);
-  const [items, setItems] = useState<PracticeTestItem[] | null>(null);
-  const [responses, setResponses] = useState<PracticeResponse[] | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = reviewViewFromQuery(searchParams.get(REVIEW_QUERY_PARAM));
+  const [loaded, setLoaded] = useState<{
+    routeKey: string;
+    attempt: PracticeAttempt;
+    items: PracticeTestItem[];
+    responses: PracticeResponse[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ routeKey: string; text: string } | null>(null);
 
   // Both route parts are identity: the same attempt under another group must
   // be revalidated, not assumed.
-  const { begin, isCurrent } = useRouteGeneration(`${historyKey}|${attemptId}`);
+  const routeKey = `${historyKey}|${attemptId}`;
+  const { begin, isCurrent } = useRouteGeneration(routeKey);
 
   useEffect(() => {
-    setAttempt(null);
-    setItems(null);
-    setResponses(null);
-    setError(null);
+    setLoaded(null);
+    setFailure(null);
   }, [attemptId, historyKey]);
+
+  // Changing views only rewrites the query; the frozen attempt is not re-read.
+  const chooseView = useCallback(
+    (next: PracticeReviewView) => {
+      setSearchParams(
+        (current) => {
+          const params = new URLSearchParams(current);
+          if (next === "missed") params.set(REVIEW_QUERY_PARAM, "missed");
+          else params.delete(REVIEW_QUERY_PARAM);
+          return params;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   const loadAttemptData = useCallback(async () => {
     if (!repositories?.practiceSessions) {
@@ -484,22 +516,22 @@ function AttemptReviewPage({
     }
     const generation = begin();
     setLoading(true);
-    setError(null);
+    setFailure(null);
     try {
       const att = await repositories.practiceSessions.getAttempt(attemptId);
       if (!isCurrent(generation)) return;
       if (!att) {
-        setError("Practice attempt not found.");
+        setFailure({ routeKey, text: "Practice attempt not found." });
         return;
       }
       if (att.status !== "completed") {
-        setError("Attempt is not completed.");
+        setFailure({ routeKey, text: "Attempt is not completed." });
         return;
       }
       const ver = await repositories.practiceSessions.getVersion(att.versionId);
       if (!isCurrent(generation)) return;
       if (!ver || ver.historyKey !== historyKey) {
-        setError("Practice attempt does not belong to this study material.");
+        setFailure({ routeKey, text: "Practice attempt does not belong to this study material." });
         return;
       }
       const [itms, resps] = await Promise.all([
@@ -507,26 +539,29 @@ function AttemptReviewPage({
         repositories.practiceSessions.getResponses(attemptId),
       ]);
       if (!isCurrent(generation)) return;
-      setAttempt(att);
-      setItems(itms);
-      setResponses(resps);
+      setLoaded({ routeKey, attempt: att, items: itms, responses: resps });
     } catch (err) {
       if (!isCurrent(generation)) return;
-      setError(errorText(err, "Failed to load attempt review."));
+      setFailure({ routeKey, text: errorText(err, "Failed to load attempt review.") });
     } finally {
       if (isCurrent(generation)) setLoading(false);
     }
-  }, [attemptId, begin, historyKey, isCurrent, repositories]);
+  }, [attemptId, begin, historyKey, isCurrent, repositories, routeKey]);
 
   useEffect(() => {
     void loadAttemptData();
   }, [loadAttemptData]);
 
-  if (loading) {
+  // Data loaded for an earlier route is never shown under this one, not even
+  // for the render before the reset effect runs.
+  const current = loaded?.routeKey === routeKey ? loaded : null;
+  const error = failure?.routeKey === routeKey ? failure.text : null;
+
+  if (loading || (!current && !error && (loaded || failure))) {
     return <Loading label="Loading attempt review…" />;
   }
 
-  if (error || !attempt) {
+  if (error || !current) {
     return (
       <Card>
         <EmptyState
@@ -548,12 +583,9 @@ function AttemptReviewPage({
     );
   }
 
-  const responseMap = new Map<string, PracticeResponse>();
-  if (responses) {
-    for (const r of responses) {
-      responseMap.set(r.itemId, r);
-    }
-  }
+  const { attempt, items } = current;
+  const entries = buildAttemptReview(attempt.id, items, current.responses);
+  const shown = reviewEntriesFor(entries, view);
 
   const score = attempt.scorePercent ?? 0;
   const disclaimer = `Practice result from your material (${score}%). Not an official FAA knowledge test score or certification of flight readiness.`;
@@ -603,77 +635,102 @@ function AttemptReviewPage({
       </Card>
 
       <div className="stack stack--3">
-        <h3 className="ai-guide__title">Questions & Answers</h3>
-        {items &&
-          items.map((item, idx) => {
-            const resp = responseMap.get(item.id);
-            const userChoice = resp ? resp.selectedIndex : null;
-            const isDontKnow = resp ? resp.isDontKnow : false;
-            const wasAnswered = resp !== undefined;
-            const isCorrect = wasAnswered && !isDontKnow && userChoice === item.correctIndex;
+        <div className="row row--between row--wrap">
+          <h3 className="ai-guide__title">Questions & Answers</h3>
+          <div className="filter-chips" role="group" aria-label="Questions to review">
+            {REVIEW_VIEWS.map((choice) => (
+              <button
+                type="button"
+                key={choice.value}
+                className={`filter-chip${view === choice.value ? " is-active" : ""}`}
+                aria-pressed={view === choice.value}
+                onClick={() => chooseView(choice.value)}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            let resultTone: "complete" | "overdue" | "due" = "overdue";
-            let resultLabel = "Incorrect";
-            if (!wasAnswered) {
-              resultTone = "due";
-              resultLabel = "Unanswered";
-            } else if (isDontKnow) {
-              resultTone = "due";
-              resultLabel = "Marked as don't know";
-            } else if (isCorrect) {
-              resultTone = "complete";
-              resultLabel = "Correct";
-            }
+        {view === "missed" && shown.length === 0 ? (
+          <Card>
+            <EmptyState
+              title="Nothing missed or skipped"
+              body="You answered every question in this attempt correctly. All of them are still here to look back over."
+              action={
+                <Button variant="secondary" onClick={() => chooseView("all")}>
+                  Show all questions
+                </Button>
+              }
+            />
+          </Card>
+        ) : null}
 
-            return (
-              <Card key={item.id}>
-                <CardHeader
-                  title={`Question ${idx + 1} of ${items.length}`}
-                  eyebrow={item.sourcePage ? `Source p. ${item.sourcePage}` : "Check source"}
-                  action={<Badge tone={resultTone}>{resultLabel}</Badge>}
-                />
-                <CardBody>
-                  <div className="stack stack--3">
-                    <p className="small strong">{item.questionText}</p>
+        {shown.map(({ item, response, outcome, number }) => {
+          const userChoice = response ? response.selectedIndex : null;
 
-                    <div
-                      className="stack stack--2"
-                      role="radiogroup"
-                      aria-label={`Question ${idx + 1} options`}
-                    >
-                      {item.options.map((opt, optIdx) => {
-                        const isThisCorrect = optIdx === item.correctIndex;
-                        const isThisSelected = optIdx === userChoice;
+          let resultTone: "complete" | "overdue" | "due" = "overdue";
+          let resultLabel = "Incorrect";
+          if (outcome === "unanswered") {
+            resultTone = "due";
+            resultLabel = "Unanswered";
+          } else if (outcome === "dont_know") {
+            resultTone = "due";
+            resultLabel = "Marked as don't know";
+          } else if (outcome === "correct") {
+            resultTone = "complete";
+            resultLabel = "Correct";
+          }
 
-                        let optionClass = "practice-option";
-                        if (isThisCorrect) {
-                          optionClass += " practice-option--correct";
-                        } else if (isThisSelected) {
-                          optionClass += " practice-option--incorrect";
-                        }
+          return (
+            <Card key={item.id}>
+              <CardHeader
+                title={`Question ${number} of ${items.length}`}
+                eyebrow={item.sourcePage ? `Source p. ${item.sourcePage}` : "Check source"}
+                action={<Badge tone={resultTone}>{resultLabel}</Badge>}
+              />
+              <CardBody>
+                <div className="stack stack--3">
+                  <p className="small strong">{item.questionText}</p>
 
-                        return (
-                          <div
-                            key={optIdx}
-                            className={optionClass}
-                            style={{ display: "flex", justifyContent: "space-between" }}
-                          >
-                            <span>{opt}</span>
-                            <span>
-                              {isThisCorrect && " (Correct answer)"}
-                              {isThisSelected && !isThisCorrect && " (Your choice)"}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div
+                    className="stack stack--2"
+                    role="radiogroup"
+                    aria-label={`Question ${number} options`}
+                  >
+                    {item.options.map((opt, optIdx) => {
+                      const isThisCorrect = optIdx === item.correctIndex;
+                      const isThisSelected = optIdx === userChoice;
 
-                    {item.explanation && <p className="tiny dim ai-copy">{item.explanation}</p>}
+                      let optionClass = "practice-option";
+                      if (isThisCorrect) {
+                        optionClass += " practice-option--correct";
+                      } else if (isThisSelected) {
+                        optionClass += " practice-option--incorrect";
+                      }
+
+                      return (
+                        <div
+                          key={optIdx}
+                          className={optionClass}
+                          style={{ display: "flex", justifyContent: "space-between" }}
+                        >
+                          <span>{opt}</span>
+                          <span>
+                            {isThisCorrect && " (Correct answer)"}
+                            {isThisSelected && !isThisCorrect && " (Your choice)"}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                </CardBody>
-              </Card>
-            );
-          })}
+
+                  {item.explanation && <p className="tiny dim ai-copy">{item.explanation}</p>}
+                </div>
+              </CardBody>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
