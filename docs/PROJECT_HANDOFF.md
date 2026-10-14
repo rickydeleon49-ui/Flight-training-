@@ -1,3 +1,18 @@
+## M2 focused practice review — 13 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW** (Claude, uncommitted isolated worktree, base `c9a15ab`).
+
+- A confirmed completed practice result now links to that exact attempt's review with `?review=missed`.
+- Completed-attempt history has All questions / Missed or skipped controls. Plain links still open on All questions.
+- Missed or skipped covers incorrect, don't-know and unanswered questions, classified from frozen items. Original numbering, explanations, source pages and the immutable score are kept.
+- No persistence, migration, scoring, dependency or M4 change.
+- Verification:
+  - Node 22: six focused suites 77 passed; `npm test` 3071 passed / 6 skipped; typecheck, build, cargo test 465 / fmt / clippy, cargo-lock and diff checks all exit 0.
+  - The new rendered regressions fail 6/6 against the baseline UI, and the classification mutants are caught.
+  - The default Node 26.10.0 lane has 165 failures that also occur on the baseline (`localStorage` undefined); they are recorded, not caused here.
+
+[Implementation report](M2_FOCUSED_PRACTICE_REVIEW_REPORT_2026-10-13.md). This does not complete M2 and makes no installed/release claim. M4 and other entries below are unchanged.
+
 ## M4 round-3 independent review — 11 October 2026
 
 **CORRECTIONS REQUIRED: M4-R28–R32.** Submitted full runners reproduce 52 passing tests on Node22/26 and delivered checksums verify45/45; five new diagnostics fail on both lanes. Confirmed: duplicate durable ownership across concurrent controllers, pending save surviving abort, stale callback publication, asserted installation/final-verification receipts, and incomplete mutant/count traceability. Sequential restart and simple late-retry fixes are retained; M4 remains evidence-only. Gemini's submission is untouched.

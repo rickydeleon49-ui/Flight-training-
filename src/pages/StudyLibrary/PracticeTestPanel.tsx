@@ -18,6 +18,7 @@ import type {
   PracticeTestItem,
   PracticeTestVersion,
 } from "@/domain/types";
+import { attemptReviewPath } from "@/logic/practiceAttemptReview";
 import { AppDataContext } from "@/state/AppDataContext";
 import "./studyLibrary.css";
 
@@ -1164,6 +1165,15 @@ export function PracticeTestPanel({
   if (state.completedResult !== null) {
     const result = state.completedResult;
     const disclaimer = `Practice result from your material (${result.scorePercent}%). Not an official FAA knowledge test score or certification of flight readiness.`;
+    // Only an acknowledged completion of the attempt this panel ran, on its own
+    // frozen version, links to that exact attempt's review.
+    const reviewHistoryKey =
+      state.phase === "completed" &&
+      result.attemptId &&
+      state.attempt?.attemptId === result.attemptId &&
+      state.version?.id === state.attempt.versionId
+        ? state.version.historyKey
+        : null;
     return (
       <div className="stack stack--4" role="status">
         {notices}
@@ -1190,6 +1200,14 @@ export function PracticeTestPanel({
           <Button onClick={handleRetake} disabled={state.phase !== "completed"}>
             Retake this test
           </Button>
+          {reviewHistoryKey && (
+            <a
+              href={`#${attemptReviewPath(reviewHistoryKey, result.attemptId, "missed")}`}
+              className="button button--secondary"
+            >
+              Review missed or skipped questions
+            </a>
+          )}
           {materialId && (
             <a
               href={`#/study/history/${encodeURIComponent(materialId)}`}
