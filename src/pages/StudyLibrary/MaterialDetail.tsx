@@ -66,6 +66,7 @@ import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
+import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
 
 interface ActiveGeminiOperation {
@@ -762,6 +763,12 @@ function MaterialDetailPage({
                       </p>
                     </div>
 
+                    <StudyContentProvenance
+                      sourceMaterialTitle={material.title}
+                      content={studySet}
+                      kind="study-aid"
+                    />
+
                     <section className="stack stack--3" aria-labelledby="ai-guide-title">
                       <div>
                         <p className="eyebrow">Study guide</p>
@@ -963,6 +970,13 @@ function MaterialDetailPage({
                         </Link>
                       ) : null}
                     </div>
+
+                    <StudyContentProvenance
+                      sourceMaterialTitle={material.title}
+                      content={practiceTest}
+                      kind="practice-test"
+                    />
+
                     <PracticeTestPanel practiceTest={practiceTest} materialId={material.id} key={practiceTest.updatedAt} />
                   </div>
                 ) : !generatingPractice && !hasImported ? (
