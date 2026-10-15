@@ -46,8 +46,8 @@
     },
     {
       "path": "docs/MAC_LOCAL_V054_BUILD_AND_BUG_TEST_2026-10-15.md",
-      "bytes": 11215,
-      "sha256": "a566212cac3a87addc0609718447f8377035a5299b67bb1c171c19a189c32aa8"
+      "bytes": 11531,
+      "sha256": "14b36e1ae9f3f18e6cdcc2487cead5373eacdfb6c90a848fa70b0852e5349eff"
     },
     {
       "path": "docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md",
@@ -56,8 +56,8 @@
     },
     {
       "path": "docs/evidence/mac-local-v054-build-2026-10-15/README.md",
-      "bytes": 1930,
-      "sha256": "1ebd9e1302654a14fefde55b5185bb9a78a5e98358570950fa651b721a24c5e8"
+      "bytes": 2179,
+      "sha256": "078945f93db2ccd57aa542dc5a61da77843efb08082fa69ac72ebed13447420b"
     },
     {
       "path": "docs/evidence/mac-local-v054-build-2026-10-15/artifact-identity.json",

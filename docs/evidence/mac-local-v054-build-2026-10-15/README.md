@@ -12,3 +12,5 @@ Current conclusion: app built; 13 browser flows and full frontend/native checks 
 - `source-manifest.json` / `SHA256SUMS`: current version-source/reports/trackers and every evidence file; finalized last. Older helper manifests describe their accepted snapshots, not this versioned tree.
 
 Artifacts stay local under `/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/`; no installer/app/binary enters Git. No app launch, hfdtest, real data/profile, provider or public release. The owner explicitly deferred interactive desktop testing.
+
+Raw `.log` receipts are explicitly tracked despite the repository log ignore rule. `native-build.log:31` retains one compiler-emitted trailing space; all-files whitespace checking reports it. Raw evidence is not normalized to obtain a green check.

@@ -6,9 +6,9 @@ d3ce335acc41b5122467850afbb78c36b7b80d1cc0a4b72b602bca5fc651d5e4  src-tauri/taur
 d6133b3dcb91cc79ae2fa489d3843e432c760144ef89969ad2dc6efb0bda1987  ROADMAP.md
 ea17ef799ef953adbd6fa81a6b57edd5f07caae1f02c525624f2877acb3d7475  STATUS.md
 5b96d8612857bf796a99d37a4e6c3431b88daf8ab7e7b7971c57179e2405ab19  docs/PROJECT_HANDOFF.md
-a566212cac3a87addc0609718447f8377035a5299b67bb1c171c19a189c32aa8  docs/MAC_LOCAL_V054_BUILD_AND_BUG_TEST_2026-10-15.md
+14b36e1ae9f3f18e6cdcc2487cead5373eacdfb6c90a848fa70b0852e5349eff  docs/MAC_LOCAL_V054_BUILD_AND_BUG_TEST_2026-10-15.md
 d84323f5be6309787ab00036dc3e4f9d6e6cee0129b42ffd07757af40ae2d5b9  docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md
-1ebd9e1302654a14fefde55b5185bb9a78a5e98358570950fa651b721a24c5e8  docs/evidence/mac-local-v054-build-2026-10-15/README.md
+078945f93db2ccd57aa542dc5a61da77843efb08082fa69ac72ebed13447420b  docs/evidence/mac-local-v054-build-2026-10-15/README.md
 7a981a8933c4a76fb108254e9cfb59b8ab9c85adfb4340b2e9118f7eb877852d  docs/evidence/mac-local-v054-build-2026-10-15/artifact-identity.json
 e56f410a93c8390e56b4a1e2a994dd9846db82b9779c979c3fc3b2fda604095e  docs/evidence/mac-local-v054-build-2026-10-15/browser-functional-initial.log
 0586b525723afde522a23abd0862d20d2c3abb7e9d8c2cb1421014d6c191b016  docs/evidence/mac-local-v054-build-2026-10-15/browser-functional-v2.log
@@ -33,4 +33,4 @@ da5963b20f6bcbefd7518d9197b59229588f6ebf2e4bcef768aa4395690b9564  docs/evidence/
 8d14cd887d87edefc2abd1b5ff4fb451ba22eccd4f3c0610b373106c98dd544a  docs/evidence/mac-local-v054-build-2026-10-15/skill-status-confidence.png
 1ebaf676dfae9e5feb6c80626498c2035f6dd33a3e581e47d352b9c46fbd1f9e  docs/evidence/mac-local-v054-build-2026-10-15/test-gate.json
 90fde0febe29b279ec9058d75ba515a84f54226b621ce1cda6e6d344fcabaacd  docs/evidence/mac-local-v054-build-2026-10-15/versioned-proof-replay.json
-fffb316941eefb0b1f00623e2adc95a9eb458067fa1dfb5afbe348d4be06011f  docs/evidence/mac-local-v054-build-2026-10-15/source-manifest.json
+60d8a898f5fab9eac3aad88aaa637a3674391cbba84d3bffdd42fc683ede68a4  docs/evidence/mac-local-v054-build-2026-10-15/source-manifest.json

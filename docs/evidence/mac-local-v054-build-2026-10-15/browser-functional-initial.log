@@ -1,0 +1,14 @@
+PASS Profile saves and survives reload without school or instructor
+FAIL Notes create edit pin and reload persistence
+FAIL Notes cancel deletion then delete and undo
+FAIL Question and answer persist after reload
+PASS Flight Fund contribution persists
+PASS Zero expense refused then valid expense affects balance
+PASS Schedule lesson with estimate survives reload
+FAIL Quick debrief saves without flight-time invention
+PASS M3 skill status and confidence persist independently
+FAIL Custom skill create rename retire restore
+PASS Minimum desktop width has no horizontal overflow
+PASS Fresh browser context cannot see synthetic saved records
+PASS No browser exceptions HTTP errors or external requests
+{"passed":8,"failed":5}

@@ -39,10 +39,12 @@ Empty APFS and HFS+ controls both succeeded in about 3 seconds. A separate bound
 | Browser functional scenarios | 13/13 passed; 0 browser exceptions, HTTP errors or external requests |
 | Full frontend suite (`npm test -- --maxWorkers=2`) | 3,202 passed, 6 skipped; exit 0 |
 | Native macOS Rust suite | 465 passed, 6 ignored; exit 0 |
-| Rust fmt, Clippy `-D warnings`, Cargo lock, whitespace | exit 0 |
+| Rust fmt, Clippy `-D warnings`, Cargo lock, source whitespace | exit 0 |
 | Schema14 helper suite after ARM64 build | **22 passed, 1 failed, 0 skipped; exit 1 — QA-01** |
 | Current-version helper replay procedure | **exit 1 before worktree creation — QA-02** |
 | Staged/mounted ad-hoc app verification and image cleanup | pass; detach 0 |
+
+Raw stdout is preserved byte-for-byte. The final all-files whitespace check flags one original trailing space in `native-build.log:31` (`[plugin vite:reporter] `); this receipt-only finding is retained, not edited or reported as a clean all-files check. Source/configuration/document whitespace checks pass.
 
 Frontend type checking and bundling passed as Tauri’s before-build command; no redundant frontend rebuild was run. Full frontend tests used two workers to avoid unrelated machine-load timing failures. No test was skipped, timeout extended or expectation weakened to get a green result. Native/browser source results do not certify the installed app.
 

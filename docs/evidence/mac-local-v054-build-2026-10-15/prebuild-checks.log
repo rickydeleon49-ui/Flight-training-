@@ -1,0 +1,17 @@
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-
+
+(node:86578) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  143 passed | 1 skipped (144)
+   Start at  15:42:37
+   Duration  1.88s (transform 131ms, setup 0ms, import 193ms, tests 1.74s, environment 0ms)
+
+
+> her-flight-deck@0.5.4 test:cargo-lock
+> node scripts/test-cargo-lock-sync.mjs
+
+Checking Cargo toolchain and lockfile synchronization (read-only)...
+Cargo lockfile synchronization verified: her-flight-deck is at 0.5.4 in both Cargo.toml and Cargo.lock
