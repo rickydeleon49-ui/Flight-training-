@@ -92,7 +92,7 @@ export function StudyLibraryHistory({
     if (inspectingId !== null && inspecting === null) setInspectingId(null);
   }, [inspectingId, inspecting]);
   const pending = stream.pendingTargets();
-  const format = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
+  const format = REVIEWED_AT_FORMAT;
 
   return (
     <section className="stack stack--4" aria-labelledby="card-history-title">
@@ -232,6 +232,9 @@ export function StudyLibraryHistory({
   );
 }
 
+/** "5 Oct 2026, 09:12": unambiguous whichever way round she reads dates. */
+const REVIEWED_AT_FORMAT = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
+
 /** A past card exactly as it was reviewed. Nothing here can change her cards. */
 export function HistoricalCardDialog({ row, onClose }: { row: LibraryRecentReviewEntry | null; onClose: () => void }) {
   const provenance = row ? describeProvenance(row) : null;
@@ -266,7 +269,7 @@ export function HistoricalCardDialog({ row, onClose }: { row: LibraryRecentRevie
             <p className="ai-copy">{row.back}</p>
           </div>
           <p className="small muted">
-            Rated {RATING_LABELS[row.rating]} on {new Date(row.reviewedAt).toLocaleString("en-GB")}
+            Rated {RATING_LABELS[row.rating]} on {REVIEWED_AT_FORMAT.format(new Date(row.reviewedAt))}
             {interval ? `, ${interval}` : ""}.{row.sourcePage ? ` Source page ${row.sourcePage}.` : ""}
           </p>
           {provenance ? (

@@ -25,14 +25,14 @@ import {
   type Transaction,
   type TransactionType,
 } from "@/domain/types";
-import { formatShortDate, todayIso } from "@/lib/dates";
+import { formatMonthYear, formatShortDate, todayIso } from "@/lib/dates";
 import { formatMoney, moneyToInput, parseMoney } from "@/lib/money";
 import {
-  averageLessonCost,
-  countPaidLessons,
   fundSummary,
+  monthlySpending,
   spentInMonth,
   totalUpcoming,
+  trainingCostSummary,
   upcomingExpenses,
 } from "@/logic/finance";
 import { useAppData } from "@/state/AppDataContext";
@@ -55,7 +55,11 @@ export function Finances() {
     [data.events, data.transactions, today],
   );
   const thisMonth = spentInMonth(data.transactions, today);
-  const average = averageLessonCost(data.transactions);
+  const months = useMemo(() => monthlySpending(data.transactions, today), [data.transactions, today]);
+  const costs = useMemo(
+    () => trainingCostSummary(data.transactions, data.journalEntries),
+    [data.transactions, data.journalEntries],
+  );
   const fundGoal = data.fundGoals.find((goal) => goal.active) ?? null;
 
   const recent = data.transactions.slice(0, 20);
@@ -269,12 +273,18 @@ export function Finances() {
                   </div>
                   <div>
                     <p className="insight__label">Paid lessons</p>
-                    <p className="insight__value">{countPaidLessons(data.transactions)}</p>
+                    <p className="insight__value">{costs.lessons.length}</p>
                   </div>
                   <div>
                     <p className="insight__label">Average lesson</p>
                     <p className="insight__value">
-                      {average === null ? "—" : formatMoney(average)}
+                      {costs.averageLesson === null ? "—" : formatMoney(costs.averageLesson)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="insight__label">Per flight hour</p>
+                    <p className="insight__value">
+                      {costs.perFlightHour === null ? "—" : formatMoney(costs.perFlightHour.perHour)}
                     </p>
                   </div>
                   <div>
@@ -283,8 +293,61 @@ export function Finances() {
                   </div>
                 </div>
                 <p className="tiny dim" style={{ marginTop: "var(--space-4)" }}>
-                  Averages come from the lesson and rental expenses you have recorded. They
-                  are not a forecast.
+                  Averages come from the lesson and rental expenses you have recorded. Expenses
+                  linked to the same lesson count as one lesson. They are not a forecast.
+                </p>
+                <p className="tiny dim" data-testid="per-hour-basis" style={{ marginTop: "var(--space-2)" }}>
+                  {costs.perFlightHour === null
+                    ? "Per flight hour needs a lesson with a recorded cost and a journal entry for that lesson with its total time."
+                    : `Per flight hour uses ${costs.perFlightHour.lessonsCounted} of ${costs.lessons.length} ${costs.lessons.length === 1 ? "lesson" : "lessons"}: those with logged flight time (${costs.perFlightHour.hours} hr).`}
+                </p>
+                {costs.possibleDoubleCounts.length > 0 && (
+                  <div className="stack stack--2" role="note" style={{ marginTop: "var(--space-4)" }}>
+                    <p className="small">
+                      {costs.possibleDoubleCounts.length === 1
+                        ? "One lesson has a recorded lesson total and separate lesson expenses. If they are the same money, edit or delete one so it isn't counted twice."
+                        : `${costs.possibleDoubleCounts.length} lessons have a recorded lesson total and separate lesson expenses. If they are the same money, edit or delete one so it isn't counted twice.`}
+                    </p>
+                    {costs.possibleDoubleCounts.map((item) => (
+                      <div className="row row--between" key={item.eventId}>
+                        <Link className="small truncate" to={`/schedule/${item.eventId}`}>
+                          {data.events.find((event) => event.id === item.eventId)?.title || "Lesson"}
+                        </Link>
+                        <span className="small numeric dim">{formatMoney(item.cost)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader title="Spending by month" />
+              <CardBody>
+                <table className="month-table">
+                  <caption className="visually-hidden">Recorded spending for the last six months</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Month</th>
+                      <th scope="col">Spent</th>
+                      <th scope="col">On lessons</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {months
+                      .slice()
+                      .reverse()
+                      .map((row) => (
+                        <tr key={row.month}>
+                          <th scope="row">{formatMonthYear(`${row.month}-01`)}</th>
+                          <td className="numeric">{formatMoney(row.spent)}</td>
+                          <td className="numeric dim">{formatMoney(row.lessons)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+                <p className="tiny dim" style={{ marginTop: "var(--space-3)" }}>
+                  Only expenses you have recorded. Estimated lesson costs stay under Coming up.
                 </p>
               </CardBody>
             </Card>

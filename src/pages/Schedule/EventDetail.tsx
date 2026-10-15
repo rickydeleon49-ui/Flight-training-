@@ -380,6 +380,15 @@ export function EventDetail() {
                   </p>
                 ) : event.actualCost == null && event.estimatedCost == null ? (
                   <p className="small muted">Add a cost to this lesson to record it as an expense.</p>
+                ) : event.status === "cancelled" && event.actualCost == null ? (
+                  <p className="small muted">
+                    This lesson was cancelled, so its estimate isn't recorded. If you paid a
+                    cancellation fee, add it as the actual cost to record it.
+                  </p>
+                ) : ((event.actualCost ?? event.estimatedCost) as number) <= 0 ? (
+                  <p className="small muted">
+                    Edit this lesson's cost to an amount above zero to record it as an expense.
+                  </p>
                 ) : hasHappened ? (
                   <>
                     <Button variant="primary" block onClick={recordCost}>

@@ -1,0 +1,50 @@
+
+ RUN  v4.1.11 <review-checkout>
+
+ ❯ src/services/backups.test.ts (6 tests | 1 failed | 5 skipped) 5ms
+     × is dated with her local day, not the UTC one 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/services/backups.test.ts > complete backup file name > is dated with her local day, not the UTC one
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "defaultPath": "her-flight-deck-2026-10-14.hfdbackup",
++   {
++     "defaultPath": "her-flight-deck-2026-10-15.hfdbackup",
++     "filters": [
++       {
++         "extensions": [
++           "hfdbackup",
++         ],
++         "name": "Her Flight Deck backup",
++       },
++     ],
++     "title": "Save a complete Her Flight Deck backup",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/services/backups.test.ts:52:24
+     50|       else process.env.TZ = originalTz;
+     51|     }
+     52|     expect(mocks.save).toHaveBeenCalledWith(
+       |                        ^
+     53|       expect.objectContaining({ defaultPath: "her-flight-deck-2026-10-…
+     54|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  06:36:59
+   Duration  108ms (transform 18ms, setup 0ms, import 24ms, tests 5ms, environment 0ms)

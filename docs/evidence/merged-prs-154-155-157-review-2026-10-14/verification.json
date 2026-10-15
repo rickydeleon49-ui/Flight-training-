@@ -1,0 +1,73 @@
+{
+  "reviewedCommit": "cb0ece14239e4bacbd845642329ba47e98fe1d13",
+  "baselineCommit": "3d27ef3a8ef5131895455bd2346b4f7e0ce20239",
+  "node": "22.23.3",
+  "npm": "10.9.9",
+  "install": {
+    "command": "npm ci --ignore-scripts --no-audit --no-fund",
+    "exitCode": 0
+  },
+  "reviewerRuns": [
+    {
+      "command": "npx vitest run src/logic/studyContentProvenance.test.ts src/pages/StudyLibrary/MaterialDetailProvenance.test.ts src/logic/practiceAttemptReview.test.ts src/pages/StudyLibrary/PracticeAttemptReview.test.ts src/pages/StudyLibrary/PracticeTestPanel.test.ts src/pages/StudyLibrary/PracticeSessionPR2.test.ts src/pages/StudyLibrary/PracticeSessionPR2Finish.test.ts src/pages/StudyLibrary/PracticeSessionPR2Corrections.test.ts src/pages/StudyLibrary/PracticeHistoryDates.test.ts src/pages/StudyLibrary/PracticeMetadataReadRecovery.test.ts",
+      "exitCode": 0,
+      "filesPassed": 10,
+      "testsPassed": 110,
+      "durationSeconds": 5.47,
+      "log": "focused-tests.txt"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "includes": "tsc --noEmit && vite build",
+      "log": "build.txt"
+    },
+    {
+      "command": "git diff 3d27ef3 cb0ece1 --check",
+      "exitCode": 0
+    }
+  ],
+  "githubChecks": [
+    {
+      "pr": 154,
+      "head": "6f6dcdb2b6d914f374aa3dd934a012d10519f5d5",
+      "conclusion": "success",
+      "run": 38483925995
+    },
+    {
+      "pr": 155,
+      "head": "ba3ad747ef0e42ed28e0f086594973ed67c3ebb4",
+      "conclusion": "success",
+      "run": 38512804168
+    },
+    {
+      "pr": 157,
+      "head": "32cbed2bbda30143245e2c2cc9edfd470497e6a7",
+      "conclusion": "success",
+      "run": 38516874596
+    },
+    {
+      "head": "cb0ece14239e4bacbd845642329ba47e98fe1d13",
+      "conclusion": "success",
+      "run": 38518002842
+    }
+  ],
+  "advisories": {
+    "source-map-js": {
+      "number": 2,
+      "state": "fixed",
+      "fixedAt": "2026-10-13T23:32:17Z"
+    },
+    "glib": {
+      "number": 1,
+      "state": "open",
+      "severity": "medium",
+      "classification": "existing separate maintenance item"
+    }
+  },
+  "limits": [
+    "No full frontend or native suite rerun locally; exact-head GitHub full-gate success verified separately.",
+    "No installed app, WebKit, VoiceOver, signing or release verification.",
+    "Public test/build logs replace the checkout root with <review-checkout> and normalize trailing whitespace; no result content changed."
+  ]
+}

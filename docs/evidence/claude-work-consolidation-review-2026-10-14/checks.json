@@ -1,0 +1,78 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "TZ": null,
+    "exit": 0,
+    "seconds": 4.662
+  },
+  {
+    "name": "cargo-lock",
+    "command": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "TZ": null,
+    "exit": 0,
+    "seconds": 24.736
+  },
+  {
+    "name": "timezone-UTC",
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/lib/dates.test.ts",
+      "src/logic/notes.test.ts",
+      "src/pages/StudyLibrary/PracticeHistoryDates.test.ts",
+      "src/logic/localDay.test.ts",
+      "src/state/useLocalToday.test.ts",
+      "src/services/backups.test.ts",
+      "src/logic/dataSafety.test.ts"
+    ],
+    "TZ": "UTC",
+    "exit": 0,
+    "seconds": 1.187
+  },
+  {
+    "name": "timezone-America-Los_Angeles",
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/lib/dates.test.ts",
+      "src/logic/notes.test.ts",
+      "src/pages/StudyLibrary/PracticeHistoryDates.test.ts",
+      "src/logic/localDay.test.ts",
+      "src/state/useLocalToday.test.ts",
+      "src/services/backups.test.ts",
+      "src/logic/dataSafety.test.ts"
+    ],
+    "TZ": "America/Los_Angeles",
+    "exit": 0,
+    "seconds": 1.166
+  },
+  {
+    "name": "timezone-Pacific-Kiritimati",
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/lib/dates.test.ts",
+      "src/logic/notes.test.ts",
+      "src/pages/StudyLibrary/PracticeHistoryDates.test.ts",
+      "src/logic/localDay.test.ts",
+      "src/state/useLocalToday.test.ts",
+      "src/services/backups.test.ts",
+      "src/logic/dataSafety.test.ts"
+    ],
+    "TZ": "Pacific/Kiritimati",
+    "exit": 1,
+    "seconds": 1.199
+  }
+]

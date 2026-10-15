@@ -92,10 +92,11 @@ export function localDayOf(timestamp: string | null | undefined): IsoDate | null
   return Number.isNaN(parsed.getTime()) ? null : todayIso(parsed);
 }
 
-/** e.g. "Sep 6". */
-export function formatShortDate(date: IsoDate): string {
+/** e.g. "Oct 20". Year is added when it is not the current one: "Oct 20, 2028". */
+export function formatShortDate(date: IsoDate, today: IsoDate = todayIso()): string {
   const d = parseIsoDate(date);
-  return `${MONTHS[d.getMonth()]?.slice(0, 3)} ${d.getDate()}`;
+  const sameYear = date.slice(0, 4) === today.slice(0, 4);
+  return `${MONTHS[d.getMonth()]?.slice(0, 3)} ${d.getDate()}${sameYear ? "" : `, ${d.getFullYear()}`}`;
 }
 
 export function formatMonthYear(date: IsoDate): string {
@@ -125,7 +126,7 @@ export function describeRelativeDate(date: IsoDate, today: IsoDate = todayIso())
   if (delta === -1) return "1 day overdue";
   if (delta < 0) return `${Math.abs(delta)} days overdue`;
   if (delta < 7) return `in ${delta} days`;
-  return formatShortDate(date);
+  return formatShortDate(date, today);
 }
 
 export function formatDuration(minutes: number | null): string {

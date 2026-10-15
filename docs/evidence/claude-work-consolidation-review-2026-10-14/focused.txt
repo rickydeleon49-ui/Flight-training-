@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 <review-checkout>
+
+ ❯ src/lib/dates.test.ts (15 tests | 1 failed) 10ms
+     × names the year otherwise, so an expiry two years out is not read as this month 3ms
+(node:44172) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44171) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44167) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44168) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/dates.test.ts > formatShortDate > names the year otherwise, so an expiry two years out is not read as this month
+ReferenceError: describeRelativeDate is not defined
+ ❯ src/lib/dates.test.ts:136:5
+    134|     expect(formatShortDate("2028-10-20", "2026-10-14")).toBe("Oct 20, …
+    135|     expect(formatShortDate("2025-12-03", "2026-10-14")).toBe("Dec 3, 2…
+    136|     expect(describeRelativeDate("2027-01-05", "2026-12-20")).toBe("Jan…
+       |     ^
+    137|   });
+    138| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 13 passed (14)
+      Tests  1 failed | 170 passed (171)
+   Start at  23:31:35
+   Duration  3.28s (transform 1.83s, setup 0ms, import 3.01s, tests 4.18s, environment 2.87s)

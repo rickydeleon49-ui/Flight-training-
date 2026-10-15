@@ -85,3 +85,21 @@
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }
+
+.month-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.month-table th,
+.month-table td {
+  padding: var(--space-1) 0;
+  text-align: right;
+  font-weight: 400;
+}
+.month-table th:first-child { text-align: left; }
+.month-table thead th {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+.month-table .numeric { font-variant-numeric: tabular-nums; }

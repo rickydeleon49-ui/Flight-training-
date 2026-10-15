@@ -1,0 +1,56 @@
+
+ RUN  v4.1.11 <review-checkout>
+
+(node:45231) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/CardReviewClockRecovery.test.ts (9 tests | 1 failed | 8 skipped) 70ms
+     × waits for delayed real digest completion without advancing the review clock 70ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewClockRecovery.test.ts > relearning readiness while a material stays open > waits for delayed real digest completion without advancing the review clock
+TestingLibraryElementError: Unable to find an accessible element with the role "heading"
+
+Here are the accessible roles:
+
+  status:
+
+  Name "":
+  <p
+    class="tiny dim"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p
+      class="tiny dim"
+      role="status"
+    >
+      Loading card reviews…
+    </p>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ heading src/pages/StudyLibrary/CardReviewClockRecovery.test.ts:117:30
+    115| };
+    116| const advance = (ms: number) => act(async () => void (await vi.advance…
+    117| const heading = () => screen.getByRole("heading", { level: 3 }).textCo…
+       |                              ^
+    118| const reviewDisabled = () => screen.getByRole("button", { name: "Revie…
+    119| const focusWindow = () => act(async () => void fireEvent.focus(window)…
+ ❯ src/pages/StudyLibrary/CardReviewClockRecovery.test.ts:165:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  06:36:59
+   Duration  639ms (transform 183ms, setup 0ms, import 264ms, tests 70ms, environment 221ms)

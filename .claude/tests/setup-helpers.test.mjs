@@ -28,7 +28,7 @@ import { createServer as createHttpServer } from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const UNDER_TEST = resolve(process.env.HFD_SETUP_UNDER_TEST || join(HERE, "..", ".."));
@@ -288,15 +288,25 @@ if (process.argv.includes("--child")) {
 }
 `;
 
-/** Mock Playwright. MOCK_PW_FAIL names the failing step; "goto+close" fails navigation, then close. */
+/**
+ * Mock Playwright. MOCK_PW_FAIL names the failing step; "goto+close" fails navigation, then close.
+ * Every URL loaded is appended to MOCK_PW_GOTOS. The page reports the route it was sent to, unless
+ * MOCK_PW_STATE (JSON) overrides what the app appears to show.
+ */
 const PLAYWRIGHT_SOURCE = `
 const fs = require("fs");
 const fail = process.env.MOCK_PW_FAIL || "";
 const boom = (step) => { if (fail === step || (fail === "goto+close" && (step === "goto" || step === "close"))) throw new Error("mock " + step + " failure"); };
 const page = () => ({
+  url: null,
   on() {},
-  async goto() { boom("goto"); },
+  async goto(url) { boom("goto"); this.url = new URL(url); if (process.env.MOCK_PW_GOTOS) fs.appendFileSync(process.env.MOCK_PW_GOTOS, url + "\\n"); },
   async waitForTimeout() {},
+  async waitForSelector() {},
+  async evaluate() {
+    const shown = { pathname: this.url.pathname, hash: this.url.hash, hasMain: true, notFound: false };
+    return { ...shown, ...JSON.parse(process.env.MOCK_PW_STATE || "{}") };
+  },
   async screenshot({ path }) { boom("screenshot"); fs.writeFileSync(path, "png"); },
 });
 exports.chromium = {
@@ -318,7 +328,7 @@ const WATCHDOG_MS = 15_000;
  * time, whether the watchdog fired, and the pids of every dummy server process
  * this run's helper started (recorded by the dummy itself).
  */
-async function runScreenshot(t, { pwFail = "", serverMode = "ok", external = null } = {}) {
+async function runScreenshot(t, { pwFail = "", serverMode = "ok", external = null, routes = ["/"], pageState = null, extraArgs = [] } = {}) {
   const root = tmp("shot");
   const port = await freePort();
   const serverFile = join(root, "server.mjs");
@@ -332,6 +342,7 @@ async function runScreenshot(t, { pwFail = "", serverMode = "ok", external = nul
   script(join(bin, "npm"), `#!/bin/sh\nif [ "$1" = "root" ]; then echo "${globalModules}"; exit 0; fi\nexit 1\n`);
   script(join(bin, "npx"), `#!/bin/sh\nexec "${NODE}" "${serverFile}" "$@"\n`);
   const ownedPids = join(root, "owned.pids");
+  const gotos = join(root, "gotos.log");
   const env = {
     PATH: `${bin}:${dirname(NODE)}:${SYSTEM_PATH}`,
     HOME: root,
@@ -348,6 +359,8 @@ async function runScreenshot(t, { pwFail = "", serverMode = "ok", external = nul
     MOCK_PW_FAIL: pwFail,
     MOCK_SERVER_MODE: serverMode,
     MOCK_SERVER_PIDS: ownedPids,
+    MOCK_PW_GOTOS: gotos,
+    MOCK_PW_STATE: pageState ? JSON.stringify(pageState) : "",
   };
 
   let externalServer = null;
@@ -357,7 +370,7 @@ async function runScreenshot(t, { pwFail = "", serverMode = "ok", external = nul
   }
 
   const started = Date.now();
-  const child = spawn(NODE, [SCREENSHOT, "/", "--out", join(root, "out")], { cwd: root, env, stdio: ["ignore", "ignore", "pipe"] });
+  const child = spawn(NODE, [SCREENSHOT, ...routes, "--out", join(root, "out"), ...extraArgs], { cwd: root, env, stdio: ["ignore", "ignore", "pipe"] });
   let stderr = "";
   child.stderr.on("data", (d) => (stderr += d));
   let watchdogFired = false;
@@ -386,7 +399,8 @@ async function runScreenshot(t, { pwFail = "", serverMode = "ok", external = nul
     }
     rmSync(root, { recursive: true, force: true });
   });
-  return { code, stderr, elapsedMs, watchdogFired, pids, survivors, root, port, externalServer };
+  const loaded = existsSync(gotos) ? readFileSync(gotos, "utf8").trim().split("\n").filter(Boolean) : [];
+  return { code, stderr, elapsedMs, watchdogFired, pids, survivors, root, port, externalServer, loaded };
 }
 
 const shotDone = (r) => assert.equal(r.watchdogFired, false, `helper still running at the ${WATCHDOG_MS} ms watchdog`);
@@ -481,3 +495,75 @@ for (const pwFail of ["", "launch", "goto+close"]) {
     assert.equal(body, "existing", "the reused server must still answer");
   });
 }
+
+// ============================================================ screenshot routes (HashRouter)
+const ROUTES_MODULE = join(CLAUDE_DIR, "skills/run/routes.mjs");
+const noRoutes = !existsSync(ROUTES_MODULE) && "no routes.mjs in this version";
+
+test("ROUTES: documented and hash forms map to the same hash URL and a #-free file name", { skip: noRoutes }, async () => {
+  const { routeTarget } = await import(pathToFileURL(ROUTES_MODULE).href);
+  const base = "http://localhost:1420";
+  for (const form of ["/finances", "/#/finances", "#/finances", "finances", "/finances/"]) {
+    assert.deepEqual(routeTarget(form, base), { path: "/finances", url: `${base}/#/finances`, name: "finances.png" }, form);
+  }
+  assert.deepEqual(routeTarget("/", base), { path: "/", url: `${base}/#/`, name: "home.png" });
+  assert.deepEqual(routeTarget("/#/", base), { path: "/", url: `${base}/#/`, name: "home.png" });
+  assert.equal(routeTarget("/journal/new", base).name, "journal_new.png");
+  assert.equal(routeTarget("/study?tab=due", base).name, "study_tab_due.png");
+  assert.equal(routeTarget("/journal", base, { dark: true }).name, "journal-os-dark.png");
+  assert.throws(() => routeTarget("http://localhost:1420/#/finances", base), /not a full URL/);
+  assert.throws(() => routeTarget("/#/a#b", base), /only one #/);
+});
+
+test("ROUTES: a mismatch names what the app showed instead", { skip: noRoutes }, async () => {
+  const { routeMismatch, routeTarget } = await import(pathToFileURL(ROUTES_MODULE).href);
+  const t = routeTarget("/finances", "http://x");
+  const ok = { pathname: "/", hash: "#/finances", hasMain: true, notFound: false };
+  assert.equal(routeMismatch(t, ok), null);
+  assert.match(routeMismatch(t, { ...ok, pathname: "/finances", hash: "" }), /only serves \//);
+  assert.match(routeMismatch(t, { ...ok, hash: "" }), /showing \//);
+  assert.match(routeMismatch(t, { ...ok, notFound: true }), /isn't here/);
+  assert.match(routeMismatch(t, { ...ok, hasMain: false }), /shell did not render/);
+});
+
+test("ROUTES: the helper loads documented routes as hash URLs and names files without #", { skip: noRoutes }, async (t) => {
+  const r = await runScreenshot(t, { routes: ["/finances", "/#/study", "/journal/new"] });
+  shotDone(r);
+  assert.equal(r.code, 0, r.stderr);
+  const base = `http://localhost:${r.port}`;
+  assert.deepEqual(r.loaded, [`${base}/#/finances`, `${base}/#/study`, `${base}/#/journal/new`]);
+  assert.deepEqual(readdirSync(join(r.root, "out")).sort(), ["finances.png", "journal_new.png", "study.png"]);
+  assert.deepEqual(r.survivors, []);
+});
+
+test("ROUTES: --dark files are labelled -os-dark and the run says the app stays light", { skip: noRoutes }, async (t) => {
+  const r = await runScreenshot(t, { routes: ["/journal"], extraArgs: ["--dark"] });
+  shotDone(r);
+  assert.equal(r.code, 0, r.stderr);
+  assert.deepEqual(readdirSync(join(r.root, "out")), ["journal-os-dark.png"]);
+  assert.match(r.stderr, /only a light theme/);
+});
+
+for (const [label, pageState, pattern] of [
+  ["another screen", { hash: "#/" }, /showing \//],
+  ["the not-found screen", { notFound: true }, /isn't here/],
+  ["no app shell", { hasMain: false }, /shell did not render/],
+]) {
+  test(`ROUTES: the helper fails loudly when the page shows ${label}, writes nothing and stops the owned server`, { skip: noRoutes }, async (t) => {
+    const r = await runScreenshot(t, { routes: ["/finances"], pageState });
+    shotDone(r);
+    assert.equal(r.code, 1, r.stderr);
+    assert.match(r.stderr, /Route \/finances did not render/);
+    assert.match(r.stderr, pattern);
+    assert.equal(existsSync(join(r.root, "out", "finances.png")), false);
+    assert.deepEqual(r.survivors, []);
+  });
+}
+
+test("ROUTES: two routes that would overwrite one file fail before any server starts", { skip: noRoutes }, async (t) => {
+  const r = await runScreenshot(t, { routes: ["/finances", "/#/finances"] });
+  shotDone(r);
+  assert.equal(r.code, 1, r.stderr);
+  assert.match(r.stderr, /would both be saved as finances\.png/);
+  assert.deepEqual(r.pids, [], "no server should have been started");
+});

@@ -41,6 +41,7 @@ import {
   makeQuizAttempt,
   QUIZ_QUESTIONS,
   readinessSummary,
+  reminderLeadDays,
   trainingCostForecast,
 } from "@/logic/toolkit";
 import { useAppData } from "@/state/AppDataContext";
@@ -621,7 +622,7 @@ function RecordsTool({ state, save }: ToolProps) {
 function CostTool({ state, save }: ToolProps) {
   const { data } = useAppData();
   const totals = flightLogTotals(data.journalEntries);
-  const forecast = trainingCostForecast(totals, data.transactions, state);
+  const forecast = trainingCostForecast(totals, data.transactions, state, data.journalEntries);
   const [hourly, setHourly] = useState(String(state.estimatedHourlyCost / 100));
   const [additional, setAdditional] = useState(
     String(state.additionalTrainingCosts / 100),
@@ -671,9 +672,9 @@ function CostTool({ state, save }: ToolProps) {
             <Field
               label="Estimated cost per flight hour"
               hint={
-                forecast.observedHourly
-                  ? `The forecast currently uses ${formatMoney(forecast.observedHourly)} per logged hour from tracked spending.`
-                  : "Used until the app has both logged hours and training expenses."
+                forecast.observedHourly !== null
+                  ? `The forecast currently uses ${formatMoney(forecast.observedHourly)} per flight hour: lesson costs from ${forecast.observedLessons} ${forecast.observedLessons === 1 ? "lesson" : "lessons"} with logged flight time.`
+                  : "Used until a lesson has both a recorded cost and a linked journal entry with its total time."
               }
             >
               <TextInput
@@ -1074,7 +1075,7 @@ function ReminderTool({ state, save }: ToolProps) {
         events: data.events,
         credentials: state.credentials,
         profile: data.profile,
-        leadDays: Number(leadDays || 0),
+        leadDays: reminderLeadDays(leadDays, 0),
       }),
     [data.actions, data.events, data.profile, leadDays, state.credentials],
   );
@@ -1119,10 +1120,7 @@ function ReminderTool({ state, save }: ToolProps) {
               onClick={() =>
                 void save((current) => ({
                   ...current,
-                  reminderLeadDays: Math.min(
-                    90,
-                    Math.max(0, Number(leadDays || 0)),
-                  ),
+                  reminderLeadDays: reminderLeadDays(leadDays, 0),
                 }))
               }
             >

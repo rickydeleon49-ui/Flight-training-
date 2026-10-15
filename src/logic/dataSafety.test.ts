@@ -77,7 +77,7 @@ describe("backupHealth", () => {
 
   it("is satisfied by a recent backup from this version", () => {
     const health = backupHealth({
-      lastBackupAt: "2026-09-04T09:00:00.000Z",
+      lastBackupAt: "2026-09-04T12:00:00.000Z",
       lastBackupVersion: "0.2.0",
       appVersion: "0.2.0",
       now,
@@ -111,6 +111,41 @@ describe("backupHealth", () => {
     });
     expect(health.state).toBe("stale");
     expect(health.needsAttention).toBe(true);
+  });
+
+  it("counts the actual local calendar dates when UTC+14 crosses an extra midnight", () => {
+    const originalTz = process.env.TZ;
+    try {
+      for (const [zone, expected] of [["UTC", "2 days ago"], ["America/Los_Angeles", "2 days ago"], ["Pacific/Kiritimati", "3 days ago"]]) {
+        process.env.TZ = zone;
+        expect(backupHealth({
+          lastBackupAt: "2026-09-04T09:00:00.000Z",
+          lastBackupVersion: "0.2.0", appVersion: "0.2.0", now,
+        }).message, zone).toContain(expected!);
+      }
+    } finally {
+      if (originalTz === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTz;
+    }
+  });
+
+  it("names calendar days, so last night's backup is yesterday this morning", () => {
+    const morning = new Date(2026, 8, 6, 8, 0);
+    const lastNight = new Date(2026, 8, 5, 23, 0);
+    const health = backupHealth({
+      lastBackupAt: lastNight.toISOString(),
+      lastBackupVersion: "0.2.0",
+      appVersion: "0.2.0",
+      now: morning,
+    });
+    expect(health.message).toContain("saved yesterday");
+    const earlier = backupHealth({
+      lastBackupAt: new Date(2026, 8, 6, 0, 30).toISOString(),
+      lastBackupVersion: "0.2.0",
+      appVersion: "0.2.0",
+      now: new Date(2026, 8, 6, 23, 30),
+    });
+    expect(earlier.message).toContain("saved today");
   });
 
   it("does not nag the day before it is due", () => {

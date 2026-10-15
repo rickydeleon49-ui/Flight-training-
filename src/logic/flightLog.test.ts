@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { makeJournalEntry } from "@/testing/factories";
 import {
+  flightTimeProblem,
+  flightTimesChanged,
   flightActivity,
   flightLogTotals,
   flightRoute,
@@ -90,5 +92,53 @@ describe("flight log", () => {
       ["training", 50],
       ["solo", 25],
     ]);
+  });
+});
+
+describe("flightTimeProblem", () => {
+  const times = (overrides: Partial<Parameters<typeof flightTimeProblem>[0]>) => ({
+    totalTime: null,
+    dualReceived: null,
+    soloTime: null,
+    picTime: null,
+    crossCountryTime: null,
+    nightTime: null,
+    actualInstrumentTime: null,
+    simulatedInstrumentTime: null,
+    ...overrides,
+  });
+
+  it("accepts parts that fit inside the total, including equal to it", () => {
+    expect(flightTimeProblem(times({ totalTime: 1.5, dualReceived: 1.5, crossCountryTime: 1.5, nightTime: 0.3 }))).toBeNull();
+    expect(flightTimeProblem(times({ totalTime: 1.3, soloTime: 1.3, picTime: 1.3 }))).toBeNull();
+  });
+
+  it("checks nothing until a total is entered", () => {
+    expect(flightTimeProblem(times({ dualReceived: 2 }))).toBeNull();
+  });
+
+  it("names each part that is longer than the flight", () => {
+    expect(flightTimeProblem(times({ totalTime: 1.5, dualReceived: 2 }))).toBe(
+      "Dual received time can't be more than this flight's total time of 1.5 hr.",
+    );
+    expect(flightTimeProblem(times({ totalTime: 1, picTime: 1.2, nightTime: 1.1, simulatedInstrumentTime: 3 }))).toBe(
+      "PIC, night and simulated instrument time can't be more than this flight's total time of 1.0 hr.",
+    );
+  });
+
+  it("refuses dual and solo, or actual and simulated instrument, adding up past the total", () => {
+    expect(flightTimeProblem(times({ totalTime: 1.5, dualReceived: 1, soloTime: 1 }))).toMatch(/^Dual received and solo time together/);
+    expect(flightTimeProblem(times({ totalTime: 1, actualInstrumentTime: 0.6, simulatedInstrumentTime: 0.5 }))).toMatch(/^Actual and simulated instrument time together/);
+  });
+
+  it("tells an edit of the logbook times from one that leaves them alone", () => {
+    const saved = times({ totalTime: 1, dualReceived: 2 });
+    expect(flightTimesChanged(saved, { ...saved })).toBe(false);
+    expect(flightTimesChanged(saved, { ...saved, dualReceived: 1 })).toBe(true);
+    expect(flightTimesChanged(saved, { ...saved, totalTime: 2 })).toBe(true);
+  });
+
+  it("is not tripped by floating-point addition of tenths", () => {
+    expect(flightTimeProblem(times({ totalTime: 0.3, dualReceived: 0.1, soloTime: 0.2 }))).toBeNull();
   });
 });

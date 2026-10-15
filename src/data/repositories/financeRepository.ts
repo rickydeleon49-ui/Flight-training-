@@ -122,6 +122,11 @@ export function financeRepository(db: SqlDatabase) {
       category?: ExpenseCategory;
       goalId?: Id | null;
     }): Promise<Transaction> {
+      // An expense is always a positive whole number of cents; a negative one
+      // would quietly reduce what training has cost.
+      if (!Number.isSafeInteger(params.amount) || params.amount <= 0) {
+        throw new Error("A lesson cost must be more than zero.");
+      }
       const existing = await this.findLessonCost(params.eventId);
       if (existing) throw new DuplicateLessonCostError(existing);
 

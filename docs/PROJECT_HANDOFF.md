@@ -1,3 +1,9 @@
+## Claude consolidation and next owner — 14 October 2026
+
+Reviewed source packages are consolidated for exact-head CI/integration: nine bug fixes, M5 cost analytics, material Again readiness, timezone maintenance and screenshot routing. The original red PR161 receipt is preserved; the new rendered test waits on observable completion and has a delayed-crypto regression. Requirements remain a proposal, not approval. [Review](CLAUDE_WORK_CONSOLIDATION_REVIEW_2026-10-14.md).
+
+Next implementation priority is the existing [saved schema14 package](MAC_SCHEMA14_UNMERGED_CONTINUATION_2026-10-12.md), followed by the accepted local unsigned v0.5.4 route after review. Reuse the existing owner/work; do not launch a competing package. Apple signing/publication, hfdtest, M4 production and RQ-D1–D7 remain separate. Current Git coordination is explicitly authorized to Codex by the owner's review/merge/cleanup request. All older entries below are retained as historical submission snapshots.
+
 ## M2 Review due clock recovery — 14 October 2026
 
 **IMPLEMENTED, PENDING INDEPENDENT REVIEW** (Claude `claude-opus-5-5` medium; uncommitted isolated worktree; base `e87874b`). This is the only queue job for this work (`6d5fca12ebf7`).
@@ -49,6 +55,11 @@
   - The default Node 26.10.0 lane has 165 failures that also occur on the baseline (`localStorage` undefined); they are recorded, not caused here.
 
 [Implementation report](M2_FOCUSED_PRACTICE_REVIEW_REPORT_2026-10-13.md). This does not complete M2 and makes no installed/release claim. M4 and other entries below are unchanged.
+## MAINT-143-TZ corrected — 12 October 2026
+
+**Corrected, pending independent review; uncommitted and unpushed** (base `3d27ef3`, isolated worktree `agents/task-20261012-210510-179657`). The change is test-only. The date-helper and practice-history suites now set their time zone explicitly with literal boundary days. Practice history also freezes the clock. TZ is restored exactly, and the Notes hook no longer leaves `TZ="undefined"`. The five required suites (dates, practice-history dates, notes, localDay, useLocalToday) pass 43/43 under UTC, Los Angeles and Kiritimati on Node 26 and Node 22. The worktree has no `origin` remote, so the base was checked read-only through the GitHub API: upstream `main` is `3d27ef3`, and no open PR claims the task. A UTC-day reversion fails 10 cases in every zone. [Verification report](MAINT_143_TZ_VERIFICATION_2026-10-12.md).
+
+Only MAINT-143-TZ changes status. MAINT-143-KEYS stays with the schema14 package. M4 R28–R32 and installed/signing/release gates are unchanged.
 
 ## M4 round-3 independent review — 11 October 2026
 

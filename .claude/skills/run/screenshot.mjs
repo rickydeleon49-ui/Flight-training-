@@ -1,6 +1,17 @@
 // Screenshots the browser-mode app (`npm run dev`, SQLite in WebAssembly).
 // Usage: node .claude/skills/run/screenshot.mjs [route ...] [--out DIR] [--width N] [--dark]
 //
+// The app uses HashRouter, so routes are given as `/finances` (or `/#/finances`)
+// and always loaded as `BASE/#/finances`; see routes.mjs. After loading, the
+// helper checks that the app is showing that route and fails if it is not
+// (another screen, the "That page isn't here." screen, or no app shell).
+//
+// --dark emulates a dark macOS appearance (prefers-color-scheme: dark). The
+// app has one light palette and pins `color-scheme: light`
+// (src/styles/tokens.css), so the page still renders light: the screenshot
+// shows that nothing leaks from the OS setting, not a dark theme. Files get
+// the suffix `-os-dark` to say so.
+//
 // Reuses a server already answering on the port and never signals it. Otherwise
 // starts Vite itself and stops it on every exit path: startup timeout, browser
 // launch failure, navigation or screenshot failure, and browser-close failure.
@@ -26,11 +37,14 @@
 //   HFD_SHOT_TIMEOUT_MS  startup budget (default 30000)
 //   HFD_SHOT_PROBE_MS    one readiness request (default 2000)
 //   HFD_SHOT_GRACE_MS    wait after SIGTERM before SIGKILL (default 5000)
+//   HFD_SHOT_ROUTE_MS    wait for the app shell after each load (default 10000)
 import { spawn, execSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+
+import { routeMismatch, routeTargets } from "./routes.mjs";
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => {
@@ -48,6 +62,7 @@ const routes = args.length ? args : ["/"];
 
 const port = Number(process.env.HFD_SHOT_PORT || 1420);
 const BASE = `http://localhost:${port}`;
+const ROUTE_MS = Number(process.env.HFD_SHOT_ROUTE_MS || 10_000);
 const STARTUP_MS = Number(process.env.HFD_SHOT_TIMEOUT_MS || 30_000);
 const PROBE_MS = Number(process.env.HFD_SHOT_PROBE_MS || 2_000);
 const GRACE_MS = Number(process.env.HFD_SHOT_GRACE_MS || 5_000);
@@ -137,6 +152,9 @@ const note = (error) => {
 };
 
 try {
+  // Bad routes fail before any server or browser is started.
+  const targets = routeTargets(routes, BASE, { dark });
+
   const initial = await probe(PROBE_MS);
   if (initial === "silent") {
     throw new Error(
@@ -165,16 +183,28 @@ try {
     viewport: { width, height: 900 },
     colorScheme: dark ? "dark" : "light",
   });
+  if (dark) {
+    console.error("Note: --dark emulates a dark OS appearance; the app has only a light theme, so pages render light.");
+  }
   const page = await context.newPage();
   page.on("pageerror", (e) => pageErrors.push(e.message));
   page.on("console", (m) => m.type() === "error" && pageErrors.push(m.text()));
 
-  for (const route of routes) {
-    await page.goto(BASE + route, { waitUntil: "networkidle" });
+  for (const target of targets) {
+    await page.goto(target.url, { waitUntil: "networkidle" });
+    // The shell's <main> appears once the database is open; lazy screens may
+    // still be loading, so give them a moment before reading the page.
+    await page.waitForSelector("main.content", { timeout: ROUTE_MS }).catch(() => {});
     await page.waitForTimeout(300);
-    const name =
-      (route.replace(/^\/|\/$/g, "").replace(/\//g, "_") || "home") + (dark ? "-dark" : "") + ".png";
-    const file = join(outDir, name);
+    const state = await page.evaluate(() => ({
+      pathname: location.pathname,
+      hash: location.hash,
+      hasMain: Boolean(document.querySelector("main.content")),
+      notFound: (document.querySelector("main.content")?.textContent ?? "").includes("That page isn't here."),
+    }));
+    const mismatch = routeMismatch(target, state);
+    if (mismatch) throw new Error(`Route ${target.path} did not render (${target.url}): ${mismatch}`);
+    const file = join(outDir, target.name);
     await page.screenshot({ path: file, fullPage: true });
     console.log(file);
   }

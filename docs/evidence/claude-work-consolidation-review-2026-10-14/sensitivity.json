@@ -1,0 +1,10 @@
+[
+  {
+    "mutation": "restore fixed 20-turn wait",
+    "exit": 1
+  },
+  {
+    "mutation": "restore UTC backup filename",
+    "exit": 1
+  }
+]

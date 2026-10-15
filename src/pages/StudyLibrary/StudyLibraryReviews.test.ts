@@ -293,6 +293,12 @@ describe("Card review history and binder indicators", () => {
     const dialog = await screen.findByRole("dialog", { name: "Card as you reviewed it" });
     expect(within(dialog).getByText("Old answer 0")).toBeTruthy();
     expect(within(dialog).getByText(/This is a read-only record/)).toBeTruthy();
+    // The dialog names the review time exactly as the list does: "5 Oct 2026,
+    // 09:12", never a numeric 05/10/2026 a US reader would take as May 10.
+    const listedAt = within(rows[1]!).getByText(/^Weather basics · /).textContent!.split(" · ")[1]!;
+    const ratedLine = within(dialog).getByText(/^Rated Good on /).textContent!;
+    expect(ratedLine).toContain(`on ${listedAt}`);
+    expect(ratedLine).not.toMatch(/\d{2}\/\d{2}\/\d{4}/);
     fireEvent.click(within(dialog).getAllByRole("button", { name: "Close" }).at(-1)!);
     expect(writes).not.toHaveBeenCalled();
     expect(executes).not.toHaveBeenCalled();

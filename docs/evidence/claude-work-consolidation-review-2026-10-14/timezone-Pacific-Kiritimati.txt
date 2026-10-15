@@ -1,0 +1,31 @@
+
+ RUN  v4.1.11 <review-checkout>
+
+ ❯ src/logic/dataSafety.test.ts (21 tests | 1 failed) 11ms
+     × is satisfied by a recent backup from this version 6ms
+(node:49440) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/logic/dataSafety.test.ts > backupHealth > is satisfied by a recent backup from this version
+AssertionError: expected 'Complete backup saved 3 days ago, fro…' to contain '2 days ago'
+
+Expected: "2 days ago"
+Received: "Complete backup saved 3 days ago, from version 0.2.0."
+
+ ❯ src/logic/dataSafety.test.ts:87:28
+     85|     expect(health.state).toBe("protected");
+     86|     expect(health.needsAttention).toBe(false);
+     87|     expect(health.message).toContain("2 days ago");
+       |                            ^
+     88|   });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 71 passed (72)
+   Start at  20:40:28
+   Duration  1.02s (transform 384ms, setup 0ms, import 639ms, tests 352ms, environment 607ms)
