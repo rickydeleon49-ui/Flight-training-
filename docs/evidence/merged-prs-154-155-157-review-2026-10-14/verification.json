@@ -68,6 +68,6 @@
   "limits": [
     "No full frontend or native suite rerun locally; exact-head GitHub full-gate success verified separately.",
     "No installed app, WebKit, VoiceOver, signing or release verification.",
-    "Public test/build logs replace the checkout root with <review-checkout>; no other content changed."
+    "Public test/build logs replace the checkout root with <review-checkout> and normalize trailing whitespace; no result content changed."
   ]
 }

@@ -20,7 +20,7 @@ node_modules/zod/v4/core/regexes.js (74:0): A comment
 in "node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 ✓ 339 modules transformed.
 rendering chunks...
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) <review-checkout>/src/data/practiceSessionTransaction.ts is dynamically imported by <review-checkout>/src/data/sqlJsDb.ts, <review-checkout>/src/data/sqlJsDb.ts, <review-checkout>/src/data/sqlJsDb.ts, <review-checkout>/src/data/sqlJsDb.ts, <review-checkout>/src/data/structuredImportTransaction.ts but also statically imported by <review-checkout>/src/data/practiceStateValidation.ts, <review-checkout>/src/data/sqlJsDb.ts, dynamic import will not move module into another chunk.
 
 computing gzip size...
