@@ -1,3 +1,5 @@
+> Package accepted and merged in PR #165. F1–F3 follow-up refreshes the current 20-file overlay manifest; original execution/proof receipts below remain historical unchanged bytes. See [follow-up evidence](../mac-schema14-followup-2026-10-15/README.md) for current execution and full submission inventory.
+
 # Schema14 continuation evidence — 15 October 2026
 
 Current submission: implemented, pending independent review. Start with [reviewer handoff](../../MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md).

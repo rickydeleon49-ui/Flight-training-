@@ -71,6 +71,10 @@ jobs:
       - if: steps.filter.outputs.run_heavy != 'false'
         run: npm test
 
+      - name: Schema verification helper regressions
+        if: steps.filter.outputs.run_heavy != 'false'
+        run: node --test scripts/mac-schema14-profile-snapshot.test.mjs
+
       # `npm run build` typechecks first, then produces the real frontend
       # bundle — which is also what the Rust side compiles against.
       - if: steps.filter.outputs.run_heavy != 'false'

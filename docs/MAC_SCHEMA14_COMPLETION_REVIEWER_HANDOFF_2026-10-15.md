@@ -1,3 +1,5 @@
+> Historical implementation handoff. Package accepted and merged in PR #165. See [F1–F3 follow-up](MAC_SCHEMA14_FOLLOWUP_F1_F3_2026-10-15.md) for current helper counts and RUNBOOK §7 for exact post-merge reproduction. Earlier measured receipts remain unchanged.
+
 # Schema-14 verification preparation — independent reviewer handoff
 
 15 October 2026. **IMPLEMENTED; PENDING INDEPENDENT REVIEW.** No commit, push, merge or installer build is part of this handoff.

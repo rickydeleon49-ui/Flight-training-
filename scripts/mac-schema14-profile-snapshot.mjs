@@ -1741,7 +1741,17 @@ function selfCheck() {
   const add = (name, pass, detail) => checks.push({ name, pass: !!pass, detail });
   const out = name => path.join(dir, `${name}.json`);
   const cmp = (before, after, purpose, name) => {
-    const outcome = compare({ before, after, purpose });
+    let outcome;
+    try {
+      outcome = compare({ before, after, purpose });
+    } catch (error) {
+      // A refused comparison is a named self-check failure, never a passing verdict.
+      // Keep unexpected programming errors visible instead of treating them as refusals.
+      const message = String(error?.message ?? error);
+      if (!message.startsWith('REFUSED:')) throw error;
+      add(`comparison: ${name} accepts its snapshots for ${purpose}`, false, { refusal: message });
+      outcome = { verdict: 'REFUSED', diffs: [message], sections: {}, notes: [] };
+    }
     fs.writeFileSync(out(`cmp-${name}`), `${JSON.stringify(outcome, null, 2)}\n`);
     return outcome;
   };
@@ -1907,7 +1917,7 @@ function selfCheck() {
       cUp.verdict === 'PASS' && sameList(cUp.sections.tables.seededAdditions, ['skill_catalog_entries', 'skill_catalog_revisions'])
         && cUp.sections.tables.emptyAdditions.length === 4 && s14.m3Evidence.builtinCatalogEntries === 15 && s14.m3Evidence.observations === 0,
       { verdict: cUp.verdict, diffs: cUp.diffs, tables: cUp.sections.tables });
-    add('contract upgrade: no receipt key is set aside outside restore', cUp.receiptExclusion.applied === false && cUp.sections.backupReceipt === undefined);
+    add('contract upgrade: no receipt key is set aside outside restore', cUp.verdict !== 'REFUSED' && cUp.receiptExclusion.applied === false && cUp.sections.backupReceipt === undefined);
     takeSnapshot(up.root, uid, out('s14-again'));
     const cSame = cmp(out('s14'), out('s14-again'), 'unchanged', 'unchanged-14');
     add('contract unchanged: two captures of the same schema-14 library pass', cSame.verdict === 'PASS' && cSame.diffs.length === 0, cSame.diffs);

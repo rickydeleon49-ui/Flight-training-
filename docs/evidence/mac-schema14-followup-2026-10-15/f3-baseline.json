@@ -1,0 +1,16 @@
+{
+  "runtime": "v22.23.3",
+  "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+  "sourceSha256": "49540cd4e4e130020079e9bde36cf20c7179e2af33d8b87df2b877a5f0d03788",
+  "mutation": {
+    "from": "const out = Object.create(null);",
+    "to": "const out = {};"
+  },
+  "command": [
+    "node",
+    "<disposable mutated helper>"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-selfcheck-f3-baseline-SREHTt/mac-schema14-profile-snapshot.disposable.mjs:327\nfunction fail(msg) { throw new Error(`REFUSED: ${msg}`); }\n                           ^\n\nError: REFUSED: snapshot(s) are not usable for a verdict — before: app_metadata.keyDigests lists 4 keys but the table has 5 rows; after: app_metadata.keyDigests lists 4 keys but the table has 5 rows\n    at fail (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-selfcheck-f3-baseline-SREHTt/mac-schema14-profile-snapshot.disposable.mjs:327:28)\n    at compare (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-selfcheck-f3-baseline-SREHTt/mac-schema14-profile-snapshot.disposable.mjs:1444:24)\n    at cmp (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-selfcheck-f3-baseline-SREHTt/mac-schema14-profile-snapshot.disposable.mjs:1752:21)\n    at selfCheck (file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-selfcheck-f3-baseline-SREHTt/mac-schema14-profile-snapshot.disposable.mjs:1913:17)\n    at file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-selfcheck-f3-baseline-SREHTt/mac-schema14-profile-snapshot.disposable.mjs:2165:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v22.23.3\n"
+}

@@ -81,3 +81,106 @@ Command shape (identical for every gate):
 ## 6. Hand back
 
 Hand back the whole `$HFD_EVID` folder, terminal logs with exit codes, the DMG/binary hashes as observed, and screenshots of the gate actions. Profiles and backups stay local.
+
+## 7. Post-merge source-only reproduction (F2)
+
+This section runs only synthetic source proofs. It does not execute any installed gate above. Run from the repository root with Python 3, Git, Node 22 and npm available. Set `HFD_SCHEMA14_SOURCE_COMMIT` to the full merged commit to reproduce, or leave it unset to use your fetched `origin/main`. The F1–F3 PR’s final comment records the tested merged identity. Fetch if needed before starting.
+
+The committed source manifest lists exactly the 20 helper-package source/document/receipt paths. Its own file and SHA256SUMS complete the 22-path overlay. The original baseline/HEAD check and allowlist are unchanged. Workflow changes and this follow-up’s separate evidence are outside that overlay; Linux CI validates the workflow separately. The full follow-up inventory is in `docs/evidence/mac-schema14-followup-2026-10-15/submission-manifest.json`. Earlier package receipts remain historical, not relabelled as executions of changed source.
+
+The procedure reads bytes from the selected Git commit, verifies every listed size/hash before copying, creates a detached temporary worktree at **16f9cf3**, installs dependencies only there, runs the unchanged proof and removes that worktree in `finally`, including on an interrupt. It never copies local dirty files or edits current checkout files. The final receipt is retained in a fresh system-temp directory, with the selected commit, all commands/exits, 12-stage proof and cleanup facts. Node22 remains mandatory. No application build is run.
+
+```bash
+export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
+python3 - <<'PY_REPRO'
+import hashlib, json, os, pathlib, shutil, signal, subprocess, tempfile, time
+
+BASE = '16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78'
+MANIFEST = 'docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json'
+SUMS = 'docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS'
+repo = pathlib.Path(subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip())
+def git(*args):
+    return subprocess.check_output(['git', '-C', str(repo), *args])
+commit = git('rev-parse', '--verify', os.environ.get('HFD_SCHEMA14_SOURCE_COMMIT', 'origin/main') + '^{commit}').decode().strip()
+start_status = git('status', '--porcelain=v1', '--untracked-files=all')
+manifest_bytes = git('show', f'{commit}:{MANIFEST}')
+manifest = json.loads(manifest_bytes)
+assert manifest['base'] == BASE and manifest['schemaContractCommit'] == '8a260c0b32bc213850ed85bf9488d6ef571354a9'
+files = manifest['files']
+assert len({f['path'] for f in files}) == len(files) == 20
+payload = {}
+for f in files:
+    p = pathlib.PurePosixPath(f['path'])
+    assert not p.is_absolute() and '..' not in p.parts and str(p) == f['path']
+    b = git('show', f"{commit}:{f['path']}")
+    assert len(b) == f['bytes'] and hashlib.sha256(b).hexdigest() == f['sha256'], f['path']
+    payload[f['path']] = b
+payload[MANIFEST] = manifest_bytes
+payload[SUMS] = git('show', f'{commit}:{SUMS}')
+for line in payload[SUMS].decode().splitlines():
+    digest, p = line.split('  ', 1)
+    assert p in payload and hashlib.sha256(payload[p]).hexdigest() == digest, p
+assert len(payload[SUMS].decode().splitlines()) == 21
+assert git('show', f'{commit}:package-lock.json') == git('show', f'{BASE}:package-lock.json')
+root = pathlib.Path(tempfile.mkdtemp(prefix='hfd-schema14-postmerge-'))
+worktree = root / 'worktree'
+receipt_dir = pathlib.Path(tempfile.mkdtemp(prefix='hfd-schema14-postmerge-receipt-'))
+receipt = {'commit': commit, 'base': BASE, 'copiedPaths': sorted(payload), 'commands': [], 'success': False}
+added = False
+failure = None
+
+def command(argv, cwd):
+    started = time.time()
+    p = subprocess.run(argv, cwd=cwd, text=True, capture_output=True)
+    receipt['commands'].append({'argv': argv, 'cwd': str(cwd), 'startedAt': started, 'durationSeconds': time.time() - started, 'exit': p.returncode, 'stdout': p.stdout, 'stderr': p.stderr})
+    if p.returncode:
+        raise RuntimeError(f'{argv} exited {p.returncode}: {p.stderr[-1500:]}')
+    return p
+
+def interrupted(signum, frame):
+    raise InterruptedError(f'interrupted by signal {signum}')
+signal.signal(signal.SIGTERM, interrupted)
+signal.signal(signal.SIGHUP, interrupted)
+try:
+    command(['git', '-C', str(repo), 'worktree', 'add', '--detach', str(worktree), BASE], repo)
+    added = True
+    for p, b in payload.items():
+        mode = git('ls-tree', commit, '--', p).decode().split()[0]
+        assert mode in ('100644', '100755'), p
+        dest = worktree / p
+        assert not dest.is_symlink(), p
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(b)
+        dest.chmod(0o755 if mode == '100755' else 0o644)
+    command(['node', '--version'], worktree)
+    assert receipt['commands'][-1]['stdout'].startswith('v22.')
+    command(['npm', 'ci'], worktree)  # dependencies only in the disposable worktree
+    p = command(['node', 'scripts/mac-schema14-verification-proof.mjs'], worktree)
+    last = p.stdout.strip().splitlines()[-1]
+    assert last.startswith('PASS: 12/12 stages; receipt '), last
+    proof_path = pathlib.Path(last.split('; receipt ', 1)[1])
+    receipt['proof'] = json.loads(proof_path.read_bytes())
+    assert receipt['proof']['summary'] == {'stages': 12, 'passed': 12, 'failed': 0}
+    receipt['success'] = True
+except BaseException as error:
+    receipt['error'] = f'{type(error).__name__}: {error}'
+    failure = error
+finally:
+    if added:
+        cleanup = subprocess.run(['git', '-C', str(repo), 'worktree', 'remove', '--force', str(worktree)], text=True, capture_output=True)
+        receipt['cleanup'] = {'exit': cleanup.returncode, 'stderr': cleanup.stderr, 'worktreeRemoved': not worktree.exists()}
+        if cleanup.returncode or worktree.exists():
+            receipt['success'] = False
+    shutil.rmtree(root, ignore_errors=True)
+    receipt['sourceCheckoutStatusUnchanged'] = git('status', '--porcelain=v1', '--untracked-files=all') == start_status
+    receipt['success'] = receipt['success'] and receipt['sourceCheckoutStatusUnchanged']
+    output = receipt_dir / 'reproduction.json'
+    output.write_text(json.dumps(receipt, indent=2) + '\n')
+    print(f"{'PASS' if receipt['success'] else 'FAIL'}: post-merge reproduction; receipt {output}")
+if failure:
+    raise failure
+assert receipt['success'], receipt
+PY_REPRO
+```
+
+Expected final line: `PASS: post-merge reproduction; receipt <temporary path>`. The nested proof must report 12/12 stages; cleanup must report exit 0, `worktreeRemoved: true` and `sourceCheckoutStatusUnchanged: true`. A current-HEAD direct proof refusal is expected after integration: use this procedure, not pin or allowlist changes.
