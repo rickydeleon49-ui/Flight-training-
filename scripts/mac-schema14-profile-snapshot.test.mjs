@@ -83,6 +83,46 @@ describe('distributed helper', () => {
   });
 });
 
+describe('full self-check reporting', () => {
+  it('reports lost special keys as named failures, completes all checks and exits nonzero', () => {
+    const dir = path.join(scratch, 'full-selfcheck-lost-key');
+    fs.mkdirSync(dir);
+    const file = writeDisposableHelper(dir, {
+      entry: 'selfCheck();',
+      edit: { from: 'const out = Object.create(null);', to: 'const out = {};' },
+    });
+    const result = cli([], file);
+    assert.equal(result.status, 1);
+    const report = JSON.parse(result.stdout); // An uncaught refusal produced no report before F3.
+    assert.equal(report.allPassed, false);
+    assert.ok(report.counts.checks >= 102);
+    assert.ok(report.counts.failed > 0);
+    const named = name => {
+      const check = report.checks.find(c => c.name === name);
+      assert.ok(check, `missing check: ${name}`);
+      return check;
+    };
+    assert.equal(named('metadata: __proto__, constructor, toString and a Unicode key are captured as own digests and counts agree').pass, false);
+    assert.equal(named('comparison: upgrade accepts its snapshots for upgrade').pass, false);
+    assert.match(named('comparison: upgrade accepts its snapshots for upgrade').detail.refusal, /keyDigests lists 4 keys but the table has 5 rows/);
+    assert.equal(named('contract upgrade: no receipt key is set aside outside restore').pass, false);
+    assert.equal(named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions').pass, true);
+    assert.equal(named('scratch leak check: no WAL-copy scratch directory survived the run').pass, true);
+    assert.doesNotMatch(result.stderr, /Error: REFUSED:|at selfCheck \(/);
+  });
+
+  it('runs the historical schema13 self-check with only its intentional schema-ceiling alarm', () => {
+    const result = cli(['self-check'], path.join(REPO, 'scripts/mac-schema13-profile-snapshot.mjs'));
+    assert.equal(result.status, 1);
+    const report = JSON.parse(result.stdout);
+    const failed = report.checks.filter(c => !c.pass).map(c => c.name);
+    assert.deepEqual(failed, ["anchor: CURRENT_SCHEMA_VERSION in the shipped source still equals this helper's constant"]);
+    assert.equal(report.counts.passed, 105);
+    assert.equal(report.counts.failed, 1);
+    assert.ok(report.checks.filter(c => /special metadata key/.test(c.name)).every(c => c.pass));
+  });
+});
+
 describe('proof source walker', () => {
   it('sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files', () => {
     const dir = path.join(scratch, 'walker');

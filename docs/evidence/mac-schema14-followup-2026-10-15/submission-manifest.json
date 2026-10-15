@@ -1,0 +1,108 @@
+{
+  "schema": "hfd-schema14-followup-submission/1",
+  "generatedAt": "2026-10-15T20:59:59.769424+00:00",
+  "base": "845052623b731d4955f15d820e91d1e7a60683ef",
+  "path": "A: accepted package integrated first; separate F1-F3 follow-up",
+  "files": [
+    {
+      "path": ".github/workflows/checks.yml",
+      "bytes": 5075,
+      "sha256": "a625d493704f7d87313020bb071f8c2f795fae1ad1f8d197b40ddc95aeee66b0"
+    },
+    {
+      "path": "ROADMAP.md",
+      "bytes": 75290,
+      "sha256": "b35100285d113fdfaedb438c02183d7d00bf78db71a8cdcdc6a7d5fc0c9ffb52"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 203719,
+      "sha256": "c1055d7f7e7febaab38245073985a2c830a4ff88aea477e5e3b5f13eadafd30c"
+    },
+    {
+      "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
+      "bytes": 10617,
+      "sha256": "46ec355b6248d3b390079640c782840e3fa2b7873fe21b76aa9212c6388d0f3e"
+    },
+    {
+      "path": "docs/MAC_SCHEMA14_FOLLOWUP_F1_F3_2026-10-15.md",
+      "bytes": 5882,
+      "sha256": "0cdacf16d66e8940731f4da210a1632df29702a39f99c6ed54e7c6e5b84bcab9"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 112889,
+      "sha256": "da8513a4d2fc1dadcdad04e976cc2de74cb7f2926746aae05e422af3c6200962"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/README.md",
+      "bytes": 1576,
+      "sha256": "81b1419daba8d5ea2ece9a662f4e573620567f053da69e390389260f36e1ce9b"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md",
+      "bytes": 13205,
+      "sha256": "1f0a762478e16ec3c483d83f24930ce1414c448fa96658612a4660abbc9c2b4f"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+      "bytes": 2562,
+      "sha256": "1265d464f86414a3b03e5f6e6fbb76a0f4309c663099f419c0cea597bd47b0fb"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+      "bytes": 4564,
+      "sha256": "0790e9ef0bc4e14ed0777d9d15ac5ef7456a6851dfb0fc737727367fce1d511e"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-followup-2026-10-15/README.md",
+      "bytes": 1085,
+      "sha256": "6f018b9d81639cc1b556cc7c7a7473638f2018ff9d0ef0da9173d584c52f26b9"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-followup-2026-10-15/accepted-checks.json",
+      "bytes": 23515,
+      "sha256": "2aadfac327480ede988bc8a3ec25aeac67a25dc02c9dcc10d591f5a940df53fa"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-followup-2026-10-15/accepted-followchecks.json",
+      "bytes": 16461,
+      "sha256": "e2604aec5d9e97103dae72f637cf3bc15e6dc97ee98b7e1a355f91fcf71dc4eb"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-followup-2026-10-15/f3-baseline.json",
+      "bytes": 1990,
+      "sha256": "b7794f13f48eaea22cd6571f0ae2342847c8f79ab2bfd12d3e127fbce84c4273"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-followup-2026-10-15/integration-ci.json",
+      "bytes": 381,
+      "sha256": "2534d428dc3fa9aaea6be37009a1160cfc9f8a8377412837f04f80a82a03727c"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-followup-2026-10-15/reproduction.json",
+      "bytes": 57674,
+      "sha256": "8c808c19c394f3dac8e06ce69ae0ad29455a72dfe33cc5a09c3be8becdf66388"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-followup-2026-10-15/verification.json",
+      "bytes": 61512,
+      "sha256": "2b089ac0b48a57d77ed9785d81a80a6b072468daea5649e4f598cd46e6e01b0b"
+    },
+    {
+      "path": "scripts/mac-schema14-profile-snapshot.mjs",
+      "bytes": 142514,
+      "sha256": "e674f5ebf9755921b9975e8a3b42800c2fa883bd6860ea9b017c53a25fbc0a6d"
+    },
+    {
+      "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
+      "bytes": 20343,
+      "sha256": "73a6dbf96addecb758f26ab899aa4be26d4d7742fd014639ae1de7398ea6b0f8"
+    }
+  ],
+  "overlayManifest": "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+  "excludes": {
+    "self": "listed in SHA256SUMS",
+    "SHA256SUMS": "never hashes itself"
+  }
+}

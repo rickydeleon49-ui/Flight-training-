@@ -1,25 +1,25 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-15T18:57:57.602363+00:00",
+  "generatedAt": "2026-10-15T20:58:56.806979+00:00",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
-  "status": "implemented-pending-independent-review",
-  "generatedAfterReceipt": "2026-10-15T18:57:26.048837+00:00",
+  "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
+  "generatedAfterReceipt": "2026-10-15T20:58:56.806292+00:00",
   "files": [
     {
       "path": "STATUS.md",
-      "bytes": 202510,
-      "sha256": "933a730d1946cb71c59d88360cf9a3f42572f270880f0af3e83f8a5bfc32b2d3"
+      "bytes": 203719,
+      "sha256": "c1055d7f7e7febaab38245073985a2c830a4ff88aea477e5e3b5f13eadafd30c"
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 74081,
-      "sha256": "7f2b5f9d4d3bd82b007772dab5f9c7ba538d9a89706465305d7cbc277f9ce5ab"
+      "bytes": 75290,
+      "sha256": "b35100285d113fdfaedb438c02183d7d00bf78db71a8cdcdc6a7d5fc0c9ffb52"
     },
     {
       "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
-      "bytes": 10351,
-      "sha256": "0737e8cef7b93f9984303be51a45c03c148246e42cbf324049ce2081387aa44b"
+      "bytes": 10617,
+      "sha256": "46ec355b6248d3b390079640c782840e3fa2b7873fe21b76aa9212c6388d0f3e"
     },
     {
       "path": "docs/evidence/mac-schema14-completion-2026-10-15/baseline.json",
@@ -38,13 +38,13 @@
     },
     {
       "path": "docs/evidence/mac-schema14-completion-2026-10-15/README.md",
-      "bytes": 1267,
-      "sha256": "7c013ed468dec5813d18af13ddeded14797b7ccebad268b59db836888cbd5ddb"
+      "bytes": 1576,
+      "sha256": "81b1419daba8d5ea2ece9a662f4e573620567f053da69e390389260f36e1ce9b"
     },
     {
       "path": "docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md",
-      "bytes": 6517,
-      "sha256": "88610b5a858773ff8f72b27e6a579a763bf27f2d5e03ab652583c879ba25d384"
+      "bytes": 13205,
+      "sha256": "1f0a762478e16ec3c483d83f24930ce1414c448fa96658612a4660abbc9c2b4f"
     },
     {
       "path": "scripts/mac-schema13-profile-snapshot.mjs",
@@ -53,13 +53,13 @@
     },
     {
       "path": "scripts/mac-schema14-profile-snapshot.mjs",
-      "bytes": 141964,
-      "sha256": "49540cd4e4e130020079e9bde36cf20c7179e2af33d8b87df2b877a5f0d03788"
+      "bytes": 142514,
+      "sha256": "e674f5ebf9755921b9975e8a3b42800c2fa883bd6860ea9b017c53a25fbc0a6d"
     },
     {
       "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
-      "bytes": 17997,
-      "sha256": "9d53ef79f5c03b590f42571c83d1143e52569a39e2c6e776a492c53e592c95c0"
+      "bytes": 20343,
+      "sha256": "73a6dbf96addecb758f26ab899aa4be26d4d7742fd014639ae1de7398ea6b0f8"
     },
     {
       "path": "scripts/mac-schema14-verification-proof.mjs",
@@ -78,8 +78,8 @@
     },
     {
       "path": "docs/PROJECT_HANDOFF.md",
-      "bytes": 111690,
-      "sha256": "b4fcf78e38cc93732f31143505f44c2a75070a45be29bc81986d51f99692b48a"
+      "bytes": 112889,
+      "sha256": "da8513a4d2fc1dadcdad04e976cc2de74cb7f2926746aae05e422af3c6200962"
     },
     {
       "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md",
@@ -107,9 +107,9 @@
       "sha256": "f329ca092b1ed4eab95f0de2584cbc7ca458457c9a7f4e262f06d7fdd1c886b1"
     }
   ],
+  "historicalReceipts": "Original accepted executions remain unchanged; current follow-up executions are in docs/evidence/mac-schema14-followup-2026-10-15/verification.json.",
   "exclusions": {
     "self": "listed in SHA256SUMS",
     "SHA256SUMS": "never hashes itself"
-  },
-  "historicalManifest": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/source-manifest.json describes saved original checkout; not current hashes"
+  }
 }
