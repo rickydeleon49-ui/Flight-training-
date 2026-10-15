@@ -1,3 +1,14 @@
+## PR161 CI failure and Codex-lead repair queue — 14 October 2026
+
+**Corrections required; unmerged; pending next owner-selected implementer.** Codex remains the designated Git coordinator. PR161 head `4ab1a15` failed three new rendered card-clock tests; the safe CI gate prevented merging. The local delivery session then exited because its failed-CI correction transition is not implemented.
+
+- **CI-161-01 (P1):** reproduce and correct asynchronous readiness/acknowledgement handling in the PR161 rendered tests, or a demonstrated production race. Preserve clock, persistence and retry assertions; no sleeps, timeout inflation, skips or weakened gates.
+- **PIPE-161-01 (P2):** in the external controller bundle, add bounded/idempotent CI-failure receipts and same-task repair dispatch, fresh Codex approval and exact-head checks. Maximum two CI repair attempts per lineage; keep one implementer/Git coordinator and no model calls for CI waiting.
+- Dependency/order: diagnose PR161 verification first, then controller recovery; finish both at independent review readiness before resuming the delivery session. Existing accepted packages and M4 stay separate; no installer/release work.
+- Acceptance, exact source/line references, reproducible diagnostics, scopes, regressions and model-neutral handoff: [PR161 failure review and repair prompt](docs/PR161_CI_FAILURE_REVIEW_AND_REPAIR_PROMPT_2026-10-14.md).
+
+Earlier roadmap history below is preserved.
+
 ## Active M4 continuation after historical review reconciliation — 12 October 2026
 
 Use the [current independent review](docs/M4_DOCUMENT_NAVIGATION_ROUND3_REVIEW_2026-10-11.md) and [round-4 correction assignment R28–R32](docs/M4_DOCUMENT_NAVIGATION_ROUND4_CORRECTIONS_PROMPT_2026-10-11.md). PR #148 preserves the earlier round-2 findings and round-3 prompt as history; it does not reactivate them or accept M4 production.
