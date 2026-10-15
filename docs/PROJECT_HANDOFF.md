@@ -1,3 +1,18 @@
+## Study Library scenario test isolation — 14 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW** (Claude, uncommitted isolated worktree, base `cb0ece1`). Test-only M2 maintenance.
+
+- `src/perf/studyLibraryScenarios.test.ts` now gives each of the 18 benchmark scenarios its own named, sequential test. Each test runs on a freshly mounted real Study Library with its own disposable SQLite: the 16 ordinary scenarios at 240 materials and the two expanded scenarios at 1,000. Every run uses the existing `only` selector.
+- Coverage accounting is new. It detects a scenario that is unassigned, assigned twice, a duplicate name, skipped, unfinished or run twice. The check that both expanded scenarios are ineligible at 240 materials is kept.
+- All harness checks, spot checks, negative controls and fixture/transaction tests are retained. Harness `2af0e3af…` and fixture `93b834e5…` are unchanged. Budgets stay at 30 s and 60 s per test; there are no retries, skips or production changes.
+- Verification (Node 22.23.3):
+  - The unchanged baseline passed 11/11 in 42.68 s. The historical timeouts in `runs/20261014-004448-779238` were full-suite load stalls and **did not reproduce**.
+  - The final suite passed 31/31 in 34.31 s, and typecheck exit 0.
+  - Six disposable mutations (omit, duplicate, skip, intermediate id, intermediate count, inert control) each failed as intended.
+- This isolates stalls for diagnosis; it does not cure timeouts under load. Splitting the test raises the aggregate time the suite may take. M4, the schema14 parity package `d8ff795089fc` and the other packages are untouched.
+
+[Implementation report](STUDY_LIBRARY_SCENARIO_ISOLATION_REPORT_2026-10-14.md). Entries below are unchanged.
+
 ## M2 focused practice review — 13 October 2026
 
 **IMPLEMENTED, PENDING INDEPENDENT REVIEW** (Claude, uncommitted isolated worktree, base `c9a15ab`).

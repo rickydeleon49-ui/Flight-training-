@@ -42,6 +42,11 @@ const meter: Meter = {
 };
 
 async function mountLibrary(materials: FixtureMaterial[]) {
+  // Each test mounts its own page; nothing may carry over from the previous one.
+  expect(db).toBeNull();
+  expect(context).toBeNull();
+  expect(document.body.innerHTML).toBe("");
+  expect(sessionStorage.length).toBe(0);
   db = await createNodeSqliteDatabase();
   await createRepositories(db).app.set("airline_starter_pack", "skipped-for-test");
   await seedFixtureMaterials(db, materials);
@@ -88,7 +93,68 @@ describe("Study Library benchmark fixture", () => {
   });
 });
 
+// Each scenario runs in its own named test on a freshly mounted page, so a slow
+// or failing scenario is reported by name and cannot hold up the others.
+// Ordinary scenarios use the 240-material fixture.
+const ORDINARY = [
+  "emptyQueryClearsSearch",
+  "matchingQueryPasted",
+  "narrowingQueryTyped",
+  "noMatchQuery",
+  "unicodeUppercaseAccent",
+  "unicodeCjk",
+  "unicodeDecomposedNoNormalization",
+  "duplicateTitlesUnderTitleSort",
+  "tagQuery",
+  "notesQuery",
+  "filtersAndSortTogether",
+  "statusChipNextUp",
+  "sortRecentToPriority",
+  "sortPriorityToTitle",
+  "sortTitleToRecent",
+  "showMoreProgressive",
+];
+// Expanded-state scenarios need 1,000 materials.
 const EXPANDED = ["showMoreExpandTo1000", "queryWhileExpanded"];
+const ASSIGNED = [...ORDINARY, ...EXPANDED];
+
+// Spot checks that the ordinary scenarios exercise what their names say.
+const SPOT_CHECKS: Record<string, (result: ScenarioResult) => void> = {
+  matchingQueryPasted: (r) => expect(r.final.resultCount).toBe(24),
+  noMatchQuery: (r) => expect(r.final.resultCount).toBe(0),
+  filtersAndSortTogether: (r) => expect(r.final.resultCount).toBeGreaterThan(1),
+  showMoreProgressive: (r) => expect(r.final.shownCount).toBe(200),
+  narrowingQueryTyped(r) {
+    // Every typed prefix is its own step, measured and verified for its own query.
+    expect(r.steps.map((s) => s.view.query)).toEqual(Array.from("airspace class b", (_, i) => "airspace class b".slice(0, i + 1)));
+    expect(r.steps.at(-1)!.resultCount).toBe(6);
+  },
+};
+
+function repeated(names: string[]): string[] {
+  return [...new Set(names.filter((name, i) => names.indexOf(name) !== i))];
+}
+
+/** Scenarios that are not given exactly one test, or tests for names that are not scenarios. */
+function assignmentProblems(scenarios: string[], assigned: string[]): string[] {
+  return [
+    ...repeated(scenarios).map((name) => `duplicate scenario name: ${name}`),
+    ...repeated(assigned).map((name) => `assigned to more than one test: ${name}`),
+    ...scenarios.filter((name) => !assigned.includes(name)).map((name) => `not assigned to a test: ${name}`),
+    ...assigned.filter((name) => !scenarios.includes(name)).map((name) => `assigned but not a scenario: ${name}`),
+  ];
+}
+
+/** Scenarios that did not finish (omitted, skipped or failed), or finished more than once. */
+function completionProblems(scenarios: string[], completed: string[]): string[] {
+  return [
+    ...scenarios.filter((name) => !completed.includes(name)).map((name) => `did not finish: ${name}`),
+    ...repeated(completed).map((name) => `finished more than once: ${name}`),
+  ];
+}
+
+/** Names whose scenario test reached the end of its checks, in execution order. */
+const completed: string[] = [];
 
 function finished(results: Record<string, ScenarioResult | { skipped: string }>, name: string): ScenarioResult {
   const result = results[name];
@@ -96,44 +162,76 @@ function finished(results: Record<string, ScenarioResult | { skipped: string }>,
   return result;
 }
 
-describe("Study Library benchmark scenarios", () => {
-  it("lists exactly the answer key's ids and order on the real page for every scenario", async () => {
-    const materials = fixtureLibrary(240);
-    await mountLibrary(materials);
-    const results = await runLibraryScenarios({
-      materials, loaded: () => context!.data.materials, meter, repeats: 1, warmups: 0,
-    });
-    expect(Object.keys(results)).toEqual(SCENARIOS.map((s) => s.name));
-    for (const [name, result] of Object.entries(results)) {
-      // Expanded-state scenarios need 1,000 materials and are covered below.
-      expect("skipped" in result, name).toBe(EXPANDED.includes(name));
-    }
-    // Spot checks that the scenarios exercise what their names say.
-    expect(finished(results, "matchingQueryPasted").final.resultCount).toBe(24);
-    expect(finished(results, "noMatchQuery").final.resultCount).toBe(0);
-    expect(finished(results, "filtersAndSortTogether").final.resultCount).toBeGreaterThan(1);
-    expect(finished(results, "showMoreProgressive").final.shownCount).toBe(200);
-    // Every typed prefix is its own step, measured and verified for its own query.
-    const narrowing = finished(results, "narrowingQueryTyped");
-    expect(narrowing.steps.map((s) => s.view.query)).toEqual(Array.from("airspace class b", (_, i) => "airspace class b".slice(0, i + 1)));
-    expect(narrowing.steps.at(-1)!.resultCount).toBe(6);
-    for (const step of narrowing.steps) {
-      expect(step.wallMs.n).toBe(1);
-      expect(step.computeMs.n).toBe(1);
-    }
-  }, 30_000);
+/** Mounts a fresh page over `total` fixture materials and runs exactly one scenario on it. */
+async function runScenario(name: string, total: number): Promise<ScenarioResult> {
+  const materials = fixtureLibrary(total);
+  await mountLibrary(materials);
+  const results = await runLibraryScenarios({
+    materials, loaded: () => context!.data.materials, meter, repeats: 1, warmups: 0, only: [name],
+  });
+  expect(Object.keys(results)).toEqual([name]);
+  const result = finished(results, name);
+  const scenario = SCENARIOS.find((s) => s.name === name)!;
+  expect(result.steps).toHaveLength(scenario.measured.length);
+  for (const step of result.steps) {
+    expect(step.wallMs.n).toBe(1);
+    expect(step.computeMs.n).toBe(1);
+  }
+  return result;
+}
 
-  it("measures a stated expanded display of 1,000 cards, and a query from it returns to 100", async () => {
-    const materials = fixtureLibrary(1_000);
+describe("Study Library benchmark scenarios", () => {
+  it("assigns every scenario to exactly one named test", () => {
+    expect(assignmentProblems(SCENARIOS.map((s) => s.name), ASSIGNED)).toEqual([]);
+    expect(Object.keys(SPOT_CHECKS).filter((name) => !ORDINARY.includes(name))).toEqual([]);
+  });
+
+  it("coverage accounting reports omitted, duplicated and unfinished scenarios", () => {
+    const names = SCENARIOS.map((s) => s.name);
+    expect(assignmentProblems(names, ASSIGNED.filter((n) => n !== "tagQuery"))).toEqual(["not assigned to a test: tagQuery"]);
+    expect(assignmentProblems([...names, "tagQuery"], ASSIGNED)).toEqual(["duplicate scenario name: tagQuery"]);
+    expect(assignmentProblems(names, [...ASSIGNED, "unicodeCjk"])).toEqual(["assigned to more than one test: unicodeCjk"]);
+    expect(assignmentProblems(names, [...ASSIGNED, "renamedScenario"])).toEqual(["assigned but not a scenario: renamedScenario"]);
+    expect(completionProblems(names, names.filter((n) => n !== "queryWhileExpanded"))).toEqual(["did not finish: queryWhileExpanded"]);
+    expect(completionProblems(names, [...names, "noMatchQuery"])).toEqual(["finished more than once: noMatchQuery"]);
+  });
+
+  it("skips both expanded-state scenarios at the 240-material tier", async () => {
+    const materials = fixtureLibrary(240);
     await mountLibrary(materials);
     const results = await runLibraryScenarios({
       materials, loaded: () => context!.data.materials, meter, repeats: 1, warmups: 0, only: EXPANDED,
     });
-    const expand = finished(results, "showMoreExpandTo1000");
+    expect(results).toEqual({
+      showMoreExpandTo1000: { skipped: "needs at least 1000 materials" },
+      queryWhileExpanded: { skipped: "needs at least 1000 materials" },
+    });
+  }, 30_000);
+
+  for (const name of ORDINARY) {
+    it(`${name}: lists exactly the answer key's ids and order on the real page`, async () => {
+      const result = await runScenario(name, 240);
+      SPOT_CHECKS[name]?.(result);
+      completed.push(name);
+    }, 30_000);
+  }
+
+  it("showMoreExpandTo1000: measures a stated expanded display of 1,000 cards", async () => {
+    const expand = await runScenario("showMoreExpandTo1000", 1_000);
     expect(expand.steps.map((s) => s.shownCount)).toEqual([200, 300, 400, 500, 600, 700, 800, 900, 1_000]);
-    const query = finished(results, "queryWhileExpanded");
-    expect(query.final).toEqual({ resultCount: 100, shownCount: 100 });
+    completed.push("showMoreExpandTo1000");
   }, 60_000);
+
+  it("queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100", async () => {
+    const query = await runScenario("queryWhileExpanded", 1_000);
+    expect(query.final).toEqual({ resultCount: 100, shownCount: 100 });
+    completed.push("queryWhileExpanded");
+  }, 60_000);
+
+  it("finished every scenario exactly once, in assigned order", () => {
+    expect(completionProblems(SCENARIOS.map((s) => s.name), completed)).toEqual([]);
+    expect(completed).toEqual(ASSIGNED);
+  });
 
   it("fails the run when the final page result differs from the answer key", async () => {
     const materials = fixtureLibrary(240);
