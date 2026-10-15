@@ -1,0 +1,188 @@
+{
+  "schema": "hfd-local-v054-qa-evidence/1",
+  "buildCommit": "fee78699dde736b016747c6a2ec3513a9677a556",
+  "functionalParent": "f2a7090190c74fdc3779785ae3684049d16b2a0e",
+  "state": "provisional local test build; version/report pending independent review; QA-01 and QA-02 open",
+  "files": [
+    {
+      "path": "package.json",
+      "bytes": 1347,
+      "sha256": "f78456662e52812266cab0c516f861d90fb69b156018ff94264445c08afa91d2"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 113946,
+      "sha256": "d254eab7c0e712dfe9bc3a452bcd252452a77857d0798fc1503f7118e8e1ca66"
+    },
+    {
+      "path": "src-tauri/Cargo.toml",
+      "bytes": 1176,
+      "sha256": "f49624eea6bb0c22154eafe74e5e64603de6ce757dae9ea87cce7b07620636a3"
+    },
+    {
+      "path": "src-tauri/Cargo.lock",
+      "bytes": 157885,
+      "sha256": "b39085c4211caad00540ef6321461d863b5788841e08933cf1cc9009f1a100c7"
+    },
+    {
+      "path": "src-tauri/tauri.conf.json",
+      "bytes": 1465,
+      "sha256": "d3ce335acc41b5122467850afbb78c36b7b80d1cc0a4b72b602bca5fc651d5e4"
+    },
+    {
+      "path": "ROADMAP.md",
+      "bytes": 76762,
+      "sha256": "d6133b3dcb91cc79ae2fa489d3843e432c760144ef89969ad2dc6efb0bda1987"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 205191,
+      "sha256": "ea17ef799ef953adbd6fa81a6b57edd5f07caae1f02c525624f2877acb3d7475"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 114351,
+      "sha256": "5b96d8612857bf796a99d37a4e6c3431b88daf8ab7e7b7971c57179e2405ab19"
+    },
+    {
+      "path": "docs/MAC_LOCAL_V054_BUILD_AND_BUG_TEST_2026-10-15.md",
+      "bytes": 11215,
+      "sha256": "a566212cac3a87addc0609718447f8377035a5299b67bb1c171c19a189c32aa8"
+    },
+    {
+      "path": "docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md",
+      "bytes": 4936,
+      "sha256": "d84323f5be6309787ab00036dc3e4f9d6e6cee0129b42ffd07757af40ae2d5b9"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/README.md",
+      "bytes": 1930,
+      "sha256": "1ebd9e1302654a14fefde55b5185bb9a78a5e98358570950fa651b721a24c5e8"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/artifact-identity.json",
+      "bytes": 8351,
+      "sha256": "7a981a8933c4a76fb108254e9cfb59b8ab9c85adfb4340b2e9118f7eb877852d"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-functional-initial.log",
+      "bytes": 723,
+      "sha256": "e56f410a93c8390e56b4a1e2a994dd9846db82b9779c979c3fc3b2fda604095e"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-functional-v2.log",
+      "bytes": 724,
+      "sha256": "0586b525723afde522a23abd0862d20d2c3abb7e9d8c2cb1421014d6c191b016"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-functional.log",
+      "bytes": 724,
+      "sha256": "ae99e408a2d527ddc5f845711e612bd9c16c00b7648bf28f42b6f4acf7a2387c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-initial-results.json",
+      "bytes": 13888,
+      "sha256": "6a66b78afbff62c0aa1ac6d21cfbdc7ca887d829ace16e0379468c989983985c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-results.json",
+      "bytes": 1917,
+      "sha256": "0a762defba22f8b0f595ab4184ebbac7be4f20a3fca23cce98bc4c0b53665c49"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-routes.log",
+      "bytes": 1392,
+      "sha256": "9e39d8a9024ddbc6f5b38f2f7c1adc1a63cc71809f45fa734e9b5fccc3e16e26"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-smoke-archived.mjs",
+      "bytes": 12096,
+      "sha256": "b92a914cf00b89c2299a8030abfc424ec7628b2bfffca083965491a01f38030c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/browser-v2-results.json",
+      "bytes": 3031,
+      "sha256": "da5963b20f6bcbefd7518d9197b59229588f6ebf2e4bcef768aa4395690b9564"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/build-receipt.json",
+      "bytes": 694,
+      "sha256": "6e209b69a0e3d87e6393856fb3d29fffa70eeb079d294a4917c89333f49d56d3"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/disk-image-control-invalid-command.json",
+      "bytes": 817,
+      "sha256": "0f63e2b33d252b9a60a0f6bf4babfb7cbf1e34d6488448685868952a8c20e78c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/disk-image-control.json",
+      "bytes": 970,
+      "sha256": "5c139198f5f43374288f8aabd732494cd3398673de9e43282aa460280633c5be"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/dmg-owned-process-cleanup.json",
+      "bytes": 794,
+      "sha256": "5dad49e3cafcac43c234a0ce747e4a2fc948414386e5eade0ade74fd89f7905d"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/dmg-stall-stop.json",
+      "bytes": 717,
+      "sha256": "712b4c3f1744ae9e4ccfef505f07fedf3b8f19480129a5281459db65b6728cba"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/finances-populated.png",
+      "bytes": 182503,
+      "sha256": "8944100b0dee1c32aa92e64b37947c8d6e167edb8fa461e72e265fc789299373"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/glib-apple-silicon.txt",
+      "bytes": 176,
+      "sha256": "4dc8e4fe7f86c681d8b81d94c4e76a3dda13457f37def5513d5850195a7778f6"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/hfs-disk-image-control.json",
+      "bytes": 985,
+      "sha256": "0b92c1048d75189b0ce62cb92940365966385363848fc24cf026459bb5462384"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/native-build.log",
+      "bytes": 20196,
+      "sha256": "69269a00931444ffdf8f3c071b238af2cb1281269ec01dde6d0e7704a7582987"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/own-image-cleanup.json",
+      "bytes": 32,
+      "sha256": "552536d66e435a46d73248dbe6a7d159e383fb7700e577e0c9b631eb8c2b5b4c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/packaging-commands.json",
+      "bytes": 6703,
+      "sha256": "6e91a5f0a19e6dee747beafc4078666893080ae41c7074cc68ef07bc4f197db8"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/prebuild-checks.log",
+      "bytes": 700,
+      "sha256": "8843da2d5c25fc79da52b78f465389e16596b10b9198064c36c3cfc596bef509"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/skill-status-confidence.png",
+      "bytes": 79138,
+      "sha256": "8d14cd887d87edefc2abd1b5ff4fb451ba22eccd4f3c0610b373106c98dd544a"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/test-gate.json",
+      "bytes": 75217,
+      "sha256": "1ebaf676dfae9e5feb6c80626498c2035f6dd33a3e581e47d352b9c46fbd1f9e"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-build-2026-10-15/versioned-proof-replay.json",
+      "bytes": 895,
+      "sha256": "90fde0febe29b279ec9058d75ba515a84f54226b621ce1cda6e6d344fcabaacd"
+    }
+  ],
+  "exclusions": {
+    "self": "listed in SHA256SUMS",
+    "SHA256SUMS": "never hashes itself",
+    "native artifacts": "outside source; hashes in artifact-identity.json"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "sourceCommit": "fee78699dde736b016747c6a2ec3513a9677a556",
+  "version": "0.5.4",
+  "cleanAtStart": true,
+  "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+  "argv": [
+    "npm",
+    "run",
+    "tauri",
+    "--",
+    "build",
+    "--target",
+    "aarch64-apple-darwin",
+    "--bundles",
+    "app,dmg",
+    "--no-sign",
+    "--ci"
+  ],
+  "startedAt": "2026-10-15T22:43:38.416662+00:00",
+  "durationSeconds": 447.09157609939575,
+  "exit": 1,
+  "settings": {
+    "SDKROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+    "CARGO_BUILD_JOBS": "4",
+    "signing": "--no-sign; no Developer ID/notarization"
+  },
+  "log": "native-build.log"
+}
