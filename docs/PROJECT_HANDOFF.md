@@ -1,3 +1,25 @@
+## M2 Review due clock recovery — 14 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW** (Claude `claude-opus-5-5` medium; uncommitted isolated worktree; base `e87874b`). This is the only queue job for this work (`6d5fca12ebf7`).
+
+- `useLibraryDueStream` now re-checks the computer's current local day on mount, at the midnight timer, on window focus and on return to a visible document. Hidden-state notifications are ignored.
+- **When the day boundary changed:** it invalidates the old generation, which drops its pages and failed read. It then reads page one with a fresh clock, the latest filters and a null cursor.
+- **When the boundary is unchanged:** it reads nothing and keeps everything already loaded.
+- One timer is always re-armed from the current clock. This also fixes the old redundant read, and the lost timer when the timer fired on an unchanged day.
+- The fix uses ordinary browser events, with no polling or new dependency. Scheduling, persistence, migrations, History, Retry, Check again and StrictMode ownership are unchanged.
+- **Verification (Node 22.23.3):**
+  - New hook suite: 21 passed. New rendered real-SQLite suite: 5 passed.
+  - `StudyLibraryReviews` 16, `deferredReviewRead` 10, `localDay` 5 and `StudyLibrary` 2 passed.
+  - Typecheck, build and `git diff --check` exit 0.
+  - Against unchanged production source: 14/21 and 3/5 fail. Both disposable mutants are caught.
+- **Limitations:**
+  - Sub-day relearning refresh and material-level sessions remain separate.
+  - Webview event delivery across sleep and zone change on an installed app is unverified.
+  - G1–G3 and release gates stay deferred.
+- PR159/154/155/157 and M3 production are integrated. Keyboard `f163efd3f8f1`, parity `d8ff795089fc`, schema14 preparation, MAINT-143-KEYS, timezone PR152 and REL-03 are preserved and excluded. M4 remains separately gated.
+
+[Implementation report](M2_REVIEW_DUE_CLOCK_RECOVERY_REPORT_2026-10-14.md). Entries below are unchanged.
+
 ## Study Library scenario test isolation — 14 October 2026
 
 **IMPLEMENTED, PENDING INDEPENDENT REVIEW** (Claude, uncommitted isolated worktree, base `cb0ece1`). Test-only M2 maintenance.

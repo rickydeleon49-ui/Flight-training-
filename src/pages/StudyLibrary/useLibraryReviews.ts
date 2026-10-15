@@ -74,19 +74,40 @@ export function useLibraryDueStream(
   const [stream] = useState(() =>
     createDueStream((input) => repository.readReviewDue(input), { ...captureClock(), ...filters, limit }),
   );
-  const [day, setDay] = useState(0);
   const state = useStreamState(stream);
-  useOwnedStream(
-    stream,
-    JSON.stringify([filters.statusFilter, filters.topic, dataRevision, day]),
-    () => ({ ...captureClock(), ...filters, limit }),
-  );
-  // Crossing local midnight changes what is due: start over with a new clock.
+  const options = () => ({ ...captureClock(), ...filters, limit });
+  const latestOptions = useRef(options);
+  latestOptions.current = options;
+  useOwnedStream(stream, JSON.stringify([filters.statusFilter, filters.topic, dataRevision]), options);
+  // What is due ends at the next local midnight of the zone the computer is
+  // in now. A timer aims at that midnight, but timers stall during sleep and
+  // the zone can change, so focus and a return to a visible window check
+  // again. Only a different boundary starts over, with a new clock and the
+  // current filters; otherwise loaded pages and a failed read are kept.
   useEffect(() => {
-    const wait = Date.parse(state.options.nextLocalMidnightUtc) - Date.now();
-    const timer = setTimeout(() => setDay((d) => d + 1), Math.max(1_000, Math.min(wait + 1_000, 2_147_000_000)));
-    return () => clearTimeout(timer);
-  }, [state.options.nextLocalMidnightUtc]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const reconcile = () => {
+      const next = latestOptions.current();
+      if (next.nextLocalMidnightUtc !== stream.getSnapshot().options.nextLocalMidnightUtc) {
+        stream.invalidate(next);
+        void stream.loadNextPage();
+      }
+      clearTimeout(timer);
+      const wait = Date.parse(next.nextLocalMidnightUtc) - Date.parse(next.nowUtc);
+      timer = setTimeout(reconcile, Math.max(1_000, Math.min(wait + 1_000, 2_147_000_000)));
+    };
+    const onResume = () => {
+      if (document.visibilityState !== "hidden") reconcile();
+    };
+    reconcile();
+    window.addEventListener("focus", onResume);
+    document.addEventListener("visibilitychange", onResume);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", onResume);
+      document.removeEventListener("visibilitychange", onResume);
+    };
+  }, [stream]);
   const refresh = () => {
     stream.invalidate(captureClock());
     void stream.loadNextPage();
