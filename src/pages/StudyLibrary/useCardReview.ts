@@ -36,6 +36,8 @@ import type { CardReviewRepository } from "@/data/repositories/cardReviewReposit
 import { describeWait, scheduleCard, type CardSchedule } from "@/logic/cardScheduler";
 import { currentTimeZone, localDate, nextLocalMidnightUtc, shortLocalDay } from "@/logic/localDay";
 
+import { useCardReviewClock } from "./useCardReviewClock";
+
 /* ------------------------------------------------------------------ */
 /* Pure helpers                                                        */
 /* ------------------------------------------------------------------ */
@@ -669,6 +671,9 @@ export function useCardReview(
   }, [materialId, repository]);
 
   const readState: CardReadState = read.materialId === materialId ? read : { phase: "loading" };
+  // Display only: render again when a shown Again card becomes due, or when
+  // she returns to the window, so the summary follows the clock.
+  useCardReviewClock(readState.phase === "ready" ? readState.snapshot : null, clock, JSON.stringify([materialId ?? null, options.contentKey ?? null]));
   return {
     read: readState,
     recent,
