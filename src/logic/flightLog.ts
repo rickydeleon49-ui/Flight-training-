@@ -55,6 +55,62 @@ export function flightLogTotals(entries: JournalEntry[]): FlightLogTotals {
 
 export const formatHours = (hours: number): string => hours.toFixed(1);
 
+type FlightTimes = Pick<
+  JournalEntry,
+  | "totalTime"
+  | "dualReceived"
+  | "soloTime"
+  | "picTime"
+  | "crossCountryTime"
+  | "nightTime"
+  | "actualInstrumentTime"
+  | "simulatedInstrumentTime"
+>;
+
+const PART_TIMES: ReadonlyArray<readonly [Exclude<keyof FlightTimes, "totalTime">, string]> = [
+  ["dualReceived", "dual received"],
+  ["soloTime", "solo"],
+  ["picTime", "PIC"],
+  ["crossCountryTime", "cross-country"],
+  ["nightTime", "night"],
+  ["actualInstrumentTime", "actual instrument"],
+  ["simulatedInstrumentTime", "simulated instrument"],
+];
+
+/** Whether any logbook time differs between a saved entry and an edit of it. */
+export const flightTimesChanged = (before: FlightTimes, after: FlightTimes): boolean =>
+  before.totalTime !== after.totalTime || PART_TIMES.some(([key]) => before[key] !== after[key]);
+
+// Times are entered to a tenth; this only absorbs floating-point addition.
+const HOURS_TOLERANCE = 1e-9;
+
+/**
+ * Why these logbook times can't all be true of one flight, or null.
+ *
+ * Each part of a flight is part of its total: 2.0 hours of dual on a 1.5-hour
+ * flight is a typing slip, and once saved it would inflate every total built
+ * from the log. Dual received and solo can't overlap, and neither can actual
+ * and simulated instrument time. Nothing is checked until a total is entered.
+ */
+export function flightTimeProblem(times: FlightTimes): string | null {
+  const total = times.totalTime;
+  if (total == null || !Number.isFinite(total)) return null;
+  const exceeds = (value: number | null) => value != null && value > total + HOURS_TOLERANCE;
+  const over = PART_TIMES.filter(([key]) => exceeds(times[key])).map(([, label]) => label);
+  if (over.length > 0) {
+    const named = over.length === 1 ? over[0]! : `${over.slice(0, -1).join(", ")} and ${over.at(-1)!}`;
+    const sentence = `${named.charAt(0).toUpperCase()}${named.slice(1)} time`;
+    return `${sentence} can't be more than this flight's total time of ${formatHours(total)} hr.`;
+  }
+  if (exceeds((times.dualReceived ?? 0) + (times.soloTime ?? 0))) {
+    return `Dual received and solo time together can't be more than this flight's total time of ${formatHours(total)} hr.`;
+  }
+  if (exceeds((times.actualInstrumentTime ?? 0) + (times.simulatedInstrumentTime ?? 0))) {
+    return `Actual and simulated instrument time together can't be more than this flight's total time of ${formatHours(total)} hr.`;
+  }
+  return null;
+}
+
 export interface FlightActivity {
   flightsLast30Days: number;
   hoursLast30Days: number;

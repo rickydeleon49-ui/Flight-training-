@@ -10,6 +10,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
+import { todayIso } from "@/lib/dates";
 
 export interface BackupInfo {
   name: string;
@@ -62,7 +63,7 @@ export async function createBackup(): Promise<string> {
 /** Ask where to save, then return the selected portable-backup path. */
 export async function chooseCompleteBackupDestination(): Promise<string | null> {
   if (!isTauri()) throw new Error("Backups need the desktop application.");
-  const date = new Date().toISOString().slice(0, 10);
+  const date = todayIso();
   return save({
     title: "Save a complete Her Flight Deck backup",
     defaultPath: `her-flight-deck-${date}.hfdbackup`,

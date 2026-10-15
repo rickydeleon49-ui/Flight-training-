@@ -646,6 +646,47 @@ describe("M1 D5: Quick debrief mode in existing journal flow", () => {
     expect(updated?.departureAirport).toBe("KPAE");
   });
 
+  it("refuses a part of the flight longer than its total and saves once corrected", async () => {
+    const repos = createRepositories(testDb);
+    const entry = await repos.journal.create({ date: "2026-09-26", title: "Pattern work", totalTime: 1.0 });
+
+    await renderJournalForm(`/journal/${entry.id}/edit`);
+    fireEvent.change(screen.getByLabelText("Total flight time"), { target: { value: "1.5" } });
+    fireEvent.change(screen.getByLabelText("Dual received"), { target: { value: "2" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    });
+
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Dual received time can't be more than this flight's total time of 1.5 hr.",
+    );
+    expect((await repos.journal.list()).find((e) => e.id === entry.id)?.dualReceived).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Dual received"), { target: { value: "1.5" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    });
+    await waitFor(() => expect(screen.getByTestId("entry-detail")).toBeTruthy());
+    const saved = (await repos.journal.list()).find((e) => e.id === entry.id);
+    expect(saved?.totalTime).toBe(1.5);
+    expect(saved?.dualReceived).toBe(1.5);
+  });
+
+  it("lets a quick debrief save an entry whose earlier times it doesn't show", async () => {
+    const repos = createRepositories(testDb);
+    const entry = await repos.journal.create({ date: "2026-09-20", title: "Older entry", totalTime: 1.0, dualReceived: 1.2 });
+
+    await renderJournalForm(`/journal/${entry.id}/edit?mode=quick`);
+    fireEvent.change(screen.getByLabelText("What went well?"), { target: { value: "Steep turns" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    });
+    await waitFor(() => expect(screen.getByTestId("entry-detail")).toBeTruthy());
+    const saved = (await repos.journal.list()).find((e) => e.id === entry.id);
+    expect(saved?.wentWell).toBe("Steep turns");
+    expect(saved?.dualReceived).toBe(1.2);
+  });
+
   it("regression 2: requires explicit acceptance of derived records and does not create fallbacks or auto-create", async () => {
     const repos = createRepositories(testDb);
 

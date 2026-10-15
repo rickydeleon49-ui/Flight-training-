@@ -1,3 +1,7 @@
+## Claude consolidation accepted — 14 October 2026
+
+The reviewed consolidation contains the nine-defect bug sweep, the first M5 cost-analytics slice, material Again clock refresh with repaired asynchronous tests, timezone maintenance and screenshot routing. Integration remains subject to required exact-head CI. M5 requirements are published as a proposal only; RQ-D1–D7 and knowledgeable human review remain pending. Current release direction is local unsigned v0.5.4; schema14 preparation/metadata proofs and version freeze precede that build, while signing/publication and hfdtest remain deferred. [Independent review](docs/CLAUDE_WORK_CONSOLIDATION_REVIEW_2026-10-14.md) and [current roadmap](ROADMAP.md) supersede the older snapshot statuses below.
+
 ## M4 round-3 independent review — 11 October 2026
 
 **CORRECTIONS REQUIRED: M4-R28–R32.** Submitted full runners reproduce 52 passing tests on Node22/26 and delivered checksums verify45/45; five new diagnostics fail on both lanes. Confirmed: duplicate durable ownership across concurrent controllers, pending save surviving abort, stale callback publication, asserted installation/final-verification receipts, and incomplete mutant/count traceability. Sequential restart and simple late-retry fixes are retained; M4 remains evidence-only. Gemini's submission is untouched.

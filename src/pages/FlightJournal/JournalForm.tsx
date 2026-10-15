@@ -16,6 +16,7 @@ import {
 import { todayIso } from "@/lib/dates";
 import { writeDraft } from "@/lib/drafts";
 import { newId } from "@/lib/id";
+import { flightTimeProblem, flightTimesChanged } from "@/logic/flightLog";
 import type { DebriefSaveOperation } from "@/data/db";
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
@@ -377,6 +378,13 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       )
     ) {
       setError("Landing counts must be whole numbers.");
+      return;
+    }
+    // Times saved before this check existed are left alone unless she changes
+    // one, so a quick debrief never stops on fields that mode doesn't show.
+    const timeProblem = flightTimeProblem(draft);
+    if (timeProblem && (!existing || flightTimesChanged(existing, draft))) {
+      setError(timeProblem);
       return;
     }
     setError(null);

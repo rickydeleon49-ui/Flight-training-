@@ -1,0 +1,229 @@
+
+ RUN  v4.1.11 <review-checkout>
+
+(node:45033) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45029) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45031) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45025) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45030) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45026) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45027) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/CardReviewClockRecovery.test.ts (9 tests | 1 failed) 2867ms
+     × an open session, revealed answer and unconfirmed rating survive the instant; Try again resends the same rating 2067ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/CardReviewClockRecovery.test.ts > relearning readiness while a material stays open > an open session, revealed answer and unconfirmed rating survive the instant; Try again resends the same rating
+TestingLibraryElementError: Unable to find an element with the text: /^Card 1 of 3$/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      aria-labelledby="card-review-title"
+      class="card-review stack stack--3"
+    >
+      <div
+        class="row row--between"
+      >
+        <div>
+          <p
+            class="eyebrow"
+          >
+            Card reviews
+          </p>
+          <h3
+            class="ai-guide__title"
+            id="card-review-title"
+          >
+            3 new cards · none due
+          </h3>
+        </div>
+      </div>
+      <div
+        aria-label="Card review session. Card 1 of 3."
+        class="card-review__session stack stack--3"
+        tabindex="-1"
+      >
+        <div
+          class="row row--between"
+        >
+          <p
+            class="small strong"
+          >
+            Card
+            1
+             of
+            3
+             · new
+          </p>
+          <span
+            class="badge badge--study"
+          >
+            Check source
+          </span>
+        </div>
+        <div
+          aria-live="polite"
+          class="flashcard"
+        >
+          <span
+            class="tiny dim"
+          >
+            Question
+          </span>
+          <span>
+            Synthetic card 1: which letter follows 1?
+          </span>
+        </div>
+        <div>
+          <button
+            aria-keyshortcuts="Space Enter"
+            class="button button--primary button--small"
+            type="button"
+          >
+            Show answer
+          </button>
+        </div>
+        <div
+          class="row row--between"
+        >
+          <div
+            class="card-review__options"
+          >
+            <button
+              aria-expanded="false"
+              aria-label="More options for card: Synthetic card 1: which letter follows 1?"
+              class="button button--ghost button--small"
+              type="button"
+            >
+              Card options
+            </button>
+          </div>
+          <button
+            class="button button--ghost button--small"
+            type="button"
+          >
+            Done for now
+          </button>
+        </div>
+        <p
+          class="tiny dim"
+        >
+          Space or Enter shows the answer; 1–4 rate it.
+        </p>
+      </div>
+      <div
+        class="card-review__reset"
+      >
+        <button
+          class="button button--secondary button--small"
+          type="button"
+        >
+          Reset card reviews
+        </button>
+      </div>
+    </section>
+  </div>
+  <dialog
+    aria-labelledby="_r_d_"
+    class="dialog dialog--narrow modal-fallback"
+    role="dialog"
+    style="z-index: 1002;"
+    tabindex="-1"
+  >
+    <div
+      class="dialog__header"
+    >
+      <div>
+        <h2
+          class="dialog__title"
+          id="_r_d_"
+        >
+          Reset card reviews for “Synthetic letters”?
+        </h2>
+      </div>
+      <button
+        class="icon-button"
+        title="Close"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          focusable="false"
+          height="18"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="18"
+        >
+          <path
+            d="M6 6l12 12M18 6 6 18"
+          />
+        </svg>
+        <span
+          class="visually-hidden"
+        >
+          Close
+        </span>
+      </button>
+    </div>
+    <div
+      class="dialog__body"
+    >
+      <p
+        class="muted"
+      >
+        This removes the review schedule and rating history for this material’s cards. Your saved cards, study guide and practice tests stay. Backups you’ve already made are not changed.
+      </p>
+    </div>
+    <div
+      class="dialog__footer"
+    >
+      <button
+        class="button button--secondary"
+        id="_r_c_"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="button button--danger"
+        type="button"
+      >
+        Reset reviews
+      </button>
+    </div>
+  </dialog>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/StudyLibrary/CardReviewClockRecovery.test.ts:126:17
+    124| }
+    125| const sessionReady = (position: string) => () => {
+    126|   expect(screen.getByText(new RegExp(`^Card ${position}$`))).toBeTruth…
+       |                 ^
+    127|   expect(screen.getByRole("button", { name: "Show answer" }).hasAttrib…
+    128| };
+ ❯ settle src/pages/StudyLibrary/CardReviewClockRecovery.test.ts:121:11
+ ❯ src/pages/StudyLibrary/CardReviewClockRecovery.test.ts:319:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 18 passed (19)
+      Tests  1 failed | 250 passed (251)
+   Start at  06:34:40
+   Duration  6.17s (transform 3.11s, setup 0ms, import 5.61s, tests 14.27s, environment 5.50s)

@@ -1,0 +1,232 @@
+TAP version 13
+# Subtest: R2: local session at a spaced checkout path exits 0 and does nothing
+ok 1 - R2: local session at a spaced checkout path exits 0 and does nothing
+  ---
+  duration_ms: 192.788125
+  type: 'test'
+  ...
+# Subtest: R2: local session at a plain path exits 0 and does nothing (control)
+ok 2 - R2: local session at a plain path exits 0 and does nothing (control)
+  ---
+  duration_ms: 41.378458
+  type: 'test'
+  ...
+# Subtest: R2: control: the unquoted command form fails at a spaced path
+ok 3 - R2: control: the unquoted command form fails at a spaced path
+  ---
+  duration_ms: 8.674917
+  type: 'test'
+  ...
+# Subtest: R2: remote session at a spaced checkout path reaches setup
+ok 4 - R2: remote session at a spaced checkout path reaches setup
+  ---
+  duration_ms: 952.808916
+  type: 'test'
+  ...
+# Subtest: R4: cold setup uses npm ci and leaves all four tracked files unchanged
+ok 5 - R4: cold setup uses npm ci and leaves all four tracked files unchanged
+  ---
+  duration_ms: 800.662042
+  type: 'test'
+  ...
+# Subtest: R4: warm setup reuses a verified node_modules without reinstalling
+ok 6 - R4: warm setup reuses a verified node_modules without reinstalling
+  ---
+  duration_ms: 1051.285875
+  type: 'test'
+  ...
+# Subtest: R4: a changed lock invalidates the warm cache and reinstalls with npm ci
+ok 7 - R4: a changed lock invalidates the warm cache and reinstalls with npm ci
+  ---
+  duration_ms: 1075.384416
+  type: 'test'
+  ...
+# Subtest: R4: a changed package.json with the same lock invalidates the warm cache
+ok 8 - R4: a changed package.json with the same lock invalidates the warm cache
+  ---
+  duration_ms: 1111.949041
+  type: 'test'
+  ...
+# Subtest: R4: an incomplete warm cache (simulated failing npm ls) reinstalls with npm ci
+ok 9 - R4: an incomplete warm cache (simulated failing npm ls) reinstalls with npm ci
+  ---
+  duration_ms: 1162.178875
+  type: 'test'
+  ...
+# Subtest: R4: a root-name mismatch never rewrites the committed lock
+ok 10 - R4: a root-name mismatch never rewrites the committed lock
+  ---
+  duration_ms: 780.750167
+  type: 'test'
+  ...
+# Subtest: R4: a real dependency mismatch fails visibly and changes nothing
+ok 11 - R4: a real dependency mismatch fails visibly and changes nothing
+  ---
+  duration_ms: 468.820958
+  type: 'test'
+  ...
+# Subtest: R4: a missing lock fails visibly and no lock is created
+ok 12 - R4: a missing lock fails visibly and no lock is created
+  ---
+  duration_ms: 126.503083
+  type: 'test'
+  ...
+# Subtest: R4: a Cargo.lock change during setup fails the hook (four-file guard)
+ok 13 - R4: a Cargo.lock change during setup fails the hook (four-file guard)
+  ---
+  duration_ms: 797.142958
+  type: 'test'
+  ...
+# Subtest: R4: npm-deps does not trust a marker from a different setup
+ok 14 - R4: npm-deps does not trust a marker from a different setup
+  ---
+  duration_ms: 595.791125
+  type: 'test'
+  ...
+# Subtest: R3: success writes the screenshot and stops the owned server
+ok 15 - R3: success writes the screenshot and stops the owned server
+  ---
+  duration_ms: 606.748458
+  type: 'test'
+  ...
+# Subtest: R3: a launch failure exits 1 with its own error and stops the owned server
+ok 16 - R3: a launch failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 633.747084
+  type: 'test'
+  ...
+# Subtest: R3: a newContext failure exits 1 with its own error and stops the owned server
+ok 17 - R3: a newContext failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 630.679417
+  type: 'test'
+  ...
+# Subtest: R3: a goto failure exits 1 with its own error and stops the owned server
+ok 18 - R3: a goto failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 633.436291
+  type: 'test'
+  ...
+# Subtest: R3: a screenshot failure exits 1 with its own error and stops the owned server
+ok 19 - R3: a screenshot failure exits 1 with its own error and stops the owned server
+  ---
+  duration_ms: 633.519417
+  type: 'test'
+  ...
+# Subtest: R3: a startup timeout exits 1 and stops the owned server
+ok 20 - R3: a startup timeout exits 1 and stops the owned server
+  ---
+  duration_ms: 1869.189041
+  type: 'test'
+  ...
+# Subtest: R3: a server that exits before answering is reported and leaves nothing behind
+ok 21 - R3: a server that exits before answering is reported and leaves nothing behind
+  ---
+  duration_ms: 566.933792
+  type: 'test'
+  ...
+# Subtest: R5: a browser-close failure after successful screenshots exits 1 and still stops the owned server
+ok 22 - R5: a browser-close failure after successful screenshots exits 1 and still stops the owned server
+  ---
+  duration_ms: 635.125834
+  type: 'test'
+  ...
+# Subtest: R5: when navigation and then browser close both fail, the navigation error is the one reported
+ok 23 - R5: when navigation and then browser close both fail, the navigation error is the one reported
+  ---
+  duration_ms: 628.308917
+  type: 'test'
+  ...
+# Subtest: R6: an owned server that ignores SIGTERM is killed within the bound, parent and child
+ok 24 - R6: an owned server that ignores SIGTERM is killed within the bound, parent and child
+  ---
+  duration_ms: 1140.789375
+  type: 'test'
+  ...
+# Subtest: R7: an owned server that accepts but never answers ends at the startup deadline and is stopped
+ok 25 - R7: an owned server that accepts but never answers ends at the startup deadline and is stopped
+  ---
+  duration_ms: 1870.930542
+  type: 'test'
+  ...
+# Subtest: R7: a pre-existing server that never answers ends promptly and is left running
+ok 26 - R7: a pre-existing server that never answers ends promptly and is left running
+  ---
+  duration_ms: 797.949083
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (success)
+ok 27 - R3: a reused server is left running (success)
+  ---
+  duration_ms: 328.890875
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (launch)
+ok 28 - R3: a reused server is left running (launch)
+  ---
+  duration_ms: 301.029292
+  type: 'test'
+  ...
+# Subtest: R3: a reused server is left running (goto+close)
+ok 29 - R3: a reused server is left running (goto+close)
+  ---
+  duration_ms: 305.609625
+  type: 'test'
+  ...
+# Subtest: ROUTES: documented and hash forms map to the same hash URL and a \#-free file name
+ok 30 - ROUTES: documented and hash forms map to the same hash URL and a \#-free file name
+  ---
+  duration_ms: 1.197125
+  type: 'test'
+  ...
+# Subtest: ROUTES: a mismatch names what the app showed instead
+ok 31 - ROUTES: a mismatch names what the app showed instead
+  ---
+  duration_ms: 0.154959
+  type: 'test'
+  ...
+# Subtest: ROUTES: the helper loads documented routes as hash URLs and names files without \#
+ok 32 - ROUTES: the helper loads documented routes as hash URLs and names files without \#
+  ---
+  duration_ms: 612.613083
+  type: 'test'
+  ...
+# Subtest: ROUTES: --dark files are labelled -os-dark and the run says the app stays light
+ok 33 - ROUTES: --dark files are labelled -os-dark and the run says the app stays light
+  ---
+  duration_ms: 633.551166
+  type: 'test'
+  ...
+# Subtest: ROUTES: the helper fails loudly when the page shows another screen, writes nothing and stops the owned server
+ok 34 - ROUTES: the helper fails loudly when the page shows another screen, writes nothing and stops the owned server
+  ---
+  duration_ms: 627.36975
+  type: 'test'
+  ...
+# Subtest: ROUTES: the helper fails loudly when the page shows the not-found screen, writes nothing and stops the owned server
+ok 35 - ROUTES: the helper fails loudly when the page shows the not-found screen, writes nothing and stops the owned server
+  ---
+  duration_ms: 627.936333
+  type: 'test'
+  ...
+# Subtest: ROUTES: the helper fails loudly when the page shows no app shell, writes nothing and stops the owned server
+ok 36 - ROUTES: the helper fails loudly when the page shows no app shell, writes nothing and stops the owned server
+  ---
+  duration_ms: 631.040541
+  type: 'test'
+  ...
+# Subtest: ROUTES: two routes that would overwrite one file fail before any server starts
+ok 37 - ROUTES: two routes that would overwrite one file fail before any server starts
+  ---
+  duration_ms: 285.56075
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 24264.823167

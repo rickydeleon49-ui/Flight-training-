@@ -99,13 +99,18 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
     if (!draft.title.trim()) found.title = "Give this a title so you recognise it later.";
     if (!draft.date) found.date = "Choose a date.";
 
+    // Same rule as an expense in Finances: a cost is more than zero, or blank.
     const estimatedCost = estimated.trim() === "" ? null : parseMoney(estimated);
     if (estimated.trim() !== "" && estimatedCost === null) {
       found.estimated = "Enter an amount like 275 or 275.50.";
+    } else if (estimatedCost !== null && estimatedCost <= 0) {
+      found.estimated = "Enter an amount greater than zero, or leave it blank.";
     }
     const actualCost = actual.trim() === "" ? null : parseMoney(actual);
     if (actual.trim() !== "" && actualCost === null) {
       found.actual = "Enter an amount like 265 or 265.00.";
+    } else if (actualCost !== null && actualCost <= 0) {
+      found.actual = "Enter an amount greater than zero, or leave it blank.";
     }
     if (draft.endTime && draft.startTime && draft.endTime < draft.startTime) {
       found.endTime = "The end time is before the start time.";

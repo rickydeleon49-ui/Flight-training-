@@ -1,0 +1,62 @@
+[
+  {
+    "name": "timezone-UTC-final",
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/lib/dates.test.ts",
+      "src/logic/notes.test.ts",
+      "src/pages/StudyLibrary/PracticeHistoryDates.test.ts",
+      "src/logic/localDay.test.ts",
+      "src/state/useLocalToday.test.ts",
+      "src/services/backups.test.ts",
+      "src/logic/dataSafety.test.ts"
+    ],
+    "TZ": "UTC",
+    "exit": 0,
+    "seconds": 1.066
+  },
+  {
+    "name": "timezone-America-Los_Angeles-final",
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/lib/dates.test.ts",
+      "src/logic/notes.test.ts",
+      "src/pages/StudyLibrary/PracticeHistoryDates.test.ts",
+      "src/logic/localDay.test.ts",
+      "src/state/useLocalToday.test.ts",
+      "src/services/backups.test.ts",
+      "src/logic/dataSafety.test.ts"
+    ],
+    "TZ": "America/Los_Angeles",
+    "exit": 0,
+    "seconds": 1.073
+  },
+  {
+    "name": "typecheck-final",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "TZ": null,
+    "exit": 0,
+    "seconds": 3.753
+  },
+  {
+    "name": "rust-fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--check"
+    ],
+    "TZ": null,
+    "exit": 0,
+    "seconds": 0.227
+  }
+]

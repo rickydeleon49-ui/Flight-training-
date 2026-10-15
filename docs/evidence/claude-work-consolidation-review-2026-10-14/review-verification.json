@@ -1,0 +1,35 @@
+{
+  "base": "42077ccd00b70ad406e30d236a34e0ab556745d5",
+  "node": "22.23.3",
+  "npm": "10.9.9",
+  "fullFrontend": {
+    "command": "TZ=UTC npm test",
+    "exit": 0,
+    "passed": 3194,
+    "skipped": 6,
+    "seconds": 56.14,
+    "unhandledErrors": 0
+  },
+  "helper": {
+    "command": "node --test .claude/tests/setup-helpers.test.mjs",
+    "exit": 0,
+    "passed": 37
+  },
+  "timezoneFinal": {
+    "zones": [
+      "UTC",
+      "America/Los_Angeles",
+      "Pacific/Kiritimati"
+    ],
+    "passedPerZone": 73,
+    "exitPerZone": 0
+  },
+  "finalSourceFileCount": 36,
+  "notes": [
+    "checks.json is the first gate and retains the initial Kiritimati failure; final-checks.json and final lane logs supersede that failure.",
+    "focused.txt retains the coordinator import mistake; focused-final.txt retains the first exact-matcher mistake. Both were fixed before final frontend verification.",
+    "Original PR161 failed CI remains at run 38687320702; its success is not asserted.",
+    "Whitespace, source hashes and receipt checksums were verified after inventory generation.",
+    "No local native test matrix; exact-head CI must run Rust tests and Clippy before merge."
+  ]
+}

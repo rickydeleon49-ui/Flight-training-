@@ -1,0 +1,18 @@
+{
+  "head": "42077ccd00b70ad406e30d236a34e0ab556745d5",
+  "hashes": {
+    "src/logic/finance.test.ts": "5c91c1e268096fec2cfa8afef9a8d782eef2d225f0b26d5e40f891242bea2793",
+    "src/logic/finance.ts": "9e6fbfe1b05844f8d6099c2d5c4e21901a3aeaaf99bc782cc93c2ecd4af872ab",
+    "src/logic/toolkit.test.ts": "bd32d853ad20deb828900ed3b1c1ae24d8f39d03e314d14a9336288c5418db6a",
+    "src/logic/toolkit.ts": "1dc2683aec2322d39ff4c42b2bfa60970d3cd611c96b33fd66d8bbc20c74740c",
+    "src/pages/Finances/Finances.tsx": "d9f265ba74b0a0af03f2d3b8047a926c7d5c44e6fb25fee5453cd94e5a25a3a3",
+    "src/pages/Finances/finances.css": "56a8a2e65d07c1bb311393dbd683817fb28ba881b663fd107dbbc197560d3df3",
+    "src/pages/PilotToolkit/PilotToolkit.tsx": "541416c039e6954352bb35afb00a9614f1ea48dc526d4a70ad9b4f65268dd81f",
+    "docs/M5_TRAINING_COST_ANALYTICS_REPORT_2026-10-14.md": "3f7ddb966103f124c11b1938e1f2b0f2ffa08c7a139d3a58540affca0d15ac49",
+    "src/pages/Finances/Finances.test.ts": "9f8acdd7ddb68065ddb9aaffcc6f21336574a1fff2fa7e778825f016685dcbdc"
+  },
+  "untracked": [
+    "docs/M5_TRAINING_COST_ANALYTICS_REPORT_2026-10-14.md",
+    "src/pages/Finances/Finances.test.ts"
+  ]
+}

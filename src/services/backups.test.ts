@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   isTauri: vi.fn(() => false),
   invoke: vi.fn(),
   openPath: vi.fn(),
+  save: vi.fn(),
 }));
 
 vi.mock("@/data", () => ({
@@ -18,12 +19,40 @@ vi.mock("@tauri-apps/plugin-opener", () => ({
   openPath: mocks.openPath,
 }));
 
-import { dataDirectory, revealFolder } from "./backups";
+vi.mock("@tauri-apps/plugin-dialog", () => ({
+  open: vi.fn(),
+  save: mocks.save,
+}));
+
+import { chooseCompleteBackupDestination, dataDirectory, revealFolder } from "./backups";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(false);
   mocks.invoke.mockReset();
   mocks.openPath.mockReset();
+  mocks.save.mockReset();
+});
+
+describe("complete backup file name", () => {
+  it("is dated with her local day, not the UTC one", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    mocks.save.mockResolvedValueOnce(null);
+    const originalTz = process.env.TZ;
+    process.env.TZ = "America/Los_Angeles";
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      // Late evening locally: in the Americas the UTC date is already tomorrow.
+      vi.setSystemTime(new Date("2026-10-15T06:30:00.000Z"));
+      await chooseCompleteBackupDestination();
+    } finally {
+      vi.useRealTimers();
+      if (originalTz === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTz;
+    }
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultPath: "her-flight-deck-2026-10-14.hfdbackup" }),
+    );
+  });
 });
 
 describe("data directory outside the desktop shell", () => {

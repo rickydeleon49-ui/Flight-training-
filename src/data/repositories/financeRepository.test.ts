@@ -44,6 +44,16 @@ describe("recording a lesson's cost", () => {
     expect(transaction.category).toBe("flight_lesson");
   });
 
+  it("refuses a lesson cost of zero or less without writing anything", async () => {
+    const lesson = await createLesson();
+    for (const amount of [-150_00, 0, 12.5]) {
+      await expect(
+        repos.finance.recordLessonCost({ eventId: lesson.id, amount, date: lesson.date, description: lesson.title }),
+      ).rejects.toThrow("A lesson cost must be more than zero.");
+    }
+    expect(await repos.finance.list()).toHaveLength(0);
+  });
+
   it("refuses a second recording for the same lesson", async () => {
     const lesson = await createLesson();
     await repos.finance.recordLessonCost({

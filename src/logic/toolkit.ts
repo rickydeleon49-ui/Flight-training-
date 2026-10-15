@@ -1,6 +1,7 @@
 import type {
   CredentialRecord,
   IsoDate,
+  JournalEntry,
   NextAction,
   Profile,
   QuizAttempt,
@@ -11,6 +12,7 @@ import type {
   Transaction,
 } from "@/domain/types";
 import { addDays, daysBetween, todayIso } from "@/lib/dates";
+import { trainingCostSummary } from "./finance";
 import type { FlightLogTotals } from "./flightLog";
 
 export const DEFAULT_READINESS_ITEMS: ReadinessItem[] = [
@@ -69,6 +71,22 @@ export function defaultToolkitState(): ToolkitState {
   return copyToolkitData(DEFAULT_TOOLKIT_STATE);
 }
 
+/** A stored amount that is a number of zero or more, or the default. */
+function nonNegativeOr(value: unknown, fallback: number): number {
+  const number = Number(value ?? fallback);
+  return Number.isFinite(number) ? Math.max(0, number) : fallback;
+}
+
+/**
+ * The reminder window as whole days from 0 to 90. Used for what is saved and
+ * for the preview, so the list she sees is the one she will get.
+ */
+export function reminderLeadDays(value: unknown, fallback = 7): number {
+  const number = Number(value === "" || value == null ? fallback : value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(90, Math.max(0, Math.floor(number)));
+}
+
 /**
  * Fill in defaults and repair stored toolkit state. The result shares nothing
  * with the input or the defaults, so editing it cannot change either.
@@ -92,9 +110,9 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     credentials: Array.isArray(input.credentials) ? input.credentials : [],
     safetyChecks: Array.isArray(input.safetyChecks) ? input.safetyChecks : [],
     quizAttempts: Array.isArray(input.quizAttempts) ? input.quizAttempts : [],
-    reminderLeadDays: Math.min(90, Math.max(0, Number(input.reminderLeadDays ?? 7))),
-    estimatedHourlyCost: Math.max(0, Number(input.estimatedHourlyCost ?? 220_00)),
-    additionalTrainingCosts: Math.max(0, Number(input.additionalTrainingCosts ?? 1_500_00)),
+    reminderLeadDays: reminderLeadDays(input.reminderLeadDays),
+    estimatedHourlyCost: nonNegativeOr(input.estimatedHourlyCost, 220_00),
+    additionalTrainingCosts: nonNegativeOr(input.additionalTrainingCosts, 1_500_00),
   });
 }
 
@@ -111,19 +129,39 @@ const TRAINING_CATEGORIES = new Set([
   "medical", "books", "study_materials", "headset", "equipment", "fees",
 ]);
 
+/**
+ * Planning estimate for the rest of private pilot training.
+ *
+ * The observed hourly rate is lesson cost per flight hour from lessons that
+ * have both a recorded cost and logged time (see `trainingCostSummary`). It
+ * never divides one-off costs such as a headset, medical or books by flight
+ * hours, because those would then be multiplied across every remaining hour;
+ * they stay in tracked spending and in her own "additional remaining costs".
+ */
 export function trainingCostForecast(
   totals: FlightLogTotals,
   transactions: Transaction[],
   state: ToolkitState,
+  journalEntries: Pick<JournalEntry, "eventId" | "totalTime">[] = [],
 ) {
   const spent = transactions
     .filter((item) => item.type === "expense" && TRAINING_CATEGORIES.has(item.category))
     .reduce((sum, item) => sum + item.amount, 0);
-  const observedHourly = totals.totalTime > 0 && spent > 0 ? Math.round(spent / totals.totalTime) : null;
+  const observed = trainingCostSummary(transactions, journalEntries).perFlightHour;
+  const observedHourly = observed?.perHour ?? null;
   const hourly = observedHourly ?? state.estimatedHourlyCost;
   const remainingHours = Math.max(0, 40 - totals.totalTime);
   const estimatedRemaining = Math.round(remainingHours * hourly) + state.additionalTrainingCosts;
-  return { spent, observedHourly, hourly, remainingHours, estimatedRemaining, projectedTotal: spent + estimatedRemaining };
+  return {
+    spent,
+    observedHourly,
+    /** How many lessons the observed rate comes from, or null when her estimate is used. */
+    observedLessons: observed?.lessonsCounted ?? null,
+    hourly,
+    remainingHours,
+    estimatedRemaining,
+    projectedTotal: spent + estimatedRemaining,
+  };
 }
 
 export interface ReminderItem {
@@ -155,7 +193,12 @@ export function buildReminders(input: {
   }
   const datedRecords = [
     ...input.credentials.filter((item) => item.expiresOn).map((item) => ({ id: `credential-${item.id}`, title: item.title, date: item.expiresOn! })),
-    ...(input.profile.medicalExpiry ? [{ id: "profile-medical", title: "Medical certificate", date: input.profile.medicalExpiry }] : []),
+    // The medical expiry in Settings and a saved medical record with the same
+    // date are one document; it is listed once. Different dates both stay.
+    ...(input.profile.medicalExpiry &&
+    !input.credentials.some((item) => item.type === "medical" && item.expiresOn === input.profile.medicalExpiry)
+      ? [{ id: "profile-medical", title: "Medical certificate", date: input.profile.medicalExpiry }]
+      : []),
   ];
   for (const item of datedRecords) {
     if (item.date > through) continue;

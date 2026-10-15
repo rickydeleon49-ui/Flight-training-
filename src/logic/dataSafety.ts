@@ -9,11 +9,10 @@
  * Both are pure decisions about strings and dates, so they are decided here
  * and tested, rather than being worked out inside a screen.
  */
+import { daysBetween, todayIso } from "@/lib/dates";
 
 /** After this long without a complete backup, the app says so. */
 export const BACKUP_REMINDER_DAYS = 14;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Compare two version strings the way `0.10.0` deserves.
@@ -88,7 +87,9 @@ export function backupHealth({
     };
   }
 
-  const days = Math.floor((now.getTime() - taken.getTime()) / DAY_MS);
+  // Local calendar days, so a backup saved late last night reads "yesterday"
+  // this morning rather than "today".
+  const days = daysBetween(todayIso(taken), todayIso(now));
   const when = days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
 
   if (lastBackupVersion && appVersion && compareVersions(lastBackupVersion, appVersion) !== 0) {
