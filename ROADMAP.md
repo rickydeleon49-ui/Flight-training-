@@ -1,3 +1,7 @@
+## Local coordinator recovery continuation — 15 October 2026
+
+**PIPE-161-01 remains queued; CI-161-01 is complete through merged PR #163.** Continue only the external controller repair: exact failed-CI evidence, bounded same-task correction, durable duplicate/two-attempt guards, fresh Codex approval and exact-head green checks. Keep tooling outside application source. [Diagnostic history and updated handoff](docs/PR161_CI_FAILURE_REVIEW_AND_REPAIR_PROMPT_2026-10-14.md). Do not restart the superseded PR161 feature.
+
 ## Claude work consolidation — 14 October 2026
 
 Independent review accepts the nine-defect bug sweep, the first M5 cost-analytics slice, material-level Again clock refresh, screenshot routing and timezone-test maintenance in this consolidation. Completion below is effective when the reviewed consolidation passes exact-head CI and merges; no installed Mac or signing result is claimed. [Review and verification](docs/CLAUDE_WORK_CONSOLIDATION_REVIEW_2026-10-14.md). Original submissions and the primary's unpublished notes have recoverable local snapshots; prior tracker history remains below.
