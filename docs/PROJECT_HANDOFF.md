@@ -1,3 +1,9 @@
+## Schema14 preparation completed for review — 15 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW.** The saved REL-01 / MAINT-143-KEYS package is recovered onto accepted main `16f9cf3` in `codex/schema14-verification-completion` at `/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-`. Original saved hashes verified 10/10 and evidence checksums 4/4; original worktree preserved. Current focused checks: 117 Vitest, 21 helper tests, proof 12/12 (schema14 self-check 102/102), typecheck and Cargo-lock pass. The intentional historical schema13 ceiling alarm remains. Current inventory/evidence and exact review steps: [reviewer handoff](MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md).
+
+The proof binds the repository overlay to `16f9cf3` while retaining the immutable `8a260c0` schema contract and unchanged migrations/fixtures. Source-only synthetic evidence does not close installed gates. Next action: independent review/CI/integration, then the selected local unsigned v0.5.4 source/version preparation. hfdtest, signing/publication and M4 production remain deferred/separately owned. No commit, push, build or profile access. Older entries below retain their historical status.
+
 ## Claude consolidation and next owner — 14 October 2026
 
 Reviewed source packages are consolidated for exact-head CI/integration: nine bug fixes, M5 cost analytics, material Again readiness, timezone maintenance and screenshot routing. The original red PR161 receipt is preserved; the new rendered test waits on observable completion and has a delayed-crypto regression. Requirements remain a proposal, not approval. [Review](CLAUDE_WORK_CONSOLIDATION_REVIEW_2026-10-14.md).

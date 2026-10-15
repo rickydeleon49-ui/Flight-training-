@@ -686,7 +686,7 @@ function metadataKeyDigests(db) {
   const primaryKey = info.filter(r => r.pk > 0).sort((a, b) => a.pk - b.pk).map(r => r.name);
   if (!sameList(primaryKey, ['key'])) fail(`app_metadata: primary key [${primaryKey.join(',')}] is not [key]`);
   const keyIndex = cols.indexOf('key');
-  const out = {};
+  const out = Object.create(null);
   for (const raw of prepared(db, `SELECT ${typedSelect(cols)} FROM "app_metadata" ORDER BY "key" ASC`).all()) {
     if (raw[`T${keyIndex}`] !== 'text') fail('app_metadata has a key that is not text');
     const cells = cols.map((c, i) => encodeCell(raw[`T${i}`], raw[`V${i}`], raw[`H${i}`]));
@@ -2066,6 +2066,91 @@ function selfCheck() {
       add('anchor: the excluded receipt keys are exactly the backup keys appRepository.ts writes',
         BACKUP_RECEIPT_KEYS.every(k => repoSrc.includes(`"${k}"`)) && [...repoSrc.matchAll(/"(last_complete_backup_[a-z_]+)"/g)].map(m => m[1]).sort().join() === BACKUP_RECEIPT_KEYS.join(),
         { found: [...repoSrc.matchAll(/"(last_complete_backup_[a-z_]+)"/g)].map(m => m[1]) });
+
+      // Special metadata keys (__proto__, constructor, toString, Unicode). A refused comparison is
+      // recorded as that check's failure, so a lost key fails its named check instead of the run.
+      const tryCmp = (...args) => {
+        try { return cmp(...args); } catch (error) { return { verdict: 'REFUSED', diffs: [String(error?.message ?? error)], sections: {} }; }
+      };
+      setMeta([
+        ['__proto__', 'proto-val'],
+        ['constructor', 'ctor-val'],
+        ['toString', 'str-val'],
+        ['special_✈️_key', 'unicode-val'],
+      ]);
+      const specialSnap = snap('special-keys');
+      add('receipt: special metadata keys (__proto__, constructor, toString, Unicode) capture own digests and counts agree',
+        Object.hasOwn(specialSnap.s.history.app_metadata.keyDigests, '__proto__')
+          && Object.hasOwn(specialSnap.s.history.app_metadata.keyDigests, 'constructor')
+          && Object.hasOwn(specialSnap.s.history.app_metadata.keyDigests, 'toString')
+          && Object.hasOwn(specialSnap.s.history.app_metadata.keyDigests, 'special_✈️_key')
+          && Object.keys(specialSnap.s.history.app_metadata.keyDigests).length === specialSnap.s.history.app_metadata.rowCount
+          && isHex64(specialSnap.s.history.app_metadata.keyDigests['__proto__'])
+          && isHex64(specialSnap.s.history.app_metadata.keyDigests['constructor'])
+          && isHex64(specialSnap.s.history.app_metadata.keyDigests['toString'])
+          && isHex64(specialSnap.s.history.app_metadata.keyDigests['special_✈️_key']),
+        { keys: Object.keys(specialSnap.s.history.app_metadata.keyDigests), rowCount: specialSnap.s.history.app_metadata.rowCount });
+
+      const specialSnap2 = snap('special-keys-2');
+      const cmpSpecialUnchanged = tryCmp(specialSnap.p, specialSnap2.p, 'unchanged', 'special-unchanged');
+      add('receipt: unchanged comparison passes when special metadata keys are retained',
+        cmpSpecialUnchanged.verdict === 'PASS' && cmpSpecialUnchanged.diffs.length === 0,
+        { verdict: cmpSpecialUnchanged.verdict, diffs: cmpSpecialUnchanged.diffs });
+
+      // Changed special key fails restore
+      setMeta([['__proto__', 'proto-val-modified']]);
+      const specialChanged = snap('special-proto-changed');
+      setMeta([['__proto__', 'proto-val']]);
+      const cmpSpecialChanged = tryCmp(specialSnap.p, specialChanged.p, 'restore', 'special-changed');
+      add('receipt: changed special metadata key fails restore, naming the key',
+        cmpSpecialChanged.verdict === 'FAIL' && cmpSpecialChanged.diffs.some(d => /keys other than the backup receipt differ \(__proto__\)/.test(d)),
+        { diffs: cmpSpecialChanged.diffs });
+
+      // Removed special key fails restore
+      setMeta([], ['constructor']);
+      const specialRemoved = snap('special-ctor-removed');
+      setMeta([['constructor', 'ctor-val']]);
+      const cmpSpecialRemoved = tryCmp(specialSnap.p, specialRemoved.p, 'restore', 'special-removed');
+      add('receipt: removed special metadata key fails restore, naming the key',
+        cmpSpecialRemoved.verdict === 'FAIL' && cmpSpecialRemoved.diffs.some(d => /keys other than the backup receipt differ \(constructor\)/.test(d)),
+        { diffs: cmpSpecialRemoved.diffs });
+
+      // Added special key fails restore
+      setMeta([['extra_unicode_🌟', 'extra-val']]);
+      const specialAdded = snap('special-added');
+      setMeta([], ['extra_unicode_🌟']);
+      const cmpSpecialAdded = tryCmp(specialSnap.p, specialAdded.p, 'restore', 'special-added');
+      add('receipt: added special metadata key fails restore, naming the key',
+        cmpSpecialAdded.verdict === 'FAIL' && cmpSpecialAdded.diffs.some(d => /keys other than the backup receipt differ \(extra_unicode_🌟\)/.test(d)),
+        { diffs: cmpSpecialAdded.diffs });
+
+      // Clean up special keys
+      setMeta([], ['__proto__', 'constructor', 'toString', 'special_✈️_key', 'extra_unicode_🌟']);
+
+      add('receipt: special metadata keys are never receipt exclusions',
+        ['__proto__', 'constructor', 'toString', 'special_✈️_key', 'extra_unicode_🌟'].every(k => !BACKUP_RECEIPT_KEYS.includes(k)),
+        { excludedKeys: BACKUP_RECEIPT_KEYS });
+
+      // A schema-12 archive state holding the special keys, restored and migrated to 13, keeps them.
+      const sRoot = newScratchRoot(path.join(rDir, 'special-restore'));
+      const sDb = buildSchema12Profile(sRoot, migDir);
+      const sMeta = new DatabaseSync(sDb);
+      for (const [k, v] of [['__proto__', 'proto-val'], ['constructor', 'ctor-val'], ['toString', 'str-val'], ['special_✈️_key', 'unicode-val']]) {
+        sMeta.prepare('INSERT INTO app_metadata (key, value) VALUES (?, ?)').run(k, v);
+      }
+      sMeta.close();
+      const sArchive = path.join(rDir, 'special-archive-state.json');
+      takeSnapshot(sRoot, rUid, sArchive);
+      const sUp = new DatabaseSync(sDb);
+      applyMigrations(sUp, migDir, RETAINED_SCHEMA_VERSION + 1, CURRENT_SCHEMA_VERSION, true);
+      sUp.close();
+      const sRestored = path.join(rDir, 'special-restored.json');
+      takeSnapshot(sRoot, rUid, sRestored);
+      const cmpSpecialRestore = tryCmp(sArchive, sRestored, 'restore', 'special-restore');
+      add('receipt: restore passes when the special metadata keys are retained, comparing each of them',
+        cmpSpecialRestore.verdict === 'PASS' && cmpSpecialRestore.sections?.backupReceipt?.applied === true
+          && cmpSpecialRestore.sections?.backupReceipt?.otherKeysCompared === 4 && cmpSpecialRestore.sections?.backupReceipt?.otherKeysChanged?.length === 0,
+        { verdict: cmpSpecialRestore.verdict, diffs: cmpSpecialRestore.diffs, backupReceipt: cmpSpecialRestore.sections?.backupReceipt });
     }
 
     /* ============================ environment + drift anchors ============================ */
