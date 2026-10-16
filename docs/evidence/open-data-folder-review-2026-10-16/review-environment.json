@@ -1,0 +1,29 @@
+{
+  "node": {
+    "path": "/opt/homebrew/opt/node@22/bin/node",
+    "exit": 0,
+    "stdout": "v22.23.3",
+    "stderr": ""
+  },
+  "npm": {
+    "path": "/opt/homebrew/opt/node@22/bin/npm",
+    "exit": 0,
+    "stdout": "10.9.9",
+    "stderr": ""
+  },
+  "rustc": {
+    "path": "/opt/homebrew/bin/rustc",
+    "exit": 0,
+    "stdout": "rustc 1.99.0 (b940084d7 2026-09-28) (Homebrew)",
+    "stderr": ""
+  },
+  "cargo": {
+    "path": "/opt/homebrew/bin/cargo",
+    "exit": 0,
+    "stdout": "cargo 1.99.0 (5f94df478 2026-08-27) (Homebrew)",
+    "stderr": ""
+  },
+  "SDKROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+  "applicationSourceHead": "a83a70244ed717a42588bbc9d4b0e4891917e9e5",
+  "updatedApplicationHead": "0b81886015b20b0bf6866a7a547ef0db91cb4a25"
+}

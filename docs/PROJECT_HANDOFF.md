@@ -1,3 +1,11 @@
+## Open folder fix accepted and merged; empty-folder follow-up tracked — 16 October 2026
+
+PR #180's native Finder correction passes independent source review: **3,252 frontend tests / 475 Rust tests**, typecheck/build/lint/fmt/lock/hygiene and26 schema-helper tests pass. The nine reviewed application files remain identical after updating the branch to current main. Final head `0b818860` passed exact-head CI; #180 merged at `2a203df`, with all nine application hashes confirmed again. No new release is built or published; released v0.5.5 bytes are unchanged. [Review](OPEN_DATA_FOLDER_REVIEW_2026-10-16.md).
+
+**OPENFOLDER-01 (non-blocking):** the empty-root macOS branch still uses plain open-path on the `.app` directory; enumeration failures are indistinguishable from emptiness. Normal startup/library behavior is fixed. Track the bounded [follow-up](OPEN_DATA_FOLDER_FOLLOWUP_PROMPT_2026-10-16.md) before claiming every recovery-state folder opens. Keep this maintenance item separate from the unchanged eight-item post-release queue.
+
+**Other work:** #179 is already merged. #178 needs RELREC-01 screenshot publication/inventory. The active M4 prototype still needs R33–R36 under its existing correction prompt; no production adoption or migration0015. Claude's native Finder observation is implementer evidence; this reviewer ran automated checks and inspected saved metadata, without launching the app, manipulating a profile, reading a key or calling a provider. Preserve historical entries below.
+
 ## Independent review: M4 corrections required; release follow-ups triaged — 16 October 2026
 
 **M4 remains evidence-only; corrections R33–R36 are required before adoption.** Independent Node22/26 replays preserve72 mapped tests and16 mutants, and the prior frozen five diagnostics pass. Four new diagnostics fail on both lanes: claim-write errors return undurable tokens, unreserved future tokens commit, verified-reuse lacks validated install execution evidence, and active invented mutant IDs can evade the report checker. The real runner also reproduces both evidence false positives. [Review](docs/M4_RELEASE_INDEPENDENT_REVIEW_2026-10-16.md) · [one correction handoff](docs/M4_RELEASE_REVIEW_CORRECTIONS_PROMPT_2026-10-16.md).

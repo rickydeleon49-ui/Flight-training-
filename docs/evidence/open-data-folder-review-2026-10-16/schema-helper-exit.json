@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/opt/homebrew/opt/node@22/bin/node",
+    "--test",
+    "scripts/mac-schema14-profile-snapshot.test.mjs"
+  ],
+  "cwd": "/Users/rickymac/code/Flight-training-open-folder",
+  "exit": 0
+}
