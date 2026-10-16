@@ -2227,17 +2227,16 @@ mod tests {
         }
     }
 
-    /// Settings' "Open folder" button reveals the whole data directory
-    /// (`data_directory` returns `app_root`, i.e. `$APPCONFIG` itself), not a
-    /// path under `documents/` — it needs its own scope entry on the same
-    /// permission, or it fails with the identical "Not allowed to open path"
-    /// error the documents-folder scope above exists to prevent.
+    /// Settings' and Data Recovery's "Open folder" button opens the whole data
+    /// directory through the native `open_data_folder` command, which resolves
+    /// the folder itself. The webview therefore needs no `opener:allow-open-path`
+    /// scope for `$APPCONFIG` itself, and must not keep one: the only path it may
+    /// still open is a document under `documents/`.
     #[test]
-    fn opening_the_whole_data_directory_from_settings_is_also_scoped() {
+    fn the_data_folder_is_opened_natively_not_through_a_webview_path_scope() {
         let raw = include_str!("../capabilities/default.json");
         let capabilities: serde_json::Value = serde_json::from_str(raw).unwrap();
         let permissions = capabilities["permissions"].as_array().unwrap();
-
         let entry = permissions
             .iter()
             .find(|permission| {
@@ -2251,11 +2250,16 @@ mod tests {
             .iter()
             .filter_map(|allowed| allowed["path"].as_str())
             .collect();
+        assert_eq!(
+            allowed_paths,
+            vec!["$APPCONFIG/documents/**"],
+            "the webview may open documents only; the data folder is opened by `open_data_folder`"
+        );
 
+        let lib = include_str!("lib.rs");
         assert!(
-            allowed_paths.contains(&"$APPCONFIG"),
-            "opener:allow-open-path scope {allowed_paths:?} does not cover $APPCONFIG itself, \
-             which is exactly what `data_directory` returns for Settings' \"Open folder\" button"
+            lib.contains("backup::open_data_folder,"),
+            "open_data_folder must be registered as a command"
         );
     }
 

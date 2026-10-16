@@ -7,7 +7,6 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
 import { formatLocalDay, todayIso } from "@/lib/dates";
@@ -125,10 +124,15 @@ export async function dataDirectory(): Promise<string> {
   return invoke<string>("data_directory");
 }
 
-/** Open a folder in the system file manager. */
-export async function revealFolder(path: string): Promise<void> {
+/**
+ * Open her data folder in Finder or File Explorer.
+ *
+ * The desktop shell resolves the folder itself (`open_data_folder`), so the
+ * page never passes a path and needs no file-system scope for it.
+ */
+export async function openDataFolder(): Promise<void> {
   if (!isTauri()) throw new Error("This needs the desktop application.");
-  await openPath(path);
+  await invoke("open_data_folder");
 }
 
 /** Describes an automatic copy in words, e.g. "before version 0.2.0". */

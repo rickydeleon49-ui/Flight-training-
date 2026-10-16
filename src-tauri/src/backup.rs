@@ -7309,6 +7309,20 @@ pub fn data_directory(app: AppHandle) -> Result<String, String> {
     Ok(app_root(&app)?.to_string_lossy().to_string())
 }
 
+/// Open her data folder in Finder or File Explorer.
+///
+/// The folder is resolved here from `app_root`, never taken from the webview,
+/// so this needs no path scope and opens exactly the folder `data_directory`
+/// shows. Settings used to pass the displayed path to the opener plugin's
+/// `open_path`, which failed on an installed Mac with "That folder could not
+/// be opened" (MAC-06 had never been verified natively).
+#[tauri::command]
+pub fn open_data_folder(app: AppHandle) -> Result<(), String> {
+    let root = app_root(&app)?;
+    tauri_plugin_opener::open_path(&root, None::<&str>)
+        .map_err(|e| format!("Could not open {}: {e}", root.display()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
