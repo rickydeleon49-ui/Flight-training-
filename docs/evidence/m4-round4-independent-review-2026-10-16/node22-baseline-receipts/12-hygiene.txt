@@ -1,0 +1,15 @@
+=== 12 hygiene ===
+node: v22.23.3  platform: darwin/arm64
+cwd: /Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node22-disposable
+command: git diff --check
+exit: 0
+RESULT: PASS
+--- stdout ---
+
+--- stderr ---
+
+
+--- derived ---
+tracked modifications: 0
+subject pack untracked: 0 entries
+production paths (src/, src-tauri/, package.json, Cargo.*) modified: 0

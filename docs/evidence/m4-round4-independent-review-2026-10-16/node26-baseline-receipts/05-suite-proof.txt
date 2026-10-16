@@ -1,0 +1,437 @@
+=== suite proof.test.mjs ===
+node: v26.10.0  platform: darwin/arm64
+cwd: /Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node26-disposable
+command: /opt/homebrew/Cellar/node/26.10.0_1/bin/node --test --test-reporter=tap docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs
+exit: 0
+RESULT: PASS
+--- stdout ---
+TAP version 13
+# Subtest: [control] bounded physical reference with trusted identity and complete nested translation work
+ok 1 - [control] bounded physical reference with trusted identity and complete nested translation work
+  ---
+  duration_ms: 0.678917
+  type: 'test'
+  ...
+# Subtest: [control] newer missing-path intent still blocks obsolete opener
+ok 2 - [control] newer missing-path intent still blocks obsolete opener
+  ---
+  duration_ms: 0.237
+  type: 'test'
+  ...
+# Subtest: [M4-R9] unknown and invalid totals cannot resolve physical destinations
+ok 3 - [M4-R9] unknown and invalid totals cannot resolve physical destinations
+  ---
+  duration_ms: 0.068667
+  type: 'test'
+  ...
+# Subtest: [M4-R9] printed label map without a declared identity cannot resolve
+ok 4 - [M4-R9] printed label map without a declared identity cannot resolve
+  ---
+  duration_ms: 0.048959
+  type: 'test'
+  ...
+# Subtest: [M4-R9] genuine first-level nullable parent metadata permits root navigation
+ok 5 - [M4-R9] genuine first-level nullable parent metadata permits root navigation
+  ---
+  duration_ms: 0.053166
+  type: 'test'
+  ...
+# Subtest: [M4-R9] live root translation requires complete range metadata
+ok 6 - [M4-R9] live root translation requires complete range metadata
+  ---
+  duration_ms: 0.03425
+  type: 'test'
+  ...
+# Subtest: [M4-R9] reverse translation cannot succeed without destination identity
+ok 7 - [M4-R9] reverse translation cannot succeed without destination identity
+  ---
+  duration_ms: 0.037834
+  type: 'test'
+  ...
+# Subtest: [M4-R9] deleted root document returns structured snapshot guidance
+ok 8 - [M4-R9] deleted root document returns structured snapshot guidance
+  ---
+  duration_ms: 0.058625
+  type: 'test'
+  ...
+# Subtest: [M4-R9] deleted parent document returns structured snapshot guidance
+ok 9 - [M4-R9] deleted parent document returns structured snapshot guidance
+  ---
+  duration_ms: 0.041541
+  type: 'test'
+  ...
+# Subtest: [M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds
+ok 10 - [M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds
+  ---
+  duration_ms: 0.0685
+  type: 'test'
+  ...
+# Subtest: [M4-R15] unknown or malformed destination count cannot produce a verified destination
+ok 11 - [M4-R15] unknown or malformed destination count cannot produce a verified destination
+  ---
+  duration_ms: 0.115042
+  type: 'test'
+  ...
+# Subtest: [M4-R16] a label map bound to different content is stale and cannot resolve
+ok 12 - [M4-R16] a label map bound to different content is stale and cannot resolve
+  ---
+  duration_ms: 0.069958
+  type: 'test'
+  ...
+# Subtest: [M4-R16] a bound map still cannot resolve a mapped page outside the trusted count
+ok 13 - [M4-R16] a bound map still cannot resolve a mapped page outside the trusted count
+  ---
+  duration_ms: 0.029416
+  type: 'test'
+  ...
+# Subtest: [M4-R17] resolveDestination refuses any reference without a trusted identity
+ok 14 - [M4-R17] resolveDestination refuses any reference without a trusted identity
+  ---
+  duration_ms: 0.029792
+  type: 'test'
+  ...
+# Subtest: [M4-R17] a caller-inflated count cannot open a destination beyond persisted identity
+ok 15 - [M4-R17] a caller-inflated count cannot open a destination beyond persisted identity
+  ---
+  duration_ms: 0.054583
+  type: 'test'
+  ...
+# Subtest: [M4-R17] resolver -> controller -> protocol compose into one durable destination
+ok 16 - [M4-R17] resolver -> controller -> protocol compose into one durable destination
+  ---
+  duration_ms: 6.346042
+  type: 'test'
+  ...
+# Subtest: [M4-R18] translated pages stay inside the bounded root range so arithmetic cannot overflow
+ok 17 - [M4-R18] translated pages stay inside the bounded root range so arithmetic cannot overflow
+  ---
+  duration_ms: 0.059875
+  type: 'test'
+  ...
+# Subtest: [M4-R10] persisted bookmark cannot default verified outside active bounds
+ok 18 - [M4-R10] persisted bookmark cannot default verified outside active bounds
+  ---
+  duration_ms: 5.002667
+  type: 'test'
+  ...
+# Subtest: [M4-R10] identity replacement atomically invalidates bookmark and reading state
+ok 19 - [M4-R10] identity replacement atomically invalidates bookmark and reading state
+  ---
+  duration_ms: 5.106666
+  type: 'test'
+  ...
+# Subtest: [M4-R10] unknown bounds cannot reverify a matching-hash bookmark
+ok 20 - [M4-R10] unknown bounds cannot reverify a matching-hash bookmark
+  ---
+  duration_ms: 0.073208
+  type: 'test'
+  ...
+# Subtest: [M4-R10] content drift detector distinguishes verified, drifted and unknown
+ok 21 - [M4-R10] content drift detector distinguishes verified, drifted and unknown
+  ---
+  duration_ms: 0.230584
+  type: 'test'
+  ...
+# Subtest: [M4-R19] navigation writers with unknown or malformed identity persist unverified without throwing
+ok 22 - [M4-R19] navigation writers with unknown or malformed identity persist unverified without throwing
+  ---
+  duration_ms: 5.378292
+  type: 'test'
+  ...
+# Subtest: [M4-R11] same material with different content cannot inherit prior requested page
+ok 23 - [M4-R11] same material with different content cannot inherit prior requested page
+  ---
+  duration_ms: 0.093459
+  type: 'test'
+  ...
+# Subtest: [M4-R11] public progress accessor must not leak A after failed B
+ok 24 - [M4-R11] public progress accessor must not leak A after failed B
+  ---
+  duration_ms: 0.043041
+  type: 'test'
+  ...
+# Subtest: [M4-R11] explicit abort refuses obsolete opener and prevents state publication
+ok 25 - [M4-R11] explicit abort refuses obsolete opener and prevents state publication
+  ---
+  duration_ms: 0.055375
+  type: 'test'
+  ...
+# Subtest: [M4-R13] held obsolete save is rejected at commit and page 42 never reaches storage
+ok 26 - [M4-R13] held obsolete save is rejected at commit and page 42 never reaches storage
+  ---
+  duration_ms: 5.511667
+  type: 'test'
+  ...
+# Subtest: [M4-R13] a fenced commit that throws is surfaced honestly and cannot leave the stale page
+ok 27 - [M4-R13] a fenced commit that throws is surfaced honestly and cannot leave the stale page
+  ---
+  duration_ms: 5.160083
+  type: 'test'
+  ...
+# Subtest: [M4-R14] a mid-flight content replacement commits the winner's whole tuple and nothing else
+ok 28 - [M4-R14] a mid-flight content replacement commits the winner's whole tuple and nothing else
+  ---
+  duration_ms: 5.026292
+  type: 'test'
+  ...
+# Subtest: [M4-R11] opener refuses an out-of-bounds destination before native invocation
+ok 29 - [M4-R11] opener refuses an out-of-bounds destination before native invocation
+  ---
+  duration_ms: 0.0435
+  type: 'test'
+  ...
+# Subtest: [M4-R11] partial save failure offers deliberate save-only retry carrying same ownership
+ok 30 - [M4-R11] partial save failure offers deliberate save-only retry carrying same ownership
+  ---
+  duration_ms: 0.113041
+  type: 'test'
+  ...
+# Subtest: [M4-R23] session 1 saves several pages, then a new controller on the same database commits a new page
+ok 31 - [M4-R23] session 1 saves several pages, then a new controller on the same database commits a new page
+  ---
+  duration_ms: 39.644459
+  type: 'test'
+  ...
+# Subtest: [M4-R23] two controllers on one database: the later request wins and the earlier held request is rejected
+ok 32 - [M4-R23] two controllers on one database: the later request wins and the earlier held request is rejected
+  ---
+  duration_ms: 36.983791
+  type: 'test'
+  ...
+# Subtest: [M4-R24] retrySave sends the retried operation's own generation and is rejected once superseded by a newer request
+ok 33 - [M4-R24] retrySave sends the retried operation's own generation and is rejected once superseded by a newer request
+  ---
+  duration_ms: 5.181917
+  type: 'test'
+  ...
+# Subtest: [M4-R13] same-content repeat commits with advanced generation and preserves final database state
+ok 34 - [M4-R13] same-content repeat commits with advanced generation and preserves final database state
+  ---
+  duration_ms: 5.077875
+  type: 'test'
+  ...
+# Subtest: [M4-R13] changed content with same material ID commits new tuple and preserves final database state
+ok 35 - [M4-R13] changed content with same material ID commits new tuple and preserves final database state
+  ---
+  duration_ms: 5.114334
+  type: 'test'
+  ...
+# Subtest: [M4-R13] route navigation A -> B -> A commits each destination and preserves final database state for both materials
+ok 36 - [M4-R13] route navigation A -> B -> A commits each destination and preserves final database state for both materials
+  ---
+  duration_ms: 5.122042
+  type: 'test'
+  ...
+# Subtest: [M4-R13] explicit abort/unmount prevents in-flight operation from committing to storage
+ok 37 - [M4-R13] explicit abort/unmount prevents in-flight operation from committing to storage
+  ---
+  duration_ms: 4.876167
+  type: 'test'
+  ...
+# Subtest: [M4-R13] delayed failure of earlier operation cannot overwrite or corrupt newer committed progress
+ok 38 - [M4-R13] delayed failure of earlier operation cannot overwrite or corrupt newer committed progress
+  ---
+  duration_ms: 5.251083
+  type: 'test'
+  ...
+# Subtest: [M4-R14] superseded or drifted generation row remains visibly unverified, never active
+ok 39 - [M4-R14] superseded or drifted generation row remains visibly unverified, never active
+  ---
+  duration_ms: 4.983292
+  type: 'test'
+  ...
+# Subtest: [M4-R28] file-backed DB: overlapping controllers, earlier completion released first, later request wins
+ok 40 - [M4-R28] file-backed DB: overlapping controllers, earlier completion released first, later request wins
+  ---
+  duration_ms: 37.114209
+  type: 'test'
+  ...
+# Subtest: [M4-R28] file-backed DB: overlapping controllers, later completion released first, earlier completion rejected
+ok 41 - [M4-R28] file-backed DB: overlapping controllers, later completion released first, earlier completion rejected
+  ---
+  duration_ms: 37.079375
+  type: 'test'
+  ...
+# Subtest: [M4-R28] earlier pending operation is fenced from becoming a durable stale winner once later claim exists
+ok 42 - [M4-R28] earlier pending operation is fenced from becoming a durable stale winner once later claim exists
+  ---
+  duration_ms: 4.98825
+  type: 'test'
+  ...
+# Subtest: [M4-R29] abort while persistence is pending fences the operation before commit and preserves previous saved tuple
+ok 43 - [M4-R29] abort while persistence is pending fences the operation before commit and preserves previous saved tuple
+  ---
+  duration_ms: 4.948417
+  type: 'test'
+  ...
+# Subtest: [M4-R29] an old operation cancellation cannot cancel or release a newer operation claim
+ok 44 - [M4-R29] an old operation cancellation cannot cancel or release a newer operation claim
+  ---
+  duration_ms: 4.934875
+  type: 'test'
+  ...
+# Subtest: [M4-R29] post-commit delayed acknowledgement retains storage result but suppresses publication
+ok 45 - [M4-R29] post-commit delayed acknowledgement retains storage result but suppresses publication
+  ---
+  duration_ms: 4.945042
+  type: 'test'
+  ...
+# Subtest: [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+ok 46 - [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.016084
+  type: 'test'
+  ...
+# Subtest: [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+ok 47 - [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.028542
+  type: 'test'
+  ...
+# Subtest: [M4-R30] obsolete opener failure must leave winner notice and state intact
+ok 48 - [M4-R30] obsolete opener failure must leave winner notice and state intact
+  ---
+  duration_ms: 4.946333
+  type: 'test'
+  ...
+# Subtest: [M4-R30] route navigation A -> B -> A with delayed persistence leaves final winner intact
+ok 49 - [M4-R30] route navigation A -> B -> A with delayed persistence leaves final winner intact
+  ---
+  duration_ms: 4.952958
+  type: 'test'
+  ...
+# Subtest: [M4-R31] the real runner rejects a delivered receipt altered after sealing
+ok 50 - [M4-R31] the real runner rejects a delivered receipt altered after sealing
+  ---
+  duration_ms: 167.293459
+  type: 'test'
+  ...
+# Subtest: [M4-R31] a failing final manifest check produces a FAILED outcome and never a PASS
+ok 51 - [M4-R31] a failing final manifest check produces a FAILED outcome and never a PASS
+  ---
+  duration_ms: 17.625875
+  type: 'test'
+  ...
+# Subtest: [M4-R31] an interrupted run leaves its outcome receipts marked incomplete, never an earlier success
+ok 52 - [M4-R31] an interrupted run leaves its outcome receipts marked incomplete, never an earlier success
+  ---
+  duration_ms: 0.8
+  type: 'test'
+  ...
+# Subtest: [M4-R31] an installer failure is recorded with its real non-zero exit and a FAILED result
+ok 53 - [M4-R31] an installer failure is recorded with its real non-zero exit and a FAILED result
+  ---
+  duration_ms: 0.090125
+  type: 'test'
+  ...
+# Subtest: [M4-R32] the runner's validator accepts claims that match what executed
+ok 54 - [M4-R32] the runner's validator accepts claims that match what executed
+  ---
+  duration_ms: 0.283625
+  type: 'test'
+  ...
+# Subtest: [M4-R32] the runner's validator rejects a cited mutant that never executed
+ok 55 - [M4-R32] the runner's validator rejects a cited mutant that never executed
+  ---
+  duration_ms: 0.29875
+  type: 'test'
+  ...
+# Subtest: [M4-R32] the runner's validator rejects an executed mutant missing from the report
+ok 56 - [M4-R32] the runner's validator rejects an executed mutant missing from the report
+  ---
+  duration_ms: 0.038042
+  type: 'test'
+  ...
+# Subtest: [M4-R32] the runner's validator rejects a cited test that did not run
+ok 57 - [M4-R32] the runner's validator rejects a cited test that did not run
+  ---
+  duration_ms: 0.029
+  type: 'test'
+  ...
+# Subtest: [M4-R32] the runner's validator rejects stale counts
+ok 58 - [M4-R32] the runner's validator rejects stale counts
+  ---
+  duration_ms: 0.042833
+  type: 'test'
+  ...
+# Subtest: [M4-R32] executed mutant IDs and failure outcomes are derived from execution records
+ok 59 - [M4-R32] executed mutant IDs and failure outcomes are derived from execution records
+  ---
+  duration_ms: 0.177833
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 541.046458
+
+--- stderr ---
+
+
+--- derived ---
+tests 59, pass 59, fail 0
+passed names:
+  - [control] bounded physical reference with trusted identity and complete nested translation work
+  - [control] newer missing-path intent still blocks obsolete opener
+  - [M4-R9] unknown and invalid totals cannot resolve physical destinations
+  - [M4-R9] printed label map without a declared identity cannot resolve
+  - [M4-R9] genuine first-level nullable parent metadata permits root navigation
+  - [M4-R9] live root translation requires complete range metadata
+  - [M4-R9] reverse translation cannot succeed without destination identity
+  - [M4-R9] deleted root document returns structured snapshot guidance
+  - [M4-R9] deleted parent document returns structured snapshot guidance
+  - [M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds
+  - [M4-R15] unknown or malformed destination count cannot produce a verified destination
+  - [M4-R16] a label map bound to different content is stale and cannot resolve
+  - [M4-R16] a bound map still cannot resolve a mapped page outside the trusted count
+  - [M4-R17] resolveDestination refuses any reference without a trusted identity
+  - [M4-R17] a caller-inflated count cannot open a destination beyond persisted identity
+  - [M4-R17] resolver -> controller -> protocol compose into one durable destination
+  - [M4-R18] translated pages stay inside the bounded root range so arithmetic cannot overflow
+  - [M4-R10] persisted bookmark cannot default verified outside active bounds
+  - [M4-R10] identity replacement atomically invalidates bookmark and reading state
+  - [M4-R10] unknown bounds cannot reverify a matching-hash bookmark
+  - [M4-R10] content drift detector distinguishes verified, drifted and unknown
+  - [M4-R19] navigation writers with unknown or malformed identity persist unverified without throwing
+  - [M4-R11] same material with different content cannot inherit prior requested page
+  - [M4-R11] public progress accessor must not leak A after failed B
+  - [M4-R11] explicit abort refuses obsolete opener and prevents state publication
+  - [M4-R13] held obsolete save is rejected at commit and page 42 never reaches storage
+  - [M4-R13] a fenced commit that throws is surfaced honestly and cannot leave the stale page
+  - [M4-R14] a mid-flight content replacement commits the winner's whole tuple and nothing else
+  - [M4-R11] opener refuses an out-of-bounds destination before native invocation
+  - [M4-R11] partial save failure offers deliberate save-only retry carrying same ownership
+  - [M4-R23] session 1 saves several pages, then a new controller on the same database commits a new page
+  - [M4-R23] two controllers on one database: the later request wins and the earlier held request is rejected
+  - [M4-R24] retrySave sends the retried operation's own generation and is rejected once superseded by a newer request
+  - [M4-R13] same-content repeat commits with advanced generation and preserves final database state
+  - [M4-R13] changed content with same material ID commits new tuple and preserves final database state
+  - [M4-R13] route navigation A -> B -> A commits each destination and preserves final database state for both materials
+  - [M4-R13] explicit abort/unmount prevents in-flight operation from committing to storage
+  - [M4-R13] delayed failure of earlier operation cannot overwrite or corrupt newer committed progress
+  - [M4-R14] superseded or drifted generation row remains visibly unverified, never active
+  - [M4-R28] file-backed DB: overlapping controllers, earlier completion released first, later request wins
+  - [M4-R28] file-backed DB: overlapping controllers, later completion released first, earlier completion rejected
+  - [M4-R28] earlier pending operation is fenced from becoming a durable stale winner once later claim exists
+  - [M4-R29] abort while persistence is pending fences the operation before commit and preserves previous saved tuple
+  - [M4-R29] an old operation cancellation cannot cancel or release a newer operation claim
+  - [M4-R29] post-commit delayed acknowledgement retains storage result but suppresses publication
+  - [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+  - [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+  - [M4-R30] obsolete opener failure must leave winner notice and state intact
+  - [M4-R30] route navigation A -> B -> A with delayed persistence leaves final winner intact
+  - [M4-R31] the real runner rejects a delivered receipt altered after sealing
+  - [M4-R31] a failing final manifest check produces a FAILED outcome and never a PASS
+  - [M4-R31] an interrupted run leaves its outcome receipts marked incomplete, never an earlier success
+  - [M4-R31] an installer failure is recorded with its real non-zero exit and a FAILED result
+  - [M4-R32] the runner's validator accepts claims that match what executed
+  - [M4-R32] the runner's validator rejects a cited mutant that never executed
+  - [M4-R32] the runner's validator rejects an executed mutant missing from the report
+  - [M4-R32] the runner's validator rejects a cited test that did not run
+  - [M4-R32] the runner's validator rejects stale counts
+  - [M4-R32] executed mutant IDs and failure outcomes are derived from execution records

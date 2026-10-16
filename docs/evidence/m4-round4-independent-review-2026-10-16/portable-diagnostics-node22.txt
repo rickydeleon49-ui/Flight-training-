@@ -1,0 +1,109 @@
+TAP version 13
+# (node:20428) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: reservation database failure must not return an unpersisted token
+not ok 1 - reservation database failure must not return an unpersisted token
+  ---
+  duration_ms: 2.500875
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:19:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:24:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: commit must reject a generation that was never the reserved owner
+not ok 2 - commit must reject a generation that was never the reserved owner
+  ---
+  duration_ms: 0.851167
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:27:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    an unreserved future token is not the authorized owner
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:32:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: a blocked claim write cannot allocate equal tokens and make the earlier request win
+not ok 3 - a blocked claim write cannot allocate equal tokens and make the earlier request win
+  ---
+  duration_ms: 0.641833
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:36:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    earlier request must not become a stale winner after a later claim attempt
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:47:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: active unexecuted mutant claims cannot escape via NAVIGATION in their ID
+not ok 4 - active unexecuted mutant claims cannot escape via NAVIGATION in their ID
+  ---
+  duration_ms: 0.721625
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:52:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the active fabricated mutant must be rejected
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:54:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 0
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 91.141584
