@@ -104,6 +104,12 @@ installs packages.
   modal behavior. Keep that fallback working. The fallback is covered by
   source tests; behavior on an installed macOS 12.0–12.2 Mac is still
   unverified.
-- Never tell anyone to bypass Gatekeeper, SmartScreen or Defender.
+- Never tell anyone to bypass SmartScreen or Defender, or to disable or weaken
+  any operating-system protection (no `xattr -d`/quarantine removal, no
+  `spctl --master-disable`). **Owner exception (16 October 2026):** while Mac
+  builds are unsigned, the owner may have a known person open an owner-released
+  build through Apple's own Privacy & Security → **Open Anyway** step, only after
+  its SHA-256 matches the published checksum. This covers macOS's "could not
+  verify" (unidentified developer) block only, never a malware detection.
 - Keep secrets, real databases, private documents, installers, `node_modules`
   and `target/` out of Git.
