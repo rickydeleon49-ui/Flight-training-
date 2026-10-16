@@ -18,6 +18,7 @@ import {
   flightActivity,
   flightLogTotals,
   flightRoute,
+  flightTimeChecks,
   formatHours,
   hasFlightLogData,
   privatePilotPart61Reference,
@@ -58,6 +59,7 @@ export function FlightJournal() {
     [data.journalEntries, today],
   );
   const privatePilotReference = useMemo(() => privatePilotPart61Reference(totals), [totals]);
+  const timeChecks = useMemo(() => flightTimeChecks(data.journalEntries), [data.journalEntries]);
 
   return (
     <>
@@ -176,6 +178,42 @@ export function FlightJournal() {
             ))}
           </div>
 
+          {timeChecks.length > 0 ? (
+            <Card>
+              <CardHeader
+                title={
+                  timeChecks.length === 1
+                    ? "One flight's times don't add up"
+                    : `${timeChecks.length} flights' times don't add up`
+                }
+              />
+              <CardBody>
+                <div className="stack stack--3" role="note" aria-label="Flights to check">
+                  <p className="small">
+                    Part of {timeChecks.length === 1 ? "this flight" : "each of these flights"} is
+                    logged as longer than its total time. Nothing has been changed: the times stay
+                    as you entered them and still count in the totals above, so check them against
+                    your logbook and correct them when you can.
+                  </p>
+                  {timeChecks.map(({ entry, problem }) => (
+                    <div className="time-check" key={entry.id}>
+                      <div style={{ minWidth: 0 }}>
+                        <Link className="small strong" to={`/journal/${entry.id}`}>
+                          {formatLongDate(entry.date, today)}
+                          {entry.title ? ` · ${entry.title}` : ""}
+                        </Link>
+                        <p className="tiny muted">{problem}</p>
+                      </div>
+                      <Link className="button button--ghost button--small" to={`/journal/${entry.id}/edit`}>
+                        Correct times
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          ) : null}
+
           {loggedFlights.length > 0 ? (
             <div className="flight-progress-grid">
               <Card>
@@ -240,6 +278,9 @@ export function FlightJournal() {
                     include specific training, cross-country, night, instrument, takeoff,
                     landing, endorsement, and proficiency requirements. Confirm qualifying
                     time with her instructor and authoritative logbook.
+                    {timeChecks.length > 0
+                      ? " These totals include the flights above whose times don't add up yet."
+                      : ""}
                   </p>
                 </CardBody>
               </Card>

@@ -39,8 +39,11 @@ import {
   buildReminders,
   daysUntil,
   makeQuizAttempt,
+  medicalDateConflict,
+  type MedicalDateChoice,
   QUIZ_QUESTIONS,
   readinessSummary,
+  reconcileMedicalDates,
   reminderLeadDays,
   trainingCostForecast,
 } from "@/logic/toolkit";
@@ -105,6 +108,26 @@ export function PilotToolkit() {
     }
   };
 
+  // Owned here, not by the medical card, so a choice still saving keeps both
+  // buttons locked when she switches tabs and comes back.
+  const medicalChoosingRef = useRef(false);
+  const [medicalChoosing, setMedicalChoosing] = useState(false);
+  const medicalChoice = useMemo<PendingChoice>(
+    () => ({
+      acquire: () => {
+        if (medicalChoosingRef.current) return false;
+        medicalChoosingRef.current = true;
+        setMedicalChoosing(true);
+        return true;
+      },
+      release: () => {
+        medicalChoosingRef.current = false;
+        setMedicalChoosing(false);
+      },
+    }),
+    [],
+  );
+
   const save = async (change: (current: ToolkitState) => ToolkitState) => {
     const result = await mutate(async (repositories) =>
       repositories.toolkit.save(change(await repositories.toolkit.get())),
@@ -162,7 +185,12 @@ export function PilotToolkit() {
         ) : null}
         {tool === "report" ? <InstructorReport /> : null}
         {tool === "records" ? (
-          <RecordsTool state={data.toolkit} save={save} />
+          <RecordsTool
+            state={data.toolkit}
+            save={save}
+            medicalChoice={medicalChoice}
+            medicalChoosing={medicalChoosing}
+          />
         ) : null}
         {tool === "costs" ? <CostTool state={data.toolkit} save={save} /> : null}
         {tool === "safety" ? (
@@ -384,7 +412,95 @@ function ReportMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RecordsTool({ state, save }: ToolProps) {
+/**
+ * Settings and her saved medical record disagree about when the medical
+ * expires. She says which matches her certificate; only then is the other
+ * one updated to match.
+ *
+ * The first choice owns the outcome. A synchronous guard, held by the Toolkit
+ * page so it survives a tab switch, stops a second click (even within the same
+ * render) from queueing the opposite choice, and the
+ * write itself re-reads both dates inside the serialized mutation: a choice
+ * made against dates that have since changed writes nothing, and the dates as
+ * they now stand are shown again.
+ */
+function MedicalDateConflictCard({
+  state,
+  guard,
+  choosing,
+}: {
+  state: ToolkitState;
+  guard: PendingChoice;
+  choosing: boolean;
+}) {
+  const { data, mutate } = useAppData();
+  const [staleNotice, setStaleNotice] = useState(false);
+  const conflict = medicalDateConflict(data.profile, state.credentials);
+  if (!conflict) return null;
+  const { settingsDate, record } = conflict;
+  const today = todayIso();
+
+  const choose = async (authority: MedicalDateChoice["authority"]) => {
+    if (!guard.acquire()) return;
+    setStaleNotice(false);
+    const choice: MedicalDateChoice = { authority, settingsDate, recordId: record.id, recordDate: record.expiresOn };
+    try {
+      const outcome = await mutate(async (repos) => {
+        const [profile, toolkit] = await Promise.all([repos.profile.get(), repos.toolkit.get()]);
+        const plan = reconcileMedicalDates(profile, toolkit.credentials, choice);
+        if (plan.write === "profile") await repos.profile.update({ medicalExpiry: plan.medicalExpiry });
+        if (plan.write === "record") await repos.toolkit.save({ ...toolkit, credentials: plan.credentials });
+        return plan.write;
+      });
+      // null: the write failed and the app's error message says so; both
+      // dates stay as they were and she can choose again.
+      if (outcome === "none") setStaleNotice(true);
+    } finally {
+      guard.release();
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader title="Two different medical dates" />
+      <CardBody>
+        <div className="stack stack--3" role="note" aria-label="Medical dates differ" aria-busy={choosing}>
+          <p className="small">
+            Settings says your medical expires {formatLongDate(settingsDate, today)}. Your saved
+            record “{record.title}” says {formatLongDate(record.expiresOn, today)}. Which one
+            matches your certificate? Nothing changes until you choose.
+          </p>
+          {staleNotice ? (
+            <p className="small" role="status">
+              These dates changed before your choice was saved, so nothing was changed. Here they
+              are as they stand now.
+            </p>
+          ) : null}
+          <div className="row row--wrap">
+            <Button size="small" disabled={choosing} onClick={() => void choose("record")}>
+              {formatLongDate(record.expiresOn, today)} is right
+            </Button>
+            <Button size="small" disabled={choosing} onClick={() => void choose("settings")}>
+              {formatLongDate(settingsDate, today)} is right
+            </Button>
+          </div>
+          {choosing ? (
+            <p className="tiny dim" role="status">
+              Saving your choice…
+            </p>
+          ) : null}
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+
+function RecordsTool({
+  state,
+  save,
+  medicalChoice,
+  medicalChoosing,
+}: ToolProps & { medicalChoice: PendingChoice; medicalChoosing: boolean }) {
   const { data, deleteWithUndo } = useAppData();
   const [draft, setDraft] = useState({
     type: "pilot_certificate" as CredentialType,
@@ -429,6 +545,7 @@ function RecordsTool({ state, save }: ToolProps) {
 
   return (
     <div className="stack stack--5">
+      <MedicalDateConflictCard state={state} guard={medicalChoice} choosing={medicalChoosing} />
       <Card>
         <CardHeader
           title="Add a certificate or record"
@@ -1298,6 +1415,12 @@ function CareerTool({ state, save }: ToolProps) {
       </p>
     </div>
   );
+}
+
+/** A one-at-a-time lock: `acquire` is false while an earlier choice is still saving. */
+interface PendingChoice {
+  acquire: () => boolean;
+  release: () => void;
 }
 
 interface ToolProps {

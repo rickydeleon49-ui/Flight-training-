@@ -1,0 +1,31 @@
+[
+  {
+    "name": "tests",
+    "argv": [
+      "npm",
+      "test"
+    ],
+    "exit": 0,
+    "seconds": 51.85
+  },
+  {
+    "name": "typecheck",
+    "argv": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 3.74
+  },
+  {
+    "name": "build",
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 4.8
+  }
+]

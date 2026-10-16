@@ -1,0 +1,15 @@
+{
+  "ROADMAP.md": "56c3de5f0fbf580e66054d16094e89d73976cbc8a077415961a71b5cea07f0be",
+  "src/logic/flightLog.test.ts": "4b19f9c72fcb0a51b80715677db2d86886513520b34754536e330faac869ff75",
+  "src/logic/flightLog.ts": "252a92dac6b92494ff5ba4b510ff5aa9fbe1a769055f486cdd4d1e564523cfc9",
+  "src/logic/toolkit.test.ts": "2223d22d8d68888522b4439494ce794627aeeec585bbc3c76dd0a1c08a8b5757",
+  "src/logic/toolkit.ts": "710701f0b8a5e5cd9d98b90063ded047661db243e24ce9dbc1b82c0bddac1adc",
+  "src/pages/FlightJournal/FlightJournal.tsx": "73cb0f88bbec44054c1aeec76b5824b229a389592cf50bfbc02886a2830c5a8d",
+  "src/pages/FlightJournal/JournalEntryDetail.tsx": "03be1cf68953ca64e2f0e4fa78b75e36756b507b757831897d2c858915b21e6c",
+  "src/pages/FlightJournal/journal.css": "709d0887934e00bf213ee02e17126d62b0f59833740f2a16eb27b2bc6f2881b6",
+  "src/pages/PilotToolkit/PilotToolkit.tsx": "cfdfa6a328045be92fe88649a7c93f6c10a846e0019c5e12b2d823f2c934ad58",
+  "src/pages/Settings/Settings.tsx": "0248afb415b201406b2a3b459de70d37aab54616ddd6cb7013546520df3ef357",
+  "docs/SWEEP_FOLLOWUPS_REPORT_2026-10-15.md": "d044c2245cab9dd1927347131d4f2dc717b9514352fe7922ce801b2e70c88b49",
+  "src/pages/FlightJournal/flightTimeChecks.test.ts": "af223829618287dc5c9c48952969fb50885ff6adf495cbfe9138e906e5adae5d",
+  "src/pages/PilotToolkit/medicalDateConflict.test.ts": "6c06e147fb6f222118793f259381750347e89cd441ac1f4f98db78b050092b14"
+}
