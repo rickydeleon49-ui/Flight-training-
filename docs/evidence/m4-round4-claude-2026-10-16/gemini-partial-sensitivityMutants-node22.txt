@@ -1,0 +1,85 @@
+TAP version 13
+# (node:7585) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [sensitivity] clean modules pass all thirteen unchanged regressions
+not ok 1 - [sensitivity] clean modules pass all thirteen unchanged regressions
+  ---
+  duration_ms: 1.980208
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:376:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    baseline regression [M4-R10] atomic replacement invalidation must pass: migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations
+    + actual - expected
+    
+    + Error: migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations
+    +     at loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    +     at Module.applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    +     at schemaBackedDb (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:61:22)
+    +     at regressionAtomicInvalidation (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:102:21)
+    +     at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:379:17)
+    +     at async Test.run (node:internal/test_runner/test:1054:7)
+    +     at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    Module.applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    schemaBackedDb (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:61:22)
+    regressionAtomicInvalidation (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:102:21)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:379:17)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:380:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [sensitivity] each guard reversion fails its unchanged regression by name
+not ok 2 - [sensitivity] each guard reversion fails its unchanged regression by name
+  ---
+  duration_ms: 7.579333
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:384:1'
+  failureType: 'testCodeFailure'
+  error: 'mutant M3_OMIT_ATOMIC_BOOKMARK_INVALIDATION: expected AssertionError, got Error: migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:540:14)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [sensitivity] a missing scratch engine fails loudly and never borrows another directory
+not ok 3 - [sensitivity] a missing scratch engine fails loudly and never borrows another directory
+  ---
+  duration_ms: 1.025792
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:567:1'
+  failureType: 'testCodeFailure'
+  error: "scratch engine not installed at scratch/pdfjs-engine/node_modules/pdfjs-dist. Run: npm ci --prefix scratch/pdfjs-engine (this proof never borrows another directory's node_modules)."
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    resolveEngine (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/realParserDemonstration.mjs:39:11)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs:578:22)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 0
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 75.305875

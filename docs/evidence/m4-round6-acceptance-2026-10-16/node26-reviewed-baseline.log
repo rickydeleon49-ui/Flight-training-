@@ -1,0 +1,126 @@
+✖ a newer failed reservation supersedes an older held opener (8.031583ms)
+✖ a newer failed reservation supersedes an older held persistence (5.508791ms)
+✖ an ignored INSERT cannot issue an unpersisted reservation token (5.131125ms)
+✖ an ignored UPDATE cannot issue an unpersisted reservation token (5.118791ms)
+✖ a signal-terminated install preserves its real signal in the execution record (181.916375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 262.346125
+
+✖ failing tests:
+
+test at docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:24:2
+✖ a newer failed reservation supersedes an older held opener (8.031583ms)
+  AssertionError [ERR_ASSERTION]: the newer failed intent must supersede old callbacks and keep the saved tuple
+  + actual - expected
+  
+    {
+  +   controllerState: 'opened',
+  +   oldSuccess: true,
+  +   savedPage: 10
+  -   controllerState: 'failed',
+  -   oldSuccess: false,
+  -   savedPage: 5
+    }
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:38:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { oldSuccess: true, controllerState: 'opened', savedPage: 10 },
+    expected: { oldSuccess: false, controllerState: 'failed', savedPage: 5 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:24:2
+✖ a newer failed reservation supersedes an older held persistence (5.508791ms)
+  AssertionError [ERR_ASSERTION]: the newer failed intent must supersede old callbacks and keep the saved tuple
+  + actual - expected
+  
+    {
+  +   controllerState: 'opened',
+  +   oldSuccess: true,
+  +   savedPage: 10
+  -   controllerState: 'failed',
+  -   oldSuccess: false,
+  -   savedPage: 5
+    }
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:38:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { oldSuccess: true, controllerState: 'opened', savedPage: 10 },
+    expected: { oldSuccess: false, controllerState: 'failed', savedPage: 5 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:44:2
+✖ an ignored INSERT cannot issue an unpersisted reservation token (5.131125ms)
+  AssertionError [ERR_ASSERTION]: no-op claim writes must throw, observed {"tokens":[2,2],"claim":null}
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:51:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:44:2
+✖ an ignored UPDATE cannot issue an unpersisted reservation token (5.118791ms)
+  AssertionError [ERR_ASSERTION]: no-op claim writes must throw, observed {"tokens":[2,2],"claim":{"reserved_generation":1}}
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:51:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m4-round5-independent-review-2026-10-16/signal-diagnostic.test.mjs:9:1
+✖ a signal-terminated install preserves its real signal in the execution record (181.916375ms)
+  AssertionError [ERR_ASSERTION]: capture the real child signal instead of hard-coding null
+  
+  null !== 'SIGTERM'
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round5-independent-review-2026-10-16/signal-diagnostic.test.mjs:26:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'SIGTERM',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

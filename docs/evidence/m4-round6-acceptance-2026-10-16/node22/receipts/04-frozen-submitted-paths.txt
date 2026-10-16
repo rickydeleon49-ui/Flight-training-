@@ -1,0 +1,18 @@
+=== 04 frozen submitted paths and prior rounds verification ===
+node: v22.23.3
+manifest: docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/submitted-hashes.json
+entries: 32  unchanged: 30  changed(disclosed): 2  missing: 0
+changed detail:
+  docs/M4_DOCUMENT_NAVIGATION_AND_VIEWER_EVALUATION_2026-10-11.md
+    expected b08140ff4b1b57c70c36284ebfff4c1929047d96eae4220074d3b630045adc2a
+    actual   5b028ab086dea7a5cbdd5065d4ffd1d9b26063ab5dd2af915547e870eee7ca94
+  docs/M4_CONDITIONAL_IMPLEMENTATION_PROMPT_2026-10-11.md
+    expected a32a8897655c88460c81b050a7d53a95fb9b9c0fe397cfa5d3daf7a5c1b5b100
+    actual   39da295c4290250f66bb507d44a9d0321f7d167806fbbfb749835bae2e41c327
+--- prior rounds published SHA256SUMS verification (R27) ---
+  docs/evidence/m4-document-navigation-integration-rereview-2026-10-11: PASS (54 files OK)
+  docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11: PASS (28 files OK)
+  docs/evidence/m4-document-navigation-scope-rereview-2026-10-11: PASS (40 files OK)
+  docs/evidence/m4-document-navigation-scope-review-2026-10-11: PASS (29 files OK)
+  docs/evidence/m4-document-navigation-eval-2026-10-11: PASS (21 files OK)
+RESULT: PASS - final state reconciles: unchanged except disclosed revisions, and all prior packs verified

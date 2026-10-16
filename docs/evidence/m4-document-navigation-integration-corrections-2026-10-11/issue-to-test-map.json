@@ -1,0 +1,190 @@
+{
+  "milestone": "M4",
+  "title": "Document Navigation & Open-Source PDF Viewer Evaluation - Integration Corrections",
+  "generated_at": "2026-10-11T13:30:00-07:00",
+  "groups": {
+    "M4-R9": {
+      "title": "Complete Destination Validation & Nullable Schema13 Lineage",
+      "findings_addressed": [
+        "Physical/label resolution checks bounds only when count is already safe; unknown/malformed totalPages bypasses check and resolves",
+        "Label maps without bounds or content binding resolve unverified destinations",
+        "Translator rejected parentPageStart:null / parentPageEnd:null for legitimate first-level schema13 split rows",
+        "Missing required root range (sourcePageEnd) was accepted",
+        "Reverse translation (root_to_child) succeeded without child destination materialId",
+        "Unsafe integer arithmetic slipped through unchecked"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/proof/contractModel.mjs"
+      ],
+      "tests": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[control] bounded physical reference and complete nested translation work"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] unknown and invalid totals cannot resolve physical destinations"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] label maps without bounds cannot resolve a verified destination"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] genuine first-level nullable parent metadata permits root navigation"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] live root translation requires complete range metadata"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] reverse translation cannot succeed without destination identity"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] translated arithmetic must remain a safe integer"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] deleted root document returns structured snapshot guidance"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds"
+        }
+      ]
+    },
+    "M4-R10": {
+      "title": "Atomic Content Replacement, Navigation Writer Enforcement, and Lifecycle Verification",
+      "findings_addressed": [
+        "saveContentIdentity committed cache while navigation statuses remained verified/active on old content",
+        "Reconciliation updated bookmarks only, leaving old reading state active",
+        "addBookmark and saveReadingState accepted out-of-bounds inputs without consulting persisted content identity",
+        "Matching hash without trusted bounds reverified bookmarks",
+        "Populated upgrade retention, transaction rollback on fault, and synthetic backup/restore needed actual SQLite protocol execution"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/proof/persistenceProtocol.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/proof/databaseLifecycle.test.mjs"
+      ],
+      "tests": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] persisted bookmark cannot default verified outside active bounds"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] identity replacement atomically invalidates bookmark and reading state"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] reading state cannot be active outside persisted content bounds"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] unknown bounds cannot reverify a matching-hash bookmark"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] populated schema 1-13 upgrade preserves all prior rows and tables"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] atomic replacement transaction invalidates bookmark and reading state"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] atomic replacement transaction rolls back completely upon injected fault"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] file-backed SQLite database safely closes and reopens"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] synthetic backup and restore preserves state and detects drift/missing files"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] older binary schema probe detects and refuses candidate schema version 0015"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state"
+        }
+      ]
+    },
+    "M4-R11": {
+      "title": "Durable Save Ownership, Commit Fencing, and Content Scoping",
+      "findings_addressed": [
+        "Obsolete persistence callback committed page 42 over newer page 3 in SQLite",
+        "Progress keyed by material ID only: replacing same material with different content inherited prior page",
+        "Public lastRequestedPage getter leaked prior material page after subsequent request failed",
+        "Opener accepted out-of-bounds destination and invoked opener before bounds check",
+        "Partial save failure needed deliberate save-only recovery without re-opening"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/proof/openerController.mjs"
+      ],
+      "tests": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[control] newer missing-path intent still blocks obsolete opener"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] same material with different content cannot inherit prior requested page"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] held old save commits after newer save and must be fenced"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] public progress accessor must not leak A after failed B"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] opener refuses out-of-bounds destination before native invocation"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] partial save failure offers deliberate save-only retry carrying same ownership"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] explicit abort refuses obsolete opener and prevents state publication"
+        }
+      ]
+    },
+    "M4-R12": {
+      "title": "Reproducible Evidence, PDF.js Cleanup, and Disposable Mutation Sensitivity",
+      "findings_addressed": [
+        "Runner imported old snapshots instead of running current-source diagnostics separately",
+        "Illustrative mutant examples lacked actual module-copy guard reversions tested by unchanged regressions",
+        "Scratch package allowed caret version; needed pinned package-lock.json and license inventory",
+        "PDF.js parser tasks lacked task.destroy() in finally for rejection paths",
+        "Disclosed Node 26 success vs Node 22 runtime limitation honestly"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/proof/sensitivityMutants.test.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/proof/realParserDemonstration.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/scratch/pdfjs-engine/package.json",
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/scratch/pdfjs-engine/package-lock.json",
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/scratch/pdfjs-engine/scratch-artifacts.json",
+        "docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/scripts/run_integration_proof.mjs"
+      ],
+      "tests": [
+        {
+          "file": "proof/sensitivityMutants.test.mjs",
+          "test_name": "[sensitivity] clean baseline modules pass all regression checks (exit 0)"
+        },
+        {
+          "file": "proof/sensitivityMutants.test.mjs",
+          "test_name": "[sensitivity] actual disposable module mutations fail unchanged regressions (exit 1)"
+        }
+      ]
+    }
+  }
+}

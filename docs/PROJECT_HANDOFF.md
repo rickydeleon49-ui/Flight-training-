@@ -6,6 +6,26 @@ Checks: full frontend 3,252 passed / 6 skipped, Rust 476 passed / 6 ignored, car
 
 The separate model-budget/timeout evaluation and M4 R37–R39 retain their existing assignments. The eight-item queue order is unchanged. Historical entries follow unchanged.
 
+## M4 prototype accepted for integration; production scope decision next — 16 October 2026
+
+**R37–R39 closed in the evidence-only prototype**, effective after this acceptance PR passes exact-head CI and merges. Independent current-main Node22/26 runners pass104 mapped tests and24 mutants; assigned five, previous four and adapted frozen five pass on each. Direct unadapted4/5 remains disclosed. [Acceptance](M4_ROUND6_ACCEPTANCE_2026-10-16.md). All709 submitted files are preserved; old tracker prefixes are reconciled with current history rather than replacing it.
+
+**Next:** owner dispositions of [OD-1–OD-10](M4_PRODUCTION_SCOPE_DECISIONS_2026-10-16.md), then real native-reader source links/bookmarks/last-requested tracking under the [current handoff](M4_SLICE1_CURRENT_HANDOFF_2026-10-16.md). OD-6 explicitly recommends refusing invalid references, matching the tested resolver; the earlier clamping proposal is unapproved. The old conditional implementation draft is superseded, preserved historically, and must not drive a production port.
+
+No production M4 source or migration0015 registration, embedded-viewer dependency, installed/provider test or new release is included. The eight-item roadmap order is unchanged; OPENFOLDER-01 and model-budget evaluation remain separate. Source acceptance is not owner approval of the new feature scope. Historical author and project entries follow unchanged.
+
+## M4 round 6 (R37–R39) corrected — pending Codex review — 16 October 2026
+
+**IMPLEMENTED, UNCOMMITTED, PENDING CODEX REVIEW.** Claude corrected the three findings of the [round-5 review](M4_ROUND5_INDEPENDENT_REVIEW_2026-10-16.md) in the existing M4 checkout.
+
+- **R37:** a newer request now retires older work before any ownership read or reservation can fail.
+- **R38:** a reservation now proves its claim persisted before issuing a token.
+- **R39:** the install record keeps the real signal.
+- **Diagnostics:** the review's five new ones pass 5/5 on Node 22 and 26; the earlier ones are preserved.
+- **Lanes:** both lanes pass with 104 mapped tests and 24 mutants (Node 22 live npm 10 install; Node 26 validated npm 10 reuse).
+- **Not done:** M4 stays evidence-only. OD-1–OD-10 stay proposed, P54-01 and migration 0015 are unstarted, and the eight-item queue order is unchanged. [Report](M4_DOCUMENT_NAVIGATION_ROUND6_CORRECTIONS_REPORT_2026-10-16.md).
+- **Note:** this checkout's trackers date from `7e49558`. Reconcile with current `main` when committing.
+
 ## GEM-01 wording follow-up accepted and merged — 16 October 2026
 
 PR #184 merged at4a8a92f after independent source review and successful exact-head CI. Settings now distinguishes Argon's rate/capacity fallback from403 access refusal, matching Rust and README. Independent Settings tests3/3, typecheck/build/hygiene pass; CI covers3,252 frontend,474 Linux Rust and26 helper tests. [Acceptance](GEM01_WORDING_ACCEPTANCE_2026-10-16.md). No new release or live provider verification is claimed.

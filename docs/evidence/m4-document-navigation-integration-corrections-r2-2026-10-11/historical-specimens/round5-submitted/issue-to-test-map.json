@@ -1,0 +1,760 @@
+{
+  "milestone": "M4",
+  "title": "Document Navigation & Open-Source PDF Viewer Evaluation - Integration Corrections (Round 5)",
+  "generated_at": "2026-10-16T16:00:00-07:00",
+  "groups": [
+    {
+      "group": "M4-Controls",
+      "title": "Positive Controls and Baseline Invariants",
+      "findings_addressed": [
+        "Bounded physical reference with trusted identity and complete nested translation work",
+        "Newer missing-path intent still blocks obsolete opener"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[control] bounded physical reference with trusted identity and complete nested translation work"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[control] newer missing-path intent still blocks obsolete opener"
+        }
+      ]
+    },
+    {
+      "group": "M4-R9",
+      "title": "Complete Destination Validation & Nullable Lineage (Retained Scope)",
+      "findings_addressed": [
+        "Physical/label resolution checks bounds only when count is safe",
+        "Label maps without bounds cannot resolve",
+        "Translator accepts first-level nullable parent schema-13 rows",
+        "Live root translation requires complete range metadata",
+        "Reverse translation requires child material ID",
+        "Structured snapshot guidance for deleted root/parent documents",
+        "Physical index validation rejects non-integers, zeros, and out-of-bounds"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] unknown and invalid totals cannot resolve physical destinations"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] printed label map without a declared identity cannot resolve"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] genuine first-level nullable parent metadata permits root navigation"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] live root translation requires complete range metadata"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] reverse translation cannot succeed without destination identity"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] deleted root document returns structured snapshot guidance"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] deleted parent document returns structured snapshot guidance"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds"
+        }
+      ]
+    },
+    {
+      "group": "M4-R10",
+      "title": "Atomic Content Replacement, Navigation Writer Enforcement, and Lifecycle Verification (Retained Scope)",
+      "findings_addressed": [
+        "Single BEGIN IMMEDIATE revalidation transaction updates identity and invalidates bookmarks/reading state",
+        "Bound-checking navigation writers consult persisted active identity",
+        "Matching hash cannot reverify without trusted bounds",
+        "Transaction rollback on injected SQLite trigger fault",
+        "File-backed SQLite database safely closes and reopens",
+        "Synthetic backup/restore preserves state and detects drift/missing files",
+        "Foreign key cascade delete verified"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] persisted bookmark cannot default verified outside active bounds"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] identity replacement atomically invalidates bookmark and reading state"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] unknown bounds cannot reverify a matching-hash bookmark"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R10] content drift detector distinguishes verified, drifted and unknown"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] atomic replacement transaction rolls back completely upon injected fault"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] file-backed SQLite database safely closes and reopens"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] synthetic backup and restore preserves state and detects drift/missing files"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R10] replacement of a drifted document leaves prior navigation visible but unverified"
+        }
+      ]
+    },
+    {
+      "group": "M4-R11",
+      "title": "Content-Scoped Reading State and Opener Pre-Validation (Retained Scope)",
+      "findings_addressed": [
+        "Progress is keyed strictly by materialId:contentSha256",
+        "Public lastRequestedPage getter does not leak prior generation after failed replacement",
+        "Explicit abort refuses obsolete opener and prevents state publication",
+        "Pre-opener destination bounds validation",
+        "Partial save failure offers deliberate save-only retry without replaying opener"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] same material with different content cannot inherit prior requested page"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] public progress accessor must not leak A after failed B"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] explicit abort refuses obsolete opener and prevents state publication"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] opener refuses an out-of-bounds destination before native invocation"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R11] partial save failure offers deliberate save-only retry carrying same ownership"
+        }
+      ]
+    },
+    {
+      "group": "M4-R13",
+      "title": "Commit-Time Generation Ownership Fencing; Elimination of Repair-After-Commit",
+      "findings_addressed": [
+        "Obsolete persistence write commits over newer destination; compensating rewrite is swallowed on failure",
+        "Fenced writer validates owner_generation inside durable commit transaction and returns verdict",
+        "Controller consumes commit verdict without secondary compensating writes"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R13] held obsolete save is rejected at commit and page 42 never reaches storage"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R13] a fenced commit that throws is surfaced honestly and cannot leave the stale page"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R13] same-content repeat commits with advanced generation and preserves final database state"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R13] changed content with same material ID commits new tuple and preserves final database state"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R13] route navigation A -> B -> A commits each destination and preserves final database state for both materials"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R13] explicit abort/unmount prevents in-flight operation from committing to storage"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R13] delayed failure of earlier operation cannot overwrite or corrupt newer committed progress"
+        }
+      ]
+    },
+    {
+      "group": "M4-R14",
+      "title": "Immutable Ownership Tuple Commitment",
+      "findings_addressed": [
+        "Compensating rewrite restamped old content hash and printed label onto newer page",
+        "Durable navigation commit carries winning operation's complete immutable tuple (page, hash, label)",
+        "Superseded or drifted generation row remains visibly unverified, never active"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R14] a mid-flight content replacement commits the winner's whole tuple and nothing else"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R14] superseded or drifted generation row remains visibly unverified, never active"
+        }
+      ]
+    },
+    {
+      "group": "M4-R15",
+      "title": "Mandatory Destination Counts for Split Coordinate Translation",
+      "findings_addressed": [
+        "Translation returned success when destination count was unknown (null/undefined/absent)",
+        "child_to_root and child_to_parent require trusted safe-integer destination counts (>= 1)",
+        "Unknown or malformed counts return unresolved guidance with snapshot metadata"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R15] unknown or malformed destination count cannot produce a verified destination"
+        }
+      ]
+    },
+    {
+      "group": "M4-R16",
+      "title": "Content-Bound Printed Label Maps",
+      "findings_addressed": [
+        "Printed label maps were bounded but lacked content identity verification",
+        "Label maps declare originating contentSha256 and refuse resolution against drifted content",
+        "Out-of-bounds mapped entries strictly rejected"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R16] a label map bound to different content is stale and cannot resolve"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R16] a bound map still cannot resolve a mapped page outside the trusted count"
+        }
+      ]
+    },
+    {
+      "group": "M4-R17",
+      "title": "Unified Validated Destination Record Across Resolver, Opener, and Persistence",
+      "findings_addressed": [
+        "Resolver, translator, and controller used fragmented shapes; opener trusted caller-reported totalPages",
+        "Unified resolved/unresolved destination contract carrying materialId, coordinateSpace, contentSha256, physicalPage, totalPages, pageLabel, provenance",
+        "Controller and durable persistence consume only validated destination records"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R17] resolveDestination refuses any reference without a trusted identity"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R17] a caller-inflated count cannot open a destination beyond persisted identity"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R17] resolver -> controller -> protocol compose into one durable destination"
+        }
+      ]
+    },
+    {
+      "group": "M4-R18",
+      "title": "Elimination of Unreachable Arithmetic Overflow Guard",
+      "findings_addressed": [
+        "Arithmetic guard was unreachable because range-completeness and ordering invariants ensure translated page lands in bounded range",
+        "Range invariant documented where it holds; test names genuine invariant"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R18] translated pages stay inside the bounded root range so arithmetic cannot overflow"
+        }
+      ]
+    },
+    {
+      "group": "M4-R19",
+      "title": "Deterministic Persisted Unverified Status for Unknown Content Identity",
+      "findings_addressed": [
+        "addBookmark and saveReadingState threw raw SQLite constraint/type errors on missing/malformed identity",
+        "Boundary canonicalization and defined persistence as unverified with NULL hash",
+        "Deterministic behavior across Node 22 and Node 26 SQLite engines"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R19] navigation writers with unknown or malformed identity persist unverified without throwing"
+        }
+      ]
+    },
+    {
+      "group": "M4-R20",
+      "title": "Measured Integrity Gate and Disposable Module Mutation Sensitivity",
+      "findings_addressed": [
+        "Runner derives receipts from captured outputs and real exits rather than literals",
+        "Verification of 30 unchanged submitted paths plus 2 disclosed document revisions",
+        "SHA256SUMS generated last and verified with shasum -c",
+        "Tamper self-test verifies detection of post-manifest edits",
+        "Clean modules pass all 11 unchanged regressions; all 11 guard reversions fail with named AssertionErrors"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/sensitivityMutants.test.mjs",
+          "test_name": "[sensitivity] clean modules pass all thirteen unchanged regressions"
+        },
+        {
+          "file": "proof/sensitivityMutants.test.mjs",
+          "test_name": "[sensitivity] each guard reversion fails its unchanged regression by name"
+        }
+      ]
+    },
+    {
+      "group": "M4-R21",
+      "title": "Accepted-Base Ledger Ceiling, Shipped 0014 Discovery, and Provisional 0015 Coexistence",
+      "findings_addressed": [
+        "Prior test used literal ceiling of 13; accepted main ships 0014 (CURRENT_SCHEMA_VERSION=14)",
+        "Suite discovers all 14 shipped migrations from accepted-main reference tree and verifies checksums",
+        "Older-binary probe tests candidate version 15 against derived ceiling 14",
+        "Candidate 0015 coexists with shipped 0014; prior rows and M3 skills evidence retained"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/candidate/candidate_migration_0015.sql"
+      ],
+      "cases": [
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R21] populated schema 1-14 upgrade preserves all prior rows including M3 skills evidence"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R21] candidate 0015 coexists with shipped 0014 for the navigation writers"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R21] pointing the ledger back at this worktree's own migrations fails the verification"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R21] an altered byte in the extracted ledger fails verification before any database is built"
+        },
+        {
+          "file": "proof/databaseLifecycle.test.mjs",
+          "test_name": "[M4-R21] older binary refuses a candidate-upgraded database using the derived ceiling"
+        }
+      ]
+    },
+    {
+      "group": "M4-R22",
+      "title": "Pack-Local Parser Reproducibility, Legacy Entrypoint Determinism, and Scratch Loud Failure",
+      "findings_addressed": [
+        "Parser proof resolved engine from previous round's untracked directory",
+        "Legacy entrypoint evaluated per-process makes 5/5 fixtures and forged /Count 99 pass on both Node 22 and Node 26",
+        "Modern build Promise.try failure captured as labelled historical artifact",
+        "Missing scratch install fails loudly and never borrows other directories"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/realParserDemonstration.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/parser-entrypoint.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/scratch-artifacts.json"
+      ],
+      "cases": [
+        {
+          "file": "proof/sensitivityMutants.test.mjs",
+          "test_name": "[sensitivity] a missing scratch engine fails loudly and never borrows another directory"
+        }
+      ]
+    },
+    {
+      "group": "M4-R23",
+      "title": "Durable-Ordered Operation Generations Across Controller Instances and Sessions",
+      "findings_addressed": [
+        "Controller instance counter started at 0 after app restart and was permanently rejected by stored owner generation",
+        "Generations are ordered against persisted maximum across controller instances and sessions",
+        "Later request wins and earlier held request is rejected inside commit transaction on shared database"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R23] session 1 saves several pages, then a new controller on the same database commits a new page"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R23] two controllers on one database: the later request wins and the earlier held request is rejected"
+        }
+      ]
+    },
+    {
+      "group": "M4-R24",
+      "title": "Late Retry Generation Binding and Supersession Rejection",
+      "findings_addressed": [
+        "retrySave closure carried newest intent id and could overwrite newer committed progress with obsolete page",
+        "retrySave closure carries original operation's own generation and is rejected immediately once superseded"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R24] retrySave sends the retried operation's own generation and is rejected once superseded by a newer request"
+        }
+      ]
+    },
+    {
+      "group": "M4-R28",
+      "title": "Atomic Durable Operation Ownership Reservation (Two Overlapping Controllers)",
+      "findings_addressed": [
+        "Two controllers starting before either save commits both allocated generation 1 by reading last saved generation",
+        "Atomic reservation of operation ownership claims durable token before asynchronous opener/persistence work",
+        "Two overlapping controllers preserve later request regardless of completion order",
+        "Earlier pending operation is fenced from becoming a durable stale winner once later claim exists"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R28] file-backed DB: overlapping controllers, earlier completion released first, later request wins"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R28] file-backed DB: overlapping controllers, later completion released first, earlier completion rejected"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R28] earlier pending operation is fenced from becoming a durable stale winner once later claim exists"
+        }
+      ]
+    },
+    {
+      "group": "M4-R29",
+      "title": "Commit Boundary Cancellation Fence & Abort While Persistence Pending",
+      "findings_addressed": [
+        "Abort must fence save awaiting persistence before transaction commit boundary",
+        "Normal saves and save-only retries carry cancellable operation ownership",
+        "Abort before commit prevents write and preserves previous saved tuple with honest aborted result",
+        "Old operation cancellation cannot cancel or release newer operation claim",
+        "Post-commit delayed acknowledgement retains storage result but suppresses publication"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R29] abort while persistence is pending fences the operation before commit and preserves previous saved tuple"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R29] an old operation cancellation cannot cancel or release a newer operation claim"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R29] post-commit delayed acknowledgement retains storage result but suppresses publication"
+        }
+      ]
+    },
+    {
+      "group": "M4-R30",
+      "title": "Post-Await Ownership Recheck & Stale Callback Isolation",
+      "findings_addressed": [
+        "Recheck immutable operation ownership after every await",
+        "Late fulfilled commit acknowledgement cannot overwrite newer controller progress",
+        "Late retry acknowledgement cannot overwrite newer controller progress",
+        "Obsolete opener failure leaves winner notice, state, and route intact",
+        "Route navigation A -> B -> A with delayed persistence leaves final winner intact"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R30] late retry acknowledgement cannot overwrite newer controller progress"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R30] obsolete opener failure must leave winner notice and state intact"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R30] route navigation A -> B -> A with delayed persistence leaves final winner intact"
+        }
+      ]
+    },
+    {
+      "group": "M4-R31",
+      "title": "Truthful Installation Records, Measured Outcomes, and Two-Stage Manifest",
+      "findings_addressed": [
+        "Delivered receipt altered after sealing causes runner verification failure",
+        "Installer failure or verified reuse is recorded truthfully without fabricating zero-exit records",
+        "Payload verification failure records truthful failure and does not claim success"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R31] the real runner rejects a delivered receipt altered after sealing"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R31] a failing final manifest check produces a FAILED outcome and never a PASS"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R31] an interrupted run leaves its outcome receipts marked incomplete, never an earlier success"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R31] an installer failure is recorded with its real non-zero exit and a FAILED result"
+        }
+      ],
+      "round4_note": "Round 4 (Claude): replaced Gemini's unreviewed R31/R32 cases, which re-implemented or asserted assigned values, with cases that call scripts/evidenceChecks.mjs and the real runner. The replaced cases are kept in docs/evidence/m4-round4-claude-2026-10-16/replaced-gemini-r31-r32-tests.txt."
+    },
+    {
+      "group": "M4-R32",
+      "title": "Execution-Derived Mutant Traceability, Active Claims, and Count Alignment",
+      "findings_addressed": [
+        "Report and README validator rejects unknown mutant claims including M99_NEVER_EXECUTED",
+        "Report and README validator rejects cited tests that were not executed",
+        "Executed mutant IDs and failure outcomes are derived from execution records (07b-executed-mutants.json)"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R32] the runner's validator accepts claims that match what executed"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R32] the runner's validator rejects a cited mutant that never executed"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R32] the runner's validator rejects an executed mutant missing from the report"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R32] the runner's validator rejects a cited test that did not run"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R32] the runner's validator rejects stale counts"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R32] executed mutant IDs and failure outcomes are derived from execution records"
+        }
+      ],
+      "round4_note": "Round 4 (Claude): replaced Gemini's unreviewed R31/R32 cases, which re-implemented or asserted assigned values, with cases that call scripts/evidenceChecks.mjs and the real runner. The replaced cases are kept in docs/evidence/m4-round4-claude-2026-10-16/replaced-gemini-r31-r32-tests.txt."
+    },
+    {
+      "group": "M4-R33",
+      "title": "Durable reservation fails closed",
+      "findings_addressed": [
+        "Independent review 2026-10-16 M4-R33"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/candidate/candidate_migration_0015.sql",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R33] a failed claim write throws, returns no token and leaves the saved tuple and claim unchanged"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R33] a blocked claim write cannot hand out equal tokens or let the earlier request win"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R33] a missing claims table fails reservation instead of being created on demand"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R33] a controller whose reservation fails reports it and never opens or saves"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R33] two connections to one file-backed database reserve distinct, increasing, durable tokens"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R33] reservation survives restart and refuses overflow without changing the claim"
+        }
+      ]
+    },
+    {
+      "group": "M4-R34",
+      "title": "Commit requires the exact current claim",
+      "findings_addressed": [
+        "Independent review 2026-10-16 M4-R34"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R34] commit rejects a generation that was never the reserved owner"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R34] commit with no claim is rejected without writing"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R34] an unreadable claim rejects the commit and keeps the exact saved tuple"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R34] once a later token is reserved the earlier one is rejected and the winner's exact tuple stands"
+        }
+      ]
+    },
+    {
+      "group": "M4-R35",
+      "title": "Verified reuse requires a real install execution record",
+      "findings_addressed": [
+        "Independent review 2026-10-16 M4-R35"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/evidenceChecks.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] the real runner's reuse route accepts a valid recorded successful install"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] a live install that fails writes its real non-zero execution record and a FAILED receipt"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] digest integrity and successful-install attestation are checked separately"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] the real runner's reuse route rejects missing install evidence"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] the real runner's reuse route rejects exit42 install evidence"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] the real runner's reuse route rejects wrong-cwd install evidence"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] the real runner's reuse route rejects wrong-binding install evidence"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R35] the real runner's reuse route rejects malformed install evidence"
+        }
+      ]
+    },
+    {
+      "group": "M4-R36",
+      "title": "Named mutant IDs are claims; history only by explicit markers",
+      "findings_addressed": [
+        "Independent review 2026-10-16 M4-R36"
+      ],
+      "primary_files": [
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/evidenceChecks.mjs",
+        "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs"
+      ],
+      "cases": [
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R36] active unexecuted mutant claims cannot escape via NAVIGATION in their ID"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R36] document references and environment syntax are distinguished from claims by syntax, and history only by markers"
+        },
+        {
+          "file": "proof/proof.test.mjs",
+          "test_name": "[M4-R36] the real runner rejects a current report claiming M99_NAVIGATION_NEVER_EXECUTED"
+        }
+      ]
+    }
+  ]
+}

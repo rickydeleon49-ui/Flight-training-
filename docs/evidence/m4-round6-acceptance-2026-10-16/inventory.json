@@ -1,0 +1,447 @@
+[
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/.gitattributes",
+    "bytes": 435,
+    "sha256": "54da72bce9aca3f90c3b9cce4cacd9bd0af0d23b8f39d97a6257523e9c8f67f5"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/README.md",
+    "bytes": 2076,
+    "sha256": "94f2a19ae6c2a18f4d021f70ab62b0c19100e39777f8f2e7e41515cae31f0624"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/baseline-and-probe-results.json",
+    "bytes": 567,
+    "sha256": "5270cccfe6d73d58e6509087f6035187320ffc3098ad98c68dc88d13ee90ef08"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/behavior-retention.json",
+    "bytes": 1117,
+    "sha256": "5b66a7943d2169f8badafd1771688ab51842f5ef91e0abd1ea790d8f30309c06"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/cleanup.json",
+    "bytes": 140,
+    "sha256": "f64edecad62736e18bc2a072456d14eed12fa332d16aa8161d496a14b59ede9c"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/current-helper-exit.json",
+    "bytes": 117,
+    "sha256": "828481dcbdd2f3d9923daf00c224b1cdcd1520f06f19247b95aea7e21caa3c5a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/current-helper-tests.log",
+    "bytes": 8317,
+    "sha256": "373e84ec7c42f70ee9d409370b11fd86d232188e5aecb71ce5207d98420d45f1"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/diagnostic-results.json",
+    "bytes": 443,
+    "sha256": "e5549f4e4507b52881c670a6c6da3885f4f03fb5128c5e557cbf60f75ab20099"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/full-runner-exit42-receipt.txt",
+    "bytes": 1117,
+    "sha256": "472a62436a5e424a4215255b6a28291823d0c72b71e5650fd9fcc8cb5535a3c5"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/full-runner-exit42.log",
+    "bytes": 260,
+    "sha256": "43a13e1986c64755fbc8293f120616f05cb9d9020eb94bf96a6c5c73ea1d7c38"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/full-runner-invented-mutant-receipt.txt",
+    "bytes": 518,
+    "sha256": "da3fe01ca494bbb08e1d0b99aa63fdda853a1549e7981997a187221fb425f72a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/full-runner-invented-mutant.log",
+    "bytes": 281,
+    "sha256": "6877bc9c25d9672d9d80497783c2d2cde6c9d45a94c89dcee8908b25c50910ae"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/full-runner-signal-reuse-receipt.txt",
+    "bytes": 1126,
+    "sha256": "01315a7d0fb64864b4bb993e09b2c3a5975fde1393402ccc16e08b6df4f98d21"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/full-runner-signal-reuse.log",
+    "bytes": 270,
+    "sha256": "f2ead1da6aeaa1612b8b600d3f25eafdcc8c0ac66a2a5b64078c01565f7e33d8"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/imported-paths.json",
+    "bytes": 79112,
+    "sha256": "6e57dd373c36ca1bc5e5e2ceed3f73fe8df2f2f3fc709994925afa62fa123c7b"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/PAYLOAD_SHA256SUMS",
+    "bytes": 20830,
+    "sha256": "cdbe8a589f59c4a1a374235c0f4603f03c278bfabec61070686f537097ed3f13"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/SHA256SUMS",
+    "bytes": 21114,
+    "sha256": "bf3382315421902ba4dbdb8a5dc2ba68f1009ea77ce37174bd21c5f2a4897ce4"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/install-execution.json",
+    "bytes": 1178,
+    "sha256": "0489238b94923f405af8ca841184304b8b4d7c73a6fac5570e559f7434e201ca"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/00-pre-edit-inventory.json",
+    "bytes": 18576,
+    "sha256": "00cd771971ec9de69f6f831ebb18c27eec68d21e924c44a864b3fb2ad6002f24"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/01-accepted-main.json",
+    "bytes": 7120,
+    "sha256": "192938e55df354c26abd87adff62eb11f451e728c7b5d5852e7d687cc8263ff6"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/01-toolchain.txt",
+    "bytes": 470,
+    "sha256": "d7a8e0477845bab5fb233d48844b059d76b038209bb6286df787b6865dca0770"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/01b-engine-install.txt",
+    "bytes": 959,
+    "sha256": "611c2eb29147f0b2c8abe40764cf6006e4b4c1f860d8815ab01f7545a90c7343"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/02-accepted-main.txt",
+    "bytes": 670,
+    "sha256": "5404bdaf46c4afa79d0a3c0f88f8b0d8f8ffab79f64b2cb1cc68415b316f16c0"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/03-subject-pack-inventory.txt",
+    "bytes": 328,
+    "sha256": "b8b608364b988fb1600b805baf32ec79d453d1ca2f5c4a2c2572df861bd5400d"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/04-frozen-submitted-paths.txt",
+    "bytes": 1293,
+    "sha256": "81937cb42195f2532072f3df78e282b690ad3492bbafb9c84ac138d5ddb0bed1"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/05-suite-proof.txt",
+    "bytes": 30719,
+    "sha256": "19aa1acee2818c239e9756fbee84c711aa6a0c149632ec22da9cb7c7af28969d"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/06-suite-lifecycle.txt",
+    "bytes": 4039,
+    "sha256": "49d312dea31ce253cd8b6eea82336bd9b3ea440f1298aeb6b8fd12b48b4ada07"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/07-suite-sensitivity.txt",
+    "bytes": 1634,
+    "sha256": "2338230a3c87cfd4598ee3ffaebbb603f170cfc55a0b06723d9dc37ef4d73e68"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/07b-executed-mutants.json",
+    "bytes": 3643,
+    "sha256": "24c03dcfec4b3f7097c18d71a115b829da531eb81881b0a555455b7f4cd5aba8"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/08-issue-map-traceability.txt",
+    "bytes": 185,
+    "sha256": "6247f08d241ccc99c970844b086b955e3ba7c7798f9eca6aa6656b809d419a3e"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/08b-report-readme-traceability.txt",
+    "bytes": 537,
+    "sha256": "5227a3a1ad95f16f1d7641e99f72ec00facbf8dcd27afbd88574efdb7f03d00f"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/09-parser-legacy.txt",
+    "bytes": 4788,
+    "sha256": "6263d6f0993b3c0e76abca40084e5ade8f51734f069c6afaa50986c9ab2e8303"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/10-parser-modern-historical.txt",
+    "bytes": 624,
+    "sha256": "63d409278a6546c23efbc653ddcc877081ccf782136395dee2a13b98a767accc"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/11-historical-reproductions.txt",
+    "bytes": 416,
+    "sha256": "ee6d9c8c64091a9040a3e83e0a71518ef764d4ef7da67d238dd6439fc84c8e82"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/12-hygiene.txt",
+    "bytes": 335,
+    "sha256": "4cf0669e3f6bb5694e716ebcc5e24c33ba2a2511338496f1e438869db16dadfd"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/13-manifest.txt",
+    "bytes": 827,
+    "sha256": "c6c7b16f41b11d6b5f1085c64490465148ec803ba005646b51a6301805598906"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/14-manifest-tamper-selftest.txt",
+    "bytes": 403,
+    "sha256": "7c20297981a616132ddee4df47b984faafa7df59345d58ebcec1cb8a414e7362"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/15-run-summary.json",
+    "bytes": 2545,
+    "sha256": "6b2be8dfb16ed94827d36db47de242c8070b5e41e49cfcf2fbdf779411350fae"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22/receipts/16-manifest-verification.txt",
+    "bytes": 10829,
+    "sha256": "0597a07ce7276a5d0e465efa79660de3e86521397b534091725628a6831d9b46"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22-assigned-five.log",
+    "bytes": 1296,
+    "sha256": "159cf27c36816a59f86d57b2998f336e5ff19d7e5de9e29c4f0f0118e3c26e2a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22-frozen-five-direct.log",
+    "bytes": 3146,
+    "sha256": "8ea462bc642f1fddc624cdcf181a47b6db1b7f1ea6e52baad5f2378513a44c88"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22-frozen-five.log",
+    "bytes": 2476,
+    "sha256": "b9090616945cef3410a2bf0431d91577c76745de4f736487acbc1baf40916a5a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22-full.log",
+    "bytes": 225,
+    "sha256": "4c2c318e7509f63eed7d48b2515975440cfe89591d48e4b293a427d43090c1fd"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22-prepare.log",
+    "bytes": 86,
+    "sha256": "a687858d608994cb5388bb4b11efb26e8bdf666ffaa78e20afeb6e5c73d195f4"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22-previous-four.log",
+    "bytes": 1142,
+    "sha256": "ed289988708ed378ca378793eafb56c0e3c791d588dfdc1431510994ca156224"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node22-reviewed-baseline.log",
+    "bytes": 6075,
+    "sha256": "537cfef28c44c9bd3797243f08758d28f0a3384c6b24a66c50aa481b4ece0b63"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/PAYLOAD_SHA256SUMS",
+    "bytes": 20830,
+    "sha256": "c37d1bbd85deafe1dbd0e140d06882a800e0d092d81912d526ca5cdfac75d8a0"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/SHA256SUMS",
+    "bytes": 21114,
+    "sha256": "1fed9d053802c884b8c5e279785b007aaa2aec22fb4b399c10aebdac3a8130ae"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/install-execution.json",
+    "bytes": 965,
+    "sha256": "9656acc656e5a91878e3d16db9ce3811bb93ee941d07c5a122bbe68802f5fcae"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/00-pre-edit-inventory.json",
+    "bytes": 18576,
+    "sha256": "00cd771971ec9de69f6f831ebb18c27eec68d21e924c44a864b3fb2ad6002f24"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/01-accepted-main.json",
+    "bytes": 7120,
+    "sha256": "b51456c08608ddaa5ec6c169aa93fdca39f6a5e772eaa3abdc9959d55e0da1d8"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/01-toolchain.txt",
+    "bytes": 470,
+    "sha256": "c21ced7051c8c7f9cd44e8eeb15eda32eb4002c462dd6544694155ae6035e48a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/01b-engine-install.txt",
+    "bytes": 1103,
+    "sha256": "d548044f9b12eb7e1e69fa69aa6d0815fa3e5730d52d8601879e582c4032e861"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/02-accepted-main.txt",
+    "bytes": 669,
+    "sha256": "a2d42d6ddd003f57d5b7162068cba422897e6a93a7524e549577b37164d8dfea"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/03-subject-pack-inventory.txt",
+    "bytes": 328,
+    "sha256": "3a7ef7a267e2aa2dcc3e01caae6e238296db0bc0ef93c8b4b9256fffe336ec68"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/04-frozen-submitted-paths.txt",
+    "bytes": 1293,
+    "sha256": "cce5e3c45d8e87b4a2375383f133080b2e868b3c3ceadb1b1d699344bd5bdf04"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/05-suite-proof.txt",
+    "bytes": 30549,
+    "sha256": "5f8e9df28b0c7246abb09ad7f6739d1a4bdfe63b804f81a59e74001cd699f585"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/06-suite-lifecycle.txt",
+    "bytes": 3865,
+    "sha256": "a976b581d27a5d4da0a4ad0690799ea080fec064a8417b8244d2e9697691dc01"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/07-suite-sensitivity.txt",
+    "bytes": 1461,
+    "sha256": "324f7ea044c2810ef4024169d7e794502f7fa53ca47968b268569e960426a2a1"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/07b-executed-mutants.json",
+    "bytes": 3643,
+    "sha256": "24c03dcfec4b3f7097c18d71a115b829da531eb81881b0a555455b7f4cd5aba8"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/08-issue-map-traceability.txt",
+    "bytes": 185,
+    "sha256": "d62736b990146583610f9f57003e28db9cd065d0ca8548bcdeebbf5d93bedf5a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/08b-report-readme-traceability.txt",
+    "bytes": 537,
+    "sha256": "24d1622c148c906ffa80691f14eda23c6202c69af273060488b492fe8b1ca285"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/09-parser-legacy.txt",
+    "bytes": 4787,
+    "sha256": "3be6c9b5b110c0b6c14a8cf0757f1cf8bfffee9a963e30f7fc0a5c0d24f45601"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/10-parser-modern-historical.txt",
+    "bytes": 2338,
+    "sha256": "976bc967839e5d362c4419ae2f3274d725786b888d47329f2dfad89f38ad72ad"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/11-historical-reproductions.txt",
+    "bytes": 491,
+    "sha256": "3a06ba2a47cf00ac35472c0346e889f3a7b43e9a304f5cd14906de0182cbb885"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/12-hygiene.txt",
+    "bytes": 335,
+    "sha256": "43ad958381e6ca11f30a8c375f9d53533b7790065b85df1c3553d44924df8b59"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/13-manifest.txt",
+    "bytes": 827,
+    "sha256": "c981ae740b380d8844772df0f25fb06ea5932262e9bfc0435d37614e727d05ae"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/14-manifest-tamper-selftest.txt",
+    "bytes": 403,
+    "sha256": "33e3c332819fdd6a44bf7f3ecd56093d458bf9759980534e0f56ebbbdf262c78"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/15-run-summary.json",
+    "bytes": 2545,
+    "sha256": "b4410762a8154a962493b20d25acc65ed4b4da62758a881859586b7b44702dd0"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26/receipts/16-manifest-verification.txt",
+    "bytes": 10829,
+    "sha256": "9a1d6ef88a6a59cda79e993f3dbaee1a18679792337638329a5b3cc911c5c674"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-assigned-five.log",
+    "bytes": 528,
+    "sha256": "c79bb942ad6e72828ce6f5a5582d4582b744564a125cb8ac888c04813a944b78"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-frozen-five-direct.log",
+    "bytes": 2399,
+    "sha256": "84880e176b7cf39f220ec44f7fb40bccd527cf4e802455f05dff3b64e3a0f05b"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-frozen-five.log",
+    "bytes": 1619,
+    "sha256": "600a4bab51b80e45945058bcdec46513b5bc0633856c587c77a36463bcb008aa"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-full.log",
+    "bytes": 225,
+    "sha256": "d4d330e7b0596c102b6c5568e0b7046dd757b238db9b72e731cd87bb1dede4d6"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-install.log",
+    "bytes": 185,
+    "sha256": "27d5d713f959160edfa057ddc0a404fa093e24b9bd3287433af88f217e7ef4fe"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-prepare.log",
+    "bytes": 86,
+    "sha256": "a687858d608994cb5388bb4b11efb26e8bdf666ffaa78e20afeb6e5c73d195f4"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-previous-four.log",
+    "bytes": 471,
+    "sha256": "a5de967a348132d72d6a553a8101f4ee3fdeb1f18bb914cab017e74d7dad42d3"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/node26-reviewed-baseline.log",
+    "bytes": 5622,
+    "sha256": "a21b431db3a49ef6607e9280e4196dbc479489427bfe07109272875fb701aee8"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/preservation.json",
+    "bytes": 150,
+    "sha256": "f861f751236b704a14e896a00a3d80619fa2a2ef95c86ed4757e13b53631d539"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/replay.json",
+    "bytes": 1810,
+    "sha256": "faabdd90eaf7058b367e6fc612ab824789656325b9b2108dbdd1b0f6b028c2e8"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-final-hashes-rebased.txt",
+    "bytes": 3887,
+    "sha256": "712b22c8df04ac306669acb09aab10cfb1813007ed2c0398285f23f9daca89af"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-manifests.json",
+    "bytes": 583,
+    "sha256": "98ffdd93a6bc345bdb080268ff1a2abec2742c60f619fa8719901d278a620646"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-path-aliases.json",
+    "bytes": 698,
+    "sha256": "5a63cba438e11fe2a04e22cb26cd47347a57133ca0c93ce86525e39d7c376efa"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-root/ROADMAP.md",
+    "bytes": 105308,
+    "sha256": "fa19f768ec510f33eabc98199aeeadbb7641effe6da2be0a597bbd5d1014feb8"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-root/STATUS.md",
+    "bytes": 227813,
+    "sha256": "27fbf3610096aad30faeaa4dbb63db974b1ef24bf0b4d427abd7d4721fe33d0a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-root/docs/PROJECT_HANDOFF.md",
+    "bytes": 136893,
+    "sha256": "af37bbd8c62ae4ad4483b679ce0d91bc594f8229d0f3e82115011f3dfa3a7ee9"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-root/docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+    "bytes": 2562,
+    "sha256": "eca5a5f31e3905e30ff985b4ca2af33edf125ae6e943c099f8a41e528a96573b"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-root/docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+    "bytes": 4642,
+    "sha256": "0d8c0273bcc788a6414ad001d93565b9631c6bbbd3a82e418d340ff49584673a"
+  },
+  {
+    "path": "docs/evidence/m4-round6-acceptance-2026-10-16/submitted-source-hashes.json",
+    "bytes": 127524,
+    "sha256": "e34d38100a7750e0cf6fd87069c3de31fef91929f79b55fd3042a80aa6fa99cc"
+  }
+]

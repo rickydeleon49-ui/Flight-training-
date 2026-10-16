@@ -1,0 +1,4 @@
+=== round-5 integration proof runner | node v26.10.0 | docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+PROOF RUN FAILED:
+- 01b engine install: npm ci exited 1
+- 01b engine install: no usable engine at docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist

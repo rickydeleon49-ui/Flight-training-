@@ -1,0 +1,6 @@
+=== Hygiene Receipt ===
+Date: 2026-10-11T18:05:00Z
+Command: git diff --check
+Result: Clean (exit code 0, 0 output lines)
+Trailing whitespace check on docs/ and docs/evidence/m4-document-navigation-eval-2026-10-11/:
+Zero trailing whitespace issues found.

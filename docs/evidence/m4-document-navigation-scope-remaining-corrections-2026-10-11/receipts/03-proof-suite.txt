@@ -1,0 +1,61 @@
+=== M4 Remaining Corrections Proof Execution Receipt ===
+Timestamp: 2026-10-11T18:40:53.560Z
+Command: node docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11/scripts/run_remaining_proof.mjs
+Suite 1 (proof.test.mjs): Exit 0, 10 passed
+Suite 2 (databaseLifecycle.test.mjs): Exit 0, 7 passed
+Suite 3 (sensitivity.test.mjs): Exit 0, 5 passed
+
+--- 1. Proof Suite Output ---
+Warning: Please use the `legacy` build in Node.js environments.
+Warning: Indexing all PDF objects
+Warning: checkLastPage - invalid /Pages tree /Count: 99.
+✔ M4-P1: Strict Safe Integer Page Validation & Clamping (R5) (0.386583ms)
+✔ M4-P2: Provenance-Aware Reference Resolution & Bounded Label Maps (R5) (0.134333ms)
+✔ M4-P3: Split-Lineage Coordinate Space & Navigation Safety (R5) (0.137333ms)
+✔ M4-P4: Content Drift Detection & Bounded Bookmark Revalidation (R6) (0.076625ms)
+✔ M4-P5: Native Jump Fallback Messaging (R5) (0.053334ms)
+✔ M4-P6: WebKit & Engine Boundary Audit with Primary Sources (R8) (0.043208ms)
+✔ M4-P7: Evaluated Real PDF Parser Demonstration (pdfjs-dist 6.3.289) (R8) (37.981291ms)
+✔ M4-P8: Opener Lifecycle State Machine, Supersession & Injected Persistence (R7) (0.167084ms)
+✔ M4-P9: Replay of All 10 Historical Review Diagnostics Cases (0.103958ms)
+✔ M4-P10: Replay of All 13 Rereview Diagnostics Cases Against Corrected Models (0.187667ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 140.339584
+
+--- 2. Database Lifecycle Output ---
+✔ M4-DB-LC-1: Shipped schema 0001-0013 upgrade to candidate 0015 retains existing rows (38.619083ms)
+✔ M4-DB-LC-2: Close and reopen verifies durable persistence across connections (37.6865ms)
+✔ M4-DB-LC-3: Content replacement A/50 -> B/10 marks old bookmarks unverified and creates mixed generations (36.868916ms)
+✔ M4-DB-LC-4: Bounded revalidation: same hash cannot verify an out-of-bounds bookmark (40.05775ms)
+✔ M4-DB-LC-5: Multi-table transaction rollback restores state on failure (35.89475ms)
+✔ M4-DB-LC-6: ON DELETE CASCADE cleans up all dependent navigation rows (34.04225ms)
+✔ M4-DB-LC-7: Disposable backup and restore preserves authoritative rows and triggers revalidation on drift (35.832125ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 350.983708
+
+--- 3. Sensitivity Mutants Output ---
+✔ Mutant 1: Provenance guard sensitivity (numeric without provenance) (0.387417ms)
+✔ Mutant 2: Bounded revalidation guard sensitivity (page > totalPages) (0.090791ms)
+✔ Mutant 3: Intent advancement guard sensitivity (supersession on invalid request) (0.431125ms)
+✔ Mutant 4: Safe integer validation sensitivity (fractions & unsafe integers) (0.078959ms)
+✔ Mutant 5: Deleted root guard sensitivity (0.12475ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.723584

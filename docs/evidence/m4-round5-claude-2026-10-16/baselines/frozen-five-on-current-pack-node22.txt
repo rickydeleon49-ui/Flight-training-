@@ -1,0 +1,48 @@
+TAP version 13
+# {"case":"R28-tokens","olderToken":1,"newerToken":2}
+# {"case":"R28","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":null,"persistedPage":null},"newResult":{"success":true,"state":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20.","saved":true,"saveError":null,"persistedStatus":"active","lastRequestedPage":20,"confirmedRead":false},"finalPage":20}
+# {"case":"R29","result":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":5,"persistedPage":5},"finalPage":5,"controllerState":"aborted"}
+# {"case":"R30-normal","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":10,"persistedPage":10},"durablePage":20,"controllerPage":20}
+# {"case":"R30-retry","late":{"success":false,"state":"aborted","superseded":true,"reason":"superseded","persistedPage":20},"durablePage":20,"controllerPage":20}
+# {"case":"R30-failure","durablePage":20,"controllerState":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20."}
+# (node:22830) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [M4-R28] overlapping controllers with earlier completion still retain later request
+ok 1 - [M4-R28] overlapping controllers with earlier completion still retain later request
+  ---
+  duration_ms: 41.223459
+  type: 'test'
+  ...
+# Subtest: [M4-R29] abort while persistence is pending cannot change the saved page
+ok 2 - [M4-R29] abort while persistence is pending cannot change the saved page
+  ---
+  duration_ms: 5.476958
+  type: 'test'
+  ...
+# Subtest: [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+ok 3 - [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.280166
+  type: 'test'
+  ...
+# Subtest: [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+ok 4 - [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.73575
+  type: 'test'
+  ...
+# Subtest: [M4-R30] obsolete opener failure must leave the winner notice and state intact
+ok 5 - [M4-R30] obsolete opener failure must leave the winner notice and state intact
+  ---
+  duration_ms: 5.208709
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.764917

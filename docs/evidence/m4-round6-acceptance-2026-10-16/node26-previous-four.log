@@ -1,0 +1,12 @@
+✔ reservation database failure must not return an unpersisted token (1.645375ms)
+✔ commit must reject a generation that was never the reserved owner (0.446334ms)
+✔ a blocked claim write cannot allocate equal tokens and make the earlier request win (0.411333ms)
+✔ active unexecuted mutant claims cannot escape via NAVIGATION in their ID (0.457917ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85.448125

@@ -1,0 +1,6 @@
+=== 14 manifest tamper self-test ===
+node: v22.23.3
+cmd: node scripts/run_integration_proof.mjs --verify-manifest-only --pack-root <tmp> against tampered receipts/01-toolchain.txt
+runner exit: 1
+output: PROOF RUN FAILED: 16 manifest: SHA256SUMS does not verify: receipts/01-toolchain.txt: FAILED
+RESULT: PASS - runner itself halts with exit 1 when a delivered receipt is changed after manifest
