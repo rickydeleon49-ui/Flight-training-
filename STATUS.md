@@ -1,3 +1,11 @@
+## OPENFOLDER-01 empty-folder fallback corrected; submitted for review — 16 October 2026
+
+The empty/unreadable Mac data-folder fallback in `open_data_folder` is corrected in `src-tauri/src/backup.rs`. For an empty `.app` root, the command now asks the opener to *reveal* the folder instead of *opening* it, and Finder's behaviour on an installed Mac was **not observed** because no app launch was performed. Read/enumeration failures return an informative I/O error instead of falling back to `open_path`; an unreadable individual entry inside the folder now stops the reveal with an error, where it was previously skipped. Working database and child reveal behavior are preserved, permissions remain narrow, and an opener test adapter tests routing, missing root, and permission-denied listing without opening Finder. `open_data_folder_in` is private. [Report](docs/OPEN_DATA_FOLDER_FOLLOWUP_COMPLETION_2026-10-16.md).
+
+Checks: full frontend 3,252 passed / 6 skipped, Rust 477 passed / 6 ignored, cargo clippy `--locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`, cargo fmt, lock sync, typecheck, build, 21/21 schema-14 checksums, and 26 schema-helper tests pass. Submitted for Codex review; no self-merge.
+
+The separate model-budget/timeout evaluation and M4 R37–R39 retain their existing assignments. The eight-item queue order is unchanged. Historical entries follow unchanged.
+
 ## M4 prototype accepted for integration; production scope decision next — 16 October 2026
 
 **R37–R39 closed in the evidence-only prototype**, effective after this acceptance PR passes exact-head CI and merges. Independent current-main Node22/26 runners pass104 mapped tests and24 mutants; assigned five, previous four and adapted frozen five pass on each. Direct unadapted4/5 remains disclosed. [Acceptance](docs/M4_ROUND6_ACCEPTANCE_2026-10-16.md). All709 submitted files are preserved; old tracker prefixes are reconciled with current history rather than replacing it.
