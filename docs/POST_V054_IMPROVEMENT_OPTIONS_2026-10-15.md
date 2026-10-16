@@ -1,6 +1,8 @@
 # Possible improvements after v0.5.4 — 15 October 2026
 
-**Decision document only. All options below are PROPOSED, not approved implementation work.** The owner wants the next Mac release as soon as practical and will select improvements for the roadmap **after that release**. Do not add these features or dependencies to v0.5.4. Do not treat publication of this document as approval of an option, provider, new data contract or migration. No roadmap/status/handoff file is changed by this research.
+**Subsequent owner decision — 15 October 2026:** all eight options are selected for the roadmap **after v0.5.4**, in order P54-01 → P54-03 → P54-04 → P54-02 → P54-05 → P54-06 → P54-07 → P54-08. See the [current approved queue](../ROADMAP.md). The proposal text below preserves the research checkpoint; exact packages/contracts still require their normal implementation review. This does not add features to the pending release.
+
+**Historical research status before the subsequent owner decision above: options were PROPOSED, not yet approved implementation work.** The owner wants the next Mac release as soon as practical and will select improvements for the roadmap **after that release**. Do not add these features or dependencies to v0.5.4. Do not treat publication of this document as approval of an option, provider, new data contract or migration. No roadmap/status/handoff file is changed by this research.
 
 ## Current app and release context
 
