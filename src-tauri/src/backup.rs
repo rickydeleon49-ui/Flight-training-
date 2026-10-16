@@ -7348,7 +7348,7 @@ impl FolderOpener for SystemFolderOpener {
     }
 }
 
-pub fn open_data_folder_in(root: &Path) -> Result<(), String> {
+fn open_data_folder_in(root: &Path) -> Result<(), String> {
     open_data_folder_with(root, cfg!(target_os = "macos"), &SystemFolderOpener)
 }
 
@@ -14025,5 +14025,49 @@ mod tests {
         );
 
         std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn open_data_folder_handles_permission_denied_listing() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = scratch("open-perm-denied.app");
+        let child = root.join("child.txt");
+        std::fs::write(&child, b"content").unwrap();
+
+        struct PermissionGuard<'a>(&'a Path);
+        impl Drop for PermissionGuard<'_> {
+            fn drop(&mut self) {
+                let _ = std::fs::set_permissions(self.0, std::fs::Permissions::from_mode(0o755));
+                let _ = std::fs::remove_dir_all(self.0);
+            }
+        }
+
+        let _guard = PermissionGuard(&root);
+        std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o000)).unwrap();
+
+        // If running as root (e.g. in some container environments), root can read 0o000 directories.
+        if std::fs::read_dir(&root).is_ok() {
+            // When running as root, permissions are ignored by the OS; skip assertion.
+            return;
+        }
+
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(
+            result.is_err(),
+            "expected error for permission-denied directory"
+        );
+        let err = result.unwrap_err();
+        let expected_prefix = format!("Could not open {}", root.display());
+        assert!(
+            err.starts_with(&expected_prefix),
+            "expected error to start with '{expected_prefix}', got '{err}'"
+        );
+        assert!(
+            opener.calls.lock().unwrap().is_empty(),
+            "opener should not be called when listing fails with permission denied"
+        );
     }
 }
