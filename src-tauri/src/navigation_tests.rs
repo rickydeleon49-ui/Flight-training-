@@ -1342,3 +1342,98 @@ fn the_pre_upgrade_copy_keeps_a_schema14_library_exactly_valid_or_not() {
         }
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Shared cases (fixtures/navigation/operation-cases.json)             */
+/* ------------------------------------------------------------------ */
+
+/// Whether every key in `expected` is present with an equal value in
+/// `actual` (recursively for objects; arrays must have equal length).
+fn subset(expected: &Value, actual: &Value) -> bool {
+    match (expected, actual) {
+        (Value::Object(e), Value::Object(a)) => e
+            .iter()
+            .all(|(k, v)| a.get(k).is_some_and(|got| subset(v, got))),
+        (Value::Array(e), Value::Array(a)) => {
+            e.len() == a.len() && e.iter().zip(a).all(|(x, y)| subset(x, y))
+        }
+        _ => expected == actual,
+    }
+}
+
+#[test]
+fn the_shared_operation_cases_hold_natively() {
+    let raw = include_str!("../fixtures/navigation/operation-cases.json");
+    let doc: Value = serde_json::from_str(raw).unwrap();
+    let mut text = raw.to_string();
+    for (token, hash) in doc["hashes"].as_object().unwrap() {
+        text = text.replace(token.as_str(), hash.as_str().unwrap());
+    }
+    let doc: Value = serde_json::from_str(&text).unwrap();
+    let cases = doc["cases"].as_array().unwrap();
+    assert!(cases.len() >= 30);
+    for case in cases {
+        let name = case["name"].as_str().unwrap();
+        let dir = TempDir::new("shared");
+        let mut conn = library(dir.path());
+        conn.execute_batch(
+            "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES
+               ('mat', 'Synthetic', 'x', 'x'), ('other', 'Synthetic', 'x', 'x');",
+        )
+        .unwrap();
+        for sql in case["setup"].as_array().unwrap() {
+            conn.execute_batch(sql.as_str().unwrap())
+                .unwrap_or_else(|e| panic!("{name}: setup {sql}: {e}"));
+        }
+        for (i, step) in case["steps"].as_array().unwrap().iter().enumerate() {
+            if let Some(sql) = step["op"].get("sql").and_then(Value::as_str) {
+                conn.execute_batch(sql).unwrap();
+                continue;
+            }
+            let outcome =
+                decode_operation(&step["op"]).and_then(|op| run_operation_on(&mut conn, &op));
+            let expect = &step["expect"];
+            match (outcome, expect.get("ok"), expect.get("error")) {
+                (Ok(value), Some(want), None) => {
+                    assert!(
+                        subset(want, &value),
+                        "{name} step {i}: {value} does not contain {want}"
+                    )
+                }
+                (Err(code), None, Some(want)) => assert_eq!(
+                    serde_json::to_value(code).unwrap(),
+                    *want,
+                    "{name} step {i}"
+                ),
+                (got, _, _) => panic!("{name} step {i}: got {got:?}, expected {expect}"),
+            }
+        }
+        let Some(fin) = case.get("final") else {
+            continue;
+        };
+        if let Some(want) = fin.get("claim") {
+            let got = claim_of(&conn, "mat").unwrap().map(|(r, c)| json!([r, c]));
+            assert_eq!(got.unwrap_or(Value::Null), *want, "{name}: claim");
+        }
+        if let Some(want) = fin.get("tuple") {
+            let got: Option<Value> = conn
+                .query_row(
+                    "SELECT json_array(last_requested_page, last_requested_page_label, confirmed_read,
+                            originating_content_sha256, status, owner_generation)
+                       FROM material_reading_state WHERE material_id = 'mat'",
+                    [],
+                    |r| r.get::<_, String>(0),
+                )
+                .optional()
+                .unwrap()
+                .map(|t| serde_json::from_str(&t).unwrap());
+            assert_eq!(got.unwrap_or(Value::Null), *want, "{name}: tuple");
+        }
+        if let Some(want) = fin.get("bookmarks") {
+            let n: i64 = conn
+                .query_row("SELECT COUNT(*) FROM material_bookmarks", [], |r| r.get(0))
+                .unwrap();
+            assert_eq!(json!(n), *want, "{name}: bookmarks");
+        }
+    }
+}
