@@ -1,0 +1,31 @@
+diff --git a/src-tauri/src/navigation.rs b/src-tauri/src/navigation.rs
+index 91af1bc..404ea1a 100644
+--- a/src-tauri/src/navigation.rs
++++ b/src-tauri/src/navigation.rs
+@@ -33,7 +33,7 @@ use serde::Serialize;
+ use serde_json::{json, Map, Value};
+ use tauri::AppHandle;
+ 
+-use crate::card_reviews::is_lower_hex_64;
++use crate::card_reviews::{is_lower_hex_64, js_trim};
+ use crate::documents::{safe_relative_path, DOCUMENTS_DIR};
+ use crate::lineage::calculate_sha256;
+ use crate::practice_sessions::{db_now_iso, is_root_ready};
+@@ -176,7 +176,7 @@ fn label_field(map: &Map<String, Value>, key: &str) -> Check<Option<String>> {
+     match map.get(key).ok_or(Code::InvalidArgument)? {
+         Value::Null => Ok(None),
+         Value::String(text) => {
+-            if text.is_empty() || text.trim() != text || code_points(text) > MAX_LABEL_CHARS {
++            if text.is_empty() || js_trim(text) != text || code_points(text) > MAX_LABEL_CHARS {
+                 return Err(Code::InvalidArgument);
+             }
+             Ok(Some(text.clone()))
+@@ -190,7 +190,7 @@ fn text_field(map: &Map<String, Value>, key: &str, max: usize, allow_empty: bool
+         .get(key)
+         .and_then(Value::as_str)
+         .ok_or(Code::InvalidArgument)?;
+-    if code_points(text) > max || text.trim() != text || (!allow_empty && text.is_empty()) {
++    if code_points(text) > max || js_trim(text) != text || (!allow_empty && text.is_empty()) {
+         return Err(Code::InvalidArgument);
+     }
+     Ok(text.to_string())

@@ -7431,34 +7431,74 @@ pub fn data_directory(app: AppHandle) -> Result<String, String> {
 /// opened because its executable is missing", which is exactly what an
 /// installed Mac reported. Revealing an item *inside* the folder makes Finder
 /// open the folder itself with that item selected, and needs no extra
-/// permission, so that is what macOS does here.
+/// permission, so that is what macOS does here. For a truly empty folder,
+/// revealing the folder itself in its parent displays the folder in Finder
+/// without Launch Services executing it as an application.
 #[tauri::command]
 pub fn open_data_folder(app: AppHandle) -> Result<(), String> {
     let root = app_root(&app)?;
-    let opened = if cfg!(target_os = "macos") {
-        match item_to_reveal_in(&root) {
-            Some(item) => tauri_plugin_opener::reveal_item_in_dir(&item),
-            None => tauri_plugin_opener::open_path(&root, None::<&str>),
+    open_data_folder_in(&root)
+}
+
+/// System opener operations used to show the data folder.
+trait FolderOpener {
+    fn reveal_item_in_dir(&self, path: &Path) -> Result<(), String>;
+    fn open_path(&self, path: &Path) -> Result<(), String>;
+}
+
+struct SystemFolderOpener;
+
+impl FolderOpener for SystemFolderOpener {
+    fn reveal_item_in_dir(&self, path: &Path) -> Result<(), String> {
+        tauri_plugin_opener::reveal_item_in_dir(path).map_err(|e| e.to_string())
+    }
+
+    fn open_path(&self, path: &Path) -> Result<(), String> {
+        tauri_plugin_opener::open_path(path, None::<&str>).map_err(|e| e.to_string())
+    }
+}
+
+fn open_data_folder_in(root: &Path) -> Result<(), String> {
+    open_data_folder_with(root, cfg!(target_os = "macos"), &SystemFolderOpener)
+}
+
+fn open_data_folder_with<O: FolderOpener>(
+    root: &Path,
+    is_macos: bool,
+    opener: &O,
+) -> Result<(), String> {
+    let opened = if is_macos {
+        match item_to_reveal_in(root) {
+            Ok(item) => opener.reveal_item_in_dir(&item),
+            Err(e) => Err(e.to_string()),
         }
     } else {
-        tauri_plugin_opener::open_path(&root, None::<&str>)
+        opener.open_path(root)
     };
     opened.map_err(|e| format!("Could not open {}: {e}", root.display()))
 }
 
-/// What to select so Finder shows the inside of `root`: the database when it is
-/// there, otherwise the first item in the folder, otherwise nothing.
-fn item_to_reveal_in(root: &Path) -> Option<PathBuf> {
+/// What to select so Finder shows the inside of `root`:
+/// - the database when it is there,
+/// - otherwise the first item in the folder in name order,
+/// - otherwise `root` itself when the directory is truly empty,
+/// - or an I/O error if the directory cannot be inspected.
+fn item_to_reveal_in(root: &Path) -> std::io::Result<PathBuf> {
     let database = root.join(DB_FILES[0]);
     if database.is_file() {
-        return Some(database);
+        return Ok(database);
     }
-    let mut entries: Vec<PathBuf> = std::fs::read_dir(root)
-        .ok()?
-        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
-        .collect();
-    entries.sort();
-    entries.into_iter().next()
+    let entries = std::fs::read_dir(root)?;
+    let mut items: Vec<PathBuf> = Vec::new();
+    for entry in entries {
+        items.push(entry?.path());
+    }
+    items.sort();
+    if let Some(first) = items.into_iter().next() {
+        Ok(first)
+    } else {
+        Ok(root.to_path_buf())
+    }
 }
 
 #[cfg(test)]
@@ -13964,26 +14004,180 @@ mod tests {
         assert!(message.contains("2026-10-16-035630-before-restore"));
     }
 
+    #[derive(Debug, PartialEq, Eq, Clone)]
+    enum OpenerCall {
+        Reveal(PathBuf),
+        OpenPath(PathBuf),
+    }
+
+    #[derive(Default)]
+    struct TestFolderOpener {
+        calls: std::sync::Mutex<Vec<OpenerCall>>,
+        fail_with: Option<String>,
+    }
+
+    impl FolderOpener for TestFolderOpener {
+        fn reveal_item_in_dir(&self, path: &Path) -> Result<(), String> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(OpenerCall::Reveal(path.to_path_buf()));
+            match &self.fail_with {
+                Some(err) => Err(err.clone()),
+                None => Ok(()),
+            }
+        }
+
+        fn open_path(&self, path: &Path) -> Result<(), String> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(OpenerCall::OpenPath(path.to_path_buf()));
+            match &self.fail_with {
+                Some(err) => Err(err.clone()),
+                None => Ok(()),
+            }
+        }
+    }
+
     #[test]
-    fn the_data_folder_is_shown_by_selecting_something_inside_it() {
+    fn item_to_reveal_distinguishes_content_emptiness_and_errors() {
         let root = std::env::temp_dir().join(format!("hfd-reveal-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).unwrap();
 
-        // An empty folder has nothing to select, so the folder itself is opened.
-        assert_eq!(item_to_reveal_in(&root), None);
+        // An empty folder has nothing inside, so the folder itself is selected in its parent.
+        assert_eq!(item_to_reveal_in(&root).unwrap(), root);
 
         // Without the database, the first item in name order is selected.
         std::fs::create_dir_all(root.join("documents")).unwrap();
         std::fs::create_dir_all(root.join("backups")).unwrap();
-        assert_eq!(item_to_reveal_in(&root), Some(root.join("backups")));
+        assert_eq!(item_to_reveal_in(&root).unwrap(), root.join("backups"));
 
         // The database is preferred whenever it is there.
         std::fs::write(root.join(DB_FILES[0]), b"db").unwrap();
-        assert_eq!(item_to_reveal_in(&root), Some(root.join(DB_FILES[0])));
+        assert_eq!(item_to_reveal_in(&root).unwrap(), root.join(DB_FILES[0]));
 
-        // A missing folder is not an error here; opening it reports one later.
-        assert_eq!(item_to_reveal_in(&root.join("missing")), None);
+        // A missing folder or inspection failure returns Err instead of None.
+        assert!(item_to_reveal_in(&root.join("missing")).is_err());
         std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn open_data_folder_routes_command_through_opener_adapter() {
+        let root = scratch("open-routing.app");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+
+        // 1. Empty .app root on macOS reveals the directory itself (not open_path).
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::Reveal(root.clone())]
+        );
+
+        // 2. Database-absent, nonempty root on macOS reveals the first child.
+        std::fs::create_dir_all(root.join("documents")).unwrap();
+        std::fs::create_dir_all(root.join("backups")).unwrap();
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::Reveal(root.join("backups"))]
+        );
+
+        // 3. Database-present root on macOS reveals the database file.
+        std::fs::write(root.join(DB_FILES[0]), b"db").unwrap();
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::Reveal(root.join(DB_FILES[0]))]
+        );
+
+        // 4. Listing error on missing root returns an inspection error and dispatches nothing.
+        let missing = root.join("missing_dir.app");
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&missing, true, &opener);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.starts_with(&format!("Could not open {}", missing.display())),
+            "unexpected error: {err}"
+        );
+        assert!(
+            opener.calls.lock().unwrap().is_empty(),
+            "opener should not be called on listing error"
+        );
+
+        // 5. Non-macOS platforms route directly to open_path.
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, false, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::OpenPath(root.clone())]
+        );
+
+        // 6. Opener failure is formatted with "Could not open <root>: <err>".
+        let opener = TestFolderOpener {
+            calls: std::sync::Mutex::new(Vec::new()),
+            fail_with: Some("access denied".to_string()),
+        };
+        let result = open_data_folder_with(&root, true, &opener);
+        assert_eq!(
+            result,
+            Err(format!("Could not open {}: access denied", root.display()))
+        );
+
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn open_data_folder_handles_permission_denied_listing() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = scratch("open-perm-denied.app");
+        let child = root.join("child.txt");
+        std::fs::write(&child, b"content").unwrap();
+
+        struct PermissionGuard<'a>(&'a Path);
+        impl Drop for PermissionGuard<'_> {
+            fn drop(&mut self) {
+                let _ = std::fs::set_permissions(self.0, std::fs::Permissions::from_mode(0o755));
+                let _ = std::fs::remove_dir_all(self.0);
+            }
+        }
+
+        let _guard = PermissionGuard(&root);
+        std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o000)).unwrap();
+
+        // If running as root (e.g. in some container environments), root can read 0o000 directories.
+        if std::fs::read_dir(&root).is_ok() {
+            // When running as root, permissions are ignored by the OS; skip assertion.
+            return;
+        }
+
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(
+            result.is_err(),
+            "expected error for permission-denied directory"
+        );
+        let err = result.unwrap_err();
+        let expected_prefix = format!("Could not open {}", root.display());
+        assert!(
+            err.starts_with(&expected_prefix),
+            "expected error to start with '{expected_prefix}', got '{err}'"
+        );
+        assert!(
+            opener.calls.lock().unwrap().is_empty(),
+            "opener should not be called when listing fails with permission denied"
+        );
     }
 }
