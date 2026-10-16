@@ -1,0 +1,66 @@
+{
+  "initialStagedWhitespaceExit": 2,
+  "reason": "Raw submitted and reviewer tool outputs contain preserved EOF blanks or Vite reporter spacing; no source formatting defects",
+  "exactReceiptExceptions": {
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-America_Los_Angeles.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-Pacific_Kiritimati.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-UTC.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/03-cargo-test-backup.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/04-rendered-before.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/build.txt": [
+      "blank-at-eol"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-build.txt": [
+      "blank-at-eol"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-cargo-test.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-npm-test.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-typecheck.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-America_Los_Angeles.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-Pacific_Kiritimati.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-UTC.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/npm-test.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-2026-10-15/typecheck.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/build.txt": [
+      "blank-at-eol"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/focused.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/frontend.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/rust.txt": [
+      "blank-at-eof"
+    ],
+    "docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/typecheck.txt": [
+      "blank-at-eof"
+    ]
+  }
+}

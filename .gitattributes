@@ -119,3 +119,25 @@ docs/evidence/mac-schema13-final-corrections-2026-10-10/receipts/exploratory-hel
 docs/evidence/mac-schema13-final-corrections-2026-10-10/receipts/helper-selfcheck.stdout -whitespace
 docs/evidence/mac-schema13-operator-corrections-2026-10-10/receipts/selfcheck-final.json -whitespace
 docs/evidence/mac-schema13-operator-corrections-2026-10-10/revert-sensitivity.py -whitespace
+
+# Preserve these exact desktop-review raw tool receipts; source checks remain enabled.
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-America_Los_Angeles.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-Pacific_Kiritimati.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-UTC.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/03-cargo-test-backup.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/04-rendered-before.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/build.txt whitespace=-blank-at-eol
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-build.txt whitespace=-blank-at-eol
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-cargo-test.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-npm-test.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-typecheck.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-America_Los_Angeles.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-Pacific_Kiritimati.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-UTC.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/npm-test.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-2026-10-15/typecheck.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/build.txt whitespace=-blank-at-eol
+docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/focused.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/frontend.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/rust.txt whitespace=-blank-at-eof
+docs/evidence/mac-v054-desktop-corrections-review-2026-10-15/typecheck.txt whitespace=-blank-at-eof

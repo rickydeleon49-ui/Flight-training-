@@ -1,0 +1,11 @@
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-
+
+(node:33279) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  4 passed (4)
+      Tests  44 passed (44)
+   Start at  21:33:55
+   Duration  1.08s (transform 415ms, setup 0ms, import 629ms, tests 402ms, environment 611ms)
+

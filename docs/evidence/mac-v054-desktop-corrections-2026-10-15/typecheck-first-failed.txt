@@ -1,0 +1,5 @@
+
+> her-flight-deck@0.5.4 typecheck
+> tsc --noEmit
+
+src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts(52,78): error TS2322: Type '"pdf"' is not assignable to type 'MaterialType | undefined'.

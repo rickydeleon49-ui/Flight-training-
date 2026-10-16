@@ -22,6 +22,7 @@ mod skill_evidence;
 mod storage;
 mod study_packet;
 
+use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
@@ -121,6 +122,22 @@ pub(crate) fn migrations() -> Vec<Migration> {
     ]
 }
 
+/// After a restore restart, show the main window and activate the app. The
+/// restart spawns the executable directly, so nothing else brings it to the
+/// front and the restored app can appear hidden behind other windows.
+fn bring_main_window_forward(app: &tauri::AppHandle) {
+    let Some(window) = app.get_webview_window("main") else {
+        eprintln!("Restore finished, but the main window was not found to bring forward.");
+        return;
+    };
+    if let Err(error) = window.show() {
+        eprintln!("Restore finished, but the window could not be shown: {error}");
+    }
+    if let Err(error) = window.set_focus() {
+        eprintln!("Restore finished, but the window could not be brought forward: {error}");
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -136,8 +153,11 @@ pub fn run() {
             // A user-requested full restore is staged during the previous run
             // and installed here, before SQLite opens the database. Startup
             // blocks if an ambiguous restore cannot be safely resolved.
-            backup::handle_startup_restore(app.handle())
+            let restored = backup::handle_startup_restore(app.handle())
                 .map_err(Box::<dyn std::error::Error>::from)?;
+            if restored {
+                bring_main_window_forward(app.handle());
+            }
 
             // Before the frontend opens the database, and therefore before any
             // migration runs, copy it aside if this is a new version's first run.
