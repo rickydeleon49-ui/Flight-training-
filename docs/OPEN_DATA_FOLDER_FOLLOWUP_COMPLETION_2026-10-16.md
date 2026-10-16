@@ -1,10 +1,14 @@
 # Open folder empty-directory follow-up (OPENFOLDER-01) — completion report
 
-**Date:** 16 October 2026  
-**Assignment:** [OPEN_DATA_FOLDER_FOLLOWUP_PROMPT_2026-10-16.md](OPEN_DATA_FOLDER_FOLLOWUP_PROMPT_2026-10-16.md)  
-**Review reference:** [OPEN_DATA_FOLDER_REVIEW_2026-10-16.md](OPEN_DATA_FOLDER_REVIEW_2026-10-16.md)  
-**Assigned agent:** Gemini  
-**Reviewer:** Codex  
+**Date:** 16 October 2026
+
+**Assignment:** [OPEN_DATA_FOLDER_FOLLOWUP_PROMPT_2026-10-16.md](OPEN_DATA_FOLDER_FOLLOWUP_PROMPT_2026-10-16.md)
+
+**Review reference:** [OPEN_DATA_FOLDER_REVIEW_2026-10-16.md](OPEN_DATA_FOLDER_REVIEW_2026-10-16.md)
+
+**Assigned agent:** Gemini
+
+**Reviewer:** Codex
 
 ---
 
@@ -57,7 +61,11 @@ All required verification checks were executed locally and passed with exit code
 | Frontend full test suite | `npm test` | **PASS (exit 0)**, 146 passed, 4 skipped; 3,252 passed, 6 skipped |
 | Schema-14 helper suite | `node --test scripts/mac-schema14-profile-snapshot.test.mjs` | **PASS (exit 0)**, 26 passed, 0 failed |
 | Schema-14 checksums | `shasum -a 256 -c docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS` | **PASS (exit 0)**, 21/21 OK |
-| Diff hygiene | `git diff --check` | **PASS (exit 0)**, 0 errors |
+| Diff hygiene (initial run) | `git diff --check` | **PASS (exit 0)** (inspected uncommitted working tree only) |
+| Submitted diff hygiene (Codex review) | `git diff --check origin/main...HEAD` | **FAIL (exit 2)**, 5 trailing-space lines in report header (finding OPENFOLDER-R1) |
+| Submitted diff hygiene (corrected) | `git diff --check origin/main...HEAD` | **PASS (exit 0)**, clean across all submitted commits |
+
+> **Hygiene receipt disclosure (OPENFOLDER-R1):** The initial `git diff --check` run was executed after committing all changes, which evaluated an empty working-tree diff and did not validate the submitted PR diff. During Codex review of head `312cc5d576e30dde4d26de089d741d4efd9d4774`, `git diff --check origin/main...HEAD` returned exit code 2 on five trailing-space Markdown line breaks in lines 3–7 of this report. Lines 3–7 were converted to blank paragraph separation, and `git diff --check origin/main` / `git diff --check origin/main...HEAD` now validates clean with exit code 0.
 
 ---
 
