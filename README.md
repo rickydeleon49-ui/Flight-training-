@@ -177,6 +177,12 @@ In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
   the draft must remain private and held from distribution. Never instruct
   users to bypass, disable, or weaken operating system or browser protections
   (such as running quarantine removal commands or lowering Safe Browsing).
+  **Owner exception (16 October 2026):** an unsigned Mac build that the owner
+  has released may be opened through Apple's documented Privacy & Security →
+  **Open Anyway** step after its SHA-256 matches the published checksum. This
+  applies only to macOS's "could not verify" (unidentified developer) block,
+  never to an actual malware detection, and ends once Developer ID signing and
+  notarization are in place.
 - **Windows hold resolution:** The Windows hold may be resolved by authoritative
   Microsoft clearance of the exact installer (e.g. Microsoft Security Intelligence
   developer dispute) or by trusted code signing. If a detection cannot be cleared
