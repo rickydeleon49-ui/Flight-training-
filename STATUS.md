@@ -1,3 +1,16 @@
+## v0.5.4 Mac release authorized by the owner, with signing waived — 16 October 2026
+
+**Owner decision:** publish the accepted, unsigned fbff255 v0.5.4 Mac build as a GitHub release. Apple Developer ID signing and notarization will follow another day. REL-05 (signing) and REL-08 (standard account, interrupted save) are **waived by the owner for this release, not passed**.
+
+- **Asset:** the exact verified bytes, uploaded unchanged. DMG `1048e4636190d07afcbf2da76fc38822cd13189552b03a0ed69265870857676d` (5,086,379 B), executable `a809e7b1…a181a8f`. Tag `v0.5.4` targets `fbff255`. There is no CI rebuild, so published bytes are tested bytes.
+- **Gatekeeper:** `spctl` rejects the build, so downloaders should expect macOS to block it. The release notes do not describe a way around it.
+- **Visibility:** the repository is private, so the release is visible to collaborators only.
+- **Release policy:** Mac candidate version set to 0.5.4. The v0.5.3 draft stays frozen, 0.5.2 stays retired, and Windows stays held on v0.5.1 with no Windows asset.
+- **Housekeeping:** the old 0.5.3 app was retired from this Mac's `/Applications` (`824688…eb28`, reversible).
+- **Sequence:** this PR with green CI, then a draft release with the asset re-downloaded and hash-checked, then publication on the owner's explicit "publish".
+
+[Release record and notes](docs/MAC_V054_RELEASE_2026-10-16.md). The eight-item post-release queue (P54-01…08) is unchanged. Historical entries below keep their original status.
+
 ## Final private v0.5.4 candidate accepted for local testing — 15 October 2026
 
 **Independent review ACCEPTED within the selected administrator UID501 synthetic-data lane, through the containing PR's exact-head checks.** No blocking application defect found. Exact fbff255 candidate artifacts and installed executable matched; native screenshots/observer logs support corrected dates, automatic restart and foreground recovery. Independent checks:26 helper tests,57 focused tests and Cargo-lock passed. Offline verification confirms complete schema definitions, exact ledger coverage/checksums, retained ledger rows, seeded contents, PDFs, integrity and foreign keys.
