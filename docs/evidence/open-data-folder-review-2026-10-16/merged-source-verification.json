@@ -1,0 +1,15 @@
+{
+  "mergeCommit": "2a203df7820617caf4b3ce2ef8d15ba2cf7487ef",
+  "matchedPaths": [
+    "src-tauri/capabilities/default.json",
+    "src-tauri/src/backup.rs",
+    "src-tauri/src/documents.rs",
+    "src-tauri/src/lib.rs",
+    "src/components/recovery/DataRecovery.tsx",
+    "src/components/recovery/DataRecoveryLocalDates.test.ts",
+    "src/pages/Settings/Settings.tsx",
+    "src/services/backups.test.ts",
+    "src/services/backups.ts"
+  ],
+  "mismatches": []
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/.gitattributes",
+    "bytes": 94,
+    "sha256": "ac5af86220624c548deecd5b9f634c225728cba25e5272a755f3f67c8f0e5199"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/README.md",
+    "bytes": 1015,
+    "sha256": "5d38443f446818b8e4f2ff5bb637c8725d699c7ed6cf4a37e42aa8fc34f5dc3d"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/branch-update-verification.json",
+    "bytes": 8620,
+    "sha256": "047800cb23cd98614775909a03a36f8a9e6203adf070e66f752906f3fa8f5cf7"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/build.log",
+    "bytes": 7455,
+    "sha256": "69f3ea8c0b659fd1f5d5b75725f50afe44f47edff303a585f153f338b9d33ff9"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/clippy.log",
+    "bytes": 72,
+    "sha256": "9d892c5778d0c975f64a671e66ea5a753502353da3addd1dfdf3825225e406a2"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/diff.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/exact-head-ci.json",
+    "bytes": 7004,
+    "sha256": "0c3fd5c5373efa3b00a95ece4b1e89331ef91db1aaf55111893166596fa0da42"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/fmt.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/frontend.log",
+    "bytes": 12993,
+    "sha256": "4ceb57fc6d241d8ad6147872c171175ab82055bcc5cddff39c0f826d91ee9247"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/local-test-artifact-identities.json",
+    "bytes": 598,
+    "sha256": "8707581d2f1140362f3acd5cd7d2a9172c645b502b0ca43599c214160586d242"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/lock.log",
+    "bytes": 254,
+    "sha256": "93456332d21a7ac5b313ed6212cb59e263a9e8bd321da636bf6ff4bdceb0de51"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/merge-receipt.json",
+    "bytes": 214,
+    "sha256": "e99c7d5f57e596b71c8d9bb0cecf98d893fe30c9bcea6c1150b2ab8ea9278ef9"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/merged-source-verification.json",
+    "bytes": 460,
+    "sha256": "cf3d757488b3b2dcafbfba10d5ecbc5c15ee16ca3af96152f7c7bca07db6c9ba"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/results.json",
+    "bytes": 1314,
+    "sha256": "372eba9f1408cf1a2ef46516eeb490bd6cf1cd97b2aa82272884ef5ee20f82c4"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/review-environment.json",
+    "bytes": 770,
+    "sha256": "3f76db47bc006f3f644e3f6709690bc6b120f84bf3812acaceef96c74eb6873b"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/rust.log",
+    "bytes": 41617,
+    "sha256": "864ee0bba3f9b4bd9a7b3c9c54d81d179a5f64a68efc528422eb43a762f84cbc"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/schema-helper-exit.json",
+    "bytes": 206,
+    "sha256": "e37a0604a1a149291a82d0a0322053a4a504bd4f31dcff8323188521f65eecde"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/schema-helper.log",
+    "bytes": 8309,
+    "sha256": "2de25500e4483ef48b7a02f10d2b63f0be12a5753abe8fc4b515d4c71a02bbee"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/source-hashes.json",
+    "bytes": 949,
+    "sha256": "3d0ee604c6e68565559badc86d6543810c3ef1ac34ced8e6ba43306e4f74d4b5"
+  },
+  {
+    "path": "docs/evidence/open-data-folder-review-2026-10-16/typecheck.log",
+    "bytes": 51,
+    "sha256": "27419b619c564b6956699b6f162ec88b10c885c656d79ca3c50813f250f655fa"
+  }
+]
