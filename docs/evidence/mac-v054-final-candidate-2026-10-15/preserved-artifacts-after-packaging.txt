@@ -1,0 +1,15 @@
+=== preserved candidates re-verified AFTER packaging ===
+-- fee7869
+37
+-- e928601
+14
+-- any FAILED:
+none
+none
+-- UNCOMMITTED sealed executable
+721460a2a9ba775f3de640e9411c3a805e245ebed1fb72fd2e46620e992763ba  2026-10-15-v0.5.4-desktop-corrections-UNCOMMITTED/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+-- frozen v0.5.3 installer untouched
+total 0
+drwxr-xr-x@  3 rickymac  staff    96 Oct 15 20:55 .
+drwxr-x---+ 41 rickymac  staff  1312 Oct 15 22:15 ..
+drwxr-xr-x@  3 rickymac  staff    96 Oct 15 19:20 Her Flight Deck Verification e928601

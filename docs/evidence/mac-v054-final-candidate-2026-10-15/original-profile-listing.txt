@@ -1,0 +1,70 @@
+### pre-operation default profile identity (UID501 administrator lane, owner data + saved key preserved unread)
+2026-10-15T22:33:31-0700
+--- root stat
+path=/Users/rickymac/Library/Application Support/com.herflightdeck.app inode=21671262 uid=501 gid=20 mode=drwxr-xr-x size=448
+--- listing (names/sizes/modes only; credential content never read)
+total 1400
+drwxr-xr-x@ 14 rickymac  staff     448 Oct 15 20:56 .
+drwx------+ 61 rickymac  staff    1952 Oct 15 21:43 ..
+-rw-r--r--@  1 rickymac  staff   32768 Oct 15 19:26 .backup-snapshot-16811-1792117579435190000.db-shm
+-rw-r--r--@  1 rickymac  staff       0 Oct 15 19:26 .backup-snapshot-16811-1792117579435190000.db-wal
+-rw-r--r--@  1 rickymac  staff   32768 Oct 15 20:43 .backup-snapshot-16811-1792122198104113000.db-shm
+-rw-r--r--@  1 rickymac  staff       0 Oct 15 20:43 .backup-snapshot-16811-1792122198104113000.db-wal
+drwxr-xr-x@  8 rickymac  staff     256 Oct 15 20:44 .verify-staging
+drwxr-xr-x@  4 rickymac  staff     128 Oct 15 20:44 backups
+drwxr-xr-x@  4 rickymac  staff     128 Oct 15 20:44 documents
+-rw-------@  1 rickymac  staff      53 Oct 15 20:17 gemini-key
+-rw-r--r--@  1 rickymac  staff  610304 Oct 15 20:56 her-flight-deck.db
+-rw-r--r--@  1 rickymac  staff   32768 Oct 15 20:56 her-flight-deck.db-shm
+-rw-r--r--@  1 rickymac  staff       0 Oct 15 20:56 her-flight-deck.db-wal
+-rw-r--r--@  1 rickymac  staff       5 Oct 15 19:20 last-run-version.txt
+
+/Users/rickymac/Library/Application Support/com.herflightdeck.app/.verify-staging:
+total 192
+drwxr-xr-x@  8 rickymac  staff    256 Oct 15 20:44 .
+drwxr-xr-x@ 14 rickymac  staff    448 Oct 15 20:56 ..
+-rw-r--r--@  1 rickymac  staff  32768 Oct 15 20:43 hfd-inspect-16811-1792122198159996000-0.db-shm
+-rw-r--r--@  1 rickymac  staff      0 Oct 15 20:43 hfd-inspect-16811-1792122198159996000-0.db-wal
+-rw-r--r--@  1 rickymac  staff  32768 Oct 15 20:44 hfd-inspect-19094-1792122241275913000-0.db-shm
+-rw-r--r--@  1 rickymac  staff      0 Oct 15 20:44 hfd-inspect-19094-1792122241275913000-0.db-wal
+-rw-r--r--@  1 rickymac  staff  32768 Oct 15 20:44 hfd-inspect-19094-1792122250741683000-1.db-shm
+-rw-r--r--@  1 rickymac  staff      0 Oct 15 20:44 hfd-inspect-19094-1792122250741683000-1.db-wal
+
+/Users/rickymac/Library/Application Support/com.herflightdeck.app/backups:
+total 0
+drwxr-xr-x@  4 rickymac  staff  128 Oct 15 20:44 .
+drwxr-xr-x@ 14 rickymac  staff  448 Oct 15 20:56 ..
+drwxr-xr-x@  3 rickymac  staff   96 Oct 15 19:26 2026-10-16-022619-manual
+drwxr-xr-x@  4 rickymac  staff  128 Oct 15 20:44 2026-10-16-034410-before-restore
+
+/Users/rickymac/Library/Application Support/com.herflightdeck.app/backups/2026-10-16-022619-manual:
+total 1192
+drwxr-xr-x@ 3 rickymac  staff      96 Oct 15 19:26 .
+drwxr-xr-x@ 4 rickymac  staff     128 Oct 15 20:44 ..
+-rw-r--r--@ 1 rickymac  staff  610304 Oct 15 19:26 her-flight-deck.db
+
+/Users/rickymac/Library/Application Support/com.herflightdeck.app/backups/2026-10-16-034410-before-restore:
+total 1280
+drwxr-xr-x@ 4 rickymac  staff     128 Oct 15 20:44 .
+drwxr-xr-x@ 4 rickymac  staff     128 Oct 15 20:44 ..
+drwxr-xr-x@ 4 rickymac  staff     128 Oct 15 19:26 documents
+-rw-r--r--@ 1 rickymac  staff  610304 Oct 15 20:43 her-flight-deck.db
+
+/Users/rickymac/Library/Application Support/com.herflightdeck.app/backups/2026-10-16-034410-before-restore/documents:
+total 16
+drwxr-xr-x@ 4 rickymac  staff   128 Oct 15 19:26 .
+drwxr-xr-x@ 4 rickymac  staff   128 Oct 15 20:44 ..
+-rw-r--r--@ 1 rickymac  staff  3360 Oct  8 23:26 10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf
+-rw-r--r--@ 1 rickymac  staff  1184 Oct 15 19:26 67f19546-255f-4eb6-bf68-e231db7fb8b5-Synthetic Native Chapter 2-4.pdf
+
+/Users/rickymac/Library/Application Support/com.herflightdeck.app/documents:
+total 16
+drwxr-xr-x@  4 rickymac  staff   128 Oct 15 20:44 .
+drwxr-xr-x@ 14 rickymac  staff   448 Oct 15 20:56 ..
+-rw-r--r--@  1 rickymac  staff  3360 Oct 15 20:44 10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf
+-rw-r--r--@  1 rickymac  staff  1184 Oct 15 20:44 67f19546-255f-4eb6-bf68-e231db7fb8b5-Synthetic Native Chapter 2-4.pdf
+--- entry count / total bytes
+entries:       12
+bytes: 2048 KiB
+--- credential presence recorded as metadata only
+-rw-------@ 53 /Users/rickymac/Library/Application

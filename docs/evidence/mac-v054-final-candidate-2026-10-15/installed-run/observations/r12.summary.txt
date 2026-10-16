@@ -1,0 +1,11 @@
+2026-10-16T06:03:27.361Z pids [(61073, [4780])] front Her Flight Deck 61073 staged []
+2026-10-16T06:03:28.700Z pids [(61073, [4780])] front Her Flight Deck 61073 staged ['.restore-staging'] activated Claude Claude 2026-10-16T06:03:28.844Z
+2026-10-16T06:03:29.012Z pids [(62109, [])] front Claude 73011 staged ['.restore-pending']
+2026-10-16T06:03:29.455Z pids [(62109, [4799])] front Her Flight Deck 62109 staged []
+2026-10-16T06:04:01.101Z pids [] front Claude 73011 staged []
+2026-10-16T06:04:38.732Z pids [(63642, [])] front Her Flight Deck 63642 staged []
+2026-10-16T06:04:38.956Z pids [(63642, [4812])] front Her Flight Deck 63642 staged []
+2026-10-16T06:04:54.378Z pids [(63642, [4812])] front Claude 73011 staged []
+2026-10-16T06:04:57.534Z pids [(63642, [4812])] front Her Flight Deck 63642 staged []
+2026-10-16T06:04:58.935Z pids [] front Claude 73011 staged []
+2026-10-16T06:05:27.370Z END

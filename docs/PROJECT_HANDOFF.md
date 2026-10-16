@@ -1,3 +1,27 @@
+## Final private v0.5.4 candidate accepted for local testing — 15 October 2026
+
+**Independent review ACCEPTED within the selected administrator UID501 synthetic-data lane, through the containing PR's exact-head checks.** No blocking application defect found. Exact fbff255 candidate artifacts and installed executable matched; native screenshots/observer logs support corrected dates, automatic restart and foreground recovery. Independent checks:26 helper tests,57 focused tests and Cargo-lock passed. Offline verification confirms complete schema definitions, exact ledger coverage/checksums, retained ledger rows, seeded contents, PDFs, integrity and foreign keys.
+
+**Schema12 disposition:** the one `daily_plan_session` difference is expected local-day rollover; it remains reported, not excluded or converted to an identical-rows verdict. No training record or document loss found. Standard-account, minimum-OS, VoiceOver, erasure/native-fault, Developer ID/notarization and public publication retain their unverified/deferred status. Gatekeeper assessment rejects the ad-hoc candidate. The owner profile is returned; no reviewer app launch/profile/key access occurred.
+
+**Next:** owner local testing using the exact installed fbff255 path. No new build or implementation is required by this review. [Acceptance](docs/MAC_V054_FINAL_CANDIDATE_ACCEPTANCE_2026-10-15.md) · [local-use handoff](docs/MAC_V054_LOCAL_USE_HANDOFF_2026-10-15.md). The eight-item improvement queue remains unchanged and starts after v0.5.4. Historical entries below retain their original status.
+
+## Final private v0.5.4 candidate (fbff255): installed verification complete in the UID501 lane — pending independent review — 16 October 2026
+
+**BUILT AND VERIFIED ON THE INSTALLED CANDIDATE; PENDING INDEPENDENT REVIEW.** Uncommitted on `main` at `fbff255` (tree `713eb74f909367c72b31bdf3da0bf63301256dd1`). Administrator UID501, synthetic data only; not a standard-account pass.
+
+- **Candidate:** `local-candidates/2026-10-15-v0.5.4-fbff255/`. DMG `1048e463…`, ZIP `7e55ccc7…`, executable `a809e7b1…`; 6/6 artifact checksums OK. Installed at `~/Applications/Her Flight Deck Verification fbff255/`.
+  - **Gatekeeper:** `spctl` rejects it (exit 3). This is an ad-hoc seal only, not Developer ID or notarized.
+- **Restores into the exact candidate:** populated schema 14, genuine schema 13 and genuine old-app schema 12 (`6845044f…`). Each restarted automatically, with an on-screen window within 0.5 s.
+  - **Foreground recovery confirmed on these bytes:** with Claude confirmed frontmost while the new process ran (schema 13 and 12), the restored app brought itself forward 0.17–0.45 s later.
+- **Offline comparisons:** retained rows, original schema, original ledger rows (all columns) and managed PDFs are identical. New migrations 13 and 14 have shipped checksums, success 1 and seed 15/15.
+  - **One honest difference (schema 12):** the app regenerated the stale 2026-10-11 `daily_plan_session` for today after the restore. It is not excluded.
+- **Date labels at 23:00 PDT (UTC already 16 October):** Added, Last reviewed, Settings safety copies and confirmation, and the Data Recovery list and confirmation all read "Thursday, October 15".
+- **Quit:** Cmd-Q each time, with the process confirmed ended.
+- **Your profile:** returned intact; the Gemini key was never read. No old binary opened, nothing deleted, no provider calls.
+
+Not executed: erasure UI, VoiceOver, standard account/minimum OS, mid-save fault injection, signing and notarization. [Report](MAC_V054_FINAL_CANDIDATE_REPORT_2026-10-15.md). The eight-item post-release queue (P54-01…08) is unchanged. Historical entries below keep their original status.
+
 ## Desktop corrections accepted; fresh final v0.5.4 candidate next — 15 October 2026
 
 **Independent source review ACCEPTED, effective after the containing PR passes exact-head CI and merges.** DESKTOP-V054-01 (material dates), -04 (backup dates) and -03 (post-restore foreground activation) pass review with no blocking code findings. DESKTOP-V054-02 remains investigated/not reproduced; its original automation no-window outputs retain an unconfirmed cause. Independent gate9/9 exit0:44 focused,3,242 frontend/6 skipped,467 Rust/6 ignored, typecheck/build/fmt/Clippy/lock/hygiene clean. Submitted47 hashes and35 checksums matched; private test-build binary/signature matched read-only. Native evidence is one counted implementer focus run, not a new reviewer-installed test. [Acceptance](MAC_V054_DESKTOP_CORRECTIONS_ACCEPTANCE_2026-10-15.md).

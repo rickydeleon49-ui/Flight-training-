@@ -1,0 +1,6 @@
+# Frozen raw first-session receipts; preserve their actual output bytes.
+helper-lock-checks-first-failed.txt -whitespace
+launch-and-identity.txt -whitespace
+native-build.txt -whitespace
+native-install.txt -whitespace
+package-identity.txt -whitespace
