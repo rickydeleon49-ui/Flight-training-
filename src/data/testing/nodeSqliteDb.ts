@@ -22,6 +22,7 @@ import { executeCardReviewAction } from "../cardReviewTransaction";
 import { readLibraryRecentReviews, readLibraryReviewDue } from "../cardLibraryReader";
 import { executeSkillEvidenceAction } from "../skillEvidenceTransaction";
 import { listSkills, readEvidencePage, readObservationHistory, readSkillSummary } from "../skillEvidenceReader";
+import { executeNavigationOperation } from "../navigationTransaction";
 import {
   executeEraseHistoryAction,
   executeLegacyConversion,
@@ -196,6 +197,13 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
     },
     readObservationHistory(input: import("@/domain/types").ObservationHistoryInput) {
       return owner.exclusive(() => readObservationHistory(query, input));
+    },
+    navigationOperation<K extends import("@/domain/types").NavigationOperation["kind"]>(
+      operation: Extract<import("@/domain/types").NavigationOperation, { kind: K }>,
+    ): Promise<import("@/domain/types").NavigationResultByKind[K]> {
+      return owner.exclusive(
+        async () => (await executeNavigationOperation(exec, run, query, operation)) as import("@/domain/types").NavigationResultByKind[K],
+      );
     },
     close() {
       db.close();

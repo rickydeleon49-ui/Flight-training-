@@ -109,6 +109,19 @@ export interface SqlDatabase {
   readObservationHistory?(
     input: import("@/domain/types").ObservationHistoryInput,
   ): Promise<import("@/domain/types").ObservationHistoryPage>;
+  /**
+   * One document-navigation operation (M4) as a single-connection immediate
+   * transaction: reserve, cancel, commit, read, read confirmation and
+   * bookmarks. There is no fallback: without it, navigation writes refuse.
+   */
+  navigationOperation?<K extends import("@/domain/types").NavigationOperation["kind"]>(
+    operation: Extract<import("@/domain/types").NavigationOperation, { kind: K }>,
+  ): Promise<import("@/domain/types").NavigationResultByKind[K]>;
+  /**
+   * Desktop only: hash and page-count a material's managed PDF from its own
+   * bytes and record that identity (M4). Browser mode has no managed files.
+   */
+  inspectNavigationIdentity?(materialId: string): Promise<import("@/domain/types").InspectedNavigationIdentity>;
 }
 
 export interface PracticeTestSaveOperation {

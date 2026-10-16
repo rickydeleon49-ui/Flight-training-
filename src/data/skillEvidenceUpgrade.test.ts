@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { MIGRATIONS, applyMigrations } from "./migrations";
 import { createRepositories } from "./repositories";
 import { PracticeStateValidationError, SKILL_EVIDENCE_TABLES, validateApplicationDatabase } from "./practiceStateValidation";
 import { createNodeSqliteDatabase, type TestDatabase } from "./testing/nodeSqliteDb";
@@ -75,10 +76,12 @@ describe("upgrading a populated schema-13 library", () => {
 
     const db = await createNodeSqliteDatabase(path);
     databases.push(db);
-    expect(await db.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: 14 }]);
+    expect(await db.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: MIGRATIONS.at(-1)!.version }]);
     const after = await openNodeEngine(path);
     engines.push(after);
-    expect(RETAINED(after)).toEqual(before);
+    // Later migrations only add tables (schema 15's navigation tables start empty).
+    const retained = RETAINED(after) as Record<string, unknown>;
+    expect(Object.fromEntries(Object.keys(before).map((k) => [k, retained[k]]))).toEqual(before);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_catalog_entries")).toEqual([{ n: 15 }]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_observations")).toEqual([{ n: 0 }]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_evidence_operations")).toEqual([{ n: 0 }]);
@@ -178,6 +181,8 @@ describe("backup and restore of a schema-14 library", () => {
       const path = tempPath("tampered.db");
       writeFileSync(path, node.snapshot());
       const copy = await openNodeEngine(path);
+      // Bring the copy to the current schema first, so opening it only validates and never migrates.
+      await applyMigrations((sql) => copy.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 14).map((m) => m.version)));
       copy.exec(tamper);
       copy.close();
       const bytes = readFileSync(path);
