@@ -1,3 +1,9 @@
+## GEM-01 wording follow-up accepted and merged — 16 October 2026
+
+PR #184 merged at4a8a92f after independent source review and successful exact-head CI. Settings now distinguishes Argon's rate/capacity fallback from403 access refusal, matching Rust and README. Independent Settings tests3/3, typecheck/build/hygiene pass; CI covers3,252 frontend,474 Linux Rust and26 helper tests. [Acceptance](GEM01_WORDING_ACCEPTANCE_2026-10-16.md). No new release or live provider verification is claimed.
+
+The separate model-budget/timeout evaluation remains open. M4 R37–R39 and OPENFOLDER-01 retain their existing assignments, and the eight-item queue order is unchanged. Historical entries follow unchanged.
+
 ## M4 round5 reviewed: ownership corrections required; release record accepted — 16 October 2026
 
 **M4 stays evidence-only and unmerged.** Both independent Node22/26 runners pass93 mapped tests and20 mutants; prior four diagnostics pass and frozen five pass through the disclosed seed adapter. New diagnostics expose **R37** (failed newer reservation leaves older opener/save live: page5 becomes10 and UI reverts to opened) and **R38** (ignored claim INSERT/UPDATE issues duplicate undurable tokens). **R39**, a non-blocking receipt issue, loses an install child's real termination signal. All five new assertions fail on both lanes. [Review](M4_ROUND5_INDEPENDENT_REVIEW_2026-10-16.md) · [single precise correction assignment](M4_ROUND5_CORRECTIONS_PROMPT_2026-10-16.md).
