@@ -1,0 +1,1 @@
+/Users/rickymac/code/Flight-training-gemini-model/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app: code has no resources but signature indicates they must be present
