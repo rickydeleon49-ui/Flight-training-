@@ -1,0 +1,204 @@
+{
+  "schema": "hfd-fresh-v054-independent-review/1",
+  "candidateSource": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "preservedSubmissionCommit": "8a304ba48b633bae99b1ebb7862fc0dee65accff",
+  "metadataReplayCommit": "1b31738b19bae08582f1391c795799c54007a268",
+  "scope": "Reports/evidence only. Candidate and all app inputs unchanged.",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 86071,
+      "sha256": "5f1909ec6d3740f518a44e8eede3f62ec50bb77349222c4ea7643b8c397b4e38"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 213854,
+      "sha256": "7ca8192c6f625f679bac36e868112229085cdeb182bc05424378ba532c1e8975"
+    },
+    {
+      "path": "docs/MAC_LOCAL_V054_FRESH_CANDIDATE_ACCEPTANCE_2026-10-15.md",
+      "bytes": 5733,
+      "sha256": "e288fcbb2b4f7abdb8d15f0618c6b2efae78ea5981cf1634c1e619f69e6d7a1e"
+    },
+    {
+      "path": "docs/MAC_LOCAL_V054_FRESH_CANDIDATE_REPORT_2026-10-15.md",
+      "bytes": 11299,
+      "sha256": "4c8b69ede16675b49c3d8d6955b019453d317a9515b3d2cbcd6e90a0f6d9b51a"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 122979,
+      "sha256": "72b2e75c9db7d82f07383a1d45e5aad877c37ff78c1127e4010c5e1546c7536f"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/README.md",
+      "bytes": 1525,
+      "sha256": "951f53f6878554077d662053211e2ece471bebb00bed79168fc89be6fde47bde"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/SHA256SUMS",
+      "bytes": 2696,
+      "sha256": "bcb164b42eabbbef88f01ad5b169e1b956a0d22444fc9f25e3dab0150f35aa9f"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional-archived.mjs",
+      "bytes": 15213,
+      "sha256": "caeffe5ef81e4996cac12d52d218d9b2c20502b6cf9d50dbeacf8f334dda12c8"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/console.log",
+      "bytes": 965,
+      "sha256": "29c6229edbd9054f6111901c1fc055ed6660c772f17518ce8168dd823bc9fc69"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/finances-populated.png",
+      "bytes": 182503,
+      "sha256": "8944100b0dee1c32aa92e64b37947c8d6e167edb8fa461e72e265fc789299373"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/medical-conflict.png",
+      "bytes": 158271,
+      "sha256": "0b495bab3e1ae3b5c708d3b25fcc70a4f1d1db1bcbffa43b0d25da1be87c5c87"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/medical-reconciled.png",
+      "bytes": 130182,
+      "sha256": "25cfd475043e4a518dd1f06e862370ccf7e41f23ab12c4d69af0d3f428c8ce36"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/medical-settings-note.png",
+      "bytes": 467317,
+      "sha256": "1e0756d717ec75f375230ef6184ab606492a44eaf6001d47ed30d7d6b1c58cc8"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/results.json",
+      "bytes": 2486,
+      "sha256": "14875d0a2ed9aea0a77645d17b7b569620109a7117fd581e3e2abcbc24677d2f"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/skill-status-confidence.png",
+      "bytes": 79138,
+      "sha256": "8d14cd887d87edefc2abd1b5ff4fb451ba22eccd4f3c0610b373106c98dd544a"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/build-receipt.json",
+      "bytes": 646,
+      "sha256": "f151388f47bff8b45bfad6dd819ceba74643029a45b01c2b043d63d6be372403"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/cargo-lock.txt",
+      "bytes": 254,
+      "sha256": "768e7aa90eeb6effedc2a58ecb6dd887057c21961d43300b81a2f94a089c6e7c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/evidence-inventory.json",
+      "bytes": 5559,
+      "sha256": "b67945a24c86ee34513e899cab2c811eb465babb7b28760b59721f98d6d43425"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/helper-tests.txt",
+      "bytes": 8306,
+      "sha256": "9ae908448896f5fa35687248d0b4e5a32d6dcafb4a4c4e4ca7020c615dc9aaa5"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/native-build.log",
+      "bytes": 9031,
+      "sha256": "a1724c2010e16ac3783a3ccfcfe56ebf4765d6f3914add26f9fb5c282a7b84d6"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/packaging-receipt.json",
+      "bytes": 10639,
+      "sha256": "bdb397951f79fb410970e093961716e3cc811f6060dba31775a392cfe15b6850"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/preserved-artifacts.json",
+      "bytes": 526,
+      "sha256": "e7757bc8b7a87a402ace8008035435ed785065c22d6d225e752dcb25d0756466"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/replay-e928601.json",
+      "bytes": 60607,
+      "sha256": "7a35b974c4a5e646ac9664b41df2eadbdec7f1a74a9ad1ae6696ed6252e1fb38"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/source-freeze.json",
+      "bytes": 1949,
+      "sha256": "c3887c4a0a6053648982e2c6e4fa3e2d28791c61661a6d66b4437e46d42ed19b"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/README.md",
+      "bytes": 1301,
+      "sha256": "00b21c0fb5a5791f3690bd7636e174110a3e074ea1634b5c59bd1f45518acf6a"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/artifact-review.json",
+      "bytes": 8007,
+      "sha256": "f1b64c4a5ab0067c9fabc559f09c8679ecdb645053181f329b12c01a80b4c8fb"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/browser-medical-conflict.png",
+      "bytes": 158271,
+      "sha256": "0b495bab3e1ae3b5c708d3b25fcc70a4f1d1db1bcbffa43b0d25da1be87c5c87"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/browser-medical-reconciled.png",
+      "bytes": 130182,
+      "sha256": "25cfd475043e4a518dd1f06e862370ccf7e41f23ab12c4d69af0d3f428c8ce36"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/browser-results.json",
+      "bytes": 2486,
+      "sha256": "1df2ceded58b2019fd7180202df2cb73ea80eeb29dc26b5cd9d9deb37bdc192d"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/browser-review.mjs",
+      "bytes": 15213,
+      "sha256": "4062a40b109876b0e32634c131264ecbd05e88304aab376c813da39d9597b6f8"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/browser.txt",
+      "bytes": 965,
+      "sha256": "29c6229edbd9054f6111901c1fc055ed6660c772f17518ce8168dd823bc9fc69"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/gate.json",
+      "bytes": 517,
+      "sha256": "59ac0e9791be2268c9ce50314636f2b16664027b1e7e0facc5a317e9bcbdb2bf"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/helpers.txt",
+      "bytes": 8320,
+      "sha256": "3360825d9393bdd769770a5c922740376766f29e07ae6b2529e9d0dfed8ea3c3"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/initial-review-metadata-check.json",
+      "bytes": 530,
+      "sha256": "3709e5958726b6454c0c047478416b76a6eafee137f6db60b8d7d2abcbed4b8a"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/lock.txt",
+      "bytes": 254,
+      "sha256": "768e7aa90eeb6effedc2a58ecb6dd887057c21961d43300b81a2f94a089c6e7c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/replay-report.json",
+      "bytes": 60601,
+      "sha256": "3fdc8c2cd24a225de2dfe9504570d99b032b6fb2a2cace04194db1b22de71307"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-review-2026-10-15/replay-report.txt",
+      "bytes": 146,
+      "sha256": "2a6b73aeac5da5244d28838763bf8cd2fc89e4d9e56d2ddc7388e6a9a81fd60e"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+      "bytes": 2562,
+      "sha256": "858971f242d7a13de92427ad8c402f96ab2f39ab0aab4aed5d01ca539486a399"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+      "bytes": 4641,
+      "sha256": "ecceb531d8814f79d86250280392d74a3cf6431cc75f7c40b384eb7ed07da0c2"
+    }
+  ]
+}
