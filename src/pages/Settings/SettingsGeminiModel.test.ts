@@ -80,7 +80,12 @@ describe("Gemini model choice in Settings", () => {
     );
     expect((argon as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText(/Gemini 4 Argon · key saved on this computer/)).toBeTruthy();
-    expect(screen.getByText(/tries Gemini Flash instead and shows which model made each study aid/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        /If Google is busy, or this key has reached its limit for Gemini 4 Argon, Her Flight Deck tries Gemini Flash instead and shows which model made each study aid/,
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText(/asking you to turn on billing or choose Standard/)).toBeTruthy();
 
     await act(async () => {
       fireEvent.click(standard);
