@@ -41,7 +41,7 @@ Before publishing any draft:
 
 2. **Apple Silicon Mac Installed-App Gate (Mandatory for macOS release):**
    - On physical Apple Silicon hardware (M1/M2/M3/M4), install the **exact `.dmg`** downloaded from the draft.
-   - Execute the smoke test sequence: launch from `/Applications`, verify Gatekeeper prompt (record exact dialog text/buttons; never advise "Open Anyway" or `xattr -d`), import a PDF, open in Preview, reveal in Finder, execute automatic and manual splitting, test Gemini assistant, save complete backup to Downloads, and verify restore.
+   - Execute the smoke test sequence: launch from `/Applications`, verify Gatekeeper prompt (record exact dialog text/buttons; never advise `xattr -d` or disabling Gatekeeper. For an owner-released unsigned build, Apple's Privacy & Security "Open Anyway" step is permitted under the owner exception in README, after checksum verification), import a PDF, open in Preview, reveal in Finder, execute automatic and manual splitting, test Gemini assistant, save complete backup to Downloads, and verify restore.
    - Record the release evidence:
      - Exact draft DMG filename and full 64-character SHA-256 hash.
      - GitHub Actions workflow run URL and ID that compiled the draft.
