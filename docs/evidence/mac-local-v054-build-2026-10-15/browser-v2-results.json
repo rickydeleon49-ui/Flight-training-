@@ -1,0 +1,79 @@
+{
+  "scope": "Compiled frontend preview; isolated browser SQLite only, not an installed Mac app test",
+  "runtime": "v22.23.3",
+  "sourceCommit": "fee7869",
+  "results": [
+    {
+      "name": "Profile saves and survives reload without school or instructor",
+      "status": "PASS",
+      "durationMs": 2244
+    },
+    {
+      "name": "Notes create edit pin and reload persistence",
+      "status": "PASS",
+      "durationMs": 1896
+    },
+    {
+      "name": "Notes cancel deletion then delete and undo",
+      "status": "PASS",
+      "durationMs": 1293
+    },
+    {
+      "name": "Question and answer persist after reload",
+      "status": "PASS",
+      "durationMs": 1537
+    },
+    {
+      "name": "Flight Fund contribution persists",
+      "status": "PASS",
+      "durationMs": 1786
+    },
+    {
+      "name": "Zero expense refused then valid expense affects balance",
+      "status": "PASS",
+      "durationMs": 1104
+    },
+    {
+      "name": "Schedule lesson with estimate survives reload",
+      "status": "PASS",
+      "durationMs": 1489
+    },
+    {
+      "name": "Quick debrief saves without flight-time invention",
+      "status": "FAIL",
+      "durationMs": 53,
+      "error": "locator.click: Error: strict mode violation: getByRole('dialog', { name: 'Training reminders', exact: true }).getByRole('button', { name: 'Close', exact: true }) resolved to 2 elements:\n    1) <button type=\"button\" title=\"Close\" class=\"icon-button\">…</button> aka getByRole('button', { name: 'Close', description: 'Close' })\n    2) <button type=\"button\" class=\"button button--secondary\">Close</button> aka getByRole('button', { name: 'Close' }).nth(1)\n\nCall log:\n\u001b[2m  - waiting for getByRole('dialog', { name: 'Training reminders', exact: true }).getByRole('button', { name: 'Close', exact: true })\u001b[22m\n\n    at go (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:15:365)\n    at async file:///Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:32:74\n    at async run (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:18:58)\n    at async file:///Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:32:2",
+      "body": "Opening this section…"
+    },
+    {
+      "name": "M3 skill status and confidence persist independently",
+      "status": "PASS",
+      "durationMs": 1291
+    },
+    {
+      "name": "Custom skill create rename retire restore",
+      "status": "PASS",
+      "durationMs": 2039
+    },
+    {
+      "name": "Minimum desktop width has no horizontal overflow",
+      "status": "PASS",
+      "durationMs": 80
+    },
+    {
+      "name": "Fresh browser context cannot see synthetic saved records",
+      "status": "PASS",
+      "durationMs": 945
+    },
+    {
+      "name": "No browser exceptions HTTP errors or external requests",
+      "status": "PASS",
+      "durationMs": 1
+    }
+  ],
+  "errors": [],
+  "httpErrors": [],
+  "external": [],
+  "passed": 12,
+  "failed": 1
+}

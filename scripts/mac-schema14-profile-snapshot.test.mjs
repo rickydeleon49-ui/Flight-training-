@@ -15,7 +15,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { recognizeBuildOutput, walkerSensitivity, writeDisposableHelper } from './mac-schema14-verification-proof.mjs';
+import { compareDependencyLock, recognizeBuildOutput, walkerSensitivity, writeDisposableHelper } from './mac-schema14-verification-proof.mjs';
 
 const REPO = process.cwd();
 const HELPER = path.join(REPO, 'scripts', 'mac-schema14-profile-snapshot.mjs');
@@ -128,12 +128,64 @@ describe('proof source walker', () => {
     const dir = path.join(scratch, 'walker');
     fs.mkdirSync(dir);
     const cases = walkerSensitivity(dir);
-    assert.equal(cases.length, 11);
+    assert.equal(cases.length, 15);
     for (const c of cases) assert.ok(c.pass, `${c.name}: changed ${JSON.stringify(c.changed)}, accepted ${JSON.stringify(c.accepted)}`);
     const byName = Object.fromEntries(cases.map(c => [c.name, c]));
     assert.deepEqual(byName['accepted: genuine Cargo target and Tauri gen schemas'].changed, []);
     assert.ok(byName['refused: source inside Tauri gen'].changed.includes('src-tauri/gen/schemas/payload.mjs'));
     assert.deepEqual(byName['refused: changed protected migration beside accepted build output'].changed, ['src-tauri/migrations/0001_initial_schema.sql']);
+    assert.deepEqual(byName['accepted: Apple Silicon target output beside host output'].changed, []);
+    assert.ok(byName['refused: unknown target name in Cargo target'].changed.includes('src-tauri/target/x86_64-apple-darwin/release/libz.rlib'));
+    assert.ok(byName['refused: source beside the Apple Silicon target profile'].changed.includes('src-tauri/target/aarch64-apple-darwin/build.rs'));
+  });
+
+  it('recognizes Cargo\'s Apple Silicon target folder only in its exact tagged shape', () => {
+    const ignore = fs.readFileSync(path.join(REPO, '.gitignore'), 'utf8');
+    const TAG = 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n# For information about cache directory tags see https://bford.info/cachedir/\n';
+    const TRIPLE = 'src-tauri/target/aarch64-apple-darwin';
+    const put = (root, rel, body) => { fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true }); fs.writeFileSync(path.join(root, rel), body, { flag: 'wx' }); };
+    const tree = (name, edit) => {
+      const root = path.join(scratch, `target-shape-${name}`);
+      fs.mkdirSync(root);
+      put(root, '.gitignore', ignore);
+      put(root, 'src-tauri/target/CACHEDIR.TAG', TAG);
+      put(root, 'src-tauri/target/release/deps/libhost.rlib', 'rlib');
+      put(root, `${TRIPLE}/CACHEDIR.TAG`, TAG);
+      put(root, `${TRIPLE}/release/deps/libx.rlib`, 'rlib');
+      put(root, `${TRIPLE}/release/.cargo-lock`, '');
+      // Cargo hard-links its own outputs inside a profile; the profile is not descended.
+      fs.linkSync(path.join(root, `${TRIPLE}/release/deps/libx.rlib`), path.join(root, `${TRIPLE}/release/libx.rlib`));
+      const tracked = edit?.(root) ?? new Set();
+      return recognizeBuildOutput(root, 'src-tauri/target', tracked);
+    };
+
+    const genuine = tree('genuine');
+    assert.equal(genuine.recognized, true, genuine.reason);
+    assert.deepEqual(genuine.targets, [{ triple: 'aarch64-apple-darwin', entries: ['CACHEDIR.TAG', 'release'] }]);
+    const both = tree('both-profiles', root => { put(root, `${TRIPLE}/debug/deps/liby.rlib`, 'rlib'); });
+    assert.equal(both.recognized, true, both.reason);
+
+    const refused = [
+      ['an unknown target name', root => { put(root, 'src-tauri/target/x86_64-apple-darwin/CACHEDIR.TAG', TAG); }, /unexpected top-level entries: x86_64-apple-darwin/],
+      ['a lookalike target name', root => { put(root, 'src-tauri/target/aarch64-apple-darwin-x/CACHEDIR.TAG', TAG); }, /unexpected top-level entries: aarch64-apple-darwin-x/],
+      ['an unexpected file at the target root', root => { put(root, 'src-tauri/target/notes.md', 'x'); }, /unexpected top-level entries: notes\.md/],
+      ['an unexpected file beside the target profiles', root => { put(root, `${TRIPLE}/build.rs`, 'fn main() {}'); }, /aarch64-apple-darwin: unexpected entries: build\.rs/],
+      ['an unknown directory beside the target profiles', root => { fs.mkdirSync(path.join(root, `${TRIPLE}/src`)); }, /aarch64-apple-darwin: unexpected entries: src/],
+      ['a target folder that is a file', root => { fs.rmSync(path.join(root, TRIPLE), { recursive: true }); put(root, TRIPLE, 'x'); }, /aarch64-apple-darwin is not a real directory/],
+      ['a symlinked target folder', root => { const real = path.join(scratch, `elsewhere-${++counter}`); fs.renameSync(path.join(root, TRIPLE), real); fs.symlinkSync(real, path.join(root, TRIPLE)); }, /aarch64-apple-darwin is not a real directory/],
+      ['a symlinked target profile', root => { const real = path.join(scratch, `elsewhere-${++counter}`); fs.renameSync(path.join(root, `${TRIPLE}/release`), real); fs.symlinkSync(real, path.join(root, `${TRIPLE}/release`)); }, /aarch64-apple-darwin\/release is not a real directory/],
+      ['a missing target cache tag', root => { fs.rmSync(path.join(root, `${TRIPLE}/CACHEDIR.TAG`)); }, /aarch64-apple-darwin: no single-linked Cargo CACHEDIR\.TAG/],
+      ['an invalid target cache tag', root => { fs.writeFileSync(path.join(root, `${TRIPLE}/CACHEDIR.TAG`), 'Signature: 0000\n'); }, /aarch64-apple-darwin: no single-linked Cargo CACHEDIR\.TAG/],
+      ['a symlinked target cache tag', root => { fs.rmSync(path.join(root, `${TRIPLE}/CACHEDIR.TAG`)); fs.symlinkSync(path.join(root, 'src-tauri/target/CACHEDIR.TAG'), path.join(root, `${TRIPLE}/CACHEDIR.TAG`)); }, /aarch64-apple-darwin: no single-linked Cargo CACHEDIR\.TAG/],
+      ['a hard-linked target cache tag', root => { fs.linkSync(path.join(root, `${TRIPLE}/CACHEDIR.TAG`), path.join(scratch, `tag-link-${++counter}`)); }, /aarch64-apple-darwin: no single-linked Cargo CACHEDIR\.TAG/],
+      ['a tracked path inside the target folder', () => new Set([`${TRIPLE}/release/deps/libx.rlib`]), /a tracked path lies inside it/],
+      ['a missing top-level cache tag', root => { fs.rmSync(path.join(root, 'src-tauri/target/CACHEDIR.TAG')); }, /^no single-linked Cargo CACHEDIR\.TAG$/],
+    ];
+    for (const [name, edit, reason] of refused) {
+      const found = tree(name.replace(/[^a-z]+/g, '-'), edit);
+      assert.equal(found.recognized, false, `${name} was accepted`);
+      assert.match(found.reason, reason, `${name}: ${found.reason}`);
+    }
   });
 
   it('recognizes only the two exact build-output paths, and this checkout\'s real ones when present', () => {
@@ -145,6 +197,48 @@ describe('proof source walker', () => {
       assert.equal(found.recognized, true, `${rel}: ${found.reason}`);
       assert.equal(recognizeBuildOutput(REPO, rel, new Set([`${rel}/tracked.txt`])).recognized, false, rel);
     }
+  });
+});
+
+describe('post-merge replay dependency lock (QA-02)', () => {
+  // Built from this checkout's own lock, so CI's shallow clone needs no history.
+  const baseline = fs.readFileSync(path.join(REPO, 'package-lock.json'));
+  const lock = () => JSON.parse(baseline.toString('utf8'));
+  const text = value => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+  const bumped = version => { const l = lock(); l.version = version; l.packages[''].version = version; return l; };
+  const firstDependency = l => Object.keys(l.packages).find(k => k.startsWith('node_modules/') && l.packages[k].integrity && l.packages[k].resolved);
+
+  it('accepts an identical lock and a version-only bump of both root fields', () => {
+    assert.equal(baseline.toString('utf8'), text(lock()).toString('utf8'), 'the checked-in lock is in npm canonical form');
+    assert.deepEqual(compareDependencyLock(baseline, baseline), { ok: true, baselineVersion: lock().version, candidateVersion: lock().version, versionOnly: false });
+    const r = compareDependencyLock(baseline, text(bumped('9.9.9')));
+    assert.deepEqual(r, { ok: true, baselineVersion: lock().version, candidateVersion: '9.9.9', versionOnly: true });
+  });
+
+  it('refuses any other difference, including dependency, integrity, resolution and inconsistent root versions', () => {
+    const cases = [
+      ['a direct dependency added', l => { l.packages[''].dependencies = { ...l.packages[''].dependencies, 'left-pad': '^1.3.0' }; }, /more than the application version/],
+      ['a direct dependency range changed', l => { const [name] = Object.keys(l.packages[''].dependencies); l.packages[''].dependencies[name] = '*'; }, /more than the application version/],
+      ['a transitive package version changed', l => { l.packages[firstDependency(l)].version = '0.0.0-tampered'; }, /more than the application version/],
+      ['a package integrity changed', l => { l.packages[firstDependency(l)].integrity = 'sha512-tampered'; }, /more than the application version/],
+      ['a package resolution changed', l => { l.packages[firstDependency(l)].resolved = 'https://example.invalid/pkg.tgz'; }, /more than the application version/],
+      ['a package removed', l => { delete l.packages[firstDependency(l)]; }, /more than the application version/],
+      ['the lock name changed', l => { l.name = 'someone-else'; l.packages[''].name = 'someone-else'; }, /more than the application version/],
+      ['only the top-level version bumped', l => { l.packages[''].version = lock().version; }, /candidate lock root versions disagree/],
+      ['only packages[""] version bumped', l => { l.version = lock().version; }, /candidate lock root versions disagree/],
+      ['root version fields removed', l => { delete l.version; delete l.packages[''].version; }, /candidate lock lacks the root version fields/],
+    ];
+    for (const [name, edit, reason] of cases) {
+      const l = bumped('9.9.9');
+      edit(l);
+      const r = compareDependencyLock(baseline, text(l));
+      assert.equal(r.ok, false, `${name} was accepted`);
+      assert.match(r.reason, reason, `${name}: ${r.reason}`);
+    }
+    const reformatted = Buffer.from(JSON.stringify(bumped('9.9.9'), null, 4) + '\n');
+    assert.match(compareDependencyLock(baseline, reformatted).reason, /more than the application version/);
+    assert.match(compareDependencyLock(baseline, Buffer.from('{ not json')).reason, /candidate package-lock.json is not JSON/);
+    assert.match(compareDependencyLock(Buffer.from(JSON.stringify(lock())), baseline).reason, /baseline lock is not in npm's canonical form/);
   });
 });
 

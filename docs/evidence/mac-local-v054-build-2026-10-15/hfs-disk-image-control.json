@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "hdiutil",
+    "create",
+    "-srcfolder",
+    "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-hfs-image-control-xzz18teq/empty",
+    "-size",
+    "64m",
+    "-fs",
+    "HFS+",
+    "-fsargs",
+    "-c c=64,a=16,e=16",
+    "-volname",
+    "HFD QA HFS Control",
+    "-format",
+    "UDRW",
+    "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-hfs-image-control-xzz18teq/empty-hfs.dmg"
+  ],
+  "durationSeconds": 3.0344529151916504,
+  "exit": 0,
+  "timedOut": false,
+  "stdout": "created: /var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-hfs-image-control-xzz18teq/empty-hfs.dmg\n",
+  "stderr": "hdiutil: WARNING: 'hdiutil create -size -volname -format ...' is deprecated. Please use 'diskutil image create from/blank -size --volumeName --format ...' instead.\n",
+  "scope": "Empty disposable HFS+ control with the same filesystem flags as Tauri; no app/profile",
+  "root": "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-hfs-image-control-xzz18teq"
+}

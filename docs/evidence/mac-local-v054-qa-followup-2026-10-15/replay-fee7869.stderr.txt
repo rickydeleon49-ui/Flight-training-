@@ -1,0 +1,31 @@
+file:///private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-lockcheck-lnygwi02/[eval1]:1
+import fs from 'node:fs';import { compareDependencyLock } from "file:///var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-lockcheck-lnygwi02/proof.mjs";const read = name => fs.readFileSync("/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-lockcheck-lnygwi02" + '/' + name);process.stdout.write(JSON.stringify(compareDependencyLock(read('baseline-lock.json'), read('candidate-lock.json'))));
+                                  ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: The requested module 'file:///var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-lockcheck-lnygwi02/proof.mjs' does not provide an export named 'compareDependencyLock'
+    at ModuleJob._instantiate (node:internal/modules/esm/module_job:226:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:335:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:282:26)
+    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:278:20)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.3
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/qa/runbook-from-commit.py", line 42, in <module>
+    lock_check = json.loads(subprocess.check_output(['node', '--input-type=module', '-e', (
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "import fs from 'node:fs';"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        "process.stdout.write(JSON.stringify(compareDependencyLock(read('baseline-lock.json'), read('candidate-lock.json'))));"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )], cwd=check, text=True))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.8/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 473, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.8/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['node', '--input-type=module', '-e', 'import fs from \'node:fs\';import { compareDependencyLock } from "file:///var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-lockcheck-lnygwi02/proof.mjs";const read = name => fs.readFileSync("/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-lockcheck-lnygwi02" + \'/\' + name);process.stdout.write(JSON.stringify(compareDependencyLock(read(\'baseline-lock.json\'), read(\'candidate-lock.json\'))));']' returned non-zero exit status 1.
