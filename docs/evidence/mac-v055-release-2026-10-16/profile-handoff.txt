@@ -1,0 +1,5 @@
+original root: inode=21671262 uid=501 gid=20 mode=drwxr-xr-x
+returned root: inode=21671262 uid=501 gid=20 mode=drwxr-xr-x
+swapped at: 2026-10-16T10:42:07-0700
+returned at: 2026-10-16T10:45:33-0700
+ls -laR identical apart from the parent folder line. Gemini key never read.

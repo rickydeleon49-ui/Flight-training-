@@ -1,0 +1,1 @@
+241519eafccabcb702c48e9786fcaa9916170954abe15afa746152079b8bb7cd  src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck

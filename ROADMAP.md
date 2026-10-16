@@ -1,3 +1,13 @@
+## v0.5.5 published with the Gemini 4 Argon choice; Codex review restored before merges — 16 October 2026
+
+**PUBLISHED; RETROSPECTIVE CODEX REVIEW REQUESTED.** [v0.5.5](https://github.com/rickydeleon49-ui/Flight-training-/releases/tag/v0.5.5) is the Latest release: the exact tested `7e49558` DMG `620ed755…`, ad-hoc only, with `spctl` rejecting it. [v0.5.4](https://github.com/rickydeleon49-ui/Flight-training-/releases/tag/v0.5.4) (`1048e463…`) was published earlier the same day.
+
+- **GEM-01 is released.** The installed 0.5.5 upgraded from 0.5.4, and the Settings Standard/Argon choice works with a placeholder key and no provider call. The send dialog names Argon and was cancelled. Restore plus foreground recovery passes, and Cmd-Q quits. Data matches apart from the accepted daily-plan rollover.
+- **Process:** #176 and #177 were merged and v0.5.4/v0.5.5 published by Claude on the owner's instruction, **without independent Codex review**. The owner has restored the rule that **Codex reviews before any merge**; those PRs and this record are submitted for review.
+- **Next:** the post-release queue resumes at P54-01, unchanged in order. All work is left as PRs for Codex.
+
+[Release record](docs/MAC_V055_RELEASE_2026-10-16.md). Historical entries below keep their original status.
+
 ## Owner-requested Gemini model choice (GEM-01): implemented, pending review — 16 October 2026
 
 **IMPLEMENTED, PENDING INDEPENDENT REVIEW.** The owner asked for a better Gemini model on a paid key ("option 1"). This is a new owner-added item, outside the eight-item post-release queue (P54-01…08, unchanged and still waiting). It targets the next version, 0.5.5 or later. The released v0.5.4 bytes are unchanged.

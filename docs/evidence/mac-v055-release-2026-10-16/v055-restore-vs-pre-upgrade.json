@@ -1,0 +1,112 @@
+{
+  "label": "v055-restore-vs-pre-upgrade",
+  "at": "2026-10-16T10:45:20.096644-07:00",
+  "fixture": "/Users/rickymac/.codex/task-recovery/v055-release-20261016/synthetic-before-0.5.5",
+  "root": "/Users/rickymac/Library/Application Support/com.herflightdeck.app",
+  "fixtureTables": 42,
+  "restoredTables": 42,
+  "newTables": [],
+  "missingTables": [],
+  "retainedRowCounts": {
+    "ai_study_sets": 1,
+    "app_metadata": 2,
+    "card_items": 3,
+    "card_review_events": 1,
+    "card_review_generations": 0,
+    "card_review_operations": 1,
+    "card_review_state": 1,
+    "card_versions": 1,
+    "debrief_operations": 0,
+    "event_materials": 0,
+    "event_prep_items": 0,
+    "fund_goals": 0,
+    "goal_checklist_items": 36,
+    "goals": 9,
+    "journal_entries": 0,
+    "journal_materials": 0,
+    "material_split_lineage": 0,
+    "material_tags": 15,
+    "milestones": 9,
+    "next_actions": 0,
+    "notes": 0,
+    "pilot_toolkit": 0,
+    "practice_attempts": 1,
+    "practice_responses": 2,
+    "practice_session_operations": 4,
+    "practice_test_items": 2,
+    "practice_test_versions": 1,
+    "practice_tests": 1,
+    "questions": 0,
+    "schedule_events": 0,
+    "settings": 1,
+    "skill_catalog_entries": 15,
+    "skill_catalog_revisions": 15,
+    "skill_evidence_operations": 0,
+    "skill_observation_revisions": 0,
+    "skill_observations": 0,
+    "skill_self_assessments": 0,
+    "split_operation_log": 0,
+    "study_materials": 11,
+    "tags": 9,
+    "transactions": 0
+  },
+  "retainedRowsTotal": 141,
+  "tableDifferences": {
+    "app_metadata": {
+      "missingRows": [
+        "[\"daily_plan_session\", \"{\\\"version\\\":1,\\\"date\\\":\\\"2026-10-15\\\",\\\"timeBudget\\\":20,\\\"suggestedIds\\\":[\\\"material:e26cc9b3-8f95-41dc-a801-1224d06630f5\\\",\\\"material:9b0683fa-b77c-407c-b930-fffe8e992c87\\\",\\\"material:ca90be52-ea48-41a2-aaa4-0e4fea59a956\\\"],\\\"decisions\\\":{},\\\"updatedAt\\\":\\\"2026-10-16T06:03:29.553Z\\\",\\\"targetCapacity\\\":3}\"]"
+      ],
+      "extraRows": [
+        "[\"daily_plan_session\", \"{\\\"version\\\":1,\\\"date\\\":\\\"2026-10-16\\\",\\\"timeBudget\\\":20,\\\"suggestedIds\\\":[\\\"material:e26cc9b3-8f95-41dc-a801-1224d06630f5\\\",\\\"material:9b0683fa-b77c-407c-b930-fffe8e992c87\\\",\\\"material:ca90be52-ea48-41a2-aaa4-0e4fea59a956\\\"],\\\"decisions\\\":{},\\\"updatedAt\\\":\\\"2026-10-16T17:44:21.906Z\\\",\\\"targetCapacity\\\":3}\"]"
+      ]
+    }
+  },
+  "fixtureSchemaObjects": 146,
+  "restoredSchemaObjects": 146,
+  "schemaObjectsChangedOrMissing": [],
+  "newSchemaObjects": [],
+  "ledgerColumns": [
+    "version",
+    "description",
+    "installed_on",
+    "success",
+    "checksum",
+    "execution_time"
+  ],
+  "originalLedgerVersions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "originalLedgerRowsIdentical": true,
+  "originalLedgerMismatches": [],
+  "newLedgerRows": [],
+  "skillCatalogSeed": 15,
+  "skillCatalogRevisionsSeed": 15,
+  "fixtureDocuments": {
+    "fdaac269-4e46-46c2-a0b4-a5360755bbc6-synthetic-long-manual.pdf": "0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1",
+    "ca90be52-ea48-41a2-aaa4-0e4fea59a956-synthetic-illustrated-charts.pdf": "b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d",
+    "79347220-ca50-4c85-8ee4-49d44dff097f-synthetic-small-checklist.pdf": "f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134"
+  },
+  "documentsIdentical": true,
+  "restoredDocumentsExtra": [],
+  "integrityCheck": "ok",
+  "verdict": {
+    "retainedRowsIdentical": false,
+    "schemaRetained": true,
+    "originalLedgerIdentical": true,
+    "documentsIdentical": true,
+    "newMigrationsValid": true
+  }
+}
