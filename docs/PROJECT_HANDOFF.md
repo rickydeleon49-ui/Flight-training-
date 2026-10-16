@@ -1,3 +1,11 @@
+## OPENFOLDER-01 empty-folder fallback corrected; submitted for review — 16 October 2026
+
+The empty/unreadable Mac data-folder fallback in `open_data_folder` is corrected in `src-tauri/src/backup.rs`. For an empty `.app` root, Finder reveals the folder itself in its parent rather than passing it to `open_path` (which invokes Launch Services application launch). Read/enumeration failures return an informative I/O error instead of falling back to `open_path`. Working database and child reveal behavior are preserved, permissions remain narrow, and an opener test adapter tests routing without opening Finder. [Report](OPEN_DATA_FOLDER_FOLLOWUP_COMPLETION_2026-10-16.md).
+
+Checks: full frontend 3,252 passed / 6 skipped, Rust 476 passed / 6 ignored, cargo clippy `--locked -- -D warnings`, cargo fmt, lock sync, typecheck, build, and 26 schema-helper tests pass. Submitted for Codex review; no self-merge.
+
+The separate model-budget/timeout evaluation and M4 R37–R39 retain their existing assignments. The eight-item queue order is unchanged. Historical entries follow unchanged.
+
 ## GEM-01 wording follow-up accepted and merged — 16 October 2026
 
 PR #184 merged at4a8a92f after independent source review and successful exact-head CI. Settings now distinguishes Argon's rate/capacity fallback from403 access refusal, matching Rust and README. Independent Settings tests3/3, typecheck/build/hygiene pass; CI covers3,252 frontend,474 Linux Rust and26 helper tests. [Acceptance](GEM01_WORDING_ACCEPTANCE_2026-10-16.md). No new release or live provider verification is claimed.
