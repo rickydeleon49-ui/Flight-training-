@@ -1,6 +1,6 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-15T20:58:56.806979+00:00",
+  "generatedAt": "2026-10-16T01:11:00.738Z",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
   "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
@@ -8,13 +8,13 @@
   "files": [
     {
       "path": "STATUS.md",
-      "bytes": 203719,
-      "sha256": "c1055d7f7e7febaab38245073985a2c830a4ff88aea477e5e3b5f13eadafd30c"
+      "bytes": 206828,
+      "sha256": "9773a1b9af3fdefb929baef61156c06b47c726a4af96d76b425904d4a2010d39"
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 75290,
-      "sha256": "b35100285d113fdfaedb438c02183d7d00bf78db71a8cdcdc6a7d5fc0c9ffb52"
+      "bytes": 78399,
+      "sha256": "6cf1b0a2629c94419fdbcb548245cfe5515c9e64a81dc61f709d654707c8ae20"
     },
     {
       "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
@@ -43,8 +43,8 @@
     },
     {
       "path": "docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md",
-      "bytes": 13205,
-      "sha256": "1f0a762478e16ec3c483d83f24930ce1414c448fa96658612a4660abbc9c2b4f"
+      "bytes": 15705,
+      "sha256": "a74b82a86311d60101f28abebca2393694aa0c15eb0a3d4a07f64b1760cd2cb8"
     },
     {
       "path": "scripts/mac-schema13-profile-snapshot.mjs",
@@ -58,13 +58,13 @@
     },
     {
       "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
-      "bytes": 20343,
-      "sha256": "73a6dbf96addecb758f26ab899aa4be26d4d7742fd014639ae1de7398ea6b0f8"
+      "bytes": 29122,
+      "sha256": "6691e718ad3098696311b3d389364af15bdd55f2ab88d77b314d5a01a96a2e83"
     },
     {
       "path": "scripts/mac-schema14-verification-proof.mjs",
-      "bytes": 61947,
-      "sha256": "0bf8b3edc97f620a67152a77d29c216a5a45d6cede3bc17aef53b64b8d78e62e"
+      "bytes": 67838,
+      "sha256": "b7517d5757c77191971fc4dbe76cdf0c2219031eb4681361b3fd08d6d94a1ff4"
     },
     {
       "path": "src/logic/currentSchemaVerification.test.ts",
@@ -78,8 +78,8 @@
     },
     {
       "path": "docs/PROJECT_HANDOFF.md",
-      "bytes": 112889,
-      "sha256": "da8513a4d2fc1dadcdad04e976cc2de74cb7f2926746aae05e422af3c6200962"
+      "bytes": 115978,
+      "sha256": "d0207edb94d199dc5a57bbdaccb91cdad204d76c6b9974d020f7587f4e41161c"
     },
     {
       "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md",
@@ -107,7 +107,7 @@
       "sha256": "f329ca092b1ed4eab95f0de2584cbc7ca458457c9a7f4e262f06d7fdd1c886b1"
     }
   ],
-  "historicalReceipts": "Original accepted executions remain unchanged; current follow-up executions are in docs/evidence/mac-schema14-followup-2026-10-15/verification.json.",
+  "historicalReceipts": "Original accepted executions remain unchanged; F1–F3 executions are in docs/evidence/mac-schema14-followup-2026-10-15/verification.json; QA-01/QA-02 executions are in docs/evidence/mac-local-v054-qa-followup-2026-10-15/.",
   "exclusions": {
     "self": "listed in SHA256SUMS",
     "SHA256SUMS": "never hashes itself"

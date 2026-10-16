@@ -1,3 +1,12 @@
+## Local v0.5.4 QA-01/QA-02 tooling corrections — pending independent review — 15 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW.** Claude, uncommitted on `codex/local-v054-build-check` (HEAD `93a88df`), per the [QA follow-up prompt](docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md). Scripts and docs only; no application source, dependency, migration, version, signing or native-artifact change.
+
+- **LOCAL-V054-QA-01:** the build-output recognizer now accepts the one supported cross-target folder, `src-tauri/target/aarch64-apple-darwin`, only in Cargo's exact shape: its own single-linked cache tag and real `debug`/`release` profiles. Unknown or lookalike target names, stray entries, symlinked folders or profiles, missing, invalid, symlinked or hard-linked tags, and tracked paths inside build output still refuse. The original 11 walker scenarios are kept, with 4 added.
+- **LOCAL-V054-QA-02:** the post-merge replay now permits only the two synchronized application-version fields in `package-lock.json`, decided by the tested `compareDependencyLock` before any worktree is created. An identical lock passes as before. The replay still installs the baseline lock on the immutable `16f9cf3` baseline and certifies only the helper component.
+
+Measured results, the check-only replay of the new bytes and preserved original failures: [reviewer handoff](docs/MAC_LOCAL_V054_QA_FOLLOWUP_HANDOFF_2026-10-15.md). The automatic DMG stall stays a separate, unexplained observation. Installed tests, desktop launch, hfdtest, signing and publication remain deferred. Historical entries below keep their original status.
+
 ## Local v0.5.4 build tested; tooling follow-ups open — 15 October 2026
 
 A provisional local ARM64 v0.5.4 test artifact was built from clean version-only commit `fee7869` (accepted functional parent `f2a7090`). Staged ad-hoc app and private DMG verified read-only, hashes matched, image detached. Automated results: frontend 3,202 passed / 6 skipped; native Mac Rust 465 / 6 ignored; 12 browser routes and 13 functional scenarios passed. No installed app/profile/hfdtest use; desktop launch remains deferred by the owner's current choice.

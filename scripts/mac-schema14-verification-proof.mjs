@@ -98,6 +98,13 @@ const BUILD_OUTPUT = Object.freeze({
   'src-tauri/gen': { kind: 'tauri-gen-schemas', ignoreRule: 'src-tauri/gen/' },
 });
 const CARGO_TARGET_ENTRIES = new Set(['CACHEDIR.TAG', '.rustc_info.json', '.future-incompat-report.json', 'debug', 'release', 'tmp']);
+/**
+ * Cross-target folders Cargo writes under target/ for `--target <triple>`. Only the project's one
+ * supported Mac lane (Apple Silicon) is recognized, and only as Cargo writes it: its own single-linked
+ * cache tag plus real profile directories. Any other triple, or anything else inside, is refused.
+ */
+const CARGO_TARGET_TRIPLES = new Set(['aarch64-apple-darwin']);
+const CARGO_TRIPLE_PROFILES = new Set(['debug', 'release']);
 const CARGO_CACHEDIR_TAG = 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n';
 const TAURI_GEN_SCHEMA = /^(acl-manifests|capabilities|desktop-schema|(macOS|linux|windows|iOS|android)-schema)\.json$/;
 const TAURI_GEN_MAX_BYTES = 16 * 1024 * 1024;
@@ -206,9 +213,57 @@ function blobId(bytes) {
 }
 
 /**
+ * QA-02: whether a later commit's package-lock.json is the pinned baseline lock with only the
+ * application's own version changed. The post-merge replay installs dependencies from the baseline
+ * lock in a detached baseline worktree, so the candidate must carry exactly the same dependency
+ * graph. The only permitted difference is the two synchronized root fields `version` and
+ * `packages[""].version`, which scripts/bump-version.mjs changes together; the candidate must be
+ * byte-identical to the baseline as npm would write it with that version substituted. Any package,
+ * range, integrity, resolution, key-order or formatting change, or root versions that disagree, is
+ * refused. This compares one component's inputs; it never certifies the candidate application.
+ */
+export function compareDependencyLock(baselineBytes, candidateBytes) {
+  const refuse = reason => ({ ok: false, reason });
+  const parse = (bytes, label) => {
+    try { return { value: JSON.parse(Buffer.from(bytes).toString('utf8')) }; } catch { return { error: `${label} package-lock.json is not JSON` }; }
+  };
+  const base = parse(baselineBytes, 'baseline');
+  if (base.error) return refuse(base.error);
+  const cand = parse(candidateBytes, 'candidate');
+  if (cand.error) return refuse(cand.error);
+  const rootVersion = (lock, label) => {
+    const top = lock?.version;
+    const pkg = lock?.packages?.['']?.version;
+    if (typeof top !== 'string' || typeof pkg !== 'string') return { error: `${label} lock lacks the root version fields` };
+    if (top !== pkg) return { error: `${label} lock root versions disagree (${top} vs packages[""] ${pkg})` };
+    return { version: top };
+  };
+  const bv = rootVersion(base.value, 'baseline');
+  if (bv.error) return refuse(bv.error);
+  const cv = rootVersion(cand.value, 'candidate');
+  if (cv.error) return refuse(cv.error);
+  const npmText = lock => `${JSON.stringify(lock, null, 2)}\n`;
+  if (npmText(base.value) !== Buffer.from(baselineBytes).toString('utf8')) return refuse('baseline lock is not in npm\'s canonical form');
+  const expected = structuredClone(base.value);
+  expected.version = cv.version;
+  expected.packages[''].version = cv.version;
+  if (npmText(expected) !== Buffer.from(candidateBytes).toString('utf8')) {
+    return refuse('candidate lock differs from the baseline in more than the application version');
+  }
+  return { ok: true, baselineVersion: bv.version, candidateVersion: cv.version, versionOnly: bv.version !== cv.version };
+}
+
+/** Cargo's cache-directory tag: a regular, single-linked, small file starting with Cargo's signature. */
+function isCargoTag(tag) {
+  const st = fs.existsSync(tag) ? fs.lstatSync(tag) : null;
+  return Boolean(st?.isFile() && st.nlink === 1 && st.size <= 4096 && fs.readFileSync(tag, 'utf8').startsWith(CARGO_CACHEDIR_TAG));
+}
+
+/**
  * Recognizes one BUILD_OUTPUT directory, or says why it is not recognized. Cargo's target is not
  * descended (it holds gigabytes and Cargo's own hard links); it must be a real directory carrying
- * Cargo's cache-directory tag with only Cargo's top-level entries. Tauri's gen must hold only
+ * Cargo's cache-directory tag with only Cargo's top-level entries, plus at most the Apple Silicon
+ * cross-target folder in the same tagged shape. Tauri's gen must hold only
  * schemas/ with generated schema JSON: regular, single-linked, bounded, parseable files.
  */
 export function recognizeBuildOutput(root, rel, trackedPaths) {
@@ -224,16 +279,25 @@ export function recognizeBuildOutput(root, rel, trackedPaths) {
   if (!st.isDirectory()) return no('not a real directory');
   const names = fs.readdirSync(abs).sort();
   if (spec.kind === 'cargo-target') {
-    const unknown = names.filter(n => !CARGO_TARGET_ENTRIES.has(n));
+    const unknown = names.filter(n => !CARGO_TARGET_ENTRIES.has(n) && !CARGO_TARGET_TRIPLES.has(n));
     if (unknown.length) return no(`unexpected top-level entries: ${unknown.join(', ')}`);
-    const tag = path.join(abs, 'CACHEDIR.TAG');
-    const tagSt = fs.existsSync(tag) ? fs.lstatSync(tag) : null;
-    if (!tagSt?.isFile() || tagSt.nlink !== 1 || tagSt.size > 4096 || !fs.readFileSync(tag, 'utf8').startsWith(CARGO_CACHEDIR_TAG)) return no('no single-linked Cargo CACHEDIR.TAG');
+    if (!isCargoTag(path.join(abs, 'CACHEDIR.TAG'))) return no('no single-linked Cargo CACHEDIR.TAG');
+    const targets = [];
     for (const n of names.filter(x => x !== 'CACHEDIR.TAG')) {
       const s = fs.lstatSync(path.join(abs, n));
       if (n.startsWith('.') ? !s.isFile() : !s.isDirectory()) return no(`${n} is not a ${n.startsWith('.') ? 'regular file' : 'real directory'}`);
+      if (!CARGO_TARGET_TRIPLES.has(n)) continue;
+      // A cross-target folder: Cargo's own tag and profile directories, nothing else.
+      const inner = fs.readdirSync(path.join(abs, n)).sort();
+      const stray = inner.filter(x => x !== 'CACHEDIR.TAG' && !CARGO_TRIPLE_PROFILES.has(x));
+      if (stray.length) return no(`${n}: unexpected entries: ${stray.join(', ')}`);
+      if (!isCargoTag(path.join(abs, n, 'CACHEDIR.TAG'))) return no(`${n}: no single-linked Cargo CACHEDIR.TAG`);
+      for (const profile of inner.filter(x => x !== 'CACHEDIR.TAG')) {
+        if (!fs.lstatSync(path.join(abs, n, profile)).isDirectory()) return no(`${n}/${profile} is not a real directory`);
+      }
+      targets.push({ triple: n, entries: inner });
     }
-    return { recognized: true, kind: spec.kind, path: rel, ignoreRule: spec.ignoreRule, topLevel: names, descended: false };
+    return { recognized: true, kind: spec.kind, path: rel, ignoreRule: spec.ignoreRule, topLevel: names, targets, descended: false };
   }
   if (names.length !== 1 || names[0] !== 'schemas' || !fs.lstatSync(path.join(abs, 'schemas')).isDirectory()) return no('must contain only a schemas directory');
   const files = [];
@@ -309,6 +373,14 @@ export function walkerSensitivity(dir) {
   const HELPER = 'scripts/mac-schema14-profile-snapshot.mjs';
   const GEN = ['src-tauri/gen/schemas/capabilities.json', 'src-tauri/gen/schemas/macOS-schema.json'];
   const put = (root, rel, body) => { fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true }); fs.writeFileSync(path.join(root, rel), body, { flag: 'wx' }); };
+  const HOST_TARGET = ['src-tauri/target/.rustc_info.json', 'src-tauri/target/CACHEDIR.TAG', 'src-tauri/target/debug/deps/libx.rlib', 'src-tauri/target/debug/libx.rlib'];
+  const TRIPLE_TAG = `${CARGO_CACHEDIR_TAG}# For information about cache directory tags see https://bford.info/cachedir/\n`;
+  const TRIPLE_FILES = ['src-tauri/target/aarch64-apple-darwin/CACHEDIR.TAG', 'src-tauri/target/aarch64-apple-darwin/release/deps/liba.rlib', 'src-tauri/target/aarch64-apple-darwin/release/liba.rlib'];
+  const withTriple = root => {
+    put(root, TRIPLE_FILES[0], TRIPLE_TAG);
+    put(root, TRIPLE_FILES[1], 'rlib');
+    fs.linkSync(path.join(root, TRIPLE_FILES[1]), path.join(root, TRIPLE_FILES[2]));
+  };
   const build = (name, edit) => {
     const root = path.join(dir, name);
     fs.mkdirSync(root);
@@ -335,6 +407,11 @@ export function walkerSensitivity(dir) {
     ['refused: tracked path inside build output', (root, entries) => [...entries, { mode: '100644', sha: blobId(fs.readFileSync(path.join(root, GEN[0]))), path: GEN[0], stage: 0 }], [GEN[1]], ['cargo-target']],
     ['refused: changed protected migration beside accepted build output', root => fs.appendFileSync(path.join(root, MIGRATION), '-- edited\n'), [MIGRATION], ['cargo-target', 'tauri-gen-schemas']],
     ['refused: deleted protected migration beside accepted build output', root => fs.rmSync(path.join(root, MIGRATION)), [MIGRATION], ['cargo-target', 'tauri-gen-schemas']],
+    // QA-01: the canonical Apple Silicon target folder (`--target aarch64-apple-darwin`).
+    ['accepted: Apple Silicon target output beside host output', root => withTriple(root), [], ['cargo-target', 'tauri-gen-schemas']],
+    ['refused: unknown target name in Cargo target', root => { withTriple(root); put(root, 'src-tauri/target/x86_64-apple-darwin/CACHEDIR.TAG', TRIPLE_TAG); put(root, 'src-tauri/target/x86_64-apple-darwin/release/libz.rlib', 'rlib'); }, [...HOST_TARGET, ...TRIPLE_FILES, 'src-tauri/target/x86_64-apple-darwin/CACHEDIR.TAG', 'src-tauri/target/x86_64-apple-darwin/release/libz.rlib'], ['tauri-gen-schemas']],
+    ['refused: source beside the Apple Silicon target profile', root => { withTriple(root); put(root, 'src-tauri/target/aarch64-apple-darwin/build.rs', 'fn main() {}\n'); }, [...HOST_TARGET, ...TRIPLE_FILES, 'src-tauri/target/aarch64-apple-darwin/build.rs'], ['tauri-gen-schemas']],
+    ['refused: tracked path inside the Apple Silicon target', (root, entries) => { withTriple(root); return [...entries, { mode: '100644', sha: blobId(fs.readFileSync(path.join(root, TRIPLE_FILES[1]))), path: TRIPLE_FILES[1], stage: 0 }]; }, [...HOST_TARGET, TRIPLE_FILES[0], TRIPLE_FILES[2]], ['tauri-gen-schemas']],
   ];
   return cases.map(([name, edit, expectChanged, expectAccepted]) => {
     const { root, entries } = build(name.replace(/[^a-z]+/g, '-'), edit);
@@ -680,7 +757,7 @@ async function proof() {
     const dir = path.join(scratch, 'walker');
     fs.mkdirSync(dir);
     const cases = walkerSensitivity(dir);
-    return { pass: cases.length === 11 && cases.every(c => c.pass), cases };
+    return { pass: cases.length === 15 && cases.every(c => c.pass), cases };
   });
 
   stage('distributed-helper-lane','the distributed schema-14 helper has one fixed operator lane and no test route; its CLI refuses here and writes nothing', () => {

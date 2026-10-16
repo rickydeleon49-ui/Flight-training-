@@ -1,0 +1,16 @@
+ecdc95a4e4cb7ca512e7e8f1915d64b245b7e8377b3862b2303ea2bc2ca14b1d  docs/evidence/mac-local-v054-qa-followup-2026-10-15/README.md
+768e7aa90eeb6effedc2a58ecb6dd887057c21961d43300b81a2f94a089c6e7c  docs/evidence/mac-local-v054-qa-followup-2026-10-15/cargo-lock.txt
+608fb8f7e9f03ae35d349da7137a3309b5a9bd63a0955636c5281f76332b14f8  docs/evidence/mac-local-v054-qa-followup-2026-10-15/helper-tests-final.txt
+b7751d8b5670b1cfc8918c881488f3a4e04f6ba987dd8794990660a1d853ad15  docs/evidence/mac-local-v054-qa-followup-2026-10-15/npm-test.txt
+cd2142c072c31e5c1ba9cdc26276fdabbab08cc29675948027c1bf40e0468d67  docs/evidence/mac-local-v054-qa-followup-2026-10-15/qa01-helper-before.txt
+84b8dc58e76f4e26c49344aae56e06447853d7e9de58877ea127b14bff4fb32e  docs/evidence/mac-local-v054-qa-followup-2026-10-15/qa01-new-tests-before-fix.txt
+e4c6618dea2cfe04ec7135a05653e27ad0c6ec6346ceb8a313fd67529747364f  docs/evidence/mac-local-v054-qa-followup-2026-10-15/qa02-recipe-before.stderr.txt
+1a5f52ee8ec811bddd8a52cda4a23a8b9d0b1ece6bb291ce8ec75519d01f9cd3  docs/evidence/mac-local-v054-qa-followup-2026-10-15/receipts.json
+26917fa5f0db061b62dca9dffbef942a890a75ab266721535ab9fb0504a6f107  docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-check-commit.json
+a2ad1660cdce1ee11ad46694a83c1129badc764b57bd2da3f3859aefa8001384  docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-f2a7090.json
+e86c7110165bd774634bd89ffd676e1252098b1b2d809a4cd15f2077850a2d37  docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-fee7869.stderr.txt
+5b802c95b0e5e1bb29c9d33fe6995ca217d6806d0c7fbab5885ce1f7a0789f08  docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-negative-integrity.stderr.txt
+520680385188ee4e2a8e3f21ae92a4d94d762aa29844bc469c3d12b52556113c  docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-negative-root-version.stderr.txt
+2dc5feaf52edd1003c034bb1b9f3c2aee79d04d39f8f3e49b4ecb25b620189c5  docs/evidence/mac-local-v054-qa-followup-2026-10-15/submission-manifest.json
+b4fbc39bfda7f22755a4421672874761bd4db5d80b7661fde6c9e62cf27de03a  docs/evidence/mac-local-v054-qa-followup-2026-10-15/typecheck.txt
+3f31104c9b3fdc575a9b4fb75bfee0de9027ce4151dd64c3c8e850eebb354ffc  docs/evidence/mac-local-v054-qa-followup-2026-10-15/vitest-focused.txt

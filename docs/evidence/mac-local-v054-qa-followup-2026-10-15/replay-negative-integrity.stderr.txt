@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/qa/runbook-from-commit.py", line 48, in <module>
+    assert lock_check['ok'], f"package-lock.json: {lock_check['reason']}"
+           ~~~~~~~~~~^^^^^^
+AssertionError: package-lock.json: candidate lock differs from the baseline in more than the application version

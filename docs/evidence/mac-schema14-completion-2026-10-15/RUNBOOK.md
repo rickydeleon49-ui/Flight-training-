@@ -88,6 +88,8 @@ This section runs only synthetic source proofs. It does not execute any installe
 
 The committed source manifest lists exactly the 20 helper-package source/document/receipt paths. Its own file and SHA256SUMS complete the 22-path overlay. The original baseline/HEAD check and allowlist are unchanged. Workflow changes and this follow-up’s separate evidence are outside that overlay; Linux CI validates the workflow separately. The full follow-up inventory is in `docs/evidence/mac-schema14-followup-2026-10-15/submission-manifest.json`. Earlier package receipts remain historical, not relabelled as executions of changed source.
 
+**Dependency lock (QA-02, 15 October 2026).** The replay always installs dependencies from the baseline lock inside the detached baseline worktree; the commit's lock is never copied. The commit's `package-lock.json` must therefore be the baseline lock with, at most, the two synchronized application-version fields (`version` and `packages[""].version`) changed together, as `scripts/bump-version.mjs` writes them, byte-for-byte in npm's format. An identical lock passes as before; otherwise `compareDependencyLock` in the commit's verified proof runner decides, before any worktree is created. Commits from before QA-02 whose lock differs have no such function and still refuse. Any dependency, range, integrity, resolution, key-order or formatting change, or root versions that disagree, refuses. A version-only commit such as a release-candidate bump can be replayed. This remains a replay of the helper component on the immutable baseline, never a certification of the commit's whole application source. The original raw-equality refusal on `fee7869` is preserved in `docs/evidence/mac-local-v054-build-2026-10-15/versioned-proof-replay.json`.
+
 The procedure reads bytes from the selected Git commit, verifies every listed size/hash before copying, creates a detached temporary worktree at **16f9cf3**, installs dependencies only there, runs the unchanged proof and removes that worktree in `finally`, including on an interrupt. It never copies local dirty files or edits current checkout files. The final receipt is retained in a fresh system-temp directory, with the selected commit, all commands/exits, 12-stage proof and cleanup facts. Node22 remains mandatory. No application build is run.
 
 ```bash
@@ -121,11 +123,30 @@ for line in payload[SUMS].decode().splitlines():
     digest, p = line.split('  ', 1)
     assert p in payload and hashlib.sha256(payload[p]).hexdigest() == digest, p
 assert len(payload[SUMS].decode().splitlines()) == 21
-assert git('show', f'{commit}:package-lock.json') == git('show', f'{BASE}:package-lock.json')
+# QA-02: the replay installs the baseline lock, so the commit's lock must match it apart from the
+# two synchronized application-version fields. An identical lock (every commit replayed before
+# QA-02) needs nothing more; otherwise compareDependencyLock in the commit's own copy of the proof
+# runner, whose bytes were verified against the manifest above, decides.
+base_lock = git('show', f'{BASE}:package-lock.json')
+commit_lock = git('show', f'{commit}:package-lock.json')
+lock_check = {'ok': True, 'identical': True}
+if commit_lock != base_lock:
+  with tempfile.TemporaryDirectory(prefix='hfd-schema14-lockcheck-') as check:
+    check = pathlib.Path(check)
+    (check / 'proof.mjs').write_bytes(payload['scripts/mac-schema14-verification-proof.mjs'])
+    (check / 'baseline-lock.json').write_bytes(base_lock)
+    (check / 'candidate-lock.json').write_bytes(commit_lock)
+    lock_check = json.loads(subprocess.check_output(['node', '--input-type=module', '-e', (
+        "import fs from 'node:fs';"
+        f"import {{ compareDependencyLock }} from {json.dumps((check / 'proof.mjs').as_uri())};"
+        f"const read = name => fs.readFileSync({json.dumps(str(check))} + '/' + name);"
+        "process.stdout.write(JSON.stringify(compareDependencyLock(read('baseline-lock.json'), read('candidate-lock.json'))));"
+    )], cwd=check, text=True))
+assert lock_check['ok'], f"package-lock.json: {lock_check['reason']}"
 root = pathlib.Path(tempfile.mkdtemp(prefix='hfd-schema14-postmerge-'))
 worktree = root / 'worktree'
 receipt_dir = pathlib.Path(tempfile.mkdtemp(prefix='hfd-schema14-postmerge-receipt-'))
-receipt = {'commit': commit, 'base': BASE, 'copiedPaths': sorted(payload), 'commands': [], 'success': False}
+receipt = {'commit': commit, 'base': BASE, 'copiedPaths': sorted(payload), 'dependencyLock': lock_check, 'commands': [], 'success': False}
 added = False
 failure = None
 
