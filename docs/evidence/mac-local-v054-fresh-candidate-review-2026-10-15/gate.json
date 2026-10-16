@@ -1,0 +1,31 @@
+[
+  {
+    "name": "helpers",
+    "argv": [
+      "node",
+      "--test",
+      "scripts/mac-schema14-profile-snapshot.test.mjs"
+    ],
+    "exit": 0,
+    "seconds": 3.35
+  },
+  {
+    "name": "lock",
+    "argv": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "exit": 0,
+    "seconds": 0.307
+  },
+  {
+    "name": "browser",
+    "argv": [
+      "node",
+      "/Users/rickymac/.codex/task-recovery/v054-fresh-candidate-review-20261015/browser-review.mjs"
+    ],
+    "exit": 0,
+    "seconds": 26.912
+  }
+]

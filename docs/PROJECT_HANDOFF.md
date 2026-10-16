@@ -1,3 +1,11 @@
+## Fresh v0.5.4 local candidate accepted — 15 October 2026
+
+**Independent review ACCEPTED for the private local lane, with report integration through exact-head CI in the containing PR.** The fresh candidate is built from frozen source **e9286017d3ca8b1faa1c8f5568c708d43e0b3050**, including PR167 and PR169. Independent review matched all candidate14/14 and earlier-candidate37/37 hashes, verified the local ad-hoc app/ZIP/read-only DMG contents and matching executable identity, reran26 helper tests plus lock checks and all17 browser scenarios. No application/version/dependency change was made by this report integration. [Acceptance and independent evidence](MAC_LOCAL_V054_FRESH_CANDIDATE_ACCEPTANCE_2026-10-15.md).
+
+Candidate folder: `/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/`. DMG SHA256: `7a93541a1fe7c9ccaa540deb8b164ac0ac09da8bc5c33b8ae1fed6755ad499b9`. Signature is **local ad-hoc only**, not Developer ID/notarized. The native candidate was not rebuilt or launched during review; oldfee7869 artifacts remain intact.
+
+**Release position:** source/version preparation and the fresh local build/package/browser lane are complete. Desktop launch/install, standard-account use, installed populated-data upgrade and older-backup restore, native pickers/PDF flow, Gatekeeper and VoiceOver remain **UNVERIFIED/deferred**. Existing deferral persists; do not open another preparatory audit or launch a profile automatically. The next release action is an owner-selected installed/use lane when requested. Signing/publication remains deferred. M4 remains a separately owned prototype; M5 refunds/requirements decisions remain separate and unapproved.
+
 ## Fresh local v0.5.4 candidate built from e928601 — pending independent review — 15 October 2026
 
 **BUILT AND VERIFIED WITHIN THE LOCAL LANE; PENDING INDEPENDENT REVIEW.** Claude, uncommitted on report branch `codex/local-v054-fresh-candidate`. Frozen source `e9286017d3ca8b1faa1c8f5568c708d43e0b3050` (PR #167, including PR #169). One `aarch64-apple-darwin` app was built with `--bundles app` (exit 0, 59 s), then sealed ad-hoc on a staged copy and packaged once through the recorded bounded lane. The DMG was created in 4 s with no stall, inspected read-only and detached.
