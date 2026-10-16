@@ -1,0 +1,11 @@
+FAIL stale content-A read confirmation must not confirm content B at the same page : old confirmation accepted; new content marked read
+
+false !== true
+
+FAIL successful commit adapter must reject a different saved page/hash/label/status : inconsistent successful acknowledgement accepted
+
+true !== false
+
+Summary: 0 passed / 2 failed
+(node:74976) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

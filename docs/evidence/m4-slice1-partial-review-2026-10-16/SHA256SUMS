@@ -1,0 +1,11 @@
+32c84d1c64abd6749cb01a97178edbb24217aaf7738b84c744e0d396f6d34d91  docs/evidence/m4-slice1-partial-review-2026-10-16/README.md
+4e4586521a9c2f825d1f33d61727156d2b743c0442c2b9f5fe4399e7e5a88553  docs/evidence/m4-slice1-partial-review-2026-10-16/diagnostics.log
+6627230ddbed6e22effeb32e5d93c88205e387f8c6bd809cbd70d103be251b97  docs/evidence/m4-slice1-partial-review-2026-10-16/diagnostics.mjs
+e65cc86959311e4796164b3f54444c3cd05e3333c0eac9858557b1d240f3b5a0  docs/evidence/m4-slice1-partial-review-2026-10-16/focused-existing.log
+e2973568af484e3eca298d71d34c76b07d9b5911687009c71b101f6bb9ccb035  docs/evidence/m4-slice1-partial-review-2026-10-16/focused-native.log
+30953b7cc7c055d7c7fc99e37470a6b1307782f50efaafa1f32d174176c10189  docs/evidence/m4-slice1-partial-review-2026-10-16/preserved-uncommitted.patch
+9c92ab531704bb6ccd491fde859d044e9a7d1ee1fc59584c031291fc0b007968  docs/evidence/m4-slice1-partial-review-2026-10-16/submitted-snapshot.json
+27419b619c564b6956699b6f162ec88b10c885c656d79ca3c50813f250f655fa  docs/evidence/m4-slice1-partial-review-2026-10-16/typecheck.log
+c392a7bbbb1a66e12e9b6e9d89b664a5a1408aa75af4bf89028c195268bf6b44  docs/M4_PRODUCTION_SCOPE_OWNER_APPROVAL_2026-10-16.md
+993f38ff8dc5ba8a70b252aa9ed0d475c791673092a833ae2a36446018c86f1f  docs/M4_SLICE1_PARTIAL_REVIEW_2026-10-16.md
+95bb2e1ca3faff96727dcd5c5b7e0a0b251ba486e1a78c918ac14ade1026f7ec  docs/M4_SLICE1_CONTINUATION_PROMPT_2026-10-16.md

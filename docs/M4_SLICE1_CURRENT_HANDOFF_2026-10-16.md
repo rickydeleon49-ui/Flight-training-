@@ -4,6 +4,8 @@ This supersedes the implementation instructions in `M4_CONDITIONAL_IMPLEMENTATIO
 
 **Gate:** begin production implementation only after independent prototype acceptance is merged and the owner dispositions in `M4_PRODUCTION_SCOPE_DECISIONS_2026-10-16.md` are actually recorded. Both are prerequisites; never infer owner approval from a prototype test pass. No release, version bump, native installer build, profile use or paid-provider request is authorized by this document.
 
+**Current resume point:** the owner has now approved all ten defaults. Production work is partial at checkpoint07fdcfa with four review findings; use [the continuation assignment](M4_SLICE1_CONTINUATION_PROMPT_2026-10-16.md) and [partial review](M4_SLICE1_PARTIAL_REVIEW_2026-10-16.md) in addition to this baseline handoff. This does not certify the partial implementation.
+
 ## Read and establish identity
 
 Fetch first. Read latest STATUS/ROADMAP/PROJECT_HANDOFF, `M4_ROUND6_ACCEPTANCE_2026-10-16.md`, the owner decision packet, and the actual owner answer. Use current accepted main and a clean isolated implementation branch/worktree; reuse a suitable clean owned worktree when possible. Do not overwrite the preserved dirty M4 review checkout or another agent's OPENFOLDER-01 work.
