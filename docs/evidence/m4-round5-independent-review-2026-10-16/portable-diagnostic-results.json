@@ -1,0 +1,24 @@
+[
+  {
+    "lane": "node22",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "--test",
+      "/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs",
+      "/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round5-independent-review-2026-10-16/signal-diagnostic.test.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-post-v054-roadmap",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "--test",
+      "/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs",
+      "/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round5-independent-review-2026-10-16/signal-diagnostic.test.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-post-v054-roadmap",
+    "exit": 1
+  }
+]

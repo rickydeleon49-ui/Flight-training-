@@ -1,0 +1,22 @@
+[
+  {
+    "lane": "node22",
+    "diagnostic": "prior-four",
+    "exit": 0
+  },
+  {
+    "lane": "node22",
+    "diagnostic": "additional",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "diagnostic": "prior-four",
+    "exit": 0
+  },
+  {
+    "lane": "node26",
+    "diagnostic": "additional",
+    "exit": 1
+  }
+]

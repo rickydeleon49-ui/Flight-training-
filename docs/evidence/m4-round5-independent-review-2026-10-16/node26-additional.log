@@ -1,0 +1,106 @@
+✖ a newer failed reservation supersedes an older held opener (7.813584ms)
+✖ a newer failed reservation supersedes an older held persistence (5.185042ms)
+✖ an ignored INSERT cannot issue an unpersisted reservation token (5.081834ms)
+✖ an ignored UPDATE cannot issue an unpersisted reservation token (4.8605ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.835917
+
+✖ failing tests:
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:23:2
+✖ a newer failed reservation supersedes an older held opener (7.813584ms)
+  AssertionError [ERR_ASSERTION]: the newer failed intent must supersede old callbacks and keep the saved tuple
+  + actual - expected
+  
+    {
+  +   controllerState: 'opened',
+  +   oldSuccess: true,
+  +   savedPage: 10
+  -   controllerState: 'failed',
+  -   oldSuccess: false,
+  -   savedPage: 5
+    }
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:37:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { oldSuccess: true, controllerState: 'opened', savedPage: 10 },
+    expected: { oldSuccess: false, controllerState: 'failed', savedPage: 5 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:23:2
+✖ a newer failed reservation supersedes an older held persistence (5.185042ms)
+  AssertionError [ERR_ASSERTION]: the newer failed intent must supersede old callbacks and keep the saved tuple
+  + actual - expected
+  
+    {
+  +   controllerState: 'opened',
+  +   oldSuccess: true,
+  +   savedPage: 10
+  -   controllerState: 'failed',
+  -   oldSuccess: false,
+  -   savedPage: 5
+    }
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:37:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { oldSuccess: true, controllerState: 'opened', savedPage: 10 },
+    expected: { oldSuccess: false, controllerState: 'failed', savedPage: 5 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:43:2
+✖ an ignored INSERT cannot issue an unpersisted reservation token (5.081834ms)
+  AssertionError [ERR_ASSERTION]: no-op claim writes must throw, observed {"tokens":[2,2],"claim":null}
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:50:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:43:2
+✖ an ignored UPDATE cannot issue an unpersisted reservation token (4.8605ms)
+  AssertionError [ERR_ASSERTION]: no-op claim writes must throw, observed {"tokens":[2,2],"claim":{"reserved_generation":1}}
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:50:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

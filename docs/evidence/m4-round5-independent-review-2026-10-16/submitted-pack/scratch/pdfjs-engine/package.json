@@ -1,0 +1,10 @@
+{
+  "name": "pdfjs-engine",
+  "version": "1.0.0",
+  "description": "Her Flight Deck scratch PDF evaluation engine",
+  "main": "index.js",
+  "type": "commonjs",
+  "dependencies": {
+    "pdfjs-dist": "6.3.289"
+  }
+}
