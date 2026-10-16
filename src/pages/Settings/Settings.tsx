@@ -1244,9 +1244,10 @@ export function Settings() {
                   ))}
                   {gemini.choice === "most-capable" ? (
                     <p className="tiny dim">
-                      If Gemini 4 Argon cannot answer, for example because the key has no
-                      billing or Google is busy, Her Flight Deck tries Gemini Flash instead and
-                      shows which model made each study aid.
+                      If Google is busy, or this key has reached its limit for Gemini 4 Argon,
+                      Her Flight Deck tries Gemini Flash instead and shows which model made each
+                      study aid. If Google does not allow this key to use Argon, you will see a
+                      message asking you to turn on billing or choose Standard.
                     </p>
                   ) : null}
                 </fieldset>
