@@ -7313,14 +7313,42 @@ pub fn data_directory(app: AppHandle) -> Result<String, String> {
 ///
 /// The folder is resolved here from `app_root`, never taken from the webview,
 /// so this needs no path scope and opens exactly the folder `data_directory`
-/// shows. Settings used to pass the displayed path to the opener plugin's
-/// `open_path`, which failed on an installed Mac with "That folder could not
-/// be opened" (MAC-06 had never been verified natively).
+/// shows.
+///
+/// On macOS that folder is named after the bundle identifier,
+/// `com.herflightdeck.app`, and anything ending in `.app` is treated as an
+/// application: `/usr/bin/open` on it fails with "The application cannot be
+/// opened because its executable is missing", which is exactly what an
+/// installed Mac reported. Revealing an item *inside* the folder makes Finder
+/// open the folder itself with that item selected, and needs no extra
+/// permission, so that is what macOS does here.
 #[tauri::command]
 pub fn open_data_folder(app: AppHandle) -> Result<(), String> {
     let root = app_root(&app)?;
-    tauri_plugin_opener::open_path(&root, None::<&str>)
-        .map_err(|e| format!("Could not open {}: {e}", root.display()))
+    let opened = if cfg!(target_os = "macos") {
+        match item_to_reveal_in(&root) {
+            Some(item) => tauri_plugin_opener::reveal_item_in_dir(&item),
+            None => tauri_plugin_opener::open_path(&root, None::<&str>),
+        }
+    } else {
+        tauri_plugin_opener::open_path(&root, None::<&str>)
+    };
+    opened.map_err(|e| format!("Could not open {}: {e}", root.display()))
+}
+
+/// What to select so Finder shows the inside of `root`: the database when it is
+/// there, otherwise the first item in the folder, otherwise nothing.
+fn item_to_reveal_in(root: &Path) -> Option<PathBuf> {
+    let database = root.join(DB_FILES[0]);
+    if database.is_file() {
+        return Some(database);
+    }
+    let mut entries: Vec<PathBuf> = std::fs::read_dir(root)
+        .ok()?
+        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+        .collect();
+    entries.sort();
+    entries.into_iter().next()
 }
 
 #[cfg(test)]
@@ -13824,5 +13852,28 @@ mod tests {
         let message = outcome.expect_err("an ambiguous restore must block startup");
         assert!(message.starts_with("Startup blocked to prevent data loss: active data obstructed"));
         assert!(message.contains("2026-10-16-035630-before-restore"));
+    }
+
+    #[test]
+    fn the_data_folder_is_shown_by_selecting_something_inside_it() {
+        let root = std::env::temp_dir().join(format!("hfd-reveal-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+
+        // An empty folder has nothing to select, so the folder itself is opened.
+        assert_eq!(item_to_reveal_in(&root), None);
+
+        // Without the database, the first item in name order is selected.
+        std::fs::create_dir_all(root.join("documents")).unwrap();
+        std::fs::create_dir_all(root.join("backups")).unwrap();
+        assert_eq!(item_to_reveal_in(&root), Some(root.join("backups")));
+
+        // The database is preferred whenever it is there.
+        std::fs::write(root.join(DB_FILES[0]), b"db").unwrap();
+        assert_eq!(item_to_reveal_in(&root), Some(root.join(DB_FILES[0])));
+
+        // A missing folder is not an error here; opening it reports one later.
+        assert_eq!(item_to_reveal_in(&root.join("missing")), None);
+        std::fs::remove_dir_all(&root).unwrap();
     }
 }
