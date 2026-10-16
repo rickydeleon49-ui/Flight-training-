@@ -1,3 +1,22 @@
+## Fresh local v0.5.4 candidate built from e928601 — pending independent review — 15 October 2026
+
+**BUILT AND VERIFIED WITHIN THE LOCAL LANE; PENDING INDEPENDENT REVIEW.** Claude, uncommitted on report branch `codex/local-v054-fresh-candidate`. Frozen source `e9286017d3ca8b1faa1c8f5568c708d43e0b3050` (PR #167, including PR #169). One `aarch64-apple-darwin` app was built with `--bundles app` (exit 0, 59 s), then sealed ad-hoc on a staged copy and packaged once through the recorded bounded lane. The DMG was created in 4 s with no stall, inspected read-only and detached.
+
+- **Candidate:** `/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/`.
+  - DMG SHA-256 `7a93541a…d499b9`;
+  - ZIP `068695bf…decf47`;
+  - final executable `b60d2e6c…848822`.
+- **Status:** LOCAL_ADHOC, private test only. No Developer ID, notarization or Gatekeeper claim.
+- **Checks:**
+  - helper tests 26/26 on the new ARM64 output;
+  - Cargo lock check passes;
+  - RUNBOOK component replay 12/12 (helper on baseline `16f9cf3` only);
+  - browser QA 17/17, including both medical-date directions and nothing written before a choice;
+  - frontend 3,221 reused from the identical accepted tree.
+- **Preserved:** the `fee7869` candidate still verifies 37/37 and was not relabelled.
+
+[Report and reviewer handoff](MAC_LOCAL_V054_FRESH_CANDIDATE_REPORT_2026-10-15.md). Desktop launch, installation, hfdtest, installed upgrade and restore, Gatekeeper, VoiceOver, signing and publication remain UNVERIFIED/deferred. Historical entries below keep their original status.
+
 ## v0.5.4 source preparation and QA tooling accepted — 15 October 2026
 
 **Independent review ACCEPTED for exact-head CI/integration in PR #167.** QA-01 and QA-02 are closed in source: real ARM64 Cargo output is recognized with its strict shape/link/tracked-file guards, and helper replay permits only the two synchronized root application-version fields. The five version files consistently declare **0.5.4**, with no dependency change. PR #169's flight-time/medical fixes are included and unchanged. [Acceptance](MAC_LOCAL_V054_QA_ACCEPTANCE_2026-10-15.md).

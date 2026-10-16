@@ -1,0 +1,9 @@
+{
+  "candidate": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869",
+  "sourceCommit": "fee78699dde736b016747c6a2ec3513a9677a556",
+  "predatesPR169": true,
+  "artifactSha256sums": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/ARTIFACT_SHA256SUMS",
+  "verifiedOk": "37 of 37",
+  "checkedAt": "2026-10-16T01:50:40.510Z",
+  "note": "checked before the build and again after packaging; nothing in that directory was written, moved or relabelled"
+}
