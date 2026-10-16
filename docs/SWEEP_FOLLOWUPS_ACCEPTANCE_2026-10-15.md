@@ -26,7 +26,7 @@ Node22.23.3, synthetic disposable jsdom/SQLite. Exact outputs: [evidence](eviden
 | `npm run build` | exit0 |
 | Submitted tracked source `git diff --check` | exit0 |
 
-Two historical raw Vite receipts (`build.txt:23` in original review and correction evidence) retain the compiler's trailing space. The all-files check flags these receipt-only bytes; source/document hygiene is clean. Preserve raw receipts instead of relabelling or normalizing them. Original two-failure receipts remain intact. CI will run required Rust, formatting, Clippy, lockfile and helper checks on the exact submitted PR head; no unchanged local native rebuild is required for this frontend-only correction. The containing PR must record its exact final head, CI run and merge commit before integration is claimed.
+All three raw Vite build receipts (`build.txt:23` in original review, correction and independent re-review evidence) retain the compiler's trailing space. Some raw test/typecheck receipts also retain terminal blank lines. The all-files check reports those receipt-only bytes; source/document hygiene is clean. Preserve raw receipts instead of relabelling or normalizing them. Original two-failure receipts remain intact. CI will run required Rust, formatting, Clippy, lockfile and helper checks on the exact submitted PR head; no unchanged local native rebuild is required for this frontend-only correction. The containing PR must record its exact final head, CI run and merge commit before integration is claimed.
 
 ## Roadmap handoff
 
