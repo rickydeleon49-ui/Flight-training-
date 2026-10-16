@@ -1,0 +1,41 @@
+Window: "Her Flight Deck", App: Her Flight Deck.
+0 standard window Her Flight Deck, Secondary Actions: Raise
+	1 scroll area
+		2 HTML content Description: Her Flight Deck, URL: tauri://localhost#/study/d09f8af7-70ae-4f4c-b547-6c431c7c7dad
+			3 container Take out a chapter
+				4 heading Take out a chapter, Value: 2
+					5 text Take out a chapter
+				6 text Saves the pages you choose as a study document of its own. The original handbook is left exactly as it is.
+				7 button Close
+				8 text synthetic-small-checklist.pdf — 10 pages, 3 KB.
+				9 text First page
+				10 number field (settable) First page, Value: 1
+					11 stepper 0
+						12 unknown
+						13 unknown
+				14 text Last page
+				15 number field (settable) Last page, Value: 10
+					16 stepper 0
+						17 unknown
+						18 unknown
+				19 text Title (optional)
+				20 text field (settable) Title (optional), Value: Synthetic blocked chapter must not persist, Placeholder: synthetic-small-checklist — Pages 1–10
+				21 text Left blank, this is named after the page range.
+				22 text 10 pages. A safety copy of your library is saved first, and this chapter becomes its own Study Library item — Gemini can create a study guide or practice test from it, just like any other document. Anything over 50 MB once saved is refused; illustrated pages take more space than plain text, so a heavily illustrated range may need to be smaller than the page count alone suggests.
+				23 text Could not create the backup folder: Permission denied (os error 13)
+				24 button Cancel
+				25 button Save this chapter
+		26 scroll bar (settable, float) 0
+	27 close button
+	28 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	29 minimize button
+	30 text Her Flight Deck
+31 menu bar
+	32 Her Flight Deck
+	33 File
+	34 Edit
+	35 View
+	36 Window
+	37 Help
+
+The focused UI element is 3 container Take out a chapter

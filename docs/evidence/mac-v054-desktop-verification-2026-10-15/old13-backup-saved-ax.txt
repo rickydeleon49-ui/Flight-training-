@@ -1,0 +1,123 @@
+The following is a diff from the previous accessibility tree for Window: "Her Flight Deck" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 89-97, 100-451
+~82 standard window Her Flight Deck, Secondary Actions: Raise
+~	83 scroll area
+~		84 HTML content Description: Her Flight Deck, URL: tauri://localhost#/settings
+~			85 container
+~				86 text Her Flight Deck Training companion
+~				87 button Search ⌘K
+~				88 container Main
++					89 link Flight Deck, Value: tauri://localhost#/
++					90 link Flight Path, Value: tauri://localhost#/flight-path
++					91 link Study Library, Value: tauri://localhost#/study
++					92 link Schedule, Value: tauri://localhost#/schedule
++					93 link Flight Log, Value: tauri://localhost#/journal
++					94 link Questions, Value: tauri://localhost#/questions
++					95 link Notes, Value: tauri://localhost#/notes
++					96 link Finances, Value: tauri://localhost#/finances
++					97 link Pilot Toolkit, Value: tauri://localhost#/toolkit
+~				98 link Settings, Value: tauri://localhost#/settings
+~				99 text Your instructor and official aviation guidance stay authoritative. This is here to keep your training organized.
++			100 container
++				101 heading Settings, Value: 1
++					102 text Settings
++				103 text Your profile and how this application behaves.
++				104 text GREETING AND FOCUS
++				105 heading About you, Value: 2
++					106 text About you
++				107 text On macOS: Use Save profile before closing the window with the red button. What should we call you?
++				108 text field (settable) What should we call you?, Placeholder: Ava
++				109 text Certificate you are working toward
++				110 text field (settable) Certificate you are working toward, Value: Airline Pilot, Placeholder: Private Pilot
++				111 text Current focus
++				112 text field (settable) Current focus, Value: Build a strong training foundation, Placeholder: Landings
++				113 text Shown beside your greeting. Current milestone
++				114 pop up button (collapsed) Current milestone, Value: Build Your Training Foundation, Secondary Actions: Expand
++				115 text USED TO FILL IN NEW LESSONS
++				116 heading Where you train, Value: 2
++					117 text Where you train
++				118 text On macOS: Dates use the Mac’s region and calendar settings; these fields remain optional. None of this is required. Before you have settled on a school you can leave it empty, or fill in only the parts that are true today. Flight school
++				119 text field (settable) Flight school, Placeholder: Cedar Field Aviation
++				120 text Leave it blank while you are still choosing. Instructor
++				121 text field (settable) Instructor, Placeholder: Dana Whitfield
++				122 text Filled in on each new lesson. Home airport
++				123 text field (settable) Home airport, Placeholder: Cedar Field
++				124 text Filled in as the location. Aircraft you fly
++				125 text field (settable) Aircraft you fly, Placeholder: Cessna 172
++				126 text Training started
++				127 date time area Training started, Value: 10/15/26
++					128 container
++						129 stepper (settable, float) month, Value: 0
++						130 text /
++						131 stepper (settable, float) day, Value: 0
++						132 text /
++						133 stepper (settable, float) year, Value: 0
++				134 text Optional — your first flight counts, school or not. Medical certificate expires
++				135 date time area Medical certificate expires, Value: 10/15/26
++					136 container
++						137 stepper (settable, float) month, Value: 0
++						138 text /
++						139 stepper (settable, float) day, Value: 0
++						140 text /
++						141 stepper (settable, float) year, Value: 0
++				142 text Your own reminder — the certificate itself is what counts.
++				143 button Save profile
++				144 text YOURS ALONE
++				145 heading Why you started, Value: 2
++					146 text Why you started
++				147 text On macOS: Export a picture from Photos or choose one from Finder. It is resized and stored in the app’s private database.
++				148 button Add a photo
++				149 text Optional. It is resized on this computer and never leaves it. Why did you start flying?
++				150 text entry area (settable) Why did you start flying?, Value: [text entry area], Placeholder: The first time I saw the airfield from the air, I knew.
++					151 text The first time I saw the airfield from the air, I knew.
++				152 text Shown back to you on your Flight Deck. Nobody else reads it.
++				153 button Save
++				154 text ACCENT COLOUR
++				155 heading Look and feel, Value: 2
++					156 text Look and feel
++				157 text On macOS: The accent follows Her Flight Deck on this Mac and changes immediately. Changes the accent used across the application. Takes effect straight away.
++				158 container Accent colour
++					159 toggle button Berry, Value: on
++					160 toggle button Lavender, Value: off
++					161 toggle button Sky, Value: off
++					162 toggle button Mint, Value: off
++				163 text BUILT-IN GUIDANCE
++				164 heading Airline pilot starter pack, Value: 2
++					165 text Airline pilot starter pack
++				166 text On macOS: Restoring starter items changes only this Mac’s local library. Includes a complete career roadmap from training foundations through ATP and airline applications, along with lesson checklists, debrief prompts, record organizers, and official FAA starting points. It never replaces her instructor, logbook, aircraft documents, or current regulations.
++				167 button Restore missing starter items
++				168 text STUDY LIBRARY FILES
++				169 heading Check library, Value: 2
++					170 text Check library
++				171 text Find study materials whose files are missing and stored files that are not linked to a material. Nothing changes until you choose an action.
++				172 button Check library
++				173 text COMPLETE BACKUP AND RESTORE
++				174 heading Your data, Value: 2
++					175 text Your data
++				176 button Save complete backup
++				177 button Restore backup
++				178 text On macOS: App data lives under the displayed Application Support path, and Open folder opens that exact folder in Finder. Complete backups can be saved to Downloads or iCloud Drive, and imported documents live in app-owned storage and move through complete backups. Complete backup saved — 3 files, 508 KB protected. Protected. Complete backup saved today, from version 0.5.3. Last saved to /Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/private-backups/her-flight-deck-20synthetic-schema13.hfdbackup26-10-16.hfdbackup
++				179 text Save one portable .hfdbackup file containing the complete database, profile photo, flight log, and every uploaded study document. Nothing is uploaded anywhere. Keep the file on another drive or in a cloud folder so it is safe if this computer is lost. Save a fresh backup before installing an update. If anything looks wrong afterwards, Restore backup puts that file back exactly as it was. Restore checks the file first and asks for confirmation. Before it replaces anything, the app keeps a recoverable copy of the current data, then restarts with the restored copy. Where it lives /Users/rickymac/Library/Application Support/com.herflightdeck.app
++				180 button Open folder
++				181 text The database copies below are made automatically before an update runs for the first time. They stay on this computer and hold your records, lessons and settings — not the uploaded files themselves, which are never moved. Use Save complete backup for protection against losing this computer.
++				182 button Save a copy on this computer
++				183 text Safety copies kept (1) Taken by you 2026-10-16 · 504 KB
++				184 button Put this back
++				185 text SCOPE
++				186 heading About this application, Value: 2
++					187 text About this application
++				188 text On macOS: Her Flight Deck supports macOS 12 or newer. Use only an official candidate installer. If macOS displays a security warning, record the exact message for investigation. Do not attempt to disable Gatekeeper or bypass platform security protections. Her Flight Deck organizes the training information you put into it. It does not replace your flight instructor, your flight school, official aviation regulations, aircraft documentation, or required training. Where this application and an official or instructor-provided source disagree, the official source is correct.
++				189 text OPTIONAL ONLINE AI
++				190 heading Gemini study assistant, Value: 2
++					191 text Gemini study assistant
++				192 text On macOS: Google AI Studio opens in the default browser. The API key stays in this Mac’s Application Support folder and is not included in backups or SQLite. Gemini can turn a selected Study Library document into a study guide and flashcards. Only files you deliberately analyze are sent to Google. Personal notes, flight logs, profile details, and other library files are never sent. 1. Open Google AI Studio and sign in with her Google account. 2. Choose Create API key, then copy the key. 3. Paste it below. The complete key is never shown again.
++				193 button Sign in with Google
++				194 secure text field (settable) Gemini API key, Value: Paste Gemini API key
++				195 button (disabled) Connect Gemini
++				196 text Google states that free-tier content may be used to improve its products. Do not analyze medical records, certificates, addresses, or documents containing sensitive personal information. AI study material must be checked against the current source, FAA publications, aircraft documents, and her instructor. If Gemini keeps saying it is busy: a “503 — high demand” is Google’s capacity, not your key. Her Flight Deck already waits, retries, and tries Flash-Lite before reporting it. If it happens often, enabling billing for the same Google Cloud project moves the key to paid Tier 1, which has higher rate limits. Billing does not change or upgrade the configured model (gemini-3.5-flash), nor does it guarantee that a model will always have capacity, so you may still need to try again later.
++		197 scroll bar (settable, float) 0.6484093
++	198 close button
++	199 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
++	200 minimize button
++	201 text Her Flight Deck
+The focused UI element is 84 HTML content Description: Her Flight Deck, URL: tauri://localhost#/settings

@@ -1,0 +1,262 @@
+{
+  "source": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "reviewBase": "55b52af183221ff12d9bbcd5748b4dab48e0f5e8",
+  "lane": "UID501 administrator; synthetic only; standard-account gates not asserted",
+  "files": [
+    {
+      "path": "docs/MAC_V054_DESKTOP_VERIFICATION_2026-10-15.md",
+      "bytes": 9242,
+      "sha256": "59bbbd354637b2a8707e5ce84a93b0f43a3b886f8e62e9fbdf2953f0d1d8c0c6"
+    },
+    {
+      "path": "docs/MAC_V054_DESKTOP_CORRECTIONS_PROMPT_2026-10-15.md",
+      "bytes": 6990,
+      "sha256": "f36409b63ac55eeb376714b29b53e1fae859bbfece3a832fc328a4db82e137a2"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 215418,
+      "sha256": "20abde629c955a7478409fea27ef712f0210110495347304dd05372df91cd5ac"
+    },
+    {
+      "path": "ROADMAP.md",
+      "bytes": 87635,
+      "sha256": "1a1e777ffbec66278d7a5b8bd5b20cab17690a1e7dc4eabf23526973f85590fe"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 124533,
+      "sha256": "232659a7b6535f753b7a759fc98693190aabe7dcc631688a0e9eaa0f8db31baf"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/README.md",
+      "bytes": 2328,
+      "sha256": "395ff741f7d4a0eb6cdaf2c5abffbe9a0434d9e33fd796e562b83b874f4313d3"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/backup-saved-ax.txt",
+      "bytes": 9830,
+      "sha256": "a77d4944c0e381816f7bf6cdbb5647912aca51b1c44773a857d492cea9d1f35f"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/backup14-archive-audit.json",
+      "bytes": 345,
+      "sha256": "8240163af138ffd175bdcaf24a09a66e1b8f62c04e047754747fc99ba7e95dc5"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/cancel-comparison.json",
+      "bytes": 86,
+      "sha256": "4b10da0cce03cc042f867462bef59c4bc10e61147895ddbc39f735931db6bdbb"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/date-bug-confirmation.json",
+      "bytes": 390,
+      "sha256": "8a7b4aeaa9f72d21bc40599a21194bd9682bccaa02f42c45492132771ab05c6d"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/date-bug-reviewed-ax.txt",
+      "bytes": 414,
+      "sha256": "e7aa6c26ed1951282d0ae9c6be703678e4eea596a235e2f82d81053d62d3c7c2"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/final-original-synthetic-profile.json",
+      "bytes": 101573,
+      "sha256": "70758eb1aeaad3277c33c8309c242417bd7e974ed964573a904e97e54eab69ce"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/first-quit-check.json",
+      "bytes": 1160,
+      "sha256": "12ae47b797153a4a22a19555e94bd591c6a15355e196a0227744ec04262a4db9"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/guarded-save-after.json",
+      "bytes": 116800,
+      "sha256": "398008c2a8a7c5551e5deca491b4539bc8a2312fefdbf210b0abe7aa63bead0c"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/guarded-save-before.json",
+      "bytes": 116800,
+      "sha256": "7f5ff132cf1ea4a5e4bb3eab716c601354cce3bbe87d58b71e6b6c68d1f57b2d"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/guarded-save-comparison.json",
+      "bytes": 117,
+      "sha256": "86531adfbf2313b428ffd40de3d0074d2a5d634abc40c8493a870eec2d3d84c1"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/guarded-save-operation-note.txt",
+      "bytes": 377,
+      "sha256": "6bd3ed198b05e5e001ab4534bcbf0f288b0437c4f541d80bce3eed90bb2ddf82"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/guarded-save-refused-ax.txt",
+      "bytes": 1917,
+      "sha256": "1dbdab1a6e2d2215d1a274b2cf4573ca568758499b97a4aa78be10f470ede647"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/invalid-backup-after.json",
+      "bytes": 117172,
+      "sha256": "cad71178aafd04a62d31a6eed7cee2e42e6e4cf047f55f24a195782ea3df2e2e"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/invalid-backup-comparison.json",
+      "bytes": 86,
+      "sha256": "4b10da0cce03cc042f867462bef59c4bc10e61147895ddbc39f735931db6bdbb"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/invalid-backup-refused-ax.txt",
+      "bytes": 10476,
+      "sha256": "9451490d92c23e4e4adddf7f2bdef0174078ec2f7c64753ef8ffd33eb505e3a3"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/launch-command.json",
+      "bytes": 179,
+      "sha256": "daf4c3955c4d7dd61b727c1a9b04c158dc736108e28f928fc73c5d4f9c28a56c"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/native-pdf-preview-ax.txt",
+      "bytes": 3257,
+      "sha256": "27e0a826bcf6348f251ec5374fc9826954b9ced27dec90b738ab5963b1e873af"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/offline-verification.json",
+      "bytes": 2037,
+      "sha256": "f622a4b17181f9030beacbd7f63af2808851074beaa961aa2239ec1312085c0f"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/old13-backup-saved-ax.txt",
+      "bytes": 10344,
+      "sha256": "a5d0b7c06197df0c2380c483bccba5a6a9b615608317adb198dc933e9618cd22"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/old13-install.json",
+      "bytes": 1898,
+      "sha256": "e00efc93a1c2f6178c5ceeff260e687f86eac1c052b9e2e0b6fef71f752cddce"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/pdf-imported-detail-ax.txt",
+      "bytes": 3732,
+      "sha256": "5e31ef9fd5e8bda568a38630936e4f817f5506b8381b3264f00836ba0ad1a00c"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/pdf-page-audit.json",
+      "bytes": 963,
+      "sha256": "cca45bdbcdd377a6b63491aeb2763f63622b687f37265286afe4cf79541597bd"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/permission-operation.json",
+      "bytes": 232,
+      "sha256": "cc6d0b1c4330df86cb723b5ec88478ed00f93f71a00dd701b06346ab473c4f70"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/permission-recovery.json",
+      "bytes": 255,
+      "sha256": "1d2fa7817dd86f644e1c5e259eeb582c96982904720ec30b4973ae60b8103c48"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/prelaunch.json",
+      "bytes": 3996,
+      "sha256": "f9b2e4c8fcea18de64c3d698d9b21b1333bb992cbf54181c189fa80f788047e4"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/profile-return.json",
+      "bytes": 582,
+      "sha256": "5c953f2c56d212a973c29e49fb862858c7f90979106e80f6dd16fb2704d26ea8"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/restore13-after.json",
+      "bytes": 109062,
+      "sha256": "94faf2e2c7699eb8a89188df258e39c03754bef88a4874ef0819fd65595f4cc3"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/restore13-comparison.json",
+      "bytes": 354,
+      "sha256": "67a6d3ae7b2ebc917ad2419c5c819de0d51e53260c22a156ebfe48080f1f7f42"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/restore13-window-observation.json",
+      "bytes": 434,
+      "sha256": "0f73da286a910e4437bee93a586f7a3f887df94812f3f6b002db8eff835a3714"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/restore14-comparison.json",
+      "bytes": 107,
+      "sha256": "9df5bfa4168c57128e489c337a28dccd005fbc7a7b0bee8057e65725f0c68e6e"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/restore14-skills-window-observation.json",
+      "bytes": 423,
+      "sha256": "2f42e00732b69b5d1872a2dbed6372cf9cc8361b0f165c1039b7f9f6b9865f5c"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/running-identity.json",
+      "bytes": 365,
+      "sha256": "fd1fa287798a2dbaee2ad5454f8f79c47c99d2dd3757510adddae3b74c157994"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/schema14-backup-before.json",
+      "bytes": 101924,
+      "sha256": "7d40da12592233ab67583fad1bc8241f7ee78daaeb67919dbc9a7d217fe77ecf"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/schema14-restored.json",
+      "bytes": 101551,
+      "sha256": "d39c8044f8a53c912994fbbc9e0cbecf628a2644e2fb0f5c2be73f85cd7e96c8"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/skills-after-cancel.json",
+      "bytes": 115738,
+      "sha256": "6be6c1ec87699865223ea255ac1e7f9fc294cf8839d176e2ad6a45d5256da7f1"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/skills-backup14-before.json",
+      "bytes": 117172,
+      "sha256": "b0c936d6bcfdd2c647d48ae553ab27cb14808457d90f3f72f495e577f7926583"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/skills-before-cancel.json",
+      "bytes": 115738,
+      "sha256": "a3052c17902cb5238eb79d0f11a37ad0ce7aabb36b24944f714af9c4eab39ad9"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/skills-native-saved-ax.txt",
+      "bytes": 3226,
+      "sha256": "c80159f7d6671b50d85269804529599da50aa69e74c2753554ff1394f9070c86"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/skills-restore14-comparison.json",
+      "bytes": 163,
+      "sha256": "34e64e0ae5eb955fb4a6c7651a3b48e2f260a95576e89a9568dd1f70503a4fc2"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/skills-restored14-after.json",
+      "bytes": 116800,
+      "sha256": "17974ee72647f6a4273edc33db624b5e759993de6cbf4c7b1ac3628dc1969902"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/snapshot.py",
+      "bytes": 1284,
+      "sha256": "ec035637764a422fdf158dc2a448099040f1777869f4271534d0a69f66d1c3ef"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/upgrade-comparison.json",
+      "bytes": 266,
+      "sha256": "7b90a1ad89f716e863ec3c6f31cefe46c10ee2fb4e386a8619b0b11e56df8d09"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/upgrade13-before.json",
+      "bytes": 86201,
+      "sha256": "15e925f31d04f6494606ced0ee2d9eaf5392748741ed2064ad76db67cc60317d"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/upgrade14-after.json",
+      "bytes": 109463,
+      "sha256": "bc339e70a981a3b31d7cfca2c0e3d8fc1408da7c486ea4a906c17f8046bd3777"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-verification-2026-10-15/verify-evidence.py",
+      "bytes": 4646,
+      "sha256": "bb0848beb6186d6ccf143a00afd20f2b2c30aed5cafb1351dc5e9575cb76f048"
+    }
+  ]
+}

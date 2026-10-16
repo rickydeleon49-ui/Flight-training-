@@ -1,0 +1,51 @@
+{
+  "commands": [
+    {
+      "args": [
+        "hdiutil",
+        "attach",
+        "-readonly",
+        "-nobrowse",
+        "-mountpoint",
+        "/Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/old13-mount",
+        "/Users/Shared/hfd-schema13-kit-2026-10-08/installers/NEW-schema13-36a7b39-adhoc.dmg"
+      ],
+      "exit": 0,
+      "stdout": "expected   CRC32 $56D2DB33\n/dev/disk4          \tGUID_partition_scheme          \t\n/dev/disk4s1        \tApple_HFS                      \t/Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/old13-mount\n",
+      "stderr": "hdiutil: WARNING: 'hdiutil attach -readonly -nobrowse -mountpoint ...' is deprecated. Please use 'diskutil image attach --readOnly --mountOptions nobrowse --mountPoint ...' instead.\n"
+    },
+    {
+      "args": [
+        "ditto",
+        "/Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/old13-mount/Her Flight Deck.app",
+        "/Users/rickymac/Applications/Her Flight Deck Verification OLD13/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "codesign",
+        "--verify",
+        "--strict",
+        "/Users/rickymac/Applications/Her Flight Deck Verification OLD13/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "hdiutil",
+        "detach",
+        "/Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/old13-mount"
+      ],
+      "exit": 0,
+      "stdout": "\"disk4\" ejected.\n",
+      "stderr": "hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.\n"
+    }
+  ],
+  "preservedCurrentProfile": "/Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/preserved-current-profile",
+  "defaultRootAbsentBeforeOldLaunch": true
+}

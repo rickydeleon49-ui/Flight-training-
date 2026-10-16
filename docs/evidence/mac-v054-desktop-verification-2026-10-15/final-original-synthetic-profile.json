@@ -1,0 +1,2839 @@
+{
+  "at": "2026-10-15T20:56:25.430619-07:00",
+  "uid": 501,
+  "inode": 21671262,
+  "tables": {
+    "_sqlx_migrations": {
+      "columns": [
+        "version",
+        "description",
+        "installed_on",
+        "success",
+        "checksum",
+        "execution_time"
+      ],
+      "rows": [
+        [
+          1,
+          "initial_schema",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "93c1db5721e76f0ff078d761e1ae069b36626e920bdb49265d02bc74814f561c7e2b420977d5fc926db9f15db9a95ba9"
+          },
+          1068292
+        ],
+        [
+          10,
+          "debrief_links",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "e46fd0d95b4c0171624cec7266539806abd7fcd08995bdcb2f2eddae3407536add3d00eb0ea1d48f841485e37d8f3677"
+          },
+          755625
+        ],
+        [
+          11,
+          "practice_sessions",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "0a6fa68d41a86a8cbe80373aec85cbfeaf7924dd011cab30cabe8e831ce2b856af4affe4ba62b780437092d408738e1c"
+          },
+          907875
+        ],
+        [
+          12,
+          "card_reviews",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "b237f42428e37f818fa41da4e58a577505f1c0049a4e8e103ac81849aecf808be4a1a5fa535960025770b6c80316da0e"
+          },
+          478083
+        ],
+        [
+          13,
+          "split_source_lineage",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "f126deadc4c31c153cd7dc3ac081a4cebe58bc2dbc260bcd386abc210e0d1fc22707bc7c7d62a73b9d124fdb625df03d"
+          },
+          286791
+        ],
+        [
+          14,
+          "skills_evidence",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "d034e5aec63ee49d6e8fa16235aad5855c57da4f570ecdabc701c260d096d9945f2b9d546ac930adb54c4bd8e2b7fc0e"
+          },
+          805500
+        ],
+        [
+          2,
+          "profile_details",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "c6cc6c4112643ae87a5fdf215872ded1a5ceff38f073322d80afd25c52542bc29085d11d6462aa0a60939a163e450831"
+          },
+          772792
+        ],
+        [
+          3,
+          "personal_note",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "d5dbee28e67edf579db4629eced09c2feacd074bede3c98b254de607f093502e760241c8237d2ae56307012ef93bcdf0"
+          },
+          316459
+        ],
+        [
+          4,
+          "app_metadata",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "e82ef2f34aa05d649802b6f80df89a74a9becd8257ed5a8b91a213207088fd14ec86f134e4856eefad2162dab9b3cedc"
+          },
+          161792
+        ],
+        [
+          5,
+          "flight_log",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "45d523ca5f335fe34a4596e6c34fe59152053340870ff957ecc56ae270d9455d71958ea23918e3005ab42d64b4ac08d0"
+          },
+          1446291
+        ],
+        [
+          6,
+          "pilot_toolkit",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "5f2d9aa61fffcbcf919717132169dbc47e92d87536404c11f746c7f3627776e65f386805875a0c024d1b107baecaa021"
+          },
+          187875
+        ],
+        [
+          7,
+          "ai_study",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "84c78321f2ac121d6488226c8dc71353e0e881874dff728cf52f9dd978d52134125b9bed5a32bede8f23db8439d7a9c6"
+          },
+          130291
+        ],
+        [
+          8,
+          "notes",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "cefb3b37e17d4b79fd2b1d420a9c1c5a14197c49637f2e06b9f05ad62d7a8c043c09440d7fba8ae1ed1a7b8375ec388b"
+          },
+          155167
+        ],
+        [
+          9,
+          "practice_tests",
+          "2026-10-16 02:20:50",
+          1,
+          {
+            "hex": "f505734e62dae5f968df88c7ae9cc6a2b3639410cbb70926e3fb80781a7ed829a1de6123c0e89a859a262148542b4789"
+          },
+          124083
+        ]
+      ]
+    },
+    "ai_study_sets": {
+      "columns": [
+        "source_material_id",
+        "title",
+        "summary",
+        "sections_json",
+        "flashcards_json",
+        "source_notes",
+        "provider",
+        "model",
+        "generated_at",
+        "updated_at"
+      ],
+      "rows": []
+    },
+    "app_metadata": {
+      "columns": [
+        "key",
+        "value"
+      ],
+      "rows": [
+        [
+          "airline_starter_pack",
+          "1"
+        ],
+        [
+          "daily_plan_session",
+          "{\"version\":1,\"date\":\"2026-10-15\",\"timeBudget\":20,\"suggestedIds\":[\"material:9ac3f602-169b-4c90-be5e-5ac6fdc57add\"],\"decisions\":{},\"updatedAt\":\"2026-10-16T02:20:50.170Z\",\"targetCapacity\":1}"
+        ]
+      ]
+    },
+    "card_items": {
+      "columns": [
+        "id",
+        "version_id",
+        "ordinal",
+        "front",
+        "back",
+        "source_page"
+      ],
+      "rows": []
+    },
+    "card_review_events": {
+      "columns": [
+        "id",
+        "item_id",
+        "generation",
+        "rating",
+        "reviewed_at",
+        "scheduler_version",
+        "prior_state_json",
+        "next_state_json"
+      ],
+      "rows": []
+    },
+    "card_review_generations": {
+      "columns": [
+        "source_material_id",
+        "generation"
+      ],
+      "rows": []
+    },
+    "card_review_operations": {
+      "columns": [
+        "operation_id",
+        "action",
+        "source_material_id",
+        "generation",
+        "request_hash",
+        "applied_at",
+        "is_erased",
+        "result_json"
+      ],
+      "rows": []
+    },
+    "card_review_state": {
+      "columns": [
+        "item_id",
+        "source_material_id",
+        "scheduler_version",
+        "step",
+        "due_at",
+        "last_reviewed_at",
+        "reps",
+        "lapses",
+        "suspended",
+        "flag",
+        "revision"
+      ],
+      "rows": []
+    },
+    "card_versions": {
+      "columns": [
+        "id",
+        "source_material_id",
+        "content_hash",
+        "card_count",
+        "provider",
+        "created_at",
+        "first_reviewed_at",
+        "is_active"
+      ],
+      "rows": []
+    },
+    "debrief_operations": {
+      "columns": [
+        "id",
+        "journal_id",
+        "applied_at"
+      ],
+      "rows": []
+    },
+    "event_materials": {
+      "columns": [
+        "event_id",
+        "material_id"
+      ],
+      "rows": []
+    },
+    "event_prep_items": {
+      "columns": [
+        "id",
+        "event_id",
+        "title",
+        "done",
+        "position",
+        "created_at"
+      ],
+      "rows": []
+    },
+    "fund_goals": {
+      "columns": [
+        "id",
+        "title",
+        "target",
+        "active",
+        "created_at",
+        "updated_at"
+      ],
+      "rows": []
+    },
+    "goal_checklist_items": {
+      "columns": [
+        "id",
+        "goal_id",
+        "title",
+        "done",
+        "position",
+        "created_at"
+      ],
+      "rows": [
+        [
+          "04deecb1-2ab4-42b9-94fd-e416f4d4c93f",
+          "c4b34d55-ad55-4740-ad83-3426be7a32c0",
+          "Review the plan with a flight instructor or trusted aviation mentor",
+          0,
+          3,
+          "2026-10-16T02:20:50.130Z"
+        ],
+        [
+          "0e7686c6-5689-4411-8cc2-88f441256a4d",
+          "c906b9ad-facb-448e-b0f2-1817ba4820c6",
+          "Use the current Private Pilot Airman Certification Standards",
+          0,
+          2,
+          "2026-10-16T02:20:50.131Z"
+        ],
+        [
+          "11c8e49e-05cf-485a-8cd7-a3ff8c92c383",
+          "1c55dde9-3bbb-4881-90ba-d38eb7909331",
+          "Plan instrument ground study",
+          0,
+          0,
+          "2026-10-16T02:20:50.132Z"
+        ],
+        [
+          "19ea3310-e6b1-4b2e-a7cf-a1679d351417",
+          "10fafe73-67bb-42b7-931e-839cc7bddea8",
+          "Complete the applicable ATP or airline training event",
+          0,
+          3,
+          "2026-10-16T02:20:50.139Z"
+        ],
+        [
+          "1d6b8eff-ae07-4fcf-ba60-1605572cb9a6",
+          "5528288b-9e28-42b1-86a0-7c84f9d0d686",
+          "Complete the applicable practical-test preparation",
+          0,
+          3,
+          "2026-10-16T02:20:50.136Z"
+        ],
+        [
+          "3fa3a3aa-5a4d-4e73-af86-a7b3e31926b9",
+          "4521fee5-741a-4437-959a-35658200ed15",
+          "Compare CFI, CFII, and MEI training with other experience-building routes",
+          0,
+          0,
+          "2026-10-16T02:20:50.137Z"
+        ],
+        [
+          "4335010b-fbd1-4e25-8a83-e59ff0981232",
+          "c906b9ad-facb-448e-b0f2-1817ba4820c6",
+          "Complete instructor-recommended checkride preparation",
+          0,
+          3,
+          "2026-10-16T02:20:50.132Z"
+        ],
+        [
+          "43e654de-24a4-4931-afe9-a9b38b293dbf",
+          "4521fee5-741a-4437-959a-35658200ed15",
+          "Estimate training cost, pay, schedule, and experience quality",
+          0,
+          2,
+          "2026-10-16T02:20:50.137Z"
+        ],
+        [
+          "449256ed-9fdf-4bae-ac3e-b1c715d3b9e8",
+          "1c55dde9-3bbb-4881-90ba-d38eb7909331",
+          "Use the current Instrument Rating Airman Certification Standards",
+          0,
+          2,
+          "2026-10-16T02:20:50.133Z"
+        ],
+        [
+          "57f00bcc-9e4c-4227-89c4-5c2d8aabc902",
+          "8bf57768-86d7-4b36-ba15-f13998cbcb36",
+          "Keep a clean record of employment, training, and checkride history",
+          0,
+          3,
+          "2026-10-16T02:20:50.138Z"
+        ],
+        [
+          "589d8ea0-f923-4d99-b5ab-9b2e3e32e707",
+          "5528288b-9e28-42b1-86a0-7c84f9d0d686",
+          "Review aircraft systems and performance with an instructor",
+          0,
+          1,
+          "2026-10-16T02:20:50.136Z"
+        ],
+        [
+          "59c62243-2782-43ac-ad10-b729ac158cf1",
+          "9bd45bf4-dbe2-4bac-bbb1-ca7aab7d8488",
+          "Create an efficient experience-building plan with an instructor",
+          0,
+          1,
+          "2026-10-16T02:20:50.134Z"
+        ],
+        [
+          "5e3a8a83-0257-4d5d-884f-19bae436cf7e",
+          "c906b9ad-facb-448e-b0f2-1817ba4820c6",
+          "Create a ground-school study plan",
+          0,
+          0,
+          "2026-10-16T02:20:50.131Z"
+        ],
+        [
+          "6e6977ca-e9a8-4813-b785-dbd914e12e20",
+          "e4f22893-e5b5-494b-9034-493ab7938a8a",
+          "Build a master r\u00e9sum\u00e9 and complete application history",
+          0,
+          0,
+          "2026-10-16T02:20:50.140Z"
+        ],
+        [
+          "7b093233-f681-41c0-8c6a-31c689ecafec",
+          "10fafe73-67bb-42b7-931e-839cc7bddea8",
+          "Verify current ATP-CTP and knowledge-test requirements",
+          0,
+          1,
+          "2026-10-16T02:20:50.139Z"
+        ],
+        [
+          "8190c2a4-ab43-4f9a-a914-34379f5b73aa",
+          "4521fee5-741a-4437-959a-35658200ed15",
+          "Talk with pilots currently doing the work",
+          0,
+          1,
+          "2026-10-16T02:20:50.137Z"
+        ],
+        [
+          "876c6f26-66cd-44b9-8a86-94b88e1afb33",
+          "c4b34d55-ad55-4740-ad83-3426be7a32c0",
+          "Choose a realistic lesson schedule and training budget",
+          0,
+          2,
+          "2026-10-16T02:20:50.130Z"
+        ],
+        [
+          "8787e0d9-0648-43b6-b490-cdb36967c861",
+          "8bf57768-86d7-4b36-ba15-f13998cbcb36",
+          "Maintain medical, certificate, and endorsement records",
+          0,
+          2,
+          "2026-10-16T02:20:50.138Z"
+        ],
+        [
+          "94a36df6-f6a0-483d-9690-773ff9569118",
+          "8bf57768-86d7-4b36-ba15-f13998cbcb36",
+          "Keep a complete and accurate pilot logbook",
+          0,
+          0,
+          "2026-10-16T02:20:50.138Z"
+        ],
+        [
+          "94bfe6e3-fee9-40b6-a897-b640274a6f15",
+          "e4f22893-e5b5-494b-9034-493ab7938a8a",
+          "Prepare technical, human-resources, and scenario interview practice",
+          0,
+          2,
+          "2026-10-16T02:20:50.140Z"
+        ],
+        [
+          "9e6a702c-8952-4dd6-8a36-123f9983923c",
+          "c4b34d55-ad55-4740-ad83-3426be7a32c0",
+          "Compare flight schools and Part 61 / Part 141 training routes",
+          0,
+          0,
+          "2026-10-16T02:20:50.130Z"
+        ],
+        [
+          "a6006b8a-d6e2-4e07-84d1-dc4c42b53c23",
+          "c906b9ad-facb-448e-b0f2-1817ba4820c6",
+          "Track instructor endorsements and required experience",
+          0,
+          1,
+          "2026-10-16T02:20:50.131Z"
+        ],
+        [
+          "ab43b225-c22a-4b5f-9431-3d7537e3baa4",
+          "9bd45bf4-dbe2-4bac-bbb1-ca7aab7d8488",
+          "Track commercial maneuvers and areas of operation",
+          0,
+          2,
+          "2026-10-16T02:20:50.134Z"
+        ],
+        [
+          "b84f8eab-a69a-44a2-a0b2-371a17d27cfc",
+          "c4b34d55-ad55-4740-ad83-3426be7a32c0",
+          "Discuss long-term medical certification with an Aviation Medical Examiner",
+          0,
+          1,
+          "2026-10-16T02:20:50.130Z"
+        ],
+        [
+          "bbf3faa3-42c1-4e90-ae87-187e17041d1e",
+          "e4f22893-e5b5-494b-9034-493ab7938a8a",
+          "Research each airline's current published qualifications",
+          0,
+          3,
+          "2026-10-16T02:20:50.141Z"
+        ],
+        [
+          "bd1633ef-3353-46d3-92e2-9975b59b608f",
+          "4521fee5-741a-4437-959a-35658200ed15",
+          "Choose the next certificate, rating, or job target",
+          0,
+          3,
+          "2026-10-16T02:20:50.137Z"
+        ],
+        [
+          "be26de11-27e8-4497-a051-187a5153deb6",
+          "9bd45bf4-dbe2-4bac-bbb1-ca7aab7d8488",
+          "Complete instructor-recommended checkride preparation",
+          0,
+          3,
+          "2026-10-16T02:20:50.135Z"
+        ],
+        [
+          "c31e4d71-0e46-4620-91d1-aef000a912bb",
+          "9bd45bf4-dbe2-4bac-bbb1-ca7aab7d8488",
+          "Review the current commercial eligibility and experience requirements",
+          0,
+          0,
+          "2026-10-16T02:20:50.133Z"
+        ],
+        [
+          "c8b44264-cea5-4f44-bbdd-4e70065a686d",
+          "8bf57768-86d7-4b36-ba15-f13998cbcb36",
+          "Review ATP eligibility progress at regular intervals",
+          0,
+          1,
+          "2026-10-16T02:20:50.138Z"
+        ],
+        [
+          "cd491011-0e55-4bb2-a3a3-e097c17a478e",
+          "1c55dde9-3bbb-4881-90ba-d38eb7909331",
+          "Complete instructor-recommended checkride preparation",
+          0,
+          3,
+          "2026-10-16T02:20:50.133Z"
+        ],
+        [
+          "cd55df0e-a71d-464a-af9d-607096b7562e",
+          "5528288b-9e28-42b1-86a0-7c84f9d0d686",
+          "Track multiengine experience carefully",
+          0,
+          2,
+          "2026-10-16T02:20:50.136Z"
+        ],
+        [
+          "d3dbbae7-8060-4ef9-8880-d96b660dde5a",
+          "10fafe73-67bb-42b7-931e-839cc7bddea8",
+          "Organize logbooks and qualification records for review",
+          0,
+          2,
+          "2026-10-16T02:20:50.139Z"
+        ],
+        [
+          "d59b9dde-652d-49f4-8800-28c17e2f53d3",
+          "10fafe73-67bb-42b7-931e-839cc7bddea8",
+          "Confirm standard or restricted-privileges ATP eligibility",
+          0,
+          0,
+          "2026-10-16T02:20:50.139Z"
+        ],
+        [
+          "e2e1791d-a33c-4906-b626-1fdf12ddcc93",
+          "5528288b-9e28-42b1-86a0-7c84f9d0d686",
+          "Choose when multiengine training fits the overall plan",
+          0,
+          0,
+          "2026-10-16T02:20:50.135Z"
+        ],
+        [
+          "f29df2aa-aaf4-495e-be2a-42228419e5ec",
+          "e4f22893-e5b5-494b-9034-493ab7938a8a",
+          "Audit logbooks, certificates, medical records, and training records",
+          0,
+          1,
+          "2026-10-16T02:20:50.140Z"
+        ],
+        [
+          "fc5aea10-b99d-4754-b8b2-4d35f27a14d2",
+          "1c55dde9-3bbb-4881-90ba-d38eb7909331",
+          "Track instrument training and experience",
+          0,
+          1,
+          "2026-10-16T02:20:50.132Z"
+        ]
+      ]
+    },
+    "goals": {
+      "columns": [
+        "id",
+        "milestone_id",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "target_date",
+        "notes",
+        "confidence",
+        "created_at",
+        "updated_at",
+        "completed_at"
+      ],
+      "rows": [
+        [
+          "10fafe73-67bb-42b7-931e-839cc7bddea8",
+          "dcb9337e-1f64-4150-85ae-ced783244e6e",
+          "Complete the applicable ATP pathway",
+          "Confirm eligibility, ATP-CTP applicability, testing, and practical-test steps from current FAA sources.",
+          "not_started",
+          "important",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.139Z",
+          "2026-10-16T02:20:50.139Z",
+          null
+        ],
+        [
+          "1c55dde9-3bbb-4881-90ba-d38eb7909331",
+          "5674e2d4-f823-4cc6-8730-12f67ac6fa5f",
+          "Add the Instrument-Airplane Rating",
+          "Follow the current FAA requirements and an instructor-approved training plan.",
+          "not_started",
+          "important",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.132Z",
+          "2026-10-16T02:20:50.132Z",
+          null
+        ],
+        [
+          "4521fee5-741a-4437-959a-35658200ed15",
+          "6576915f-b306-4f24-b6c8-ef0e16cf427d",
+          "Select and prepare for a professional flying path",
+          "Compare instructor certificates and other lawful experience-building opportunities.",
+          "not_started",
+          "important",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.137Z",
+          "2026-10-16T02:20:50.137Z",
+          null
+        ],
+        [
+          "5528288b-9e28-42b1-86a0-7c84f9d0d686",
+          "6ff36f57-d077-4c96-a9c6-70386087e652",
+          "Complete the planned Multi-Engine training",
+          "Choose timing and course structure with a qualified instructor and career mentor.",
+          "not_started",
+          "important",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.135Z",
+          "2026-10-16T02:20:50.135Z",
+          null
+        ],
+        [
+          "8bf57768-86d7-4b36-ba15-f13998cbcb36",
+          "4d32d9ea-7430-4dff-8d17-6366dedc14a9",
+          "Track progress toward ATP eligibility",
+          "Use current regulations and trusted mentors to verify which experience applies to the intended ATP route.",
+          "not_started",
+          "important",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.138Z",
+          "2026-10-16T02:20:50.138Z",
+          null
+        ],
+        [
+          "9bd45bf4-dbe2-4bac-bbb1-ca7aab7d8488",
+          "f7c8a094-40e1-4cde-8f4b-7cda4619a6ea",
+          "Earn the Commercial Pilot Certificate",
+          "Build the required experience and prepare with the current Commercial Pilot ACS.",
+          "not_started",
+          "important",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.133Z",
+          "2026-10-16T02:20:50.133Z",
+          null
+        ],
+        [
+          "c4b34d55-ad55-4740-ad83-3426be7a32c0",
+          "f7bc6874-3fe9-47ea-a547-c80cafdcc3be",
+          "Create an airline-career training plan",
+          "Turn the long journey into a route that fits your school, budget, schedule, and life.",
+          "working_on",
+          "next_up",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.129Z",
+          "2026-10-16T02:20:50.129Z",
+          null
+        ],
+        [
+          "c906b9ad-facb-448e-b0f2-1817ba4820c6",
+          "d45db430-91e0-4099-aa82-4a29308ccec1",
+          "Earn the Private Pilot Certificate",
+          "Train to proficiency and meet the current knowledge, experience, endorsement, and practical-test requirements.",
+          "not_started",
+          "important",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.131Z",
+          "2026-10-16T02:20:50.131Z",
+          null
+        ],
+        [
+          "e4f22893-e5b5-494b-9034-493ab7938a8a",
+          "44af5b50-37e8-4563-907b-f450ea45f87a",
+          "Become ready for an airline hiring process",
+          "Research each employer's current qualifications; airline hiring minimums are not all the same.",
+          "not_started",
+          "later",
+          null,
+          "",
+          null,
+          "2026-10-16T02:20:50.140Z",
+          "2026-10-16T02:20:50.140Z",
+          null
+        ]
+      ]
+    },
+    "journal_entries": {
+      "columns": [
+        "id",
+        "event_id",
+        "date",
+        "title",
+        "mission",
+        "practiced",
+        "went_well",
+        "was_difficult",
+        "instructor_feedback",
+        "questions_for_next_time",
+        "confidence",
+        "goal_id",
+        "created_at",
+        "updated_at",
+        "aircraft_type",
+        "aircraft_id",
+        "departure_airport",
+        "arrival_airport",
+        "instructor_name",
+        "total_time",
+        "dual_received",
+        "solo_time",
+        "pic_time",
+        "cross_country_time",
+        "night_time",
+        "actual_instrument_time",
+        "simulated_instrument_time",
+        "day_landings",
+        "night_landings"
+      ],
+      "rows": []
+    },
+    "journal_materials": {
+      "columns": [
+        "journal_id",
+        "material_id"
+      ],
+      "rows": []
+    },
+    "material_split_lineage": {
+      "columns": [
+        "material_id",
+        "parent_material_id",
+        "root_material_id",
+        "source_page_start",
+        "source_page_end",
+        "parent_page_start",
+        "parent_page_end",
+        "child_page_count",
+        "source_file_name",
+        "source_title",
+        "source_content_sha256",
+        "source_total_pages",
+        "parent_file_name",
+        "parent_title",
+        "parent_content_sha256",
+        "parent_total_pages",
+        "nested_level",
+        "created_at"
+      ],
+      "rows": [
+        [
+          "67f19546-255f-4eb6-bf68-e231db7fb8b5",
+          null,
+          "10167dfd-355d-47c1-9100-675454d5ab3c",
+          2,
+          4,
+          null,
+          null,
+          3,
+          "synthetic-small-checklist.pdf",
+          "synthetic-small-checklist",
+          "f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134",
+          10,
+          null,
+          null,
+          null,
+          null,
+          1,
+          "2026-10-16T02:26:19.480Z"
+        ]
+      ]
+    },
+    "material_tags": {
+      "columns": [
+        "material_id",
+        "tag_id"
+      ],
+      "rows": [
+        [
+          "1992a43f-216e-4edb-a196-eabcef56e55a",
+          "4807c027-ade7-d320-41a9-b2c39aa43b01"
+        ],
+        [
+          "1992a43f-216e-4edb-a196-eabcef56e55a",
+          "9cccd8c8-5b1e-954a-b6de-529708a492e8"
+        ],
+        [
+          "2080e026-338a-47fa-992b-09d329648631",
+          "4807c027-ade7-d320-41a9-b2c39aa43b01"
+        ],
+        [
+          "2080e026-338a-47fa-992b-09d329648631",
+          "eb6a97b1-774d-c836-e1cf-41f898aa31ad"
+        ],
+        [
+          "51d9c9f3-2f68-4e22-a576-7b723716aeb8",
+          "4807c027-ade7-d320-41a9-b2c39aa43b01"
+        ],
+        [
+          "51d9c9f3-2f68-4e22-a576-7b723716aeb8",
+          "c109c75a-e417-3d4e-31fa-6985aa98d947"
+        ],
+        [
+          "970566d5-b134-4882-a506-00926cd8e200",
+          "0817248d-7ba4-d56b-fe59-83f547749a2c"
+        ],
+        [
+          "970566d5-b134-4882-a506-00926cd8e200",
+          "4807c027-ade7-d320-41a9-b2c39aa43b01"
+        ],
+        [
+          "9ac3f602-169b-4c90-be5e-5ac6fdc57add",
+          "4807c027-ade7-d320-41a9-b2c39aa43b01"
+        ],
+        [
+          "9ac3f602-169b-4c90-be5e-5ac6fdc57add",
+          "da4a7b86-13ca-4a79-6570-de5382861608"
+        ],
+        [
+          "dd590b49-9abf-4621-9866-42a44f642823",
+          "153fa5f4-985d-a942-0671-7ccc3574a9b7"
+        ],
+        [
+          "dd590b49-9abf-4621-9866-42a44f642823",
+          "4807c027-ade7-d320-41a9-b2c39aa43b01"
+        ],
+        [
+          "e872e14a-868a-402a-a67e-e751861ca30e",
+          "4807c027-ade7-d320-41a9-b2c39aa43b01"
+        ],
+        [
+          "e872e14a-868a-402a-a67e-e751861ca30e",
+          "73c0e505-f0dd-2605-8cbd-fa87195c3730"
+        ],
+        [
+          "e872e14a-868a-402a-a67e-e751861ca30e",
+          "9597c294-b8c0-5778-f020-5f681b4dc0da"
+        ]
+      ]
+    },
+    "milestones": {
+      "columns": [
+        "id",
+        "title",
+        "description",
+        "position",
+        "status",
+        "target_date",
+        "created_at",
+        "updated_at"
+      ],
+      "rows": [
+        [
+          "44af5b50-37e8-4563-907b-f450ea45f87a",
+          "Airline Applications and Type Rating",
+          "Prepare a professional application, interview record, and airline-training mindset.",
+          8,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.140Z",
+          "2026-10-16T02:20:50.140Z"
+        ],
+        [
+          "4d32d9ea-7430-4dff-8d17-6366dedc14a9",
+          "Build Airline-Qualifying Experience",
+          "Build quality experience while keeping accurate records and strong professional habits.",
+          6,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.137Z",
+          "2026-10-16T02:20:50.137Z"
+        ],
+        [
+          "5674e2d4-f823-4cc6-8730-12f67ac6fa5f",
+          "Instrument Rating",
+          "Develop instrument procedures, weather judgment, and precise aircraft control.",
+          2,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.132Z",
+          "2026-10-16T02:20:50.132Z"
+        ],
+        [
+          "6576915f-b306-4f24-b6c8-ef0e16cf427d",
+          "Choose a Time-Building Path",
+          "Flight instructing is common, but it is not the only route; choose deliberately.",
+          5,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.136Z",
+          "2026-10-16T02:20:50.136Z"
+        ],
+        [
+          "6ff36f57-d077-4c96-a9c6-70386087e652",
+          "Multi-Engine Training",
+          "Add multiengine knowledge and privileges appropriate to the planned career route.",
+          4,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.135Z",
+          "2026-10-16T02:20:50.135Z"
+        ],
+        [
+          "d45db430-91e0-4099-aa82-4a29308ccec1",
+          "Private Pilot Certificate",
+          "Build the knowledge, judgment, and flying foundation for every stage that follows.",
+          1,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.131Z",
+          "2026-10-16T02:20:50.131Z"
+        ],
+        [
+          "dcb9337e-1f64-4150-85ae-ced783244e6e",
+          "ATP-CTP and ATP Certificate",
+          "Prepare for the certification stage used for airline transport operations.",
+          7,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.139Z",
+          "2026-10-16T02:20:50.139Z"
+        ],
+        [
+          "f7bc6874-3fe9-47ea-a547-c80cafdcc3be",
+          "Build Your Training Foundation",
+          "Choose a training route, protect your long-term options, and make a sustainable plan.",
+          0,
+          "in_progress",
+          null,
+          "2026-10-16T02:20:50.129Z",
+          "2026-10-16T02:20:50.129Z"
+        ],
+        [
+          "f7c8a094-40e1-4cde-8f4b-7cda4619a6ea",
+          "Commercial Pilot Certificate",
+          "Raise knowledge, judgment, and aircraft control to commercial-pilot standards.",
+          3,
+          "not_started",
+          null,
+          "2026-10-16T02:20:50.133Z",
+          "2026-10-16T02:20:50.133Z"
+        ]
+      ]
+    },
+    "next_actions": {
+      "columns": [
+        "id",
+        "title",
+        "description",
+        "category",
+        "priority",
+        "status",
+        "due_date",
+        "estimated_minutes",
+        "related_type",
+        "related_id",
+        "created_at",
+        "updated_at",
+        "completed_at",
+        "material_id",
+        "source_material_id"
+      ],
+      "rows": []
+    },
+    "notes": {
+      "columns": [
+        "id",
+        "title",
+        "body",
+        "pinned",
+        "created_at",
+        "updated_at"
+      ],
+      "rows": [
+        [
+          "10794987-7fd6-44bb-9058-4b7ffbf0bb1a",
+          "Synthetic native persistence",
+          "Disposable desktop verification. Native save, restart, backup and restore.",
+          0,
+          "2026-10-16T02:22:02.098Z",
+          "2026-10-16T02:22:02.098Z"
+        ]
+      ]
+    },
+    "pilot_toolkit": {
+      "columns": [
+        "id",
+        "state_json",
+        "updated_at"
+      ],
+      "rows": []
+    },
+    "practice_attempts": {
+      "columns": [
+        "id",
+        "version_id",
+        "source_material_id",
+        "source_material_title",
+        "started_at",
+        "completed_at",
+        "status",
+        "revision",
+        "total_questions",
+        "answered_count",
+        "correct_count",
+        "incorrect_count",
+        "dont_know_count",
+        "score_percent"
+      ],
+      "rows": []
+    },
+    "practice_responses": {
+      "columns": [
+        "id",
+        "attempt_id",
+        "item_id",
+        "selected_index",
+        "is_dont_know",
+        "is_correct",
+        "answered_at"
+      ],
+      "rows": []
+    },
+    "practice_session_operations": {
+      "columns": [
+        "operation_id",
+        "action",
+        "request_hash",
+        "applied_at",
+        "result_json",
+        "history_key",
+        "attempt_id",
+        "is_erased"
+      ],
+      "rows": []
+    },
+    "practice_test_items": {
+      "columns": [
+        "id",
+        "version_id",
+        "ordinal",
+        "question_text",
+        "options_json",
+        "correct_index",
+        "explanation",
+        "source_page"
+      ],
+      "rows": []
+    },
+    "practice_test_versions": {
+      "columns": [
+        "id",
+        "source_material_id",
+        "history_key",
+        "source_material_title",
+        "version_number",
+        "provider",
+        "model",
+        "title",
+        "content_hash",
+        "created_at",
+        "is_active"
+      ],
+      "rows": []
+    },
+    "practice_tests": {
+      "columns": [
+        "source_material_id",
+        "title",
+        "questions_json",
+        "provider",
+        "model",
+        "generated_at",
+        "updated_at",
+        "legacy_migrated_at",
+        "legacy_error"
+      ],
+      "rows": []
+    },
+    "questions": {
+      "columns": [
+        "id",
+        "text",
+        "topic",
+        "event_id",
+        "material_id",
+        "journal_id",
+        "status",
+        "answer",
+        "created_at",
+        "updated_at",
+        "answered_at",
+        "source_journal_id",
+        "source_material_id",
+        "source_event_id"
+      ],
+      "rows": []
+    },
+    "schedule_events": {
+      "columns": [
+        "id",
+        "title",
+        "event_type",
+        "date",
+        "start_time",
+        "end_time",
+        "location",
+        "instructor",
+        "notes",
+        "goal_id",
+        "estimated_cost",
+        "actual_cost",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "rows": []
+    },
+    "settings": {
+      "columns": [
+        "id",
+        "pilot_name",
+        "certificate_goal",
+        "current_focus",
+        "current_milestone_id",
+        "created_at",
+        "updated_at",
+        "flight_school",
+        "instructor_name",
+        "home_airport",
+        "aircraft_type",
+        "training_started_on",
+        "medical_expiry",
+        "accent_color",
+        "why_note",
+        "photo"
+      ],
+      "rows": [
+        [
+          "profile",
+          "Synthetic Mac Verification Pilot",
+          "Airline Pilot",
+          "Build a strong training foundation",
+          "f7bc6874-3fe9-47ea-a547-c80cafdcc3be",
+          "2026-10-16T02:20:50.146Z",
+          "2026-10-16T02:21:47.842Z",
+          "",
+          "",
+          "",
+          "",
+          null,
+          null,
+          "berry",
+          "",
+          null
+        ]
+      ]
+    },
+    "skill_catalog_entries": {
+      "columns": [
+        "id",
+        "origin",
+        "catalog_version",
+        "label",
+        "description",
+        "topic",
+        "status",
+        "revision",
+        "created_at",
+        "updated_at",
+        "retired_at"
+      ],
+      "rows": [
+        [
+          "builtin.checklist_use",
+          "builtin",
+          1,
+          "Using checklists",
+          "Following the checklist at each phase of flight.",
+          "general",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.crosswind_landing",
+          "builtin",
+          1,
+          "Crosswind landing",
+          "Holding centerline and correcting for wind.",
+          "landings",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.emergency_approach",
+          "builtin",
+          1,
+          "Emergency approach and landing",
+          "Best glide, field selection and checklist with no engine power.",
+          "emergency_procedures",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.go_around",
+          "builtin",
+          1,
+          "Go-around",
+          "Deciding early and flying the go-around.",
+          "landings",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.ground_reference",
+          "builtin",
+          1,
+          "Ground reference maneuvers",
+          "Correcting for wind relative to a ground track.",
+          "navigation",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.normal_landing",
+          "builtin",
+          1,
+          "Normal approach and landing",
+          "Stabilized approach, flare and touchdown.",
+          "landings",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.normal_takeoff",
+          "builtin",
+          1,
+          "Normal takeoff and climb",
+          "Takeoff roll, rotation and initial climb.",
+          "performance",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.preflight_inspection",
+          "builtin",
+          1,
+          "Preflight inspection",
+          "Walking around and checking the airplane before flight.",
+          "aircraft_systems",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.radio_communications",
+          "builtin",
+          1,
+          "Radio communications",
+          "Talking with ATC and other traffic clearly.",
+          "communications",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.slow_flight",
+          "builtin",
+          1,
+          "Slow flight",
+          "Controlling the airplane near the low end of its speed range.",
+          "aerodynamics",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.stalls",
+          "builtin",
+          1,
+          "Stalls and recovery",
+          "Recognizing a stall and recovering promptly.",
+          "aerodynamics",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.steep_turns",
+          "builtin",
+          1,
+          "Steep turns",
+          "Holding altitude and bank through a steep turn.",
+          "aerodynamics",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.taxiing",
+          "builtin",
+          1,
+          "Taxiing",
+          "Moving safely on the ground, including wind and signage.",
+          "airports",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.traffic_pattern",
+          "builtin",
+          1,
+          "Traffic pattern",
+          "Flying the pattern: entry, spacing, altitude and turns.",
+          "airports",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ],
+        [
+          "builtin.weather_decisions",
+          "builtin",
+          1,
+          "Weather decisions",
+          "Gathering weather and deciding whether and how to go.",
+          "weather",
+          "active",
+          1,
+          "2026-10-10T00:00:00.000Z",
+          "2026-10-10T00:00:00.000Z",
+          null
+        ]
+      ]
+    },
+    "skill_catalog_revisions": {
+      "columns": [
+        "skill_id",
+        "revision",
+        "label",
+        "description",
+        "topic",
+        "status",
+        "catalog_version",
+        "changed_by",
+        "operation_id",
+        "changed_at"
+      ],
+      "rows": [
+        [
+          "builtin.checklist_use",
+          1,
+          "Using checklists",
+          "Following the checklist at each phase of flight.",
+          "general",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.crosswind_landing",
+          1,
+          "Crosswind landing",
+          "Holding centerline and correcting for wind.",
+          "landings",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.emergency_approach",
+          1,
+          "Emergency approach and landing",
+          "Best glide, field selection and checklist with no engine power.",
+          "emergency_procedures",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.go_around",
+          1,
+          "Go-around",
+          "Deciding early and flying the go-around.",
+          "landings",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.ground_reference",
+          1,
+          "Ground reference maneuvers",
+          "Correcting for wind relative to a ground track.",
+          "navigation",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.normal_landing",
+          1,
+          "Normal approach and landing",
+          "Stabilized approach, flare and touchdown.",
+          "landings",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.normal_takeoff",
+          1,
+          "Normal takeoff and climb",
+          "Takeoff roll, rotation and initial climb.",
+          "performance",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.preflight_inspection",
+          1,
+          "Preflight inspection",
+          "Walking around and checking the airplane before flight.",
+          "aircraft_systems",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.radio_communications",
+          1,
+          "Radio communications",
+          "Talking with ATC and other traffic clearly.",
+          "communications",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.slow_flight",
+          1,
+          "Slow flight",
+          "Controlling the airplane near the low end of its speed range.",
+          "aerodynamics",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.stalls",
+          1,
+          "Stalls and recovery",
+          "Recognizing a stall and recovering promptly.",
+          "aerodynamics",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.steep_turns",
+          1,
+          "Steep turns",
+          "Holding altitude and bank through a steep turn.",
+          "aerodynamics",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.taxiing",
+          1,
+          "Taxiing",
+          "Moving safely on the ground, including wind and signage.",
+          "airports",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.traffic_pattern",
+          1,
+          "Traffic pattern",
+          "Flying the pattern: entry, spacing, altitude and turns.",
+          "airports",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ],
+        [
+          "builtin.weather_decisions",
+          1,
+          "Weather decisions",
+          "Gathering weather and deciding whether and how to go.",
+          "weather",
+          "active",
+          1,
+          "catalog",
+          null,
+          "2026-10-10T00:00:00.000Z"
+        ]
+      ]
+    },
+    "skill_evidence_operations": {
+      "columns": [
+        "operation_id",
+        "action",
+        "request_hash",
+        "subject_id",
+        "applied_at",
+        "result_json",
+        "is_erased"
+      ],
+      "rows": []
+    },
+    "skill_observation_revisions": {
+      "columns": [
+        "observation_id",
+        "revision",
+        "change_kind",
+        "wording",
+        "observed_on",
+        "attribution",
+        "instructor_name",
+        "linked_action_id",
+        "linked_action_title",
+        "addressed_at",
+        "operation_id",
+        "recorded_at"
+      ],
+      "rows": []
+    },
+    "skill_observations": {
+      "columns": [
+        "id",
+        "skill_id",
+        "skill_label_snapshot",
+        "journal_id",
+        "source_journal_id",
+        "source_journal_date",
+        "source_journal_title",
+        "source_field",
+        "source_text_sha256",
+        "attribution",
+        "instructor_name",
+        "wording",
+        "observed_on",
+        "revision",
+        "action_id",
+        "linked_action_id",
+        "linked_action_title",
+        "addressed_at",
+        "created_at",
+        "updated_at"
+      ],
+      "rows": []
+    },
+    "skill_self_assessments": {
+      "columns": [
+        "id",
+        "skill_id",
+        "kind",
+        "status",
+        "confidence",
+        "sequence",
+        "operation_id",
+        "set_at"
+      ],
+      "rows": []
+    },
+    "split_operation_log": {
+      "columns": [
+        "operation_id",
+        "source_material_id",
+        "receipt_canonical_json",
+        "receipt_hash",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "rows": [
+        [
+          "1dc00a77b08bac723ac35b9dc15503271e5d8b8f9012393a6e2398b9a73bb3fe",
+          "10167dfd-355d-47c1-9100-675454d5ab3c",
+          "{\"isNested\":false,\"nestedLevel\":1,\"parentSnapshot\":null,\"plan\":[{\"canonicalRootEnd\":4,\"canonicalRootStart\":2,\"childPageCount\":3,\"filePath\":\"67f19546-255f-4eb6-bf68-e231db7fb8b5-Synthetic Native Chapter 2-4.pdf\",\"fileSize\":1184,\"id\":\"67f19546-255f-4eb6-bf68-e231db7fb8b5\",\"originalFileName\":\"Synthetic Native Chapter 2-4.pdf\",\"selection\":{\"end\":4,\"start\":2}}],\"rootContentSha256\":\"f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134\",\"rootFileName\":\"synthetic-small-checklist.pdf\",\"rootMaterialId\":\"10167dfd-355d-47c1-9100-675454d5ab3c\",\"rootTitle\":\"synthetic-small-checklist\",\"rootTotalPages\":10,\"sourceContentSha256\":\"f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134\",\"sourceFilePath\":\"10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf\",\"sourceFileSize\":3360,\"sourceMaterialId\":\"10167dfd-355d-47c1-9100-675454d5ab3c\",\"sourceTotalPages\":10}",
+          "1dc00a77b08bac723ac35b9dc15503271e5d8b8f9012393a6e2398b9a73bb3fe",
+          "committed",
+          "2026-10-16T02:26:19.478Z",
+          "2026-10-16T02:26:19.480Z"
+        ]
+      ]
+    },
+    "study_materials": {
+      "columns": [
+        "id",
+        "title",
+        "material_type",
+        "topic",
+        "review_status",
+        "priority",
+        "goal_id",
+        "event_id",
+        "notes",
+        "file_path",
+        "original_file_name",
+        "file_size",
+        "created_at",
+        "updated_at",
+        "last_reviewed_at"
+      ],
+      "rows": [
+        [
+          "10167dfd-355d-47c1-9100-675454d5ab3c",
+          "synthetic-small-checklist",
+          "study_guide",
+          "general",
+          "needs_review",
+          "later",
+          null,
+          null,
+          "",
+          "10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf",
+          "synthetic-small-checklist.pdf",
+          3360,
+          "2026-10-16T02:24:40.049Z",
+          "2026-10-16T02:24:40.049Z",
+          null
+        ],
+        [
+          "1992a43f-216e-4edb-a196-eabcef56e55a",
+          "Airline Pilot Pathway Overview",
+          "study_guide",
+          "general",
+          "reference_only",
+          "next_up",
+          null,
+          null,
+          "A common U.S. pathway is: training foundation \u2192 Private Pilot \u2192 Instrument Rating \u2192 Commercial Pilot \u2192 multiengine training \u2192 a lawful time-building route \u2192 ATP eligibility and ATP-CTP when applicable \u2192 airline selection and type-specific training. This is a planning map, not a promise that every pilot follows the same route. Review it with instructors and mentors, and verify current FAA and employer requirements before making decisions.",
+          null,
+          null,
+          null,
+          "2026-10-16T02:20:50.141Z",
+          "2026-10-16T02:20:50.141Z",
+          null
+        ],
+        [
+          "2080e026-338a-47fa-992b-09d329648631",
+          "Career Mentor Check-In",
+          "worksheet",
+          "general",
+          "reference_only",
+          "later",
+          null,
+          null,
+          "Revisit every few months:\n\u2022 Is the current training pace sustainable?\n\u2022 Which next certificate, rating, or job best supports the long-term goal?\n\u2022 Are there gaps in knowledge, judgment, professionalism, or recordkeeping?\n\u2022 Is the medical and financial plan still realistic?\n\u2022 What hiring assumptions need to be checked against current employer information?\n\u2022 Which decisions are reversible, and which deserve a second opinion?",
+          null,
+          null,
+          null,
+          "2026-10-16T02:20:50.146Z",
+          "2026-10-16T02:20:50.146Z",
+          null
+        ],
+        [
+          "51d9c9f3-2f68-4e22-a576-7b723716aeb8",
+          "Before Each Lesson",
+          "checklist",
+          "general",
+          "reference_only",
+          "important",
+          null,
+          null,
+          "Personal preparation prompt:\n\u2022 Confirm the lesson time, location, instructor, and school instructions.\n\u2022 Review the assigned material and write down questions.\n\u2022 Bring the documents and equipment your instructor requires.\n\u2022 Check sleep, food, hydration, medication, stress, and readiness honestly.\n\u2022 Review weather and aircraft information only within your current training and instructor guidance.\n\u2022 Know the lesson objective and what success should look like.\n\nThis does not replace an instructor, school checklist, preflight inspection, POH/AFM, or regulation.",
+          null,
+          null,
+          null,
+          "2026-10-16T02:20:50.143Z",
+          "2026-10-16T02:20:50.143Z",
+          null
+        ],
+        [
+          "67f19546-255f-4eb6-bf68-e231db7fb8b5",
+          "Synthetic Native Chapter 2-4",
+          "study_guide",
+          "general",
+          "needs_review",
+          "later",
+          null,
+          null,
+          "Pages 2\u20134 of synthetic-small-checklist.",
+          "67f19546-255f-4eb6-bf68-e231db7fb8b5-Synthetic Native Chapter 2-4.pdf",
+          "Synthetic Native Chapter 2-4.pdf",
+          1184,
+          "2026-10-16T02:26:19.480Z",
+          "2026-10-16T03:56:14.075Z",
+          "2026-10-16T03:56:14.075Z"
+        ],
+        [
+          "970566d5-b134-4882-a506-00926cd8e200",
+          "After Each Flight \u2014 Debrief Prompts",
+          "worksheet",
+          "general",
+          "reference_only",
+          "important",
+          null,
+          null,
+          "Capture the lesson while it is fresh:\n\u2022 What was today's mission?\n\u2022 What did we practice?\n\u2022 What went well, and why?\n\u2022 What was difficult, and when did it begin?\n\u2022 What exact feedback did the instructor give?\n\u2022 What should I review before the next lesson?\n\u2022 What question should I ask next time?\n\u2022 What is the single best next action?\n\nUse the Flight Log & Journal for the personal answers.",
+          null,
+          null,
+          null,
+          "2026-10-16T02:20:50.143Z",
+          "2026-10-16T02:20:50.143Z",
+          null
+        ],
+        [
+          "9ac3f602-169b-4c90-be5e-5ac6fdc57add",
+          "Questions for a Flight School",
+          "worksheet",
+          "general",
+          "needs_review",
+          "next_up",
+          null,
+          null,
+          "Useful interview prompts:\n\u2022 Who will be the primary instructor, and how consistent is scheduling?\n\u2022 What is included in the quoted price, and what commonly costs extra?\n\u2022 How are weather cancellations, maintenance, and instructor changes handled?\n\u2022 What aircraft availability and maintenance history should a student understand?\n\u2022 How does the school track syllabus progress and stage checks?\n\u2022 Which training route fits an airline-career goal, and why?\n\u2022 Can current students and recent graduates describe their experience?\n\nRecord answers and compare schools on the same criteria.",
+          null,
+          null,
+          null,
+          "2026-10-16T02:20:50.145Z",
+          "2026-10-16T02:20:50.145Z",
+          null
+        ],
+        [
+          "dd590b49-9abf-4621-9866-42a44f642823",
+          "Training Records Organizer",
+          "admin_document",
+          "general",
+          "reference_only",
+          "important",
+          null,
+          null,
+          "Keep authoritative originals in their proper place and maintain secure copies where appropriate:\n\u2022 Pilot and medical certificates\n\u2022 Government identification and eligibility documents\n\u2022 Logbooks and digital-logbook exports\n\u2022 Instructor endorsements\n\u2022 Knowledge-test and practical-test records\n\u2022 School graduation or course records\n\u2022 Employment and training history\n\u2022 R\u00e9sum\u00e9 and application history\n\nThis app is an organizer, not an FAA-compliant substitute for required certificates, records, endorsements, or logbooks.",
+          null,
+          null,
+          null,
+          "2026-10-16T02:20:50.144Z",
+          "2026-10-16T02:20:50.144Z",
+          null
+        ],
+        [
+          "e872e14a-868a-402a-a67e-e751861ca30e",
+          "Official FAA Certification Resources",
+          "reference",
+          "regulations",
+          "reference_only",
+          "next_up",
+          null,
+          null,
+          "Use official sources for requirements and current editions:\n\nBecome a Pilot \u2014 https://www.faa.gov/pilots/become\nAirman Certification Standards \u2014 https://www.faa.gov/training_testing/testing/acs\nATP training and certification resources \u2014 https://www.faa.gov/pilots/training/atp\nCurrent 14 CFR Part 61 \u2014 https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-61\nFAA handbooks and manuals \u2014 https://www.faa.gov/regulations_policies/handbooks_manuals/aviation\n\nRequirements and publications change. Her instructor, examiner, school, FAA sources, and aircraft documents take priority over this app.",
+          null,
+          null,
+          null,
+          "2026-10-16T02:20:50.142Z",
+          "2026-10-16T02:20:50.142Z",
+          null
+        ]
+      ]
+    },
+    "tags": {
+      "columns": [
+        "id",
+        "name",
+        "created_at"
+      ],
+      "rows": [
+        [
+          "0817248d-7ba4-d56b-fe59-83f547749a2c",
+          "debrief",
+          "2026-10-16T02:20:50.143Z"
+        ],
+        [
+          "153fa5f4-985d-a942-0671-7ccc3574a9b7",
+          "records",
+          "2026-10-16T02:20:50.144Z"
+        ],
+        [
+          "4807c027-ade7-d320-41a9-b2c39aa43b01",
+          "Airline Starter Pack",
+          "2026-10-16T02:20:50.141Z"
+        ],
+        [
+          "73c0e505-f0dd-2605-8cbd-fa87195c3730",
+          "official sources",
+          "2026-10-16T02:20:50.142Z"
+        ],
+        [
+          "9597c294-b8c0-5778-f020-5f681b4dc0da",
+          "FAA",
+          "2026-10-16T02:20:50.142Z"
+        ],
+        [
+          "9cccd8c8-5b1e-954a-b6de-529708a492e8",
+          "career roadmap",
+          "2026-10-16T02:20:50.141Z"
+        ],
+        [
+          "c109c75a-e417-3d4e-31fa-6985aa98d947",
+          "lesson prep",
+          "2026-10-16T02:20:50.143Z"
+        ],
+        [
+          "da4a7b86-13ca-4a79-6570-de5382861608",
+          "school selection",
+          "2026-10-16T02:20:50.145Z"
+        ],
+        [
+          "eb6a97b1-774d-c836-e1cf-41f898aa31ad",
+          "career planning",
+          "2026-10-16T02:20:50.146Z"
+        ]
+      ]
+    },
+    "transactions": {
+      "columns": [
+        "id",
+        "type",
+        "amount",
+        "date",
+        "category",
+        "description",
+        "notes",
+        "event_id",
+        "goal_id",
+        "source",
+        "created_at",
+        "updated_at"
+      ],
+      "rows": []
+    }
+  },
+  "schema": [
+    [
+      "index",
+      "idx_actions_due",
+      "next_actions",
+      "CREATE INDEX idx_actions_due ON next_actions(due_date)"
+    ],
+    [
+      "index",
+      "idx_actions_material",
+      "next_actions",
+      "CREATE INDEX idx_actions_material ON next_actions(material_id)"
+    ],
+    [
+      "index",
+      "idx_actions_related",
+      "next_actions",
+      "CREATE INDEX idx_actions_related ON next_actions(related_type, related_id)"
+    ],
+    [
+      "index",
+      "idx_actions_status",
+      "next_actions",
+      "CREATE INDEX idx_actions_status ON next_actions(status)"
+    ],
+    [
+      "index",
+      "idx_card_events_item",
+      "card_review_events",
+      "CREATE INDEX idx_card_events_item\n    ON card_review_events(item_id, reviewed_at)"
+    ],
+    [
+      "index",
+      "idx_card_ops_material",
+      "card_review_operations",
+      "CREATE INDEX idx_card_ops_material\n    ON card_review_operations(source_material_id)"
+    ],
+    [
+      "index",
+      "idx_card_state_due",
+      "card_review_state",
+      "CREATE INDEX idx_card_state_due\n    ON card_review_state(source_material_id, suspended, due_at)"
+    ],
+    [
+      "index",
+      "idx_checklist_goal",
+      "goal_checklist_items",
+      "CREATE INDEX idx_checklist_goal ON goal_checklist_items(goal_id)"
+    ],
+    [
+      "index",
+      "idx_events_date",
+      "schedule_events",
+      "CREATE INDEX idx_events_date ON schedule_events(date)"
+    ],
+    [
+      "index",
+      "idx_events_status",
+      "schedule_events",
+      "CREATE INDEX idx_events_status ON schedule_events(status)"
+    ],
+    [
+      "index",
+      "idx_goals_milestone",
+      "goals",
+      "CREATE INDEX idx_goals_milestone ON goals(milestone_id)"
+    ],
+    [
+      "index",
+      "idx_goals_status",
+      "goals",
+      "CREATE INDEX idx_goals_status ON goals(status)"
+    ],
+    [
+      "index",
+      "idx_journal_date",
+      "journal_entries",
+      "CREATE INDEX idx_journal_date ON journal_entries(date)"
+    ],
+    [
+      "index",
+      "idx_materials_goal",
+      "study_materials",
+      "CREATE INDEX idx_materials_goal ON study_materials(goal_id)"
+    ],
+    [
+      "index",
+      "idx_materials_status",
+      "study_materials",
+      "CREATE INDEX idx_materials_status ON study_materials(review_status)"
+    ],
+    [
+      "index",
+      "idx_materials_topic",
+      "study_materials",
+      "CREATE INDEX idx_materials_topic ON study_materials(topic)"
+    ],
+    [
+      "index",
+      "idx_notes_pinned_updated",
+      "notes",
+      "CREATE INDEX idx_notes_pinned_updated ON notes(pinned DESC, updated_at DESC)"
+    ],
+    [
+      "index",
+      "idx_practice_attempts_material",
+      "practice_attempts",
+      "CREATE INDEX idx_practice_attempts_material\n    ON practice_attempts(source_material_id, status)"
+    ],
+    [
+      "index",
+      "idx_practice_attempts_version",
+      "practice_attempts",
+      "CREATE INDEX idx_practice_attempts_version\n    ON practice_attempts(version_id)"
+    ],
+    [
+      "index",
+      "idx_practice_items_version",
+      "practice_test_items",
+      "CREATE INDEX idx_practice_items_version\n    ON practice_test_items(version_id, ordinal)"
+    ],
+    [
+      "index",
+      "idx_practice_ops_attempt",
+      "practice_session_operations",
+      "CREATE INDEX idx_practice_ops_attempt\n    ON practice_session_operations(attempt_id)"
+    ],
+    [
+      "index",
+      "idx_practice_ops_history",
+      "practice_session_operations",
+      "CREATE INDEX idx_practice_ops_history\n    ON practice_session_operations(history_key)"
+    ],
+    [
+      "index",
+      "idx_practice_responses_attempt",
+      "practice_responses",
+      "CREATE INDEX idx_practice_responses_attempt\n    ON practice_responses(attempt_id)"
+    ],
+    [
+      "index",
+      "idx_practice_versions_history",
+      "practice_test_versions",
+      "CREATE INDEX idx_practice_versions_history\n    ON practice_test_versions(history_key)"
+    ],
+    [
+      "index",
+      "idx_prep_event",
+      "event_prep_items",
+      "CREATE INDEX idx_prep_event ON event_prep_items(event_id)"
+    ],
+    [
+      "index",
+      "idx_questions_status",
+      "questions",
+      "CREATE INDEX idx_questions_status ON questions(status)"
+    ],
+    [
+      "index",
+      "idx_skill_evidence_operations_subject",
+      "skill_evidence_operations",
+      "CREATE INDEX idx_skill_evidence_operations_subject ON skill_evidence_operations(subject_id)"
+    ],
+    [
+      "index",
+      "idx_skill_observations_action",
+      "skill_observations",
+      "CREATE INDEX idx_skill_observations_action ON skill_observations(action_id)"
+    ],
+    [
+      "index",
+      "idx_skill_observations_journal",
+      "skill_observations",
+      "CREATE INDEX idx_skill_observations_journal ON skill_observations(journal_id)"
+    ],
+    [
+      "index",
+      "idx_skill_observations_page",
+      "skill_observations",
+      "CREATE INDEX idx_skill_observations_page ON skill_observations(observed_on, created_at, id)"
+    ],
+    [
+      "index",
+      "idx_skill_observations_skill_page",
+      "skill_observations",
+      "CREATE INDEX idx_skill_observations_skill_page ON skill_observations(skill_id, observed_on, created_at, id)"
+    ],
+    [
+      "index",
+      "idx_skill_observations_source_journal",
+      "skill_observations",
+      "CREATE INDEX idx_skill_observations_source_journal ON skill_observations(source_journal_id)"
+    ],
+    [
+      "index",
+      "idx_split_lineage_parent",
+      "material_split_lineage",
+      "CREATE INDEX idx_split_lineage_parent ON material_split_lineage(parent_material_id)"
+    ],
+    [
+      "index",
+      "idx_split_lineage_root",
+      "material_split_lineage",
+      "CREATE INDEX idx_split_lineage_root ON material_split_lineage(root_material_id)"
+    ],
+    [
+      "index",
+      "idx_split_operation_source",
+      "split_operation_log",
+      "CREATE INDEX idx_split_operation_source ON split_operation_log(source_material_id)"
+    ],
+    [
+      "index",
+      "idx_split_operation_status",
+      "split_operation_log",
+      "CREATE INDEX idx_split_operation_status ON split_operation_log(status)"
+    ],
+    [
+      "index",
+      "idx_transactions_date",
+      "transactions",
+      "CREATE INDEX idx_transactions_date ON transactions(date)"
+    ],
+    [
+      "index",
+      "idx_transactions_one_lesson_cost",
+      "transactions",
+      "CREATE UNIQUE INDEX idx_transactions_one_lesson_cost\n  ON transactions(event_id)\n  WHERE source = 'lesson_cost' AND event_id IS NOT NULL"
+    ],
+    [
+      "index",
+      "idx_transactions_type",
+      "transactions",
+      "CREATE INDEX idx_transactions_type ON transactions(type)"
+    ],
+    [
+      "index",
+      "sqlite_autoindex__sqlx_migrations_1",
+      "_sqlx_migrations",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_ai_study_sets_1",
+      "ai_study_sets",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_app_metadata_1",
+      "app_metadata",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_items_1",
+      "card_items",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_items_2",
+      "card_items",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_review_events_1",
+      "card_review_events",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_review_generations_1",
+      "card_review_generations",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_review_operations_1",
+      "card_review_operations",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_review_state_1",
+      "card_review_state",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_versions_1",
+      "card_versions",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_card_versions_2",
+      "card_versions",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_debrief_operations_1",
+      "debrief_operations",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_event_materials_1",
+      "event_materials",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_event_prep_items_1",
+      "event_prep_items",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_fund_goals_1",
+      "fund_goals",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_goal_checklist_items_1",
+      "goal_checklist_items",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_goals_1",
+      "goals",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_journal_entries_1",
+      "journal_entries",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_journal_materials_1",
+      "journal_materials",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_material_split_lineage_1",
+      "material_split_lineage",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_material_tags_1",
+      "material_tags",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_milestones_1",
+      "milestones",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_next_actions_1",
+      "next_actions",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_notes_1",
+      "notes",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_pilot_toolkit_1",
+      "pilot_toolkit",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_attempts_1",
+      "practice_attempts",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_responses_1",
+      "practice_responses",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_responses_2",
+      "practice_responses",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_session_operations_1",
+      "practice_session_operations",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_test_items_1",
+      "practice_test_items",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_test_items_2",
+      "practice_test_items",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_test_versions_1",
+      "practice_test_versions",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_practice_tests_1",
+      "practice_tests",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_questions_1",
+      "questions",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_schedule_events_1",
+      "schedule_events",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_settings_1",
+      "settings",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_skill_catalog_entries_1",
+      "skill_catalog_entries",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_skill_catalog_revisions_1",
+      "skill_catalog_revisions",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_skill_evidence_operations_1",
+      "skill_evidence_operations",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_skill_observation_revisions_1",
+      "skill_observation_revisions",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_skill_observations_1",
+      "skill_observations",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_skill_self_assessments_1",
+      "skill_self_assessments",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_skill_self_assessments_2",
+      "skill_self_assessments",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_split_operation_log_1",
+      "split_operation_log",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_study_materials_1",
+      "study_materials",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_tags_1",
+      "tags",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_tags_2",
+      "tags",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_transactions_1",
+      "transactions",
+      null
+    ],
+    [
+      "index",
+      "uq_active_card_version",
+      "card_versions",
+      "CREATE UNIQUE INDEX uq_active_card_version\n    ON card_versions(source_material_id)\n    WHERE is_active = 1"
+    ],
+    [
+      "index",
+      "uq_active_practice_version",
+      "practice_test_versions",
+      "CREATE UNIQUE INDEX uq_active_practice_version\n    ON practice_test_versions(source_material_id)\n    WHERE is_active = 1 AND source_material_id IS NOT NULL"
+    ],
+    [
+      "index",
+      "uq_single_in_progress_attempt",
+      "practice_attempts",
+      "CREATE UNIQUE INDEX uq_single_in_progress_attempt\n    ON practice_attempts(source_material_id)\n    WHERE status = 'in_progress' AND source_material_id IS NOT NULL"
+    ],
+    [
+      "table",
+      "_sqlx_migrations",
+      "_sqlx_migrations",
+      "CREATE TABLE _sqlx_migrations (\n    version BIGINT PRIMARY KEY,\n    description TEXT NOT NULL,\n    installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    success BOOLEAN NOT NULL,\n    checksum BLOB NOT NULL,\n    execution_time BIGINT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "ai_study_sets",
+      "ai_study_sets",
+      "CREATE TABLE ai_study_sets (\n  source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n  title              TEXT NOT NULL DEFAULT '',\n  summary            TEXT NOT NULL DEFAULT '',\n  sections_json      TEXT NOT NULL DEFAULT '[]',\n  flashcards_json    TEXT NOT NULL DEFAULT '[]',\n  source_notes       TEXT NOT NULL DEFAULT '',\n  provider           TEXT NOT NULL DEFAULT 'gemini',\n  model              TEXT NOT NULL DEFAULT '',\n  generated_at       TEXT NOT NULL,\n  updated_at         TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "app_metadata",
+      "app_metadata",
+      "CREATE TABLE app_metadata (\n  key   TEXT PRIMARY KEY,\n  value TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "card_items",
+      "card_items",
+      "CREATE TABLE card_items (\n    id          TEXT PRIMARY KEY,\n    version_id  TEXT NOT NULL REFERENCES card_versions(id) ON DELETE CASCADE,\n    ordinal     INTEGER NOT NULL CHECK (ordinal >= 0),\n    front       TEXT NOT NULL,\n    back        TEXT NOT NULL,\n    source_page INTEGER,\n    UNIQUE (version_id, ordinal)\n)"
+    ],
+    [
+      "table",
+      "card_review_events",
+      "card_review_events",
+      "CREATE TABLE card_review_events (\n    id                TEXT PRIMARY KEY,\n    item_id           TEXT NOT NULL REFERENCES card_items(id) ON DELETE CASCADE,\n    generation        INTEGER NOT NULL CHECK (generation >= 0),\n    rating            TEXT NOT NULL CHECK (rating IN ('again', 'hard', 'good', 'easy')),\n    reviewed_at       TEXT NOT NULL,\n    scheduler_version TEXT NOT NULL,\n    prior_state_json  TEXT NOT NULL,\n    next_state_json   TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "card_review_generations",
+      "card_review_generations",
+      "CREATE TABLE card_review_generations (\n    source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n    generation         INTEGER NOT NULL CHECK (generation >= 0)\n)"
+    ],
+    [
+      "table",
+      "card_review_operations",
+      "card_review_operations",
+      "CREATE TABLE card_review_operations (\n    operation_id       TEXT PRIMARY KEY,\n    action             TEXT NOT NULL CHECK (action IN ('rate', 'suspend', 'resume', 'flag', 'unflag', 'reset')),\n    source_material_id TEXT NOT NULL,\n    generation         INTEGER NOT NULL CHECK (generation >= 0),\n    request_hash       TEXT NOT NULL,\n    applied_at         TEXT NOT NULL,\n    is_erased          INTEGER NOT NULL DEFAULT 0 CHECK (is_erased IN (0, 1)),\n    result_json        TEXT,\n    CHECK ((is_erased = 1) = (result_json IS NULL))\n)"
+    ],
+    [
+      "table",
+      "card_review_state",
+      "card_review_state",
+      "CREATE TABLE card_review_state (\n    item_id            TEXT PRIMARY KEY REFERENCES card_items(id) ON DELETE CASCADE,\n    source_material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n    scheduler_version  TEXT NOT NULL,\n    step               INTEGER NOT NULL CHECK (step BETWEEN -1 AND 7),\n    due_at             TEXT,\n    last_reviewed_at   TEXT,\n    reps               INTEGER NOT NULL DEFAULT 0 CHECK (reps >= 0),\n    lapses             INTEGER NOT NULL DEFAULT 0 CHECK (lapses >= 0),\n    suspended          INTEGER NOT NULL DEFAULT 0 CHECK (suspended IN (0, 1)),\n    flag               TEXT CHECK (flag IN ('wrong_answer', 'unclear', 'not_in_source')),\n    revision           INTEGER NOT NULL CHECK (revision >= 1),\n    CHECK ((due_at IS NULL) = (last_reviewed_at IS NULL)),\n    CHECK (due_at IS NOT NULL OR (reps = 0 AND step = -1))\n)"
+    ],
+    [
+      "table",
+      "card_versions",
+      "card_versions",
+      "CREATE TABLE card_versions (\n    id                 TEXT PRIMARY KEY,\n    source_material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n    content_hash       TEXT NOT NULL,\n    card_count         INTEGER NOT NULL CHECK (card_count BETWEEN 1 AND 500),\n    provider           TEXT NOT NULL CHECK (provider IN ('gemini', 'import')),\n    created_at         TEXT NOT NULL,\n    first_reviewed_at  TEXT,\n    is_active          INTEGER NOT NULL CHECK (is_active IN (0, 1)),\n    UNIQUE (source_material_id, content_hash)\n)"
+    ],
+    [
+      "table",
+      "debrief_operations",
+      "debrief_operations",
+      "CREATE TABLE debrief_operations (\n    id         TEXT PRIMARY KEY,\n    journal_id TEXT NOT NULL,\n    applied_at TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "event_materials",
+      "event_materials",
+      "CREATE TABLE event_materials (\n  event_id    TEXT NOT NULL REFERENCES schedule_events(id) ON DELETE CASCADE,\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  PRIMARY KEY (event_id, material_id)\n)"
+    ],
+    [
+      "table",
+      "event_prep_items",
+      "event_prep_items",
+      "CREATE TABLE event_prep_items (\n  id         TEXT PRIMARY KEY,\n  event_id   TEXT NOT NULL REFERENCES schedule_events(id) ON DELETE CASCADE,\n  title      TEXT NOT NULL,\n  done       INTEGER NOT NULL DEFAULT 0,\n  position   INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "fund_goals",
+      "fund_goals",
+      "CREATE TABLE fund_goals (\n  id         TEXT PRIMARY KEY,\n  title      TEXT NOT NULL,\n  target     INTEGER NOT NULL,\n  active     INTEGER NOT NULL DEFAULT 1,\n  created_at TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "goal_checklist_items",
+      "goal_checklist_items",
+      "CREATE TABLE goal_checklist_items (\n  id         TEXT PRIMARY KEY,\n  goal_id    TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,\n  title      TEXT NOT NULL,\n  done       INTEGER NOT NULL DEFAULT 0,\n  position   INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "goals",
+      "goals",
+      "CREATE TABLE goals (\n  id           TEXT PRIMARY KEY,\n  milestone_id TEXT REFERENCES milestones(id) ON DELETE SET NULL,\n  title        TEXT NOT NULL,\n  description  TEXT NOT NULL DEFAULT '',\n  status       TEXT NOT NULL DEFAULT 'not_started',\n  priority     TEXT NOT NULL DEFAULT 'important',\n  target_date  TEXT,\n  notes        TEXT NOT NULL DEFAULT '',\n  confidence   INTEGER,\n  created_at   TEXT NOT NULL,\n  updated_at   TEXT NOT NULL,\n  completed_at TEXT\n)"
+    ],
+    [
+      "table",
+      "journal_entries",
+      "journal_entries",
+      "CREATE TABLE journal_entries (\n  id                      TEXT PRIMARY KEY,\n  event_id                TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  date                    TEXT NOT NULL,\n  title                   TEXT NOT NULL DEFAULT '',\n  mission                 TEXT NOT NULL DEFAULT '',\n  practiced               TEXT NOT NULL DEFAULT '',\n  went_well               TEXT NOT NULL DEFAULT '',\n  was_difficult           TEXT NOT NULL DEFAULT '',\n  instructor_feedback     TEXT NOT NULL DEFAULT '',\n  questions_for_next_time TEXT NOT NULL DEFAULT '',\n  confidence              INTEGER,\n  goal_id                 TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  created_at              TEXT NOT NULL,\n  updated_at              TEXT NOT NULL\n, aircraft_type TEXT NOT NULL DEFAULT '', aircraft_id TEXT NOT NULL DEFAULT '', departure_airport TEXT NOT NULL DEFAULT '', arrival_airport TEXT NOT NULL DEFAULT '', instructor_name TEXT NOT NULL DEFAULT '', total_time REAL, dual_received REAL, solo_time REAL, pic_time REAL, cross_country_time REAL, night_time REAL, actual_instrument_time REAL, simulated_instrument_time REAL, day_landings INTEGER, night_landings INTEGER)"
+    ],
+    [
+      "table",
+      "journal_materials",
+      "journal_materials",
+      "CREATE TABLE journal_materials (\n  journal_id  TEXT NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  PRIMARY KEY (journal_id, material_id)\n)"
+    ],
+    [
+      "table",
+      "material_split_lineage",
+      "material_split_lineage",
+      "CREATE TABLE material_split_lineage (\n  material_id            TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  parent_material_id     TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  root_material_id       TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  source_page_start      INTEGER NOT NULL CHECK (TYPEOF(source_page_start) = 'integer' AND source_page_start >= 1),\n  source_page_end        INTEGER NOT NULL CHECK (TYPEOF(source_page_end) = 'integer' AND source_page_end >= source_page_start),\n  parent_page_start      INTEGER CHECK (parent_page_start IS NULL OR (TYPEOF(parent_page_start) = 'integer' AND parent_page_start >= 1)),\n  parent_page_end        INTEGER CHECK (parent_page_end IS NULL OR (TYPEOF(parent_page_end) = 'integer' AND parent_page_end >= parent_page_start)),\n  child_page_count       INTEGER NOT NULL CHECK (TYPEOF(child_page_count) = 'integer' AND child_page_count >= 1),\n  source_file_name       TEXT NOT NULL,\n  source_title           TEXT NOT NULL,\n  source_content_sha256  TEXT,\n  source_total_pages     INTEGER CHECK (source_total_pages IS NULL OR (TYPEOF(source_total_pages) = 'integer' AND source_total_pages >= source_page_end)),\n  parent_file_name       TEXT,\n  parent_title           TEXT,\n  parent_content_sha256  TEXT,\n  parent_total_pages     INTEGER CHECK (parent_total_pages IS NULL OR (TYPEOF(parent_total_pages) = 'integer' AND (parent_page_end IS NULL OR parent_total_pages >= parent_page_end))),\n  nested_level           INTEGER NOT NULL DEFAULT 1 CHECK (TYPEOF(nested_level) = 'integer' AND nested_level >= 1),\n  created_at             TEXT NOT NULL,\n  CHECK (material_id != parent_material_id),\n  CHECK (material_id != root_material_id),\n  CHECK (child_page_count = (source_page_end - source_page_start + 1)),\n  CHECK (parent_page_start IS NULL OR child_page_count = (parent_page_end - parent_page_start + 1)),\n  CHECK ((parent_page_start IS NULL AND parent_page_end IS NULL) OR (parent_page_start IS NOT NULL AND parent_page_end IS NOT NULL)),\n  CHECK (\n    (nested_level = 1 AND parent_page_start IS NULL AND parent_page_end IS NULL AND parent_total_pages IS NULL)\n    OR\n    (nested_level > 1 AND parent_page_start IS NOT NULL AND parent_page_end IS NOT NULL AND parent_total_pages IS NOT NULL)\n  )\n)"
+    ],
+    [
+      "table",
+      "material_tags",
+      "material_tags",
+      "CREATE TABLE material_tags (\n  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,\n  tag_id      TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n  PRIMARY KEY (material_id, tag_id)\n)"
+    ],
+    [
+      "table",
+      "milestones",
+      "milestones",
+      "CREATE TABLE milestones (\n  id          TEXT PRIMARY KEY,\n  title       TEXT NOT NULL,\n  description TEXT NOT NULL DEFAULT '',\n  position    INTEGER NOT NULL DEFAULT 0,\n  status      TEXT NOT NULL DEFAULT 'not_started',\n  target_date TEXT,\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "next_actions",
+      "next_actions",
+      "CREATE TABLE next_actions (\n  id                TEXT PRIMARY KEY,\n  title             TEXT NOT NULL,\n  description       TEXT NOT NULL DEFAULT '',\n  category          TEXT NOT NULL DEFAULT 'prepare',\n  priority          TEXT NOT NULL DEFAULT 'important',\n  status            TEXT NOT NULL DEFAULT 'open',\n  due_date          TEXT,\n  estimated_minutes INTEGER,\n  related_type      TEXT,\n  related_id        TEXT,\n  created_at        TEXT NOT NULL,\n  updated_at        TEXT NOT NULL,\n  completed_at      TEXT\n, material_id TEXT REFERENCES study_materials(id) ON DELETE SET NULL, source_material_id TEXT)"
+    ],
+    [
+      "table",
+      "notes",
+      "notes",
+      "CREATE TABLE notes (\n  id         TEXT PRIMARY KEY,\n  title      TEXT NOT NULL DEFAULT '',\n  body       TEXT NOT NULL DEFAULT '',\n  pinned     INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "pilot_toolkit",
+      "pilot_toolkit",
+      "CREATE TABLE pilot_toolkit (\n  id TEXT PRIMARY KEY CHECK (id = 'toolkit'),\n  state_json TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "practice_attempts",
+      "practice_attempts",
+      "CREATE TABLE practice_attempts (\n    id                    TEXT PRIMARY KEY,\n    version_id            TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE RESTRICT,\n    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n    source_material_title TEXT NOT NULL,\n    started_at            TEXT NOT NULL,\n    completed_at          TEXT,\n    status                TEXT NOT NULL CHECK (status IN ('in_progress', 'completed', 'abandoned')),\n    revision              INTEGER NOT NULL DEFAULT 0 CHECK (revision >= 0),\n    total_questions       INTEGER NOT NULL,\n    answered_count        INTEGER NOT NULL DEFAULT 0,\n    correct_count         INTEGER NOT NULL DEFAULT 0,\n    incorrect_count       INTEGER NOT NULL DEFAULT 0,\n    dont_know_count       INTEGER NOT NULL DEFAULT 0,\n    score_percent         REAL\n)"
+    ],
+    [
+      "table",
+      "practice_responses",
+      "practice_responses",
+      "CREATE TABLE practice_responses (\n    id             TEXT PRIMARY KEY,\n    attempt_id     TEXT NOT NULL REFERENCES practice_attempts(id) ON DELETE CASCADE,\n    item_id        TEXT NOT NULL REFERENCES practice_test_items(id) ON DELETE CASCADE,\n    selected_index INTEGER,\n    is_dont_know   INTEGER NOT NULL DEFAULT 0 CHECK (is_dont_know IN (0, 1)),\n    is_correct     INTEGER NOT NULL DEFAULT 0 CHECK (is_correct IN (0, 1)),\n    answered_at    TEXT NOT NULL,\n    UNIQUE(attempt_id, item_id),\n    CHECK (\n        (is_dont_know = 1 AND selected_index IS NULL) OR\n        (is_dont_know = 0 AND selected_index IS NOT NULL AND selected_index >= 0)\n    )\n)"
+    ],
+    [
+      "table",
+      "practice_session_operations",
+      "practice_session_operations",
+      "CREATE TABLE practice_session_operations (\n    operation_id   TEXT PRIMARY KEY,\n    action         TEXT NOT NULL,\n    request_hash   TEXT NOT NULL,\n    applied_at     TEXT NOT NULL,\n    result_json    TEXT NOT NULL,\n    history_key    TEXT NOT NULL,\n    attempt_id     TEXT NOT NULL,\n    is_erased      INTEGER NOT NULL DEFAULT 0 CHECK (is_erased IN (0, 1))\n)"
+    ],
+    [
+      "table",
+      "practice_test_items",
+      "practice_test_items",
+      "CREATE TABLE practice_test_items (\n    id            TEXT PRIMARY KEY,\n    version_id    TEXT NOT NULL REFERENCES practice_test_versions(id) ON DELETE CASCADE,\n    ordinal       INTEGER NOT NULL,\n    question_text TEXT NOT NULL,\n    options_json  TEXT NOT NULL,\n    correct_index INTEGER NOT NULL,\n    explanation   TEXT NOT NULL DEFAULT '',\n    source_page   INTEGER,\n    UNIQUE(version_id, ordinal)\n)"
+    ],
+    [
+      "table",
+      "practice_test_versions",
+      "practice_test_versions",
+      "CREATE TABLE practice_test_versions (\n    id                    TEXT PRIMARY KEY,\n    source_material_id    TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n    history_key           TEXT NOT NULL,\n    source_material_title TEXT NOT NULL,\n    version_number        INTEGER NOT NULL DEFAULT 1,\n    provider              TEXT NOT NULL DEFAULT 'gemini',\n    model                 TEXT NOT NULL DEFAULT '',\n    title                 TEXT NOT NULL DEFAULT '',\n    content_hash          TEXT NOT NULL,\n    created_at            TEXT NOT NULL,\n    is_active             INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1))\n)"
+    ],
+    [
+      "table",
+      "practice_tests",
+      "practice_tests",
+      "CREATE TABLE practice_tests (\n  source_material_id TEXT PRIMARY KEY REFERENCES study_materials(id) ON DELETE CASCADE,\n  title               TEXT NOT NULL DEFAULT '',\n  questions_json      TEXT NOT NULL DEFAULT '[]',\n  provider            TEXT NOT NULL DEFAULT 'gemini',\n  model               TEXT NOT NULL DEFAULT '',\n  generated_at        TEXT NOT NULL,\n  updated_at          TEXT NOT NULL\n, legacy_migrated_at TEXT, legacy_error TEXT)"
+    ],
+    [
+      "table",
+      "questions",
+      "questions",
+      "CREATE TABLE questions (\n  id          TEXT PRIMARY KEY,\n  text        TEXT NOT NULL,\n  topic       TEXT NOT NULL DEFAULT 'general',\n  event_id    TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  material_id TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  journal_id  TEXT REFERENCES journal_entries(id) ON DELETE SET NULL,\n  status      TEXT NOT NULL DEFAULT 'to_ask',\n  answer      TEXT NOT NULL DEFAULT '',\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL,\n  answered_at TEXT\n, source_journal_id TEXT, source_material_id TEXT, source_event_id TEXT)"
+    ],
+    [
+      "table",
+      "schedule_events",
+      "schedule_events",
+      "CREATE TABLE schedule_events (\n  id             TEXT PRIMARY KEY,\n  title          TEXT NOT NULL,\n  event_type     TEXT NOT NULL DEFAULT 'flight_lesson',\n  date           TEXT NOT NULL,\n  start_time     TEXT,\n  end_time       TEXT,\n  location       TEXT NOT NULL DEFAULT '',\n  instructor     TEXT NOT NULL DEFAULT '',\n  notes          TEXT NOT NULL DEFAULT '',\n  goal_id        TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  estimated_cost INTEGER,\n  actual_cost    INTEGER,\n  status         TEXT NOT NULL DEFAULT 'scheduled',\n  created_at     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "settings",
+      "settings",
+      "CREATE TABLE settings (\n  id                   TEXT PRIMARY KEY,\n  pilot_name           TEXT NOT NULL DEFAULT '',\n  certificate_goal     TEXT NOT NULL DEFAULT 'Private Pilot',\n  current_focus        TEXT NOT NULL DEFAULT '',\n  current_milestone_id TEXT,\n  created_at           TEXT NOT NULL,\n  updated_at           TEXT NOT NULL\n, flight_school       TEXT NOT NULL DEFAULT '', instructor_name     TEXT NOT NULL DEFAULT '', home_airport        TEXT NOT NULL DEFAULT '', aircraft_type       TEXT NOT NULL DEFAULT '', training_started_on TEXT, medical_expiry      TEXT, accent_color        TEXT NOT NULL DEFAULT 'berry', why_note TEXT NOT NULL DEFAULT '', photo    TEXT)"
+    ],
+    [
+      "table",
+      "skill_catalog_entries",
+      "skill_catalog_entries",
+      "CREATE TABLE skill_catalog_entries (\n  id               TEXT PRIMARY KEY NOT NULL,\n  origin           TEXT NOT NULL CHECK (origin IN ('builtin', 'custom')),\n  catalog_version  INTEGER CHECK (catalog_version IS NULL OR (TYPEOF(catalog_version) = 'integer' AND catalog_version >= 1)),\n  label            TEXT NOT NULL CHECK (length(trim(label)) >= 1 AND length(label) <= 80),\n  description      TEXT NOT NULL DEFAULT '' CHECK (length(description) <= 500),\n  topic            TEXT NOT NULL CHECK (topic IN ('weather', 'navigation', 'regulations', 'communications', 'aerodynamics', 'aircraft_systems', 'flight_planning', 'airports', 'performance', 'emergency_procedures', 'landings', 'general')),\n  status           TEXT NOT NULL CHECK (status IN ('active', 'retired')),\n  revision         INTEGER NOT NULL CHECK (TYPEOF(revision) = 'integer' AND revision >= 1),\n  created_at       TEXT NOT NULL,\n  updated_at       TEXT NOT NULL,\n  retired_at       TEXT,\n  CHECK ((origin = 'builtin' AND id GLOB 'builtin.?*' AND catalog_version IS NOT NULL)\n      OR (origin = 'custom' AND id GLOB 'custom.?*' AND catalog_version IS NULL)),\n  CHECK ((status = 'retired') = (retired_at IS NOT NULL))\n)"
+    ],
+    [
+      "table",
+      "skill_catalog_revisions",
+      "skill_catalog_revisions",
+      "CREATE TABLE skill_catalog_revisions (\n  skill_id         TEXT NOT NULL REFERENCES skill_catalog_entries(id) ON DELETE RESTRICT,\n  revision         INTEGER NOT NULL CHECK (TYPEOF(revision) = 'integer' AND revision >= 1),\n  label            TEXT NOT NULL CHECK (length(trim(label)) >= 1 AND length(label) <= 80),\n  description      TEXT NOT NULL CHECK (length(description) <= 500),\n  topic            TEXT NOT NULL CHECK (topic IN ('weather', 'navigation', 'regulations', 'communications', 'aerodynamics', 'aircraft_systems', 'flight_planning', 'airports', 'performance', 'emergency_procedures', 'landings', 'general')),\n  status           TEXT NOT NULL CHECK (status IN ('active', 'retired')),\n  catalog_version  INTEGER CHECK (catalog_version IS NULL OR (TYPEOF(catalog_version) = 'integer' AND catalog_version >= 1)),\n  changed_by       TEXT NOT NULL CHECK (changed_by IN ('catalog', 'user')),\n  operation_id     TEXT,\n  changed_at       TEXT NOT NULL,\n  PRIMARY KEY (skill_id, revision),\n  CHECK ((changed_by = 'user') = (operation_id IS NOT NULL))\n)"
+    ],
+    [
+      "table",
+      "skill_evidence_operations",
+      "skill_evidence_operations",
+      "CREATE TABLE skill_evidence_operations (\n  operation_id  TEXT PRIMARY KEY NOT NULL,\n  action        TEXT NOT NULL CHECK (action IN ('create_custom_skill', 'edit_custom_skill', 'retire_skill', 'restore_skill', 'create_observation', 'edit_observation', 'link_action', 'unlink_action', 'set_addressed', 'set_status', 'set_confidence', 'erase_observation')),\n  request_hash  TEXT NOT NULL CHECK (length(request_hash) = 64 AND request_hash NOT GLOB '*[^0-9a-f]*'),\n  subject_id    TEXT NOT NULL,\n  applied_at    TEXT NOT NULL,\n  result_json   TEXT,\n  is_erased     INTEGER NOT NULL DEFAULT 0 CHECK (is_erased IN (0, 1)),\n  CHECK ((is_erased = 1) = (result_json IS NULL))\n)"
+    ],
+    [
+      "table",
+      "skill_observation_revisions",
+      "skill_observation_revisions",
+      "CREATE TABLE skill_observation_revisions (\n  observation_id       TEXT NOT NULL REFERENCES skill_observations(id) ON DELETE CASCADE,\n  revision             INTEGER NOT NULL CHECK (TYPEOF(revision) = 'integer' AND revision >= 1),\n  change_kind          TEXT NOT NULL CHECK (change_kind IN ('created', 'edited', 'linked_action', 'unlinked_action', 'marked_addressed', 'cleared_addressed')),\n  wording              TEXT NOT NULL CHECK (length(trim(wording)) >= 1 AND length(wording) <= 2000 AND length(CAST(wording AS BLOB)) <= 8000),\n  observed_on          TEXT NOT NULL CHECK (date(observed_on) IS observed_on),\n  attribution          TEXT NOT NULL CHECK (attribution IN ('self_report', 'instructor_transcribed')),\n  instructor_name      TEXT NOT NULL CHECK (length(instructor_name) <= 120),\n  linked_action_id     TEXT,\n  linked_action_title  TEXT CHECK (linked_action_title IS NULL OR length(linked_action_title) <= 200),\n  addressed_at         TEXT,\n  operation_id         TEXT NOT NULL,\n  recorded_at          TEXT NOT NULL,\n  PRIMARY KEY (observation_id, revision),\n  CHECK ((revision = 1) = (change_kind = 'created')),\n  CHECK (attribution = 'instructor_transcribed' OR instructor_name = ''),\n  CHECK ((linked_action_id IS NULL) = (linked_action_title IS NULL))\n)"
+    ],
+    [
+      "table",
+      "skill_observations",
+      "skill_observations",
+      "CREATE TABLE skill_observations (\n  id                    TEXT PRIMARY KEY NOT NULL,\n  skill_id              TEXT NOT NULL REFERENCES skill_catalog_entries(id) ON DELETE RESTRICT,\n  skill_label_snapshot  TEXT NOT NULL CHECK (length(skill_label_snapshot) <= 80),\n  journal_id            TEXT REFERENCES journal_entries(id) ON DELETE SET NULL,\n  source_journal_id     TEXT NOT NULL,\n  source_journal_date   TEXT NOT NULL,\n  source_journal_title  TEXT NOT NULL CHECK (length(source_journal_title) <= 200),\n  source_field          TEXT NOT NULL CHECK (source_field IN ('instructor_feedback', 'went_well', 'was_difficult', 'practiced', 'none')),\n  source_text_sha256    TEXT CHECK (source_text_sha256 IS NULL OR (length(source_text_sha256) = 64 AND source_text_sha256 NOT GLOB '*[^0-9a-f]*')),\n  attribution           TEXT NOT NULL CHECK (attribution IN ('self_report', 'instructor_transcribed')),\n  instructor_name       TEXT NOT NULL DEFAULT '' CHECK (length(instructor_name) <= 120),\n  wording               TEXT NOT NULL CHECK (length(trim(wording)) >= 1 AND length(wording) <= 2000 AND length(CAST(wording AS BLOB)) <= 8000),\n  observed_on           TEXT NOT NULL CHECK (date(observed_on) IS observed_on),\n  revision              INTEGER NOT NULL CHECK (TYPEOF(revision) = 'integer' AND revision >= 1),\n  action_id             TEXT REFERENCES next_actions(id) ON DELETE SET NULL,\n  linked_action_id      TEXT,\n  linked_action_title   TEXT CHECK (linked_action_title IS NULL OR length(linked_action_title) <= 200),\n  addressed_at          TEXT,\n  created_at            TEXT NOT NULL,\n  updated_at            TEXT NOT NULL,\n  CHECK (journal_id IS NULL OR journal_id IS source_journal_id),\n  CHECK (attribution = 'instructor_transcribed' OR instructor_name = ''),\n  CHECK ((source_field = 'none') = (source_text_sha256 IS NULL)),\n  CHECK (action_id IS NULL OR action_id IS linked_action_id),\n  CHECK ((linked_action_id IS NULL) = (linked_action_title IS NULL))\n)"
+    ],
+    [
+      "table",
+      "skill_self_assessments",
+      "skill_self_assessments",
+      "CREATE TABLE skill_self_assessments (\n  id          TEXT PRIMARY KEY NOT NULL,\n  skill_id    TEXT NOT NULL REFERENCES skill_catalog_entries(id) ON DELETE RESTRICT,\n  kind        TEXT NOT NULL CHECK (kind IN ('status', 'confidence')),\n  status      TEXT CHECK (status IS NULL OR status IN ('learning', 'practicing', 'needs_review')),\n  confidence  INTEGER CHECK (confidence IS NULL OR (TYPEOF(confidence) = 'integer' AND confidence BETWEEN 1 AND 5)),\n  sequence    INTEGER NOT NULL CHECK (TYPEOF(sequence) = 'integer' AND sequence >= 1),\n  operation_id TEXT NOT NULL,\n  set_at      TEXT NOT NULL,\n  CHECK (kind = 'status' OR status IS NULL),\n  CHECK (kind = 'confidence' OR confidence IS NULL),\n  UNIQUE (skill_id, kind, sequence)\n)"
+    ],
+    [
+      "table",
+      "split_operation_log",
+      "split_operation_log",
+      "CREATE TABLE split_operation_log (\n  operation_id           TEXT PRIMARY KEY NOT NULL,\n  source_material_id     TEXT REFERENCES study_materials(id) ON DELETE SET NULL,\n  receipt_canonical_json TEXT NOT NULL,\n  receipt_hash           TEXT NOT NULL,\n  status                 TEXT NOT NULL CHECK (status IN ('pending', 'committed', 'cancelled')),\n  created_at             TEXT NOT NULL,\n  updated_at             TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "study_materials",
+      "study_materials",
+      "CREATE TABLE study_materials (\n  id                 TEXT PRIMARY KEY,\n  title              TEXT NOT NULL,\n  material_type      TEXT NOT NULL DEFAULT 'study_guide',\n  topic              TEXT NOT NULL DEFAULT 'general',\n  review_status      TEXT NOT NULL DEFAULT 'needs_review',\n  priority           TEXT NOT NULL DEFAULT 'later',\n  goal_id            TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  event_id           TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  notes              TEXT NOT NULL DEFAULT '',\n  file_path          TEXT,\n  original_file_name TEXT,\n  file_size          INTEGER,\n  created_at         TEXT NOT NULL,\n  updated_at         TEXT NOT NULL,\n  last_reviewed_at   TEXT\n)"
+    ],
+    [
+      "table",
+      "tags",
+      "tags",
+      "CREATE TABLE tags (\n  id         TEXT PRIMARY KEY,\n  name       TEXT NOT NULL UNIQUE,\n  created_at TEXT NOT NULL\n)"
+    ],
+    [
+      "table",
+      "transactions",
+      "transactions",
+      "CREATE TABLE transactions (\n  id          TEXT PRIMARY KEY,\n  type        TEXT NOT NULL,\n  amount      INTEGER NOT NULL,\n  date        TEXT NOT NULL,\n  category    TEXT NOT NULL DEFAULT 'other',\n  description TEXT NOT NULL DEFAULT '',\n  notes       TEXT NOT NULL DEFAULT '',\n  event_id    TEXT REFERENCES schedule_events(id) ON DELETE SET NULL,\n  goal_id     TEXT REFERENCES goals(id) ON DELETE SET NULL,\n  source      TEXT NOT NULL DEFAULT 'manual',\n  created_at  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL\n)"
+    ],
+    [
+      "trigger",
+      "trg_card_ops_material_delete",
+      "study_materials",
+      "CREATE TRIGGER trg_card_ops_material_delete\nAFTER DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE card_review_operations\n    SET is_erased = 1, result_json = NULL\n    WHERE source_material_id = OLD.id AND is_erased = 0;\nEND"
+    ],
+    [
+      "trigger",
+      "trg_cleanup_material_delete",
+      "study_materials",
+      "CREATE TRIGGER trg_cleanup_material_delete\nAFTER DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE practice_session_operations\n    SET is_erased = 1, result_json = 'null'\n    WHERE attempt_id IN (SELECT id FROM practice_attempts\n        WHERE source_material_id IS NULL AND status IN ('in_progress', 'abandoned'));\n\n    DELETE FROM practice_attempts\n    WHERE source_material_id IS NULL AND status IN ('in_progress', 'abandoned');\n\n    UPDATE practice_test_versions\n    SET is_active = 0\n    WHERE source_material_id IS NULL AND is_active = 1;\n\n    DELETE FROM practice_test_versions\n    WHERE source_material_id IS NULL\n      AND id NOT IN (SELECT DISTINCT version_id FROM practice_attempts WHERE status = 'completed');\nEND"
+    ],
+    [
+      "trigger",
+      "trg_enforce_response_item_version_insert",
+      "practice_responses",
+      "CREATE TRIGGER trg_enforce_response_item_version_insert\nBEFORE INSERT ON practice_responses\nFOR EACH ROW\nBEGIN\n    SELECT RAISE(ABORT, 'Item does not belong to attempt version')\n    WHERE (\n        SELECT version_id FROM practice_attempts WHERE id = NEW.attempt_id\n    ) != (\n        SELECT version_id FROM practice_test_items WHERE id = NEW.item_id\n    );\nEND"
+    ],
+    [
+      "trigger",
+      "trg_enforce_response_item_version_update",
+      "practice_responses",
+      "CREATE TRIGGER trg_enforce_response_item_version_update\nBEFORE UPDATE OF item_id, attempt_id ON practice_responses\nFOR EACH ROW\nBEGIN\n    SELECT RAISE(ABORT, 'Item does not belong to attempt version')\n    WHERE (\n        SELECT version_id FROM practice_attempts WHERE id = NEW.attempt_id\n    ) != (\n        SELECT version_id FROM practice_test_items WHERE id = NEW.item_id\n    );\nEND"
+    ],
+    [
+      "trigger",
+      "trg_event_delete_questions",
+      "schedule_events",
+      "CREATE TRIGGER trg_event_delete_questions\nBEFORE DELETE ON schedule_events\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_event_id = OLD.id\n    WHERE event_id = OLD.id;\nEND"
+    ],
+    [
+      "trigger",
+      "trg_journal_delete_questions",
+      "journal_entries",
+      "CREATE TRIGGER trg_journal_delete_questions\nBEFORE DELETE ON journal_entries\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_journal_id = OLD.id\n    WHERE journal_id = OLD.id;\nEND"
+    ],
+    [
+      "trigger",
+      "trg_material_delete_actions",
+      "study_materials",
+      "CREATE TRIGGER trg_material_delete_actions\nBEFORE DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE next_actions\n    SET source_material_id = OLD.id\n    WHERE material_id = OLD.id;\nEND"
+    ],
+    [
+      "trigger",
+      "trg_material_delete_questions",
+      "study_materials",
+      "CREATE TRIGGER trg_material_delete_questions\nBEFORE DELETE ON study_materials\nFOR EACH ROW\nBEGIN\n    UPDATE questions\n    SET source_material_id = OLD.id\n    WHERE material_id = OLD.id;\nEND"
+    ],
+    [
+      "trigger",
+      "trg_skill_catalog_revisions_no_delete",
+      "skill_catalog_revisions",
+      "CREATE TRIGGER trg_skill_catalog_revisions_no_delete\nBEFORE DELETE ON skill_catalog_revisions\nBEGIN\n  SELECT RAISE(ABORT, 'skill catalog history is append-only');\nEND"
+    ],
+    [
+      "trigger",
+      "trg_skill_catalog_revisions_no_update",
+      "skill_catalog_revisions",
+      "CREATE TRIGGER trg_skill_catalog_revisions_no_update\nBEFORE UPDATE ON skill_catalog_revisions\nBEGIN\n  SELECT RAISE(ABORT, 'skill catalog history is append-only');\nEND"
+    ],
+    [
+      "trigger",
+      "trg_skill_observation_revisions_no_partial_delete",
+      "skill_observation_revisions",
+      "CREATE TRIGGER trg_skill_observation_revisions_no_partial_delete\nBEFORE DELETE ON skill_observation_revisions\nWHEN EXISTS (SELECT 1 FROM skill_observations WHERE id = OLD.observation_id)\nBEGIN\n  SELECT RAISE(ABORT, 'observation history can only be erased with its observation');\nEND"
+    ],
+    [
+      "trigger",
+      "trg_skill_observation_revisions_no_update",
+      "skill_observation_revisions",
+      "CREATE TRIGGER trg_skill_observation_revisions_no_update\nBEFORE UPDATE ON skill_observation_revisions\nBEGIN\n  SELECT RAISE(ABORT, 'observation history is append-only');\nEND"
+    ],
+    [
+      "trigger",
+      "trg_skill_self_assessments_no_delete",
+      "skill_self_assessments",
+      "CREATE TRIGGER trg_skill_self_assessments_no_delete\nBEFORE DELETE ON skill_self_assessments\nBEGIN\n  SELECT RAISE(ABORT, 'self-assessment history is append-only');\nEND"
+    ],
+    [
+      "trigger",
+      "trg_skill_self_assessments_no_update",
+      "skill_self_assessments",
+      "CREATE TRIGGER trg_skill_self_assessments_no_update\nBEFORE UPDATE ON skill_self_assessments\nBEGIN\n  SELECT RAISE(ABORT, 'self-assessment history is append-only');\nEND"
+    ]
+  ],
+  "documents": {
+    "documents/10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf": "f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134",
+    "documents/67f19546-255f-4eb6-bf68-e231db7fb8b5-Synthetic Native Chapter 2-4.pdf": "a102998f882ba51de5e238f168e4d15ebdf4ccf41ce9acbcaff561de42a9cdcf"
+  }
+}

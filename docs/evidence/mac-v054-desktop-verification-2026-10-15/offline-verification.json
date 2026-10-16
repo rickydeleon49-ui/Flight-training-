@@ -1,0 +1,68 @@
+{
+  "success": true,
+  "offlineOnly": true,
+  "results": {
+    "current14Restore": {
+      "tables": 42,
+      "schemaDefinitions": 146,
+      "managedDocuments": 2,
+      "metadataExclusions": [
+        "last_complete_backup_at",
+        "last_complete_backup_path",
+        "last_complete_backup_version"
+      ]
+    },
+    "populated13To14Upgrade": {
+      "retainedTables": 36,
+      "oldLedgerRowsExactlyRetained": 13,
+      "newMigration14Checksum": "d034e5aec63ee49d6e8fa16235aad5855c57da4f570ecdabc701c260d096d9945f2b9d546ac930adb54c4bd8e2b7fc0e",
+      "newSchemaAndSeedExact": true,
+      "managedDocumentsIdentical": true,
+      "metadataExclusions": []
+    },
+    "older13RestoreTo14": {
+      "retainedTables": 36,
+      "oldLedgerRowsExactlyRetained": 13,
+      "newMigration14Checksum": "d034e5aec63ee49d6e8fa16235aad5855c57da4f570ecdabc701c260d096d9945f2b9d546ac930adb54c4bd8e2b7fc0e",
+      "newSchemaAndSeedExact": true,
+      "managedDocumentsIdentical": true,
+      "metadataExclusions": [
+        "last_complete_backup_at",
+        "last_complete_backup_path",
+        "last_complete_backup_version"
+      ]
+    },
+    "skillsCancellation": {
+      "tables": 42,
+      "schemaDefinitions": 146,
+      "managedDocuments": 2,
+      "metadataExclusions": []
+    },
+    "guardedSaveFailure": {
+      "tables": 42,
+      "schemaDefinitions": 146,
+      "managedDocuments": 2,
+      "metadataExclusions": []
+    },
+    "damagedArchiveRefusal": {
+      "tables": 42,
+      "schemaDefinitions": 146,
+      "managedDocuments": 2,
+      "metadataExclusions": []
+    },
+    "populatedSkills14Restore": {
+      "tables": 42,
+      "schemaDefinitions": 146,
+      "managedDocuments": 2,
+      "metadataExclusions": [
+        "last_complete_backup_at",
+        "last_complete_backup_path",
+        "last_complete_backup_version"
+      ]
+    },
+    "permissionRecovery": "PASS",
+    "chapterPageIdentity": "PASS",
+    "dateBug": "CONFIRMED",
+    "restartWindow": "OPEN: data checks are distinct from visible window recovery"
+  }
+}

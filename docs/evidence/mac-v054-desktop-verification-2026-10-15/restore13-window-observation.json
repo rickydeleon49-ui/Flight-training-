@@ -1,0 +1,7 @@
+{
+  "pid": 19387,
+  "binary": "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app/Contents/MacOS/her-flight-deck",
+  "observed": "Repeated CUA noWindowsAvailable after self-restart; normal open activation also no window; live process sample preserved",
+  "recovery": "SIGTERM only this verified test process then normal relaunch",
+  "automaticWindowVerdict": "UNVERIFIED - no visible restarted UI"
+}

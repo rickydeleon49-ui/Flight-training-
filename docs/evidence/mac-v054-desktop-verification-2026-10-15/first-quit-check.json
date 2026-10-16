@@ -1,0 +1,73 @@
+{
+  "stopped": true,
+  "migrations": [
+    {
+      "version": 1,
+      "success": 1
+    },
+    {
+      "version": 2,
+      "success": 1
+    },
+    {
+      "version": 3,
+      "success": 1
+    },
+    {
+      "version": 4,
+      "success": 1
+    },
+    {
+      "version": 5,
+      "success": 1
+    },
+    {
+      "version": 6,
+      "success": 1
+    },
+    {
+      "version": 7,
+      "success": 1
+    },
+    {
+      "version": 8,
+      "success": 1
+    },
+    {
+      "version": 9,
+      "success": 1
+    },
+    {
+      "version": 10,
+      "success": 1
+    },
+    {
+      "version": 11,
+      "success": 1
+    },
+    {
+      "version": 12,
+      "success": 1
+    },
+    {
+      "version": 13,
+      "success": 1
+    },
+    {
+      "version": 14,
+      "success": 1
+    }
+  ],
+  "notes": [
+    {
+      "id": "10794987-7fd6-44bb-9058-4b7ffbf0bb1a",
+      "title": "Synthetic native persistence",
+      "body": "Disposable desktop verification. Native save, restart, backup and restore.",
+      "pinned": 0,
+      "created_at": "2026-10-16T02:22:02.098Z",
+      "updated_at": "2026-10-16T02:22:02.098Z"
+    }
+  ],
+  "source": "e928601",
+  "syntheticOnly": true
+}
