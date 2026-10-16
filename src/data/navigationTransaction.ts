@@ -15,8 +15,13 @@
  *   current, non-cancelled reserved token, within the recorded identity's
  *   page count (M4-R34). Every other case is a refusal verdict that writes
  *   nothing.
+ * - `set_read` names the content hash and owner generation of the saved
+ *   request it confirms or clears, and `add_bookmark` the content hash it was
+ *   made for (M4S1-R1); a stale request is STALE_STATE and changes nothing.
  * - Identity is never written here: it comes only from the native inspector,
- *   which reads the file's bytes. Browser mode has no managed files.
+ *   which reads the file's bytes. Browser mode has no managed files. The
+ *   native side additionally rereads the managed file inside the same
+ *   transaction (M4S1-R3); that half has no browser counterpart.
  */
 import type {
   NavigationBookmark,
@@ -60,6 +65,7 @@ export const NAVIGATION_ERROR_MESSAGES: Record<NavigationErrorCode, string> = {
   PAGE_OUT_OF_RANGE: "That page isn't in this document.",
   STALE_STATE: "This changed somewhere else. Reload to see the latest.",
   LIMIT_EXCEEDED: "That is more than this can hold.",
+  OPEN_FAILED: "Your PDF reader couldn't open this file.",
   STORAGE_FAILURE: "The change could not be saved.",
   DESKTOP_ONLY: "Checking a document's pages needs the desktop application.",
 };
@@ -156,15 +162,20 @@ export function decodeNavigationOperation(value: unknown): NavigationOperation {
       return { kind, materialId: id(f, "materialId") };
     }
     case "set_read": {
-      const f = exact(value, ["kind", "materialId", "physicalPage", "confirmed"]);
+      const f = exact(value, ["kind", "materialId", "expectedContentSha256", "expectedOwnerGeneration", "physicalPage", "confirmed"]);
+      const materialId = id(f, "materialId");
+      const expectedContentSha256 = hash(f, "expectedContentSha256");
+      const expectedOwnerGeneration = positive(f.expectedOwnerGeneration);
+      const physicalPage = positive(f.physicalPage);
       if (typeof f.confirmed !== "boolean") refuse("INVALID_ARGUMENT");
-      return { kind, materialId: id(f, "materialId"), physicalPage: positive(f.physicalPage), confirmed: f.confirmed as boolean };
+      return { kind, materialId, expectedContentSha256, expectedOwnerGeneration, physicalPage, confirmed: f.confirmed as boolean };
     }
     case "add_bookmark": {
-      const f = exact(value, ["kind", "materialId", "bookmarkId", "physicalPage", "pageLabel", "title", "notes"]);
+      const f = exact(value, ["kind", "materialId", "expectedContentSha256", "bookmarkId", "physicalPage", "pageLabel", "title", "notes"]);
       return {
         kind,
         materialId: id(f, "materialId"),
+        expectedContentSha256: hash(f, "expectedContentSha256"),
         bookmarkId: id(f, "bookmarkId"),
         physicalPage: positive(f.physicalPage),
         pageLabel: label(f, "pageLabel"),
@@ -368,20 +379,25 @@ async function read(tx: Tx, materialId: string): Promise<NavigationResultByKind[
 async function setRead(tx: Tx, op: Extract<NavigationOperation, { kind: "set_read" }>): Promise<NavigationResultByKind["set_read"]> {
   if (!materialExists(tx, op.materialId)) refuse("NOT_FOUND");
   const identity = identityOf(tx, op.materialId);
-  if (!identity) return refuse("STALE_STATE");
+  if (!identity || identity.contentSha256 !== op.expectedContentSha256) return refuse("STALE_STATE");
   const state = readingStateOf(tx.query, op.materialId);
   if (
     !state ||
     state.lastRequestedPage !== op.physicalPage ||
-    state.originatingContentSha256 !== identity.contentSha256 ||
-    state.status !== "active"
+    state.originatingContentSha256 !== op.expectedContentSha256 ||
+    state.status !== "active" ||
+    state.ownerGeneration !== op.expectedOwnerGeneration
   ) {
     refuse("STALE_STATE");
   }
-  await tx.run("UPDATE material_reading_state SET confirmed_read = ?, updated_at = ? WHERE material_id = ?", [op.confirmed ? 1 : 0, now(tx), op.materialId]);
+  await tx.run(
+    `UPDATE material_reading_state SET confirmed_read = ?, updated_at = ?
+      WHERE material_id = ? AND owner_generation = ? AND originating_content_sha256 = ?`,
+    [op.confirmed ? 1 : 0, now(tx), op.materialId, op.expectedOwnerGeneration, op.expectedContentSha256],
+  );
   if (changes(tx) !== 1) refuse("STORAGE_FAILURE");
   const after = readingStateOf(tx.query, op.materialId);
-  if (!after) return refuse("STORAGE_FAILURE");
+  if (!after || after.confirmedRead !== op.confirmed || after.ownerGeneration !== op.expectedOwnerGeneration) return refuse("STORAGE_FAILURE");
   return after;
 }
 
@@ -389,6 +405,7 @@ async function addBookmark(tx: Tx, op: Extract<NavigationOperation, { kind: "add
   if (!materialExists(tx, op.materialId)) refuse("NOT_FOUND");
   const identity = identityOf(tx, op.materialId);
   if (!identity) return refuse("IDENTITY_UNKNOWN");
+  if (identity.contentSha256 !== op.expectedContentSha256) refuse("STALE_STATE");
   if (op.physicalPage > identity.totalPages) refuse("PAGE_OUT_OF_RANGE");
   if (num(tx.query("SELECT COUNT(*) AS n FROM material_bookmarks WHERE id = ?", [op.bookmarkId])[0]!, "n") !== 0) refuse("INVALID_ARGUMENT");
   if (num(tx.query("SELECT COUNT(*) AS n FROM material_bookmarks WHERE material_id = ?", [op.materialId])[0]!, "n") >= NAVIGATION_LIMITS.bookmarksPerMaterial) {

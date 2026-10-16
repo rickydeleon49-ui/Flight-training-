@@ -1545,10 +1545,20 @@ export type NavigationOperation =
       pageLabel: string | null;
     }
   | { kind: "read"; materialId: Id }
-  | { kind: "set_read"; materialId: Id; physicalPage: number; confirmed: boolean }
   | {
+      /** Bound to the saved request the person saw (M4S1-R1). */
+      kind: "set_read";
+      materialId: Id;
+      expectedContentSha256: string;
+      expectedOwnerGeneration: number;
+      physicalPage: number;
+      confirmed: boolean;
+    }
+  | {
+      /** Bound to the content the person was looking at (M4S1-R1). */
       kind: "add_bookmark";
       materialId: Id;
+      expectedContentSha256: string;
       bookmarkId: string;
       physicalPage: number;
       pageLabel: string | null;
@@ -1580,4 +1590,5 @@ export type NavigationErrorCode =
   | "LIMIT_EXCEEDED"
   | "STORAGE_FAILURE"
   /** Browser mode only: there is no managed file to inspect. */
+  | "OPEN_FAILED"
   | "DESKTOP_ONLY";

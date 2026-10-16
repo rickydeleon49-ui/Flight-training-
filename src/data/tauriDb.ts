@@ -56,7 +56,7 @@ import {
   invokeReadSkillSummary,
   invokeSkillEvidenceAction,
 } from "./skillEvidenceShapes";
-import { invokeInspectNavigationIdentity, invokeNavigationOperation } from "./navigationShapes";
+import { invokeInspectNavigationIdentity, invokeNavigationOperation, invokeOpenNavigationDocument } from "./navigationShapes";
 
 const DB_URL = "sqlite:her-flight-deck.db";
 
@@ -551,6 +551,9 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     readObservationHistory: (input) => invokeReadObservationHistory(input, callNative),
     navigationOperation: (operation) => invokeNavigationOperation(operation, callNative),
     inspectNavigationIdentity: (materialId) => invokeInspectNavigationIdentity(materialId, callNative),
+    openNavigationDocument: async (materialId, expectedContentSha256) => {
+      await invokeOpenNavigationDocument(materialId, expectedContentSha256, callNative);
+    },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);
     },

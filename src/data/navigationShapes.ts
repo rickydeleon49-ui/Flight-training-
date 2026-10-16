@@ -102,33 +102,74 @@ export function isNavigationStateFor(materialId: string, v: unknown): v is Navig
 
 const REFUSALS = new Set(["unreserved", "superseded", "cancelled", "replayed", "identity_unknown", "identity_changed", "out_of_bounds"]);
 
+type Op<K extends NavigationOperation["kind"]> = Extract<NavigationOperation, { kind: K }>;
+
+/**
+ * A successful acknowledgement must be bound to the request that was sent
+ * (M4S1-R2): a commit saved exactly the requested page, label and content for
+ * exactly this generation, active and not yet confirmed as read; a read
+ * confirmation changed only the confirmation of exactly the saved request it
+ * named; a bookmark holds exactly what was asked, on the named content.
+ * Refusals are not bound this way: they may carry newer current state.
+ */
+export function isCommittedStateFor(op: Op<"commit">, v: unknown): v is NavigationReadingState {
+  return (
+    isReadingStateFor(op.materialId, v) &&
+    v.lastRequestedPage === op.physicalPage &&
+    v.lastRequestedPageLabel === op.pageLabel &&
+    v.originatingContentSha256 === op.contentSha256 &&
+    v.ownerGeneration === op.generation &&
+    v.status === "active" &&
+    v.confirmedRead === false
+  );
+}
+
+export function isSetReadStateFor(op: Op<"set_read">, v: unknown): v is NavigationReadingState {
+  return (
+    isReadingStateFor(op.materialId, v) &&
+    v.lastRequestedPage === op.physicalPage &&
+    v.originatingContentSha256 === op.expectedContentSha256 &&
+    v.ownerGeneration === op.expectedOwnerGeneration &&
+    v.status === "active" &&
+    v.confirmedRead === op.confirmed
+  );
+}
+
+export function isAddedBookmarkFor(op: Op<"add_bookmark">, v: unknown): v is NavigationBookmark {
+  return (
+    isBookmarkFor(op.materialId, v) &&
+    v.id === op.bookmarkId &&
+    v.physicalPage === op.physicalPage &&
+    v.pageLabel === op.pageLabel &&
+    v.originatingContentSha256 === op.expectedContentSha256 &&
+    v.title === op.title &&
+    v.notes === op.notes &&
+    v.status === "verified"
+  );
+}
+
 /** Whether `v` is exactly the result `op` must produce. */
 export function isNavigationResultFor<K extends NavigationOperation["kind"]>(
-  op: Extract<NavigationOperation, { kind: K }>,
+  op: Op<K>,
   v: unknown,
 ): v is NavigationResultByKind[K] {
   const m = op.materialId;
-  switch (op.kind) {
+  const any = op as NavigationOperation;
+  switch (any.kind) {
     case "begin":
       return isRecord(v) && hasExactly(v, ["generation"]) && isPositive(v.generation);
     case "cancel":
-      return isRecord(v) && hasExactly(v, ["cancelledGeneration"]) && isPositive(v.cancelledGeneration);
+      return isRecord(v) && hasExactly(v, ["cancelledGeneration"]) && isPositive(v.cancelledGeneration) && v.cancelledGeneration >= any.generation;
     case "commit":
       if (!isRecord(v) || !hasExactly(v, ["committed", "reason", "readingState"])) return false;
-      if (v.committed === true) {
-        return (
-          v.reason === null &&
-          isReadingStateFor(m, v.readingState) &&
-          v.readingState.ownerGeneration === (op as Extract<NavigationOperation, { kind: "commit" }>).generation
-        );
-      }
+      if (v.committed === true) return v.reason === null && isCommittedStateFor(any, v.readingState);
       return v.committed === false && REFUSALS.has(v.reason as string) && (v.readingState === null || isReadingStateFor(m, v.readingState));
     case "read":
       return isNavigationStateFor(m, v);
     case "set_read":
-      return isReadingStateFor(m, v);
+      return isSetReadStateFor(any, v);
     case "add_bookmark":
-      return isBookmarkFor(m, v) && v.id === (op as Extract<NavigationOperation, { kind: "add_bookmark" }>).bookmarkId;
+      return isAddedBookmarkFor(any, v);
     case "delete_bookmark":
       return isRecord(v) && hasExactly(v, ["deleted"]) && typeof v.deleted === "boolean";
     default:
@@ -168,6 +209,22 @@ export function invokeNavigationOperation<K extends NavigationOperation["kind"]>
   call: Call,
 ): Promise<NavigationResultByKind[K]> {
   return callChecked(call, "navigation_operation", { operation: op }, (v): v is NavigationResultByKind[K] => isNavigationResultFor(op, v));
+}
+
+/** The verified handover to the default reader (`open_navigation_document`). */
+export interface OpenedNavigationDocument {
+  materialId: string;
+  contentSha256: string;
+}
+
+export function invokeOpenNavigationDocument(materialId: string, expectedContentSha256: string, call: Call): Promise<OpenedNavigationDocument> {
+  return callChecked(
+    call,
+    "open_navigation_document",
+    { input: { materialId, expectedContentSha256 } },
+    (v): v is OpenedNavigationDocument =>
+      isRecord(v) && hasExactly(v, ["materialId", "contentSha256"]) && v.materialId === materialId && v.contentSha256 === expectedContentSha256,
+  );
 }
 
 export function invokeInspectNavigationIdentity(materialId: string, call: Call): Promise<InspectedNavigationIdentity> {

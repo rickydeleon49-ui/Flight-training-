@@ -4984,7 +4984,7 @@ pub fn backup_if_upgraded(app: &AppHandle) -> Result<(), String> {
 }
 
 /// The version-change check itself, against a plain directory so it can be tested.
-fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), String> {
+pub(crate) fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), String> {
     std::fs::create_dir_all(root)
         .map_err(|e| format!("Could not create the application data directory: {e}"))?;
 
@@ -7377,7 +7377,7 @@ pub fn list_backups(app: AppHandle) -> Result<Vec<BackupInfo>, String> {
     list_backups_in(&app_root(&app)?)
 }
 
-fn list_backups_in(root: &Path) -> Result<Vec<BackupInfo>, String> {
+pub(crate) fn list_backups_in(root: &Path) -> Result<Vec<BackupInfo>, String> {
     let dir = backup_dir(root)?;
     let mut backups: Vec<BackupInfo> = std::fs::read_dir(&dir)
         .map_err(|e| format!("Could not read the backup directory: {e}"))?

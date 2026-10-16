@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { MIGRATIONS, applyMigrations } from "./migrations";
 import { createRepositories } from "./repositories";
-import { PracticeStateValidationError, SKILL_EVIDENCE_TABLES, validateApplicationDatabase } from "./practiceStateValidation";
+import { NAVIGATION_TABLES, PracticeStateValidationError, SKILL_EVIDENCE_TABLES, validateApplicationDatabase } from "./practiceStateValidation";
 import { createNodeSqliteDatabase, type TestDatabase } from "./testing/nodeSqliteDb";
 import {
   FIXTURES,
@@ -79,9 +79,12 @@ describe("upgrading a populated schema-13 library", () => {
     expect(await db.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: MIGRATIONS.at(-1)!.version }]);
     const after = await openNodeEngine(path);
     engines.push(after);
-    // Later migrations only add tables (schema 15's navigation tables start empty).
+    // Later migrations only add tables: schema 15's four navigation tables, all empty.
     const retained = RETAINED(after) as Record<string, unknown>;
     expect(Object.fromEntries(Object.keys(before).map((k) => [k, retained[k]]))).toEqual(before);
+    const added = Object.keys(retained).filter((k) => !Object.hasOwn(before, k)).sort();
+    expect(added).toEqual([...NAVIGATION_TABLES].sort());
+    for (const table of added) expect(retained[table], table).toEqual([]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_catalog_entries")).toEqual([{ n: 15 }]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_observations")).toEqual([{ n: 0 }]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_evidence_operations")).toEqual([{ n: 0 }]);
@@ -169,20 +172,42 @@ describe("backup and restore of a schema-14 library", () => {
     expect((await createRepositories(db).skillEvidence.summary("builtin.normal_landing"))?.status).toBe("practicing");
   });
 
-  it("a backup with altered evidence is refused, and the production driver will not open it; its bytes are untouched", async () => {
+  const TAMPERS = [
+    "UPDATE skill_observations SET wording = 'Altered.'",
+    "DELETE FROM skill_evidence_operations WHERE action = 'set_status'",
+    "UPDATE skill_evidence_operations SET is_erased = 0, result_json = '{\"action\":\"create_observation\",\"observationId\":\"x\",\"revision\":1}' WHERE is_erased = 1",
+  ];
+
+  // The genuine older-schema case (M4S1-R4): a tampered schema-14 file that the driver would have
+  // to upgrade before it can validate. It must be refused and its bytes left exactly as they were.
+  it("a schema-14 backup with altered evidence is refused before any upgrade is kept; its bytes are untouched", async () => {
     const node = await openNodeEngine();
     engines.push(node);
     await populated14(node);
-    for (const tamper of [
-      "UPDATE skill_observations SET wording = 'Altered.'",
-      "DELETE FROM skill_evidence_operations WHERE action = 'set_status'",
-      "UPDATE skill_evidence_operations SET is_erased = 0, result_json = '{\"action\":\"create_observation\",\"observationId\":\"x\",\"revision\":1}' WHERE is_erased = 1",
-    ]) {
-      const path = tempPath("tampered.db");
+    for (const tamper of TAMPERS) {
+      const path = tempPath("tampered14.db");
       writeFileSync(path, node.snapshot());
       const copy = await openNodeEngine(path);
-      // Bring the copy to the current schema first, so opening it only validates and never migrates.
-      await applyMigrations((sql) => copy.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 14).map((m) => m.version)));
+      expect(Math.max(...appliedVersions(copy)), "the specimen stays at schema 14").toBe(14);
+      copy.exec(tamper);
+      copy.close();
+      const bytes = readFileSync(path);
+      await expect(createNodeSqliteDatabase(path), tamper).rejects.toBeInstanceOf(PracticeStateValidationError);
+      expect(readFileSync(path).equals(bytes), tamper).toBe(true);
+    }
+  });
+
+  it("a current-schema backup with altered evidence is refused, and the production driver will not open it; its bytes are untouched", async () => {
+    const node = await openNodeEngine();
+    engines.push(node);
+    await populated14(node);
+    for (const tamper of TAMPERS) {
+      const path = tempPath("tampered-current.db");
+      writeFileSync(path, node.snapshot());
+      const copy = await openNodeEngine(path);
+      // Bring this copy to the current schema first, so opening it only validates and never migrates.
+      await applyMigrations((sql) => copy.exec(sql), appliedVersions(copy));
+      expect(Math.max(...appliedVersions(copy))).toBe(MIGRATIONS.at(-1)!.version);
       copy.exec(tamper);
       copy.close();
       const bytes = readFileSync(path);

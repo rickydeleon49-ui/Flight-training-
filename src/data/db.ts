@@ -122,6 +122,12 @@ export interface SqlDatabase {
    * bytes and record that identity (M4). Browser mode has no managed files.
    */
   inspectNavigationIdentity?(materialId: string): Promise<import("@/domain/types").InspectedNavigationIdentity>;
+  /**
+   * Desktop only: hand the material's managed PDF to the default reader after
+   * checking that its bytes, read now, are the expected content (M4S1-R3).
+   * It cannot jump to a page or control the reader afterwards.
+   */
+  openNavigationDocument?(materialId: string, expectedContentSha256: string): Promise<void>;
 }
 
 export interface PracticeTestSaveOperation {

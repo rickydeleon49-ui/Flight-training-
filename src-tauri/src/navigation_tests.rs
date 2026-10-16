@@ -1287,3 +1287,58 @@ fn the_wire_commands_use_the_checked_path() {
     assert_eq!(wire["code"], "OPEN_FAILED");
     unmark_root_ready(dir.path());
 }
+
+/* ------------------------------------------------------------------ */
+/* The pre-upgrade safety copy and an invalid older library (R4)       */
+/* ------------------------------------------------------------------ */
+
+/// The desktop path for a schema-14 library meeting a schema-15 build: the
+/// version-change copy is taken before anything opens or migrates it. For a
+/// valid library the copy is byte-identical and still verifies at schema 14;
+/// for a tampered one the copy keeps the tampered original exactly, and native
+/// whole-library verification refuses the library before and after upgrading.
+#[test]
+fn the_pre_upgrade_copy_keeps_a_schema14_library_exactly_valid_or_not() {
+    for tampered in [false, true] {
+        let dir = TempDir::new(if tampered {
+            "r4-copy-tampered"
+        } else {
+            "r4-copy"
+        });
+        let conn = populated_schema14(dir.path());
+        if tampered {
+            conn.execute_batch("DROP INDEX idx_skill_observations_page;")
+                .unwrap();
+            assert!(crate::backup::verify_application_connection(&conn).is_err());
+        }
+        drop(conn);
+        let original = std::fs::read(dir.path().join("her-flight-deck.db")).unwrap();
+        crate::backup::backup_if_upgraded_in(dir.path(), "0.0.0-schema15-test").unwrap();
+        let copies = crate::backup::list_backups_in(dir.path()).unwrap();
+        assert_eq!(copies.len(), 1);
+        let copy = PathBuf::from(&copies[0].path).join("her-flight-deck.db");
+        assert_eq!(
+            std::fs::read(&copy).unwrap(),
+            original,
+            "the copy is the original"
+        );
+
+        let live = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+        let upgraded = live
+            .execute_batch(&format!(
+                "BEGIN; {} INSERT INTO _sqlx_migrations (version) VALUES (15); COMMIT;",
+                migration_15()
+            ))
+            .map(|()| crate::backup::verify_application_connection(&live));
+        let saved = Connection::open(&copy).unwrap();
+        if tampered {
+            // Migration 15 only adds; the damage remains, and native
+            // verification still refuses the upgraded library and the copy.
+            assert!(matches!(upgraded, Ok(Err(_))), "{upgraded:?}");
+            assert!(crate::backup::verify_application_connection(&saved).is_err());
+        } else {
+            assert_eq!(upgraded, Ok(Ok(())));
+            crate::backup::verify_application_connection(&saved).unwrap();
+        }
+    }
+}
