@@ -1,3 +1,11 @@
+## v0.5.4 source preparation and QA tooling accepted — 15 October 2026
+
+**Independent review ACCEPTED for exact-head CI/integration in PR #167.** QA-01 and QA-02 are closed in source: real ARM64 Cargo output is recognized with its strict shape/link/tracked-file guards, and helper replay permits only the two synchronized root application-version fields. The five version files consistently declare **0.5.4**, with no dependency change. PR #169's flight-time/medical fixes are included and unchanged. [Acceptance](docs/MAC_LOCAL_V054_QA_ACCEPTANCE_2026-10-15.md).
+
+Independent combined verification: **26 helper tests passed / 0 skipped**, **3,221 frontend passed / 6 skipped**, typecheck, frontend build and Cargo-lock checks pass. The submitted corrected helper replay passes all **12 stages**, with all 15 walker cases; refreshed combined replay/CI identities are recorded in the containing PR closeout. Historical failure receipts and original submission manifests remain snapshots, not claims about later tracker bytes.
+
+**Next task:** [fresh private local v0.5.4 candidate from the accepted merged source](docs/MAC_LOCAL_V054_FRESH_CANDIDATE_PROMPT_2026-10-15.md). The existing fee7869 app/ZIP/DMG remains hash-identical and predates PR169; no new native candidate was built by this review. Freeze the containing PR's merged source before a new build; preserve older artifacts. The earlier automatic DMG stall remains unexplained and requires truthful receipts if repeated. Current authorization remains local unsigned/ad-hoc plus automated/browser testing; desktop launch, hfdtest, signing credentials/notarization and public publication remain deferred. M4 prototype and M5 policy/requirements decisions remain separate.
+
 ## Local v0.5.4 QA-01/QA-02 tooling corrections — pending independent review — 15 October 2026
 
 **IMPLEMENTED, PENDING INDEPENDENT REVIEW.** Claude, uncommitted on `codex/local-v054-build-check` (HEAD `93a88df`), per the [QA follow-up prompt](docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md). Scripts and docs only; no application source, dependency, migration, version, signing or native-artifact change.
@@ -14,6 +22,29 @@ A provisional local ARM64 v0.5.4 test artifact was built from clean version-only
 **Open:** LOCAL-V054-QA-01, helper suite 22/23 because genuine `target/aarch64-apple-darwin` output is classified as unexpected; LOCAL-V054-QA-02, replay recipe refuses version-only package-lock metadata. The automatic Tauri DMG phase stalled once; manual local image creation/verification succeeded, cause unconfirmed. Do not call the whole gate green or silently weaken/delete fixtures. Version configuration is prepared on `codex/local-v054-build-check`, not yet integrated into main. [Build report](docs/MAC_LOCAL_V054_BUILD_AND_BUG_TEST_2026-10-15.md) · [precise next-model task](docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md).
 
 Next: independently review version/evidence and complete the bounded tooling follow-up; preserve the test artifact. Public release/signing, installed tests, M4 production and unapproved requirements remain separate/deferred. Historical entries below describe their original checkpoints.
+
+## Sweep follow-ups accepted; next release work — 15 October 2026
+
+**Independent source review ACCEPTED for exact-head CI/integration in the containing PR.** SWEEP-1014-TIMES and SWEEP-1014-MEDICAL, including SWEEP-R1, pass re-review. The original seven-case diagnostic passes unchanged; independently rerun frontend: **3,221 passed / 6 skipped**, typecheck and production bundle pass. [Acceptance and evidence](docs/SWEEP_FOLLOWUPS_ACCEPTANCE_2026-10-15.md). Earlier submission/review receipts remain historical and unchanged. Installed Mac behavior remains unverified/deferred.
+
+**Current roadmap position:** M1 daily planning and M2 study/review source work are delivered; the first M3 skills/evidence slice is delivered. This sweep completes the two historical flight-time/medical-conflict follow-ups after the containing PR passes exact-head CI and merges. M4 viewer/navigation remains an unshipped evidence prototype with separate ownership. M5 cost analytics have a delivered first slice; refunds/credits and requirement decisions RQ-D1–D7 remain open. No additional requirement implementation or provider adoption is authorized by this acceptance.
+
+**Next priority:** resolve QA-01 (real Apple Silicon Cargo target output rejected by the schema14 helper) and disposition QA-02 (version-only lockfile replay restriction), using the [existing model-neutral follow-up in PR #167](https://github.com/rickydeleon49-ui/Flight-training-/blob/codex/local-v054-build-check/docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md). Preserve its build/failure evidence and check for an existing owner before editing. PR #167's provisional local ad-hoc v0.5.4 artifact predates this sweep: it does not contain these new fixes. Its CI passed, but tooling findings, independent version review and the exact final candidate source remain open. Do not merge it or rebuild solely because this sweep is accepted. Desktop launch/hfdtest, Apple signing/notarization and public publication stay deferred.
+
+## SWEEP-1014-TIMES and SWEEP-1014-MEDICAL implemented — 15 October 2026
+
+**IMPLEMENTED; SWEEP-R1 CORRECTED, PENDING INDEPENDENT RE-REVIEW.** Claude, uncommitted on branch `claude/sweep-followups-2026-10-15` (base `f2a7090`). [Report](docs/SWEEP_FOLLOWUPS_REPORT_2026-10-15.md) · [review (changes requested, #168)](docs/SWEEP_FOLLOWUPS_REVIEW_2026-10-15.md) · [SWEEP-R1 correction](docs/SWEEP_FOLLOWUPS_CORRECTION_R1_2026-10-15.md).
+
+- **SWEEP-1014-TIMES:**
+  - the Flight log and each entry now point out saved flights whose times don't add up, with a "Correct times" link;
+  - the times are never changed and still count in the totals, which the hour reference says.
+- **SWEEP-1014-MEDICAL:**
+  - when Settings and her latest medical record disagree, the Certificates tab asks which date matches her certificate, and only her choice updates the other record;
+  - only the first choice is accepted while it saves, and a choice made against dates that have since changed writes nothing (SWEEP-R1);
+  - Settings and the reminders say the dates differ;
+  - an earlier medical kept as history is not treated as a conflict.
+
+There is no schema, migration, backup or dependency change. M5-COST-REFUNDS and PIPE-161-01 remain open.
 
 ## Schema14 package accepted; F1–F3 follow-up — 15 October 2026
 
@@ -39,8 +70,8 @@ Independent review accepts the nine-defect bug sweep, the first M5 cost-analytic
 | CI-161-01 | Corrected: rendered tests await observable real crypto/SQLite completion without advancing the review clock, rather than 20 fake-timer turns. New delayed-digest regression catches the old wait; production display-only clock behavior is retained. Prior failed CI remains linked in the review. |
 | Screenshot helper | Accepted: HashRouter URLs, collision refusal, rendered-route checks and truthful OS-dark naming; no product dark theme added. |
 | M5 requirements | [Proposal published](docs/M5_REQUIREMENTS_SCOPE_PROPOSAL_2026-10-14.md), **not approved for implementation**. RQ-D1–D7 still require owner decisions; rule data requires knowledgeable human review. Instrument totals and recent dual time cannot establish specific training-purpose evidence. |
-| SWEEP-1014-TIMES | Pending: decide how to flag older impossible flight-time records. Add a read-only explanation with affected entries; never silently change/drop historical times or use unreviewed totals as qualifying requirement evidence. |
-| SWEEP-1014-MEDICAL | Pending: conflicting Settings/Toolkit medical dates both remain visible. Explain the conflict and ask which record is authoritative before any automatic reconciliation. |
+| SWEEP-1014-TIMES | Accepted for integration in the containing PR: read-only affected-entry warnings and correction links; saved values and totals preserved, reference caveat retained. |
+| SWEEP-1014-MEDICAL | Accepted for integration in the containing PR: explicit authority choice, synchronous pending protection, fresh-state validation and failure/retry coverage; no reconciliation on load. |
 | M5-COST-REFUNDS | Pending model decision: define refunds/credits and their effect on totals, paired rates and trends, then add repository/UI/restore regressions. Unlinked journal hours and period-specific cost rates remain explicit later scope. |
 | PIPE-161-01 | Pending external-controller work: bounded failed-CI repair dispatch, durable duplicate/two-attempt guards, fresh source-hash approval and green exact-head checks before merge. Keep this local tooling outside application source; no controller restart or automation is performed here. |
 

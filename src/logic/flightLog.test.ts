@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { makeJournalEntry } from "@/testing/factories";
 import {
+  flightTimeChecks,
   flightTimeProblem,
   flightTimesChanged,
   flightActivity,
@@ -140,5 +141,23 @@ describe("flightTimeProblem", () => {
 
   it("is not tripped by floating-point addition of tenths", () => {
     expect(flightTimeProblem(times({ totalTime: 0.3, dualReceived: 0.1, soloTime: 0.2 }))).toBeNull();
+  });
+});
+
+describe("flightTimeChecks", () => {
+  it("lists only saved entries whose times don't add up, newest first, without changing them", () => {
+    const fine = makeJournalEntry({ id: "fine", date: "2026-09-03", totalTime: 1.2, dualReceived: 1.2 });
+    const older = makeJournalEntry({ id: "older", date: "2026-08-01", totalTime: 1, dualReceived: 1.2 });
+    const newer = makeJournalEntry({ id: "newer", date: "2026-09-10", totalTime: 1.5, dualReceived: 1, soloTime: 1 });
+    const untimed = makeJournalEntry({ id: "untimed", date: "2026-09-11", dualReceived: 3 });
+    const entries = [fine, older, newer, untimed];
+    const snapshot = JSON.stringify(entries);
+
+    const checks = flightTimeChecks(entries);
+
+    expect(checks.map((check) => check.entry.id)).toEqual(["newer", "older"]);
+    expect(checks[1]!.problem).toBe("Dual received time can't be more than this flight's total time of 1.0 hr.");
+    expect(checks[0]!.problem).toMatch(/^Dual received and solo time together/);
+    expect(JSON.stringify(entries)).toBe(snapshot);
   });
 });

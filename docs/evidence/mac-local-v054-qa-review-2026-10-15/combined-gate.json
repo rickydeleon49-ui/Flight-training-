@@ -1,0 +1,53 @@
+[
+  {
+    "name": "helper-final",
+    "argv": [
+      "node",
+      "--test",
+      "scripts/mac-schema14-profile-snapshot.test.mjs"
+    ],
+    "exit": 0,
+    "seconds": 3.36
+  },
+  {
+    "name": "tests-final",
+    "argv": [
+      "npm",
+      "test",
+      "--",
+      "--maxWorkers=2"
+    ],
+    "exit": 0,
+    "seconds": 87.29
+  },
+  {
+    "name": "typecheck-final",
+    "argv": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 3.83
+  },
+  {
+    "name": "build-final",
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 4.96
+  },
+  {
+    "name": "lock-final",
+    "argv": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "exit": 0,
+    "seconds": 0.33
+  }
+]

@@ -1,0 +1,11 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-sweep-followups
+
+(node:2016) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:43:01
+   Duration  1.24s (transform 229ms, setup 0ms, import 330ms, tests 606ms, environment 224ms)
+

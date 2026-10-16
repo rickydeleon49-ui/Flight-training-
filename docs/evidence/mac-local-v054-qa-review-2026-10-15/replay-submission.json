@@ -1,0 +1,1466 @@
+{
+  "commit": "c2c33c8153d67f65da5f4ca1a8833f100d68e4c7",
+  "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
+  "copiedPaths": [
+    "ROADMAP.md",
+    "STATUS.md",
+    "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
+    "docs/MAC_SCHEMA14_VERIFICATION_PREPARATION_REPORT_2026-10-11.md",
+    "docs/PROJECT_HANDOFF.md",
+    "docs/evidence/mac-schema14-completion-2026-10-15/README.md",
+    "docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md",
+    "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+    "docs/evidence/mac-schema14-completion-2026-10-15/baseline.json",
+    "docs/evidence/mac-schema14-completion-2026-10-15/execution-receipts.json",
+    "docs/evidence/mac-schema14-completion-2026-10-15/proof-receipt.json",
+    "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+    "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md",
+    "docs/evidence/mac-schema14-verification-preparation-2026-10-11/RUNBOOK.md",
+    "docs/evidence/mac-schema14-verification-preparation-2026-10-11/SHA256SUMS",
+    "docs/evidence/mac-schema14-verification-preparation-2026-10-11/source-manifest.json",
+    "docs/evidence/mac-schema14-verification-preparation-2026-10-11/verification-receipts.json",
+    "scripts/mac-schema13-profile-snapshot.mjs",
+    "scripts/mac-schema14-profile-snapshot.mjs",
+    "scripts/mac-schema14-profile-snapshot.test.mjs",
+    "scripts/mac-schema14-verification-proof.mjs",
+    "src/logic/currentSchemaVerification.test.ts"
+  ],
+  "dependencyLock": {
+    "ok": true,
+    "baselineVersion": "0.5.3",
+    "candidateVersion": "0.5.4",
+    "versionOnly": true
+  },
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+        "worktree",
+        "add",
+        "--detach",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-postmerge-cn996x6l/worktree",
+        "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78"
+      ],
+      "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+      "startedAt": 1792113449.410078,
+      "durationSeconds": 0.3345677852630615,
+      "exit": 0,
+      "stdout": "HEAD is now at 16f9cf3 Integrate reviewed Claude fixes, cost analytics and release coordination (#163)\n",
+      "stderr": "Preparing worktree (detached HEAD 16f9cf3)\n"
+    },
+    {
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "cwd": "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-postmerge-cn996x6l/worktree",
+      "startedAt": 1792113449.852331,
+      "durationSeconds": 0.015542030334472656,
+      "exit": 0,
+      "stdout": "v22.23.3\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "npm",
+        "ci"
+      ],
+      "cwd": "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-postmerge-cn996x6l/worktree",
+      "startedAt": 1792113449.8678799,
+      "durationSeconds": 1.0730860233306885,
+      "exit": 0,
+      "stdout": "\nadded 166 packages, and audited 167 packages in 1s\n\n34 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/mac-schema14-verification-proof.mjs"
+      ],
+      "cwd": "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-postmerge-cn996x6l/worktree",
+      "startedAt": 1792113450.9409769,
+      "durationSeconds": 7.296576976776123,
+      "exit": 0,
+      "stdout": "PASS  source-identity  clone is at the pinned commit; only allowed paths differ from the pinned tree; pinned migration bytes\nPASS  source-walker-sensitivity  on disposable trees, genuine Cargo/Tauri build output is set aside while unexpected source and changed protected files are reported\nPASS  distributed-helper-lane  the distributed schema-14 helper has one fixed operator lane and no test route; its CLI refuses here and writes nothing\nPASS  historical-schema13-self-check  live schema-13 helper: every regression passes; the disclosed ceiling alarm is the only failure\nPASS  historical-special-key-reversion  live schema-13 helper with its own-key map reverted in a disposable copy: exactly the special-key checks fail\nPASS  schema14-self-check  schema-14 helper self-check, run in a disposable copy: every named source-only regression passes\nPASS  pr142-replay  all six original PR #142 comparisons replay with their original verdicts and exact diffs; the schema-14 helper refuses them\nPASS  installed-schema-anchors  pinned definitions and SQLx facts equal what the installed app recorded in PR #142\nPASS  fixture-proofs  disposable fixture proofs and named regressions on a pristine helper copy\nPASS  guard-reversions  removing each named guard from a disposable copy fails its named regression; the control still passes\nPASS  production-writers-and-validator  permanent vitest regression: production M3 writer and validateApplicationDatabase against the helper\nPASS  protected-sources-unchanged  helpers, PR #142 evidence, frozen kit, migrations and fixtures are byte-identical after the run\nPASS: 12/12 stages; receipt /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-schema14-proof-receipt-TSHmwT/proof-receipt.json\n",
+      "stderr": "(node:9205) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    }
+  ],
+  "success": true,
+  "proof": {
+    "schema": "hfd-schema14-verification-proof/1",
+    "runner": {
+      "node": "v22.23.3",
+      "platform": "darwin-arm64",
+      "cwd": "<repo>",
+      "startedAt": "2026-10-16T01:17:30.995Z",
+      "durationMs": 7238
+    },
+    "pinnedCommit": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
+    "boundaries": {
+      "syntheticSqlxLedger": "scratch libraries carry a ledger written by the helper scratch builder with SQLx's exact table definition, the shipped descriptions and SQLx SHA-384 checksums; it is not written by SQLx; stage installed-schema-anchors compares the pins with the genuine installed ledger recorded in PR #142",
+      "restores": "archive-state fidelity: closed database copies are put back in place and migrated; no native backup archive or native restore path was exercised",
+      "productionCode": "stage production-writers-and-validator runs the TypeScript production M3 writer and validateApplicationDatabase on node:sqlite; the native Rust validator and SQLx migrator were not run",
+      "installedApp": "not launched, installed or inspected; no real profile was read",
+      "schema14Installer": "unavailable: no schema-14 installer, hash, version or lane exists; nothing was constructed"
+    },
+    "summary": {
+      "stages": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "verdict": "PASS",
+    "stages": [
+      {
+        "id": "source-identity",
+        "title": "clone is at the pinned commit; only allowed paths differ from the pinned tree; pinned migration bytes",
+        "durationMs": 152,
+        "pass": true,
+        "method": "read-only reads of .git (HEAD, refs, index) and worktree bytes; no git process was started",
+        "head": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
+        "headRef": "detached",
+        "pinnedCommit": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
+        "indexEntries": 4310,
+        "indexMatchesPinnedTree": true,
+        "pinnedTree": {
+          "entries": 4306,
+          "sha256": "3ebb29ae0c656c62fdd52648d96b95711bf5c34213d236b0f5a4b6e93c5b6346"
+        },
+        "changedPaths": [
+          {
+            "status": " M",
+            "path": "ROADMAP.md"
+          },
+          {
+            "status": " M",
+            "path": "STATUS.md"
+          },
+          {
+            "status": "??",
+            "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md"
+          },
+          {
+            "status": "??",
+            "path": "docs/MAC_SCHEMA14_VERIFICATION_PREPARATION_REPORT_2026-10-11.md"
+          },
+          {
+            "status": " M",
+            "path": "docs/PROJECT_HANDOFF.md"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-completion-2026-10-15/README.md"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-completion-2026-10-15/baseline.json"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-completion-2026-10-15/execution-receipts.json"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-completion-2026-10-15/proof-receipt.json"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/RUNBOOK.md"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/SHA256SUMS"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/source-manifest.json"
+          },
+          {
+            "status": "??",
+            "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/verification-receipts.json"
+          },
+          {
+            "status": "??",
+            "path": "node_modules"
+          },
+          {
+            "status": " M",
+            "path": "scripts/mac-schema13-profile-snapshot.mjs"
+          },
+          {
+            "status": "??",
+            "path": "scripts/mac-schema14-profile-snapshot.mjs"
+          },
+          {
+            "status": "??",
+            "path": "scripts/mac-schema14-profile-snapshot.test.mjs"
+          },
+          {
+            "status": "??",
+            "path": "scripts/mac-schema14-verification-proof.mjs"
+          },
+          {
+            "status": "??",
+            "path": "src/logic/currentSchemaVerification.test.ts"
+          }
+        ],
+        "outsideAllowedPaths": [],
+        "buildOutputSetAside": [],
+        "buildOutputNotRecognized": [],
+        "migrations": [
+          {
+            "file": "0001_initial_schema.sql",
+            "sha256": "5fdd18155dd3276d1ba774d65995b0d6280bbc9be7f3703d8033801e0068e718",
+            "recorded": "5fdd18155dd3276d1ba774d65995b0d6280bbc9be7f3703d8033801e0068e718"
+          },
+          {
+            "file": "0002_profile_details.sql",
+            "sha256": "be29f442d881071e82a54fc75b92aab015f68d2b86b49c56999c8635c1ea184b",
+            "recorded": "be29f442d881071e82a54fc75b92aab015f68d2b86b49c56999c8635c1ea184b"
+          },
+          {
+            "file": "0003_personal_note.sql",
+            "sha256": "9d6915cd98fb8232b3fca5e720f4ac09f0380d0881bd88823f44232676a7f48f",
+            "recorded": "9d6915cd98fb8232b3fca5e720f4ac09f0380d0881bd88823f44232676a7f48f"
+          },
+          {
+            "file": "0004_app_metadata.sql",
+            "sha256": "3ec0833f36eea7612dc3ce5aa576623676e6b9918ddb7421c346064afd8bdbe5",
+            "recorded": "3ec0833f36eea7612dc3ce5aa576623676e6b9918ddb7421c346064afd8bdbe5"
+          },
+          {
+            "file": "0005_flight_log.sql",
+            "sha256": "1f724ad96211107e5ba7c6fe412627e448d249697fe7245e7f3d44060ad0d24b",
+            "recorded": "1f724ad96211107e5ba7c6fe412627e448d249697fe7245e7f3d44060ad0d24b"
+          },
+          {
+            "file": "0006_pilot_toolkit.sql",
+            "sha256": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1",
+            "recorded": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1"
+          },
+          {
+            "file": "0007_ai_study.sql",
+            "sha256": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358",
+            "recorded": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358"
+          },
+          {
+            "file": "0008_notes.sql",
+            "sha256": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761",
+            "recorded": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761"
+          },
+          {
+            "file": "0009_practice_tests.sql",
+            "sha256": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
+            "recorded": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec"
+          },
+          {
+            "file": "0010_debrief_links.sql",
+            "sha256": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971",
+            "recorded": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971"
+          },
+          {
+            "file": "0011_practice_sessions.sql",
+            "sha256": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+            "recorded": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de"
+          },
+          {
+            "file": "0012_card_reviews.sql",
+            "sha256": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e",
+            "recorded": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e"
+          },
+          {
+            "file": "0013_split_source_lineage.sql",
+            "sha256": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106",
+            "recorded": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106"
+          },
+          {
+            "file": "0014_skills_evidence.sql",
+            "sha256": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
+            "recorded": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a"
+          }
+        ],
+        "sourceCeiling": 14,
+        "helperSha256": {
+          "schema13": "a1658bd7c2e7da51bb34f905fda078f221dbc7ea5753515007e71a4f8fdd6209",
+          "schema14": "e674f5ebf9755921b9975e8a3b42800c2fa883bd6860ea9b017c53a25fbc0a6d"
+        },
+        "nodeModules": {
+          "link": "not a link",
+          "packageLockSha256": "c9885b920d98db1c555296a0b3a2ebd634ff48793d47f82ca112c027f1256771"
+        }
+      },
+      {
+        "id": "source-walker-sensitivity",
+        "title": "on disposable trees, genuine Cargo/Tauri build output is set aside while unexpected source and changed protected files are reported",
+        "durationMs": 25,
+        "pass": true,
+        "cases": [
+          {
+            "name": "accepted: genuine Cargo target and Tauri gen schemas",
+            "changed": [],
+            "accepted": [
+              "cargo-target",
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [],
+            "pass": true
+          },
+          {
+            "name": "refused: unexpected source beside the build output",
+            "changed": [
+              "src-tauri/src/extra.rs"
+            ],
+            "accepted": [
+              "cargo-target",
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [],
+            "pass": true
+          },
+          {
+            "name": "refused: source inside Tauri gen",
+            "changed": [
+              "src-tauri/gen/schemas/capabilities.json",
+              "src-tauri/gen/schemas/macOS-schema.json",
+              "src-tauri/gen/schemas/payload.mjs"
+            ],
+            "accepted": [
+              "cargo-target"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/gen: unexpected file schemas/payload.mjs"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: unknown top-level entry in Cargo target",
+            "changed": [
+              "src-tauri/target/.rustc_info.json",
+              "src-tauri/target/CACHEDIR.TAG",
+              "src-tauri/target/debug/deps/libx.rlib",
+              "src-tauri/target/debug/libx.rlib",
+              "src-tauri/target/notes.md"
+            ],
+            "accepted": [
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/target: unexpected top-level entries: notes.md"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: Cargo target without its cache tag",
+            "changed": [
+              "src-tauri/target/.rustc_info.json",
+              "src-tauri/target/debug/deps/libx.rlib",
+              "src-tauri/target/debug/libx.rlib"
+            ],
+            "accepted": [
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/target: no single-linked Cargo CACHEDIR.TAG"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: Cargo target is a symlink",
+            "changed": [
+              "src-tauri/target"
+            ],
+            "accepted": [
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/target: not a real directory"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: hard-linked Tauri gen schema",
+            "changed": [
+              "src-tauri/gen/schemas/capabilities.json",
+              "src-tauri/gen/schemas/macOS-schema.json"
+            ],
+            "accepted": [
+              "cargo-target"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/gen: schemas/capabilities.json is not a regular, single-linked, bounded file"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: build output without its .gitignore rule",
+            "changed": [
+              ".gitignore",
+              "src-tauri/gen/schemas/capabilities.json",
+              "src-tauri/gen/schemas/macOS-schema.json",
+              "src-tauri/target/.rustc_info.json",
+              "src-tauri/target/CACHEDIR.TAG",
+              "src-tauri/target/debug/deps/libx.rlib",
+              "src-tauri/target/debug/libx.rlib"
+            ],
+            "accepted": [],
+            "refusedBuildOutput": [
+              "src-tauri/gen: .gitignore has no src-tauri/gen/ rule",
+              "src-tauri/target: .gitignore has no src-tauri/target/ rule"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: tracked path inside build output",
+            "changed": [
+              "src-tauri/gen/schemas/macOS-schema.json"
+            ],
+            "accepted": [
+              "cargo-target"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/gen: a tracked path lies inside it"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: changed protected migration beside accepted build output",
+            "changed": [
+              "src-tauri/migrations/0001_initial_schema.sql"
+            ],
+            "accepted": [
+              "cargo-target",
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [],
+            "pass": true
+          },
+          {
+            "name": "refused: deleted protected migration beside accepted build output",
+            "changed": [
+              "src-tauri/migrations/0001_initial_schema.sql"
+            ],
+            "accepted": [
+              "cargo-target",
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [],
+            "pass": true
+          },
+          {
+            "name": "accepted: Apple Silicon target output beside host output",
+            "changed": [],
+            "accepted": [
+              "cargo-target",
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [],
+            "pass": true
+          },
+          {
+            "name": "refused: unknown target name in Cargo target",
+            "changed": [
+              "src-tauri/target/.rustc_info.json",
+              "src-tauri/target/CACHEDIR.TAG",
+              "src-tauri/target/aarch64-apple-darwin/CACHEDIR.TAG",
+              "src-tauri/target/aarch64-apple-darwin/release/deps/liba.rlib",
+              "src-tauri/target/aarch64-apple-darwin/release/liba.rlib",
+              "src-tauri/target/debug/deps/libx.rlib",
+              "src-tauri/target/debug/libx.rlib",
+              "src-tauri/target/x86_64-apple-darwin/CACHEDIR.TAG",
+              "src-tauri/target/x86_64-apple-darwin/release/libz.rlib"
+            ],
+            "accepted": [
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/target: unexpected top-level entries: x86_64-apple-darwin"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: source beside the Apple Silicon target profile",
+            "changed": [
+              "src-tauri/target/.rustc_info.json",
+              "src-tauri/target/CACHEDIR.TAG",
+              "src-tauri/target/aarch64-apple-darwin/CACHEDIR.TAG",
+              "src-tauri/target/aarch64-apple-darwin/build.rs",
+              "src-tauri/target/aarch64-apple-darwin/release/deps/liba.rlib",
+              "src-tauri/target/aarch64-apple-darwin/release/liba.rlib",
+              "src-tauri/target/debug/deps/libx.rlib",
+              "src-tauri/target/debug/libx.rlib"
+            ],
+            "accepted": [
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/target: aarch64-apple-darwin: unexpected entries: build.rs"
+            ],
+            "pass": true
+          },
+          {
+            "name": "refused: tracked path inside the Apple Silicon target",
+            "changed": [
+              "src-tauri/target/.rustc_info.json",
+              "src-tauri/target/CACHEDIR.TAG",
+              "src-tauri/target/aarch64-apple-darwin/CACHEDIR.TAG",
+              "src-tauri/target/aarch64-apple-darwin/release/liba.rlib",
+              "src-tauri/target/debug/deps/libx.rlib",
+              "src-tauri/target/debug/libx.rlib"
+            ],
+            "accepted": [
+              "tauri-gen-schemas"
+            ],
+            "refusedBuildOutput": [
+              "src-tauri/target: a tracked path lies inside it"
+            ],
+            "pass": true
+          }
+        ]
+      },
+      {
+        "id": "distributed-helper-lane",
+        "title": "the distributed schema-14 helper has one fixed operator lane and no test route; its CLI refuses here and writes nothing",
+        "durationMs": 126,
+        "pass": true,
+        "forbiddenTokens": [],
+        "laneRegionIsTheApprovedLane": true,
+        "operatorLaneCallsOutsideRegion": 1,
+        "cliSnapshot": {
+          "command": "node <repo>/scripts/mac-schema14-profile-snapshot.mjs snapshot --json <scratch>/distributed-snapshot.json",
+          "exit": 2,
+          "refusal": "REFUSED: profile root does not exist: /Users/hfdtest/Library/Application Support/com.herflightdeck.app",
+          "wroteReceipt": false
+        },
+        "cliSelfCheck": {
+          "exit": 2,
+          "refusal": "REFUSED: self-check runs only in a disposable repository copy: node scripts/mac-schema14-verification-proof.mjs self-check"
+        }
+      },
+      {
+        "id": "historical-schema13-self-check",
+        "title": "live schema-13 helper: every regression passes; the disclosed ceiling alarm is the only failure",
+        "durationMs": 497,
+        "pass": true,
+        "command": "node <repo>/scripts/mac-schema13-profile-snapshot.mjs self-check",
+        "exit": 1,
+        "counts": {
+          "checks": 106,
+          "passed": 105,
+          "failed": 1
+        },
+        "expectedFailure": {
+          "name": "anchor: CURRENT_SCHEMA_VERSION in the shipped source still equals this helper's constant",
+          "reason": "intentional: this historical helper stays bound to schema 13 while accepted source is 14",
+          "detail": {
+            "found": "14"
+          }
+        },
+        "regressionsPassing": 105,
+        "specialKeyChecks": [
+          {
+            "name": "receipt: special metadata keys (__proto__, constructor, toString, Unicode) capture own digests and counts agree",
+            "pass": true
+          },
+          {
+            "name": "receipt: unchanged comparison passes when special metadata keys are retained",
+            "pass": true
+          },
+          {
+            "name": "receipt: changed special metadata key fails restore, naming the key",
+            "pass": true
+          },
+          {
+            "name": "receipt: removed special metadata key fails restore, naming the key",
+            "pass": true
+          },
+          {
+            "name": "receipt: added special metadata key fails restore, naming the key",
+            "pass": true
+          },
+          {
+            "name": "receipt: special metadata keys are never receipt exclusions",
+            "pass": true
+          },
+          {
+            "name": "receipt: restore passes when the special metadata keys are retained, comparing each of them",
+            "pass": true
+          }
+        ],
+        "stdoutSha256": "309df37b691a1bc05edc162d21856f35dd7e13677d310a413d278c759ad6be02"
+      },
+      {
+        "id": "historical-special-key-reversion",
+        "title": "live schema-13 helper with its own-key map reverted in a disposable copy: exactly the special-key checks fail",
+        "durationMs": 983,
+        "pass": true,
+        "edit": {
+          "from": "const out = Object.create(null);",
+          "to": "const out = {};"
+        },
+        "copySha256": "10eb9156737a6b3deadef3ea7f43345c626887fe02b774afe21b48f35a861230",
+        "exit": 1,
+        "counts": {
+          "checks": 106,
+          "passed": 99,
+          "failed": 7
+        },
+        "specialKeyChecksFailed": [
+          "receipt: special metadata keys (__proto__, constructor, toString, Unicode) capture own digests and counts agree",
+          "receipt: unchanged comparison passes when special metadata keys are retained",
+          "receipt: changed special metadata key fails restore, naming the key",
+          "receipt: removed special metadata key fails restore, naming the key",
+          "receipt: added special metadata key fails restore, naming the key",
+          "receipt: restore passes when the special metadata keys are retained, comparing each of them"
+        ],
+        "expectedCeilingAlarm": true,
+        "unrelatedFailures": []
+      },
+      {
+        "id": "schema14-self-check",
+        "title": "schema-14 helper self-check, run in a disposable copy: every named source-only regression passes",
+        "durationMs": 728,
+        "pass": true,
+        "command": "node <repo>/scripts/mac-schema14-verification-proof.mjs self-check",
+        "exit": 0,
+        "counts": {
+          "checks": 102,
+          "passed": 102,
+          "failed": 0
+        },
+        "failed": [],
+        "stdoutSha256": "7ea15bc38a8c69b7824d3458bb6ea5fbbf3d40a05079d1790616081a14df148b"
+      },
+      {
+        "id": "pr142-replay",
+        "title": "all six original PR #142 comparisons replay with their original verdicts and exact diffs; the schema-14 helper refuses them",
+        "durationMs": 610,
+        "pass": true,
+        "replays": [
+          {
+            "receipt": "cmp-g1-cancel.json",
+            "purpose": "unchanged",
+            "originalVerdict": "PASS",
+            "replayVerdict": "PASS",
+            "exit": 0,
+            "diffsIdentical": true,
+            "diffs": [],
+            "schema14": {
+              "exit": 2,
+              "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 before: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly); after: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly)"
+            },
+            "pass": true
+          },
+          {
+            "receipt": "cmp-g1-failure.json",
+            "purpose": "unchanged",
+            "originalVerdict": "PASS",
+            "replayVerdict": "PASS",
+            "exit": 0,
+            "diffsIdentical": true,
+            "diffs": [],
+            "schema14": {
+              "exit": 2,
+              "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 before: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly); after: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly)"
+            },
+            "pass": true
+          },
+          {
+            "receipt": "cmp-g2-upgrade.json",
+            "purpose": "upgrade",
+            "originalVerdict": "PASS",
+            "replayVerdict": "PASS",
+            "exit": 0,
+            "diffsIdentical": true,
+            "diffs": [],
+            "schema14": {
+              "exit": 2,
+              "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 before: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly); after: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly)"
+            },
+            "pass": true
+          },
+          {
+            "receipt": "cmp-g3-refusal.json",
+            "purpose": "unchanged",
+            "originalVerdict": "PASS",
+            "replayVerdict": "PASS",
+            "exit": 0,
+            "diffsIdentical": true,
+            "diffs": [],
+            "schema14": {
+              "exit": 2,
+              "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 before: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly); after: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly)"
+            },
+            "pass": true
+          },
+          {
+            "receipt": "cmp-g3-restore.json",
+            "purpose": "restore",
+            "originalVerdict": "FAIL",
+            "replayVerdict": "FAIL",
+            "exit": 1,
+            "diffsIdentical": true,
+            "diffs": [
+              "app_metadata: before 5/7b0f0aa4093fe2d6b4f72c81bbc23894cd0c003b48edf2bc3eb43ba019acae4d after 2/920d9cf5f75dc03052b52ad2fa3162318578342422690f59f9dabb3c7ab1bf3d"
+            ],
+            "schema14": {
+              "exit": 2,
+              "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 before: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly); after: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly)"
+            },
+            "pass": true
+          },
+          {
+            "receipt": "cmp-g3-switch-fidelity.json",
+            "purpose": "unchanged",
+            "originalVerdict": "PASS",
+            "replayVerdict": "PASS",
+            "exit": 0,
+            "diffsIdentical": true,
+            "diffs": [],
+            "schema14": {
+              "exit": 2,
+              "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 before: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly); after: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper \u2014 it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly)"
+            },
+            "pass": true
+          }
+        ]
+      },
+      {
+        "id": "installed-schema-anchors",
+        "title": "pinned definitions and SQLx facts equal what the installed app recorded in PR #142",
+        "durationMs": 4,
+        "pass": true,
+        "note": "read-only comparison of committed PR #142 receipts; no installed app or profile was opened",
+        "snapshots": [
+          {
+            "file": "s12-populated.json",
+            "version": 12,
+            "objects": 74,
+            "expectedObjects": 74,
+            "mismatched": [],
+            "extra": [],
+            "ledgerDefinitionMatches": true,
+            "ledgerRows": 12,
+            "ledgerRowsMatchPins": true,
+            "pass": true
+          },
+          {
+            "file": "s12-fresh.json",
+            "version": 12,
+            "objects": 74,
+            "expectedObjects": 74,
+            "mismatched": [],
+            "extra": [],
+            "ledgerDefinitionMatches": true,
+            "ledgerRows": 12,
+            "ledgerRowsMatchPins": true,
+            "pass": true
+          },
+          {
+            "file": "s13-restored.json",
+            "version": 13,
+            "objects": 80,
+            "expectedObjects": 80,
+            "mismatched": [],
+            "extra": [],
+            "ledgerDefinitionMatches": true,
+            "ledgerRows": 13,
+            "ledgerRowsMatchPins": true,
+            "pass": true
+          },
+          {
+            "file": "s13-upgraded.json",
+            "version": 13,
+            "objects": 80,
+            "expectedObjects": 80,
+            "mismatched": [],
+            "extra": [],
+            "ledgerDefinitionMatches": true,
+            "ledgerRows": 13,
+            "ledgerRowsMatchPins": true,
+            "pass": true
+          }
+        ]
+      },
+      {
+        "id": "fixture-proofs",
+        "title": "disposable fixture proofs and named regressions on a pristine helper copy",
+        "durationMs": 1087,
+        "pass": true,
+        "copySha256": "a731c0df71038b4ae9363883b9297b11517fb9eb4c4acbdcfefbb0c629a45965",
+        "helperSha256": "e674f5ebf9755921b9975e8a3b42800c2fa883bd6860ea9b017c53a25fbc0a6d",
+        "regressions": {
+          "control-genuine-upgrade": {
+            "pass": true,
+            "verdict": "PASS",
+            "diffs": []
+          },
+          "special-keys-own-digests": {
+            "pass": true,
+            "ownKeys": [
+              "__proto__",
+              "constructor",
+              "pr\u00e9f\u00e9rence_\u2708\ufe0f_\u30ad\u30fc",
+              "toString"
+            ],
+            "rowCount": 4,
+            "restore": "PASS",
+            "diffs": []
+          },
+          "missing-ledger-row": {
+            "pass": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "before ledger: registered migration(s) 7 are missing from the SQLx ledger",
+              "after ledger: registered migration(s) 7 are missing from the SQLx ledger"
+            ]
+          },
+          "incomplete-inventory": {
+            "pass": true,
+            "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 after: table inventory is missing"
+          },
+          "incomplete-definitions": {
+            "pass": true,
+            "refusal": "REFUSED: snapshot(s) are not usable for a verdict \u2014 after: schema object skill_observations lacks a complete definition; after: schema object definitions and object inventory disagree"
+          },
+          "exclusion-scope-restore": {
+            "pass": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "app_metadata: keys other than the backup receipt differ (daily_plan_session)"
+            ]
+          },
+          "exclusion-restore-only": {
+            "pass": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "app_metadata: before 4/9f2f16b429be6abaf78f664bf715c6990a67579c9599644b75b185f2ae97a46b after 7/d30d79577d50f668d2b1877f47514d8b930bbdae556aa46d92eb313608331c51",
+              "app_metadata: keys differ (last_complete_backup_at, last_complete_backup_path, last_complete_backup_version)"
+            ]
+          },
+          "retained-data": {
+            "pass": true,
+            "verdict": "FAIL",
+            "changed": [
+              "practice_responses"
+            ],
+            "diffs": [
+              "practice_responses: before 1/f9364c9534aef6b442870c5eba06bf9a9f490196c332163ffddbbdbbaaac5bef after 1/ffeb2b0c6c748292257a0c610f64ae037f73616711654deb35cf4818e34aab3e"
+            ]
+          },
+          "seed-content": {
+            "pass": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "skill_catalog_entries: expected exactly the migration-14 catalog seed (15 rows, 19448a3d4c19c7cc2f0e7523e82bb0401f1e88914937e1fcef70f66a9711b970), found 15/746d636889ea38fcbc276173953a74c7dfed55cdd880ddf0cc41b06584cfcfcf"
+            ]
+          },
+          "ledger-prefix-rows": {
+            "pass": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "ledger: retained migration 3 row changed (description, timestamp, success, checksum or execution facts)"
+            ]
+          },
+          "altered-definition": {
+            "pass": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "after schema: object idx_split_lineage_parent definition differs from shipped migration 13"
+            ]
+          },
+          "unrecovered-permission-block": {
+            "pass": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "permissions: backups changed directory 0755 uid 501 -> directory 0555 uid 501 \u2014 an operation-bound write block was not recovered, or ownership changed"
+            ]
+          },
+          "sqlite-prefix-literal": {
+            "pass": true,
+            "captured": true,
+            "verdict": "FAIL",
+            "diffs": [
+              "after schema: unexpected object(s) not created by migrations 1\u201314: sqlitex_user_evidence"
+            ]
+          },
+          "runtime-root-symlink": {
+            "pass": true,
+            "refusal": "REFUSED: backups/ is a symlink \u2014 refusing to follow it outside the profile",
+            "wroteReceipt": false,
+            "hashedOutside": false
+          }
+        },
+        "proofs": {
+          "upgrade13to14": {
+            "verdict": "PASS",
+            "seeded": [
+              "skill_catalog_entries",
+              "skill_catalog_revisions"
+            ],
+            "empty": [
+              "skill_observations",
+              "skill_observation_revisions",
+              "skill_self_assessments",
+              "skill_evidence_operations"
+            ],
+            "retainedChanged": [],
+            "filesCompared": 2,
+            "receiptExclusion": {
+              "applied": false,
+              "keys": [],
+              "reason": "only the restore contract sets the backup receipt aside"
+            },
+            "pass": true
+          },
+          "restore12to14": {
+            "verdict": "PASS",
+            "diffs": [],
+            "backupReceipt": {
+              "applied": true,
+              "scope": "restore only",
+              "excludedKeys": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "policy": "restore compares the archive contents: the three backup-receipt keys the export writes after creating the archive are set aside by exact name; every other app_metadata key is compared row by row",
+              "receiptKeysBefore": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "receiptKeysAfter": [],
+              "receiptKeysDiffering": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "otherKeysCompared": 4,
+              "otherKeysChanged": [],
+              "otherKeysIdentical": true,
+              "receiptOnlyDifference": true
+            },
+            "empty": [
+              "material_split_lineage",
+              "split_operation_log",
+              "skill_observations",
+              "skill_observation_revisions",
+              "skill_self_assessments",
+              "skill_evidence_operations"
+            ],
+            "notes": [
+              "restore: the backup-receipt keys last_complete_backup_at, last_complete_backup_path, last_complete_backup_version are set aside by exact name (the export writes them after creating the archive); they were the only app_metadata difference; every other key, row, history entry and file stays strict",
+              "database file bytes changed; the logical content digests are the authority"
+            ],
+            "pass": true
+          },
+          "restore13to14": {
+            "verdict": "PASS",
+            "diffs": [],
+            "backupReceipt": {
+              "applied": true,
+              "scope": "restore only",
+              "excludedKeys": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "policy": "restore compares the archive contents: the three backup-receipt keys the export writes after creating the archive are set aside by exact name; every other app_metadata key is compared row by row",
+              "receiptKeysBefore": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "receiptKeysAfter": [],
+              "receiptKeysDiffering": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "otherKeysCompared": 4,
+              "otherKeysChanged": [],
+              "otherKeysIdentical": true,
+              "receiptOnlyDifference": true
+            },
+            "empty": [
+              "skill_observations",
+              "skill_observation_revisions",
+              "skill_self_assessments",
+              "skill_evidence_operations"
+            ],
+            "notes": [
+              "restore: the backup-receipt keys last_complete_backup_at, last_complete_backup_path, last_complete_backup_version are set aside by exact name (the export writes them after creating the archive); they were the only app_metadata difference; every other key, row, history entry and file stays strict",
+              "database file bytes changed; the logical content digests are the authority"
+            ],
+            "pass": true
+          },
+          "writerPopulated14": {
+            "m3Evidence": {
+              "builtinCatalogEntries": 15,
+              "customCatalogEntries": 1,
+              "catalogSeedRevisions": 15,
+              "userCatalogRevisions": 6,
+              "observations": 1,
+              "observationRevisions": 6,
+              "statusAssessments": 2,
+              "confidenceAssessments": 1,
+              "operations": 18,
+              "erasedOperations": 2,
+              "operationsByAction": [
+                [
+                  "create_custom_skill",
+                  1
+                ],
+                [
+                  "create_observation",
+                  2
+                ],
+                [
+                  "edit_custom_skill",
+                  1
+                ],
+                [
+                  "edit_observation",
+                  2
+                ],
+                [
+                  "erase_observation",
+                  1
+                ],
+                [
+                  "link_action",
+                  1
+                ],
+                [
+                  "restore_skill",
+                  2
+                ],
+                [
+                  "retire_skill",
+                  2
+                ],
+                [
+                  "set_addressed",
+                  2
+                ],
+                [
+                  "set_confidence",
+                  1
+                ],
+                [
+                  "set_status",
+                  2
+                ],
+                [
+                  "unlink_action",
+                  1
+                ]
+              ]
+            },
+            "unchanged": "PASS",
+            "restore": "PASS",
+            "restoreReceipt": {
+              "applied": true,
+              "scope": "restore only",
+              "excludedKeys": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "policy": "restore compares the archive contents: the three backup-receipt keys the export writes after creating the archive are set aside by exact name; every other app_metadata key is compared row by row",
+              "receiptKeysBefore": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "receiptKeysAfter": [],
+              "receiptKeysDiffering": [
+                "last_complete_backup_at",
+                "last_complete_backup_path",
+                "last_complete_backup_version"
+              ],
+              "otherKeysCompared": 4,
+              "otherKeysChanged": [],
+              "otherKeysIdentical": true,
+              "receiptOnlyDifference": true
+            },
+            "tampers": {
+              "observation": {
+                "verdict": "FAIL",
+                "changed": [
+                  "skill_observations"
+                ],
+                "pass": true
+              },
+              "revision": {
+                "verdict": "FAIL",
+                "changed": [
+                  "skill_observation_revisions"
+                ],
+                "pass": true
+              },
+              "self-assessment": {
+                "verdict": "FAIL",
+                "changed": [
+                  "skill_self_assessments"
+                ],
+                "pass": true
+              },
+              "tombstone": {
+                "verdict": "FAIL",
+                "changed": [
+                  "skill_evidence_operations"
+                ],
+                "pass": true
+              },
+              "custom skill": {
+                "verdict": "FAIL",
+                "changed": [
+                  "skill_catalog_entries"
+                ],
+                "pass": true
+              },
+              "explicit link": {
+                "verdict": "FAIL",
+                "changed": [
+                  "skill_observations"
+                ],
+                "pass": true
+              }
+            },
+            "pass": true
+          }
+        }
+      },
+      {
+        "id": "guard-reversions",
+        "title": "removing each named guard from a disposable copy fails its named regression; the control still passes",
+        "durationMs": 1529,
+        "pass": true,
+        "helperSha256Unchanged": true,
+        "reversions": [
+          {
+            "guard": "special-key own-key map",
+            "regression": "special-keys-own-digests",
+            "edit": {
+              "from": "const out = Object.create(null);",
+              "to": "const out = {};"
+            },
+            "copySha256": "7c540f4a230eef97124c523ef04f75f96504d9ad4c546d37f95797d4f59bbe05",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "ownKeys": [
+                "constructor",
+                "pr\u00e9f\u00e9rence_\u2708\ufe0f_\u30ad\u30fc",
+                "toString"
+              ],
+              "rowCount": 4,
+              "restore": "REFUSED",
+              "diffs": [
+                "REFUSED: snapshot(s) are not usable for a verdict \u2014 before: app_metadata.keyDigests lists 3 keys but the table has 4 rows; after: app_metadata.keyDigests lists 3 keys but the table has 4 rows"
+              ]
+            },
+            "pass": true
+          },
+          {
+            "guard": "missing-ledger guard",
+            "regression": "missing-ledger-row",
+            "edit": {
+              "from": "  if (missing.length) diffs.push(",
+              "to": "  if (false) diffs.push("
+            },
+            "copySha256": "1ff2b43f71c0cb5ef29f890b4eaf2cecc059b29422b4576143e801d301ae293b",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "inventory completeness guard",
+            "regression": "incomplete-inventory",
+            "edit": {
+              "from": "  validateInventoryFacts(snap, add);",
+              "to": ""
+            },
+            "copySha256": "23e67996cf51bfab56a0dcc673dd82de63dc9d06d29a60bbe3fb1b2049a1a074",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "definition completeness guard",
+            "regression": "incomplete-definitions",
+            "edit": {
+              "from": "  validateObjectFacts(snap.schemaObjects, add);",
+              "to": ""
+            },
+            "copySha256": "292a63980e2bbcdfe090b7fad3ad6be857b438e31e9a79395d082d648afed411",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "FAIL",
+              "diffs": [
+                "after schema: object skill_observations definition differs from shipped migration 14"
+              ]
+            },
+            "pass": true
+          },
+          {
+            "guard": "exclusion scope (exact three keys)",
+            "regression": "exclusion-scope-restore",
+            "edit": {
+              "from": "const other = changedMetadataKeys(x, y, BACKUP_RECEIPT_KEYS);",
+              "to": "const other = changedMetadataKeys(x, y, [...Object.keys(x), ...Object.keys(y)]);"
+            },
+            "copySha256": "65cff11c4cc294ee88fc837b7cf499efd88c4ad28e761a54969ba2f366997a5f",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "exclusion scope (restore only)",
+            "regression": "exclusion-restore-only",
+            "edit": {
+              "from": "if (t.name === 'app_metadata' && purpose === 'restore' && ",
+              "to": "if (t.name === 'app_metadata' && "
+            },
+            "copySha256": "603cf8cb1411150e17dd918b69d58a851b16090168295c80557fdb6c835b1c1f",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "retained-data guard",
+            "regression": "retained-data",
+            "edit": {
+              "from": "      if (!entryEqual(ea, eb)) {",
+              "to": "      if (false) {"
+            },
+            "copySha256": "45054874c9cb8e0cbb80747680a0ae4b7cc67b17d1c9ad744cf67d5dccc3f2f8",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "changed": [],
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "seed-content guard",
+            "regression": "seed-content",
+            "edit": {
+              "from": "eb.sha256 !== seed.sha256",
+              "to": "false"
+            },
+            "copySha256": "4661e2b833e4285922b9db20e5c68f1f6a592d9af1c7244c4986d70f2e074b27",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "ledger-prefix row guard",
+            "regression": "ledger-prefix-rows",
+            "edit": {
+              "from": "    if (canonicalJson(before[i]) !== canonicalJson(after[i]))",
+              "to": "    if (false)"
+            },
+            "copySha256": "1e494c185e2effd7c0d2eb33bf47e2895ae3ee315e9e7ac1c7d2c8eef54bc53a",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "definition-pin guard",
+            "regression": "altered-definition",
+            "edit": {
+              "from": "    .filter(([n, e]) => present.has(n) && (defs[n].type !== e.type",
+              "to": "    .filter(([n, e]) => false && (defs[n].type !== e.type"
+            },
+            "copySha256": "d3070770ee9d50091250f27daa5f8bdd67a0dd0225382c9a5a7d0043439b400b",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "literal sqlite_ prefix exclusion",
+            "regression": "sqlite-prefix-literal",
+            "edit": {
+              "from": "const USER_OBJECT_FILTER = \"substr(name, 1, 7) <> 'sqlite_'\";",
+              "to": "const USER_OBJECT_FILTER = \"name NOT LIKE 'sqlite_%'\";"
+            },
+            "copySha256": "ad2ff1506dcdc603f17c214775055f124e6a5973cfdfb148e0a65c2e3416d32a",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "captured": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          },
+          {
+            "guard": "symlinked runtime-root refusal",
+            "regression": "runtime-root-symlink",
+            "edit": {
+              "from": "    try { st = fs.lstatSync(abs); } catch (error) {\n      if (error.code === 'ENOENT') continue;",
+              "to": "    try { st = fs.statSync(abs); } catch (error) {\n      if (error.code === 'ENOENT') continue;"
+            },
+            "copySha256": "cf78824300e602d3e14dc769ee1eddbfcdbe396b7963cc4d7ce1d81be7a7c3d8",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "refusal": "",
+              "wroteReceipt": true,
+              "hashedOutside": true
+            },
+            "pass": true
+          },
+          {
+            "guard": "permission-recovery guard",
+            "regression": "unrecovered-permission-block",
+            "edit": {
+              "from": "if (purpose === 'unchanged') diffs.push(...permDiffs);",
+              "to": "if (false) diffs.push(...permDiffs);"
+            },
+            "copySha256": "62b4851f8be50823a282a51603a639394cc87282ae9db92dc3252ee5c32e7fe3",
+            "controlPassed": true,
+            "regressionFailed": true,
+            "observed": {
+              "pass": false,
+              "verdict": "PASS",
+              "diffs": []
+            },
+            "pass": true
+          }
+        ]
+      },
+      {
+        "id": "production-writers-and-validator",
+        "title": "permanent vitest regression: production M3 writer and validateApplicationDatabase against the helper",
+        "durationMs": 1294,
+        "pass": true,
+        "command": "node node_modules/vitest/vitest.mjs run --configLoader runner --no-cache --reporter=json --outputFile=<scratch>/vitest-report.json src/logic/currentSchemaVerification.test.ts",
+        "exit": 0,
+        "counts": {
+          "total": 8,
+          "passed": 8,
+          "failed": 0
+        },
+        "tests": [
+          {
+            "name": "the schema-14 helper contract is the registered source pins migrations 1\u201314 with the registered descriptions and SQLx SHA-384 checksums of their exact bytes",
+            "status": "passed"
+          },
+          {
+            "name": "the schema-14 helper contract is the registered source pins the same six M3 tables, indexes and triggers the production validator requires",
+            "status": "passed"
+          },
+          {
+            "name": "a populated schema-13 library upgraded to schema 14 passes production validation on both sides and only the upgrade contract, keeping special metadata keys",
+            "status": "passed"
+          },
+          {
+            "name": "writer-created schema-14 evidence is captured, and a refused write or a failed write leaves every protected fact unchanged",
+            "status": "passed"
+          },
+          {
+            "name": "writer-created schema-14 evidence restores into schema 14 with only the three receipt keys set aside, and tampered evidence fails both authorities",
+            "status": "passed"
+          },
+          {
+            "name": "writer-created schema-14 evidence a populated schema-12 archive state restores into schema 14 with validation on both sides",
+            "status": "passed"
+          },
+          {
+            "name": "writer-created schema-14 evidence a populated schema-13 archive state restores into schema 14 with validation on both sides",
+            "status": "passed"
+          },
+          {
+            "name": "the accepted writer-populated schema-14 fixture (M3-R9) removing any history-owning receipt is refused by the production validator and fails the helper's unchanged contract",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "id": "protected-sources-unchanged",
+        "title": "helpers, PR #142 evidence, frozen kit, migrations and fixtures are byte-identical after the run",
+        "durationMs": 146,
+        "pass": true,
+        "filesChecked": 44,
+        "differing": [],
+        "helpersAfter": {
+          "schema13": "a1658bd7c2e7da51bb34f905fda078f221dbc7ea5753515007e71a4f8fdd6209",
+          "schema14": "e674f5ebf9755921b9975e8a3b42800c2fa883bd6860ea9b017c53a25fbc0a6d"
+        },
+        "frozenKitFinalHelperSha256": "2161d04ae990ab40272a21b6e73a737bd0b20a91d8d5cc94ab392e72633b6e0b",
+        "outsideAllowedPaths": [],
+        "buildOutputSetAside": [],
+        "buildOutputNotRecognized": []
+      }
+    ]
+  },
+  "cleanup": {
+    "exit": 0,
+    "stderr": "",
+    "worktreeRemoved": true
+  },
+  "sourceCheckoutStatusUnchanged": true
+}

@@ -1,0 +1,46 @@
+[
+  {
+    "name": "frozen-diagnostic",
+    "exit": 0,
+    "sha256": "529646ad0662771ecf360335b3e033b005d1cc89b35e13b6f8c0f9dc4fb78636"
+  },
+  {
+    "name": "tests",
+    "argv": [
+      "npm",
+      "test"
+    ],
+    "exit": 0,
+    "seconds": 52.51
+  },
+  {
+    "name": "typecheck",
+    "argv": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 3.74
+  },
+  {
+    "name": "build",
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 4.93
+  },
+  {
+    "name": "whitespace",
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.01
+  }
+]
