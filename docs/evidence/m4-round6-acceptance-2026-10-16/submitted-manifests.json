@@ -1,0 +1,17 @@
+[
+  {
+    "manifest": "/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/SHA256SUMS",
+    "entries": 172,
+    "mismatches": []
+  },
+  {
+    "manifest": "/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/PAYLOAD_SHA256SUMS",
+    "entries": 169,
+    "mismatches": []
+  },
+  {
+    "manifest": "/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-round6-claude-2026-10-16/SHA256SUMS",
+    "entries": 78,
+    "mismatches": []
+  }
+]

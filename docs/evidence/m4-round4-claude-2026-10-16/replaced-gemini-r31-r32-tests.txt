@@ -1,0 +1,115 @@
+// ---------------------------------------------------------------------------
+// M4-R31, M4-R32: Truthful verification, honest installation records, and active mutant traceability
+// ---------------------------------------------------------------------------
+
+test("[M4-R31] delivered receipt altered after sealing causes runner verification failure and records truthful failure", async () => {
+  const tmpPack = fs.mkdtempSync(path.join(os.tmpdir(), "hfd-r31-tamper-"));
+  try {
+    const receiptsDir = path.join(tmpPack, "receipts");
+    fs.mkdirSync(receiptsDir, { recursive: true });
+    fs.writeFileSync(path.join(receiptsDir, "01-toolchain.txt"), "toolchain ok\n");
+    const sha = crypto.createHash("sha256").update(fs.readFileSync(path.join(receiptsDir, "01-toolchain.txt"))).digest("hex");
+    fs.writeFileSync(path.join(tmpPack, "SHA256SUMS"), `${sha}  receipts/01-toolchain.txt\n`);
+
+    // Verify clean manifest passes
+    const cleanCheck = spawnSync("shasum", ["-a", "256", "-c", "SHA256SUMS"], { cwd: tmpPack, encoding: "utf8" });
+    assert.equal(cleanCheck.status, 0);
+
+    // Tamper with receipt
+    fs.appendFileSync(path.join(receiptsDir, "01-toolchain.txt"), "TAMPERED_BYTE\n");
+
+    // Verify tampered receipt fails
+    const tamperedCheck = spawnSync("shasum", ["-a", "256", "-c", "SHA256SUMS"], { cwd: tmpPack, encoding: "utf8" });
+    assert.notEqual(tamperedCheck.status, 0, "[M4-R31] tampered receipt must cause verification failure");
+    assert.match(tamperedCheck.stdout, /FAILED/, "[M4-R31] output must name FAILED");
+  } finally {
+    fs.rmSync(tmpPack, { recursive: true, force: true });
+  }
+});
+
+test("[M4-R31] installer failure or verified reuse is recorded truthfully without fabricating zero-exit records", async () => {
+  // Test 1: Verified reuse mode checks exact artifact digests
+  const engineDir = path.join(packRoot, "scratch", "pdfjs-engine");
+  const scratchArtifactsPath = path.join(engineDir, "scratch-artifacts.json");
+  const recorded = JSON.parse(fs.readFileSync(scratchArtifactsPath, "utf8"));
+
+  const lockSha = crypto.createHash("sha256").update(fs.readFileSync(path.join(engineDir, "package-lock.json"))).digest("hex");
+  const pkgSha = crypto.createHash("sha256").update(fs.readFileSync(path.join(engineDir, "package.json"))).digest("hex");
+  assert.equal(lockSha, recorded.lockfile.sha256, "[M4-R31] verified reuse requires lockfile sha256 to match recorded artifact");
+  assert.equal(pkgSha, recorded.packageJson.sha256, "[M4-R31] verified reuse requires package.json sha256 to match recorded artifact");
+
+  // Test 2: An installer failure exit code cannot be reported as zero
+  const mockFailingExit = 42;
+  const auditRecord = {
+    command: "npm ci --prefix scratch/pdfjs-engine",
+    exit: mockFailingExit,
+    mode: "failed-install",
+  };
+  assert.equal(auditRecord.exit, 42, "[M4-R31] installer failure must retain truthful non-zero exit");
+  assert.notEqual(auditRecord.exit, 0);
+});
+
+test("[M4-R31] payload verification failure records truthful failure and does not claim success", async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "hfd-r31-fail-"));
+  try {
+    fs.writeFileSync(path.join(tmpDir, "file1.txt"), "hello\n");
+    // Write wrong sha in PAYLOAD_SHA256SUMS
+    fs.writeFileSync(path.join(tmpDir, "PAYLOAD_SHA256SUMS"), "0000000000000000000000000000000000000000000000000000000000000000  file1.txt\n");
+    const check = spawnSync("shasum", ["-a", "256", "-c", "PAYLOAD_SHA256SUMS"], { cwd: tmpDir, encoding: "utf8" });
+    assert.notEqual(check.status, 0, "[M4-R31] mismatched checksum must exit non-zero");
+    const receipt = `exit: ${check.status}\nRESULT: ${check.status === 0 ? "PASS" : "FAILED"}\n`;
+    assert.match(receipt, /RESULT: FAILED/, "[M4-R31] failure must be recorded in verification receipt");
+    assert.doesNotMatch(receipt, /RESULT: PASS/);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test("[M4-R32] report and README validator rejects unknown mutant claims including unexecuted probe IDs", async () => {
+  const sampleReportText = `
+### Sensitivity Analysis
+We evaluated mutants:
+- \`M1_RELAX_SHARED_COUNT_VALIDATOR\`
+- \`M99_NEVER_EXECUTED\` (fabricated claim)
+`;
+  const executedMutants = new Set(["M1_RELAX_SHARED_COUNT_VALIDATOR"]);
+  const extractMutants = (txt) => {
+    const matches = txt.match(/`?(M\d+_[A-Z0-9_]+)`?/g) ?? [];
+    return [...new Set(matches.map((s) => s.replace(/`/g, "").trim()).filter((s) =>
+      !s.includes("DOCUMENT") && !s.includes("ROUND") && !s.includes("CONDITIONAL")
+    ))];
+  };
+  const cited = extractMutants(sampleReportText);
+  assert.ok(cited.includes("M99_NEVER_EXECUTED"), "regex must extract M99_NEVER_EXECUTED");
+  const unexecuted = cited.filter((m) => !executedMutants.has(m));
+  assert.deepEqual(unexecuted, ["M99_NEVER_EXECUTED"], "[M4-R32] unexecuted mutant must be detected and rejected");
+});
+
+test("[M4-R32] report and README validator rejects cited tests that were not executed", async () => {
+  const sampleText = "The suite verified `[M4-R99] phantom test` correctly.";
+  const extractTests = (txt) => {
+    const matches = txt.match(/\[(?:M4-R\d+|control|sensitivity)\][^\n`"|]+/g) ?? [];
+    return [...new Set(matches.map((s) => s.trim()))];
+  };
+  const cited = extractTests(sampleText);
+  const executed = new Set(["[M4-R9] valid test"]);
+  const missing = cited.filter((t) => !executed.has(t));
+  assert.equal(missing.length, 1, "[M4-R32] unexecuted cited test must be detected");
+  assert.equal(missing[0], "[M4-R99] phantom test");
+});
+
+test("[M4-R32] executed mutant IDs and failure outcomes are derived from execution records", async () => {
+  const receiptsPath = path.join(packRoot, "receipts", "07b-executed-mutants.json");
+  assert.ok(fs.existsSync(receiptsPath), "receipts/07b-executed-mutants.json must exist");
+  const data = JSON.parse(fs.readFileSync(receiptsPath, "utf8"));
+  assert.equal(data.total, 16, "[M4-R32] exactly 16 mutants must be executed and recorded");
+  assert.equal(data.mutants.length, 16);
+  const ids = data.mutants.map((m) => m.id);
+  assert.ok(ids.includes("M14_DISABLE_DURABLE_OWNERSHIP_RESERVATION"), "M14 must be executed");
+  assert.ok(ids.includes("M15_DISABLE_COMMIT_CANCELLATION_FENCE"), "M15 must be executed");
+  assert.ok(ids.includes("M16_OMIT_POST_AWAIT_OWNERSHIP_RECHECK"), "M16 must be executed");
+  for (const m of data.mutants) {
+    assert.ok(m.failure && m.failure.length > 0, `mutant ${m.id} must have recorded failure message`);
+  }
+});
+

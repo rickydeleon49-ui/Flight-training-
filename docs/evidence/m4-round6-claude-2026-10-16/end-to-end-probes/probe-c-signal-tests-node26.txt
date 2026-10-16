@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: [M4-R39] a signal-terminated live install keeps exit null and its real signal, and fails the run
+ok 1 - [M4-R39] a signal-terminated live install keeps exit null and its real signal, and fails the run
+  ---
+  duration_ms: 157.552917
+  type: 'test'
+  ...
+# Subtest: [M4-R39] a recorded signal-terminated install cannot attest reuse
+ok 2 - [M4-R39] a recorded signal-terminated install cannot attest reuse
+  ---
+  duration_ms: 0.195458
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 242.448667

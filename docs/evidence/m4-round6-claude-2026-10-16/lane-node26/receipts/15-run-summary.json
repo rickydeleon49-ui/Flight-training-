@@ -1,0 +1,83 @@
+{
+  "ranAt": "2026-10-16T19:47:28.353Z",
+  "node": "v26.10.0",
+  "platform": "darwin/arm64",
+  "cwd": "/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/r6lane26",
+  "headCommit": "7e495580a48828c2c81cc4d8057e028acfc2a8eb",
+  "pinnedAcceptedMain": "e8720003a76be680812dfe3605d58e7eb6372d00",
+  "pinnedAcceptedMainSource": "default (hardcoded accepted-main baseline)",
+  "pack": "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11",
+  "suites": [
+    {
+      "file": "sensitivityMutants.test.mjs",
+      "exit": 0,
+      "tests": 3,
+      "pass": 3,
+      "fail": 0
+    },
+    {
+      "file": "proof.test.mjs",
+      "exit": 0,
+      "tests": 91,
+      "pass": 91,
+      "fail": 0
+    },
+    {
+      "file": "databaseLifecycle.test.mjs",
+      "exit": 0,
+      "tests": 10,
+      "pass": 10,
+      "fail": 0
+    }
+  ],
+  "mappedTests": 104,
+  "mappedButNotExecuted": [],
+  "frozenSubmitted": {
+    "unchanged": 30,
+    "changedDisclosed": [
+      "docs/M4_DOCUMENT_NAVIGATION_AND_VIEWER_EVALUATION_2026-10-11.md",
+      "docs/M4_CONDITIONAL_IMPLEMENTATION_PROMPT_2026-10-11.md"
+    ],
+    "missing": []
+  },
+  "priorPacksVerified": [
+    {
+      "rel": "docs/evidence/m4-document-navigation-integration-rereview-2026-10-11",
+      "status": "PASS (54 files OK)"
+    },
+    {
+      "rel": "docs/evidence/m4-document-navigation-scope-remaining-corrections-2026-10-11",
+      "status": "PASS (28 files OK)"
+    },
+    {
+      "rel": "docs/evidence/m4-document-navigation-scope-rereview-2026-10-11",
+      "status": "PASS (40 files OK)"
+    },
+    {
+      "rel": "docs/evidence/m4-document-navigation-scope-review-2026-10-11",
+      "status": "PASS (29 files OK)"
+    },
+    {
+      "rel": "docs/evidence/m4-document-navigation-eval-2026-10-11",
+      "status": "PASS (21 files OK)"
+    }
+  ],
+  "parser": {
+    "engine": "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/legacy/build/pdf.mjs",
+    "executingSha256": "91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d",
+    "recordedMatchesExecuting": true
+  },
+  "manifest": {
+    "payloadEntries": 169,
+    "payloadVerified": true,
+    "payloadExit": 0,
+    "deliveryEntries": 172,
+    "finalSealVerification": "recorded as outer execution result outside covered set",
+    "stages": {
+      "stage1": "PAYLOAD_SHA256SUMS verified before sealing receipts 15 and 16",
+      "stage2": "SHA256SUMS seals complete package including receipts 15 and 16"
+    }
+  },
+  "stepsExecuted": 23,
+  "failures": []
+}

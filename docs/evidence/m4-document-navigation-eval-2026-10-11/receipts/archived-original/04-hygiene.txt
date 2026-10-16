@@ -1,0 +1,5 @@
+=== Hygiene Receipt ===
+Date: 2026-10-11T17:15:14Z
+Command: git diff --check
+Trailing whitespace check on new files in docs/evidence/m4-document-navigation-eval-2026-10-11/:
+No trailing whitespace detected.

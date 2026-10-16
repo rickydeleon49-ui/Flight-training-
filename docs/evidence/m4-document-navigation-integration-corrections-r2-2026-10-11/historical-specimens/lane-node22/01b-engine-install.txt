@@ -1,0 +1,11 @@
+=== 01b scratch engine install audit ===
+node: v22.23.3  platform: darwin/arm64
+mode: verified-reuse (consumed recorded install with verified artifacts)
+recorded install command: npm ci --prefix docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine --no-audit --no-fund
+recorded install node: v22.23.3
+recorded at: 2026-10-11T22:37:04.762Z
+lockfile sha256: fb26bde35dc1544d9d57d8ef27f20f497b71feb5104d0684784b93e95afafd64 (matches recorded: true)
+package.json sha256: 86e4a0ddfd469bf9a901e030ad0b723ad50f036ec38ce6a7f35e854ddaaf1539 (matches recorded: true)
+legacy pdf.mjs sha256: 91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d (matches recorded: true)
+scratch-artifacts.json sha256: e1d920a81d96f7810284c13cbc6021d09263d30e7554d8ba5a9fdbebe146e6c7
+RESULT: PASS - pack-local scratch engine verified against recorded install artifacts

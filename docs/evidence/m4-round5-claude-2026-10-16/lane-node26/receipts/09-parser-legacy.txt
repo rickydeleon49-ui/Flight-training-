@@ -1,0 +1,251 @@
+=== 09 parser proof ===
+node: v26.10.0  platform: darwin/arm64
+cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/lane26
+command: /opt/homebrew/Cellar/node/26.10.0_1/bin/node docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/parser-entrypoint.mjs legacy
+exit: 0
+RESULT: PASS
+--- stdout ---
+{
+ "runtime": "Node.js v26.10.0 (darwin/arm64)",
+ "version": "6.3.289",
+ "entrypoint": "legacy/build/pdf.mjs",
+ "engineRoot": "/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/lane26/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist",
+ "results": [
+  {
+   "file": "handbook_root_sample.pdf",
+   "success": true,
+   "pageCount": 50,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    },
+    {
+     "pageNum": 2,
+     "rotate": 0
+    },
+    {
+     "pageNum": 3,
+     "rotate": 0
+    },
+    {
+     "pageNum": 4,
+     "rotate": 0
+    },
+    {
+     "pageNum": 5,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "multi_page_sample.pdf",
+   "success": true,
+   "pageCount": 10,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    },
+    {
+     "pageNum": 2,
+     "rotate": 0
+    },
+    {
+     "pageNum": 3,
+     "rotate": 0
+    },
+    {
+     "pageNum": 4,
+     "rotate": 0
+    },
+    {
+     "pageNum": 5,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "single_page.pdf",
+   "success": true,
+   "pageCount": 1,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "split_part_sample.pdf",
+   "success": true,
+   "pageCount": 16,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    },
+    {
+     "pageNum": 2,
+     "rotate": 0
+    },
+    {
+     "pageNum": 3,
+     "rotate": 0
+    },
+    {
+     "pageNum": 4,
+     "rotate": 0
+    },
+    {
+     "pageNum": 5,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "malformed_sample.pdf",
+   "success": true,
+   "rejectedAsExpected": true,
+   "errorType": "InvalidPDFException",
+   "message": "Invalid PDF structure."
+  }
+ ],
+ "corruption": {
+  "handled": true,
+  "resolvedPages": 50,
+  "behavior": "PDF.js traversed genuine catalog leaves rather than trusting the corrupted /Count header"
+ }
+}
+
+--- stderr ---
+Warning: Indexing all PDF objects
+Warning: checkLastPage - invalid /Pages tree /Count: 99.
+
+
+--- derived ---
+engine resolved from this pack: docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/legacy/build/pdf.mjs
+executing artifact sha256: 91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d
+scratch-artifacts.json pdf.mjs: 91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d
+digests match: YES
+{
+ "runtime": "Node.js v26.10.0 (darwin/arm64)",
+ "version": "6.3.289",
+ "entrypoint": "legacy/build/pdf.mjs",
+ "engineRoot": "/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/lane26/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist",
+ "results": [
+  {
+   "file": "handbook_root_sample.pdf",
+   "success": true,
+   "pageCount": 50,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    },
+    {
+     "pageNum": 2,
+     "rotate": 0
+    },
+    {
+     "pageNum": 3,
+     "rotate": 0
+    },
+    {
+     "pageNum": 4,
+     "rotate": 0
+    },
+    {
+     "pageNum": 5,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "multi_page_sample.pdf",
+   "success": true,
+   "pageCount": 10,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    },
+    {
+     "pageNum": 2,
+     "rotate": 0
+    },
+    {
+     "pageNum": 3,
+     "rotate": 0
+    },
+    {
+     "pageNum": 4,
+     "rotate": 0
+    },
+    {
+     "pageNum": 5,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "single_page.pdf",
+   "success": true,
+   "pageCount": 1,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "split_part_sample.pdf",
+   "success": true,
+   "pageCount": 16,
+   "matchesExpected": true,
+   "samplePages": [
+    {
+     "pageNum": 1,
+     "rotate": 0
+    },
+    {
+     "pageNum": 2,
+     "rotate": 0
+    },
+    {
+     "pageNum": 3,
+     "rotate": 0
+    },
+    {
+     "pageNum": 4,
+     "rotate": 0
+    },
+    {
+     "pageNum": 5,
+     "rotate": 0
+    }
+   ]
+  },
+  {
+   "file": "malformed_sample.pdf",
+   "success": true,
+   "rejectedAsExpected": true,
+   "errorType": "InvalidPDFException",
+   "message": "Invalid PDF structure."
+  }
+ ],
+ "corruption": {
+  "handled": true,
+  "resolvedPages": 50,
+  "behavior": "PDF.js traversed genuine catalog leaves rather than trusting the corrupted /Count header"
+ }
+}
+

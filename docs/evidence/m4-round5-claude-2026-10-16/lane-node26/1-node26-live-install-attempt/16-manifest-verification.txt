@@ -1,0 +1,2 @@
+=== 16 manifest verification ===
+RESULT: NOT RUN - the run stopped at 01b engine install; no verification outcome is claimed

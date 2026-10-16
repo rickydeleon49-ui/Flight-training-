@@ -1,0 +1,11 @@
+Mutation checks of the round-4 R31/R32 tests (Claude, 16 October 2026, Node v22.23.3)
+Each fault was applied to scripts/evidenceChecks.mjs in a DISPOSABLE copy only, the R31/R32 tests were run,
+and the file was restored byte-identical afterwards (cmp).
+
+C1 stale counts never reported            -> caught: [M4-R32] the runner's validator rejects stale counts
+C2 missing executed mutants ignored       -> caught: [M4-R32] the runner's validator rejects an executed mutant missing from the report
+C3 incomplete marker is a no-op           -> caught: [M4-R31] an interrupted run leaves its outcome receipts marked incomplete, never an earlier success
+C4 manifest check always ok               -> caught: [M4-R31] the real runner rejects a delivered receipt altered after sealing
+                                             caught: [M4-R31] a failing final manifest check produces a FAILED outcome and never a PASS
+C5 install audit ignores exit             -> caught: [M4-R31] an installer failure is recorded with its real non-zero exit and a FAILED result
+C6 historical lines treated as current    -> caught: [M4-R32] the runner's validator rejects stale counts

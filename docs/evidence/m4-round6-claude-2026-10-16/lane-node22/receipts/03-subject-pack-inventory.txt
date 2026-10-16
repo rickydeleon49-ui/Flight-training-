@@ -1,0 +1,8 @@
+=== 03 subject pack vs pre-edit inventory ===
+node: v22.23.3
+cmd: compare docs/evidence/m4-document-navigation-integration-corrections-2026-10-11 against receipts/00-pre-edit-inventory.json
+recorded files: 27
+changed: 0 []
+removed: 0 []
+added: 0 []
+RESULT: PASS - subject R9-R12 pack is byte-identical to the pre-edit inventory

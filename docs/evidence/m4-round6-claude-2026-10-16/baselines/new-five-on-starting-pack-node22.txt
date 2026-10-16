@@ -1,0 +1,160 @@
+TAP version 13
+# (node:43861) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a newer failed reservation supersedes an older held opener
+not ok 1 - a newer failed reservation supersedes an older held opener
+  ---
+  duration_ms: 9.309
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:24:2'
+  failureType: 'testCodeFailure'
+  error: |-
+    the newer failed intent must supersede old callbacks and keep the saved tuple
+    + actual - expected
+    
+      {
+    +   controllerState: 'opened',
+    +   oldSuccess: true,
+    +   savedPage: 10
+    -   controllerState: 'failed',
+    -   oldSuccess: false,
+    -   savedPage: 5
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    oldSuccess: false
+    controllerState: 'failed'
+    savedPage: 5
+  actual:
+    oldSuccess: true
+    controllerState: 'opened'
+    savedPage: 10
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:38:11)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: a newer failed reservation supersedes an older held persistence
+not ok 2 - a newer failed reservation supersedes an older held persistence
+  ---
+  duration_ms: 6.604417
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:24:2'
+  failureType: 'testCodeFailure'
+  error: |-
+    the newer failed intent must supersede old callbacks and keep the saved tuple
+    + actual - expected
+    
+      {
+    +   controllerState: 'opened',
+    +   oldSuccess: true,
+    +   savedPage: 10
+    -   controllerState: 'failed',
+    -   oldSuccess: false,
+    -   savedPage: 5
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    oldSuccess: false
+    controllerState: 'failed'
+    savedPage: 5
+  actual:
+    oldSuccess: true
+    controllerState: 'opened'
+    savedPage: 10
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:38:11)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an ignored INSERT cannot issue an unpersisted reservation token
+not ok 3 - an ignored INSERT cannot issue an unpersisted reservation token
+  ---
+  duration_ms: 5.643708
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:44:2'
+  failureType: 'testCodeFailure'
+  error: |-
+    no-op claim writes must throw, observed {"tokens":[2,2],"claim":null}
+    
+    0 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:51:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an ignored UPDATE cannot issue an unpersisted reservation token
+not ok 4 - an ignored UPDATE cannot issue an unpersisted reservation token
+  ---
+  duration_ms: 5.523666
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:44:2'
+  failureType: 'testCodeFailure'
+  error: |-
+    no-op claim writes must throw, observed {"tokens":[2,2],"claim":{"reserved_generation":1}}
+    
+    0 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/additional-diagnostics.test.mjs:51:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a signal-terminated install preserves its real signal in the execution record
+not ok 5 - a signal-terminated install preserves its real signal in the execution record
+  ---
+  duration_ms: 137.602709
+  type: 'test'
+  location: '/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/signal-diagnostic.test.mjs:9:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    capture the real child signal instead of hard-coding null
+    
+    null !== 'SIGTERM'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SIGTERM'
+  actual: ~
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/review183/docs/evidence/m4-round5-independent-review-2026-10-16/signal-diagnostic.test.mjs:26:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 0
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 215.005125

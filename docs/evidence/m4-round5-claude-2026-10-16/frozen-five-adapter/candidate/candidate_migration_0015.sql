@@ -1,0 +1,103 @@
+-- Candidate Migration 0015 (revision 2): Document navigation, bookmarks, reading state, content identity
+-- Authoritative candidate DDL for Her Flight Deck Milestone 4 (Document Navigation Slice 1)
+--
+-- STATUS: PROPOSED / UNREGISTERED. DO NOT REGISTER OR APPLY IN RUNTIME.
+--
+-- Context and Architectural Constraints:
+-- 1. Shipped migrations 0001–0014 are untouched and are applied in full before this DDL in every
+--    lifecycle proof. 0014_skills_evidence.sql is SHIPPED on accepted main (M3 skills evidence),
+--    not a candidate; 0015 is the next provisional number and is never registered here.
+-- 2. Fully additive schema: no columns are dropped or altered on existing tables.
+-- 3. Document files remain in private app data ($APPCONFIG/documents/), referenced by study_materials.file_path.
+-- 4. Foreign key cascade: deleting a study_material cascades to its navigation state, bookmarks, and identity cache.
+-- 5. Strict integer typing: physical page indices must be integers >= 1 (1-based physical PDF index).
+-- 6. Page labels (e.g. "iv", "3-12", "Cover") are kept distinct from 1-based physical page indices.
+-- 7. Durable Content Ownership (M4-R3): Each bookmark and reading state row binds directly to
+--    originating_content_sha256. When a file is replaced with different bytes, bookmarks retain their
+--    originating hash and can be flagged as unverified/drifted rather than silently mislinked.
+-- 8. Hash Formatting (M4-R19): where a content hash is present it must be exactly 64 hexadecimal
+--    characters; it is NULLable because an unknown or malformed identity is a defined state that
+--    must be persisted as unverified rather than thrown away or fabricated.
+-- 9. Honest Reading Semantics (M4-R4): reading state distinguishes last_requested_page from confirmed_read.
+-- 10. Bounded Fields: title <= 500 chars, notes <= 20000 chars, page_label <= 100 chars.
+-- 11. Authoritative backup compliance: all three tables participate in standard SQLite backup/restore;
+--     no derived FTS or temporary cache tables are placed in authoritative backup scope.
+-- 12. Commit-time Ownership (M4-R13/R14): owner_generation is the durable owner token. A navigation
+--     commit may only write while its generation is not older than the stored owner, so an obsolete
+--     in-flight save is rejected INSIDE the transaction instead of being re-covered afterwards. The
+--     page, content hash and printed label are written together as one immutable tuple belonging to
+--     the winning operation.
+-- 13. Durable operation claims (M4-R28, revised round 5 for M4-R33/R34): material_operation_claims
+--     is part of this declared candidate, not created on demand. A request reserves the next token
+--     under BEGIN IMMEDIATE and receives it only after that claim commits; a failed claim read or
+--     write rolls back and fails. A navigation commit is authorized only when, inside its own write
+--     transaction, the claim row exists, reads successfully, is not cancelled, and its
+--     reserved_generation EQUALS the supplied token. Absent, stale, future/unreserved and
+--     unreadable ownership are rejected without changing the stored tuple.
+
+-- 1. Reading state: tracks the last physical page requested and optional confirmed reading progress.
+CREATE TABLE IF NOT EXISTS material_reading_state (
+  material_id                 TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+  last_requested_page         INTEGER NOT NULL CHECK (TYPEOF(last_requested_page) = 'integer' AND last_requested_page >= 1),
+  last_requested_page_label   TEXT CHECK (last_requested_page_label IS NULL OR LENGTH(last_requested_page_label) <= 100),
+  confirmed_read              INTEGER NOT NULL DEFAULT 0 CHECK (confirmed_read IN (0, 1)),
+  originating_content_sha256  TEXT CHECK (
+    originating_content_sha256 IS NULL
+    OR (LENGTH(originating_content_sha256) = 64 AND originating_content_sha256 NOT GLOB '*[^0-9a-fA-F]*')
+  ),
+  status                      TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'unverified', 'drifted')),
+  owner_generation            INTEGER NOT NULL DEFAULT 0 CHECK (
+    TYPEOF(owner_generation) = 'integer' AND owner_generation >= 0
+  ),
+  updated_at                  TEXT NOT NULL
+);
+
+-- 2. Bookmarks: user-created navigation points bound to originating document content.
+CREATE TABLE IF NOT EXISTS material_bookmarks (
+  id                          TEXT PRIMARY KEY NOT NULL,
+  material_id                 TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+  page_index                  INTEGER NOT NULL CHECK (TYPEOF(page_index) = 'integer' AND page_index >= 1),
+  page_label                  TEXT CHECK (page_label IS NULL OR LENGTH(page_label) <= 100),
+  originating_content_sha256  TEXT CHECK (
+    originating_content_sha256 IS NULL
+    OR (LENGTH(originating_content_sha256) = 64 AND originating_content_sha256 NOT GLOB '*[^0-9a-fA-F]*')
+  ),
+  title                       TEXT NOT NULL CHECK (LENGTH(title) <= 500),
+  notes                       TEXT NOT NULL DEFAULT '' CHECK (LENGTH(notes) <= 20000),
+  status                      TEXT NOT NULL DEFAULT 'verified' CHECK (status IN ('verified', 'unverified', 'drifted')),
+  created_at                  TEXT NOT NULL,
+  updated_at                  TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_material_bookmarks_material
+  ON material_bookmarks(material_id);
+
+CREATE INDEX IF NOT EXISTS idx_material_bookmarks_page
+  ON material_bookmarks(material_id, page_index);
+
+CREATE INDEX IF NOT EXISTS idx_material_bookmarks_hash
+  ON material_bookmarks(originating_content_sha256);
+
+CREATE INDEX IF NOT EXISTS idx_material_reading_state_owner
+  ON material_reading_state(material_id, owner_generation);
+
+-- 3. Document content identity: caches verified SHA-256 and total page counts.
+CREATE TABLE IF NOT EXISTS material_content_identities (
+  material_id    TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+  content_sha256 TEXT NOT NULL CHECK (LENGTH(content_sha256) = 64 AND content_sha256 NOT GLOB '*[^0-9a-fA-F]*'),
+  total_pages    INTEGER NOT NULL CHECK (TYPEOF(total_pages) = 'integer' AND total_pages >= 1),
+  verified_at    TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_material_content_sha
+  ON material_content_identities(content_sha256);
+
+-- 4. Durable operation claims (M4-R28/R33/R34): the single source of operation ownership.
+--    reserved_generation is the latest token issued for the material (monotonic, never reset);
+--    cancelled_generation records the highest cancelled token. Both only ever increase.
+CREATE TABLE IF NOT EXISTS material_operation_claims (
+  material_id           TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+  reserved_generation   INTEGER NOT NULL DEFAULT 0 CHECK (TYPEOF(reserved_generation) = 'integer' AND reserved_generation >= 0),
+  cancelled_generation  INTEGER NOT NULL DEFAULT 0 CHECK (TYPEOF(cancelled_generation) = 'integer' AND cancelled_generation >= 0),
+  updated_at            TEXT NOT NULL
+);

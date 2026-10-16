@@ -1,0 +1,101 @@
+{
+  "total": 24,
+  "mutants": [
+    {
+      "id": "M1_RELAX_SHARED_COUNT_VALIDATOR",
+      "failure": "[M4-R9] totalPages Infinity must not resolve"
+    },
+    {
+      "id": "M2_REJECT_NULLABLE_PARENT",
+      "failure": "[M4-R9] first-level lineage must allow root navigation: REVERTED: nullable parent columns rejected"
+    },
+    {
+      "id": "M3_OMIT_ATOMIC_BOOKMARK_INVALIDATION",
+      "failure": "[M4-R10] bookmark must not remain verified after content replacement"
+    },
+    {
+      "id": "M4_DISABLE_COMMIT_GENERATION_FENCE",
+      "failure": "[M4-R13] a replayed committed token must not overwrite the saved page"
+    },
+    {
+      "id": "M5_IGNORE_CONTENT_PROGRESS_SCOPE",
+      "failure": "[M4-R11] new content B cannot inherit page 42 from content A"
+    },
+    {
+      "id": "M6_DROP_DESTINATION_COUNT_REQUIREMENT",
+      "failure": "[M4-R15] unknown destination count must report DESTINATION_COUNT_UNKNOWN"
+    },
+    {
+      "id": "M7_DROP_LABEL_CONTENT_BINDING",
+      "failure": "[M4-R16] stale label map must not resolve"
+    },
+    {
+      "id": "M8_TRUST_CALLER_DESTINATION_BOUNDS",
+      "failure": "[M4-R17] caller-inflated count must not reach the opener"
+    },
+    {
+      "id": "M9_ALLOW_UNKNOWN_IDENTITY_ACTIVE",
+      "failure": "[M4-R19] unknown identity must never be active"
+    },
+    {
+      "id": "M10_HARDCODE_STALE_LEDGER_CEILING",
+      "failure": "[M4-R21] ledger must verify against the derived ceiling 13: ledger holds 14 migrations but the accepted base is 13"
+    },
+    {
+      "id": "M11_OMIT_TUPLE_PROPAGATION",
+      "failure": "[M4-R14] durable hash must belong to winning operation"
+    },
+    {
+      "id": "M12_DISABLE_CROSS_SESSION_GENERATION_ORDERING",
+      "failure": "[M4-R23] a new session's reservation must exceed every durable token, got 1"
+    },
+    {
+      "id": "M13_RETRY_SENDS_NEWEST_GENERATION",
+      "failure": "[M4-R24] a superseded retry must be refused before any persistence attempt, saw [{\"page\":42,\"generation\":3}]"
+    },
+    {
+      "id": "M14_DISABLE_DURABLE_OWNERSHIP_RESERVATION",
+      "failure": "[M4-R28] later request must win even when earlier completion lands first"
+    },
+    {
+      "id": "M15_DISABLE_COMMIT_CANCELLATION_FENCE",
+      "failure": "[M4-R29] abort before commit must preserve previous saved page"
+    },
+    {
+      "id": "M16_OMIT_POST_AWAIT_OWNERSHIP_RECHECK",
+      "failure": "[M4-R30] stale acknowledged operation must not replace winning controller progress"
+    },
+    {
+      "id": "M17_SUPPRESS_CLAIM_WRITE_FAILURE",
+      "failure": "[M4-R33] a failed claim write must not return a token, got 2"
+    },
+    {
+      "id": "M18_ACCEPT_UNRESERVED_FUTURE_TOKEN",
+      "failure": "[M4-R34] a never-reserved future token must not commit"
+    },
+    {
+      "id": "M19_ACCEPT_FAILED_INSTALL_RECORD",
+      "failure": "[M4-R35] a recorded failed install must not attest reuse"
+    },
+    {
+      "id": "M20_EXEMPT_NAMED_MUTANT_IDS",
+      "failure": "[M4-R36] an unexecuted mutant claim must be rejected whatever its name contains"
+    },
+    {
+      "id": "M21_SKIP_ENTRY_SUPERSESSION",
+      "failure": "[M4-R37] a newer failed reservation must retire an older held opener"
+    },
+    {
+      "id": "M22_RETIRE_WITHOUT_LIVE_CANCELLATION",
+      "failure": "[M4-R37] a newer failed reservation must stop an older held save from landing"
+    },
+    {
+      "id": "M23_TRUST_CLAIM_WRITE_WITHOUT_POSTCONDITION",
+      "failure": "[M4-R38] an ignored claim write must not issue a token, got 2"
+    },
+    {
+      "id": "M24_DROP_INSTALL_SIGNAL",
+      "failure": "[M4-R39] a signalled install must keep its real signal"
+    }
+  ]
+}
