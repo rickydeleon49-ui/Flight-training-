@@ -1,0 +1,17 @@
+=== 01 toolchain ===
+node: v22.23.3  platform: darwin/arm64
+cwd: /Users/rickymac/code/Flight-training-m4-viewer-evaluation
+command: git rev-parse HEAD
+exit: 0
+RESULT: PASS
+--- stdout ---
+c28ab8482c8635b0b2bf74686b081e02bf448f65
+
+--- stderr ---
+
+
+--- derived ---
+head: c28ab8482c8635b0b2bf74686b081e02bf448f65
+node: v22.23.3
+pinned accepted-main: e8720003a76be680812dfe3605d58e7eb6372d00 [source: default (hardcoded accepted-main baseline)]
+tracked modifications in this worktree: 0

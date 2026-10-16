@@ -1,0 +1,61 @@
+TAP version 13
+# {"case":"R28-tokens","olderToken":1,"newerToken":2}
+# {"case":"R28","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":null,"persistedPage":null},"newResult":{"success":true,"state":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20.","saved":true,"saveError":null,"persistedStatus":"active","lastRequestedPage":20,"confirmedRead":false},"finalPage":20}
+# {"case":"R29","result":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":null,"persistedPage":null},"controllerState":"aborted"}
+# {"case":"R30-normal","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":10,"persistedPage":10},"durablePage":20,"controllerPage":20}
+# {"case":"R30-retry","late":{"success":false,"state":"aborted","superseded":true,"reason":"superseded","persistedPage":20},"durablePage":20,"controllerPage":20}
+# {"case":"R30-failure","durablePage":20,"controllerState":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20."}
+# Subtest: [M4-R28] overlapping controllers with earlier completion still retain later request
+ok 1 - [M4-R28] overlapping controllers with earlier completion still retain later request
+  ---
+  duration_ms: 38.994291
+  type: 'test'
+  ...
+# Subtest: [M4-R29] abort while persistence is pending cannot change the saved page
+not ok 2 - [M4-R29] abort while persistence is pending cannot change the saved page
+  ---
+  duration_ms: 5.843583
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:49:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [M4-R29] abort must fence an already pending persistence operation before commit
+    
+    undefined !== 5
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 5
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:57:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+ok 3 - [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.078542
+  type: 'test'
+  ...
+# Subtest: [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+ok 4 - [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 5.28125
+  type: 'test'
+  ...
+# Subtest: [M4-R30] obsolete opener failure must leave the winner notice and state intact
+ok 5 - [M4-R30] obsolete opener failure must leave the winner notice and state intact
+  ---
+  duration_ms: 5.188583
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 142.234875

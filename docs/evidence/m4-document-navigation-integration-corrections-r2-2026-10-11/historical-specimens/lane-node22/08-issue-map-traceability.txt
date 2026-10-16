@@ -1,0 +1,5 @@
+=== 08 issue-to-test map traceability ===
+node: v22.23.3
+mapped test names: 68  executed: 68  mapped-but-not-executed: 0
+  (none)
+RESULT: PASS - every mapped test executed and passed

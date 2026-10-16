@@ -1,0 +1,183 @@
+=== Her Flight Deck M4 Integration Corrections - Proof Suite Receipt ===
+Timestamp: 2026-10-11T20:28:05.177Z
+Suite 1 (proof.test.mjs): Exit 0, 21 passed, 0 failed
+Suite 2 (databaseLifecycle.test.mjs): Exit 0, 7 passed, 0 failed
+Suite 3 (sensitivityMutants.test.mjs): Exit 0, 2 passed, 0 failed
+Suite 4 (realParserDemonstration.mjs): Evaluated 5 fixtures + page-tree corruption handled
+
+--- 1. Proof Suite Output ---
+✔ [control] bounded physical reference and complete nested translation work (1.016584ms)
+✔ [control] newer missing-path intent still blocks obsolete opener (0.337917ms)
+✔ [M4-R9] unknown and invalid totals cannot resolve physical destinations (0.127708ms)
+✔ [M4-R9] label maps without bounds cannot resolve a verified destination (0.084792ms)
+✔ [M4-R9] genuine first-level nullable parent metadata permits root navigation (0.09475ms)
+✔ [M4-R9] live root translation requires complete range metadata (0.075834ms)
+✔ [M4-R9] reverse translation cannot succeed without destination identity (0.086667ms)
+✔ [M4-R9] translated arithmetic must remain a safe integer (0.072792ms)
+✔ [M4-R9] deleted root document returns structured snapshot guidance (0.135625ms)
+✔ [M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds (0.154916ms)
+✔ [M4-R10] persisted bookmark cannot default verified outside active bounds (18.129833ms)
+✔ [M4-R10] identity replacement atomically invalidates bookmark and reading state (12.393833ms)
+✔ [M4-R10] reading state cannot be active outside persisted content bounds (9.679208ms)
+✔ [M4-R10] unknown bounds cannot reverify a matching-hash bookmark (0.142958ms)
+✔ [M4-R10] content drift detector identifies modified bytes (0.560708ms)
+✔ [M4-R11] same material with different content cannot inherit prior requested page (0.24225ms)
+✔ [M4-R11] held old save commits after newer save and must be fenced (0.357208ms)
+✔ [M4-R11] public progress accessor must not leak A after failed B (0.089042ms)
+✔ [M4-R11] opener refuses out-of-bounds destination before native invocation (0.058ms)
+✔ [M4-R11] partial save failure offers deliberate save-only retry carrying same ownership (0.242625ms)
+✔ [M4-R11] explicit abort refuses obsolete opener and prevents state publication (0.09625ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 242.969333
+
+--- 2. Database Lifecycle Output ---
+✔ [M4-R10] populated schema 1-13 upgrade preserves all prior rows and tables (13.212167ms)
+✔ [M4-R10] atomic replacement transaction invalidates bookmark and reading state (12.370542ms)
+✔ [M4-R10] atomic replacement transaction rolls back completely upon injected fault (11.456416ms)
+✔ [M4-R10] file-backed SQLite database safely closes and reopens (73.900417ms)
+✔ [M4-R10] synthetic backup and restore preserves state and detects drift/missing files (79.7195ms)
+✔ [M4-R10] older binary schema probe detects and refuses candidate schema version 0015 (10.083583ms)
+✔ [M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state (10.123542ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 399.781875
+
+--- 3. Sensitivity Mutants Output ---
+✔ [sensitivity] clean baseline modules pass all regression checks (exit 0) (16.812625ms)
+✔ [sensitivity] actual disposable module mutations fail unchanged regressions (exit 1) (33.526084ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 236.09025
+
+--- 4. Real PDF.js Demonstration Output ---
+{
+  "engine": "pdfjs-dist",
+  "version": "6.3.289",
+  "runtime": "Node.js v26.10.0",
+  "results": [
+    {
+      "file": "handbook_root_sample.pdf",
+      "success": true,
+      "pageCount": 50,
+      "matchesExpected": true,
+      "samplePages": [
+        {
+          "pageNum": 1,
+          "rotate": 0
+        },
+        {
+          "pageNum": 2,
+          "rotate": 0
+        },
+        {
+          "pageNum": 3,
+          "rotate": 0
+        },
+        {
+          "pageNum": 4,
+          "rotate": 0
+        },
+        {
+          "pageNum": 5,
+          "rotate": 0
+        }
+      ]
+    },
+    {
+      "file": "multi_page_sample.pdf",
+      "success": true,
+      "pageCount": 10,
+      "matchesExpected": true,
+      "samplePages": [
+        {
+          "pageNum": 1,
+          "rotate": 0
+        },
+        {
+          "pageNum": 2,
+          "rotate": 0
+        },
+        {
+          "pageNum": 3,
+          "rotate": 0
+        },
+        {
+          "pageNum": 4,
+          "rotate": 0
+        },
+        {
+          "pageNum": 5,
+          "rotate": 0
+        }
+      ]
+    },
+    {
+      "file": "single_page.pdf",
+      "success": true,
+      "pageCount": 1,
+      "matchesExpected": true,
+      "samplePages": [
+        {
+          "pageNum": 1,
+          "rotate": 0
+        }
+      ]
+    },
+    {
+      "file": "split_part_sample.pdf",
+      "success": true,
+      "pageCount": 16,
+      "matchesExpected": true,
+      "samplePages": [
+        {
+          "pageNum": 1,
+          "rotate": 0
+        },
+        {
+          "pageNum": 2,
+          "rotate": 0
+        },
+        {
+          "pageNum": 3,
+          "rotate": 0
+        },
+        {
+          "pageNum": 4,
+          "rotate": 0
+        },
+        {
+          "pageNum": 5,
+          "rotate": 0
+        }
+      ]
+    },
+    {
+      "file": "malformed_sample.pdf",
+      "success": true,
+      "rejectedAsExpected": true,
+      "errorType": "InvalidPDFException",
+      "message": "Invalid PDF structure."
+    }
+  ],
+  "corruptionDemonstration": {
+    "handled": true,
+    "resolvedPages": 50,
+    "behavior": "PDF.js traversed genuine catalog leaves rather than trusting corrupted header"
+  }
+}

@@ -1,0 +1,16 @@
+=== 01b scratch engine install audit ===
+node: v26.10.0  platform: darwin/arm64
+mode: verified-reuse (no install ran in this execution)
+--- byte integrity against scratch-artifacts.json ---
+lockfile sha256: fb26bde35dc1544d9d57d8ef27f20f497b71feb5104d0684784b93e95afafd64 (matches: true)
+package.json sha256: 86e4a0ddfd469bf9a901e030ad0b723ad50f036ec38ce6a7f35e854ddaaf1539 (matches: true)
+legacy pdf.mjs sha256: 91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d (matches: true)
+integrity: PASS
+--- install execution record (scratch/pdfjs-engine/install-execution.json, sha256 493f3c8e0fa92c88c70d455e552d413f362b839821785347de060483f5885775) ---
+recorded command: npm ci --prefix docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine --no-audit --no-fund --ignore-scripts
+recorded cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/r6lane26
+recorded node/npm: v22.23.3 / 10.9.9
+recorded exit: 0
+recorded finished: 2026-10-16T19:47:23.626Z
+attestation: PASS
+RESULT: PASS - engine bytes verified and bound to a recorded successful install in this checkout

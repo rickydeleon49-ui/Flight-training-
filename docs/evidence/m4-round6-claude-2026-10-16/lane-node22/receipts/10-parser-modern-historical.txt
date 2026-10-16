@@ -1,0 +1,7 @@
+=== 10 modern pdfjs entrypoint probe (labelled historical artifact) ===
+node: v22.23.3
+exit: 1
+stdout: 
+stderr(head): Warning: Please use the `legacy` build in Node.js environments. | file:///private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/r6lane22/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/node_modules/pdfjs-dist/build/pdf.mjs:8844 |       Promise.try(action, data.data).then(function (result) { |                  ^
+expectation on this lane: FAILS (Promise.try unavailable in Node < 24) — recorded as a limitation of THAT BUILD only
+RESULT: PASS - matches the lane expectation

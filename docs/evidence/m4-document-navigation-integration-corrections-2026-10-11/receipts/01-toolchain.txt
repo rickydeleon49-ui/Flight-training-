@@ -1,0 +1,9 @@
+=== Her Flight Deck M4 Integration Corrections - Toolchain Receipt ===
+Timestamp: 2026-10-11T20:28:05.177Z
+Node: v26.10.0
+Platform: darwin (arm64)
+Working Tree: /Users/rickymac/code/Flight-training-m4-viewer-evaluation
+Base Commit: c28ab8482c8635b0b2bf74686b081e02bf448f65
+Git Status: Tracking origin/main (b64ac84)
+Production Dependencies: UNTOUCHED (0 changes)
+Shipped Migrations: UNTOUCHED (0001-0013 preserved; candidate 0015 provisional)

@@ -1,0 +1,38 @@
+{"case":"R28-tokens","olderToken":1,"newerToken":2}
+{"case":"R28","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":null,"persistedPage":null},"newResult":{"success":true,"state":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20.","saved":true,"saveError":null,"persistedStatus":"active","lastRequestedPage":20,"confirmedRead":false},"finalPage":20}
+{"case":"R29","result":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":null,"persistedPage":null},"controllerState":"aborted"}
+{"case":"R30-normal","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":10,"persistedPage":10},"durablePage":20,"controllerPage":20}
+{"case":"R30-retry","late":{"success":false,"state":"aborted","superseded":true,"reason":"superseded","persistedPage":20},"durablePage":20,"controllerPage":20}
+{"case":"R30-failure","durablePage":20,"controllerState":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20."}
+✔ [M4-R28] overlapping controllers with earlier completion still retain later request (37.900625ms)
+✖ [M4-R29] abort while persistence is pending cannot change the saved page (5.589458ms)
+✔ [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress (5.207834ms)
+✔ [M4-R30] late retry acknowledgement cannot overwrite newer controller progress (5.453208ms)
+✔ [M4-R30] obsolete opener failure must leave the winner notice and state intact (5.068375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 144.050959
+
+✖ failing tests:
+
+test at docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:49:1
+✖ [M4-R29] abort while persistence is pending cannot change the saved page (5.589458ms)
+  AssertionError [ERR_ASSERTION]: [M4-R29] abort must fence an already pending persistence operation before commit
+  
+  undefined !== 5
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs:57:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

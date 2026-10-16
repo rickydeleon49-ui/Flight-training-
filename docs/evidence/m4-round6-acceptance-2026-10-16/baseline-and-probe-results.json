@@ -1,0 +1,37 @@
+[
+  {
+    "lane": "node22",
+    "case": "reviewed-round5-baseline",
+    "exit": 1
+  },
+  {
+    "lane": "node22",
+    "case": "frozen-five-direct-unadapted",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "case": "reviewed-round5-baseline",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "case": "frozen-five-direct-unadapted",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "case": "exit42",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "case": "invented-mutant",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "case": "signal-reuse",
+    "exit": 1
+  }
+]

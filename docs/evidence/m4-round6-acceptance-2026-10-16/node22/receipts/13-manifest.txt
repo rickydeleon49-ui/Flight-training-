@@ -1,0 +1,12 @@
+=== 13 manifest generation ===
+node: v22.23.3  platform: darwin/arm64
+cwd: /private/tmp/hfd-m4-r6-review-uudtu01q/node22/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+stage 1 payload entries: 170
+stage 2 delivery entries: 173
+architecture: two-stage manifest resolving checksum self-reference
+  - Stage 1: PAYLOAD_SHA256SUMS seals 170 immutable payload files
+  - Stage 1 verification: measured execution recorded in receipts/16-manifest-verification.txt
+  - Stage 2: SHA256SUMS seals complete delivery including payload manifest and receipts 15 & 16
+  - Final seal verification: recorded as outer execution result outside covered set
+included scratch artifacts: package.json, package-lock.json, scratch-artifacts.json
+excluded by design: node_modules and scratch/accepted-main (prepared on demand)

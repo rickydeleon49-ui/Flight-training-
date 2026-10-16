@@ -1,0 +1,18 @@
+{
+  "prior": 93,
+  "current": 104,
+  "missing": [],
+  "added": [
+    "[M4-R37] a newer failed reservation supersedes an older held opener and keeps the exact saved tuple",
+    "[M4-R37] a newer failed reservation supersedes an older held persistence and keeps the exact saved tuple",
+    "[M4-R37] a save-only retry of a partially saved operation is refused after a newer failed reservation",
+    "[M4-R37] a thrown preliminary ownership read is a reported failure that still retires older work",
+    "[M4-R37] after a failed request, a later successful request still opens and saves normally",
+    "[M4-R38] a claim that persists the wrong generation, or cannot be read back, fails closed",
+    "[M4-R38] a normal reservation persists exactly the token it returns",
+    "[M4-R38] an ignored claim INSERT throws, issues no token and changes nothing",
+    "[M4-R38] an ignored claim UPDATE throws, issues no token and changes nothing",
+    "[M4-R39] a recorded signal-terminated install cannot attest reuse",
+    "[M4-R39] a signal-terminated live install keeps exit null and its real signal, and fails the run"
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "engine": "pdfjs-dist",
+  "version": "6.3.289",
+  "scope": "scratch evaluation; isolated in docs/evidence/m4-document-navigation-integration-corrections-2026-10-11/scratch/pdfjs-engine/",
+  "production_impact": "None. No dependencies added to root package.json or src-tauri/Cargo.toml.",
+  "packages": [
+    {
+      "name": "pdfjs-dist",
+      "version": "6.3.289",
+      "license": "Apache-2.0",
+      "resolved": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.3.289.tgz",
+      "integrity": "sha512-ZHjSVpDa3D6izMq8/04lvkhkATUmL9px6ChPaXc1k6nU2Mrhlg1/7F0bdUqCwUjw3NsPTfPZsMDUU6ZIcRaeQw==",
+      "engines": ">=22.13.0 || >=24",
+      "optionalDependencies": {
+        "@napi-rs/canvas": "^1.0.0"
+      }
+    },
+    {
+      "name": "@napi-rs/canvas",
+      "version": "1.0.11",
+      "license": "MIT",
+      "resolved": "https://registry.npmjs.org/@napi-rs/canvas/-/canvas-1.0.11.tgz",
+      "integrity": "sha512-vt5tog1cr+QKadIddGe+3LrcX0EmjEd0izF717Uwf92mBmgYfq2XRmL2r4bZU40spB69exxhrBn9I91HYEr/7w==",
+      "optional": true
+    },
+    {
+      "name": "@napi-rs/canvas-darwin-arm64",
+      "version": "1.0.11",
+      "license": "MIT",
+      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-darwin-arm64/-/canvas-darwin-arm64-1.0.11.tgz",
+      "integrity": "sha512-J/JylWoJTG8OQqZaiqly4IODyAxNofUlZo0wtSBJtHk6AdymbdIkPynAM1JvQaZpPaG5h+msk9QuK8y4i1ooqw==",
+      "optional": true,
+      "os": "darwin",
+      "cpu": "arm64"
+    }
+  ],
+  "evaluated_assets": {
+    "pdf.mjs": {
+      "rel_path": "node_modules/pdfjs-dist/build/pdf.mjs",
+      "sha256": "495588717f62303a839e91a5343deebf1b41f52e2f9f6361e73dee6ea6a4355e"
+    },
+    "pdf.worker.mjs": {
+      "rel_path": "node_modules/pdfjs-dist/build/pdf.worker.mjs",
+      "sha256": "f2870db902eaff8397442c912b69459980ac91f6f4b5ed827167b12cf7057930"
+    },
+    "LICENSE": {
+      "rel_path": "node_modules/pdfjs-dist/LICENSE",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    }
+  },
+  "runtime_evaluation": {
+    "node26": {
+      "runtime": "Node.js v26.10.0 (ARM64)",
+      "status": "PASS",
+      "behavior": "Parses synthetic PDF fixtures, extracts page counts, enumerates catalog, rejects malformed PDF, handles corrupted /Count header safely."
+    },
+    "node22": {
+      "runtime": "Node.js v22.23.3",
+      "status": "RUNTIME_LIMITATION",
+      "behavior": "Throws `Promise.try is not a function` in pdf.worker.mjs due to reliance on ECMAScript 2025 proposal not enabled by default in Node 22 without flags/polyfills. Preserved honestly as evaluated runtime boundary; no production polyfill requested."
+    },
+    "cleanup": {
+      "task_destruction": "All parser document tasks invoked through getDocument() call await task.destroy() in finally blocks across both success and failure/rejection paths.",
+      "buffer_release": "Handle destruction terminates worker/parser references; Node.js V8 does not guarantee immediate measured RSS buffer reduction. Node-based parsing does not demonstrate WKWebView engine compatibility."
+    }
+  }
+}

@@ -1,0 +1,13 @@
+✔ a newer failed reservation supersedes an older held opener (7.464708ms)
+✔ a newer failed reservation supersedes an older held persistence (5.423208ms)
+✔ an ignored INSERT cannot issue an unpersisted reservation token (5.418417ms)
+✔ an ignored UPDATE cannot issue an unpersisted reservation token (5.0825ms)
+✔ a signal-terminated install preserves its real signal in the execution record (173.18125ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 252.319166

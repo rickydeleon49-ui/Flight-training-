@@ -1,0 +1,7 @@
+node v22.23.3 npm 10.9.9
+accepted-main ready: 14 migrations verified, ceiling=14, review pack 29/29 digests OK
+prepare exit=0
+=== round-4 integration proof runner | node v22.23.3 | docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+steps: 24, mapped tests: 72, failures: 0
+ALL CURRENT-GENERATION STEPS PASSED AND RE-VERIFIED.
+runner exit=0

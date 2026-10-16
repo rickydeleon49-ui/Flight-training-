@@ -1,0 +1,4 @@
+=== round-5 integration proof runner | node v26.10.0 | docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+steps: 23, mapped tests: 93, failures: 1
+PROOF RUN FAILED:
+- 08b traceability: report/README cites unexecuted mutants (M99_NAVIGATION_NEVER_EXECUTED)

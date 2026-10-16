@@ -1,0 +1,25 @@
+Final hashes, M4 round 6 (Claude, 16 October 2026). Paths are relative to the repository root.
+
+56c68ec3f220c01fea5a0e69ad7408d486ff798be9e2d3de34957dece3aa4ad3  docs/M4_DOCUMENT_NAVIGATION_ROUND6_CORRECTIONS_REPORT_2026-10-16.md
+1fe65f8caab48dc3b576379c5908b6e2af0ca5dd7b88738fb963a564a5344f35  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/README.md
+c69cf1553789d9d4347661f570561431fc9927454129ec54411eef540a949839  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/issue-to-test-map.json
+c607289bb0c9d38ed9196b35f7ea12db7b6e91eadd83a5c07c9fe6330e8db5a7  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/openerController.mjs
+597e22ea4446b90bed4c5859f868c241eef59a602859f93e282f554015fe0551  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/persistenceProtocol.mjs
+64cb5681371e485d1949700cc72f33b2a53c16095039db16a13099281a1b6426  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs
+0bc28cf5b769cc04685e97211232ed83985e912d97e5f7e735588b2971fc53b7  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs
+139e3721ca7814b69a4634ada620779c5e4b2a5b0266ca25fbdc79d01302d400  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/sensitivityMutants.test.mjs
+e4b097fd13b316326a60e135f252a7c64c0544f123ac6c2c63652f274d93129c  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/candidate/candidate_migration_0015.sql
+cf35bd0a50a1952ab63c54f5944e539f89d4b4cded1b808e82f48f039cf78c5e  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/evidenceChecks.mjs
+f17a34f925f361f8d4555e94f664d3decff9d33f5d03fdc2e6dcc9e38cd9a75d  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs
+b33718f25f493fb83ab86bcb9376e274b51aa19732db2ceafbd10a1b45965695  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/record-scratch-artifacts.mjs
+0e79fceea34c3030ebff57c1b43c2e3fb9af4e8970e0fd9de54956062e292772  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/install-execution.json
+24c03dcfec4b3f7097c18d71a115b829da531eb81881b0a555455b7f4cd5aba8  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/receipts/07b-executed-mutants.json
+0dd0ff84fd75dec727158932091691dd4f25feae962a9169f5ae3ff242f6eda5  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/PAYLOAD_SHA256SUMS
+48dd18eced53cfda0dc68cf921921d086ec8bdd8422a2bae097f8831fa06bf97  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/SHA256SUMS
+4bffd2d852c8e1e09fcb82b91c3dcf7320c3ef52ca4a63fbd524f38f5aae02a7  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/historical-specimens/round4-submitted/SHA256SUMS-of-specimen
+befb4bab11040e248cc4f0720c539953e630c079060405a8e9ea2a533f7a6a9f  docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/historical-specimens/round5-submitted/SHA256SUMS-of-specimen
+27fbf3610096aad30faeaa4dbb63db974b1ef24bf0b4d427abd7d4721fe33d0a  STATUS.md
+fa19f768ec510f33eabc98199aeeadbb7641effe6da2be0a597bbd5d1014feb8  ROADMAP.md
+af37bbd8c62ae4ad4483b679ce0d91bc594f8229d0f3e82115011f3dfa3a7ee9  docs/PROJECT_HANDOFF.md
+eca5a5f31e3905e30ff985b4ca2af33edf125ae6e943c099f8a41e528a96573b  docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS
+0d8c0273bcc788a6414ad001d93565b9631c6bbbd3a82e418d340ff49584673a  docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json

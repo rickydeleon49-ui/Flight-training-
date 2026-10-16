@@ -1,0 +1,8 @@
+=== 01b scratch engine install audit ===
+node: v26.10.0  platform: darwin/arm64
+command: npm ci --prefix docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine --no-audit --no-fund --ignore-scripts
+cwd: /Users/rickymac/code/Flight-training-m4-viewer-evaluation
+exit: 0
+installed package: pdfjs-dist@6.3.289
+scratch-artifacts.json sha256: e1d920a81d96f7810284c13cbc6021d09263d30e7554d8ba5a9fdbebe146e6c7
+RESULT: PASS - pack-local scratch engine installed and verified

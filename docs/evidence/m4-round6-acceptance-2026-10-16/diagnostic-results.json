@@ -1,0 +1,32 @@
+[
+  {
+    "lane": "node22",
+    "case": "assigned-five",
+    "exit": 0
+  },
+  {
+    "lane": "node22",
+    "case": "previous-four",
+    "exit": 0
+  },
+  {
+    "lane": "node22",
+    "case": "frozen-five",
+    "exit": 0
+  },
+  {
+    "lane": "node26",
+    "case": "assigned-five",
+    "exit": 0
+  },
+  {
+    "lane": "node26",
+    "case": "previous-four",
+    "exit": 0
+  },
+  {
+    "lane": "node26",
+    "case": "frozen-five",
+    "exit": 0
+  }
+]

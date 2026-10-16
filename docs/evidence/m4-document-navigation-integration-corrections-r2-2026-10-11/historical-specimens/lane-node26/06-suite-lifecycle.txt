@@ -1,0 +1,94 @@
+=== suite databaseLifecycle.test.mjs ===
+node: v26.10.0  platform: darwin/arm64
+cwd: /Users/rickymac/code/Flight-training-m4-viewer-evaluation
+command: /opt/homebrew/Cellar/node/26.10.0_1/bin/node --test --test-reporter=tap docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs
+exit: 0
+RESULT: PASS
+--- stdout ---
+TAP version 13
+# Subtest: [M4-R21] populated schema 1-14 upgrade preserves all prior rows including M3 skills evidence
+ok 1 - [M4-R21] populated schema 1-14 upgrade preserves all prior rows including M3 skills evidence
+  ---
+  duration_ms: 6.722042
+  type: 'test'
+  ...
+# Subtest: [M4-R21] candidate 0015 coexists with shipped 0014 for the navigation writers
+ok 2 - [M4-R21] candidate 0015 coexists with shipped 0014 for the navigation writers
+  ---
+  duration_ms: 6.462333
+  type: 'test'
+  ...
+# Subtest: [M4-R21] pointing the ledger back at this worktree's own migrations fails the verification
+ok 3 - [M4-R21] pointing the ledger back at this worktree's own migrations fails the verification
+  ---
+  duration_ms: 0.528792
+  type: 'test'
+  ...
+# Subtest: [M4-R21] an altered byte in the extracted ledger fails verification before any database is built
+ok 4 - [M4-R21] an altered byte in the extracted ledger fails verification before any database is built
+  ---
+  duration_ms: 2.262459
+  type: 'test'
+  ...
+# Subtest: [M4-R21] older binary refuses a candidate-upgraded database using the derived ceiling
+ok 5 - [M4-R21] older binary refuses a candidate-upgraded database using the derived ceiling
+  ---
+  duration_ms: 5.312375
+  type: 'test'
+  ...
+# Subtest: [M4-R10] atomic replacement transaction rolls back completely upon injected fault
+ok 6 - [M4-R10] atomic replacement transaction rolls back completely upon injected fault
+  ---
+  duration_ms: 5.237834
+  type: 'test'
+  ...
+# Subtest: [M4-R10] file-backed SQLite database safely closes and reopens
+ok 7 - [M4-R10] file-backed SQLite database safely closes and reopens
+  ---
+  duration_ms: 38.202667
+  type: 'test'
+  ...
+# Subtest: [M4-R10] synthetic backup and restore preserves state and detects drift/missing files
+ok 8 - [M4-R10] synthetic backup and restore preserves state and detects drift/missing files
+  ---
+  duration_ms: 40.798042
+  type: 'test'
+  ...
+# Subtest: [M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state
+ok 9 - [M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state
+  ---
+  duration_ms: 5.649209
+  type: 'test'
+  ...
+# Subtest: [M4-R10] replacement of a drifted document leaves prior navigation visible but unverified
+ok 10 - [M4-R10] replacement of a drifted document leaves prior navigation visible but unverified
+  ---
+  duration_ms: 5.190042
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 196.941208
+
+--- stderr ---
+
+
+--- derived ---
+tests 10, pass 10, fail 0
+passed names:
+  - [M4-R21] populated schema 1-14 upgrade preserves all prior rows including M3 skills evidence
+  - [M4-R21] candidate 0015 coexists with shipped 0014 for the navigation writers
+  - [M4-R21] pointing the ledger back at this worktree's own migrations fails the verification
+  - [M4-R21] an altered byte in the extracted ledger fails verification before any database is built
+  - [M4-R21] older binary refuses a candidate-upgraded database using the derived ceiling
+  - [M4-R10] atomic replacement transaction rolls back completely upon injected fault
+  - [M4-R10] file-backed SQLite database safely closes and reopens
+  - [M4-R10] synthetic backup and restore preserves state and detects drift/missing files
+  - [M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state
+  - [M4-R10] replacement of a drifted document leaves prior navigation visible but unverified

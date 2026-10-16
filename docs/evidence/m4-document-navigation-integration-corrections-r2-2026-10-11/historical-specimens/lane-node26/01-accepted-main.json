@@ -1,0 +1,160 @@
+{
+  "pin": "e8720003a76be680812dfe3605d58e7eb6372d00",
+  "pinnedSubject": "e872000 docs: re-review M4 integration corrections and assign round-2 fixes (#141)",
+  "nodeVersion": "v26.10.0",
+  "recordedAt": "2026-10-12T05:43:47.743Z",
+  "worktreeHead": "",
+  "destination": "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main",
+  "usageRule": "reference bytes only; excluded from the delivered SHA256SUMS. The lifecycle suite must read the ledger from here and must never fall back to this worktree's own 13-file src-tauri/migrations/.",
+  "shippedMigrations": {
+    "count": 14,
+    "files": [
+      "0001_initial_schema.sql",
+      "0002_profile_details.sql",
+      "0003_personal_note.sql",
+      "0004_app_metadata.sql",
+      "0005_flight_log.sql",
+      "0006_pilot_toolkit.sql",
+      "0007_ai_study.sql",
+      "0008_notes.sql",
+      "0009_practice_tests.sql",
+      "0010_debrief_links.sql",
+      "0011_practice_sessions.sql",
+      "0012_card_reviews.sql",
+      "0013_split_source_lineage.sql",
+      "0014_skills_evidence.sql"
+    ],
+    "verification": {
+      "0001_initial_schema.sql": {
+        "sha256": "5fdd18155dd3276d1ba774d65995b0d6280bbc9be7f3703d8033801e0068e718",
+        "expected": "5fdd18155dd3276d1ba774d65995b0d6280bbc9be7f3703d8033801e0068e718",
+        "state": "verified"
+      },
+      "0002_profile_details.sql": {
+        "sha256": "be29f442d881071e82a54fc75b92aab015f68d2b86b49c56999c8635c1ea184b",
+        "expected": "be29f442d881071e82a54fc75b92aab015f68d2b86b49c56999c8635c1ea184b",
+        "state": "verified"
+      },
+      "0003_personal_note.sql": {
+        "sha256": "9d6915cd98fb8232b3fca5e720f4ac09f0380d0881bd88823f44232676a7f48f",
+        "expected": "9d6915cd98fb8232b3fca5e720f4ac09f0380d0881bd88823f44232676a7f48f",
+        "state": "verified"
+      },
+      "0004_app_metadata.sql": {
+        "sha256": "3ec0833f36eea7612dc3ce5aa576623676e6b9918ddb7421c346064afd8bdbe5",
+        "expected": "3ec0833f36eea7612dc3ce5aa576623676e6b9918ddb7421c346064afd8bdbe5",
+        "state": "verified"
+      },
+      "0005_flight_log.sql": {
+        "sha256": "1f724ad96211107e5ba7c6fe412627e448d249697fe7245e7f3d44060ad0d24b",
+        "expected": "1f724ad96211107e5ba7c6fe412627e448d249697fe7245e7f3d44060ad0d24b",
+        "state": "verified"
+      },
+      "0006_pilot_toolkit.sql": {
+        "sha256": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1",
+        "expected": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1",
+        "state": "verified"
+      },
+      "0007_ai_study.sql": {
+        "sha256": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358",
+        "expected": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358",
+        "state": "verified"
+      },
+      "0008_notes.sql": {
+        "sha256": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761",
+        "expected": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761",
+        "state": "verified"
+      },
+      "0009_practice_tests.sql": {
+        "sha256": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
+        "expected": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
+        "state": "verified"
+      },
+      "0010_debrief_links.sql": {
+        "sha256": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971",
+        "expected": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971",
+        "state": "verified"
+      },
+      "0011_practice_sessions.sql": {
+        "sha256": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+        "expected": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+        "state": "verified"
+      },
+      "0012_card_reviews.sql": {
+        "sha256": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e",
+        "expected": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e",
+        "state": "verified"
+      },
+      "0013_split_source_lineage.sql": {
+        "sha256": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106",
+        "expected": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106",
+        "state": "verified"
+      },
+      "0014_skills_evidence.sql": {
+        "sha256": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
+        "expected": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
+        "state": "verified"
+      }
+    },
+    "skillsEvidence0014": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a"
+  },
+  "schemaCeiling": {
+    "parsedFrom": "git show e8720003a76be680812dfe3605d58e7eb6372d00:src-tauri/src/lib.rs",
+    "line": "pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 14;",
+    "value": 14,
+    "equalsExtractedMigrationCount": true
+  },
+  "reviewPack": {
+    "path": "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/docs/evidence/m4-document-navigation-integration-corrections-rereview-2026-10-11",
+    "expectedMatches": 29,
+    "actualMatches": 29,
+    "digestFailures": []
+  },
+  "steps": [
+    {
+      "label": "rev-parse",
+      "command": "git rev-parse e8720003a76be680812dfe3605d58e7eb6372d00",
+      "cwd": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation",
+      "exit": 0,
+      "stdoutBytes": 41
+    },
+    {
+      "label": "subject",
+      "command": "git log -1 --format=%h %s e8720003a76be680812dfe3605d58e7eb6372d00",
+      "cwd": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation",
+      "exit": 0,
+      "stdoutBytes": 83
+    },
+    {
+      "label": "migrations extract",
+      "command": "git archive --format=tar e8720003a76be680812dfe3605d58e7eb6372d00 src-tauri/migrations src/data/migration-checksums.json | tar -x -C docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main",
+      "cwd": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation",
+      "archiveExit": 0,
+      "tarExit": 0,
+      "tarBytes": 71680
+    },
+    {
+      "label": "read lib.rs",
+      "command": "git show e8720003a76be680812dfe3605d58e7eb6372d00:src-tauri/src/lib.rs",
+      "cwd": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation",
+      "exit": 0,
+      "stdoutBytes": 7804
+    },
+    {
+      "label": "review-pack extract",
+      "command": "git archive --format=tar e8720003a76be680812dfe3605d58e7eb6372d00 docs/evidence/m4-document-navigation-integration-corrections-rereview-2026-10-11 | tar -x -C docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main",
+      "cwd": "/Users/rickymac/code/Flight-training-m4-viewer-evaluation",
+      "archiveExit": 0,
+      "tarExit": 0,
+      "tarBytes": 184320
+    },
+    {
+      "label": "verify review pack",
+      "command": "shasum -a 256 -c SHA256SUMS",
+      "cwd": "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/docs/evidence/m4-document-navigation-integration-corrections-rereview-2026-10-11",
+      "exit": 0,
+      "ok": 29,
+      "failed": []
+    }
+  ]
+}
