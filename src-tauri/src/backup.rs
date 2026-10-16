@@ -645,6 +645,116 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 14 {
         verify_schema_14_skill_evidence_semantics(connection)?;
     }
+    if newest_migration >= 15 {
+        verify_schema_15_navigation_semantics(connection)?;
+    }
+    Ok(())
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 15: document navigation                                      */
+/* (TS twin: `validateNavigationState`)                                */
+/* ------------------------------------------------------------------ */
+
+pub(crate) const NAVIGATION_TABLES: [&str; 4] = [
+    "material_content_identities",
+    "material_reading_state",
+    "material_bookmarks",
+    "material_operation_claims",
+];
+
+pub(crate) const NAVIGATION_INDEXES: [(&str, &str); 5] = [
+    ("material_content_identities", "idx_material_content_sha"),
+    ("material_reading_state", "idx_material_reading_state_owner"),
+    ("material_bookmarks", "idx_material_bookmarks_material"),
+    ("material_bookmarks", "idx_material_bookmarks_page"),
+    ("material_bookmarks", "idx_material_bookmarks_hash"),
+];
+
+/// The navigation contract a restored or opened database must meet: the four
+/// tables exactly as migration 0015 defines them, their indexes, rows that
+/// point at real materials, and ownership that is internally consistent — a
+/// cancelled token was issued, and a saved tuple belongs to an issued token.
+pub(crate) fn verify_schema_15_navigation_semantics(connection: &Connection) -> Result<(), String> {
+    let count = |sql: &str, params: &[&dyn rusqlite::ToSql]| -> Result<i64, String> {
+        connection
+            .query_row(sql, params, |r| r.get(0))
+            .map_err(|e| format!("Could not check document navigation: {e}"))
+    };
+    let reference = get_reference_schema_connection()?;
+    for table in NAVIGATION_TABLES {
+        if count(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )? != 1
+        {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+        if m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)? {
+            return Err(format!(
+                "Table {table} keys do not match the registered migration contract."
+            ));
+        }
+        let orphans = count(
+            &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+            &[],
+        )?;
+        if orphans != 0 {
+            return Err(format!(
+                "Table {table} has rows for study materials that no longer exist."
+            ));
+        }
+    }
+    for (table, index) in NAVIGATION_INDEXES {
+        if m3_index_shape(connection, table, index)? != m3_index_shape(&reference, table, index)? {
+            return Err(format!("The database is missing required index: {index}"));
+        }
+    }
+    if count(
+        "SELECT COUNT(*) FROM material_operation_claims WHERE cancelled_generation > reserved_generation",
+        &[],
+    )? != 0
+    {
+        return Err("A navigation claim cancels a request that was never issued.".to_string());
+    }
+    if count(
+        "SELECT COUNT(*) FROM material_reading_state s
+           LEFT JOIN material_operation_claims c ON c.material_id = s.material_id
+          WHERE s.owner_generation > COALESCE(c.reserved_generation, 0)",
+        &[],
+    )? != 0
+    {
+        return Err(
+            "A saved reading position belongs to a request that was never issued.".to_string(),
+        );
+    }
+    if count(
+        &format!(
+            "SELECT COUNT(*) FROM (SELECT material_id FROM material_bookmarks GROUP BY material_id HAVING COUNT(*) > {})",
+            crate::navigation::MAX_BOOKMARKS_PER_MATERIAL
+        ),
+        &[],
+    )? != 0
+    {
+        return Err("A study material has more bookmarks than the app supports.".to_string());
+    }
     Ok(())
 }
 
