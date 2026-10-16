@@ -1,0 +1,6 @@
+{
+  "check": "independent artifact review",
+  "outcome": "review assertion error, not an app/package failure",
+  "detail": "Initial check assumed VolumeReadOnly/ReadOnlyVolume diskutil keys. This macOS reports Writable=false, WritableMedia=false, WritableVolume=false instead. App and mounted executable hashes and codesign verification had already passed. The finally block detached the image and checked absence before the assertion propagated. Corrected check will use the observed keys.",
+  "productionSourceChanged": false
+}
