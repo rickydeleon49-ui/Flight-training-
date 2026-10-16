@@ -1,0 +1,22 @@
+{
+  "releases": [
+    {
+      "tag": "v0.5.4",
+      "sha256": "1048e4636190d07afcbf2da76fc38822cd13189552b03a0ed69265870857676d",
+      "bytes": 5086379,
+      "isDraft": false,
+      "publishedAt": "2026-10-16T16:37:44Z",
+      "targetCommitish": "fbff255312d3b900f1aa9c64b742cef8d4dd9df5"
+    },
+    {
+      "tag": "v0.5.5",
+      "sha256": "620ed7553476ef023df2df97428d3220d2bc771c8f8f0f3546549893f5471512",
+      "bytes": 5094471,
+      "isDraft": false,
+      "publishedAt": "2026-10-16T17:46:42Z",
+      "targetCommitish": "7e495580a48828c2c81cc4d8057e028acfc2a8eb"
+    }
+  ],
+  "installedV055ExecutableMatches": true,
+  "reviewerLaunched": false
+}

@@ -1,0 +1,15 @@
+
+ RUN  v4.1.11 /Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node22-disposable
+
+(node:16680) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16681) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16691) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  4 passed (4)
+      Tests  13 passed (13)
+   Start at  11:21:43
+   Duration  3.38s (transform 1.00s, setup 0ms, import 1.73s, tests 1.90s, environment 1.52s)
+

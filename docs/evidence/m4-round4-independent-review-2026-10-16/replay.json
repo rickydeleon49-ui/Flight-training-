@@ -1,0 +1,125 @@
+[
+  {
+    "label": "node22-frozen-diagnostics",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "--test",
+      "--test-reporter=tap",
+      "docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-m4-round4",
+    "exit": 0,
+    "seconds": 0.23
+  },
+  {
+    "label": "node22-clone",
+    "command": [
+      "git",
+      "clone",
+      "--shared",
+      "--quiet",
+      "--no-checkout",
+      "/Users/rickymac/code/Flight-training-",
+      "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node22-disposable"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016",
+    "exit": 0,
+    "seconds": 0.04
+  },
+  {
+    "label": "node22-checkout",
+    "command": [
+      "git",
+      "checkout",
+      "--quiet",
+      "--detach",
+      "7e495580a48828c2c81cc4d8057e028acfc2a8eb"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node22-disposable",
+    "exit": 0,
+    "seconds": 0.48
+  },
+  {
+    "label": "node22-prepare",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/prepare-accepted-main.mjs",
+      "e8720003a76be680812dfe3605d58e7eb6372d00"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node22-disposable",
+    "exit": 0,
+    "seconds": 0.12
+  },
+  {
+    "label": "node22-full-runner",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs",
+      "--install"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node22-disposable",
+    "exit": 0,
+    "seconds": 3.33
+  },
+  {
+    "label": "node26-frozen-diagnostics",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "--test",
+      "--test-reporter=tap",
+      "docs/evidence/m4-round3-senior-review-2026-10-11/diagnostics.test.mjs"
+    ],
+    "cwd": "/Users/rickymac/code/Flight-training-m4-round4",
+    "exit": 0,
+    "seconds": 0.22
+  },
+  {
+    "label": "node26-clone",
+    "command": [
+      "git",
+      "clone",
+      "--shared",
+      "--quiet",
+      "--no-checkout",
+      "/Users/rickymac/code/Flight-training-",
+      "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node26-disposable"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016",
+    "exit": 0,
+    "seconds": 0.02
+  },
+  {
+    "label": "node26-checkout",
+    "command": [
+      "git",
+      "checkout",
+      "--quiet",
+      "--detach",
+      "7e495580a48828c2c81cc4d8057e028acfc2a8eb"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node26-disposable",
+    "exit": 0,
+    "seconds": 0.41
+  },
+  {
+    "label": "node26-prepare",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/prepare-accepted-main.mjs",
+      "e8720003a76be680812dfe3605d58e7eb6372d00"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node26-disposable",
+    "exit": 0,
+    "seconds": 0.13
+  },
+  {
+    "label": "node26-full-runner",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs"
+    ],
+    "cwd": "/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node26-disposable",
+    "exit": 0,
+    "seconds": 2.93
+  }
+]
