@@ -23,7 +23,7 @@ import {
   inspectCompleteBackup,
   listBackups,
   restartForRestore,
-  revealFolder,
+  openDataFolder,
   stageCompleteRestore,
   stageLocalRestore,
   type BackupInfo,
@@ -44,6 +44,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
   const [busy, setBusy] = useState(false);
   const [archiveCandidate, setArchiveCandidate] = useState<CompleteBackupInfo | null>(null);
   const [copyCandidate, setCopyCandidate] = useState<BackupInfo | null>(null);
+  const [folderOpenError, setFolderOpenError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!backupsAvailable()) return;
@@ -183,10 +184,25 @@ export function DataRecovery({ error }: DataRecoveryProps) {
                 <CardBody>
                   <div className="row row--between" style={{ gap: "var(--space-3)" }}>
                     <code className="tiny wrap-anywhere">{dataPath}</code>
-                    <Button size="small" onClick={() => revealFolder(dataPath)}>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setFolderOpenError(null);
+                        openDataFolder().catch((error: unknown) => {
+                          setFolderOpenError(
+                            backupErrorMessage(error, "That folder could not be opened."),
+                          );
+                        });
+                      }}
+                    >
                       Open folder
                     </Button>
                   </div>
+                  {folderOpenError ? (
+                    <p className="small" role="alert" style={{ color: "var(--status-danger)", marginTop: "var(--space-2)" }}>
+                      {folderOpenError}
+                    </p>
+                  ) : null}
                   <p className="tiny dim" style={{ marginTop: "var(--space-3)" }}>
                     Copy this whole folder somewhere safe before trying anything else. It
                     contains your database, your uploaded documents, and every safety copy.

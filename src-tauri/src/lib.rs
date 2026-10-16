@@ -222,6 +222,7 @@ pub fn run() {
             backup::restart_for_restore,
             backup::list_backups,
             backup::data_directory,
+            backup::open_data_folder,
             backup::app_version,
         ])
         .run(tauri::generate_context!())

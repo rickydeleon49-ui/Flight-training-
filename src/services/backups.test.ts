@@ -24,7 +24,7 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
   save: mocks.save,
 }));
 
-import { chooseCompleteBackupDestination, dataDirectory, revealFolder } from "./backups";
+import { chooseCompleteBackupDestination, dataDirectory, openDataFolder } from "./backups";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(false);
@@ -60,10 +60,9 @@ describe("data directory outside the desktop shell", () => {
     expect(await dataDirectory()).toBe("");
   });
 
-  it("refuses to reveal a folder without the desktop application", async () => {
-    await expect(revealFolder("/some/path")).rejects.toThrow(
-      "This needs the desktop application.",
-    );
+  it("refuses to open the data folder without the desktop application", async () => {
+    await expect(openDataFolder()).rejects.toThrow("This needs the desktop application.");
+    expect(mocks.invoke).not.toHaveBeenCalledWith("open_data_folder");
   });
 });
 
@@ -77,20 +76,22 @@ describe("data directory inside desktop shell", () => {
     expect(mocks.invoke).toHaveBeenCalledWith("data_directory");
   });
 
-  it("reveals the identical path displayed in Settings", async () => {
+  it("asks the desktop shell to open its own data folder, passing no path", async () => {
     mocks.isTauri.mockReturnValue(true);
-    mocks.openPath.mockResolvedValueOnce(undefined);
+    mocks.invoke.mockResolvedValueOnce(undefined);
 
-    const displayedPath = "C:\\Users\\Pilot\\AppData\\Roaming\\com.herflightdeck.app";
-    await revealFolder(displayedPath);
+    await openDataFolder();
 
-    expect(mocks.openPath).toHaveBeenCalledWith(displayedPath);
+    expect(mocks.invoke).toHaveBeenCalledWith("open_data_folder");
+    expect(mocks.openPath).not.toHaveBeenCalled();
   });
 
-  it("propagates opener failure if the OS refuses to open the folder", async () => {
+  it("passes the desktop shell's own failure message through", async () => {
     mocks.isTauri.mockReturnValue(true);
-    mocks.openPath.mockRejectedValueOnce(new Error("Path not allowed by scope"));
+    mocks.invoke.mockRejectedValueOnce("Could not open /Users/pilot/Library/Application Support/com.herflightdeck.app: denied");
 
-    await expect(revealFolder("C:\\invalid")).rejects.toThrow("Path not allowed by scope");
+    await expect(openDataFolder()).rejects.toBe(
+      "Could not open /Users/pilot/Library/Application Support/com.herflightdeck.app: denied",
+    );
   });
 });
