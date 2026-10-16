@@ -133,7 +133,7 @@ beforeEach(async () => {
   sessionStorage.clear(); // remembered Review due filters
   db = await createNodeSqliteDatabase();
   await createRepositories(db).app.set("airline_starter_pack", "skipped-for-test");
-  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "" });
+  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "", choice: "standard" });
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
   vi.spyOn(geminiService, "generateStudyAid").mockRejectedValue(new Error("Gemini must not be called"));
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(false);

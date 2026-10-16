@@ -74,6 +74,7 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({
       configured: true,
       model: "gemini-3.5-flash",
+      choice: "standard",
     });
     vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
     vi.spyOn(documentService, "canHandleFiles").mockReturnValue(true);

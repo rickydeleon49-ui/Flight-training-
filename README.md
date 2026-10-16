@@ -226,9 +226,23 @@ once; images ride the 100 MB inline request cap. The application checks all of
 this before she clicks, so an oversized file is a next step rather than a wasted
 upload.
 
+**Which model reads it.** Settings offers two choices once a key is connected.
+**Standard** sends documents to Gemini Flash (`gemini-3.5-flash`, which Google
+now serves as `gemini-3.6-flash`) and works on a free key. **Most capable** sends
+them to Gemini 4 Argon (`gemini-4-argon`). Google offers Argon only on keys with
+billing turned on, and it costs more per document, so it is never the default.
+The choice is stored in a `gemini-model` file beside the key, never in SQLite or
+a backup, and a missing or unreadable choice means Standard. The **Send this
+file to Google?** message names the model that will read the file, and each
+saved study aid says which model made it. If Argon refuses a key without billing
+(`403`) the message says so and points to the Standard choice. If Argon is rate
+limited (`429`) or stays busy, the request moves to Gemini Flash once instead of
+waiting through every pause.
+
 **When Google is busy.** A `503` means Google's own capacity is short for a
 moment — nothing to do with her key, her quota, or her document. Generating
-retries four times with a growing pause, then tries Gemini Flash-Lite once, and
+retries four times with a growing pause, then tries a backup model once (Gemini
+Flash-Lite for Standard, Gemini Flash for Most capable), and
 only then reports that Google is busy and the same file will probably work in a
 few minutes. The waiting is narrated rather than silent: the Rust side emits
 each pause to the window, so "Gemini is reviewing this document" becomes

@@ -66,10 +66,14 @@ import {
 import {
   configureGemini,
   disconnectGemini,
+  GEMINI_MODEL_CHOICES,
   geminiAvailable,
   geminiErrorMessage,
+  geminiModelName,
   getGeminiStatus,
   openGeminiKeyPage,
+  setGeminiModel,
+  type GeminiModelChoice,
   type GeminiStatus,
 } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
@@ -321,6 +325,24 @@ export function Settings() {
       setGemini(status);
       setGeminiKey("");
       setGeminiNote("Gemini connected. Study tools are ready.");
+    } catch (error) {
+      setGeminiProblem(true);
+      setGeminiNote(geminiErrorMessage(error));
+    } finally {
+      setGeminiBusy(false);
+    }
+  };
+
+  const chooseGeminiModel = async (choice: GeminiModelChoice) => {
+    if (gemini?.choice === choice) return;
+    setGeminiBusy(true);
+    setGeminiProblem(false);
+    try {
+      const status = await setGeminiModel(choice);
+      setGemini(status);
+      setGeminiNote(
+        `New study aids will use ${geminiModelName(status.model)}. Saved study guides and flashcards are unchanged.`,
+      );
     } catch (error) {
       setGeminiProblem(true);
       setGeminiNote(geminiErrorMessage(error));
@@ -1168,7 +1190,9 @@ export function Settings() {
                   </span>
                   <div>
                     <p className="small strong">Ready to use</p>
-                    <p className="tiny dim">{gemini.model} · key saved on this computer</p>
+                    <p className="tiny dim">
+                      {geminiModelName(gemini.model)} · key saved on this computer
+                    </p>
                   </div>
                 </div>
               ) : geminiAvailable() ? (
@@ -1204,6 +1228,32 @@ export function Settings() {
                 <p className="tiny dim">Gemini setup is available in the desktop application.</p>
               )}
 
+              {gemini?.configured ? (
+                <fieldset className="gemini-model-choice stack stack--2">
+                  <legend className="field__label">Model for new study aids</legend>
+                  {(["standard", "most-capable"] as const).map((choice) => (
+                    <label key={choice} className="small">
+                      <input
+                        type="radio"
+                        name="gemini-model-choice"
+                        checked={gemini.choice === choice}
+                        disabled={geminiBusy}
+                        onChange={() => void chooseGeminiModel(choice)}
+                      />{" "}
+                      <span className="strong">{GEMINI_MODEL_CHOICES[choice].label}</span>
+                      <span className="tiny dim"> — {GEMINI_MODEL_CHOICES[choice].detail}</span>
+                    </label>
+                  ))}
+                  {gemini.choice === "most-capable" ? (
+                    <p className="tiny dim">
+                      If Gemini 4 Argon cannot answer, for example because the key has no
+                      billing or Google is busy, Her Flight Deck tries Gemini Flash instead and
+                      shows which model made each study aid.
+                    </p>
+                  ) : null}
+                </fieldset>
+              ) : null}
+
               {geminiNote ? (
                 <p
                   className="small"
@@ -1224,10 +1274,10 @@ export function Settings() {
               <p className="tiny dim">
                 <span className="strong">If Gemini keeps saying it is busy:</span> a “503 —
                 high demand” is Google&rsquo;s capacity, not your key. Her Flight Deck already
-                waits, retries, and tries Flash-Lite before reporting it. If it happens often,
+                waits, retries, and tries a backup model before reporting it. If it happens often,
                 enabling billing for the same Google Cloud project moves the key to paid Tier 1,
-                which has higher rate limits. Billing does not change or upgrade the configured
-                model (<code>gemini-3.5-flash</code>), nor does it guarantee that a model will
+                which has higher rate limits. Billing alone does not change the model: choose
+                Gemini 4 Argon above if you want the more capable one. No model is guaranteed to
                 always have capacity, so you may still need to try again later.
               </p>
 

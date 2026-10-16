@@ -68,7 +68,7 @@ function geminiStatus(status: Status) {
   const spy = vi.spyOn(geminiService, "getGeminiStatus");
   if (status === "pending") spy.mockReturnValue(new Promise(() => {}));
   else if (status === "error") spy.mockRejectedValue(new Error("status unavailable"));
-  else spy.mockResolvedValue({ configured: status === "connected", model: "gemini-3.5-flash" });
+  else spy.mockResolvedValue({ configured: status === "connected", model: "gemini-3.5-flash", choice: "standard" });
 }
 
 async function seed(material: Partial<NewMaterial> = {}) {
