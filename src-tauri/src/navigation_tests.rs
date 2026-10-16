@@ -142,6 +142,22 @@ fn commit_op(
     .unwrap()
 }
 
+fn set_read_op(
+    conn: &mut Connection,
+    hash: &str,
+    owner: i64,
+    page: i64,
+    confirmed: bool,
+) -> Check<Value> {
+    op(
+        conn,
+        json!({
+            "kind": "set_read", "materialId": MAT, "expectedContentSha256": hash,
+            "expectedOwnerGeneration": owner, "physicalPage": page, "confirmed": confirmed,
+        }),
+    )
+}
+
 /// The exact stored tuple, or None.
 /// (page, label, confirmed_read, origin hash, status, owner generation)
 type Tuple = (i64, Option<String>, i64, Option<String>, String, i64);
@@ -196,7 +212,11 @@ fn requests_are_decoded_strictly() {
         json!({ "kind": "commit", "materialId": "../x", "generation": 1, "contentSha256": "a".repeat(64), "physicalPage": 3, "pageLabel": null }),
         json!({ "kind": "begin", "materialId": MAT }),
         json!({ "kind": "erase", "materialId": MAT }),
-        json!({ "kind": "add_bookmark", "materialId": MAT, "bookmarkId": "b1", "physicalPage": 1, "pageLabel": null, "title": "", "notes": "" }),
+        json!({ "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": "a".repeat(64), "bookmarkId": "b1", "physicalPage": 1, "pageLabel": null, "title": "", "notes": "" }),
+        json!({ "kind": "add_bookmark", "materialId": MAT, "bookmarkId": "b1", "physicalPage": 1, "pageLabel": null, "title": "t", "notes": "" }),
+        json!({ "kind": "set_read", "materialId": MAT, "physicalPage": 5, "confirmed": true }),
+        json!({ "kind": "set_read", "materialId": MAT, "expectedContentSha256": "a".repeat(64), "expectedOwnerGeneration": 0, "physicalPage": 5, "confirmed": true }),
+        json!({ "kind": "set_read", "materialId": MAT, "expectedContentSha256": "a".repeat(64), "expectedOwnerGeneration": 1, "physicalPage": 5, "confirmed": "yes" }),
     ] {
         assert_eq!(decode_operation(&bad), Err(Code::InvalidArgument), "{bad}");
     }
@@ -444,15 +464,19 @@ fn a_claim_that_cannot_be_read_refuses_the_commit() {
 fn read_confirmation_applies_only_to_the_current_page_and_resets_on_a_new_request() {
     let dir = TempDir::new("read");
     let (mut conn, hash) = seeded(dir.path());
-    let set = |conn: &mut Connection, page: i64, confirmed: bool| {
-        op(
-            conn,
-            json!({ "kind": "set_read", "materialId": MAT, "physicalPage": page, "confirmed": confirmed }),
-        )
-    };
-    assert_eq!(set(&mut conn, 6, true), Err(Code::StaleState));
-    let state = set(&mut conn, 5, true).unwrap();
+    let owner = tuple(&conn).unwrap().5;
+    assert_eq!(
+        set_read_op(&mut conn, &hash, owner, 6, true),
+        Err(Code::StaleState)
+    );
+    let state = set_read_op(&mut conn, &hash, owner, 5, true).unwrap();
     assert_eq!(state["confirmedRead"], true);
+    let cleared = set_read_op(&mut conn, &hash, owner, 5, false).unwrap();
+    assert_eq!(
+        cleared["confirmedRead"], false,
+        "clearing is its own explicit step"
+    );
+    set_read_op(&mut conn, &hash, owner, 5, true).unwrap();
     let token = begin_op(&mut conn, None).unwrap();
     commit_op(&mut conn, token, &hash, 8, None);
     assert_eq!(
@@ -460,34 +484,118 @@ fn read_confirmation_applies_only_to_the_current_page_and_resets_on_a_new_reques
         0,
         "a new request is not confirmed reading"
     );
-    assert_eq!(set(&mut conn, 5, true), Err(Code::StaleState));
+    assert_eq!(
+        set_read_op(&mut conn, &hash, owner, 5, true),
+        Err(Code::StaleState)
+    );
+}
+
+/// M4S1-R1, the reviewed sequence: content A is saved at page 5 and its
+/// confirmation is held; the file becomes content B and B is saved at page 5
+/// too. The held confirmation (and a held clear) must change nothing.
+#[test]
+fn a_held_confirmation_for_replaced_content_at_the_same_page_changes_nothing() {
+    let dir = TempDir::new("read-stale-content");
+    let (mut conn, hash_a) = seeded(dir.path());
+    let owner_a = tuple(&conn).unwrap().5;
+    set_read_op(&mut conn, &hash_a, owner_a, 5, true).unwrap();
+    let held_confirm = (hash_a.clone(), owner_a, 5, true);
+    let held_clear = (hash_a.clone(), owner_a, 5, false);
+
+    write_file(dir.path(), "ifh.pdf", &pdf_bytes(50, "b"));
+    let hash_b = inspect_identity_on(&mut conn, dir.path(), MAT).unwrap()["contentSha256"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert_ne!(hash_a, hash_b);
+    let token = begin_op(&mut conn, None).unwrap();
+    assert_eq!(
+        commit_op(&mut conn, token, &hash_b, 5, None)["committed"],
+        true
+    );
+    let before = tuple(&conn).unwrap();
+    assert_eq!(before.2, 0);
+
+    for (hash, owner, page, confirmed) in [held_confirm, held_clear] {
+        assert_eq!(
+            set_read_op(&mut conn, &hash, owner, page, confirmed),
+            Err(Code::StaleState)
+        );
+        assert_eq!(
+            tuple(&conn).unwrap(),
+            before,
+            "the stored tuple is untouched"
+        );
+    }
+    // The current request can still be confirmed and cleared.
+    assert_eq!(
+        set_read_op(&mut conn, &hash_b, token, 5, true).unwrap()["confirmedRead"],
+        true
+    );
+    assert_eq!(
+        set_read_op(&mut conn, &hash_b, token, 5, false).unwrap()["confirmedRead"],
+        false
+    );
+}
+
+/// M4S1-R1: same content and page, but a newer saved request. A confirmation
+/// held from the older request is stale even though page and hash agree.
+#[test]
+fn a_held_confirmation_from_an_older_generation_of_the_same_page_changes_nothing() {
+    let dir = TempDir::new("read-stale-generation");
+    let (mut conn, hash) = seeded(dir.path());
+    let old_owner = tuple(&conn).unwrap().5;
+    let token = begin_op(&mut conn, None).unwrap();
+    assert_eq!(
+        commit_op(&mut conn, token, &hash, 5, Some("v"))["committed"],
+        true
+    );
+    set_read_op(&mut conn, &hash, token, 5, true).unwrap();
+    let before = tuple(&conn).unwrap();
+    for confirmed in [true, false] {
+        assert_eq!(
+            set_read_op(&mut conn, &hash, old_owner, 5, confirmed),
+            Err(Code::StaleState)
+        );
+        assert_eq!(tuple(&conn).unwrap(), before);
+    }
 }
 
 #[test]
 fn bookmarks_need_a_verified_identity_and_an_in_range_page() {
     let dir = TempDir::new("bookmarks");
     let mut conn = library(dir.path());
-    let add = |conn: &mut Connection, id: &str, page: i64| {
+    let add = |conn: &mut Connection, hash: &str, id: &str, page: i64| {
         op(
             conn,
             json!({
-                "kind": "add_bookmark", "materialId": MAT, "bookmarkId": id, "physicalPage": page,
+                "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": hash,
+                "bookmarkId": id, "physicalPage": page,
                 "pageLabel": "3-12", "title": "Airspace chart", "notes": "",
             }),
         )
     };
-    assert_eq!(add(&mut conn, "b1", 3), Err(Code::IdentityUnknown));
+    let unknown = "a".repeat(64);
+    assert_eq!(
+        add(&mut conn, &unknown, "b1", 3),
+        Err(Code::IdentityUnknown)
+    );
     write_file(dir.path(), "ifh.pdf", &pdf_bytes(12, "c"));
     let hash = inspect_identity_on(&mut conn, dir.path(), MAT).unwrap()["contentSha256"]
         .as_str()
         .unwrap()
         .to_string();
-    assert_eq!(add(&mut conn, "b1", 13), Err(Code::PageOutOfRange));
-    let saved = add(&mut conn, "b1", 3).unwrap();
+    assert_eq!(add(&mut conn, &hash, "b1", 13), Err(Code::PageOutOfRange));
+    assert_eq!(
+        add(&mut conn, &unknown, "b1", 3),
+        Err(Code::StaleState),
+        "a bookmark made for other content is refused"
+    );
+    let saved = add(&mut conn, &hash, "b1", 3).unwrap();
     assert_eq!(saved["status"], "verified");
     assert_eq!(saved["originatingContentSha256"], hash);
     assert_eq!(
-        add(&mut conn, "b1", 4),
+        add(&mut conn, &hash, "b1", 4),
         Err(Code::InvalidArgument),
         "ids are unique"
     );
@@ -522,7 +630,8 @@ fn bookmarks_are_limited_per_material() {
     let over = op(
         &mut conn,
         json!({
-            "kind": "add_bookmark", "materialId": MAT, "bookmarkId": "one-more", "physicalPage": 1,
+            "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": hash,
+            "bookmarkId": "one-more", "physicalPage": 1,
             "pageLabel": null, "title": "t", "notes": "",
         }),
     );
@@ -540,7 +649,8 @@ fn identity_comes_from_the_file_bytes_and_replacement_marks_saved_places_drifted
     op(
         &mut conn,
         json!({
-            "kind": "add_bookmark", "materialId": MAT, "bookmarkId": "b1", "physicalPage": 40,
+            "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": first_hash,
+            "bookmarkId": "b1", "physicalPage": 40,
             "pageLabel": null, "title": "Late chapter", "notes": "",
         }),
     )
@@ -599,11 +709,12 @@ fn missing_and_unreadable_files_are_refused_without_recording_an_identity() {
 #[test]
 fn deleting_a_material_removes_all_four_kinds_of_navigation_rows() {
     let dir = TempDir::new("cascade");
-    let (mut conn, _) = seeded(dir.path());
+    let (mut conn, hash) = seeded(dir.path());
     op(
         &mut conn,
         json!({
-            "kind": "add_bookmark", "materialId": MAT, "bookmarkId": "b1", "physicalPage": 2,
+            "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": hash,
+            "bookmarkId": "b1", "physicalPage": 2,
             "pageLabel": null, "title": "t", "notes": "",
         }),
     )
@@ -826,17 +937,15 @@ fn a_complete_backup_round_trips_all_four_navigation_tables() {
     let source = TempDir::new("backup-source");
     let out = TempDir::new("backup-out");
     let target = TempDir::new("backup-target");
-    let (mut conn, _) = seeded(source.path());
+    let (mut conn, hash) = seeded(source.path());
+    let owner = tuple(&conn).unwrap().5;
     op(&mut conn, json!({
-        "kind": "add_bookmark", "materialId": MAT, "bookmarkId": "b1", "physicalPage": 12,
+        "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": hash,
+        "bookmarkId": "b1", "physicalPage": 12,
         "pageLabel": "ii", "title": "Weather minimums", "notes": "Check against the instructor's notes.",
     }))
     .unwrap();
-    op(
-        &mut conn,
-        json!({ "kind": "set_read", "materialId": MAT, "physicalPage": 5, "confirmed": true }),
-    )
-    .unwrap();
+    set_read_op(&mut conn, &hash, owner, 5, true).unwrap();
     let expected = navigation_rows(&conn);
     assert_eq!(expected.len(), 4, "one row in each table: {expected:?}");
     drop(conn);
@@ -853,4 +962,328 @@ fn a_complete_backup_round_trips_all_four_navigation_tables() {
     assert_eq!(navigation_rows(&restored), expected);
     assert!(target.path().join(DOCUMENTS_DIR).join("ifh.pdf").is_file());
     unmark_root_ready(source.path());
+}
+
+/* ------------------------------------------------------------------ */
+/* The authoritative file check (M4S1-R3)                              */
+/* ------------------------------------------------------------------ */
+
+/// The production path: the managed file is read inside the transaction.
+fn checked(conn: &mut Connection, root: &Path, value: Value) -> Check<Value> {
+    let decoded = decode_operation(&value)?;
+    run_operation_checked(conn, root, &decoded)
+}
+
+fn commit_json(generation: i64, hash: &str, page: i64) -> Value {
+    json!({
+        "kind": "commit", "materialId": MAT, "generation": generation,
+        "contentSha256": hash, "physicalPage": page, "pageLabel": null,
+    })
+}
+
+fn identity_hash(conn: &Connection) -> Option<String> {
+    identity_of(conn, MAT).unwrap().map(|i| i.content_sha256)
+}
+
+#[test]
+fn a_file_replaced_after_inspection_cannot_authorize_a_save_and_its_drift_is_kept() {
+    let dir = TempDir::new("r3-replace");
+    let (mut conn, hash_a) = seeded(dir.path());
+    let before = tuple(&conn).unwrap();
+    let token = begin_op(&mut conn, None).unwrap();
+    // Replaced after the last inspection, with fewer pages.
+    write_file(dir.path(), "ifh.pdf", &pdf_bytes(3, "replaced"));
+    let verdict = checked(&mut conn, dir.path(), commit_json(token, &hash_a, 7)).unwrap();
+    assert_eq!(verdict["committed"], false);
+    assert_eq!(verdict["reason"], "identity_changed");
+    let after = tuple(&conn).unwrap();
+    assert_eq!(after.0, before.0, "the saved page is kept, not moved");
+    assert_eq!(after.5, before.5, "the save did not happen");
+    assert_eq!(after.4, "drifted", "the old place is visibly drifted");
+    let recorded = identity_of(&conn, MAT).unwrap().unwrap();
+    assert_ne!(recorded.content_sha256, hash_a);
+    assert_eq!(
+        recorded.total_pages, 3,
+        "the new identity is recorded atomically"
+    );
+    assert_eq!(verdict["readingState"]["status"], "drifted");
+}
+
+#[test]
+fn a_file_deleted_after_inspection_refuses_the_save_and_writes_nothing() {
+    let dir = TempDir::new("r3-delete");
+    let (mut conn, hash) = seeded(dir.path());
+    let before = (tuple(&conn), identity_hash(&conn));
+    let token = begin_op(&mut conn, None).unwrap();
+    let claim_before = claim(&conn);
+    std::fs::remove_file(dir.path().join(DOCUMENTS_DIR).join("ifh.pdf")).unwrap();
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 6)),
+        Err(Code::FileMissing)
+    );
+    assert_eq!((tuple(&conn), identity_hash(&conn)), before);
+    assert_eq!(claim(&conn), claim_before);
+    let owner = before.0.unwrap().5;
+    assert_eq!(
+        checked(
+            &mut conn,
+            dir.path(),
+            json!({
+                "kind": "set_read", "materialId": MAT, "expectedContentSha256": hash,
+                "expectedOwnerGeneration": owner, "physicalPage": 5, "confirmed": true,
+            })
+        ),
+        Err(Code::FileMissing)
+    );
+    assert_eq!(tuple(&conn).unwrap().2, 0);
+}
+
+#[test]
+fn relinking_after_inspection_is_judged_by_the_bytes_now_linked() {
+    let dir = TempDir::new("r3-relink");
+    let (mut conn, hash) = seeded(dir.path());
+    // Relinked to a copy with the same bytes: still the same content.
+    write_file(dir.path(), "copy.pdf", &pdf_bytes(50, "a"));
+    conn.execute(
+        "UPDATE study_materials SET file_path = 'copy.pdf' WHERE id = ?1",
+        [MAT],
+    )
+    .unwrap();
+    let token = begin_op(&mut conn, None).unwrap();
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 6)).unwrap()["committed"],
+        true
+    );
+    // Relinked to different bytes: refused, recorded, drifted.
+    write_file(dir.path(), "other.pdf", &pdf_bytes(50, "other"));
+    conn.execute(
+        "UPDATE study_materials SET file_path = 'other.pdf' WHERE id = ?1",
+        [MAT],
+    )
+    .unwrap();
+    let token = begin_op(&mut conn, None).unwrap();
+    let verdict = checked(&mut conn, dir.path(), commit_json(token, &hash, 9)).unwrap();
+    assert_eq!(verdict["reason"], "identity_changed");
+    assert_eq!(tuple(&conn).unwrap().0, 6);
+    // Unlinked entirely.
+    conn.execute(
+        "UPDATE study_materials SET file_path = NULL WHERE id = ?1",
+        [MAT],
+    )
+    .unwrap();
+    let token = begin_op(&mut conn, None).unwrap();
+    let current = identity_hash(&conn).unwrap();
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &current, 2)),
+        Err(Code::FileMissing)
+    );
+}
+
+#[test]
+fn held_confirmation_and_bookmark_across_a_replacement_are_refused_and_drift_is_kept() {
+    let dir = TempDir::new("r3-held-actions");
+    let (mut conn, hash_a) = seeded(dir.path());
+    let owner = tuple(&conn).unwrap().5;
+    write_file(dir.path(), "ifh.pdf", &pdf_bytes(50, "b"));
+    let held_bookmark = json!({
+        "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": hash_a,
+        "bookmarkId": "held", "physicalPage": 4, "pageLabel": null, "title": "t", "notes": "",
+    });
+    assert_eq!(
+        checked(&mut conn, dir.path(), held_bookmark.clone()),
+        Err(Code::FileChanged)
+    );
+    let state = op(&mut conn, json!({ "kind": "read", "materialId": MAT })).unwrap();
+    assert_eq!(state["bookmarks"].as_array().unwrap().len(), 0);
+    assert_eq!(state["readingState"]["status"], "drifted", "drift was kept");
+    // Now that B is recorded, the held A bookmark and confirmation stay stale.
+    assert_eq!(
+        checked(&mut conn, dir.path(), held_bookmark),
+        Err(Code::StaleState)
+    );
+    let confirm = json!({
+        "kind": "set_read", "materialId": MAT, "expectedContentSha256": hash_a,
+        "expectedOwnerGeneration": owner, "physicalPage": 5, "confirmed": true,
+    });
+    assert_eq!(
+        checked(&mut conn, dir.path(), confirm),
+        Err(Code::StaleState)
+    );
+    assert_eq!(tuple(&conn).unwrap().2, 0);
+}
+
+/// A reader stand-in: records what it was handed and can change the file
+/// while the open is "held", or fail.
+struct FakeOpener<F: Fn()> {
+    opened: std::cell::RefCell<Vec<PathBuf>>,
+    during: F,
+    fail: bool,
+}
+
+impl<F: Fn()> DocumentOpener for FakeOpener<F> {
+    fn open_path(&self, path: &Path) -> Result<(), ()> {
+        (self.during)();
+        self.opened.borrow_mut().push(path.to_path_buf());
+        if self.fail {
+            Err(())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+fn opener<F: Fn()>(during: F, fail: bool) -> FakeOpener<F> {
+    FakeOpener {
+        opened: std::cell::RefCell::new(Vec::new()),
+        during,
+        fail,
+    }
+}
+
+#[test]
+fn opening_hands_over_only_the_verified_content() {
+    let dir = TempDir::new("r3-open");
+    let (conn, hash) = seeded(dir.path());
+    let quiet = opener(|| {}, false);
+    let opened = open_verified_on(&conn, dir.path(), MAT, &hash, &quiet).unwrap();
+    assert_eq!(opened["contentSha256"], hash);
+    assert_eq!(
+        quiet.opened.borrow().as_slice(),
+        &[dir.path().join(DOCUMENTS_DIR).join("ifh.pdf")]
+    );
+    // Asked for other content than is recorded and on disk.
+    let other = "c".repeat(64);
+    let refused = opener(|| {}, false);
+    assert_eq!(
+        open_verified_on(&conn, dir.path(), MAT, &other, &refused),
+        Err(Code::FileChanged)
+    );
+    // Replaced on disk since inspection.
+    write_file(dir.path(), "ifh.pdf", &pdf_bytes(50, "b"));
+    assert_eq!(
+        open_verified_on(&conn, dir.path(), MAT, &hash, &refused),
+        Err(Code::FileChanged)
+    );
+    std::fs::remove_file(dir.path().join(DOCUMENTS_DIR).join("ifh.pdf")).unwrap();
+    assert_eq!(
+        open_verified_on(&conn, dir.path(), MAT, &hash, &refused),
+        Err(Code::FileMissing)
+    );
+    assert!(
+        refused.opened.borrow().is_empty(),
+        "nothing was handed over"
+    );
+    write_file(dir.path(), "ifh.pdf", &pdf_bytes(50, "a"));
+    let failing = opener(|| {}, true);
+    assert_eq!(
+        open_verified_on(&conn, dir.path(), MAT, &hash, &failing),
+        Err(Code::OpenFailed)
+    );
+    assert_eq!(
+        open_verified_on(&conn, dir.path(), OTHER, &hash, &quiet),
+        Err(Code::FileMissing)
+    );
+}
+
+#[test]
+fn a_file_changed_while_the_open_is_held_cannot_be_saved_as_that_page() {
+    let dir = TempDir::new("r3-held-open");
+    let (mut conn, hash) = seeded(dir.path());
+    let token = begin_op(&mut conn, None).unwrap();
+    let root = dir.path().to_path_buf();
+    let swapping = opener(
+        move || write_file(&root, "ifh.pdf", &pdf_bytes(50, "swapped")),
+        false,
+    );
+    open_verified_on(&conn, dir.path(), MAT, &hash, &swapping).unwrap();
+    let verdict = checked(&mut conn, dir.path(), commit_json(token, &hash, 9)).unwrap();
+    assert_eq!(verdict["reason"], "identity_changed");
+    assert_eq!(tuple(&conn).unwrap().0, 5);
+}
+
+#[test]
+fn a_save_only_retry_rechecks_the_file_and_the_token() {
+    let dir = TempDir::new("r3-retry");
+    let (mut conn, hash) = seeded(dir.path());
+    let token = begin_op(&mut conn, None).unwrap();
+    // The first save fails in storage and writes nothing.
+    conn.execute_batch(
+        "CREATE TRIGGER fail_save BEFORE UPDATE ON material_reading_state BEGIN SELECT RAISE(ABORT, 'disk'); END;",
+    )
+    .unwrap();
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 9)),
+        Err(Code::StorageFailure)
+    );
+    conn.execute_batch("DROP TRIGGER fail_save;").unwrap();
+    assert_eq!(tuple(&conn).unwrap().0, 5);
+    // The same token retried after the file changed is refused...
+    write_file(dir.path(), "ifh.pdf", &pdf_bytes(50, "b"));
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 9)).unwrap()["reason"],
+        "identity_changed"
+    );
+    // Restoring the original is itself a change from what is now recorded, so
+    // the first attempt after it is refused too and records A again...
+    write_file(dir.path(), "ifh.pdf", &pdf_bytes(50, "a"));
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 9)).unwrap()["reason"],
+        "identity_changed"
+    );
+    assert_eq!(
+        tuple(&conn).unwrap().4,
+        "active",
+        "A's saved place is verified again"
+    );
+    // ...after which the same retry succeeds exactly once.
+    let saved = checked(&mut conn, dir.path(), commit_json(token, &hash, 9)).unwrap();
+    assert_eq!(saved["committed"], true, "{saved}");
+    assert_eq!(saved["readingState"]["lastRequestedPage"], 9);
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 9)).unwrap()["reason"],
+        "replayed"
+    );
+    // A retry for a token that was superseded meanwhile is refused.
+    let older = begin_op(&mut conn, None).unwrap();
+    let _newer = begin_op(&mut conn, Some(older)).unwrap();
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(older, &hash, 3)).unwrap()["reason"],
+        "cancelled"
+    );
+}
+
+#[test]
+fn the_wire_commands_use_the_checked_path() {
+    let dir = TempDir::new("r3-wire");
+    let (conn, hash) = seeded(dir.path());
+    drop(conn);
+    mark_root_ready(dir.path());
+    let token = navigation_operation_at(
+        dir.path(),
+        &json!({ "kind": "begin", "materialId": MAT, "supersedeGeneration": null }),
+    )
+    .unwrap()["generation"]
+        .as_i64()
+        .unwrap();
+    std::fs::remove_file(dir.path().join(DOCUMENTS_DIR).join("ifh.pdf")).unwrap();
+    assert_eq!(
+        navigation_operation_at(dir.path(), &commit_json(token, &hash, 6)),
+        Err(Code::FileMissing.error())
+    );
+    let quiet = opener(|| {}, false);
+    assert_eq!(
+        open_navigation_document_at(
+            dir.path(),
+            &json!({ "materialId": MAT, "expectedContentSha256": hash }),
+            &quiet
+        ),
+        Err(Code::FileMissing.error())
+    );
+    assert_eq!(
+        open_navigation_document_at(dir.path(), &json!({ "materialId": MAT }), &quiet),
+        Err(Code::InvalidArgument.error())
+    );
+    let wire = serde_json::to_value(Code::OpenFailed.error()).unwrap();
+    assert_eq!(wire["code"], "OPEN_FAILED");
+    unmark_root_ready(dir.path());
 }

@@ -212,6 +212,7 @@ pub fn run() {
             skill_evidence::read_observation_history,
             navigation::navigation_operation,
             navigation::inspect_navigation_identity,
+            navigation::open_navigation_document,
             documents::save_material_operation,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,

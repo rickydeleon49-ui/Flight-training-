@@ -18,7 +18,17 @@
 //!   commit writes the whole page/hash/label tuple only for the exact,
 //!   current, non-cancelled reserved token (M4-R34), within the trusted
 //!   identity's page count; anything else is a refusal verdict that writes
-//!   nothing.
+//!   nothing. Read confirmation and bookmarks name the content (and, for
+//!   confirmation, the saved generation) they were made for (M4S1-R1).
+//! - The managed file is read again inside that same transaction for every
+//!   commit, read confirmation and bookmark (M4S1-R3), so a file deleted,
+//!   relinked or replaced after an inspection cannot authorize a save. A
+//!   replacement is recorded and reconciled there and the stale request is
+//!   refused.
+//! - `open_navigation_document`: hands the managed file to the default reader
+//!   only when its bytes, read at that moment, match the content the request
+//!   was resolved against. It does not control what the reader reads later
+//!   and cannot jump to a page; the page shown is guidance.
 //!
 //! The browser twin is `src/data/navigationTransaction.ts`; the shared cases
 //! in `fixtures/navigation/operation-cases.json` hold the two sides equal.
@@ -68,6 +78,7 @@ pub enum NavigationErrorCode {
     PageOutOfRange,
     StaleState,
     LimitExceeded,
+    OpenFailed,
     StorageFailure,
 }
 
@@ -83,6 +94,7 @@ impl NavigationErrorCode {
             Self::PageOutOfRange => "That page isn't in this document.",
             Self::StaleState => "This changed somewhere else. Reload to see the latest.",
             Self::LimitExceeded => "That is more than this can hold.",
+            Self::OpenFailed => "Your PDF reader couldn't open this file.",
             Self::StorageFailure => "The change could not be saved.",
         }
     }
@@ -219,11 +231,14 @@ pub enum Operation {
     },
     SetRead {
         material_id: String,
+        expected_content_sha256: String,
+        expected_owner_generation: i64,
         physical_page: i64,
         confirmed: bool,
     },
     AddBookmark {
         material_id: String,
+        expected_content_sha256: String,
         bookmark_id: String,
         physical_page: i64,
         page_label: Option<String>,
@@ -284,9 +299,21 @@ pub fn decode_operation(value: &Value) -> Check<Operation> {
             })
         }
         "set_read" => {
-            let m = exact(value, &["kind", "materialId", "physicalPage", "confirmed"])?;
+            let m = exact(
+                value,
+                &[
+                    "kind",
+                    "materialId",
+                    "expectedContentSha256",
+                    "expectedOwnerGeneration",
+                    "physicalPage",
+                    "confirmed",
+                ],
+            )?;
             Ok(Operation::SetRead {
                 material_id: id_field(m, "materialId")?,
+                expected_content_sha256: hash_field(m, "expectedContentSha256")?,
+                expected_owner_generation: positive_field(m, "expectedOwnerGeneration")?,
                 physical_page: positive_field(m, "physicalPage")?,
                 confirmed: m
                     .get("confirmed")
@@ -300,6 +327,7 @@ pub fn decode_operation(value: &Value) -> Check<Operation> {
                 &[
                     "kind",
                     "materialId",
+                    "expectedContentSha256",
                     "bookmarkId",
                     "physicalPage",
                     "pageLabel",
@@ -309,6 +337,7 @@ pub fn decode_operation(value: &Value) -> Check<Operation> {
             )?;
             Ok(Operation::AddBookmark {
                 material_id: id_field(m, "materialId")?,
+                expected_content_sha256: hash_field(m, "expectedContentSha256")?,
                 bookmark_id: id_field(m, "bookmarkId")?,
                 physical_page: positive_field(m, "physicalPage")?,
                 page_label: label_field(m, "pageLabel")?,
@@ -487,11 +516,21 @@ pub fn execute_operation(tx: &Transaction<'_>, op: &Operation) -> Check<Value> {
         Operation::Read { material_id } => read(tx, material_id),
         Operation::SetRead {
             material_id,
+            expected_content_sha256,
+            expected_owner_generation,
             physical_page,
             confirmed,
-        } => set_read(tx, material_id, *physical_page, *confirmed),
+        } => set_read(
+            tx,
+            material_id,
+            expected_content_sha256,
+            *expected_owner_generation,
+            *physical_page,
+            *confirmed,
+        ),
         Operation::AddBookmark {
             material_id,
+            expected_content_sha256,
             bookmark_id,
             physical_page,
             page_label,
@@ -499,12 +538,15 @@ pub fn execute_operation(tx: &Transaction<'_>, op: &Operation) -> Check<Value> {
             notes,
         } => add_bookmark(
             tx,
-            material_id,
-            bookmark_id,
-            *physical_page,
-            page_label.as_deref(),
-            title,
-            notes,
+            &NewBookmark {
+                material_id,
+                expected_hash: expected_content_sha256,
+                bookmark_id,
+                physical_page: *physical_page,
+                page_label: page_label.as_deref(),
+                title,
+                notes,
+            },
         ),
         Operation::DeleteBookmark {
             material_id,
@@ -677,11 +719,16 @@ fn read(tx: &Transaction<'_>, material_id: &str) -> Check<Value> {
     }))
 }
 
-/// Confirm or clear reading of the page last requested. It applies only while
-/// that page is still the last requested one for the current verified file.
+/// Confirm or clear reading of the saved request the person actually saw.
+/// The request names the content hash and owner generation of that saved
+/// request (M4S1-R1): it applies only while the stored tuple still has exactly
+/// that page, hash and generation, is active, and the recorded identity is
+/// still that content. Anything else is STALE_STATE and changes nothing.
 fn set_read(
     tx: &Transaction<'_>,
     material_id: &str,
+    expected_hash: &str,
+    expected_owner: i64,
     physical_page: i64,
     confirmed: bool,
 ) -> Check<Value> {
@@ -689,45 +736,81 @@ fn set_read(
         return Err(Code::NotFound);
     }
     let identity = identity_of(tx, material_id)?.ok_or(Code::StaleState)?;
-    let row: Option<(i64, Option<String>, String)> = tx
+    if identity.content_sha256 != expected_hash {
+        return Err(Code::StaleState);
+    }
+    let row: Option<(i64, Option<String>, String, i64)> = tx
         .query_row(
-            "SELECT last_requested_page, originating_content_sha256, status FROM material_reading_state WHERE material_id = ?1",
+            "SELECT last_requested_page, originating_content_sha256, status, owner_generation
+               FROM material_reading_state WHERE material_id = ?1",
             [material_id],
-            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
         )
         .optional()
         .map_err(storage)?;
     match row {
-        Some((page, Some(hash), status))
-            if page == physical_page && hash == identity.content_sha256 && status == "active" => {}
+        Some((page, Some(hash), status, owner))
+            if page == physical_page
+                && hash == expected_hash
+                && status == "active"
+                && owner == expected_owner => {}
         _ => return Err(Code::StaleState),
     }
     let now = db_now_iso(tx).map_err(storage)?;
     let changed = tx
         .execute(
-            "UPDATE material_reading_state SET confirmed_read = ?2, updated_at = ?3 WHERE material_id = ?1",
-            params![material_id, i64::from(confirmed), now],
+            "UPDATE material_reading_state SET confirmed_read = ?2, updated_at = ?3
+              WHERE material_id = ?1 AND owner_generation = ?4 AND originating_content_sha256 = ?5",
+            params![
+                material_id,
+                i64::from(confirmed),
+                now,
+                expected_owner,
+                expected_hash
+            ],
         )
         .map_err(storage)?;
     if changed != 1 {
         return Err(Code::StorageFailure);
     }
-    reading_state_json(tx, material_id)
+    let state = reading_state_json(tx, material_id)?;
+    if state["confirmedRead"] != Value::Bool(confirmed)
+        || state["ownerGeneration"] != json!(expected_owner)
+    {
+        return Err(Code::StorageFailure);
+    }
+    Ok(state)
 }
 
-fn add_bookmark(
-    tx: &Transaction<'_>,
-    material_id: &str,
-    bookmark_id: &str,
+/// Save a bookmark on the content the person was looking at. A bookmark made
+/// for content that has since been replaced is STALE_STATE (M4S1-R1).
+struct NewBookmark<'a> {
+    material_id: &'a str,
+    expected_hash: &'a str,
+    bookmark_id: &'a str,
     physical_page: i64,
-    page_label: Option<&str>,
-    title: &str,
-    notes: &str,
-) -> Check<Value> {
+    page_label: Option<&'a str>,
+    title: &'a str,
+    notes: &'a str,
+}
+
+fn add_bookmark(tx: &Transaction<'_>, b: &NewBookmark<'_>) -> Check<Value> {
+    let NewBookmark {
+        material_id,
+        expected_hash,
+        bookmark_id,
+        physical_page,
+        page_label,
+        title,
+        notes,
+    } = *b;
     if !material_exists(tx, material_id)? {
         return Err(Code::NotFound);
     }
     let identity = identity_of(tx, material_id)?.ok_or(Code::IdentityUnknown)?;
+    if identity.content_sha256 != expected_hash {
+        return Err(Code::StaleState);
+    }
     if physical_page > identity.total_pages {
         return Err(Code::PageOutOfRange);
     }
@@ -888,7 +971,79 @@ pub fn inspect_identity_on(
     let changed = previous
         .as_ref()
         .is_some_and(|p| p.content_sha256 != hash || p.total_pages != total);
-    let now = db_now_iso(&tx).map_err(storage)?;
+    let recorded = record_identity(&tx, material_id, &hash, total)?;
+    tx.commit().map_err(storage)?;
+    let mut out = identity_json(material_id, &recorded);
+    out["changed"] = Value::Bool(changed);
+    Ok(out)
+}
+
+/* ------------------------------------------------------------------ */
+/* The authoritative file check (M4S1-R3)                              */
+/* ------------------------------------------------------------------ */
+
+/// Whether an operation's meaning depends on the content of the file.
+fn needs_current_file(op: &Operation) -> bool {
+    matches!(
+        op,
+        Operation::Commit { .. } | Operation::SetRead { .. } | Operation::AddBookmark { .. }
+    )
+}
+
+fn material_of(op: &Operation) -> &str {
+    match op {
+        Operation::Begin { material_id, .. }
+        | Operation::Cancel { material_id, .. }
+        | Operation::Commit { material_id, .. }
+        | Operation::Read { material_id }
+        | Operation::SetRead { material_id, .. }
+        | Operation::AddBookmark { material_id, .. }
+        | Operation::DeleteBookmark { material_id, .. } => material_id,
+    }
+}
+
+/// What the managed file says inside the write transaction.
+#[derive(Debug, PartialEq, Eq)]
+enum FileCheck {
+    /// The file at the material's current path still has the recorded identity
+    /// (or no identity has been recorded yet, which the operation refuses).
+    Current,
+    /// The file differs from the recorded identity. The new identity has been
+    /// recorded and saved places reconciled in this transaction.
+    Replaced,
+}
+
+/// Read the material's managed file at its current path inside the write
+/// transaction and compare it with the recorded identity. This is the check a
+/// commit, read confirmation or bookmark relies on, not an earlier inspection:
+/// a file deleted, relinked or replaced since then is seen here. A missing or
+/// unreadable file is an error and the transaction writes nothing.
+fn check_current_file(tx: &Transaction<'_>, root: &Path, material_id: &str) -> Check<FileCheck> {
+    if !material_exists(tx, material_id)? {
+        return Err(Code::NotFound);
+    }
+    let relative = material_file(tx, material_id)?;
+    let bytes = read_managed(root, &relative)?;
+    let hash = calculate_sha256(&bytes);
+    let Some(recorded) = identity_of(tx, material_id)? else {
+        return Ok(FileCheck::Current);
+    };
+    if recorded.content_sha256 == hash {
+        return Ok(FileCheck::Current);
+    }
+    let (hash, total) = identity_of_bytes(&bytes)?;
+    record_identity(tx, material_id, &hash, total)?;
+    Ok(FileCheck::Replaced)
+}
+
+/// Upsert the identity and reconcile saved places against it.
+fn record_identity(
+    tx: &Transaction<'_>,
+    material_id: &str,
+    hash: &str,
+    total: i64,
+) -> Check<Identity> {
+    let now = db_now_iso(tx).map_err(storage)?;
     let written = tx
         .execute(
             "INSERT INTO material_content_identities (material_id, content_sha256, total_pages, verified_at)
@@ -903,15 +1058,87 @@ pub fn inspect_identity_on(
     if written != 1 {
         return Err(Code::StorageFailure);
     }
-    reconcile(&tx, material_id, &hash, total)?;
-    let recorded = identity_of(&tx, material_id)?.ok_or(Code::StorageFailure)?;
+    reconcile(tx, material_id, hash, total)?;
+    let recorded = identity_of(tx, material_id)?.ok_or(Code::StorageFailure)?;
     if recorded.content_sha256 != hash || recorded.total_pages != total {
         return Err(Code::StorageFailure);
     }
+    Ok(recorded)
+}
+
+/// One operation in one immediate transaction, with the managed file checked
+/// inside it for operations whose meaning depends on the content. When the
+/// file turns out to have been replaced, the new identity and the drift it
+/// causes are kept, and the stale operation is refused: a commit with its
+/// `identity_changed` verdict, anything else with FILE_CHANGED.
+pub fn run_operation_checked(
+    connection: &mut Connection,
+    root: &Path,
+    op: &Operation,
+) -> Check<Value> {
+    let tx = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(storage)?;
+    if needs_current_file(op)
+        && check_current_file(&tx, root, material_of(op))? == FileCheck::Replaced
+    {
+        let outcome = match op {
+            Operation::Commit { material_id, .. } => refused("identity_changed", &tx, material_id),
+            _ => Err(Code::FileChanged),
+        };
+        tx.commit().map_err(storage)?;
+        return outcome;
+    }
+    let outcome = execute_operation(&tx, op)?;
     tx.commit().map_err(storage)?;
-    let mut out = identity_json(material_id, &recorded);
-    out["changed"] = Value::Bool(changed);
-    Ok(out)
+    Ok(outcome)
+}
+
+/* ------------------------------------------------------------------ */
+/* Opening in the default reader                                       */
+/* ------------------------------------------------------------------ */
+
+/// The system's default reader, behind a seam so tests can hold or fail it.
+pub trait DocumentOpener {
+    fn open_path(&self, path: &Path) -> Result<(), ()>;
+}
+
+pub struct SystemDocumentOpener;
+
+impl DocumentOpener for SystemDocumentOpener {
+    fn open_path(&self, path: &Path) -> Result<(), ()> {
+        tauri_plugin_opener::open_path(path, None::<&str>).map_err(|_| ())
+    }
+}
+
+/// Hand the material's managed file to the default reader, but only after its
+/// bytes, read now, match both the content the request was resolved against
+/// and the recorded identity. What this guarantees: the file at that path had
+/// exactly that content when it was handed over. It cannot control what the
+/// reader reads later, and it does not jump to a page; the page is guidance.
+pub fn open_verified_on<O: DocumentOpener>(
+    connection: &Connection,
+    root: &Path,
+    material_id: &str,
+    expected_hash: &str,
+    opener: &O,
+) -> Check<Value> {
+    if !material_exists(connection, material_id)? {
+        return Err(Code::NotFound);
+    }
+    let relative = material_file(connection, material_id)?;
+    let bytes = read_managed(root, &relative)?;
+    let hash = calculate_sha256(&bytes);
+    drop(bytes);
+    let recorded = identity_of(connection, material_id)?.ok_or(Code::IdentityUnknown)?;
+    if hash != expected_hash || recorded.content_sha256 != expected_hash {
+        return Err(Code::FileChanged);
+    }
+    let safe = safe_relative_path(&relative).map_err(|_| Code::FileMissing)?;
+    opener
+        .open_path(&root.join(DOCUMENTS_DIR).join(safe))
+        .map_err(|_| Code::OpenFailed)?;
+    Ok(json!({ "materialId": material_id, "contentSha256": expected_hash }))
 }
 
 /* ------------------------------------------------------------------ */
@@ -933,8 +1160,11 @@ fn open_ready(root: &Path) -> Check<Connection> {
     Ok(connection)
 }
 
-/// One operation in one immediate transaction; any refusal rolls it back.
-pub fn run_operation_on(connection: &mut Connection, op: &Operation) -> Check<Value> {
+/// One operation in one immediate transaction against the recorded identity
+/// only, without reading the file: the database half that the browser twin
+/// shares, used by the shared cases. Production calls `run_operation_checked`.
+#[cfg(test)]
+pub(crate) fn run_operation_on(connection: &mut Connection, op: &Operation) -> Check<Value> {
     let tx = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(storage)?;
@@ -949,7 +1179,19 @@ pub fn navigation_operation_at(
 ) -> Result<Value, NavigationErrorWire> {
     let op = decode_operation(operation).map_err(Code::error)?;
     let mut connection = open_ready(root).map_err(Code::error)?;
-    run_operation_on(&mut connection, &op).map_err(Code::error)
+    run_operation_checked(&mut connection, root, &op).map_err(Code::error)
+}
+
+pub fn open_navigation_document_at<O: DocumentOpener>(
+    root: &Path,
+    input: &Value,
+    opener: &O,
+) -> Result<Value, NavigationErrorWire> {
+    let m = exact(input, &["materialId", "expectedContentSha256"]).map_err(Code::error)?;
+    let material_id = id_field(m, "materialId").map_err(Code::error)?;
+    let expected = hash_field(m, "expectedContentSha256").map_err(Code::error)?;
+    let connection = open_ready(root).map_err(Code::error)?;
+    open_verified_on(&connection, root, &material_id, &expected, opener).map_err(Code::error)
 }
 
 pub fn inspect_navigation_identity_at(
@@ -982,6 +1224,19 @@ pub async fn inspect_navigation_identity(
     tauri::async_runtime::spawn_blocking(move || inspect_navigation_identity_at(&root, &input))
         .await
         .map_err(|_| Code::StorageFailure.error())?
+}
+
+#[tauri::command]
+pub async fn open_navigation_document(
+    app: AppHandle,
+    input: Value,
+) -> Result<Value, NavigationErrorWire> {
+    let root = app_root(&app).map_err(|_| Code::StorageFailure.error())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        open_navigation_document_at(&root, &input, &SystemDocumentOpener)
+    })
+    .await
+    .map_err(|_| Code::StorageFailure.error())?
 }
 
 #[cfg(test)]
