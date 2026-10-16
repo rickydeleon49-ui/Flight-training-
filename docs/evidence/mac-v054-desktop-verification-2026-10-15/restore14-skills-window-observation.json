@@ -1,0 +1,7 @@
+{
+  "pid": 19899,
+  "binary": "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app/Contents/MacOS/her-flight-deck",
+  "observation": "Self-restart process exists but CUA repeatedly reports noWindowsAvailable; second observed restore restart without accessible window",
+  "recovery": "SIGTERM this verified test process only; offline data comparison follows",
+  "rootCause": "unconfirmed"
+}

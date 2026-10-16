@@ -1,0 +1,86 @@
+{
+  "source": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "ownerAuthorization": "Current-account fresh synthetic data only; administrator-account test explicitly selected.",
+  "uid": 501,
+  "account": "rickymac",
+  "standardAccountGate": false,
+  "initialProfileAbsent": true,
+  "profile": "/Users/rickymac/Library/Application Support/com.herflightdeck.app",
+  "installedApp": "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app",
+  "commands": [
+    {
+      "argv": [
+        "hdiutil",
+        "attach",
+        "-readonly",
+        "-nobrowse",
+        "-mountpoint",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-review-1g_ejh06/image",
+        "-plist",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg"
+      ],
+      "exit": 0,
+      "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>system-entities</key>\n\t<array>\n\t\t<dict>\n\t\t\t<key>content-hint</key>\n\t\t\t<string>Apple_HFS</string>\n\t\t\t<key>dev-entry</key>\n\t\t\t<string>/dev/disk4s1</string>\n\t\t\t<key>mount-point</key>\n\t\t\t<string>/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-review-1g_ejh06/image</string>\n\t\t\t<key>potentially-mountable</key>\n\t\t\t<true/>\n\t\t\t<key>unmapped-content-hint</key>\n\t\t\t<string>48465300-0000-11AA-AA11-00306543ECAC</string>\n\t\t\t<key>volume-kind</key>\n\t\t\t<string>hfs</string>\n\t\t</dict>\n\t\t<dict>\n\t\t\t<key>content-hint</key>\n\t\t\t<string>GUID_partition_scheme</string>\n\t\t\t<key>dev-entry</key>\n\t\t\t<string>/dev/disk4</string>\n\t\t\t<key>potentially-mountable</key>\n\t\t\t<false/>\n\t\t\t<key>unmapped-content-hint</key>\n\t\t\t<string>GUID_partition_scheme</string>\n\t\t</dict>\n\t</array>\n</dict>\n</plist>\n",
+      "stderr": "hdiutil: WARNING: 'hdiutil attach -readonly -nobrowse -mountpoint ...' is deprecated. Please use 'diskutil image attach --readOnly --mountOptions nobrowse --mountPoint ...' instead.\n"
+    },
+    {
+      "argv": [
+        "ditto",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-review-1g_ejh06/image/Her Flight Deck.app",
+        "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "hdiutil",
+        "detach",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-install-review-1g_ejh06/image"
+      ],
+      "exit": 0,
+      "stdout": "\"disk4\" ejected.\n",
+      "stderr": "hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.\n"
+    },
+    {
+      "argv": [
+        "spctl",
+        "--assess",
+        "--type",
+        "execute",
+        "--verbose=4",
+        "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app"
+      ],
+      "exit": 3,
+      "stdout": "",
+      "stderr": "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app: rejected\n"
+    },
+    {
+      "argv": [
+        "xattr",
+        "-p",
+        "com.apple.quarantine",
+        "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "xattr: /Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app: No such xattr: com.apple.quarantine\n"
+    }
+  ],
+  "gatekeeperAssessmentExit": 3,
+  "securityPolicyChanged": false,
+  "quarantineRemoved": false
+}

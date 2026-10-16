@@ -1,0 +1,10 @@
+{
+  "operation": "skills-save-denied-backup",
+  "path": "/Users/rickymac/Library/Application Support/com.herflightdeck.app/backups",
+  "inode": 21683709,
+  "uid": 501,
+  "oldMode": 493,
+  "temporaryMode": 320,
+  "recovered": true,
+  "recoveredMode": 493
+}

@@ -1,0 +1,1 @@
+A custom-skill creation was first attempted with backups unwritable. It saved successfully. Source inspection shows skill create is transactional and does not require a safety-backup receipt; this is not a failed guard. The U3 baseline is therefore taken afterward, immediately before the PDF chapter save that explicitly promises a safety copy. No expectations were weakened.

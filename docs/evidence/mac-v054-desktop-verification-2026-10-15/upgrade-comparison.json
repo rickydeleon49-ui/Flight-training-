@@ -1,0 +1,9 @@
+{
+  "retainedTablesIdentical": true,
+  "retainedSchemaObjectsIdentical": true,
+  "oldLedgerRowsRetained": true,
+  "ledger14PresentWithPinnedSHA384": true,
+  "newTableRowsExactlyMigrationSeed": true,
+  "newSchemaExactlyMigration": true,
+  "documentsIdentical": true
+}

@@ -1,0 +1,85 @@
+Window: "10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf", App: Preview.
+0 standard window 10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf – Page 1 of 10, ID: PVDocumentWindow, Secondary Actions: Raise, URL: file:///Users/rickymac/Library/Application%20Support/com.herflightdeck.app/documents/10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf
+	1 split group
+		2 scroll area Secondary Actions: Scroll Up, Scroll Down
+			3 collection
+				4 section (disabled)
+					5 container
+						6 image
+						7 text 1
+					8 container
+						9 image
+						10 text 2
+					11 container
+						12 image
+						13 text 3
+					14 container
+						15 image
+						16 text 4
+					17 container
+						18 image
+						19 text 5
+			20 scroll bar (settable, float) 0
+				21 value indicator (settable, float) 0
+				22 increment arrow button
+				23 decrement arrow button
+				24 increment page button
+				25 decrement page button
+		26 menu button Description: add, Help: Insert Page…
+		27 splitter (disabled, settable, float) 205
+		28 scroll area Secondary Actions: Scroll Up, Scroll Down
+			29 container document
+				30 Page (disabled)
+					31 text Synthetic Checklist - Page 1 of 10 (ID: P0001)
+				32 Page (disabled)
+					33 text Synthetic Checklist - Page 2 of 10 (ID: P0002)
+				34 Page (disabled)
+					35 text Synthetic Checklist - Page 3 of 10 (ID: P0003)
+				36 Page (disabled)
+					37 text Synthetic Checklist - Page 4 of 10 (ID: P0004)
+				38 Page (disabled)
+					39 text Synthetic Checklist - Page 5 of 10 (ID: P0005)
+				40 Page (disabled)
+					41 text Synthetic Checklist - Page 6 of 10 (ID: P0006)
+				42 Page (disabled)
+					43 text Synthetic Checklist - Page 7 of 10 (ID: P0007)
+				44 Page (disabled)
+					45 text Synthetic Checklist - Page 8 of 10 (ID: P0008)
+				46 Page (disabled)
+					47 text Synthetic Checklist - Page 9 of 10 (ID: P0009)
+				48 Page (disabled)
+					49 text Synthetic Checklist - Page 10 of 10 (ID: P0010)
+			50 scroll bar (settable, float) 9.253673160670197e-16
+				51 value indicator (settable, float) 9.253673160670197e-16
+				52 increment arrow button
+				53 decrement arrow button
+				54 increment page button
+				55 decrement page button
+		56 splitter (disabled, settable, float) 502.5
+	57 toolbar
+		58 menu button Description: View, Help: Choose sidebar display
+		59 container Zoom
+			60 button Description: zoom out, Help: Scale document down, Details: Zoom Out
+			61 button Description: zoom to actual size, Help: Display at actual size, Details: Actual Size
+			62 button Description: zoom in, Help: Scale document up, Details: Zoom In
+		63 Highlight Selection
+			64 radio button Description: highlight, Value: 0
+			65 menu button
+		66 button (disabled) Description: Remove Background, Secondary Actions: Move previous, Move next, Remove from toolbar
+		67 button Search
+		68 pop up button more toolbar items
+	69 close button
+	70 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	71 minimize button
+	72 text 10167dfd-355d-47c1-9100-675454d5ab3c-synthetic-small-checklist.pdf Page 1 of 10
+73 menu bar
+	74 Preview
+	75 File
+	76 Edit
+	77 View
+	78 Go
+	79 Tools
+	80 Window
+	81 Help
+
+The focused UI element is 29 container document

@@ -1,0 +1,68 @@
+Window: "Her Flight Deck", App: Her Flight Deck.
+0 standard window Her Flight Deck, Secondary Actions: Raise
+	1 scroll area
+		2 HTML content Description: Her Flight Deck, URL: tauri://localhost#/journal/438cdcae-c517-4bfd-86d2-76e3d72a56cc
+			3 container
+				4 text Her Flight Deck Training companion
+				5 button Search ⌘K
+				6 container Main
+					7 link Flight Deck, Value: tauri://localhost#/
+					8 link Flight Path, Value: tauri://localhost#/flight-path
+					9 link Study Library, Value: tauri://localhost#/study
+					10 link Schedule, Value: tauri://localhost#/schedule
+					11 link Flight Log, Value: tauri://localhost#/journal
+					12 link Questions, Value: tauri://localhost#/questions
+					13 link Notes, Value: tauri://localhost#/notes
+					14 link Finances, Value: tauri://localhost#/finances
+					15 link Pilot Toolkit, Value: tauri://localhost#/toolkit
+				16 link Settings, Value: tauri://localhost#/settings
+				17 text Your instructor and official aviation guidance stay authoritative. This is here to keep your training organized.
+			18 container
+				19 heading Synthetic schema13 debrief, Value: 1
+					20 text Synthetic schema13 debrief
+				21 text Thursday, October 15
+				22 link Back, Value: tauri://localhost#/journal
+				23 link Quick debrief, Value: tauri://localhost#/journal/438cdcae-c517-4bfd-86d2-76e3d72a56cc/edit?mode=quick
+				24 link Edit full log, Value: tauri://localhost#/journal/438cdcae-c517-4bfd-86d2-76e3d72a56cc/edit
+				25 button Delete
+				26 heading WHAT WENT WELL, Value: 2
+					27 text WHAT WENT WELL
+				28 text Synthetic retention check only.
+				29 heading Skill evidence, Value: 2
+					30 text Skill evidence
+				31 button Add an observation
+				32 text Note what you or your instructor said about a skill, one observation at a time. Nothing is added unless you add it. Saved.
+				33 container Evidence history
+					34 container Your note · 2026-10-15 · edited · Crosswind landing Synthetic edited observation. From “Synthetic schema13 debrief”, 2026-10-15 Follow-up: “Synthetic desktop follow-up” (still to do) You marked this addressed.
+						35 container
+							36 text Your note · 2026-10-15 · edited ·  Crosswind landing
+						37 text Synthetic edited observation.
+						38 text From “Synthetic schema13 debrief”, 2026-10-15
+						39 text Follow-up: “Synthetic desktop follow-up” (still to do)
+						40 text You marked this addressed.
+						41 container (expanded) Secondary Actions: Collapse
+							42 summary Options, Value: on
+								43 text Options
+							44 button Edit
+							45 button Unlink the follow-up
+							46 button Not addressed
+							47 button View earlier versions
+							48 button Erase permanently
+				49 heading Details, Value: 2
+					50 text Details
+				51 description list
+					52 text Date
+					53 text Thursday, October 15
+	54 close button
+	55 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	56 minimize button
+	57 text Her Flight Deck
+58 menu bar
+	59 Her Flight Deck
+	60 File
+	61 Edit
+	62 View
+	63 Window
+	64 Help
+
+The focused UI element is 2 HTML content Description: Her Flight Deck, URL: tauri://localhost#/journal/438cdcae-c517-4bfd-86d2-76e3d72a56cc
