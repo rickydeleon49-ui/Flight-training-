@@ -1,0 +1,23 @@
+[
+  {
+    "manifest": "docs/evidence/mac-v055-release-2026-10-16/EVIDENCE_SHA256SUMS",
+    "count": 21,
+    "mismatches": []
+  },
+  {
+    "manifest": "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+    "count": 21,
+    "mismatches": []
+  },
+  {
+    "rawPriorEvidence": "unchanged compared with 5e91ccdd",
+    "screenshotCount": 6,
+    "completeInventory": true
+  },
+  {
+    "schemaHelperExit": 0
+  },
+  {
+    "diffHygieneExit": 0
+  }
+]

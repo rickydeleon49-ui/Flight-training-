@@ -1,0 +1,62 @@
+[
+  {
+    "lane": "node22",
+    "step": "prepare",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/prepare-accepted-main.mjs",
+      "e8720003a76be680812dfe3605d58e7eb6372d00"
+    ],
+    "cwd": "/private/tmp/hfd-m4-r5-review-7nq5q7co/node22",
+    "exit": 0,
+    "seconds": 0.11
+  },
+  {
+    "lane": "node22",
+    "step": "full-runner",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs",
+      "--install"
+    ],
+    "cwd": "/private/tmp/hfd-m4-r5-review-7nq5q7co/node22",
+    "exit": 0,
+    "seconds": 4.4
+  },
+  {
+    "lane": "node26",
+    "step": "prepare",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/prepare-accepted-main.mjs",
+      "e8720003a76be680812dfe3605d58e7eb6372d00"
+    ],
+    "cwd": "/private/tmp/hfd-m4-r5-review-7nq5q7co/node26",
+    "exit": 0,
+    "seconds": 0.13
+  },
+  {
+    "lane": "node26",
+    "step": "engine-install",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs",
+      "--install",
+      "--engine-check-only"
+    ],
+    "cwd": "/private/tmp/hfd-m4-r5-review-7nq5q7co/node26",
+    "exit": 0,
+    "seconds": 0.64
+  },
+  {
+    "lane": "node26",
+    "step": "full-runner",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/run_integration_proof.mjs"
+    ],
+    "cwd": "/private/tmp/hfd-m4-r5-review-7nq5q7co/node26",
+    "exit": 0,
+    "seconds": 3.99
+  }
+]

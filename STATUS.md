@@ -1,3 +1,11 @@
+## M4 round5 reviewed: ownership corrections required; release record accepted — 16 October 2026
+
+**M4 stays evidence-only and unmerged.** Both independent Node22/26 runners pass93 mapped tests and20 mutants; prior four diagnostics pass and frozen five pass through the disclosed seed adapter. New diagnostics expose **R37** (failed newer reservation leaves older opener/save live: page5 becomes10 and UI reverts to opened) and **R38** (ignored claim INSERT/UPDATE issues duplicate undurable tokens). **R39**, a non-blocking receipt issue, loses an install child's real termination signal. All five new assertions fail on both lanes. [Review](docs/M4_ROUND5_INDEPENDENT_REVIEW_2026-10-16.md) · [single precise correction assignment](docs/M4_ROUND5_CORRECTIONS_PROMPT_2026-10-16.md).
+
+**RELREC-01 is resolved:** PR #178 merged at2f4cca2 after exact-head CI38952463917 on2d6c432. Six tracked native screenshots inspected; complete21-entry evidence inventory and21 helper checksums verify;26 helper tests pass. Existing raw receipts/artifact hashes are preserved. This accepts existing release evidence and adds no new installed/provider verification.
+
+**Next:** finish R37–R39 in the existing uncommitted M4 worktree and return for Codex review; preserve all round5 receipts and594 frozen input hashes. P54-01 production, OD-1–OD-10 dispositions and migration0015 remain unapproved/unstarted. The eight-item queue order is unchanged. The merged Open folder fix and its separate OPENFOLDER-01 follow-up retain their prior status; no new release is built or published. Historical entries follow unchanged.
+
 ## PR #178 release record: six screenshots published (RELREC-01) — 16 October 2026
 
 **PENDING CODEX REVIEW; NOT MERGED.** PR #178's release record now tracks its six native screenshots.

@@ -1,0 +1,93 @@
+✖ reservation database failure must not return an unpersisted token (1.630958ms)
+✖ commit must reject a generation that was never the reserved owner (0.582958ms)
+✖ a blocked claim write cannot allocate equal tokens and make the earlier request win (0.512041ms)
+✖ active unexecuted mutant claims cannot escape via NAVIGATION in their ID (0.286709ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.446417
+
+✖ failing tests:
+
+test at docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:19:1
+✖ reservation database failure must not return an unpersisted token (1.630958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:24:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /claim write blocked/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:27:1
+✖ commit must reject a generation that was never the reserved owner (0.582958ms)
+  AssertionError [ERR_ASSERTION]: an unreserved future token is not the authorized owner
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:32:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:36:1
+✖ a blocked claim write cannot allocate equal tokens and make the earlier request win (0.512041ms)
+  AssertionError [ERR_ASSERTION]: earlier request must not become a stale winner after a later claim attempt
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:47:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:52:1
+✖ active unexecuted mutant claims cannot escape via NAVIGATION in their ID (0.286709ms)
+  AssertionError [ERR_ASSERTION]: the active fabricated mutant must be rejected
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs:54:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

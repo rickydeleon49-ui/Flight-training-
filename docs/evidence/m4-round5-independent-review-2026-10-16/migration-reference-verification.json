@@ -1,0 +1,61 @@
+{
+  "pin": "e8720003a76be680812dfe3605d58e7eb6372d00",
+  "files": [
+    {
+      "path": "0001_initial_schema.sql",
+      "sha256": "5fdd18155dd3276d1ba774d65995b0d6280bbc9be7f3703d8033801e0068e718"
+    },
+    {
+      "path": "0002_profile_details.sql",
+      "sha256": "be29f442d881071e82a54fc75b92aab015f68d2b86b49c56999c8635c1ea184b"
+    },
+    {
+      "path": "0003_personal_note.sql",
+      "sha256": "9d6915cd98fb8232b3fca5e720f4ac09f0380d0881bd88823f44232676a7f48f"
+    },
+    {
+      "path": "0004_app_metadata.sql",
+      "sha256": "3ec0833f36eea7612dc3ce5aa576623676e6b9918ddb7421c346064afd8bdbe5"
+    },
+    {
+      "path": "0005_flight_log.sql",
+      "sha256": "1f724ad96211107e5ba7c6fe412627e448d249697fe7245e7f3d44060ad0d24b"
+    },
+    {
+      "path": "0006_pilot_toolkit.sql",
+      "sha256": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1"
+    },
+    {
+      "path": "0007_ai_study.sql",
+      "sha256": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358"
+    },
+    {
+      "path": "0008_notes.sql",
+      "sha256": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761"
+    },
+    {
+      "path": "0009_practice_tests.sql",
+      "sha256": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec"
+    },
+    {
+      "path": "0010_debrief_links.sql",
+      "sha256": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971"
+    },
+    {
+      "path": "0011_practice_sessions.sql",
+      "sha256": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de"
+    },
+    {
+      "path": "0012_card_reviews.sql",
+      "sha256": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e"
+    },
+    {
+      "path": "0013_split_source_lineage.sql",
+      "sha256": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106"
+    },
+    {
+      "path": "0014_skills_evidence.sql",
+      "sha256": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a"
+    }
+  ]
+}
