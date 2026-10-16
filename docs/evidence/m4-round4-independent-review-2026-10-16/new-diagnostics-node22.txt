@@ -1,0 +1,109 @@
+TAP version 13
+# (node:14529) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: reservation database failure must not return an unpersisted token
+not ok 1 - reservation database failure must not return an unpersisted token
+  ---
+  duration_ms: 3.60075
+  type: 'test'
+  location: '/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:18:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:23:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: commit must reject a generation that was never the reserved owner
+not ok 2 - commit must reject a generation that was never the reserved owner
+  ---
+  duration_ms: 1.118
+  type: 'test'
+  location: '/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:26:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    an unreserved future token is not the authorized owner
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:31:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: a blocked claim write cannot allocate equal tokens and make the earlier request win
+not ok 3 - a blocked claim write cannot allocate equal tokens and make the earlier request win
+  ---
+  duration_ms: 1.477666
+  type: 'test'
+  location: '/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:35:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    earlier request must not become a stale winner after a later claim attempt
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:46:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: active unexecuted mutant claims cannot escape via NAVIGATION in their ID
+not ok 4 - active unexecuted mutant claims cannot escape via NAVIGATION in their ID
+  ---
+  duration_ms: 0.851
+  type: 'test'
+  location: '/Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:51:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the active fabricated mutant must be rejected
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/remaining-diagnostics.test.mjs:53:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 0
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.495625

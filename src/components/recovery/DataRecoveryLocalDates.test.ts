@@ -26,6 +26,8 @@ const BACKUPS: BackupInfo[] = [
   },
 ];
 
+const openDataFolderMock = vi.fn<() => Promise<void>>();
+
 vi.mock("@/services/backups", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/backups")>();
   return {
@@ -33,6 +35,7 @@ vi.mock("@/services/backups", async (importOriginal) => {
     backupsAvailable: () => true,
     dataDirectory: () => Promise.resolve("/tmp/hfd"),
     listBackups: () => Promise.resolve(BACKUPS),
+    openDataFolder: () => openDataFolderMock(),
   };
 });
 
@@ -70,4 +73,14 @@ it("names the local day in the confirmation before putting a copy back", async (
   await screen.findByText("Taken by you · Thursday, October 15");
   fireEvent.click(screen.getAllByRole("button", { name: "Put this back" })[0]!);
   expect(await screen.findByText(/on Thursday, October 15\./)).toBeTruthy();
+});
+
+it("opens the data folder through the desktop shell and shows its real message if that fails", async () => {
+  openDataFolderMock.mockRejectedValueOnce("Could not open /tmp/hfd: permission denied");
+  render(h(DataRecovery, { error: null }));
+  await screen.findByText("Taken by you · Thursday, October 15");
+  fireEvent.click(screen.getByRole("button", { name: "Open folder" }));
+  expect(openDataFolderMock).toHaveBeenCalledTimes(1);
+  const message = await screen.findByText("Could not open /tmp/hfd: permission denied");
+  expect(message.getAttribute("role")).toBe("alert");
 });

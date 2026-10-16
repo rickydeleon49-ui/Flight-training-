@@ -35,7 +35,7 @@ import {
   inspectCompleteBackup,
   listBackups,
   restartForRestore,
-  revealFolder,
+  openDataFolder,
   stageCompleteRestore,
   stageLocalRestore,
   type BackupInfo,
@@ -1062,11 +1062,9 @@ export function Settings() {
                       size="small"
                       onClick={() => {
                         setFolderOpenError(null);
-                        revealFolder(dataPath).catch((error: unknown) => {
+                        openDataFolder().catch((error: unknown) => {
                           setFolderOpenError(
-                            error instanceof Error
-                              ? error.message
-                              : "That folder could not be opened.",
+                            backupErrorMessage(error, "That folder could not be opened."),
                           );
                         });
                       }}

@@ -1,0 +1,4 @@
+build.log -whitespace
+frontend.log -whitespace
+rust.log -whitespace
+typecheck.log -whitespace

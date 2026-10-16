@@ -1,3 +1,28 @@
+## PR #178 release record: six screenshots published (RELREC-01) — 16 October 2026
+
+**PENDING CODEX REVIEW; NOT MERGED.** PR #178's release record now tracks its six native screenshots.
+
+- **Screenshots:** all six are synthetic, with no key value, and sit in `docs/evidence/mac-v055-release-2026-10-16/screenshots/`. They were force-added by exact path, and the global image-ignore rule is unchanged. The [release record](MAC_V055_RELEASE_2026-10-16.md) links each one.
+- **Inventory:** a new `EVIDENCE_SHA256SUMS` lists the report and every evidence file. `ARTIFACT_SHA256SUMS` stays the separate binary-artifact inventory.
+- **Not done:** no rebuild or native rerun, and no installer, profile, database or key committed.
+- **Branch:** reconciled with main `4d38733`. Tracker history and the eight-item queue are unchanged; only the schema-14 helper's current tracker hashes were refreshed.
+
+## Open folder fix accepted and merged; empty-folder follow-up tracked — 16 October 2026
+
+PR #180's native Finder correction passes independent source review: **3,252 frontend tests / 475 Rust tests**, typecheck/build/lint/fmt/lock/hygiene and26 schema-helper tests pass. The nine reviewed application files remain identical after updating the branch to current main. Final head `0b818860` passed exact-head CI; #180 merged at `2a203df`, with all nine application hashes confirmed again. No new release is built or published; released v0.5.5 bytes are unchanged. [Review](OPEN_DATA_FOLDER_REVIEW_2026-10-16.md).
+
+**OPENFOLDER-01 (non-blocking):** the empty-root macOS branch still uses plain open-path on the `.app` directory; enumeration failures are indistinguishable from emptiness. Normal startup/library behavior is fixed. Track the bounded [follow-up](OPEN_DATA_FOLDER_FOLLOWUP_PROMPT_2026-10-16.md) before claiming every recovery-state folder opens. Keep this maintenance item separate from the unchanged eight-item post-release queue.
+
+**Other work:** #179 is already merged. #178 needs RELREC-01 screenshot publication/inventory. The active M4 prototype still needs R33–R36 under its existing correction prompt; no production adoption or migration0015. Claude's native Finder observation is implementer evidence; this reviewer ran automated checks and inspected saved metadata, without launching the app, manipulating a profile, reading a key or calling a provider. Preserve historical entries below.
+
+## Independent review: M4 corrections required; release follow-ups triaged — 16 October 2026
+
+**M4 remains evidence-only; corrections R33–R36 are required before adoption.** Independent Node22/26 replays preserve72 mapped tests and16 mutants, and the prior frozen five diagnostics pass. Four new diagnostics fail on both lanes: claim-write errors return undurable tokens, unreserved future tokens commit, verified-reuse lacks validated install execution evidence, and active invented mutant IDs can evade the report checker. The real runner also reproduces both evidence false positives. [Review](docs/M4_RELEASE_INDEPENDENT_REVIEW_2026-10-16.md) · [one correction handoff](docs/M4_RELEASE_REVIEW_CORRECTIONS_PROMPT_2026-10-16.md).
+
+**Release follow-ups:** PR176/177 received bounded retrospective source/artifact review;13 relevant frontend tests and typecheck pass, and published v0.5.4/v0.5.5 assets match tested candidates. No paid Gemini call or new native/Rust run was performed. PR178 stays open for RELREC-01: six locally present native screenshots are ignored and missing from its Git tree; publish them with a complete evidence inventory. PR179's owner-scoped Gatekeeper documentation was independently reviewed and merged at b88e80a after exact-head CI. Signed/notarized, standard-account, VoiceOver and other unverified limits remain explicit.
+
+**Next:** Claude, as owner-selected M4 implementer, corrects the existing prototype and PR178 separately, preserving all receipts/checkouts. No merge before Codex re-review. P54-01 production work and migration0015 stay unstarted pending M4 acceptance and disposition of proposed OD-1–OD-10. The eight-item queue order is unchanged; small GEM-01 wording/budget evaluation observations are recorded in the review and do not reorder it. Historical entries below retain their original status.
+
 ## v0.5.5 published with the Gemini 4 Argon choice; Codex review restored before merges — 16 October 2026
 
 **PUBLISHED; RETROSPECTIVE CODEX REVIEW REQUESTED.** [v0.5.5](https://github.com/rickydeleon49-ui/Flight-training-/releases/tag/v0.5.5) is the Latest release: the exact tested `7e49558` DMG `620ed755…`, ad-hoc only, with `spctl` rejecting it. [v0.5.4](https://github.com/rickydeleon49-ui/Flight-training-/releases/tag/v0.5.4) (`1048e463…`) was published earlier the same day.

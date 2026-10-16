@@ -1,0 +1,15 @@
+{
+  "failedInstallMetadata": {
+    "installExitInjected": 42,
+    "runnerExit": 0,
+    "consolePassed": true,
+    "auditClaim": "verified-reuse PASS despite missing captured successful install"
+  },
+  "unexecutedActiveMutant": {
+    "id": "M99_NAVIGATION_NEVER_EXECUTED",
+    "runnerExit": 0,
+    "consolePassed": true,
+    "failures": []
+  },
+  "reviewReceiptCopyCorrection": "The initial recorder used the wrong 08b receipt basename after both probes completed; copied the actual receipt without rerunning or changing either result."
+}

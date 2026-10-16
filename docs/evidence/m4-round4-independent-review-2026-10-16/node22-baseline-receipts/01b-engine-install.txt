@@ -1,0 +1,20 @@
+=== 01b scratch engine install audit ===
+node: v22.23.3  platform: darwin/arm64
+mode: live-install (executed npm ci)
+command: npm ci --prefix docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine --no-audit --no-fund --ignore-scripts
+cwd: /Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node22-disposable
+exit: 0
+installed package: pdfjs-dist@6.3.289
+scratch-artifacts.json sha256: e1d920a81d96f7810284c13cbc6021d09263d30e7554d8ba5a9fdbebe146e6c7
+RESULT: PASS - pack-local scratch engine installed and verified
+--- stdout ---
+
+added 3 packages in 634ms
+
+--- stderr ---
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+

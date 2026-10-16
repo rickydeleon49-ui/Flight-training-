@@ -12,7 +12,7 @@
     "dialog:allow-confirm",
     {
       "identifier": "opener:allow-open-path",
-      "allow": [{ "path": "$APPCONFIG/documents/**" }, { "path": "$APPCONFIG" }]
+      "allow": [{ "path": "$APPCONFIG/documents/**" }]
     },
     {
       "identifier": "opener:allow-reveal-item-in-dir",

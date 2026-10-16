@@ -1,0 +1,14 @@
+[
+  {
+    "folder": "/Users/rickymac/code/Flight-training-backups/test-builds/2026-10-16-open-folder-fix-d2b99ce-NOT-FOR-RELEASE",
+    "version": "0.5.5",
+    "identifier": "com.herflightdeck.app",
+    "executableSha256": "b41037a57d611e390c5f5fe1871b40f49bbe0437c5c50f704edd846357834aca"
+  },
+  {
+    "folder": "/Users/rickymac/code/Flight-training-backups/test-builds/2026-10-16-open-folder-fix-reveal-uncommitted-NOT-FOR-RELEASE",
+    "version": "0.5.5",
+    "identifier": "com.herflightdeck.app",
+    "executableSha256": "2be208eda42b8e535a29e76c0cc39b508a128cd123b2604e0badd4ec1e9ea4e8"
+  }
+]
