@@ -13,7 +13,7 @@
       "architecture": "aarch64",
       "bundle": "dmg",
       "minimumSystemVersion": "12.0",
-      "candidateVersion": "0.5.3"
+      "candidateVersion": "0.5.4"
     },
     "windows": {
       "status": "held",
