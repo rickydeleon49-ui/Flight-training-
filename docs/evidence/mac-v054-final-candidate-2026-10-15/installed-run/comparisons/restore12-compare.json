@@ -1,0 +1,162 @@
+{
+  "label": "restore12-compare",
+  "at": "2026-10-15T23:04:05.065549-07:00",
+  "fixture": "/Users/rickymac/.codex/task-recovery/v054-final-candidate-20261015/installed-run-20261016/fixtures/s12",
+  "root": "/Users/rickymac/Library/Application Support/com.herflightdeck.app",
+  "fixtureTables": 34,
+  "restoredTables": 42,
+  "newTables": [
+    "material_split_lineage",
+    "skill_catalog_entries",
+    "skill_catalog_revisions",
+    "skill_evidence_operations",
+    "skill_observation_revisions",
+    "skill_observations",
+    "skill_self_assessments",
+    "split_operation_log"
+  ],
+  "missingTables": [],
+  "retainedRowCounts": {
+    "ai_study_sets": 1,
+    "app_metadata": 2,
+    "card_items": 3,
+    "card_review_events": 1,
+    "card_review_generations": 0,
+    "card_review_operations": 1,
+    "card_review_state": 1,
+    "card_versions": 1,
+    "debrief_operations": 0,
+    "event_materials": 0,
+    "event_prep_items": 0,
+    "fund_goals": 0,
+    "goal_checklist_items": 36,
+    "goals": 9,
+    "journal_entries": 0,
+    "journal_materials": 0,
+    "material_tags": 15,
+    "milestones": 9,
+    "next_actions": 0,
+    "notes": 0,
+    "pilot_toolkit": 0,
+    "practice_attempts": 1,
+    "practice_responses": 2,
+    "practice_session_operations": 4,
+    "practice_test_items": 2,
+    "practice_test_versions": 1,
+    "practice_tests": 1,
+    "questions": 0,
+    "schedule_events": 0,
+    "settings": 1,
+    "study_materials": 11,
+    "tags": 9,
+    "transactions": 0
+  },
+  "retainedRowsTotal": 111,
+  "tableDifferences": {
+    "app_metadata": {
+      "missingRows": [
+        "[\"daily_plan_session\", \"{\\\"version\\\":1,\\\"date\\\":\\\"2026-10-11\\\",\\\"timeBudget\\\":20,\\\"suggestedIds\\\":[\\\"material:9b0683fa-b77c-407c-b930-fffe8e992c87\\\"],\\\"decisions\\\":{},\\\"updatedAt\\\":\\\"2026-10-11T23:17:36.798Z\\\",\\\"targetCapacity\\\":1}\"]"
+      ],
+      "extraRows": [
+        "[\"daily_plan_session\", \"{\\\"version\\\":1,\\\"date\\\":\\\"2026-10-15\\\",\\\"timeBudget\\\":20,\\\"suggestedIds\\\":[\\\"material:e26cc9b3-8f95-41dc-a801-1224d06630f5\\\",\\\"material:9b0683fa-b77c-407c-b930-fffe8e992c87\\\",\\\"material:ca90be52-ea48-41a2-aaa4-0e4fea59a956\\\"],\\\"decisions\\\":{},\\\"updatedAt\\\":\\\"2026-10-16T06:03:29.553Z\\\",\\\"targetCapacity\\\":3}\"]"
+      ]
+    }
+  },
+  "fixtureSchemaObjects": 113,
+  "restoredSchemaObjects": 146,
+  "schemaObjectsChangedOrMissing": [],
+  "newSchemaObjects": [
+    "index:idx_skill_evidence_operations_subject",
+    "index:idx_skill_observations_action",
+    "index:idx_skill_observations_journal",
+    "index:idx_skill_observations_page",
+    "index:idx_skill_observations_skill_page",
+    "index:idx_skill_observations_source_journal",
+    "index:idx_split_lineage_parent",
+    "index:idx_split_lineage_root",
+    "index:idx_split_operation_source",
+    "index:idx_split_operation_status",
+    "index:sqlite_autoindex_material_split_lineage_1",
+    "index:sqlite_autoindex_skill_catalog_entries_1",
+    "index:sqlite_autoindex_skill_catalog_revisions_1",
+    "index:sqlite_autoindex_skill_evidence_operations_1",
+    "index:sqlite_autoindex_skill_observation_revisions_1",
+    "index:sqlite_autoindex_skill_observations_1",
+    "index:sqlite_autoindex_skill_self_assessments_1",
+    "index:sqlite_autoindex_skill_self_assessments_2",
+    "index:sqlite_autoindex_split_operation_log_1",
+    "table:material_split_lineage",
+    "table:skill_catalog_entries",
+    "table:skill_catalog_revisions",
+    "table:skill_evidence_operations",
+    "table:skill_observation_revisions",
+    "table:skill_observations",
+    "table:skill_self_assessments",
+    "table:split_operation_log",
+    "trigger:trg_skill_catalog_revisions_no_delete",
+    "trigger:trg_skill_catalog_revisions_no_update",
+    "trigger:trg_skill_observation_revisions_no_partial_delete",
+    "trigger:trg_skill_observation_revisions_no_update",
+    "trigger:trg_skill_self_assessments_no_delete",
+    "trigger:trg_skill_self_assessments_no_update"
+  ],
+  "ledgerColumns": [
+    "version",
+    "description",
+    "installed_on",
+    "success",
+    "checksum",
+    "execution_time"
+  ],
+  "originalLedgerVersions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "originalLedgerRowsIdentical": true,
+  "originalLedgerMismatches": [],
+  "newLedgerRows": [
+    {
+      "version": 13,
+      "description": "split_source_lineage",
+      "success": 1,
+      "installed_on": "2026-10-16 06:03:29",
+      "checksumMatchesShippedSql": true,
+      "file": "0013_split_source_lineage.sql"
+    },
+    {
+      "version": 14,
+      "description": "skills_evidence",
+      "success": 1,
+      "installed_on": "2026-10-16 06:03:29",
+      "checksumMatchesShippedSql": true,
+      "file": "0014_skills_evidence.sql"
+    }
+  ],
+  "skillCatalogSeed": 15,
+  "skillCatalogRevisionsSeed": 15,
+  "fixtureDocuments": {
+    "fdaac269-4e46-46c2-a0b4-a5360755bbc6-synthetic-long-manual.pdf": "0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1",
+    "ca90be52-ea48-41a2-aaa4-0e4fea59a956-synthetic-illustrated-charts.pdf": "b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d",
+    "79347220-ca50-4c85-8ee4-49d44dff097f-synthetic-small-checklist.pdf": "f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134"
+  },
+  "documentsIdentical": true,
+  "restoredDocumentsExtra": [],
+  "integrityCheck": "ok",
+  "verdict": {
+    "retainedRowsIdentical": false,
+    "schemaRetained": true,
+    "originalLedgerIdentical": true,
+    "documentsIdentical": true,
+    "newMigrationsValid": true
+  }
+}

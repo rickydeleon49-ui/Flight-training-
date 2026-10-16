@@ -1,0 +1,5 @@
+2026-10-16T05:58:30.004Z pids [(57574, [4685])] front Her Flight Deck 57574 staged []
+2026-10-16T05:58:31.187Z pids [(58134, [])] front Claude 73011 staged ['.restore-pending'] activated Claude Her Flight Deck 2026-10-16T05:58:31.345Z
+2026-10-16T05:58:31.514Z pids [(58134, [4719])] front Her Flight Deck 58134 staged []
+2026-10-16T05:59:39.144Z pids [] front Claude 73011 staged []
+2026-10-16T06:00:00.082Z END

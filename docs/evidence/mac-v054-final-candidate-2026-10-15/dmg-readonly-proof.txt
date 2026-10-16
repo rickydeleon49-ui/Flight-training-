@@ -1,0 +1,11 @@
+=== read-only proof (observed keys, captured while mounted at pkg-work/mnt) ===
+   Media Read-Only:           Yes
+   Volume Read-Only:          Yes (read-only mount flag set)
+=== detach output ===
+hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.
+"disk4" ejected.
+=== hdiutil info after cleanup ===
+framework       : 704
+driver          : 704
+=== mount dir present after cleanup ===
+gone

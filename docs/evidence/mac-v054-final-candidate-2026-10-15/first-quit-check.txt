@@ -1,0 +1,4 @@
+### quit check (process-stopped)
+2026-10-15T22:36:45-0700
+STOPPED (pgrep exit 1 = documented no-match)
+note: terminated via SIGTERM on the task-owned PID, not a normal Cmd-Q; recorded as an exception

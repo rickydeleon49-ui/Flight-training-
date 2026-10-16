@@ -1,0 +1,2 @@
+# Preserve the focused test runner's raw final blank line.
+focused.txt -whitespace

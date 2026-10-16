@@ -1,0 +1,10 @@
+### corrected date logic present in the dist embedded by this build
+--- dist asset timestamps vs build window (build ended 22:22:10, bundling used this dist)
+2026-10-15T22:21:05-0700 dist/assets/localDay-CLlkmGOA.js
+2026-10-15T22:21:05-0700 dist/assets/MaterialDetail-BrlpH1Vv.js
+2026-10-15T22:21:05-0700 dist/assets/Settings-FVbTK-UT.js
+--- helper symbols in built assets
+--- unreadable-value fallback strings shipped
+dist/assets/MaterialDetail-BrlpH1Vv.js:the date can't be read
+dist/assets/Settings-FVbTK-UT.js:Date unknown
+dist/assets/index-DmhL_hnX.js:date unknown

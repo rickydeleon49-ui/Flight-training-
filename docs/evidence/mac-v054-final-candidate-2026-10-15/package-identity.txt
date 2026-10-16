@@ -1,0 +1,24 @@
+=== byte inventory ===
+4828093 Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.app.zip  
+5086379 Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg  
+=== hashes ===
+1048e4636190d07afcbf2da76fc38822cd13189552b03a0ed69265870857676d  Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg
+7e55ccc7d749be19f526ef0eb083f90672d6d2594a4431b1915ca10596bc1017  Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.app.zip
+a809e7b16743c9410b790dfb7634ef4d6aee956f23777aca6d9583bf3a181a8f  Her Flight Deck.app/Contents/MacOS/her-flight-deck
+=== mounted image executable (captured while attached) ===
+a809e7b16743c9410b790dfb7634ef4d6aee956f23777aca6d9583bf3a181a8f  /Users/rickymac/.codex/task-recovery/v054-final-candidate-20261015/pkg-work/mnt/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+=== raw build executable ===
+55dfcf50054acbe7524ad95611cf628bfa6a6994f2abdb356fe39715b18fc282 (recorded pre-seal)
+=== Info.plist ===
+CFBundleIdentifier: com.herflightdeck.app
+LSMinimumSystemVersion: 12.0
+CFBundleName: Her Flight Deck
+=== arch ===
+arm64
+=== signature ===
+Identifier=com.herflightdeck.app
+CodeDirectory v=20400 size=17134 flags=0x2(adhoc) hashes=529+3 location=embedded
+Executable Segment flags=0x1
+Signature=adhoc
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=1

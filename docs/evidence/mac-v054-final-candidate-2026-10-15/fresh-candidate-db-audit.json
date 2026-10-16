@@ -1,0 +1,62 @@
+{
+  "databasePath": "/Users/rickymac/Library/Application Support/com.herflightdeck.app/her-flight-deck.db",
+  "registeredMigrationVersions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "migrationCount": 14,
+  "migration14": {
+    "version": 14,
+    "description": "skills_evidence",
+    "stored_checksum_hex": "D034E5AEC63EE49D6E8FA16235AAD5855C57DA4F570ECDABC701C260D096D9945F2B9D546AC930ADB54C4BD8E2B7FC0E",
+    "success": 1,
+    "installed_on": "2026-10-16 05:34:38"
+  },
+  "shippedMigration14Bytes": 14572,
+  "migration14ChecksumMatchesShippedSQL": true,
+  "recomputedFromShippedSQL": "D034E5AEC63EE49D6E8FA16235AAD5855C57DA4F570ECDABC701C260D096D9945F2B9D546AC930ADB54C4BD8E2B7FC0E",
+  "migration14Success": true,
+  "schemaObjectCounts": {
+    "table": 42,
+    "index": 42,
+    "trigger": 14,
+    "view": 0
+  },
+  "totalSchemaObjects": 98,
+  "skillTablesPresent": [
+    "skill_catalog_entries",
+    "skill_catalog_revisions",
+    "skill_evidence_operations",
+    "skill_observation_revisions",
+    "skill_observations",
+    "skill_self_assessments"
+  ],
+  "catalogSeed": {
+    "entries": 15,
+    "revisions": 15
+  },
+  "nonEmptyTables": {
+    "app_metadata": 2,
+    "goal_checklist_items": 36,
+    "goals": 9,
+    "material_tags": 15,
+    "milestones": 9,
+    "settings": 1,
+    "skill_catalog_entries": 15,
+    "skill_catalog_revisions": 15,
+    "study_materials": 7,
+    "tags": 9
+  }
+}
