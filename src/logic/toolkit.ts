@@ -164,6 +164,77 @@ export function trainingCostForecast(
   };
 }
 
+export interface MedicalDateConflict {
+  /** The medical expiry she entered in Settings. */
+  settingsDate: IsoDate;
+  /** Her latest-expiring saved medical record, whose date differs. */
+  record: CredentialRecord & { expiresOn: IsoDate };
+}
+
+/**
+ * Settings and her saved medical record giving different expiry dates.
+ *
+ * Only the latest-expiring medical record is compared: an earlier medical she
+ * kept as a record is history, not a conflict. Nothing is reconciled here;
+ * she is asked which date matches her certificate.
+ */
+export function medicalDateConflict(
+  profile: Profile,
+  credentials: CredentialRecord[],
+): MedicalDateConflict | null {
+  if (!profile.medicalExpiry) return null;
+  const latest = credentials
+    .filter((item): item is MedicalDateConflict["record"] => item.type === "medical" && Boolean(item.expiresOn))
+    .sort((a, b) => b.expiresOn.localeCompare(a.expiresOn))[0];
+  if (!latest || latest.expiresOn === profile.medicalExpiry) return null;
+  return { settingsDate: profile.medicalExpiry, record: latest };
+}
+
+/** Which of her two medical dates she says matches her certificate. */
+export interface MedicalDateChoice {
+  authority: "record" | "settings";
+  /** The two dates and the record exactly as they were shown to her. */
+  settingsDate: IsoDate;
+  recordId: string;
+  recordDate: IsoDate;
+}
+
+export type MedicalReconciliation =
+  | { write: "none"; reason: "stale" }
+  | { write: "profile"; medicalExpiry: IsoDate }
+  | { write: "record"; credentials: CredentialRecord[] };
+
+/**
+ * What her choice changes, decided against the dates as they are saved now.
+ *
+ * She chose between two dates on screen. If either date, or which record is
+ * her latest medical, has changed since then (an earlier choice, an edit
+ * elsewhere, a removed record), the choice no longer answers the question she
+ * saw: nothing is written and the current dates are shown again.
+ */
+export function reconcileMedicalDates(
+  profile: Profile,
+  credentials: CredentialRecord[],
+  choice: MedicalDateChoice,
+): MedicalReconciliation {
+  const current = medicalDateConflict(profile, credentials);
+  if (
+    !current ||
+    current.settingsDate !== choice.settingsDate ||
+    current.record.id !== choice.recordId ||
+    current.record.expiresOn !== choice.recordDate
+  ) {
+    return { write: "none", reason: "stale" };
+  }
+  if (choice.authority === "record") return { write: "profile", medicalExpiry: choice.recordDate };
+  return {
+    write: "record",
+    credentials: credentials.map((item) =>
+      item.id === choice.recordId ? { ...item, expiresOn: choice.settingsDate } : item,
+    ),
+  };
+}
+
 export interface ReminderItem {
   id: string;
   title: string;
@@ -200,9 +271,19 @@ export function buildReminders(input: {
       ? [{ id: "profile-medical", title: "Medical certificate", date: input.profile.medicalExpiry }]
       : []),
   ];
+  // When the two medical dates disagree, both are shown and both say so.
+  const conflict = medicalDateConflict(input.profile, input.credentials);
+  const conflicting = conflict ? new Set(["profile-medical", `credential-${conflict.record.id}`]) : new Set<string>();
   for (const item of datedRecords) {
     if (item.date > through) continue;
-    reminders.push({ id: item.id, title: item.title, detail: item.date < today ? "Record may be expired" : "Expiration approaching", date: item.date, urgent: item.date <= today });
+    const detail = item.date < today ? "Record may be expired" : "Expiration approaching";
+    reminders.push({
+      id: item.id,
+      title: item.title,
+      detail: conflicting.has(item.id) ? `${detail} · your two medical dates differ` : detail,
+      date: item.date,
+      urgent: item.date <= today,
+    });
   }
   return reminders.sort((a, b) => a.date.localeCompare(b.date));
 }

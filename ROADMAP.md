@@ -1,3 +1,26 @@
+## Sweep follow-ups accepted; next release work — 15 October 2026
+
+**Independent source review ACCEPTED for exact-head CI/integration in the containing PR.** SWEEP-1014-TIMES and SWEEP-1014-MEDICAL, including SWEEP-R1, pass re-review. The original seven-case diagnostic passes unchanged; independently rerun frontend: **3,221 passed / 6 skipped**, typecheck and production bundle pass. [Acceptance and evidence](docs/SWEEP_FOLLOWUPS_ACCEPTANCE_2026-10-15.md). Earlier submission/review receipts remain historical and unchanged. Installed Mac behavior remains unverified/deferred.
+
+**Current roadmap position:** M1 daily planning and M2 study/review source work are delivered; the first M3 skills/evidence slice is delivered. This sweep completes the two historical flight-time/medical-conflict follow-ups after the containing PR passes exact-head CI and merges. M4 viewer/navigation remains an unshipped evidence prototype with separate ownership. M5 cost analytics have a delivered first slice; refunds/credits and requirement decisions RQ-D1–D7 remain open. No additional requirement implementation or provider adoption is authorized by this acceptance.
+
+**Next priority:** resolve QA-01 (real Apple Silicon Cargo target output rejected by the schema14 helper) and disposition QA-02 (version-only lockfile replay restriction), using the [existing model-neutral follow-up in PR #167](https://github.com/rickydeleon49-ui/Flight-training-/blob/codex/local-v054-build-check/docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md). Preserve its build/failure evidence and check for an existing owner before editing. PR #167's provisional local ad-hoc v0.5.4 artifact predates this sweep: it does not contain these new fixes. Its CI passed, but tooling findings, independent version review and the exact final candidate source remain open. Do not merge it or rebuild solely because this sweep is accepted. Desktop launch/hfdtest, Apple signing/notarization and public publication stay deferred.
+
+## SWEEP-1014-TIMES and SWEEP-1014-MEDICAL implemented — 15 October 2026
+
+**IMPLEMENTED; SWEEP-R1 CORRECTED, PENDING INDEPENDENT RE-REVIEW.** Claude, uncommitted on branch `claude/sweep-followups-2026-10-15` (base `f2a7090`). [Report](docs/SWEEP_FOLLOWUPS_REPORT_2026-10-15.md) · [review (changes requested, #168)](docs/SWEEP_FOLLOWUPS_REVIEW_2026-10-15.md) · [SWEEP-R1 correction](docs/SWEEP_FOLLOWUPS_CORRECTION_R1_2026-10-15.md).
+
+- **SWEEP-1014-TIMES:**
+  - the Flight log and each entry now point out saved flights whose times don't add up, with a "Correct times" link;
+  - the times are never changed and still count in the totals, which the hour reference says.
+- **SWEEP-1014-MEDICAL:**
+  - when Settings and her latest medical record disagree, the Certificates tab asks which date matches her certificate, and only her choice updates the other record;
+  - only the first choice is accepted while it saves, and a choice made against dates that have since changed writes nothing (SWEEP-R1);
+  - Settings and the reminders say the dates differ;
+  - an earlier medical kept as history is not treated as a conflict.
+
+There is no schema, migration, backup or dependency change. M5-COST-REFUNDS and PIPE-161-01 remain open.
+
 ## Schema14 package accepted; F1–F3 follow-up — 15 October 2026
 
 The independently reviewed package merged unchanged in [PR #165](https://github.com/rickydeleon49-ui/Flight-training-/pull/165) at `8450526` after exact-head CI run 38803089531 passed (3,202 frontend / 464 Rust; original skips/ignores retained). F1–F3 are a separate non-blocking follow-up: precise Linux helper CI step, [canonical post-merge reproduction](docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md#7-post-merge-source-only-reproduction-f2), and named full-self-check refusals with a meaningful regression. Helper tests now 23/23, zero skips; schema14 self-check remains 102/102. Final exact-head CI and reproduction identities are recorded with the follow-up PR closeout and [report](docs/MAC_SCHEMA14_FOLLOWUP_F1_F3_2026-10-15.md).
@@ -22,8 +45,8 @@ Independent review accepts the nine-defect bug sweep, the first M5 cost-analytic
 | CI-161-01 | Corrected: rendered tests await observable real crypto/SQLite completion without advancing the review clock, rather than 20 fake-timer turns. New delayed-digest regression catches the old wait; production display-only clock behavior is retained. Prior failed CI remains linked in the review. |
 | Screenshot helper | Accepted: HashRouter URLs, collision refusal, rendered-route checks and truthful OS-dark naming; no product dark theme added. |
 | M5 requirements | [Proposal published](docs/M5_REQUIREMENTS_SCOPE_PROPOSAL_2026-10-14.md), **not approved for implementation**. RQ-D1–D7 still require owner decisions; rule data requires knowledgeable human review. Instrument totals and recent dual time cannot establish specific training-purpose evidence. |
-| SWEEP-1014-TIMES | Pending: decide how to flag older impossible flight-time records. Add a read-only explanation with affected entries; never silently change/drop historical times or use unreviewed totals as qualifying requirement evidence. |
-| SWEEP-1014-MEDICAL | Pending: conflicting Settings/Toolkit medical dates both remain visible. Explain the conflict and ask which record is authoritative before any automatic reconciliation. |
+| SWEEP-1014-TIMES | Accepted for integration in the containing PR: read-only affected-entry warnings and correction links; saved values and totals preserved, reference caveat retained. |
+| SWEEP-1014-MEDICAL | Accepted for integration in the containing PR: explicit authority choice, synchronous pending protection, fresh-state validation and failure/retry coverage; no reconciliation on load. |
 | M5-COST-REFUNDS | Pending model decision: define refunds/credits and their effect on totals, paired rates and trends, then add repository/UI/restore regressions. Unlinked journal hours and period-specific cost rates remain explicit later scope. |
 | PIPE-161-01 | Pending external-controller work: bounded failed-CI repair dispatch, durable duplicate/two-attempt guards, fresh source-hash approval and green exact-head checks before merge. Keep this local tooling outside application source; no controller restart or automation is performed here. |
 

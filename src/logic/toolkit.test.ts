@@ -6,7 +6,9 @@ import {
   buildReminders,
   DEFAULT_TOOLKIT_STATE,
   makeQuizAttempt,
+  medicalDateConflict,
   normalizeToolkitState,
+  reconcileMedicalDates,
   reminderLeadDays,
   QUIZ_QUESTIONS,
   readinessSummary,
@@ -114,6 +116,56 @@ describe("medical reminders", () => {
       profile: makeProfile({ medicalExpiry: "2026-10-25" }), leadDays: 14, today: "2026-10-14",
     });
     expect(reminders.map((item) => item.date)).toEqual(["2026-10-20", "2026-10-25"]);
+    expect(reminders.map((item) => item.detail)).toEqual([
+      "Expiration approaching · your two medical dates differ",
+      "Expiration approaching · your two medical dates differ",
+    ]);
+  });
+
+  it("finds a conflict only between Settings and her latest medical record", () => {
+    const profile = makeProfile({ medicalExpiry: "2028-10-31" });
+    const current = { ...medical("2028-10-31"), id: "new" };
+    const previous = { ...medical("2026-03-31"), id: "old", title: "Previous medical" };
+    expect(medicalDateConflict(profile, [previous, current])).toBeNull();
+    expect(medicalDateConflict(makeProfile({ medicalExpiry: null }), [current])).toBeNull();
+    expect(medicalDateConflict(profile, [])).toBeNull();
+
+    const conflict = medicalDateConflict(makeProfile({ medicalExpiry: "2028-11-30" }), [previous, current]);
+    expect(conflict?.settingsDate).toBe("2028-11-30");
+    expect(conflict?.record.id).toBe("new");
+  });
+});
+
+describe("reconcileMedicalDates", () => {
+  const record = (id: string, expiresOn: string) => ({
+    id, type: "medical" as const, title: id, identifier: "", issuedOn: null, expiresOn, notes: "", materialId: null,
+  });
+  const previous = record("old", "2026-03-31");
+  const latest = record("new", "2031-10-31");
+  const shown = { settingsDate: "2031-11-30", recordId: "new", recordDate: "2031-10-31" };
+  const profile = makeProfile({ medicalExpiry: "2031-11-30" });
+
+  it("changes only Settings when the record is right, and only that record when Settings is right", () => {
+    expect(reconcileMedicalDates(profile, [previous, latest], { ...shown, authority: "record" })).toEqual({
+      write: "profile",
+      medicalExpiry: "2031-10-31",
+    });
+    expect(reconcileMedicalDates(profile, [previous, latest], { ...shown, authority: "settings" })).toEqual({
+      write: "record",
+      credentials: [previous, { ...latest, expiresOn: "2031-11-30" }],
+    });
+  });
+
+  it("writes nothing once the dates she was shown are no longer the saved ones", () => {
+    const stale = { write: "none", reason: "stale" };
+    // An earlier choice already reconciled them, either way round.
+    expect(reconcileMedicalDates(makeProfile({ medicalExpiry: "2031-10-31" }), [previous, latest], { ...shown, authority: "settings" })).toEqual(stale);
+    expect(reconcileMedicalDates(profile, [previous, { ...latest, expiresOn: "2031-11-30" }], { ...shown, authority: "record" })).toEqual(stale);
+    // Settings, the record's date, or the record itself changed elsewhere.
+    expect(reconcileMedicalDates(makeProfile({ medicalExpiry: "2031-12-31" }), [previous, latest], { ...shown, authority: "record" })).toEqual(stale);
+    expect(reconcileMedicalDates(profile, [previous, { ...latest, expiresOn: "2031-09-30" }], { ...shown, authority: "settings" })).toEqual(stale);
+    expect(reconcileMedicalDates(profile, [previous], { ...shown, authority: "settings" })).toEqual(stale);
+    expect(reconcileMedicalDates(profile, [previous, record("newer", "2031-10-31")], { ...shown, authority: "settings" })).toEqual(stale);
   });
 });
 

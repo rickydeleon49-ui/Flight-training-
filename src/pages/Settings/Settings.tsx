@@ -17,6 +17,7 @@ import {
 import { restoreAirlineStarterPack } from "@/data/starter";
 import type { LastCompleteBackup } from "@/data/repositories/appRepository";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
+import { formatLongDate } from "@/lib/dates";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
   appVersion,
@@ -47,6 +48,7 @@ import {
   restoreWarning,
 } from "@/logic/dataSafety";
 import { trainingDuration } from "@/logic/keyDates";
+import { medicalDateConflict } from "@/logic/toolkit";
 import {
   canHandleFiles,
   checkLibrary,
@@ -137,6 +139,7 @@ function MacNote({ children }: { children: ReactNode }) {
 
 export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
+  const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -694,6 +697,14 @@ export function Settings() {
                   />
                 )}
               </Field>
+              {medicalConflict ? (
+                <p className="small" role="note" style={{ gridColumn: "1 / -1" }}>
+                  Your saved medical record “{medicalConflict.record.title}” in the Pilot Toolkit
+                  says it expires {formatLongDate(medicalConflict.record.expiresOn)}, which
+                  differs from the date saved here. Check your certificate, then choose the right
+                  date under Certificates in the Pilot Toolkit or correct it here.
+                </p>
+              ) : null}
             </div>
 
             <div className="row" style={{ marginTop: "var(--space-5)" }}>

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui";
 import { formatLongDate, todayIso } from "@/lib/dates";
 import { actionsFor } from "@/logic/actions";
-import { flightRoute, hasFlightLogData } from "@/logic/flightLog";
+import { flightRoute, flightTimeProblem, hasFlightLogData } from "@/logic/flightLog";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 import { SkillEvidenceCard } from "@/pages/FlightPath/skills/SkillEvidenceCard";
@@ -173,6 +173,17 @@ export function JournalEntryDetail() {
                       </div>
                     ))}
                 </dl>
+                {flightTimeProblem(entry) ? (
+                  <div className="time-check" role="note" style={{ marginTop: "var(--space-4)" }}>
+                    <p className="small">
+                      {flightTimeProblem(entry)} These times are kept as you entered them; check
+                      them against your logbook.
+                    </p>
+                    <Link className="button button--ghost button--small" to={`/journal/${entry.id}/edit`}>
+                      Correct times
+                    </Link>
+                  </div>
+                ) : null}
                 <p className="tiny dim" style={{ marginTop: "var(--space-4)" }}>
                   Personal copy only. The instructor-endorsed logbook remains authoritative.
                 </p>
