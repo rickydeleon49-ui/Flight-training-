@@ -1,0 +1,107 @@
+{
+  "head": "07fdcfa6593898efe9d6a979bae11095ce1fbf80",
+  "base": "011684e6e799973375ce1637319a3325e9589ab1",
+  "status": " M src-tauri/src/navigation.rs\n",
+  "files": [
+    {
+      "path": "src-tauri/migrations/0015_document_navigation.sql",
+      "sha256": "960c28858d52d4296ecf78b58f7a76a7c28d6552b24716a18cd7b04f2828c98f",
+      "bytes": 4939
+    },
+    {
+      "path": "src-tauri/src/backup.rs",
+      "sha256": "a994a56acd871ee2f4f1ab28787aea1564d268d39e70489ea93f2fb49691d9c8",
+      "bytes": 582103
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "sha256": "0737ec5347717da0b2c25f62e2b5ef2398bf529cd9c3ce3bfe1dec6c4fa0d6ea",
+      "bytes": 9076
+    },
+    {
+      "path": "src-tauri/src/navigation.rs",
+      "sha256": "6d27102dafb43d2f9a30ff7d777cdca0d33df77b54dcc6b99819415f4a8b82bd",
+      "bytes": 34796
+    },
+    {
+      "path": "src-tauri/src/navigation_tests.rs",
+      "sha256": "ba33cf7d0f0f48baef927ca8cd9d617c06107947c557c1d26d9ebd2d8a3313d7",
+      "bytes": 31793
+    },
+    {
+      "path": "src-tauri/src/skill_evidence_tests.rs",
+      "sha256": "70b8609986f58d183a57c7a6bf639176d870c732e04ebb121d024b128de38f29",
+      "bytes": 41569
+    },
+    {
+      "path": "src/acceptance/m1Upgrade.acceptance.test.ts",
+      "sha256": "1231a6875fe052b925ddf202725a1745c794b006f65e27c1dde814b0e1f5fa65",
+      "bytes": 10297
+    },
+    {
+      "path": "src/data/db.ts",
+      "sha256": "8db1767ecb224f8a2eac197460ee96d1b6217d6c8209a7c5617fa28980e5c0b1",
+      "bytes": 12913
+    },
+    {
+      "path": "src/data/migration-checksums.json",
+      "sha256": "933d3c4e88392e442514c367416dd985cb0db4a60be2165bc7f1f255ca073c7c",
+      "bytes": 1448
+    },
+    {
+      "path": "src/data/migrations.ts",
+      "sha256": "746fb3474623eff1ceda1011a42411af3d3c4cf3a44461c215c841ae95c17134",
+      "bytes": 3474
+    },
+    {
+      "path": "src/data/navigationShapes.ts",
+      "sha256": "d222cb98585644b0680ef2ba51182bd824c9ee7f96a60a308909c500b63f520f",
+      "bytes": 7517
+    },
+    {
+      "path": "src/data/navigationTransaction.ts",
+      "sha256": "3ed58b308cc53fef1a05f1aac41a6fc58a52595c303436e9e8fcaf114b528429",
+      "bytes": 20186
+    },
+    {
+      "path": "src/data/practiceStateValidation.ts",
+      "sha256": "a32b8ef34ec1df1a92fd36cd72762c2f07177ca2f11a1dde6ee96a3dcf1fb520",
+      "bytes": 74114
+    },
+    {
+      "path": "src/data/skillEvidenceUpgrade.test.ts",
+      "sha256": "877c423e81816887e87b1b82eea1bd984f42dc33eb4dbc8a96fa7eaf5bcbfd8a",
+      "bytes": 9398
+    },
+    {
+      "path": "src/data/splitLineageStorage.test.ts",
+      "sha256": "7ea569e65cd7bcd73e8e7cc57873232698124ef7d953fedfc38a94405a1a1de4",
+      "bytes": 7120
+    },
+    {
+      "path": "src/data/sqlJsDb.ts",
+      "sha256": "a840ff3e87556dc79cbdc879a23806e383d63ceebdeffd15e7ae50ae8cad3806",
+      "bytes": 18521
+    },
+    {
+      "path": "src/data/tauriDb.ts",
+      "sha256": "d311c887c9997a9a0b9323138235caa33284881b9ba13cad5a544664737e220e",
+      "bytes": 21280
+    },
+    {
+      "path": "src/data/testing/nodeSqliteDb.ts",
+      "sha256": "1191f187f2328c9fe49e8c0c79716c6b7aaf662890e2fb52c0b04e72db25ebae",
+      "bytes": 9066
+    },
+    {
+      "path": "src/domain/types.ts",
+      "sha256": "1aa32647ca15af44516b9c5733a552fc034d9e9c0d86830791ea24755e63a53c",
+      "bytes": 46249
+    },
+    {
+      "path": "src/logic/navigation.ts",
+      "sha256": "0d6afe2933ba601d50d839a2bd00936d5ac5ee3056b359b02e937bece27ce562",
+      "bytes": 19964
+    }
+  ]
+}

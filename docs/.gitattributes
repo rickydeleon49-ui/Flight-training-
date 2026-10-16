@@ -105,3 +105,8 @@ evidence/m4-round6-claude-2026-10-16/lane-node22/receipts/10-parser-modern-histo
 evidence/m4-round6-claude-2026-10-16/lane-node26/1-npm10-engine-install/01b-engine-install.txt -whitespace
 evidence/m4-round6-claude-2026-10-16/lane-node26/receipts/09-parser-legacy.txt -whitespace
 evidence/m4-round6-claude-2026-10-16/lane-node26/receipts/10-parser-modern-historical.txt -whitespace
+evidence/m4-slice1-partial-review-2026-10-16/preserved-uncommitted.patch -text -diff
+evidence/m4-slice1-partial-review-2026-10-16/diagnostics.log -text -diff
+evidence/m4-slice1-partial-review-2026-10-16/focused-existing.log -text -diff
+evidence/m4-slice1-partial-review-2026-10-16/focused-native.log -text -diff
+evidence/m4-slice1-partial-review-2026-10-16/typecheck.log -text -diff
