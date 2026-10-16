@@ -1,0 +1,59 @@
+{
+  "lane": "Owner-authorized administrator-account test (UID501, macOS 27.0.1 26A434), fresh synthetic data only. Not UID502/hfdtest; not a standard-account pass.",
+  "binary": {
+    "path": "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app",
+    "executableSha256": "b60d2e6c04fd18ee31d4a8bd6439ed9388039c3c390ff62e09275c1464848822",
+    "source": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+    "launchedBy": "open <exact path> (never by bundle identifier)"
+  },
+  "profileHandling": {
+    "before": "app stopped and confirmed absent (pgrep); default root moved intact (mv) to /Users/rickymac/.codex/task-recovery/v054-desktop-corrections-20261015/original-default-profile; gemini-key never read, hashed or displayed (size/name only in listing)",
+    "testProfile": "ditto copy of task-recovery/v054-desktop-verification-20261015/completed-upgrade-skills-profile, byte-verified against its source (0 mismatches); contains no credential",
+    "after": "app quit through its menu, confirmed stopped; test profile moved to .../v054-desktop-corrections-20261015/test-profile-after-restores; original moved back; ls -laR names/sizes/modes identical; root inode/uid/mode identical; credential file present, not read"
+  },
+  "observationMethod": "independent of the automation tool: window-server list via CGWindowListCopyWindowInfo (windows.swift, no accessibility needed) every 0.5 s (monitor.sh), lsappinfo for LaunchServices state and the frontmost app; plus full-screen screenshots and the automation tool's own window list afterwards",
+  "baselineLaunch": {
+    "pid": 23002,
+    "mainWindow": {
+      "number": 4389,
+      "onscreen": true,
+      "bounds": "1249x836 at (75,33)"
+    },
+    "launchServices": "type Foreground, (in front)"
+  },
+  "restores": [
+    {
+      "archive": "private-backups/synthetic-skills-schema14.hfdbackup",
+      "dialog": "created Oct 15, 2026 at 8:54 PM, app 0.5.4, 3 files (600 KB)",
+      "fromPid": 23002,
+      "fromProcessStartedBy": "LaunchServices (open)",
+      "newPid": 23416,
+      "newParent": "launchd (1)",
+      "mainWindowOnscreen": "window 4436 on screen about 1 s after the new process appeared (04:11:34-35Z)",
+      "frontmostAfterRestart": "Claude (the restarted app was NOT activated)",
+      "automationToolSawWindow": true,
+      "log": "restore14-monitor.jsonl"
+    },
+    {
+      "archive": "private-backups/her-flight-deck-20synthetic-schema13.hfdbackup26-10-16.hfdbackup (genuine schema13, app 0.5.3)",
+      "dialog": "created Oct 15, 2026 at 8:46 PM, app 0.5.3, 3 files (508 KB)",
+      "fromPid": 23416,
+      "fromProcessStartedBy": "the previous self-restart (the condition of both original failures)",
+      "newPid": 25794,
+      "newParent": "launchd (1)",
+      "mainWindowOnscreen": "window 4465 on screen within about 2 s (04:13:55Z)",
+      "frontmostAfterRestart": "Claude (NOT activated)",
+      "automationToolSawWindow": true,
+      "log": "restore13-monitor.jsonl",
+      "dataRetention": "offline read-only snapshot after normal quit compared with the frozen earlier restore13-after.json of the same archive and binary: 42 tables, schema and 2 documents identical; only the three backup-receipt keys and migration 14 installed_on/execution_time excluded; retained ledger rows 1-13 identical; migration 14 present (14 ledger rows), catalog seed 15/15"
+    }
+  ],
+  "tauriRestartMechanism": "tauri 2.11.5 src/process.rs restart()/restart_macos_app(): spawns Contents/MacOS/<CFBundleExecutable> directly with std::process::Command and exits; it does not relaunch through LaunchServices, so the new process is not activated",
+  "notExecuted": [
+    "schema12 exact-candidate restore",
+    "populated schema14 restore with a full table comparison in this run (the schema14 restore here was checked for window behaviour only)",
+    "erased-observation/tombstone UI",
+    "VoiceOver",
+    "standard account"
+  ]
+}

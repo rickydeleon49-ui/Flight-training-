@@ -1,0 +1,291 @@
+{
+  "schema": "hfd-v054-desktop-corrections-submission/1",
+  "generatedAt": "2026-10-16T04:44:43.433178Z",
+  "branch": "codex/v054-desktop-corrections",
+  "base": "7f2a624",
+  "note": "Uncommitted package including the DESKTOP-V054-03/-04 follow-up; excludes SHA256SUMS and this manifest.",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 90284,
+      "sha256": "b807e0aad2c23d2e19523ac0895b3d90e3ff15d8d385e9b4bdfd6be054eab210",
+      "status": "modified"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 218067,
+      "sha256": "4600b4672faeeb100a9951c4f0d4c4e7af9ea7e4207b1fb652fd29aecca24d70",
+      "status": "modified"
+    },
+    {
+      "path": "docs/MAC_V054_DESKTOP_CORRECTIONS_REPORT_2026-10-15.md",
+      "bytes": 17889,
+      "sha256": "cad4c609b83e432778224f98e65fe84f520bfc6a035dd40290d4348d767197e0",
+      "status": "new"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 127177,
+      "sha256": "12402609f2c9a54a54845a148ff59e5d2cc43a06d79c07b131f1b9abc81fc783",
+      "status": "modified"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-rendered-before.txt",
+      "bytes": 11521,
+      "sha256": "72dc7e6ad1119045b060706b3d587c93683551756337c980cc5ab30ebc71e3e5",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-America_Los_Angeles.txt",
+      "bytes": 941,
+      "sha256": "0cc09dab5f0f82770becd5dc69e2e15f92a1b8700df62f3652b76eae8957434e",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-Pacific_Kiritimati.txt",
+      "bytes": 941,
+      "sha256": "758d8a6dc63c9da7d41d7625f4a85deeea2b6ca387e9acde181d74e25521aa30",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/01-zone-UTC.txt",
+      "bytes": 941,
+      "sha256": "291c00ef72497633e87312ab23c74d8a54e587c305ec260a615665b280f3ce86",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/03-cargo-test-backup.txt",
+      "bytes": 13011,
+      "sha256": "c440c55024aa4acd9755716977468b2adfcf532419d3abaa3ceca3563e4f98e1",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/03-run1-monitor.jsonl",
+      "bytes": 480736,
+      "sha256": "6fd5053d3526184a6a64aad77eb53f60f068d2f47035e48200a73aaff63896e1",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/03-run3-after-restart.jpg",
+      "bytes": 65854,
+      "sha256": "22576a4ae98cfed717103367bb06a6edde1d02c880237bc83d3fd2636a5f7e7f",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/03-run3-monitor.jsonl",
+      "bytes": 106706,
+      "sha256": "f0db82d692479c38fa3a8f4b9505870b06133f0e44397a2fe81da0fdef6967cd",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/04-rendered-before.txt",
+      "bytes": 84938,
+      "sha256": "e39eaa370fca927a00efedecab75b4e9664f4afe501518d8464e1e822845c50b",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/04-settings-restore-confirmation-after.jpg",
+      "bytes": 57341,
+      "sha256": "8e674b22d915a1ad19d9b0260e314783ad8a021868ce5d32d1a5ce45a59b2f9c",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/04-settings-safety-copies-after.jpg",
+      "bytes": 56241,
+      "sha256": "1802f3a16cda059c88ac3b6a322598eef7db582b8d56ba3e63862f503a91cd2c",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/build-first-failed.txt",
+      "bytes": 206,
+      "sha256": "28fb2afbd5dc7e97b49dc35aeb34046963ae131d6b8ea06066ea42a569d77a67",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/build.txt",
+      "bytes": 7735,
+      "sha256": "c9d1cfc01ba5415ff41d49dd9ca4d4a8ac733441c1fde0242adea46aff84f71c",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/duplicate-bundle-ids.json",
+      "bytes": 1715,
+      "sha256": "681ead1b931f8135df8386e8000e9654103d33b2a254e2915282edec54617940",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-build.txt",
+      "bytes": 7735,
+      "sha256": "75d657882a5560eb8c0fd8606c89122c19e374b02311cff5416e1d5db6064e55",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-cargo-test.txt",
+      "bytes": 41081,
+      "sha256": "b465e6eff7310e0573568cded32fb2aad72a29c0f59f28a115eba2d660d50641",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-clippy.txt",
+      "bytes": 197,
+      "sha256": "fb7af21167f6deebdc17b4398266befd77ad4386ee9032a69a53c5c7bc49134d",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-npm-test.txt",
+      "bytes": 12697,
+      "sha256": "bd3d503604ca071e1196c2e604c6cc408fab94cc9772dabb00e7ccfc3241eb41",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-typecheck.txt",
+      "bytes": 51,
+      "sha256": "b4fbc39bfda7f22755a4421672874761bd4db5d80b7661fde6c9e62cf27de03a",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-America_Los_Angeles.txt",
+      "bytes": 434,
+      "sha256": "d4a5d40c222b119606aec2a829ea6658a9e85030b6dab3f95cea70dcd10da6fe",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-Pacific_Kiritimati.txt",
+      "bytes": 434,
+      "sha256": "b3a2564d5510e2ff390e5cf50185233759387e721ec6ac03f02072dbae15f4e3",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/fix-zone-UTC.txt",
+      "bytes": 434,
+      "sha256": "83277adcd1dbb84b1000dd8156ccbdc87c9738f07492a840a1b3d84dcf389292",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/front.swift",
+      "bytes": 206,
+      "sha256": "b99cb30dcac9d53687e3a3f63ee4b14f5861193c13177b4d5eca549364c26633",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/monitor.sh",
+      "bytes": 896,
+      "sha256": "f8e3f86be30bd8b1335d7216cf318f631648cb6337658e9423f609e3ec3f8228",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/native-lane.json",
+      "bytes": 3925,
+      "sha256": "b477b52fc5682aa711f6e96067b55327b21f3da0e730e4de6bcf23c246ae0369",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/npm-test.txt",
+      "bytes": 12697,
+      "sha256": "29113f2bad423e9a2786c4b4be214e794f5d44c8aaf59749a1f90a70e5a7a151",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/restore13-monitor.jsonl",
+      "bytes": 70712,
+      "sha256": "a65de70727d773d842d50434e527241741c6ed67ce9ea65d0ead27a4411ce5de",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/restore14-monitor.jsonl",
+      "bytes": 77549,
+      "sha256": "2528ba42ffc64e06d883037237dde4089daf2ba992938bd898464081c3b8b11e",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/typecheck-first-failed.txt",
+      "bytes": 196,
+      "sha256": "17b573e5b2c06025a6920482e7e2815e43779fe5ab1909cf43157532de65c926",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/typecheck.txt",
+      "bytes": 51,
+      "sha256": "b4fbc39bfda7f22755a4421672874761bd4db5d80b7661fde6c9e62cf27de03a",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/watch.sh",
+      "bytes": 1240,
+      "sha256": "270876780d254ac5997f5a6e9b860c0851b0df4aa93eeeb33097e9e2cae4b624",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-v054-desktop-corrections-2026-10-15/windows.swift",
+      "bytes": 1237,
+      "sha256": "af73deac84ed1db080d76a763ccce7561be8d83a4ed7e195ff851f7ef46133f6",
+      "status": "new"
+    },
+    {
+      "path": "src-tauri/src/backup.rs",
+      "bytes": 574751,
+      "sha256": "f3462feefcdef9433c442bce9578f8fbebf11655bc5c6e327418b7b71e12e534",
+      "status": "modified"
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "bytes": 8667,
+      "sha256": "a699f40d727397e886c12c7a7a4ddfc1c90f62fc7b6aaad972eb7835979ca726",
+      "status": "modified"
+    },
+    {
+      "path": "src/components/recovery/DataRecovery.tsx",
+      "bytes": 10604,
+      "sha256": "594fe994ce33f7bcbc170e227315f358b576b5bf2ede28db9d5875f21b2e9570",
+      "status": "modified"
+    },
+    {
+      "path": "src/components/recovery/DataRecoveryLocalDates.test.ts",
+      "bytes": 2421,
+      "sha256": "8e749ee1ebea3d4cfe68192c2bc0c4a9ceea0e68a840af352b59a31da0177c4c",
+      "status": "new"
+    },
+    {
+      "path": "src/lib/backups.test.ts",
+      "bytes": 4476,
+      "sha256": "f8b4e13a9e290ec7205b544b4d5a4404ed1da716da7e701fdd9d8ae9b38e3b55",
+      "status": "modified"
+    },
+    {
+      "path": "src/lib/dates.test.ts",
+      "bytes": 7680,
+      "sha256": "33fcbfb790d872f453295aba2a661cf1c30c6260d947fa924fcfc30ce7a9cdce",
+      "status": "modified"
+    },
+    {
+      "path": "src/lib/dates.ts",
+      "bytes": 6810,
+      "sha256": "55143c7c2b6e3a1bf0a91ed1185262c1e8f30511e8e6d8afbd156e4bd584a4f2",
+      "status": "modified"
+    },
+    {
+      "path": "src/pages/Settings/Settings.tsx",
+      "bytes": 51399,
+      "sha256": "ef12ee090f922b6e0db7cf97b8b52b636c1f54d2d0f0f8ec2684a09fab1cf11e",
+      "status": "modified"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialDetail.tsx",
+      "bytes": 51006,
+      "sha256": "d4c9ed9e12ad652beebb9447853f368a95d2779bca5472d2ab54b032270fe0af",
+      "status": "modified"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts",
+      "bytes": 5351,
+      "sha256": "e8d24272f572b6445603e19b99772ed255744d4ff2632e2d401270d8daf6b5b0",
+      "status": "new"
+    },
+    {
+      "path": "src/services/backups.ts",
+      "bytes": 6355,
+      "sha256": "dc41b8a3d43e158975a4e178b4b73c7e4b2646dfdddab5938d2632293dc6e344",
+      "status": "modified"
+    }
+  ]
+}

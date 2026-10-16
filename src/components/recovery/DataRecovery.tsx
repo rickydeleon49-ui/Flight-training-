@@ -13,6 +13,7 @@ import { Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorNote } from "@/
 import { formatRestorePreviewMissingNotice, restoreWarning } from "@/logic/dataSafety";
 import {
   backupErrorMessage,
+  backupLocalDay,
   backupsAvailable,
   chooseCompleteBackup,
   dataDirectory,
@@ -148,7 +149,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
                       {restorable.slice(0, 6).map((backup) => (
                         <div className="row row--between" key={backup.name}>
                           <span className="small truncate">
-                            {describeBackup(backup.name)} · {backup.name.slice(0, 10)}
+                            {describeBackup(backup.name)} · {backupLocalDay(backup.name) ?? "date unknown"}
                           </span>
                           <span className="row" style={{ gap: "var(--space-3)" }}>
                             <span className="tiny dim numeric">{formatBytes(backup.bytes)}</span>
@@ -237,7 +238,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
         title="Put this safety copy back?"
         message={
           copyCandidate
-            ? `This copy was ${describeBackup(copyCandidate.name).toLowerCase()}, on ${copyCandidate.name.slice(0, 10)}. It brings back your records, lessons, notes and settings as they were then. Uploaded files are not touched, and a recoverable copy of the current data is kept first.`
+            ? `This copy was ${describeBackup(copyCandidate.name).toLowerCase()}, on ${backupLocalDay(copyCandidate.name) ?? "an unknown date"}. It brings back your records, lessons, notes and settings as they were then. Uploaded files are not touched, and a recoverable copy of the current data is kept first.`
             : ""
         }
         confirmLabel="Put it back and restart"

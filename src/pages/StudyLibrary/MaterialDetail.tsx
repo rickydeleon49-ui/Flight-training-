@@ -27,7 +27,7 @@ import {
   REVIEW_STATUS_OPTIONS,
   TOPIC_LABELS,
 } from "@/domain/types";
-import { formatLongDate, nowIso, todayIso } from "@/lib/dates";
+import { formatLocalDay, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
 import { checkAiSubmission } from "@/logic/aiSafety";
@@ -1120,7 +1120,9 @@ function MaterialDetailPage({
                 </Button>
                 {material.lastReviewedAt ? (
                   <p className="tiny dim">
-                    Last reviewed {formatLongDate(material.lastReviewedAt.slice(0, 10), today)}.
+                    {formatLocalDay(material.lastReviewedAt, today)
+                      ? `Last reviewed ${formatLocalDay(material.lastReviewedAt, today)}.`
+                      : "Reviewed before; the date can't be read."}
                   </p>
                 ) : (
                   <p className="tiny dim">Not reviewed yet.</p>
@@ -1158,7 +1160,7 @@ function MaterialDetailPage({
                   </>
                 ) : null}
                 <dt>Added</dt>
-                <dd>{formatLongDate(material.createdAt.slice(0, 10), today)}</dd>
+                <dd>{formatLocalDay(material.createdAt, today) ?? "Unknown"}</dd>
               </dl>
 
               {material.tags.length > 0 ? (

@@ -92,6 +92,19 @@ export function localDayOf(timestamp: string | null | undefined): IsoDate | null
   return Number.isNaN(parsed.getTime()) ? null : todayIso(parsed);
 }
 
+/**
+ * A stored timestamp as the long local date it falls on, or null when it can't
+ * be read. "2026-10-16T03:56:14Z" seen in California the evening before reads
+ * "Thursday, October 15", not the UTC day the first ten characters name.
+ */
+export function formatLocalDay(
+  timestamp: string | null | undefined,
+  today: IsoDate = todayIso(),
+): string | null {
+  const day = localDayOf(timestamp);
+  return day ? formatLongDate(day, today) : null;
+}
+
 /** e.g. "Oct 20". Year is added when it is not the current one: "Oct 20, 2028". */
 export function formatShortDate(date: IsoDate, today: IsoDate = todayIso()): string {
   const d = parseIsoDate(date);

@@ -7207,19 +7207,27 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
     }
 }
 
-pub fn handle_startup_restore(app: &AppHandle) -> Result<(), String> {
+/// Installs or resolves any pending restore before SQLite opens. Returns
+/// whether this startup finished a restore, so the caller can bring the
+/// restarted window forward: the restart execs the binary directly rather than
+/// through LaunchServices, and macOS would otherwise leave it behind whatever
+/// was in front.
+pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
     let root = app_root(app)?;
-    match handle_startup_restore_in(&root)? {
-        StartupRestoreDecision::ProceedNormally | StartupRestoreDecision::RestoreCompleted => {
-            Ok(())
-        }
+    startup_restore_outcome(handle_startup_restore_in(&root)?)
+}
+
+fn startup_restore_outcome(decision: StartupRestoreDecision) -> Result<bool, String> {
+    match decision {
+        StartupRestoreDecision::ProceedNormally => Ok(false),
+        StartupRestoreDecision::RestoreCompleted => Ok(true),
         StartupRestoreDecision::StagingRefusedUnchanged { reason } => {
             eprintln!("Pending restore refused: {reason}; current data unchanged.");
-            Ok(())
+            Ok(false)
         }
         StartupRestoreDecision::RolledBackRecovered { reason } => {
             eprintln!("Pending restore failed: {reason}; previous data was recovered.");
-            Ok(())
+            Ok(false)
         }
         StartupRestoreDecision::BlockedUnresolved {
             reason,
@@ -13765,5 +13773,42 @@ mod tests {
                 "startup conversion and direct session write both succeed for validator-refused state"
             );
         }
+    }
+
+    #[test]
+    fn only_a_completed_restore_asks_for_the_window_to_come_forward() {
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::RestoreCompleted),
+            Ok(true)
+        );
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::ProceedNormally),
+            Ok(false)
+        );
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::StagingRefusedUnchanged {
+                reason: "damaged".to_string()
+            }),
+            Ok(false)
+        );
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::RolledBackRecovered {
+                reason: "disk full".to_string()
+            }),
+            Ok(false)
+        );
+    }
+
+    #[test]
+    fn an_unresolved_restore_still_blocks_startup() {
+        let outcome = startup_restore_outcome(StartupRestoreDecision::BlockedUnresolved {
+            reason: "active data obstructed".to_string(),
+            recovery_folder: Some(PathBuf::from(
+                "/tmp/hfd/backups/2026-10-16-035630-before-restore",
+            )),
+        });
+        let message = outcome.expect_err("an ambiguous restore must block startup");
+        assert!(message.starts_with("Startup blocked to prevent data loss: active data obstructed"));
+        assert!(message.contains("2026-10-16-035630-before-restore"));
     }
 }

@@ -1,3 +1,31 @@
+## Desktop corrections accepted; fresh final v0.5.4 candidate next — 15 October 2026
+
+**Independent source review ACCEPTED, effective after the containing PR passes exact-head CI and merges.** DESKTOP-V054-01 (material dates), -04 (backup dates) and -03 (post-restore foreground activation) pass review with no blocking code findings. DESKTOP-V054-02 remains investigated/not reproduced; its original automation no-window outputs retain an unconfirmed cause. Independent gate9/9 exit0:44 focused,3,242 frontend/6 skipped,467 Rust/6 ignored, typecheck/build/fmt/Clippy/lock/hygiene clean. Submitted47 hashes and35 checksums matched; private test-build binary/signature matched read-only. Native evidence is one counted implementer focus run, not a new reviewer-installed test. [Acceptance](docs/MAC_V054_DESKTOP_CORRECTIONS_ACCEPTANCE_2026-10-15.md).
+
+**Next:** [fresh private local v0.5.4 candidate and exact-candidate verification](docs/MAC_V054_FINAL_CANDIDATE_PROMPT_2026-10-15.md) from the containing PR's accepted merged main. Preserve e928601/fee7869/UNCOMMITTED artifacts. Original dirty implementation package remains intact. No new build, app launch/profile access, signing or publication was performed by this review. Remaining installed/platform gaps stay explicit; all eight selected improvements remain queued after v0.5.4, in the owner-approved order below. Earlier entries retain their historical status.
+
+## v0.5.4 desktop corrections: 01, 03, 04 fixed; 02 not reproduced — pending independent review — 15 October 2026
+
+**IMPLEMENTED (01, 03, 04) AND INVESTIGATED (02); PENDING INDEPENDENT REVIEW.** Claude, uncommitted (03 and 04 added on the owner's instruction to complete every fix found) on `codex/v054-desktop-corrections` (base `7f2a624`).
+
+- **DESKTOP-V054-01, fixed:** Material detail "Added" and "Last reviewed" now show the local calendar day, via `localDayOf`, with an explicit fallback for unreadable values.
+  - Rendered tests fail 4/5 on the old source.
+  - Date suites pass 63/63 in UTC, Los Angeles and Kiritimati.
+  - Full suite 3,232 passed; typecheck and build pass.
+- **DESKTOP-V054-02, not reproduced:** two native restores (populated schema 14, then genuine schema 13 from a self-restarted process) each showed an on-screen main window within about 2 s, observed independently through the window server.
+  - **Confirmed instead:** the self-restarted app is never activated (Tauri spawns the binary directly), so it can come back behind other windows.
+  - The schema-13 restored data matched the earlier frozen restore exactly.
+  - No app code was changed for 02.
+- **DESKTOP-V054-03, fixed:** after a completed startup restore, `setup` shows and focuses the main window (`set_focus` activates the app). Refused, rolled-back and blocked restores are unchanged.
+  - Rust: 467 passed, clippy `-D warnings` clean; two new outcome tests.
+  - Native, separately labelled local build (`…-desktop-corrections-UNCOMMITTED`, ad-hoc, not a release candidate): with Claude confirmed frontmost while the restarted process finished the restore, the restored app became frontmost on its own about 3 s later, with an on-screen window throughout.
+- **DESKTOP-V054-04, fixed:** Settings and Data Recovery list safety copies by the local day parsed from the UTC name (`backupLocalDay`), with an explicit unknown-date fallback. Rendered test fails 3/3 on the old source; seen natively as "Thursday, October 15" for copies named 2026-10-16.
+- **Full checks after all fixes:** 3,242 frontend tests passed; typecheck, build and `git diff --check` pass.
+- **Still open:**
+  - **Six installed copies share the bundle ID**, including 0.5.3 in `/Applications`; launch by exact path only.
+
+Not executed: the schema-14 restore data comparison and the schema-12 exact-candidate restore. The older-backup matrix is incomplete; tombstone UI, VoiceOver, standard account and signing remain open. The original profile was returned intact. [Report](docs/MAC_V054_DESKTOP_CORRECTIONS_REPORT_2026-10-15.md). Historical entries below keep their original status.
+
 ## Native v0.5.4 run completed; two follow-ups open — 15 October 2026
 
 Owner authorized fresh synthetic data in this account, explicitly an **administrator-account UID501 test**. Actual e928601 candidate installed and launched. Save/restart, PDF picker/Open/chapter, genuine populated13→14 retention, current/older backup data restoration, Skills saves/history, cancellation, guarded-backup failure and damaged-archive refusal passed their bounded checks. **DESKTOP-V054-01:** Added/Last reviewed display the UTC day in the evening (confirmed P2). **DESKTOP-V054-02:** two restore self-restarts left no accessible window, although data restored; root cause unconfirmed, independent lifecycle/tooling investigation required. [Native report](docs/MAC_V054_DESKTOP_VERIFICATION_2026-10-15.md) · [one model-neutral correction prompt](docs/MAC_V054_DESKTOP_CORRECTIONS_PROMPT_2026-10-15.md).

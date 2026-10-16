@@ -22,6 +22,7 @@ import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
   appVersion,
   backupErrorMessage,
+  backupLocalDay,
   createBackup,
   backupsAvailable,
   chooseCompleteBackup,
@@ -1087,7 +1088,7 @@ export function Settings() {
                       <span className="small truncate">{describeBackup(backup.name)}</span>
                       <span className="row" style={{ gap: "var(--space-3)" }}>
                         <span className="tiny dim numeric">
-                          {backup.name.slice(0, 10)} · {formatBytes(backup.bytes)}
+                          {backupLocalDay(backup.name) ?? "Date unknown"} · {formatBytes(backup.bytes)}
                         </span>
                         {backup.restorable ? (
                           <Button
@@ -1271,7 +1272,7 @@ export function Settings() {
         title="Put this safety copy back?"
         message={
           localRestoreCandidate
-            ? `This copy was ${describeBackup(localRestoreCandidate.name).toLowerCase()}, on ${localRestoreCandidate.name.slice(0, 10)}. Your records, lessons, notes and settings go back to how they were then; anything added since will not be in them. Your uploaded files are not touched. The app keeps a recoverable copy of the current data first, then restarts.`
+            ? `This copy was ${describeBackup(localRestoreCandidate.name).toLowerCase()}, on ${backupLocalDay(localRestoreCandidate.name) ?? "an unknown date"}. Your records, lessons, notes and settings go back to how they were then; anything added since will not be in them. Your uploaded files are not touched. The app keeps a recoverable copy of the current data first, then restarts.`
             : ""
         }
         confirmLabel="Put it back and restart"
