@@ -48,6 +48,7 @@ import {
   geminiErrorMessage,
   generatePracticeTest,
   generateStudyAid,
+  geminiModelName,
   getGeminiStatus,
   watchGeminiProgress,
   type GeminiStatus,
@@ -759,7 +760,7 @@ function MaterialDetailPage({
                       <p className="tiny">
                         {importedSet
                           ? IMPORTED_CONTENT_DISCLAIMER
-                          : "AI-generated study aid. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it."}
+                          : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
                       </p>
                     </div>
 
@@ -957,7 +958,7 @@ function MaterialDetailPage({
                         <p className="tiny">
                           {importedTest
                             ? IMPORTED_CONTENT_DISCLAIMER
-                            : "AI-generated practice test. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it."}
+                            : `AI-generated practice test${practiceTest.model ? ` (made with ${geminiModelName(practiceTest.model)})` : ""}. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it.`}
                         </p>
                       </div>
                       {completedCount > 0 ? (
@@ -1226,7 +1227,7 @@ function MaterialDetailPage({
       <ConfirmDialog
         open={confirmingAi && !isGeneratingAny}
         title="Send this file to Google?"
-        message={importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ${aiCheck.reason}` : aiCheck.reason}
+        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${aiCheck.reason}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
         destructive={false}
         onConfirm={() => {
@@ -1242,8 +1243,8 @@ function MaterialDetailPage({
         title="Send this file to Google?"
         message={
           practiceTest
-            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason}`
-            : aiCheck.reason
+            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason}${geminiModelSentence(gemini)}`
+            : `${aiCheck.reason}${geminiModelSentence(gemini)}`
         }
         confirmLabel="Send to Gemini"
         destructive={false}
@@ -1285,6 +1286,15 @@ function MaterialDetailPage({
  * Said before Gemini replaces imported content. Each names only what that
  * button replaces: regenerating the guide leaves an imported test alone.
  */
+/** Which model will read the file, added to the "Send this file to Google?" message. */
+export function geminiModelSentence(status: GeminiStatus | null): string {
+  if (!status || typeof status.model !== "string" || !status.model) return "";
+  const name = geminiModelName(status.model);
+  return status.choice === "most-capable"
+    ? ` It will be read by ${name}, which costs more per document on a key with billing turned on.`
+    : ` It will be read by ${name}.`;
+}
+
 export const IMPORT_GUIDE_REGENERATE_WARNING =
   "This will replace your imported study guide and flashcards with AI-generated content.";
 export const IMPORT_TEST_REGENERATE_WARNING =

@@ -211,6 +211,7 @@ pub fn run() {
             gemini::gemini_status,
             gemini::configure_gemini,
             gemini::disconnect_gemini,
+            gemini::set_gemini_model,
             gemini::generate_study_aid,
             gemini::generate_practice_test,
             backup::create_backup,

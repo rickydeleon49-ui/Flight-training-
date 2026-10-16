@@ -1,3 +1,19 @@
+## Owner-requested Gemini model choice (GEM-01): implemented, pending review — 16 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW.** The owner asked for a better Gemini model on a paid key ("option 1"). This is a new owner-added item, outside the eight-item post-release queue (P54-01…08, unchanged and still waiting). It targets the next version, 0.5.5 or later. The released v0.5.4 bytes are unchanged.
+
+- **What it does:**
+  - Settings → Gemini offers **Standard (Gemini Flash)** or **Most capable (Gemini 4 Argon, `gemini-4-argon`)**.
+  - The choice is stored in a `gemini-model` file beside the key. It is never in SQLite or a backup (the archive allowlist admits only the database and `documents/`), and a missing or unreadable choice means Standard.
+  - **Send this file to Google?** names the model that will read the file, and saved study aids and practice tests say which model made them.
+- **Fallback:** Argon falls back to Gemini Flash once. A `429` from Argon (no billing, or its limit reached) moves to Flash at once. A `403` from Argon explains that billing is needed and points to the Standard choice. Standard's retry and Flash-Lite behaviour is unchanged.
+- **Google facts checked on 16 October 2026** (ai.google.dev models, deprecations and pricing pages):
+  - `gemini-4-argon` is stable and accepts PDFs. It is not on the free tier: $2 / $10 per 1M tokens in / out, rising to $4 / $20 on 1 December 2026.
+  - `gemini-3.5-flash` has no shutdown date, and Google routes it to `gemini-3.6-flash`.
+  - Google recommends `gemini-3.8-flash` for new projects. Repinning Standard is left as a separate decision.
+- **Checks:** 474 Rust tests (7 new), clippy `-D warnings`, fmt, 3,251 frontend tests (8 new, run in UTC), typecheck, build and the Cargo lock check all pass. There was no native run and no provider call.
+- **Not verified:** a live request to `gemini-4-argon`, and Google's exact refusal for a key without billing (the `403`/`429` handling follows the documented codes).
+
 ## v0.5.4 Mac release authorized by the owner, with signing waived — 16 October 2026
 
 **Owner decision:** publish the accepted, unsigned fbff255 v0.5.4 Mac build as a GitHub release. Apple Developer ID signing and notarization will follow another day. REL-05 (signing) and REL-08 (standard account, interrupted save) are **waived by the owner for this release, not passed**.

@@ -79,7 +79,7 @@ beforeEach(async () => {
   HTMLDialogElement.prototype.close = function () {
     this.removeAttribute("open");
   };
-  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: true, model: "gemini-3.5-flash" });
+  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(true);
   vi.spyOn(documentService, "documentExists").mockResolvedValue(true);

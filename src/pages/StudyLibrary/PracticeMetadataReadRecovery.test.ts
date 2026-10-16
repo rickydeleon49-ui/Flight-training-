@@ -143,7 +143,7 @@ beforeEach(async () => {
   db = await createNodeSqliteDatabase();
   await createRepositories(db).app.set("airline_starter_pack", "skipped-for-test");
   await savedTest("read-target", "Synthetic read target");
-  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "" });
+  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "", choice: "standard" });
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(false);
 });
