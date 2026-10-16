@@ -154,7 +154,9 @@ describe("imported content in MaterialDetail", () => {
     expect(await screen.findByText("Gemini study assistant")).toBeTruthy();
     expect(screen.getByText(/AI-generated study aid/)).toBeTruthy();
     expect(screen.queryByText(IMPORTED_CONTENT_DISCLAIMER)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+    // The button appears only once the Gemini status read resolves, which can
+    // land after the heading renders, so wait for it rather than racing it.
+    fireEvent.click(await screen.findByRole("button", { name: "Regenerate" }));
     const confirm = await screen.findByRole("dialog", { name: "Send this file to Google?" });
     expect(confirm.textContent).not.toContain("imported");
   });
