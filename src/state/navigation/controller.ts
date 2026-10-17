@@ -27,6 +27,17 @@
  * A failed save after a successful open offers a save-only retry that resends
  * the same generation and never reopens the file. Pages whose numbering has no
  * trustworthy provenance are opened for guidance only and save nothing.
+ *
+ * Two kinds of request are kept apart (M4S1-R5). `request` is a fresh page
+ * asked for now, resolved against whatever file is current. `openSaved` opens
+ * a place saved earlier (a bookmark): it carries the content that place was
+ * saved against and opens only that content. A replaced file is refused with
+ * an explanation; the old coordinate is never re-aimed at the new file.
+ *
+ * Every external side effect is dispatched only while its request is still
+ * current: the epoch is checked after each awaited step and before the next
+ * one starts, guidance included (M4S1-R8). An open the operating system has
+ * already been handed cannot be taken back; an obsolete one is never started.
  */
 import type { InspectedNavigationIdentity, NavigationOperation, NavigationReadingState, NavigationResultByKind } from "@/domain/types";
 import { NAVIGATION_ERROR_MESSAGES, NavigationError } from "@/data/navigationTransaction";
@@ -38,8 +49,6 @@ export interface NavigationPorts {
   operation<K extends NavigationOperation["kind"]>(op: Extract<NavigationOperation, { kind: K }>): Promise<NavigationResultByKind[K]>;
   /** Native: hand the file to the default reader only if it is still this content. */
   open(materialId: string, expectedContentSha256: string): Promise<void>;
-  /** Open the document in the default reader without any position (guidance only). */
-  openForGuidance(materialId: string): Promise<void>;
 }
 
 export interface OpenIntent {
@@ -48,6 +57,15 @@ export interface OpenIntent {
   provenance: PageProvenance;
   labelMap?: LabelMap | null;
   pageLabel?: string | null;
+}
+
+/** A place saved earlier, opened only on the content it was saved against. */
+export interface SavedDestination {
+  materialId: string;
+  /** The content the place was saved on; null when that was never known. */
+  contentSha256: string | null;
+  physicalPage: number;
+  pageLabel: string | null;
 }
 
 export type NavigationStatus =
@@ -82,6 +100,12 @@ const REFUSAL_MESSAGES: Record<string, string> = {
   unreserved: "This page request is no longer current, so it wasn't saved.",
 };
 
+export const SAVED_PLACE_MESSAGES = {
+  changed:
+    "This file has changed since you saved this place, so it wasn't opened there. The place is marked as possibly moved. Use Open at page to find it in the new version.",
+  unknown: "This place was saved before its file was checked, so it can't be matched to this file and wasn't opened. Use Open at page to find it.",
+} as const;
+
 function messageOf(error: unknown): { code: string; message: string } {
   if (error instanceof NavigationError) return { code: error.code, message: error.message };
   return { code: "STORAGE_FAILURE", message: NAVIGATION_ERROR_MESSAGES.STORAGE_FAILURE };
@@ -110,6 +134,21 @@ export class NavigationController {
    * with the published status, or null when a newer intent retired this one.
    */
   async request(intent: OpenIntent): Promise<NavigationStatus | null> {
+    return this.run(intent, undefined);
+  }
+
+  /**
+   * Open a saved place on the content it was saved against. If the file is no
+   * longer that content (or that was never known) it is refused and explained;
+   * nothing is opened and the old page is not saved against the new file.
+   */
+  async openSaved(saved: SavedDestination): Promise<NavigationStatus | null> {
+    const intent: OpenIntent = { materialId: saved.materialId, reference: saved.physicalPage, provenance: "physical_index", pageLabel: saved.pageLabel };
+    return this.run(intent, saved.contentSha256);
+  }
+
+  /** `savedOn` is undefined for a fresh request, or the saved place's content. */
+  private async run(intent: OpenIntent, savedOn: string | null | undefined): Promise<NavigationStatus | null> {
     const ticket = this.enter(intent.materialId);
     const { materialId } = intent;
     this.publish(ticket, { kind: "working", materialId, step: "checking" });
@@ -121,6 +160,12 @@ export class NavigationController {
       return this.finish(ticket, { kind: "failed", materialId, ...messageOf(error) });
     }
     if (!this.isCurrent(ticket)) return null;
+    // The inspection has recorded the current identity and reconciled saved
+    // places against it, so a changed file's places already read as drifted.
+    if (savedOn === null) return this.finish(ticket, { kind: "refused", materialId, message: SAVED_PLACE_MESSAGES.unknown });
+    if (savedOn !== undefined && savedOn !== identity.contentSha256) {
+      return this.finish(ticket, { kind: "refused", materialId, message: SAVED_PLACE_MESSAGES.changed });
+    }
 
     const record = resolveDestination({
       materialId,
@@ -176,9 +221,18 @@ export class NavigationController {
   async openForGuidance(materialId: string, guidance: string): Promise<NavigationStatus | null> {
     const ticket = this.enter(materialId);
     ticket.settled = true;
+    this.publish(ticket, { kind: "working", materialId, step: "checking" });
+    let identity: InspectedNavigationIdentity;
+    try {
+      identity = await this.ports.inspect(materialId);
+    } catch (error) {
+      return this.finish(ticket, { kind: "failed", materialId, ...messageOf(error) });
+    }
+    // Retired while the file was being checked: the open is never dispatched.
+    if (!this.isCurrent(ticket)) return null;
     this.publish(ticket, { kind: "working", materialId, step: "opening" });
     try {
-      await this.ports.openForGuidance(materialId);
+      await this.ports.open(materialId, identity.contentSha256);
     } catch (error) {
       return this.finish(ticket, { kind: "failed", materialId, ...messageOf(error) });
     }

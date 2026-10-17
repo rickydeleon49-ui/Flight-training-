@@ -7,8 +7,12 @@
  * position. The badge opens the material's file in the default reader, after
  * the desktop app has checked it, and tells her where to look; nothing is
  * saved. Without a file or outside the desktop app it stays a plain label.
+ *
+ * Leaving the view (unmount or a route change) retires a request this badge
+ * started and is still checking, so its file is never opened afterwards
+ * (M4S1-R8).
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui";
 import { useOptionalAppData } from "@/state/AppDataContext";
@@ -30,6 +34,15 @@ export function SourcePageBadge({ page, materialId }: SourcePageBadgeProps) {
   const { repo, controller, status } = useNavigationController();
   const hasFile = Boolean(materialId && materials.find((m) => m.id === materialId)?.filePath);
   const [epoch, setEpoch] = useState<number | null>(null);
+  const started = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!controller) return undefined;
+    return () => {
+      const current = controller.status();
+      if (started.current !== null && current.epoch === started.current && current.kind === "working") controller.abort();
+    };
+  }, [controller]);
 
   if (page === null || page === undefined || page === "") return <Badge tone="study">Check source</Badge>;
   const label = `Source p. ${page}`;
@@ -47,8 +60,12 @@ export function SourcePageBadge({ page, materialId }: SourcePageBadgeProps) {
         disabled={busy}
         aria-label={`${label}: open the source document and look for page ${page}`}
         onClick={async () => {
-          const result = await controller.openForGuidance(materialId, sourceGuidance(page));
-          setEpoch(result?.epoch ?? null);
+          const pending = controller.openForGuidance(materialId, sourceGuidance(page));
+          // The new request's epoch is published synchronously as it starts.
+          started.current = controller.status().epoch;
+          setEpoch(started.current);
+          const result = await pending;
+          if (result === null) started.current = null;
         }}
       >
         {label}

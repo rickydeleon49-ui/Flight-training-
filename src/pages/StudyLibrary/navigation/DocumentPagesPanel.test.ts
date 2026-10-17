@@ -7,7 +7,7 @@
  * asked); no real file, reader, profile, provider or network is used.
  */
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -16,8 +16,13 @@ import { NAVIGATION_ERROR_MESSAGES, NavigationError } from "@/data/navigationTra
 import { createRepositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { AppDataProvider } from "@/state/AppDataContext";
+import { useNavigationController } from "@/state/navigation/useDocumentNavigation";
+
+import { SAVED_PLACE_MESSAGES } from "@/state/navigation/controller";
+import type { StudyMaterial } from "@/domain/types";
 
 import { MaterialDetail } from "../MaterialDetail";
+import { DocumentPagesPanel, DRAFT_STALE_MESSAGE } from "./DocumentPagesPanel";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
@@ -30,6 +35,14 @@ let fileHash: string;
 let inspectFails: unknown;
 let commitFails: unknown;
 let opened: { materialId: string; hash: string }[];
+let inspectHeld: Promise<void> | null;
+let operationHeld: { kind: string; promise: Promise<void> } | null;
+
+function gate() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((r) => (resolve = r));
+  return { promise, resolve };
+}
 
 async function seed({ desktop = true, cards = [{ front: "Class C ceiling?", back: "4,000 ft AGL.", sourcePage: 12 }] } = {}) {
   db = await createNodeSqliteDatabase();
@@ -41,13 +54,18 @@ async function seed({ desktop = true, cards = [{ front: "Class C ceiling?", back
   );
   if (!desktop) return;
   db.inspectNavigationIdentity = async (materialId): Promise<InspectedNavigationIdentity> => {
+    if (inspectHeld) await inspectHeld;
     if (inspectFails) throw inspectFails;
+    const hash = fileHash;
     await db.execute(
       `INSERT INTO material_content_identities VALUES (?, ?, 50, 'x')
        ON CONFLICT(material_id) DO UPDATE SET content_sha256 = excluded.content_sha256`,
-      [materialId, fileHash],
+      [materialId, hash],
     );
-    return { materialId, contentSha256: fileHash, totalPages: 50, verifiedAt: "x", changed: false };
+    // As the native inspector does: saved places on other content drift.
+    await db.execute("UPDATE material_bookmarks SET status = 'drifted' WHERE material_id = ? AND originating_content_sha256 <> ?", [materialId, hash]);
+    await db.execute("UPDATE material_reading_state SET status = 'drifted' WHERE material_id = ? AND originating_content_sha256 <> ?", [materialId, hash]);
+    return { materialId, contentSha256: hash, totalPages: 50, verifiedAt: "x", changed: false };
   };
   db.openNavigationDocument = async (materialId, hash) => {
     if (hash !== fileHash) throw new NavigationError("FILE_CHANGED", NAVIGATION_ERROR_MESSAGES.FILE_CHANGED);
@@ -55,6 +73,11 @@ async function seed({ desktop = true, cards = [{ front: "Class C ceiling?", back
   };
   const operation = db.navigationOperation!.bind(db);
   db.navigationOperation = (async (op: Parameters<typeof operation>[0]) => {
+    if (operationHeld && op.kind === operationHeld.kind) {
+      const held = operationHeld.promise;
+      operationHeld = null;
+      await held;
+    }
     if (op.kind === "commit" && commitFails) {
       const error = commitFails;
       commitFails = undefined;
@@ -64,11 +87,19 @@ async function seed({ desktop = true, cards = [{ front: "Class C ceiling?", back
   }) as typeof db.navigationOperation;
 }
 
+/** The shared controller, as any other view inside the provider sees it. */
+let sharedController: ReturnType<typeof useNavigationController>["controller"] = null;
+function ControllerProbe() {
+  sharedController = useNavigationController().controller;
+  return null;
+}
+
 function renderDetail() {
   return render(
     h(
       AppDataProvider,
       null,
+      h(ControllerProbe),
       h(MemoryRouter, { initialEntries: [`/study/${M}`] }, h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) }))),
     ),
   );
@@ -97,6 +128,8 @@ beforeEach(() => {
   inspectFails = undefined;
   commitFails = undefined;
   opened = [];
+  inspectHeld = null;
+  operationHeld = null;
 });
 
 afterEach(() => {
@@ -216,7 +249,8 @@ describe("source badges", () => {
     renderDetail();
     const badge = await screen.findByRole("button", { name: /Source p\. 12: open the source document and look for page 12/ });
     fireEvent.click(badge);
-    expect(await screen.findByText(/The study aid points to page 12, which may be the page number printed in the book/)).toBeTruthy();
+    // The badge's own note (the panel's status line says the same).
+    expect(await within(badge.parentElement!).findByText(/The study aid points to page 12, which may be the page number printed in the book/)).toBeTruthy();
     expect(opened).toEqual([{ materialId: M, hash: A }]);
     expect(await tuple()).toBeNull();
     expect(await db.select("SELECT * FROM material_operation_claims")).toEqual([]);
@@ -236,5 +270,179 @@ describe("source badges", () => {
     await seed({ cards: [{ front: "Q", back: "A", sourcePage: null }] as never });
     renderDetail();
     expect(await screen.findByText("Check source")).toBeTruthy();
+  });
+});
+
+describe("saved places open only on their own content (M4S1-R5)", () => {
+  async function savedBookmark(scope: HTMLElement) {
+    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    await within(scope).findByText("This PDF has 50 pages.");
+    fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });
+    fireEvent.change(within(dialog).getByLabelText("PDF page"), { target: { value: "9" } });
+    fireEvent.change(within(dialog).getByLabelText("Printed page (optional)"), { target: { value: "A-label" } });
+    fireEvent.change(within(dialog).getByLabelText("Name"), { target: { value: "Saved A" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save bookmark" }));
+    const list = await within(scope).findByRole("list", { name: "Bookmarks" });
+    return within(list).getByRole("button", { name: /Open Saved A at PDF page 9/ });
+  }
+
+  it("opening a saved A bookmark must not silently target replacement B", async () => {
+    // Promoted from the frozen review diagnostic.
+    await seed();
+    renderDetail();
+    const scope = await panel();
+    const open = await savedBookmark(scope);
+    await openAt(scope, "4");
+    await within(scope).findByText(/Go to PDF page 4 there/);
+    const before = await tuple();
+    opened = [];
+    fileHash = B;
+    fireEvent.click(open);
+    expect(await within(scope).findByText(SAVED_PLACE_MESSAGES.changed)).toBeTruthy();
+    expect(opened, "an A bookmark must not open B").toEqual([]);
+    expect(await tuple(), "its old coordinate is not saved against B").toEqual(before?.slice(0, 3).concat(["drifted", 1]));
+    // The refreshed list says the place may have moved, and offers no open.
+    const list = within(scope).getByRole("list", { name: "Bookmarks" });
+    await waitFor(() => expect(within(list).queryByRole("button", { name: /Open Saved A/ })).toBeNull());
+    expect(within(list).getByText(/PDF page 9 \(printed page A-label\)/)).toBeTruthy();
+  });
+
+  it("an unchanged file opens the bookmark's own page and label", async () => {
+    await seed();
+    renderDetail();
+    const scope = await panel();
+    const open = await savedBookmark(scope);
+    fireEvent.click(open);
+    expect(await within(scope).findByText(/Go to PDF page 9 \(printed page A-label\) there/)).toBeTruthy();
+    expect(opened).toEqual([{ materialId: M, hash: A }]);
+    expect(await tuple()).toEqual([9, 0, A, "active", 1]);
+  });
+
+  it("a file replaced while the bookmark's inspection is held is refused", async () => {
+    await seed();
+    renderDetail();
+    const scope = await panel();
+    const open = await savedBookmark(scope);
+    const held = gate();
+    inspectHeld = held.promise;
+    fireEvent.click(open);
+    await within(scope).findByText("Checking the file…");
+    fileHash = B;
+    inspectHeld = null;
+    held.resolve();
+    expect(await within(scope).findByText(SAVED_PLACE_MESSAGES.changed)).toBeTruthy();
+    expect(opened).toEqual([]);
+    expect(await tuple()).toBeNull();
+  });
+
+  it("a deleted file explains itself and nothing is opened or saved", async () => {
+    await seed();
+    renderDetail();
+    const scope = await panel();
+    const open = await savedBookmark(scope);
+    inspectFails = new NavigationError("FILE_MISSING", NAVIGATION_ERROR_MESSAGES.FILE_MISSING);
+    fireEvent.click(open);
+    expect(await within(scope).findByText(NAVIGATION_ERROR_MESSAGES.FILE_MISSING)).toBeTruthy();
+    expect(opened).toEqual([]);
+    expect(await tuple()).toBeNull();
+  });
+});
+
+describe("a bookmark draft keeps the content it was started on (M4S1-R6)", () => {
+  async function startDraft(scope: HTMLElement) {
+    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    await within(scope).findByText("This PDF has 50 pages.");
+    fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });
+    fireEvent.change(within(dialog).getByLabelText("PDF page"), { target: { value: "4" } });
+    fireEvent.change(within(dialog).getByLabelText("Name"), { target: { value: "Draft for A" } });
+    return dialog;
+  }
+
+  it("an open draft retains its original content after a background refresh", async () => {
+    // Promoted from the frozen review diagnostic: the parent really refreshes
+    // to B (same page count) while the dialog stays open.
+    await seed();
+    renderDetail();
+    const scope = await panel();
+    const dialog = await startDraft(scope);
+    fileHash = B;
+    // Another view (a source link elsewhere) checks the file in the background.
+    await act(async () => {
+      await sharedController!.openForGuidance(M, "Background refresh");
+    });
+    expect(await within(dialog).findByText(DRAFT_STALE_MESSAGE)).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save bookmark" }));
+    expect(await within(dialog).findByText(NAVIGATION_ERROR_MESSAGES.STALE_STATE)).toBeTruthy();
+    expect(await db.select("SELECT * FROM material_bookmarks"), "the old draft does not bind itself to B").toEqual([]);
+    expect((within(dialog).getByLabelText("Name") as HTMLInputElement).value, "her typing is kept").toBe("Draft for A");
+  });
+
+  it("a replacement while the save itself is held is refused as stale", async () => {
+    await seed();
+    renderDetail();
+    const scope = await panel();
+    const dialog = await startDraft(scope);
+    const held = gate();
+    operationHeld = { kind: "add_bookmark", promise: held.promise };
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save bookmark" }));
+    await within(dialog).findByRole("button", { name: "Saving…" });
+    fileHash = B;
+    await db.inspectNavigationIdentity!(M);
+    held.resolve();
+    expect(await within(dialog).findByText(NAVIGATION_ERROR_MESSAGES.STALE_STATE)).toBeTruthy();
+    expect(await db.select("SELECT * FROM material_bookmarks")).toEqual([]);
+  });
+
+  it("an unchanged file saves the draft normally", async () => {
+    await seed();
+    renderDetail();
+    const scope = await panel();
+    const dialog = await startDraft(scope);
+    await act(async () => {
+      await sharedController!.openForGuidance(M, "Background refresh");
+    });
+    await within(scope).findByText("Background refresh");
+    expect(within(dialog).queryByText(DRAFT_STALE_MESSAGE)).toBeNull();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save bookmark" }));
+    const list = await within(scope).findByRole("list", { name: "Bookmarks" });
+    expect(within(list).getByText("Draft for A")).toBeTruthy();
+    const [row] = await db.select<{ originating_content_sha256: string }>("SELECT * FROM material_bookmarks");
+    expect(row!.originating_content_sha256).toBe(A);
+  });
+
+  it("a draft does not follow the panel to another material", async () => {
+    await seed();
+    await createRepositories(db).documents.create({ id: "other", title: "Other handbook", filePath: "other.pdf", originalFileName: "other.pdf", fileSize: 10 });
+    const material = (id: string) => ({ id, title: id, filePath: `${id}.pdf` }) as StudyMaterial;
+    const props = { fileMissing: false, restoring: false, onRestore: () => undefined };
+    const view = render(h(AppDataProvider, null, h(DocumentPagesPanel, { material: material(M), ...props })));
+    const scope = await panel();
+    await startDraft(scope);
+    view.rerender(h(AppDataProvider, null, h(DocumentPagesPanel, { material: material("other"), ...props })));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Add a bookmark" })).toBeNull());
+    view.rerender(h(AppDataProvider, null, h(DocumentPagesPanel, { material: material(M), ...props })));
+    await panel();
+    expect(screen.queryByRole("dialog", { name: "Add a bookmark" })).toBeNull();
+    expect(await db.select("SELECT * FROM material_bookmarks")).toEqual([]);
+  });
+});
+
+describe("source badges retire their guidance when the view goes away (M4S1-R8)", () => {
+  it("leaving while the file is being checked opens nothing", async () => {
+    await seed();
+    const view = renderDetail();
+    const badge = await screen.findByRole("button", { name: /Source p\. 12/ });
+    const held = gate();
+    inspectHeld = held.promise;
+    fireEvent.click(badge);
+    await waitFor(() => expect(screen.getByRole("button", { name: /Source p\. 12/ }).hasAttribute("disabled")).toBe(true));
+    view.unmount();
+    inspectHeld = null;
+    held.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(opened).toEqual([]);
+    expect(await tuple()).toBeNull();
   });
 });

@@ -5,8 +5,14 @@
  * request anywhere (a material's pages panel or a source badge in a study
  * view) retires older work everywhere. `useMaterialNavigation` reads one
  * material's saved place and bookmarks and performs the content-bound writes.
+ *
+ * Reads can overlap: a mutation, a page check and a settled request each
+ * reload. Only the latest read publishes (M4S1-R7): every reload takes a new
+ * number, and a completion (state, error or the end of loading) is applied
+ * only while it is still the latest and the hook is mounted. A change of
+ * material or repository, or unmounting, retires reads still in flight.
  */
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import type { NavigationBookmark, NavigationReadingState, NavigationState } from "@/domain/types";
 import type { NavigationRepository } from "@/data/repositories/navigationRepository";
@@ -25,12 +31,6 @@ export function navigationControllerFor(repo: NavigationRepository): NavigationC
       inspect: (materialId) => repo.inspect(materialId),
       operation: (op) => repo.operation(op),
       open: (materialId, hash) => repo.open(materialId, hash),
-      // Guidance only: the file is checked and handed over as it is; no
-      // position is reserved or saved.
-      openForGuidance: async (materialId) => {
-        const identity = await repo.inspect(materialId);
-        await repo.open(materialId, identity.contentSha256);
-      },
     });
     controllers.set(repo, controller);
   }
@@ -72,24 +72,44 @@ export function useMaterialNavigation(materialId: string, repo: NavigationReposi
   const [state, setState] = useState<NavigationState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const latest = useRef(0);
+  const mounted = useRef(false);
+
+  // Declared before the first read so it is mounted when that read starts.
+  // Cleanup retires reads in flight; StrictMode's replayed setup mounts again.
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      latest.current += 1;
+    };
+  }, []);
 
   const reload = useCallback(async () => {
+    const id = ++latest.current;
+    const owns = () => mounted.current && latest.current === id;
     if (!repo?.supported()) {
-      setLoading(false);
+      if (owns()) setLoading(false);
       return;
     }
+    if (owns()) setLoading(true);
     try {
       const next = await repo.operation({ kind: "read", materialId });
-      setState(next);
-      setError(null);
+      if (owns()) {
+        setState(next);
+        setError(null);
+      }
     } catch (caught) {
-      setError(navigationMessage(caught));
+      if (owns()) setError(navigationMessage(caught));
     } finally {
-      setLoading(false);
+      if (owns()) setLoading(false);
     }
   }, [materialId, repo]);
 
+  // Another material or repository: its state is not this one's.
   useEffect(() => {
+    setState(null);
+    setError(null);
     void reload();
   }, [reload]);
 

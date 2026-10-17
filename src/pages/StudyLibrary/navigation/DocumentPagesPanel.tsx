@@ -11,6 +11,9 @@
  * - Saved places made for an earlier version of the file say so (OD-8).
  * - If the page opened but could not be saved, "Try saving again" resends the
  *   save without opening the file a second time.
+ * - A bookmark opens only on the content it was saved on (M4S1-R5). A new
+ *   bookmark is bound to the content, page count and material shown when its
+ *   dialog opened, and a later refresh never rebinds it (M4S1-R6).
  */
 import { useEffect, useId, useState, type FormEvent } from "react";
 
@@ -20,6 +23,17 @@ import { NAVIGATION_LIMITS } from "@/data/navigationTransaction";
 import { savedPlaceNote } from "@/logic/navigation";
 import type { NavigationStatus } from "@/state/navigation/controller";
 import { navigationMessage, useMaterialNavigation, useNavigationController } from "@/state/navigation/useDocumentNavigation";
+
+/** What an open bookmark dialog was started on; fixed for that draft. */
+interface BookmarkDraft {
+  materialId: string;
+  contentSha256: string;
+  totalPages: number;
+  suggestedPage: number | null;
+}
+
+export const DRAFT_STALE_MESSAGE =
+  "This file changed while you were adding this bookmark, so it can't be saved for the new version. Cancel, check the pages, and add it again.";
 
 interface DocumentPagesPanelProps {
   material: StudyMaterial;
@@ -67,7 +81,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const [pageError, setPageError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [checkNote, setCheckNote] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState<BookmarkDraft | null>(null);
   const [removing, setRemoving] = useState<NavigationBookmark | null>(null);
   const [removePending, setRemovePending] = useState(false);
   const [readPending, setReadPending] = useState(false);
@@ -83,6 +97,11 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
     };
   }, [controller, material.id]);
 
+  // A draft belongs to the material it was started on.
+  useEffect(() => {
+    setDraft((current) => (current && current.materialId !== material.id ? null : current));
+  }, [material.id]);
+
   if (!repo?.supported() || !controller) return null;
   const desktop = repo.canCheckFiles();
   const identity = nav.state?.identity ?? null;
@@ -93,9 +112,29 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const said = mine ? statusText(mine) : null;
   const missing = fileMissing || (mine?.kind === "failed" && mine.code === "FILE_MISSING");
 
-  const openAt = async (reference: string | number, pageLabel?: string | null) => {
+  const openAt = async (reference: string | number) => {
     setActionError(null);
-    await controller.request({ materialId: material.id, reference, provenance: "physical_index", ...(pageLabel !== undefined ? { pageLabel } : {}) });
+    await controller.request({ materialId: material.id, reference, provenance: "physical_index" });
+  };
+
+  const openBookmark = async (bookmark: NavigationBookmark) => {
+    setActionError(null);
+    await controller.openSaved({
+      materialId: material.id,
+      contentSha256: bookmark.originatingContentSha256,
+      physicalPage: bookmark.physicalPage,
+      pageLabel: bookmark.pageLabel,
+    });
+  };
+
+  const startBookmark = () => {
+    if (!identity) return;
+    setDraft({
+      materialId: material.id,
+      contentSha256: identity.contentSha256,
+      totalPages: identity.totalPages,
+      suggestedPage: reading?.status === "active" && reading.originatingContentSha256 === identity.contentSha256 ? reading.lastRequestedPage : null,
+    });
   };
 
   const submitPage = async (event: FormEvent) => {
@@ -240,7 +279,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             <div className="row row--between row--wrap">
               <h4 className="small strong">Bookmarks</h4>
               {desktop ? (
-                <Button size="small" onClick={() => setAdding(true)} disabled={!identity || missing}>
+                <Button size="small" onClick={startBookmark} disabled={!identity || missing}>
                   Add bookmark
                 </Button>
               ) : null}
@@ -265,7 +304,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                         <Button
                           size="small"
                           disabled={busy || missing}
-                          onClick={() => void openAt(bookmark.physicalPage, bookmark.pageLabel)}
+                          onClick={() => void openBookmark(bookmark)}
                           aria-label={`Open ${bookmark.title} at ${pageWords(bookmark.physicalPage, bookmark.pageLabel)}`}
                         >
                           Open
@@ -282,15 +321,18 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
           </div>
         </section>
 
-        {adding && identity ? (
+        {draft && draft.materialId === material.id ? (
           <AddBookmarkDialog
-            contentSha256={identity.contentSha256}
-            totalPages={identity.totalPages}
-            suggestedPage={reading?.status === "active" ? reading.lastRequestedPage : null}
-            onClose={() => setAdding(false)}
+            contentSha256={draft.contentSha256}
+            totalPages={draft.totalPages}
+            suggestedPage={draft.suggestedPage}
+            changed={identity !== null && identity.contentSha256 !== draft.contentSha256}
+            onClose={() => setDraft(null)}
             onSave={async (input) => {
-              await nav.addBookmark({ ...input, contentSha256: identity.contentSha256 });
-              setAdding(false);
+              // Bound to the draft's own content; the transaction refuses it
+              // as stale if the file is no longer that content.
+              await nav.addBookmark({ ...input, contentSha256: draft.contentSha256 });
+              setDraft(null);
             }}
           />
         ) : null}
@@ -314,11 +356,13 @@ interface AddBookmarkDialogProps {
   contentSha256: string;
   totalPages: number;
   suggestedPage: number | null;
+  /** The file shown now is no longer the content this draft was started on. */
+  changed?: boolean;
   onClose: () => void;
   onSave: (input: { physicalPage: number; pageLabel: string | null; title: string; notes: string }) => Promise<void>;
 }
 
-export function AddBookmarkDialog({ totalPages, suggestedPage, onClose, onSave }: AddBookmarkDialogProps) {
+export function AddBookmarkDialog({ totalPages, suggestedPage, changed = false, onClose, onSave }: AddBookmarkDialogProps) {
   const [page, setPage] = useState(suggestedPage ? String(suggestedPage) : "");
   const [label, setLabel] = useState("");
   const [title, setTitle] = useState("");
@@ -370,6 +414,11 @@ export function AddBookmarkDialog({ totalPages, suggestedPage, onClose, onSave }
       }
     >
       <div className="stack stack--3">
+        {changed && !errors.save ? (
+          <p className="field__error" role="alert">
+            {DRAFT_STALE_MESSAGE}
+          </p>
+        ) : null}
         <Field label="PDF page" hint={`From 1 to ${totalPages}.`} error={errors.page}>
           <TextInput inputMode="numeric" value={page} onChange={(event) => setPage(event.target.value)} />
         </Field>

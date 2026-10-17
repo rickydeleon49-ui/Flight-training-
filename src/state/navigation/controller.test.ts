@@ -13,7 +13,7 @@ import { navigationRepository } from "@/data/repositories/navigationRepository";
 import { NAVIGATION_ERROR_MESSAGES, NavigationError } from "@/data/navigationTransaction";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 
-import { NavigationController, type NavigationPorts, type NavigationStatus } from "./controller";
+import { NavigationController, SAVED_PLACE_MESSAGES, type NavigationPorts, type NavigationStatus } from "./controller";
 
 const A = "a".repeat(64);
 const B = "b".repeat(64);
@@ -108,9 +108,6 @@ async function rig(): Promise<Rig> {
       await take("open");
       if (content.get(materialId)!.hash !== hash) throw new NavigationError("FILE_CHANGED", NAVIGATION_ERROR_MESSAGES.FILE_CHANGED);
     },
-    async openForGuidance(materialId) {
-      calls.push(`guidance:${materialId}`);
-    },
   };
   const row = async (sql: string, materialId: string) => (await db.select<{ t: string }>(sql, [materialId]))[0]?.t ?? null;
   return {
@@ -157,7 +154,8 @@ describe("a normal request", () => {
     const r = await rig();
     expect(await r.controller.request(intent("m1", 12, "unknown"))).toMatchObject({ kind: "refused", message: expect.stringMatching(/printed page number/) });
     expect(await r.controller.openForGuidance("m1", "Look for page 12.")).toMatchObject({ kind: "guidance", message: "Look for page 12." });
-    expect(r.calls).toEqual(["inspect:m1", "guidance:m1"]);
+    expect(r.calls).toEqual(["inspect:m1", "inspect:m1", "open:m1"]);
+    expect(await r.claim()).toBeNull();
     expect(await r.tuple()).toBeNull();
   });
 
@@ -378,8 +376,86 @@ describe("failed saves, retry, abort and unmount", () => {
       inspect: async () => ({ materialId: "m1", contentSha256: A, totalPages: 50, verifiedAt: "x", changed: false }),
       operation: (op) => navigationRepository(r.db).operation(op),
       open: async () => undefined,
-      openForGuidance: async () => undefined,
     });
     expect(await second.request(intent("m1", 6))).toMatchObject({ kind: "saved", readingState: { ownerGeneration: 3 } });
+  });
+});
+
+describe("opening a saved place on the content it was saved against (M4S1-R5)", () => {
+  const saved = (contentSha256: string | null, physicalPage = 9, pageLabel: string | null = "3-12") => ({ materialId: "m1", contentSha256, physicalPage, pageLabel });
+
+  it("matching content opens and saves the saved page and label", async () => {
+    const r = await rig();
+    expect(await r.controller.openSaved(saved(A))).toMatchObject({ kind: "saved", destination: { physicalPage: 9, pageLabel: "3-12", contentSha256: A } });
+    expect(r.calls).toEqual(["inspect:m1", "begin:m1", "open:m1", "commit:m1#1"]);
+    expect(await r.tuple()).toEqual([9, 0, A, "active", 1]);
+  });
+
+  it("a replacement at the same page count is refused: nothing opens, reserves or saves", async () => {
+    const r = await rig();
+    await r.controller.request(intent("m1", 4));
+    const before = await r.tuple();
+    r.content.set("m1", { hash: B, pages: 50 });
+    r.calls.length = 0;
+    expect(await r.controller.openSaved(saved(A))).toMatchObject({ kind: "refused", message: SAVED_PLACE_MESSAGES.changed });
+    expect(r.calls).toEqual(["inspect:m1"]);
+    expect(await r.tuple()).toEqual(before);
+    expect(await r.claim()).toEqual([1, 0]);
+  });
+
+  it("a replacement with other labels and fewer pages is refused as changed, not re-aimed or clamped", async () => {
+    const r = await rig();
+    r.content.set("m1", { hash: B, pages: 5 });
+    expect(await r.controller.openSaved(saved(A, 30, "iv"))).toMatchObject({ kind: "refused", message: SAVED_PLACE_MESSAGES.changed });
+    expect(r.calls).toEqual(["inspect:m1"]);
+    expect(await r.tuple()).toBeNull();
+  });
+
+  it("a file replaced while the inspection is held is judged by what the inspection finds", async () => {
+    const r = await rig();
+    const held = gate();
+    r.hold.inspect = held;
+    const pending = r.controller.openSaved(saved(A));
+    await reached(r.calls, "inspect:m1");
+    r.content.set("m1", { hash: B, pages: 50 });
+    held.resolve();
+    expect(await pending).toMatchObject({ kind: "refused", message: SAVED_PLACE_MESSAGES.changed });
+    expect(r.calls).toEqual(["inspect:m1"]);
+    expect(await r.tuple()).toBeNull();
+  });
+
+  it("a file replaced after the inspection is refused by the verified open and nothing is saved", async () => {
+    const r = await rig();
+    const held = gate();
+    r.hold.open = held;
+    const pending = r.controller.openSaved(saved(A));
+    await reached(r.calls, "open:m1");
+    r.content.set("m1", { hash: B, pages: 50 });
+    held.resolve();
+    expect(await pending).toMatchObject({ kind: "failed", code: "FILE_CHANGED" });
+    await flush();
+    expect(await r.tuple()).toBeNull();
+    expect(await r.claim()).toEqual([1, 1]);
+  });
+
+  it("a deleted file fails plainly and nothing is saved", async () => {
+    const r = await rig();
+    r.fail.inspect = new NavigationError("FILE_MISSING", NAVIGATION_ERROR_MESSAGES.FILE_MISSING);
+    expect(await r.controller.openSaved(saved(A))).toMatchObject({ kind: "failed", code: "FILE_MISSING" });
+    expect(await r.tuple()).toBeNull();
+    expect(await r.claim()).toBeNull();
+  });
+
+  it("a place whose content was never known stays unresolved and opens nothing", async () => {
+    const r = await rig();
+    expect(await r.controller.openSaved(saved(null))).toMatchObject({ kind: "refused", message: SAVED_PLACE_MESSAGES.unknown });
+    expect(r.calls).toEqual(["inspect:m1"]);
+    expect(await r.tuple()).toBeNull();
+  });
+
+  it("a fresh page request still resolves against the current file", async () => {
+    const r = await rig();
+    r.content.set("m1", { hash: B, pages: 50 });
+    expect(await r.controller.request({ ...intent("m1", 9), pageLabel: "3-12" })).toMatchObject({ kind: "saved", destination: { contentSha256: B } });
   });
 });
