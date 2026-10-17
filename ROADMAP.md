@@ -1,3 +1,7 @@
+## P54-02 phase 2 worker proof delivered; pending independent review — 16 October 2026
+
+**PROOF ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude delivered the bounded extraction-worker and search-contract proof on `claude/p54-02-worker-proof`. Limits and targets were pre-registered in a7813e7 before any code ran. Suite 63/63 (first run 62/63 retained). Pre-registered targets: 8 of 10 met; **missed** warm-query p95 at 10,000 (61.8 ms vs 50) and whole-process peak RSS (285 MiB vs 256), reported unchanged. macOS refuses `ulimit -v`; the sampled RSS watchdog overshot by up to 270 MiB, so there is **no hard memory bound** yet. Proposed contract: native FTS5 in a separate disposable cache, literal AND queries, no implicit prefix/fuzzy, diacritic folding, hash-bound page destinations, browser metadata fallback. No engine or dependency adopted; no application file changed. [Report](docs/P54_02_PHASE2_WORKER_PROOF_REPORT_2026-10-16.md).
+
 ## Quick review: corrections integrated into feature branches; one nonblocking UI follow-up — 16 October 2026
 
 PR194 and PR195 are merged into their feature branches; earlier "draft/pending correction" entries below are historical. PR189 headc9ad743 has Claude's recorded R11/R12 independent acceptance and current-main merge, with combined-source CI pending at review time. PR193 head27c3971 is green against the old formatted-guide base; it still needs a recorded independent export acceptance, retarget/reconciliation with main and final current-base CI before integration.

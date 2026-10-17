@@ -156,3 +156,15 @@ evidence/p54-03-acceptance-2026-10-16/helper.log -text -diff
 evidence/p54-03-acceptance-2026-10-16/hygiene.log -text -diff
 evidence/quick-roadmap-review-2026-10-16/focused.log -text -diff
 evidence/quick-roadmap-review-2026-10-16/build.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/build.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-100-1.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-100-2.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-100-3.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-1000-1.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-1000-2.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-1000-3.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-10000-1.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-10000-2.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-10000-3.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/measure-extract.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/suite.stderr.log -text -diff
