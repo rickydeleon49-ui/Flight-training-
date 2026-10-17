@@ -1,0 +1,50 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/pages/StudyLibrary/ExportStudyDialog.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts (10 tests | 2 failed) 184ms
+   × same-render Save events dispatch only one native save 7ms
+   × selection, output and answer-key controls stay fixed while the save is pending 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/ExportStudyDialog.test.ts > same-render Save events dispatch only one native save
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts:138:29
+    136|   try {
+    137|     act(() => { button.click(); button.click(); });
+    138|     expect(saveStudyExport).toHaveBeenCalledTimes(1);
+       |                             ^
+    139|   } finally {
+    140|     await act(async () => { held.resolve(null); await held.promise; });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/ExportStudyDialog.test.ts > selection, output and answer-key controls stay fixed while the save is pending
+AssertionError: <input type="checkbox" checked="">: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts:151:85
+    149|     const inputs = [...document.querySelectorAll("input")];
+    150|     expect(inputs.length).toBeGreaterThan(0);
+    151|     for (const input of inputs) expect(input.matches(":disabled"), inp…
+       |                                                                                     ^
+    152|   } finally {
+    153|     await act(async () => { held.resolve(null); await held.promise; });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  18:53:07
+   Duration  641ms (transform 82ms, setup 0ms, import 146ms, tests 184ms, environment 226ms)
+

@@ -1,0 +1,13 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/pages/StudyLibrary/ExportStudyDialog.test.ts src/logic/studyExport.test.ts src/logic/studyHandout.test.ts src/services/studyExport.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+
+ Test Files  4 passed (4)
+      Tests  35 passed (35)
+   Start at  18:53:27
+   Duration  627ms (transform 167ms, setup 0ms, import 305ms, tests 245ms, environment 497ms)
+
