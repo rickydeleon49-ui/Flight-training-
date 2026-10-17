@@ -73,21 +73,28 @@ export function useMaterialNavigation(materialId: string, repo: NavigationReposi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const latest = useRef(0);
-  const mounted = useRef(false);
+  const scope = useMemo(() => ({ materialId, repo }), [materialId, repo]);
+  const active = useRef<{ scope: typeof scope } | null>(null);
 
-  // Declared before the first read so it is mounted when that read starts.
-  // Cleanup retires reads in flight; StrictMode's replayed setup mounts again.
+  // Each committed context/lifetime owns a distinct lease. A completed action
+  // must not borrow a new lease merely because the hook is mounted again.
   useEffect(() => {
-    mounted.current = true;
+    const lease = { scope };
+    active.current = lease;
     return () => {
-      mounted.current = false;
-      latest.current += 1;
+      if (active.current === lease) {
+        active.current = null;
+        latest.current += 1;
+      }
     };
-  }, []);
+  }, [scope]);
 
-  const reload = useCallback(async () => {
+  const reloadFor = useCallback(async (lease: typeof active.current) => {
+    // Refuse retired work before it dispatches a read or takes ownership away
+    // from a valid read that is still pending in the current context.
+    if (!lease || lease.scope !== scope || active.current !== lease) return;
     const id = ++latest.current;
-    const owns = () => mounted.current && latest.current === id;
+    const owns = () => active.current === lease && latest.current === id;
     if (!repo?.supported()) {
       if (owns()) setLoading(false);
       return;
@@ -104,7 +111,21 @@ export function useMaterialNavigation(materialId: string, repo: NavigationReposi
     } finally {
       if (owns()) setLoading(false);
     }
-  }, [materialId, repo]);
+  }, [materialId, repo, scope]);
+
+  const reload = useCallback(() => reloadFor(active.current), [reloadFor]);
+
+  async function refreshAfter<T>(work: () => Promise<T>): Promise<T> {
+    const lease = active.current;
+    if (!lease || lease.scope !== scope) {
+      throw new NavigationError("STALE_STATE", NAVIGATION_ERROR_MESSAGES.STALE_STATE);
+    }
+    try {
+      return await work();
+    } finally {
+      await reloadFor(lease);
+    }
+  }
 
   // Another material or repository: its state is not this one's.
   useEffect(() => {
@@ -125,17 +146,15 @@ export function useMaterialNavigation(materialId: string, repo: NavigationReposi
     error,
     reload,
     async checkPages() {
-      if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
-      try {
+      return refreshAfter(async () => {
+        if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
         const identity = await repo.inspect(materialId);
         return identity.changed;
-      } finally {
-        await reload();
-      }
+      });
     },
     async setRead(reading, confirmed) {
-      if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
-      try {
+      return refreshAfter(async () => {
+        if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
         await repo.operation({
           kind: "set_read",
           materialId,
@@ -144,13 +163,11 @@ export function useMaterialNavigation(materialId: string, repo: NavigationReposi
           physicalPage: reading.lastRequestedPage,
           confirmed,
         });
-      } finally {
-        await reload();
-      }
+      });
     },
     async addBookmark(input) {
-      if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
-      try {
+      return refreshAfter(async () => {
+        if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
         return await repo.operation({
           kind: "add_bookmark",
           materialId,
@@ -161,17 +178,13 @@ export function useMaterialNavigation(materialId: string, repo: NavigationReposi
           title: input.title,
           notes: input.notes,
         });
-      } finally {
-        await reload();
-      }
+      });
     },
     async deleteBookmark(bookmarkId) {
-      if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
-      try {
+      return refreshAfter(async () => {
+        if (!repo) throw new NavigationError("DESKTOP_ONLY", NAVIGATION_ERROR_MESSAGES.DESKTOP_ONLY);
         await repo.operation({ kind: "delete_bookmark", materialId, bookmarkId });
-      } finally {
-        await reload();
-      }
+      });
     },
   };
 }
