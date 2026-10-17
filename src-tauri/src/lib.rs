@@ -20,6 +20,7 @@ mod practice_sessions;
 mod secrets;
 mod skill_evidence;
 mod storage;
+mod study_export;
 mod study_packet;
 
 use tauri::Manager;
@@ -189,6 +190,7 @@ pub fn run() {
             lineage::reconcile_split_batch,
             lineage::fingerprint_stored_documents,
             study_packet::pick_study_packet,
+            study_export::save_study_export,
             study_packet::save_structured_study_material_atomically,
             practice_sessions::save_practice_session_atomically,
             practice_sessions::erase_practice_history_atomically,

@@ -1,0 +1,173 @@
+/**
+ * Share or print one material's study aid (P54-04).
+ *
+ * She picks which parts to include (guide, flashcards, practice questions)
+ * and one of two outputs:
+ * - a study packet (.json) that any copy of Her Flight Deck can import as a
+ *   new material, checked by the import's own validator before it is saved;
+ * - a printable handout (.html) to open in a browser and print, with an
+ *   optional answer key on its own page.
+ *
+ * Nothing in her library changes. Only this material's chosen study content
+ * is written; practice history, other materials and settings never are.
+ */
+import { useEffect, useId, useState } from "react";
+
+import { Button, Dialog } from "@/components/ui";
+import { exportFileName, exportStudyPacket, exportableParts, type ExportSelection, type ExportSource } from "@/logic/studyExport";
+import { buildHandoutHtml } from "@/logic/studyHandout";
+import { DesktopOnlyError } from "@/services/documents";
+import { saveStudyExport, StudyExportError } from "@/services/studyExport";
+
+type Output = "packet" | "handout";
+
+interface Props {
+  open: boolean;
+  source: ExportSource;
+  onClose: () => void;
+}
+
+export const EXPORT_DESKTOP_ONLY = "Saving a file needs the desktop application.";
+
+export function ExportStudyDialog({ open, source, onClose }: Props) {
+  const ids = useId();
+  const available = exportableParts(source);
+  const [selection, setSelection] = useState<ExportSelection>(available);
+  const [output, setOutput] = useState<Output>("handout");
+  const [answerKey, setAnswerKey] = useState(true);
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setSelection(exportableParts(source));
+    setError(null);
+    setSaved(null);
+    // Reset only when the dialog opens; the source is read again at save time.
+  }, [open]);
+
+  const chosen = (selection.guide && available.guide) || (selection.flashcards && available.flashcards) || (selection.questions && available.questions);
+  const set = source.studySet;
+  const questionCount = source.practiceTest?.questions.length ?? 0;
+
+  const save = async () => {
+    setError(null);
+    setSaved(null);
+    const now = new Date();
+    let contents: string;
+    let suggested: string;
+    if (output === "packet") {
+      const packet = exportStudyPacket(source, selection, now);
+      if (!packet.ok) {
+        setError(packet.message);
+        return;
+      }
+      contents = packet.text;
+      suggested = packet.fileName;
+    } else {
+      contents = buildHandoutHtml(source, selection, { answerKey }, now);
+      suggested = exportFileName(source.material.title, "html");
+    }
+    setWorking(true);
+    try {
+      const result = await saveStudyExport(output, suggested, contents);
+      if (result) setSaved(`Saved “${result.fileName}”.`);
+    } catch (caught) {
+      if (caught instanceof DesktopOnlyError) setError(EXPORT_DESKTOP_ONLY);
+      else if (caught instanceof StudyExportError) setError(caught.message);
+      else setError("The file could not be saved. Nothing was changed.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const toggle = (part: keyof ExportSelection) => (checked: boolean) => setSelection((current) => ({ ...current, [part]: checked }));
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      dismissible={!working}
+      title="Share or print"
+      description="Save this study aid as a file. Nothing in your library changes."
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={working}>
+            {saved ? "Done" : "Cancel"}
+          </Button>
+          <Button variant="primary" onClick={() => void save()} disabled={working || !chosen}>
+            {working ? "Saving…" : "Save…"}
+          </Button>
+        </>
+      }
+    >
+      <div className="stack stack--4">
+        <fieldset className="export-study__choices">
+          <legend className="field__label">Include</legend>
+          {available.guide ? (
+            <Choice checked={selection.guide} onChange={toggle("guide")} label="Study guide" detail={plural(set?.sections.length ?? 0, "section")} />
+          ) : null}
+          {available.flashcards ? (
+            <Choice checked={selection.flashcards} onChange={toggle("flashcards")} label="Flashcards" detail={plural(set?.flashcards.length ?? 0, "card")} />
+          ) : null}
+          {available.questions ? (
+            <Choice checked={selection.questions} onChange={toggle("questions")} label="Practice questions" detail={plural(questionCount, "question")} />
+          ) : null}
+        </fieldset>
+
+        <fieldset className="export-study__choices">
+          <legend className="field__label">Save as</legend>
+          <label className="small">
+            <input type="radio" name={`${ids}-output`} checked={output === "handout"} onChange={() => setOutput("handout")} /> Printable handout
+            (.html): open it in a browser to print or save as PDF
+          </label>
+          <label className="small">
+            <input type="radio" name={`${ids}-output`} checked={output === "packet"} onChange={() => setOutput("packet")} /> Study packet (.json):
+            to import into Her Flight Deck on another computer
+          </label>
+        </fieldset>
+
+        {output === "handout" && selection.questions && available.questions ? (
+          <Choice
+            checked={answerKey}
+            onChange={setAnswerKey}
+            label="Add an answer key at the end"
+            detail="On its own page, so you can quiz yourself first."
+          />
+        ) : null}
+        {output === "packet" && selection.questions && available.questions ? (
+          <p className="tiny dim">A study packet always includes the answers, so it can be practiced after importing.</p>
+        ) : null}
+
+        <p className="tiny dim">
+          The file says where this content came from. AI-generated and imported content is still a study aid: check it against current FAA
+          material and your instructor.
+        </p>
+
+        {error ? (
+          <p className="field__error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {saved ? (
+          <p className="small" role="status">
+            {saved}
+          </p>
+        ) : null}
+      </div>
+    </Dialog>
+  );
+}
+
+const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+
+/** A plain choice; the shared Checkbox strikes through its label, which reads as "done". */
+function Choice({ checked, onChange, label, detail }: { checked: boolean; onChange: (checked: boolean) => void; label: string; detail: string }) {
+  return (
+    <label className="small export-study__option">
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /> {label}{" "}
+      <span className="tiny dim">· {detail}</span>
+    </label>
+  );
+}

@@ -1,0 +1,230 @@
+import { describe, expect, it } from "vitest";
+
+import type { AiStudySet, PracticeTest } from "@/domain/types";
+import { canonicalPersistenceJson, validatePacketText } from "@/logic/studyPacket";
+import { makeMaterial } from "@/testing/factories";
+
+import { EXPORT_MESSAGES, exportFileName, exportStudyPacket, exportableParts, type ExportSource } from "./studyExport";
+
+const NOW = new Date("2026-10-16T18:00:00Z");
+const ALL = { guide: true, flashcards: true, questions: true };
+
+function studySet(overrides: Partial<AiStudySet> = {}): AiStudySet {
+  return {
+    sourceMaterialId: "material-1",
+    title: "Weather guide",
+    summary: "How METARs and TAFs describe the weather.",
+    sections: [
+      { heading: "Reading a METAR", body: "- Station\n- Time\n- **Wind** first\n\n| Code | Meaning |\n| --- | --- |\n| BKN | Broken |" },
+      { heading: "Ceilings", body: "The lowest broken or overcast layer." },
+    ],
+    flashcards: [
+      { front: "What is a METAR?", back: "A routine surface weather observation.", sourcePage: 12 },
+      { front: "BKN means?", back: "Broken: 5/8 to 7/8 sky cover.", sourcePage: null },
+    ],
+    sourceNotes: "Based on the Aviation Weather Handbook, chapter 24.",
+    provider: "gemini",
+    model: "gemini-3.5-flash",
+    generatedAt: "2026-10-01T10:00:00Z",
+    updatedAt: "2026-10-01T10:00:00Z",
+    ...overrides,
+  };
+}
+
+function practiceTest(overrides: Partial<PracticeTest> = {}): PracticeTest {
+  return {
+    sourceMaterialId: "material-1",
+    title: "Weather practice",
+    questions: [
+      {
+        question: "Which layer is a ceiling?",
+        options: ["Few", "Scattered", "Broken", "Clear"],
+        correctIndex: 2,
+        explanation: "Broken and overcast layers are ceilings.",
+        sourcePage: 14,
+      },
+      { question: "A TAF is a…", options: ["Forecast", "Observation"], correctIndex: 0, explanation: "Terminal Aerodrome Forecast.", sourcePage: null },
+    ],
+    provider: "gemini",
+    model: "gemini-3.5-flash",
+    generatedAt: "2026-10-01T10:00:00Z",
+    updatedAt: "2026-10-01T10:00:00Z",
+    ...overrides,
+  };
+}
+
+function source(overrides: Partial<ExportSource> = {}): ExportSource {
+  return {
+    material: makeMaterial({ id: "material-1", title: "Aviation Weather Handbook", filePath: "documents/private/weather.pdf", notes: "PRIVATE NOTE" }),
+    studySet: studySet(),
+    practiceTest: practiceTest(),
+    ...overrides,
+  };
+}
+
+function exported(input: ExportSource = source(), selection = ALL) {
+  const result = exportStudyPacket(input, selection, NOW);
+  if (!result.ok) throw new Error(result.message);
+  return result;
+}
+
+describe("a study packet export", () => {
+  it("passes the import's own validator", () => {
+    const result = exported();
+    const validation = validatePacketText(result.text);
+    expect(validation.ok).toBe(true);
+    expect(result.counts).toEqual({ sections: 2, flashcards: 2, questions: 2 });
+    expect(result.fileName).toBe("Aviation Weather Handbook.json");
+  });
+
+  it("imports exactly the content she chose, answers included", () => {
+    const validation = validatePacketText(exported().text);
+    if (!validation.ok) throw new Error("invalid");
+    const set = studySet();
+    const test = practiceTest();
+    expect(validation.payload).toEqual({
+      material: { title: "Aviation Weather Handbook" },
+      studySet: {
+        title: "Aviation Weather Handbook",
+        summary: set.summary,
+        sections: set.sections,
+        flashcards: set.flashcards.map((card) => ({ front: card.front, back: card.back, sourcePage: null })),
+        sourceNotes: set.sourceNotes,
+        provider: "import",
+        model: "",
+      },
+      practiceTest: {
+        title: "Aviation Weather Handbook",
+        questions: test.questions.map((q) => ({ ...q, sourcePage: null })),
+        provider: "import",
+        model: "",
+      },
+    });
+  });
+
+  it("is stable: the same content gives the same import content hash", () => {
+    const later = exportStudyPacket(source(), ALL, new Date("2027-01-01T00:00:00Z"));
+    if (!later.ok) throw new Error(later.message);
+    const first = validatePacketText(exported().text);
+    const second = validatePacketText(later.text);
+    if (!first.ok || !second.ok) throw new Error("invalid");
+    // Only the export date differs; what an import saves is identical.
+    expect(later.text).not.toBe(exported().text);
+    expect(canonicalPersistenceJson(first.payload)).toBe(canonicalPersistenceJson(second.payload));
+  });
+
+  it("maps each answer to its own choice", () => {
+    const packet = JSON.parse(exported().text) as { questions: { choices: { id: string; text: string }[]; correctChoiceId: string }[] };
+    expect(packet.questions.map((q) => q.choices.find((c) => c.id === q.correctChoiceId)?.text)).toEqual(["Broken", "Forecast"]);
+  });
+
+  it("includes only the parts she chose", () => {
+    const cardsOnly = validatePacketText(exported(source(), { guide: false, flashcards: true, questions: false }).text);
+    if (!cardsOnly.ok) throw new Error("invalid");
+    expect(cardsOnly.payload.practiceTest).toBeNull();
+    expect(cardsOnly.payload.studySet?.sections).toEqual([]);
+    expect(cardsOnly.payload.studySet?.summary).toBe("");
+    expect(cardsOnly.payload.studySet?.sourceNotes).toBe("");
+    expect(cardsOnly.payload.studySet?.flashcards).toHaveLength(2);
+
+    const testOnly = validatePacketText(exported(source(), { guide: false, flashcards: false, questions: true }).text);
+    if (!testOnly.ok) throw new Error("invalid");
+    expect(testOnly.payload.studySet).toBeNull();
+    expect(testOnly.payload.practiceTest?.questions).toHaveLength(2);
+  });
+
+  it("refuses an empty choice, including parts the material doesn't have", () => {
+    expect(exportStudyPacket(source(), { guide: false, flashcards: false, questions: false }, NOW)).toEqual({
+      ok: false,
+      message: EXPORT_MESSAGES.nothingChosen,
+    });
+    expect(exportStudyPacket(source({ practiceTest: null }), { guide: false, flashcards: false, questions: true }, NOW)).toEqual({
+      ok: false,
+      message: EXPORT_MESSAGES.nothingChosen,
+    });
+  });
+
+  it("writes nothing but the chosen study content", () => {
+    const text = exported().text;
+    const packet = JSON.parse(text) as Record<string, unknown>;
+    expect(Object.keys(packet).sort()).toEqual(["flashcards", "format", "formatVersion", "guide", "questions", "source", "title"]);
+    for (const absent of ["material-1", "weather.pdf", "documents/", "PRIVATE NOTE", "generatedAt", "2026-10-01"]) {
+      expect(text).not.toContain(absent);
+    }
+  });
+
+  it("says where the content came from", () => {
+    const packet = JSON.parse(exported().text) as { source: { generator: string; createdAt: string; note: string } };
+    expect(packet.source.generator).toBe("Her Flight Deck");
+    expect(packet.source.createdAt).toBe("2026-10-16");
+    expect(packet.source.note).toBe(
+      "AI-generated study aid (gemini-3.5-flash). Verify everything against current FAA material, aircraft documents and an instructor.",
+    );
+    expect(packet.source.note).toContain("Verify everything");
+
+    const imported = exported(source({ studySet: studySet({ provider: "import", model: "" }), practiceTest: null }));
+    expect((JSON.parse(imported.text) as { source: { note: string } }).source.note).toContain("Imported into Her Flight Deck from a study packet; not checked by the app.");
+
+    const mixed = exported(source({ practiceTest: practiceTest({ provider: "import", model: "" }) }));
+    const note = (JSON.parse(mixed.text) as { source: { note: string } }).source.note;
+    expect(note).toContain("Study guide and flashcards: AI-generated study aid (gemini-3.5-flash).");
+    expect(note).toContain("Practice test: imported into Her Flight Deck");
+  });
+
+  it("carries known pages as unverified references, which an import discards", () => {
+    const validation = validatePacketText(exported().text);
+    if (!validation.ok) throw new Error("invalid");
+    expect(validation.preview.data.flashcards[0]?.sourceRefs).toEqual([{ label: "Aviation Weather Handbook", page: 12 }]);
+    expect(validation.preview.data.flashcards[1]?.sourceRefs).toEqual([]);
+    expect(validation.preview.warnings.map((w) => w.code)).toContain("source_refs_unverified");
+  });
+
+  it("refuses content that looks like a credential", () => {
+    const leaked = source({ studySet: studySet({ summary: `Key: AIza${"A".repeat(35)}` }) });
+    expect(exportStudyPacket(leaked, ALL, NOW)).toEqual({ ok: false, message: EXPORT_MESSAGES.credential });
+  });
+
+  it("refuses more than the format can hold", () => {
+    const many = Array.from({ length: 501 }, (_, i) => ({ front: `Q${i}`, back: `A${i}`, sourcePage: null }));
+    expect(exportStudyPacket(source({ studySet: studySet({ flashcards: many }) }), ALL, NOW)).toEqual({ ok: false, message: EXPORT_MESSAGES.tooLarge });
+  });
+
+  it("explains other content the format cannot hold", () => {
+    const duplicate = practiceTest({
+      questions: [{ question: "Pick", options: ["Same", "Same"], correctIndex: 0, explanation: "x", sourcePage: null }],
+    });
+    const result = exportStudyPacket(source({ practiceTest: duplicate }), ALL, NOW);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.message.startsWith(EXPORT_MESSAGES.invalid)).toBe(true);
+  });
+
+  it("accepts content the format only tidies (line endings and spacing)", () => {
+    const messy = source({
+      studySet: studySet({ summary: "Line one\r\nLine two   \n" }),
+      practiceTest: practiceTest({
+        questions: [{ question: "Q?", options: ["  Spaced   out ", "Other"], correctIndex: 0, explanation: "E", sourcePage: null }],
+      }),
+    });
+    const validation = validatePacketText(exported(messy).text);
+    if (!validation.ok) throw new Error("invalid");
+    expect(validation.payload.studySet?.summary).toBe("Line one\nLine two");
+    expect(validation.payload.practiceTest?.questions[0]?.options[0]).toBe("Spaced out");
+  });
+});
+
+describe("export helpers", () => {
+  it("knows which parts a material has", () => {
+    expect(exportableParts(source())).toEqual(ALL);
+    expect(exportableParts(source({ studySet: studySet({ summary: "", sections: [], flashcards: [] }), practiceTest: null }))).toEqual({
+      guide: false,
+      flashcards: false,
+      questions: false,
+    });
+  });
+
+  it("suggests a plain file name", () => {
+    expect(exportFileName("Weather / Ch. 12: METARs?", "json")).toBe("Weather Ch. 12 METARs.json");
+    expect(exportFileName("..hidden", "html")).toBe("hidden.html");
+    expect(exportFileName("   ", "json")).toBe("Study packet.json");
+  });
+});
