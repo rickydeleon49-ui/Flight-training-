@@ -1,0 +1,28 @@
+[
+  {
+    "scenario": "measurement_exit",
+    "runnerExit": 0,
+    "printedPass": true,
+    "preservation": {
+      "applicationFilesUnchanged": true,
+      "temporaryExampleRemoved": true,
+      "applicationProfileAccessed": false,
+      "productionDependencyAdded": false
+    },
+    "extractExit": "17",
+    "indexExit": "23"
+  },
+  {
+    "scenario": "preservation_changed",
+    "runnerExit": 0,
+    "printedPass": true,
+    "preservation": {
+      "applicationFilesUnchanged": false,
+      "temporaryExampleRemoved": true,
+      "applicationProfileAccessed": false,
+      "productionDependencyAdded": false
+    },
+    "extractExit": "0",
+    "indexExit": "0"
+  }
+]

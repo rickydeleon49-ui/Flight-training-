@@ -1,0 +1,612 @@
+test_already_dirty_file_changing_again_fails_preservation (__main__.RunnerGates.test_already_dirty_file_changing_again_fails_preservation) ... FAIL
+test_changed_status_fails_preservation (__main__.RunnerGates.test_changed_status_fails_preservation) ... FAIL
+test_example_changed_by_someone_else_is_left_and_fails (__main__.RunnerGates.test_example_changed_by_someone_else_is_left_and_fails) ... FAIL
+test_failed_inner_worker_is_invalid (__main__.RunnerGates.test_failed_inner_worker_is_invalid) ... FAIL
+test_failed_suite_measures_nothing (__main__.RunnerGates.test_failed_suite_measures_nothing) ... FAIL
+test_missing_measurement_field_is_invalid (__main__.RunnerGates.test_missing_measurement_field_is_invalid) ... ERROR
+test_missing_rss_is_invalid (__main__.RunnerGates.test_missing_rss_is_invalid) ... ERROR
+test_nonzero_extraction_is_invalid (__main__.RunnerGates.test_nonzero_extraction_is_invalid) ... FAIL
+test_nonzero_index_is_invalid (__main__.RunnerGates.test_nonzero_index_is_invalid) ... FAIL
+test_normal_success_is_valid (__main__.RunnerGates.test_normal_success_is_valid) ... FAIL
+test_output_inside_repository_refused (__main__.RunnerGates.test_output_inside_repository_refused) ... FAIL
+test_overlapping_locations_refused_before_anything_runs (__main__.RunnerGates.test_overlapping_locations_refused_before_anything_runs) ... FAIL
+test_wrong_text_page_count_is_invalid (__main__.RunnerGates.test_wrong_text_page_count_is_invalid) ... FAIL
+
+======================================================================
+ERROR: test_missing_measurement_field_is_invalid (__main__.RunnerGates.test_missing_measurement_field_is_invalid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 170, in test_missing_measurement_field_is_invalid
+    r = run_runner('missing_field')
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 118, in run_runner
+    runpy.run_path(str(runner_copy), run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 294, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-p54-runner-test-vxln9kc1/runner/run-phase2.py", line 123, in <module>
+KeyError: 'coldIndexMs'
+
+======================================================================
+ERROR: test_missing_rss_is_invalid (__main__.RunnerGates.test_missing_rss_is_invalid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 165, in test_missing_rss_is_invalid
+    r = run_runner('missing_rss')
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 118, in run_runner
+    runpy.run_path(str(runner_copy), run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 294, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-p54-runner-test-lrzbza13/runner/run-phase2.py", line 126, in <module>
+TypeError: '>' not supported between instances of 'NoneType' and 'NoneType'
+
+======================================================================
+FAIL: test_already_dirty_file_changing_again_fails_preservation (__main__.RunnerGates.test_already_dirty_file_changing_again_fails_preservation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 184, in test_already_dirty_file_changing_again_fails_preservation
+    self.assertFailed(r, 4, 'preservation')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 4 : [
+  {
+    "target": "300-page extraction wall time (ms, median)",
+    "measured": 10.0,
+    "rule": "<= 10000",
+    "met": true
+  },
+  {
+    "target": "300-page worker peak RSS (MiB, max)",
+    "measured": 1.0,
+    "rule": "<= 256",
+    "met": true
+  },
+  {
+    "target": "bomb deadline stop+reap (ms, deadline 1000)",
+    "measured": 1001,
+    "rule": "<= 1500",
+    "met": true
+  },
+  {
+    "target": "stall deadline stop+reap (ms, deadline 800)",
+    "measured": 801,
+    "rule": "<= 1300",
+    "met": true
+  },
+  {
+    "target": "spawn to first frame (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 100",
+    "met": true
+  },
+  {
+    "target": "IPC NDJSON parse (MB/s)",
+    "measured": 100.0,
+    "rule": ">= 50",
+    "met": true
+  },
+  {
+    "target": "cold FTS5 index at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 3000",
+    "met": true
+  },
+  {
+    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",
+    "measured": 1.0,
+    "rule": "<= 50",
+    "met": true
+  },
+  {
+    "target": "reopen + first query at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 300",
+    "met": true
+  },
+  {
+    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",
+    "measured": 2.0,
+    "rule": "<= 256",
+    "met": true
+  }
+]
+PASS: suite 71 / 71 ; scratch removed
+
+
+======================================================================
+FAIL: test_changed_status_fails_preservation (__main__.RunnerGates.test_changed_status_fails_preservation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 180, in test_changed_status_fails_preservation
+    self.assertFailed(run_runner('status_changed'), 4, 'preservation')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 4 : [
+  {
+    "target": "300-page extraction wall time (ms, median)",
+    "measured": 10.0,
+    "rule": "<= 10000",
+    "met": true
+  },
+  {
+    "target": "300-page worker peak RSS (MiB, max)",
+    "measured": 1.0,
+    "rule": "<= 256",
+    "met": true
+  },
+  {
+    "target": "bomb deadline stop+reap (ms, deadline 1000)",
+    "measured": 1001,
+    "rule": "<= 1500",
+    "met": true
+  },
+  {
+    "target": "stall deadline stop+reap (ms, deadline 800)",
+    "measured": 801,
+    "rule": "<= 1300",
+    "met": true
+  },
+  {
+    "target": "spawn to first frame (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 100",
+    "met": true
+  },
+  {
+    "target": "IPC NDJSON parse (MB/s)",
+    "measured": 100.0,
+    "rule": ">= 50",
+    "met": true
+  },
+  {
+    "target": "cold FTS5 index at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 3000",
+    "met": true
+  },
+  {
+    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",
+    "measured": 1.0,
+    "rule": "<= 50",
+    "met": true
+  },
+  {
+    "target": "reopen + first query at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 300",
+    "met": true
+  },
+  {
+    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",
+    "measured": 2.0,
+    "rule": "<= 256",
+    "met": true
+  }
+]
+PASS: suite 71 / 71 ; scratch removed
+
+
+======================================================================
+FAIL: test_example_changed_by_someone_else_is_left_and_fails (__main__.RunnerGates.test_example_changed_by_someone_else_is_left_and_fails)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 190, in test_example_changed_by_someone_else_is_left_and_fails
+    self.assertFailed(r, 4, 'build cleanup')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 4 : [
+  {
+    "target": "300-page extraction wall time (ms, median)",
+    "measured": 10.0,
+    "rule": "<= 10000",
+    "met": true
+  },
+  {
+    "target": "300-page worker peak RSS (MiB, max)",
+    "measured": 1.0,
+    "rule": "<= 256",
+    "met": true
+  },
+  {
+    "target": "bomb deadline stop+reap (ms, deadline 1000)",
+    "measured": 1001,
+    "rule": "<= 1500",
+    "met": true
+  },
+  {
+    "target": "stall deadline stop+reap (ms, deadline 800)",
+    "measured": 801,
+    "rule": "<= 1300",
+    "met": true
+  },
+  {
+    "target": "spawn to first frame (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 100",
+    "met": true
+  },
+  {
+    "target": "IPC NDJSON parse (MB/s)",
+    "measured": 100.0,
+    "rule": ">= 50",
+    "met": true
+  },
+  {
+    "target": "cold FTS5 index at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 3000",
+    "met": true
+  },
+  {
+    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",
+    "measured": 1.0,
+    "rule": "<= 50",
+    "met": true
+  },
+  {
+    "target": "reopen + first query at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 300",
+    "met": true
+  },
+  {
+    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",
+    "measured": 2.0,
+    "rule": "<= 256",
+    "met": true
+  }
+]
+PASS: suite 71 / 71 ; scratch removed
+
+
+======================================================================
+FAIL: test_failed_inner_worker_is_invalid (__main__.RunnerGates.test_failed_inner_worker_is_invalid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 156, in test_failed_inner_worker_is_invalid
+    self.assertFailed(r, 2, 'measure-extract')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 2 : [
+  {
+    "target": "300-page extraction wall time (ms, median)",
+    "measured": 10.0,
+    "rule": "<= 10000",
+    "met": true
+  },
+  {
+    "target": "300-page worker peak RSS (MiB, max)",
+    "measured": 1.0,
+    "rule": "<= 256",
+    "met": true
+  },
+  {
+    "target": "bomb deadline stop+reap (ms, deadline 1000)",
+    "measured": 1001,
+    "rule": "<= 1500",
+    "met": true
+  },
+  {
+    "target": "stall deadline stop+reap (ms, deadline 800)",
+    "measured": 801,
+    "rule": "<= 1300",
+    "met": true
+  },
+  {
+    "target": "spawn to first frame (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 100",
+    "met": true
+  },
+  {
+    "target": "IPC NDJSON parse (MB/s)",
+    "measured": 100.0,
+    "rule": ">= 50",
+    "met": true
+  },
+  {
+    "target": "cold FTS5 index at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 3000",
+    "met": true
+  },
+  {
+    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",
+    "measured": 1.0,
+    "rule": "<= 50",
+    "met": true
+  },
+  {
+    "target": "reopen + first query at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 300",
+    "met": true
+  },
+  {
+    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",
+    "measured": 2.0,
+    "rule": "<= 256",
+    "met": true
+  }
+]
+PASS: suite 71 / 71 ; scratch removed
+
+
+======================================================================
+FAIL: test_failed_suite_measures_nothing (__main__.RunnerGates.test_failed_suite_measures_nothing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 176, in test_failed_suite_measures_nothing
+    self.assertFailed(r, 3, 'suite')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'suite failed; measurements not run' != 3 : 
+
+======================================================================
+FAIL: test_nonzero_extraction_is_invalid (__main__.RunnerGates.test_nonzero_extraction_is_invalid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 149, in test_nonzero_extraction_is_invalid
+    self.assertFailed(run_runner('extract_exit'), 2, 'measure-extract')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 2 : [
+  {
+    "target": "300-page extraction wall time (ms, median)",
+    "measured": 10.0,
+    "rule": "<= 10000",
+    "met": true
+  },
+  {
+    "target": "300-page worker peak RSS (MiB, max)",
+    "measured": 1.0,
+    "rule": "<= 256",
+    "met": true
+  },
+  {
+    "target": "bomb deadline stop+reap (ms, deadline 1000)",
+    "measured": 1001,
+    "rule": "<= 1500",
+    "met": true
+  },
+  {
+    "target": "stall deadline stop+reap (ms, deadline 800)",
+    "measured": 801,
+    "rule": "<= 1300",
+    "met": true
+  },
+  {
+    "target": "spawn to first frame (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 100",
+    "met": true
+  },
+  {
+    "target": "IPC NDJSON parse (MB/s)",
+    "measured": 100.0,
+    "rule": ">= 50",
+    "met": true
+  },
+  {
+    "target": "cold FTS5 index at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 3000",
+    "met": true
+  },
+  {
+    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",
+    "measured": 1.0,
+    "rule": "<= 50",
+    "met": true
+  },
+  {
+    "target": "reopen + first query at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 300",
+    "met": true
+  },
+  {
+    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",
+    "measured": 2.0,
+    "rule": "<= 256",
+    "met": true
+  }
+]
+PASS: suite 71 / 71 ; scratch removed
+
+
+======================================================================
+FAIL: test_nonzero_index_is_invalid (__main__.RunnerGates.test_nonzero_index_is_invalid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 152, in test_nonzero_index_is_invalid
+    self.assertFailed(run_runner('index_exit'), 2, 'index-100-1')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 2 : [
+  {
+    "target": "300-page extraction wall time (ms, median)",
+    "measured": 10.0,
+    "rule": "<= 10000",
+    "met": true
+  },
+  {
+    "target": "300-page worker peak RSS (MiB, max)",
+    "measured": 1.0,
+    "rule": "<= 256",
+    "met": true
+  },
+  {
+    "target": "bomb deadline stop+reap (ms, deadline 1000)",
+    "measured": 1001,
+    "rule": "<= 1500",
+    "met": true
+  },
+  {
+    "target": "stall deadline stop+reap (ms, deadline 800)",
+    "measured": 801,
+    "rule": "<= 1300",
+    "met": true
+  },
+  {
+    "target": "spawn to first frame (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 100",
+    "met": true
+  },
+  {
+    "target": "IPC NDJSON parse (MB/s)",
+    "measured": 100.0,
+    "rule": ">= 50",
+    "met": true
+  },
+  {
+    "target": "cold FTS5 index at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 3000",
+    "met": true
+  },
+  {
+    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",
+    "measured": 1.0,
+    "rule": "<= 50",
+    "met": true
+  },
+  {
+    "target": "reopen + first query at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 300",
+    "met": true
+  },
+  {
+    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",
+    "measured": 2.0,
+    "rule": "<= 256",
+    "met": true
+  }
+]
+PASS: suite 71 / 71 ; scratch removed
+
+
+======================================================================
+FAIL: test_normal_success_is_valid (__main__.RunnerGates.test_normal_success_is_valid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 142, in test_normal_success_is_valid
+    self.assertIn('VALID: suite 71/71', r['printed'])
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'VALID: suite 71/71' not found in '[\n  {\n    "target": "300-page extraction wall time (ms, median)",\n    "measured": 10.0,\n    "rule": "<= 10000",\n    "met": true\n  },\n  {\n    "target": "300-page worker peak RSS (MiB, max)",\n    "measured": 1.0,\n    "rule": "<= 256",\n    "met": true\n  },\n  {\n    "target": "bomb deadline stop+reap (ms, deadline 1000)",\n    "measured": 1001,\n    "rule": "<= 1500",\n    "met": true\n  },\n  {\n    "target": "stall deadline stop+reap (ms, deadline 800)",\n    "measured": 801,\n    "rule": "<= 1300",\n    "met": true\n  },\n  {\n    "target": "spawn to first frame (ms, median)",\n    "measured": 1.0,\n    "rule": "<= 100",\n    "met": true\n  },\n  {\n    "target": "IPC NDJSON parse (MB/s)",\n    "measured": 100.0,\n    "rule": ">= 50",\n    "met": true\n  },\n  {\n    "target": "cold FTS5 index at 10,000 (ms, median)",\n    "measured": 1.0,\n    "rule": "<= 3000",\n    "met": true\n  },\n  {\n    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",\n    "measured": 1.0,\n    "rule": "<= 50",\n    "met": true\n  },\n  {\n    "target": "reopen + first query at 10,000 (ms, median)",\n    "measured": 1.0,\n    "rule": "<= 300",\n    "met": true\n  },\n  {\n    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",\n    "measured": 2.0,\n    "rule": "<= 256",\n    "met": true\n  }\n]\nPASS: suite 71 / 71 ; scratch removed\n'
+
+======================================================================
+FAIL: test_output_inside_repository_refused (__main__.RunnerGates.test_output_inside_repository_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 200, in test_output_inside_repository_refused
+    self.assertEqual(r['exit'], 5)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+AssertionError: 0 != 5
+
+======================================================================
+FAIL: test_overlapping_locations_refused_before_anything_runs (__main__.RunnerGates.test_overlapping_locations_refused_before_anything_runs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 195, in test_overlapping_locations_refused_before_anything_runs
+    self.assertEqual(r['exit'], 5)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+AssertionError: 0 != 5
+
+======================================================================
+FAIL: test_wrong_text_page_count_is_invalid (__main__.RunnerGates.test_wrong_text_page_count_is_invalid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 161, in test_wrong_text_page_count_is_invalid
+    self.assertFailed(r, 2, 'measure-extract')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p54/docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py", line 133, in assertFailed
+    self.assertEqual(result['exit'], code, result['printed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 2 : [
+  {
+    "target": "300-page extraction wall time (ms, median)",
+    "measured": 10.0,
+    "rule": "<= 10000",
+    "met": true
+  },
+  {
+    "target": "300-page worker peak RSS (MiB, max)",
+    "measured": 1.0,
+    "rule": "<= 256",
+    "met": true
+  },
+  {
+    "target": "bomb deadline stop+reap (ms, deadline 1000)",
+    "measured": 1001,
+    "rule": "<= 1500",
+    "met": true
+  },
+  {
+    "target": "stall deadline stop+reap (ms, deadline 800)",
+    "measured": 801,
+    "rule": "<= 1300",
+    "met": true
+  },
+  {
+    "target": "spawn to first frame (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 100",
+    "met": true
+  },
+  {
+    "target": "IPC NDJSON parse (MB/s)",
+    "measured": 100.0,
+    "rule": ">= 50",
+    "met": true
+  },
+  {
+    "target": "cold FTS5 index at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 3000",
+    "met": true
+  },
+  {
+    "target": "warm literal query at 10,000 (ms, worst p95 of crosswind/metar/density altitude)",
+    "measured": 1.0,
+    "rule": "<= 50",
+    "met": true
+  },
+  {
+    "target": "reopen + first query at 10,000 (ms, median)",
+    "measured": 1.0,
+    "rule": "<= 300",
+    "met": true
+  },
+  {
+    "target": "whole-process peak RSS, 10,000 index run (MiB, max)",
+    "measured": 2.0,
+    "rule": "<= 256",
+    "met": true
+  }
+]
+PASS: suite 71 / 71 ; scratch removed
+
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.091s
+
+FAILED (failures=11, errors=2)
