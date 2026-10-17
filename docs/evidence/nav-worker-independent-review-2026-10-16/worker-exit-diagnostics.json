@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "review-eof-stall",
+    "externalTimeoutSeconds": 3,
+    "forcedProcessGroupKill": true,
+    "exit": -9,
+    "elapsedSeconds": 3.0046009579964448,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "mode": "review-done-nonzero",
+    "externalTimeoutSeconds": 3,
+    "forcedProcessGroupKill": false,
+    "exit": 0,
+    "elapsedSeconds": 0.023256042011780664,
+    "stdout": "{\"indexed\":1,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":11.896666,\"exit\":\"exit:3\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":39126,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  }
+]
