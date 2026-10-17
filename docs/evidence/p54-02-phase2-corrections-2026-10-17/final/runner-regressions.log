@@ -1,0 +1,18 @@
+test_already_dirty_file_changing_again_fails_preservation (__main__.RunnerGates.test_already_dirty_file_changing_again_fails_preservation) ... ok
+test_changed_status_fails_preservation (__main__.RunnerGates.test_changed_status_fails_preservation) ... ok
+test_example_changed_by_someone_else_is_left_and_fails (__main__.RunnerGates.test_example_changed_by_someone_else_is_left_and_fails) ... ok
+test_failed_inner_worker_is_invalid (__main__.RunnerGates.test_failed_inner_worker_is_invalid) ... ok
+test_failed_suite_measures_nothing (__main__.RunnerGates.test_failed_suite_measures_nothing) ... ok
+test_missing_measurement_field_is_invalid (__main__.RunnerGates.test_missing_measurement_field_is_invalid) ... ok
+test_missing_rss_is_invalid (__main__.RunnerGates.test_missing_rss_is_invalid) ... ok
+test_nonzero_extraction_is_invalid (__main__.RunnerGates.test_nonzero_extraction_is_invalid) ... ok
+test_nonzero_index_is_invalid (__main__.RunnerGates.test_nonzero_index_is_invalid) ... ok
+test_normal_success_is_valid (__main__.RunnerGates.test_normal_success_is_valid) ... ok
+test_output_inside_repository_refused (__main__.RunnerGates.test_output_inside_repository_refused) ... ok
+test_overlapping_locations_refused_before_anything_runs (__main__.RunnerGates.test_overlapping_locations_refused_before_anything_runs) ... ok
+test_wrong_text_page_count_is_invalid (__main__.RunnerGates.test_wrong_text_page_count_is_invalid) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.071s
+
+OK

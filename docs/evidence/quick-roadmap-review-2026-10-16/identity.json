@@ -1,0 +1,16 @@
+{
+  "c9ad7438b8203aba28b1dc13bb5307f42c8d6285": {
+    "trackedManifests": {
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/SHA256SUMS": 19,
+      "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS": 21
+    },
+    "sourceHashesMatch": 4
+  },
+  "27c39711b46f0737c0b7e42b7b2f4d81b752b02c": {
+    "trackedManifests": {
+      "docs/evidence/p54-04-save-recovery-2026-10-16/SHA256SUMS": 25,
+      "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS": 21
+    },
+    "sourceHashesMatch": 3
+  }
+}

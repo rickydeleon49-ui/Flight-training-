@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "baseline-done-stall",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": true,
+    "exit": -9,
+    "elapsedSeconds": 3.004387958004372,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "mode": "baseline-r4-prespawn",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.019288959010737017,
+    "stdout": "{\"settled\":{\"elapsedMs\":9.075625,\"exit\":\"exit:0\",\"outcome\":\"refused:input_limit\",\"peakRssKiB\":1664,\"pid\":41966,\"reaped\":true,\"rssSamples\":1},\"workersSpawned\":1}\n",
+    "stderr": ""
+  }
+]

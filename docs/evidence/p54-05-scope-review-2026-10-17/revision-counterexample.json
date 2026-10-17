@@ -1,0 +1,12 @@
+{
+  "proposedRule": "whole minutes since 2020-01-01T00:00Z",
+  "updatedAt": [
+    "2026-10-24T10:00:10+00:00",
+    "2026-10-24T10:00:50+00:00"
+  ],
+  "derivedSequence": [
+    3583320,
+    3583320
+  ],
+  "distinctEditsCollide": true
+}

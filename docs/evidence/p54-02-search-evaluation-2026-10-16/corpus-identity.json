@@ -1,0 +1,33 @@
+{
+  "generator": "deterministic-v1-no-randomness",
+  "syntheticOnly": true,
+  "datasets": [
+    {
+      "materials": 100,
+      "records": 600,
+      "pdfPages": 400,
+      "guideRecords": 100,
+      "noteRecords": 100,
+      "bytes": 379497,
+      "sha256": "dbefc139d6fe1a65b265554647aa913d26f52dae1430e4194d1f76eee42450dc"
+    },
+    {
+      "materials": 1000,
+      "records": 6000,
+      "pdfPages": 4000,
+      "guideRecords": 1000,
+      "noteRecords": 1000,
+      "bytes": 3818627,
+      "sha256": "1545d00f369bb000ce02c3badeb314618457fac5952aa28b7377c193822215b3"
+    },
+    {
+      "materials": 10000,
+      "records": 60000,
+      "pdfPages": 40000,
+      "guideRecords": 10000,
+      "noteRecords": 10000,
+      "bytes": 38425877,
+      "sha256": "c2871db7f37a109fc60b74bd08310cb113f662144598e9ddd497f09ff9b8fca2"
+    }
+  ]
+}
