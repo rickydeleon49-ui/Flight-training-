@@ -1,3 +1,9 @@
+## Quick review: corrections integrated into feature branches; one nonblocking UI follow-up — 16 October 2026
+
+PR194 and PR195 are merged into their feature branches; earlier "draft/pending correction" entries below are historical. PR189 headc9ad743 has Claude's recorded R11/R12 independent acceptance and current-main merge, with combined-source CI pending at review time. PR193 head27c3971 is green against the old formatted-guide base; it still needs a recorded independent export acceptance, retarget/reconciliation with main and final current-base CI before integration.
+
+**NAV-UI-01 [P3], after navigation integration:** a held Check pages result from repositoryA can leave an obsolete success/error message after the mounted panel switches toB. Two diagnostics reproduce it; B's saved/current state stays correct. Bind panel notices to the initiating context/lifetime; retain live messages and existing persistence guards.126 existing focused tests and combined build/types pass;2 new diagnostic assertions fail as expected. [Review, exact fix scope and receipts](docs/QUICK_ROADMAP_CODE_REVIEW_2026-10-16.md). Do not reopen accepted R11/R12 or delay their integration solely for this rare display issue. P54-03 is merged; P54-02 phase2 worker/search proof remains next in the approved order. No new dependency, app/profile/provider/installer/release work. History follows unchanged.
+
 ## M4 R11–R12 correction accepted and merged into PR189; current-base CI pending — 16 October 2026
 
 Independent review of Codex's correction found no defects; PR194 merged into `claude/m4-slice1` at 4f2aef8 with the exact-head guard. PR189 now includes current main (P54-03 guides, search evidence) with all tracker histories retained. It merges into main only after green exact-head CI on this combined source. [Acceptance](docs/M4_LIFECYCLE_ACCEPTANCE_2026-10-16.md).
