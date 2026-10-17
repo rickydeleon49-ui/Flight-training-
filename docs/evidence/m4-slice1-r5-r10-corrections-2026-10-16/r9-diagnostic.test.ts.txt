@@ -1,0 +1,43 @@
+// Disposable R9 diagnostic, appended to a copy of skillScreens.test.ts at this correction's head and removed after the run (see r9-diagnostic.log).
+describe("R9 diagnostic: the skill list is still loading when Save's dialog is asked for", () => {
+  function holdSkills() {
+    const original = db.listSkills!.bind(db);
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    db.listSkills = (async (options: Parameters<typeof original>[0]) => {
+      await held;
+      return original(options);
+    }) as typeof db.listSkills;
+    return release;
+  }
+
+  it("[original sequence] a click on the still-disabled button opens no dialog", async () => {
+    const journalId = await debrief();
+    const release = holdSkills();
+    await mount(`/journal/${journalId}`, [["/journal/:entryId", h(JournalEntryDetail)]]);
+    const button = await screen.findByRole("button", { name: "Add an observation" });
+    expect((button as HTMLButtonElement).disabled, "found while the skill list is loading").toBe(true);
+    fireEvent.click(button);
+    release();
+    await waitFor(() => expect((screen.getByRole("button", { name: "Add an observation" }) as HTMLButtonElement).disabled).toBe(false));
+    // The original test's next step: the CI failure, now deterministic.
+    await expect(screen.findByRole("dialog", { name: "Add an observation" }, { timeout: 300 })).rejects.toThrow(/Unable to find role="dialog"/);
+  });
+
+  it("[readiness gate] waiting for the button to be enabled, then the same steps, records one observation", async () => {
+    const journalId = await debrief();
+    const release = holdSkills();
+    await mount(`/journal/${journalId}`, [["/journal/:entryId", h(JournalEntryDetail)]]);
+    const button = await screen.findByRole("button", { name: "Add an observation" });
+    release();
+    await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(button);
+    const dialog = await screen.findByRole("dialog", { name: "Add an observation" });
+    fireEvent.change(within(dialog).getByLabelText("What was said or noticed"), { target: { value: "Once only." } });
+    const save = within(dialog).getByRole("button", { name: "Save observation" });
+    fireEvent.click(save);
+    fireEvent.click(save);
+    await within(dialog).findByText("Saved.");
+    expect(await db.select("SELECT COUNT(*) AS n FROM skill_observations")).toEqual([{ n: 1 }]);
+  });
+});
