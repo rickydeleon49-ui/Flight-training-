@@ -1,0 +1,6 @@
+Tests, types, and the data-safety guards	Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803	2026-10-17T00:57:27.9961786Z HEAD is now at 805ee2a Merge c234005185250f14b2f67bf5d977a5b67b853126 into d97e1a960c9cca394b5b9ea4a81c46a189f48ebf
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:03:13.5067883Z ^[[2m Test Files ^[[22m ^[[1m^[[32m154 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m4 skipped^[[39m^[[90m (158)^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:03:13.5069260Z ^[[2m      Tests ^[[22m ^[[1m^[[32m3455 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m6 skipped^[[39m^[[90m (3461)^[[39m
+Tests, types, and the data-safety guards	Run cargo test --locked --manifest-path src-tauri/Cargo.toml	2026-10-17T01:07:23.5281991Z test result: ok. 517 passed; 0 failed; 6 ignored; 0 measured; 0 filtered out; finished in 92.95s
+Tests, types, and the data-safety guards	Run cargo test --locked --manifest-path src-tauri/Cargo.toml	2026-10-17T01:07:23.5324476Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+Tests, types, and the data-safety guards	Run cargo test --locked --manifest-path src-tauri/Cargo.toml	2026-10-17T01:07:24.0661261Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
