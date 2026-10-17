@@ -1,0 +1,1 @@
+head fad8d3abfb2cb13d31d7588655ea9d490f0c153d dirty=0 node v22.23.3 npm 10.9.9 rustc rustc 1.99.0 (b940084d7 2026-09-28) (Homebrew) sdk 27.0 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk

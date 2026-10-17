@@ -24,6 +24,32 @@ const OPERATOR_ENTRY = '// @hfd-schema14-operator-entry';
 const PR142 = path.join(REPO, 'docs', 'evidence', 'mac-installed-results-2026-10-11');
 const RECEIPT_KEYS = ['last_complete_backup_at', 'last_complete_backup_path', 'last_complete_backup_version'];
 
+/** The frozen helper's live-source anchors that alarm once a schema-15 migration is registered. */
+const LATER_SCHEMA_ALARMS = [
+  "anchor: CURRENT_SCHEMA_VERSION in the shipped source equals this helper's pinned ceiling",
+  'anchor: the registered migrations are exactly the pinned 1–14 with their descriptions',
+  'anchor: shipped migration files match migration-checksums.json and the pinned SHA-256/SQLx SHA-384 checksums',
+  'anchor: every pinned object definition equals what the shipped migrations create (97 objects, none redefined after schema 12)',
+];
+const SCHEMA15_OBJECTS = [
+  'material_content_identities', 'idx_material_content_sha', 'material_reading_state', 'idx_material_reading_state_owner',
+  'material_bookmarks', 'idx_material_bookmarks_material', 'idx_material_bookmarks_page', 'idx_material_bookmarks_hash',
+  'material_operation_claims',
+];
+
+/** Each alarm's detail names schema 15 alone: migrations 1–14 and their objects still match. */
+function assertOnlySchema15(checks) {
+  for (const c of checks) {
+    if (c.name === LATER_SCHEMA_ALARMS[0]) assert.equal(c.detail.found, '15');
+    else if (c.name === LATER_SCHEMA_ALARMS[1]) assert.deepEqual(c.detail.registered.slice(14), ['15:document_navigation']);
+    else if (c.name === LATER_SCHEMA_ALARMS[2]) assert.deepEqual(c.detail.map(m => m.version), [15]);
+    else if (c.name === LATER_SCHEMA_ALARMS[3]) {
+      assert.deepEqual(c.detail.drift, SCHEMA15_OBJECTS);
+      assert.deepEqual(c.detail.redefinedAfterBaseline, []);
+    } else assert.fail(`unexpected failing check: ${c.name}`);
+  }
+}
+
 let scratch;
 let H;
 let uid;
@@ -76,8 +102,14 @@ describe('distributed helper', () => {
     assert.match(refused.stderr, /runs only in a disposable repository copy/);
     const r = cli(['self-check'], RUNNER);
     const report = JSON.parse(r.stdout);
-    assert.equal(r.status, 0, report.checks.filter(c => !c.pass).map(c => c.name).join('; '));
-    assert.equal(report.counts.failed, 0);
+    // The helper stays frozen at schema 14. Since migration 15 shipped in source, exactly its four
+    // live-source anchors alarm, and each names only schema 15 (the historical-ceiling alarm,
+    // in the manner of the schema-13 helper's). Every other regression must still pass.
+    const failed = report.checks.filter(c => !c.pass);
+    assert.deepEqual(failed.map(c => c.name), LATER_SCHEMA_ALARMS, failed.map(c => c.name).join('; '));
+    assertOnlySchema15(failed);
+    assert.equal(r.status, 1);
+    assert.equal(report.counts.failed, LATER_SCHEMA_ALARMS.length);
     assert.ok(report.counts.checks >= 97, `${report.counts.checks} checks`);
     assert.equal(report.pinnedCommit, '8a260c0b32bc213850ed85bf9488d6ef571354a9');
   });
@@ -106,7 +138,9 @@ describe('full self-check reporting', () => {
     assert.equal(named('comparison: upgrade accepts its snapshots for upgrade').pass, false);
     assert.match(named('comparison: upgrade accepts its snapshots for upgrade').detail.refusal, /keyDigests lists 4 keys but the table has 5 rows/);
     assert.equal(named('contract upgrade: no receipt key is set aside outside restore').pass, false);
-    assert.equal(named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions').pass, true);
+    // A later-schema alarm since migration 15 (see LATER_SCHEMA_ALARMS), not caused by this edit.
+    assert.equal(named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions').pass, false);
+    assertOnlySchema15([named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions')]);
     assert.equal(named('scratch leak check: no WAL-copy scratch directory survived the run').pass, true);
     assert.doesNotMatch(result.stderr, /Error: REFUSED:|at selfCheck \(/);
   });

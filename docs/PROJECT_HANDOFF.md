@@ -1,3 +1,9 @@
+## Navigation and export accepted for combined main integration — 17 October 2026 (UTC)
+
+PR203's independent save-correction acceptance is verified and merged into PR193 atc99fcb2. PR193 now contains the accepted navigation head69768bf and current main3e59d71, preserving both feature histories. Full combined local gate9/9 passes:3,563 frontend/6 skips,531 Mac native/6 ignored, build/types, strict Clippy/fmt/lock/helper26/26/hygiene. Only MaterialDetail and native command registration combine reviewed feature contributions; other feature source is unchanged. [Integration acceptance](NAV_EXPORT_INTEGRATION_ACCEPTANCE_2026-10-17.md). Final exact-head current-main CI still gates the containing PR193 merge, which will also contain all PR189 commits.
+
+**Next, once this integration is on origin/main:** proceed directly to approved P54-05 PartA. The old continuation's Phase1 is complete; no repeated independent review or owner-default questionnaire. [Direct lesson-brief implementation prompt](P54_05_LESSON_BRIEF_IMPLEMENTATION_PROMPT_2026-10-17.md). Calendar follows PartA review. Source integration does not imply installed/release acceptance; no app/profile/provider/installer/signing/release operations. Earlier pending entries below are historical after the containing PR merges.
+
 ## P54-04 save corrections implemented; P54-03 integrated — 16 October 2026
 
 P54-03/#191 independently accepted and merged at3266f193 after exact-head CI and independent3,284 frontend/build/helper checks. P54-04/#193 remains pending: Codex implemented a synchronous one-save lock and fixed pending content/output/answer-key controls;4 new UI cases include2 baseline failures. Added meaningful native partial-write/flush/unwind/post-write-rename coverage; retracted the unproven Windows cleanup suspicion. Final gate8/8:3,320 frontend/490 native, strict Clippy/build/types/fmt/lock/helper26/26/hygiene. [Correction report](P54_04_SAVE_RECOVERY_REPORT_2026-10-16.md), [reviewer assignment](P54_04_SAVE_REVIEWER_PROMPT_2026-10-16.md). Our source needs independent review and exact-head CI; no self-merge. M4 correction#194 likewise awaits independent review. Queue order persists; no app/profile/provider/installer/release operation. History follows unchanged.
@@ -50,17 +56,29 @@ PR189's69768bf CI is green but it still needs current-main reconciliation/final 
 
 **Next integration order:** finish current-base navigation integration, record independent export acceptance and retarget/reconcile PR193 with main, then complete/review PR199 corrections in the approved queue. No app/profile/provider/installer/release work is needed. Earlier entries below are retained as historical snapshots.
 
+## NAV-UI-01 [P3] panel notices implemented; pending independent review — 16 October 2026
+
+**PENDING REVIEW; NO SELF-MERGE.** Claude implemented the quick review's follow-up on `claude/nav-ui-01-panel-notices`, stacked on PR189 b5e6b99. Pages-panel notices (check result, read-mark and removal failures) are now owned by the repository/controller/material context that started the action: a retired completion publishes nothing, and a context change clears old notices. 7 permanent cases; 4 fail on the unfixed panel. Navigation 101/101, full frontend 3,527/6 skipped, typecheck/build/helper pass. R11/R12 source unchanged. [Report](NAV_UI_01_PANEL_NOTICES_REPORT_2026-10-16.md).
+
 ## Quick review: corrections integrated into feature branches; one nonblocking UI follow-up — 16 October 2026
 
 PR194 and PR195 are merged into their feature branches; earlier "draft/pending correction" entries below are historical. PR189 headc9ad743 has Claude's recorded R11/R12 independent acceptance and current-main merge, with combined-source CI pending at review time. PR193 head27c3971 is green against the old formatted-guide base; it still needs a recorded independent export acceptance, retarget/reconciliation with main and final current-base CI before integration.
 
 **NAV-UI-01 [P3], after navigation integration:** a held Check pages result from repositoryA can leave an obsolete success/error message after the mounted panel switches toB. Two diagnostics reproduce it; B's saved/current state stays correct. Bind panel notices to the initiating context/lifetime; retain live messages and existing persistence guards.126 existing focused tests and combined build/types pass;2 new diagnostic assertions fail as expected. [Review, exact fix scope and receipts](QUICK_ROADMAP_CODE_REVIEW_2026-10-16.md). Do not reopen accepted R11/R12 or delay their integration solely for this rare display issue. P54-03 is merged; P54-02 phase2 worker/search proof remains next in the approved order. No new dependency, app/profile/provider/installer/release work. History follows unchanged.
 
+## M4 R11–R12 correction accepted and merged into PR189; current-base CI pending — 16 October 2026
+
+Independent review of Codex's correction found no defects; PR194 merged into `claude/m4-slice1` at 4f2aef8 with the exact-head guard. PR189 now includes current main (P54-03 guides, search evidence) with all tracker histories retained. It merges into main only after green exact-head CI on this combined source. [Acceptance](M4_LIFECYCLE_ACCEPTANCE_2026-10-16.md).
+
 ## Roadmap delivery checkpoint: formatted guides merged; corrections awaiting review; search proof recorded — 16 October 2026
 
 **P54-03 accepted:** PR191 merged at3266f193 after independent source review,3,284 local frontend tests/build/helper26/26 and green exact-head CI. [Acceptance](P54_03_ACCEPTANCE_2026-10-16.md). **M4/P54-01:** Codex implemented R11/R12 in draft[PR194](https://github.com/rickydeleon49-ui/Flight-training-/pull/194), stacked on189,33 new cases and3,488 frontend tests; application source passed CI38992516422; receipt-only publication head35bd450 is rechecking, independent review still required. **P54-04:** duplicate-save and editable-pending-selection fixes plus native failure proofs are in draft[PR195](https://github.com/rickydeleon49-ui/Flight-training-/pull/195), stacked on193;3,320 frontend/490 Mac native and full8-check gate pass; independent review required. Source is not self-accepted. Both PRs carry detailed reviewer assignments and preserved failure receipts.
 
 **P54-02 phase1 exploratory evidence recorded:** actual native FTS5 works, browser sql.js FTS5 is absent;3KB compressed PDF yields1MB extracted text before a length check.18 engine runs on100/1,000/10,000 synthetic materials,36 identical result-id set checks and9 accent-folding differences. No engine/dependency or production feature selected. [Report](P54_02_SEARCH_EVALUATION_2026-10-16.md), [next substantial worker-proof assignment](P54_02_EXTRACTION_WORKER_PROOF_PROMPT_2026-10-16.md). Native interaction, real handbook fidelity, hard extraction/cancellation limits and production restore/index lifecycle remain pending. Approved queue order persists. Primary settings, active Claude worktrees, owner profiles/keys and historical evidence remain untouched; no app/provider/installer/signing/release operation. [Full independent review and integration order](ROADMAP_REVIEW_HANDOFF_2026-10-16.md). History follows unchanged.
+
+## M4 R11–R12 implemented by Codex; independent review pending — 16 October 2026
+
+Owner assigned Codex implementation duties. Isolated `codex/m4-lifecycle-corrections` stacks on published PR189; Claude's active work is preserved. Per-context/lifetime action leases prevent retired refresh dispatches; unique click/controller markers preserve source-badge cleanup.33 new permanent cases;94 focused and4 frozen tests pass; full frontend3,488 pass/6 skipped, build/types and helper26/26 pass. [Implementation report](M4_LIFECYCLE_CORRECTIONS_REPORT_2026-10-16.md), [independent reviewer assignment](M4_LIFECYCLE_REVIEWER_PROMPT_2026-10-16.md). This is implementation evidence, not acceptance; exact-head CI and independent review still gate PR189. No native source, schema/version, app/profile/provider/installer/release work. Prior history follows unchanged.
 
 ## P54-03 integration fixes R1–R2 applied; pending review — 16 October 2026
 
@@ -78,9 +96,26 @@ Before accepting the guide-formatting PR191 at reviewed head5f06d97: **P54-03-R1
 
 Published PR189 headc234005 corrects the original R5–R10 failure sequences and has green exact-head CI (3455 frontend/517 Linux Rust). Independent review still reproduces2 bounded lifecycle defects: **R11**, an old action's finally can start a fresh read on a retired repository and replace current state; **R12**, an old source-badge completion can clear a newer request's cleanup marker, allowing an open after unmount. Fix both before accepting PR189;3 new regression cases fail and the single-request control passes. [Precise review](M4_SLICE1_R11_R12_REVIEW_2026-10-16.md), [correction handoff](M4_SLICE1_R11_R12_CORRECTIONS_PROMPT_2026-10-16.md). Claude is actively working through Terminal: reconcile its newer work before editing; no competing implementation was started by the reviewer. Owner scope approvals and queue order persist. Source tests do not verify installed behavior. Historical entries follow unchanged.
 
+## M4 Slice1 R5–R10 corrected; PR189 resubmitted for review — 16 October 2026
+
+**SUBMITTED FOR CODEX REVIEW; not accepted or merged.** All six re-review findings are corrected on `claude/m4-slice1` (PR189). [Correction report](M4_SLICE1_R5_R10_CORRECTION_REPORT_2026-10-16.md). R5: bookmarks open only on the content they were saved on. R6: a bookmark draft keeps its original content after a refresh. R7: only the latest reload publishes. R8: guidance checks ownership before opening; source badges retire on unmount. R9: the CI failure was a test clicking a still-disabled button while the skill list loaded, reproduced with a held load and fixed with a readiness wait. R10: native checks derive the page count from the PDF bytes, repair a wrong cached count and refuse the request. The completion report's restore claim is corrected (an unobserved A→B→A is not detectable). Frozen diagnostics are permanent regressions. Final gate exit 0: 3,455 frontend and 518 native tests, build, Clippy, fmt, lock sync, schema-14 helper 26/26, diff check; native steps also pass on SDK 26.5. Source tests only; installed behaviour is unverified. No release, version, dependency, schema, app, profile or provider work.
+
 ## M4 Slice1 PR189 requires R5–R10 corrections — 16 October 2026
 
 The feature is implemented but not accepted at reviewed head6d8c608. Independent review reproduced stale-bookmark opening, bookmark-draft rebinding, late reload publication, superseded guidance opening and native cached-count bounds defects; exact-head CI also failed one existing skill-screen case. [Re-review](M4_SLICE1_REREVIEW_2026-10-16.md), [one correction assignment](M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md). Existing512 native tests and183 focused frontend tests pass, but five new diagnostics fail; no merge is authorized by those passing subsets. All66 submitted paths are frozen and the author checkout is preserved. Owner approval OD-1–OD-10 persists; queue order unchanged. No app/profile/provider/installer/release work. Historical entries follow unchanged.
+
+## M4 Slice1 document navigation complete; submitted for review — 16 October 2026
+
+**SUBMITTED FOR CODEX REVIEW; not accepted or merged.** One source PR on `claude/m4-slice1` delivers the owner-approved Slice1 (OD-1–OD-10, OD-6 refuse-and-explain) and closes the partial review's four findings at source level. [Report](M4_SLICE1_COMPLETION_REPORT_2026-10-16.md).
+
+- **R1:** read confirmation names the content hash and saved generation it was made for; bookmarks name the content. Stale requests change nothing.
+- **R2:** success replies must match every request-bound field.
+- **R3:** native commits, confirmations and bookmarks reread the managed file inside their own transaction; deletion, relinking or replacement after inspection cannot authorize a save. A verified native open hands only checked content to the default reader.
+- **R4:** the genuine tampered schema-14 case is restored; the node test driver (not production) now leaves a refused file unchanged.
+- **Feature:** migration 0015 (four tables), shared native/browser operation and validation cases, request controller with local epochs and durable supersession, source badges in four study views, and a "Find your place" panel with page entry, last requested page, separate read mark, bookmarks, save-only retry and file restore.
+- **Schema-14 helper:** still frozen at 14; its pins are compared with the registered 1–14 prefix and it refuses a schema-15 library.
+
+Source tests only; installed reader/IPC behaviour is unverified. No release, version bump, dependency, app launch, profile or provider use. Queue order is unchanged. Historical entries follow unchanged.
 
 ## M4 Slice1 scope approved; partial implementation needs completion — 16 October 2026
 

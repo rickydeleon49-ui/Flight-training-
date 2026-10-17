@@ -1,6 +1,6 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-17T06:19:57.578917+00:00",
+  "generatedAt": "2026-10-17T06:25:18.182070+00:00",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
   "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
@@ -8,13 +8,13 @@
   "files": [
     {
       "path": "STATUS.md",
-      "bytes": 258755,
-      "sha256": "208e43c0e8cfefea06209bb487c5e914fd2ac135bd29b012a3729425a15ab70e"
+      "bytes": 264966,
+      "sha256": "d8f4e4e4811bef4d4a412a3d7bfc155b45f555941f50fab17a177c8f5752cf36"
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 136250,
-      "sha256": "1c94d7396720307635976f2e97ecfebdd4e88a5bdc38f3923137292318a42de0"
+      "bytes": 142461,
+      "sha256": "fa3e0ab7a1ba9c38016b9feafb19add8d3ee1593008779df1290548c5f3bee01"
     },
     {
       "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
@@ -58,8 +58,8 @@
     },
     {
       "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
-      "bytes": 29122,
-      "sha256": "6691e718ad3098696311b3d389364af15bdd55f2ab88d77b314d5a01a96a2e83"
+      "bytes": 31363,
+      "sha256": "5088ed83c15236b155f4a57a18be58ba4b492b900f8fb0eef0f90e16094f2534"
     },
     {
       "path": "scripts/mac-schema14-verification-proof.mjs",
@@ -68,8 +68,8 @@
     },
     {
       "path": "src/logic/currentSchemaVerification.test.ts",
-      "bytes": 20510,
-      "sha256": "d888b1507503fe7b58a4a96d81f7ecf1e309581af480b82729b405db3052e901"
+      "bytes": 22217,
+      "sha256": "38fc3e491cc3ab9d1f924101cf6e044497689604c7e1916de75a823d1e578339"
     },
     {
       "path": "docs/MAC_SCHEMA14_VERIFICATION_PREPARATION_REPORT_2026-10-11.md",
@@ -78,8 +78,8 @@
     },
     {
       "path": "docs/PROJECT_HANDOFF.md",
-      "bytes": 167630,
-      "sha256": "98ae0dcb93fbee0559138830d3aca163e745b4a0b2c573a663dbf0a904cea92c"
+      "bytes": 173801,
+      "sha256": "68415062be72e341f8d89634935e7166aa2c92748ea427b95257af3e06c9a24e"
     },
     {
       "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md",

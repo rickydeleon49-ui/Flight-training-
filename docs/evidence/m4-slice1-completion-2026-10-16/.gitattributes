@@ -1,0 +1,4 @@
+# Preserve raw M4 Slice1 gate and failure receipts byte-for-byte (tool output pads with spaces).
+# Reports, maps and source keep normal whitespace checks.
+failed/*.log -whitespace
+final/*.log -whitespace

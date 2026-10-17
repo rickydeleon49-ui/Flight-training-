@@ -23,6 +23,7 @@ import {
   type CardReviewController,
   type ItemActionKind,
 } from "./useCardReview";
+import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export const MALFORMED_CARDS_MESSAGE =
   "These saved cards can't be reviewed because they're damaged. Your study guide is still here. Regenerating or re-importing creates a fresh set.";
@@ -171,7 +172,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, content
         </p>
       ) : null}
 
-      {review.session ? <SessionView review={review} items={items} states={snapshot.states} /> : null}
+      {review.session ? <SessionView review={review} items={items} states={snapshot.states} materialId={materialId} /> : null}
 
       {!review.session && browseItem ? (
         <div className="row card-review__browse-options">
@@ -327,10 +328,12 @@ function SessionView({
   review,
   items,
   states,
+  materialId,
 }: {
   review: CardReviewController;
   items: CardReviewSnapshotItem[];
   states: Record<string, CardReviewItemState>;
+  materialId: string;
 }) {
   const session = review.session!;
   const region = useRef<HTMLDivElement>(null);
@@ -377,7 +380,7 @@ function SessionView({
           Card {session.position + 1} of {session.cards.length}
           {shown.kind === "new" ? " · new" : ""}
         </p>
-        <Badge tone="study">{item.sourcePage ? `Source p. ${item.sourcePage}` : "Check source"}</Badge>
+        <SourcePageBadge page={item.sourcePage} materialId={materialId} />
       </div>
       <div className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
         <span className="tiny dim">{review.revealed ? "Answer" : "Question"}</span>

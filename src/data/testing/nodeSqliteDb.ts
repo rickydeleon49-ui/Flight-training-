@@ -12,7 +12,14 @@
  * transaction before the driver is returned. A failure rolls the conversion
  * back, closes the connection and rejects, so tests exercise the same
  * refusal the browser driver gives.
+ *
+ * Like the browser driver, which migrates in memory and stores nothing on a
+ * refusal, a refused open leaves an existing file exactly as it was, even
+ * when pending migrations had to run before validation could refuse it
+ * (M4S1-R4: before this, the file was left upgraded).
  */
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+
 import type { SqlDatabase, SqlValue } from "../db";
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "../connectionOwner";
 import { executeDebriefSave } from "../debriefTransaction";
@@ -22,6 +29,7 @@ import { executeCardReviewAction } from "../cardReviewTransaction";
 import { readLibraryRecentReviews, readLibraryReviewDue } from "../cardLibraryReader";
 import { executeSkillEvidenceAction } from "../skillEvidenceTransaction";
 import { listSkills, readEvidencePage, readObservationHistory, readSkillSummary } from "../skillEvidenceReader";
+import { executeNavigationOperation } from "../navigationTransaction";
 import {
   executeEraseHistoryAction,
   executeLegacyConversion,
@@ -66,7 +74,13 @@ function schemaReference(): Promise<ValidationQuery> {
 
 export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestDatabase> {
   const { DatabaseSync } = await import(/* @vite-ignore */ nativeSqlite);
+  const original = path !== ":memory:" && existsSync(path) ? readFileSync(path) : null;
   const db = new DatabaseSync(path);
+  const refuseUnchanged = (error: unknown): never => {
+    db.close();
+    if (original) writeFileSync(path, original);
+    throw error;
+  };
   db.exec("PRAGMA foreign_keys = ON");
 
   // Reopening an existing file must skip the migrations it already has, the
@@ -80,7 +94,11 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
     // No migrations table yet — this is a fresh database.
   }
 
-  await applyMigrations((sql) => db.exec(sql), applied);
+  try {
+    await applyMigrations((sql) => db.exec(sql), applied);
+  } catch (error) {
+    refuseUnchanged(error);
+  }
 
   let testDb: TestDatabase;
 
@@ -103,8 +121,7 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
       validateApplicationDatabase(query, referenceQuery),
     );
   } catch (error) {
-    db.close();
-    throw error;
+    refuseUnchanged(error);
   }
 
   const owner = createConnectionOwner(() => rollbackIfOpen(exec));
@@ -196,6 +213,13 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
     },
     readObservationHistory(input: import("@/domain/types").ObservationHistoryInput) {
       return owner.exclusive(() => readObservationHistory(query, input));
+    },
+    navigationOperation<K extends import("@/domain/types").NavigationOperation["kind"]>(
+      operation: Extract<import("@/domain/types").NavigationOperation, { kind: K }>,
+    ): Promise<import("@/domain/types").NavigationResultByKind[K]> {
+      return owner.exclusive(
+        async () => (await executeNavigationOperation(exec, run, query, operation)) as import("@/domain/types").NavigationResultByKind[K],
+      );
     },
     close() {
       db.close();

@@ -71,6 +71,7 @@ interface Library {
 }
 interface DatabaseHandle {
   exec(sql: string): void;
+  prepare(sql: string): { run(...params: unknown[]): unknown };
 }
 interface Helper {
   PINNED_SOURCE: { commit: string; schemaCeiling: number };
@@ -195,14 +196,43 @@ afterAll(() => {
 describe("the schema-14 helper contract is the registered source", () => {
   it("pins migrations 1–14 with the registered descriptions and SQLx SHA-384 checksums of their exact bytes", () => {
     expect(helper.PINNED_SOURCE).toMatchObject({ commit: "8a260c0b32bc213850ed85bf9488d6ef571354a9", schemaCeiling: 14 });
-    expect(helper.PINNED_MIGRATIONS.map((m) => [m.version, m.description])).toEqual(MIGRATIONS.map((m) => [m.version, m.description]));
-    for (const m of MIGRATIONS) {
+    // The helper is frozen at schema 14: its pins are the registered 1–14 prefix, byte for byte.
+    const prefix = MIGRATIONS.filter((m) => m.version <= 14);
+    expect(prefix.map((m) => m.version)).toEqual(Array.from({ length: 14 }, (_, i) => i + 1));
+    expect(helper.PINNED_MIGRATIONS.map((m) => [m.version, m.description])).toEqual(prefix.map((m) => [m.version, m.description]));
+    for (const m of prefix) {
       const pinned = helper.PINNED_MIGRATIONS.find((p) => p.version === m.version)!;
       expect(createHash("sha384").update(m.sql, "utf8").digest("hex"), `migration ${m.version}`).toBe(pinned.sqlx);
       expect(createHash("sha256").update(m.sql, "utf8").digest("hex"), `migration ${m.version}`).toBe(pinned.sha256);
     }
+  });
+
+  it("is not the current ceiling: the application is at a newer schema the frozen helper never certifies", () => {
     const ceiling = readFileSync(join(repo, "src-tauri", "src", "lib.rs"), "utf8").match(/CURRENT_SCHEMA_VERSION[^=]*=\s*(\d+)/);
-    expect(Number(ceiling?.[1])).toBe(14);
+    const current = Number(ceiling?.[1]);
+    expect(current).toBe(MIGRATIONS.at(-1)!.version);
+    expect(current).toBeGreaterThan(helper.PINNED_SOURCE.schemaCeiling);
+    expect(helper.PINNED_MIGRATIONS.some((m) => m.version > 14)).toBe(false);
+  });
+
+  it("refuses a library already upgraded to the newer schema as an uncertified newer format", () => {
+    const library = helper.buildScratchProfile(join(scratch, "newer"), repo, { version: 14 });
+    const before = snap(library, "newer-14");
+    const next = MIGRATIONS.find((m) => m.version === 15)!;
+    helper.withDb(library.dbPath, (db) => {
+      db.exec(next.sql);
+      db.prepare("INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES (?, ?, '2026-10-16 00:00:00', 1, ?, 1)").run(
+        next.version,
+        next.description,
+        createHash("sha384").update(next.sql, "utf8").digest(),
+      );
+    });
+    const after = snap(library, "newer-15");
+    for (const purpose of ["upgrade", "unchanged", "restore"] as const) {
+      const verdict = helper.compare({ before, after, purpose });
+      expect(verdict.verdict, purpose).toBe("FAIL");
+      expect(verdict.diffs.some((d) => d.includes("library is at schema 15, newer than this helper's pinned ceiling 14")), purpose).toBe(true);
+    }
   });
 
   it("pins the same six M3 tables, indexes and triggers the production validator requires", () => {

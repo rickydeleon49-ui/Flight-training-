@@ -1,0 +1,102 @@
+▶ distributed helper
+  ✔ exports nothing, has one operator entry, one fixed lane and no test or environment route (0.6525ms)
+  ✖ the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes (837.743625ms)
+✖ distributed helper (838.711792ms)
+▶ full self-check reporting
+  ✖ reports lost special keys as named failures, completes all checks and exits nonzero (720.439625ms)
+  ✔ runs the historical schema13 self-check with only its intentional schema-ceiling alarm (581.936167ms)
+✖ full self-check reporting (1302.50225ms)
+▶ proof source walker
+  ✔ sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files (27.653292ms)
+  ✔ recognizes Cargo's Apple Silicon target folder only in its exact tagged shape (17.579792ms)
+  ✔ recognizes only the two exact build-output paths, and this checkout's real ones when present (1.989334ms)
+✔ proof source walker (47.35875ms)
+▶ post-merge replay dependency lock (QA-02)
+  ✔ accepts an identical lock and a version-only bump of both root fields (3.405333ms)
+  ✔ refuses any other difference, including dependency, integrity, resolution and inconsistent root versions (12.008375ms)
+✔ post-merge replay dependency lock (QA-02) (15.505291ms)
+▶ operator CLI refusals
+  ✔ snapshot outside the approved lane refuses and writes nothing (110.292334ms)
+  ✔ no flag retargets the lane or relaxes a rule (301.606708ms)
+  ✔ the account guard refuses any uid other than the approved standard account (0.2335ms)
+✔ operator CLI refusals (412.216166ms)
+▶ operator CLI compare
+  ✔ writes a fresh receipt for a genuine upgrade, then never clobbers it or an input (377.601625ms)
+  ✔ refuses the original PR #142 installed receipts instead of reinterpreting them, leaving them byte-identical (75.981167ms)
+  ✔ refuses oversized and symlinked receipts before reading them (208.621042ms)
+✔ operator CLI compare (662.291667ms)
+▶ the disposable copy's scratch lane
+  ✔ refuses roots outside task-owned scratch, outside the temporary directory, or not named for the app (0.242916ms)
+  ✔ is never selected outside a takeSnapshot call (35.77ms)
+  ✔ clones are independent single-linked files, so the hard-link guard is never tripped by fixture copies (44.370334ms)
+✔ the disposable copy's scratch lane (80.4665ms)
+▶ special metadata keys on real SQLite
+  ✔ capture __proto__, constructor, toString and Unicode keys as own digests in a prototype-free map (0.280833ms)
+  ✔ retained special keys pass upgrade and restore; changed, removed or added ones fail restore by name (80.030958ms)
+  ✔ sets aside exactly the three receipt keys, only for restore (73.95825ms)
+✔ special metadata keys on real SQLite (154.490584ms)
+▶ inventory and runtime-root boundaries
+  ✔ inventories sqlite-like user objects that a LIKE wildcard would hide, and compare names them (62.861208ms)
+  ✔ refuses a symlinked backups/ root before listing it and writes no receipt (38.85875ms)
+  ✔ refuses a symlinked .restore-staging/ root before listing it and writes no receipt (39.18225ms)
+  ✔ refuses a symlinked .restore-pending/ root before listing it and writes no receipt (38.945625ms)
+  ✔ still records a real (non-symlinked) backups/ root as runtime disclosure (40.079084ms)
+✔ inventory and runtime-root boundaries (220.109708ms)
+ℹ tests 26
+ℹ suites 9
+ℹ pass 24
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3865.791666
+
+✖ failing tests:
+
+test at scripts/mac-schema14-profile-snapshot.test.mjs:73:3
+✖ the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes (837.743625ms)
+  AssertionError [ERR_ASSERTION]: anchor: CURRENT_SCHEMA_VERSION in the shipped source equals this helper's pinned ceiling; anchor: the registered migrations are exactly the pinned 1–14 with their descriptions; anchor: shipped migration files match migration-checksums.json and the pinned SHA-256/SQLx SHA-384 checksums; anchor: every pinned object definition equals what the shipped migrations create (97 objects, none redefined after schema 12)
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-slice1/scripts/mac-schema14-profile-snapshot.test.mjs:79:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mac-schema14-profile-snapshot.test.mjs:87:3
+✖ reports lost special keys as named failures, completes all checks and exits nonzero (720.439625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-slice1/scripts/mac-schema14-profile-snapshot.test.mjs:109:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:505:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:479:3)
+      at node:internal/per_context/primordials:505:9
+      at Array.map (<anonymous>) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit=1
