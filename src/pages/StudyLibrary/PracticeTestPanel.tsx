@@ -21,6 +21,7 @@ import type {
 import { attemptReviewPath } from "@/logic/practiceAttemptReview";
 import { AppDataContext } from "@/state/AppDataContext";
 import "./studyLibrary.css";
+import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export interface PracticeTestPanelProps {
   practiceTest: PracticeTest;
@@ -1267,9 +1268,7 @@ export function PracticeTestPanel({
         <h3 id="practice-test-title" className="ai-guide__title">
           Question {state.index + 1} of {totalQuestions}
         </h3>
-        <Badge tone="study">
-          {question.sourcePage ? `Source p. ${question.sourcePage}` : "Check source"}
-        </Badge>
+        <SourcePageBadge page={question.sourcePage} materialId={materialId} />
       </div>
 
       <p className="small ai-copy">{question.questionText}</p>

@@ -69,6 +69,8 @@ import { SplitPdfDialog } from "./SplitPdfDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
+import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
+import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 interface ActiveGeminiOperation {
   requestId: number;
@@ -711,6 +713,15 @@ function MaterialDetailPage({
             </Card>
           ) : null}
 
+          {material.filePath ? (
+            <DocumentPagesPanel
+              material={material}
+              fileMissing={fileMissing}
+              restoring={restoringFile}
+              onRestore={() => void restoreFile()}
+            />
+          ) : null}
+
           {material.filePath || studySet ? (
             <Card>
               <CardHeader
@@ -796,11 +807,7 @@ function MaterialDetailPage({
                               Card {cardIndex + 1} of {studySet.flashcards.length}
                             </h3>
                           </div>
-                          <Badge tone="study">
-                            {studySet.flashcards[cardIndex]?.sourcePage
-                              ? `Source p. ${studySet.flashcards[cardIndex]?.sourcePage}`
-                              : "Check source"}
-                          </Badge>
+                          <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
                         </div>
                         <button
                           className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
