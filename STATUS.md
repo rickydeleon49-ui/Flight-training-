@@ -1,3 +1,11 @@
+## Independent review: panel fix accepted; search proof needs four corrections — 16 October 2026
+
+**NAV-UI-01 accepted:** PR198 at cb4afba passed independent234 navigation tests, the two original frozen diagnostics, typecheck/build and helper26/26; exact-head CI39004376950 is green. Merged into PR189 as69768bf. PR189 remains open: reconcile current main and require final combined-source exact-head CI before main integration. Accepted R11/R12 are preserved.
+
+**P54-02 phase2 / PR199 requires P54P2-R1–R4:**30/42 submitted evidence members exist and verify in Git;12 logs are missing. The original63/63 suite reproduces, but new diagnostics show EOF can hang past deadline, a complete-result worker exiting3 can still index, and the runner can print PASS after failed measurements or preservation. Caller hashing also lacks the preregistered input boundary. [Independent review](docs/NAV_WORKER_INDEPENDENT_REVIEW_2026-10-16.md); [one precise correction assignment](docs/P54_02_PHASE2_CORRECTIONS_PROMPT_2026-10-16.md). Keep original receipts/preregistration and reported8/10 targets unchanged; no production engine/default adoption.
+
+**Next integration order:** finish current-base navigation integration, record independent export acceptance and retarget/reconcile PR193 with main, then complete/review PR199 corrections in the approved queue. No app/profile/provider/installer/release work is needed. Earlier entries below are retained as historical snapshots.
+
 ## Quick review: corrections integrated into feature branches; one nonblocking UI follow-up — 16 October 2026
 
 PR194 and PR195 are merged into their feature branches; earlier "draft/pending correction" entries below are historical. PR189 headc9ad743 has Claude's recorded R11/R12 independent acceptance and current-main merge, with combined-source CI pending at review time. PR193 head27c3971 is green against the old formatted-guide base; it still needs a recorded independent export acceptance, retarget/reconciliation with main and final current-base CI before integration.

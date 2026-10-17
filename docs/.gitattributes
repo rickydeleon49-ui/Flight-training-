@@ -156,3 +156,14 @@ evidence/p54-03-acceptance-2026-10-16/helper.log -text -diff
 evidence/p54-03-acceptance-2026-10-16/hygiene.log -text -diff
 evidence/quick-roadmap-review-2026-10-16/focused.log -text -diff
 evidence/quick-roadmap-review-2026-10-16/build.log -text -diff
+
+# Preserve independent review raw receipts byte-for-byte.
+evidence/nav-worker-independent-review-2026-10-16/diagnostic-build.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/nav-build.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/nav-helper-tests.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/nav-typecheck.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/navigation-all-tests.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/navigation-tests.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/proof-build.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/proof-suite.stderr.log -text -diff
+evidence/nav-worker-independent-review-2026-10-16/review-doc-helper-tests.log -text -diff
