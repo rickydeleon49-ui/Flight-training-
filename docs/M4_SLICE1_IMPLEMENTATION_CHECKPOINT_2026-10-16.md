@@ -49,4 +49,6 @@ Assignment: `docs/M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md`; review: `d
 - e756353: R10 (native count validation) with permanent tests.
 - 86a438a: R5–R8 with permanent tests; the reviewer copies were removed after promotion.
 
-**Next:** R9 (CI failure in `skillScreens.test.ts`, "two quick clicks on Save record one observation"), then the report, receipts, trackers, manifest rebind, the final Node 22 gate, push, and exact-head CI.
+- c14afff: R9. The test clicked "Add an observation" while it was disabled (skill list still loading). A held `listSkills` reproduces it (`r9-diagnostic.log`). Both evidence-card tests now wait for the button to be enabled.
+
+**Next:** the final Node 22 gate into `final/` at c14afff (or later source), then the correction report, source hashes, evidence SHA256SUMS, trackers, manifest rebind (`node <scratch>/rebind.cjs` logic: recompute every entry of `docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json`, then SHA256SUMS), push, and exact-head CI.
