@@ -167,3 +167,10 @@ evidence/nav-worker-independent-review-2026-10-16/navigation-tests.log -text -di
 evidence/nav-worker-independent-review-2026-10-16/proof-build.log -text -diff
 evidence/nav-worker-independent-review-2026-10-16/proof-suite.stderr.log -text -diff
 evidence/nav-worker-independent-review-2026-10-16/review-doc-helper-tests.log -text -diff
+
+# Preserve phase2 re-review raw receipts.
+evidence/p54-02-phase2-rereview-2026-10-17/proof-build.log -text -diff
+evidence/p54-02-phase2-rereview-2026-10-17/runner-regressions.log -text -diff
+evidence/p54-02-phase2-rereview-2026-10-17/stream-diagnostic-build.log -text -diff
+evidence/p54-02-phase2-rereview-2026-10-17/suite.stderr.log -text -diff
+evidence/p54-02-phase2-rereview-2026-10-17/helper-tests.log -text -diff
