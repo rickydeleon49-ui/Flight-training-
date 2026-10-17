@@ -1437,3 +1437,41 @@ fn the_shared_operation_cases_hold_natively() {
         }
     }
 }
+
+#[test]
+fn the_shared_validation_cases_hold_natively() {
+    let doc: Value =
+        serde_json::from_str(include_str!("../fixtures/navigation/validation-cases.json")).unwrap();
+    let cases = doc["cases"].as_array().unwrap();
+    assert!(cases.len() >= 20);
+    for case in cases {
+        let name = case["name"].as_str().unwrap();
+        let dir = TempDir::new("shared-validation");
+        let conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        conn.execute_batch("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);")
+            .unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+            conn.execute(
+                "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+                [m.version],
+            )
+            .unwrap();
+        }
+        for sql in doc["baseline"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .chain(case["sql"].as_array().unwrap())
+        {
+            conn.execute_batch(sql.as_str().unwrap())
+                .unwrap_or_else(|e| panic!("{name}: {sql}: {e}"));
+        }
+        let outcome = match crate::backup::verify_application_connection(&conn) {
+            Ok(()) => "accept",
+            Err(_) => "refuse",
+        };
+        assert_eq!(outcome, case["expect"].as_str().unwrap(), "{name}");
+    }
+}
