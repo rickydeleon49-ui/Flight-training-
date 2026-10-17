@@ -1,0 +1,7 @@
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:21:03.5521358Z ^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m^[[1m^[[41m Failed Tests 1 ^[[49m^[[22m^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:21:03.5523475Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/pages/FlightPath/skills/skillScreens.test.ts^[[2m > ^[[22ma debrief's Skill evidence card^[[2m > ^[[22mtwo quick clicks on Save record one observation
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:21:03.5541560Z ^[[31m^[[1mTestingLibraryElementError^[[22m^[[39m: Unable to find role="dialog" and name "Add an observation"
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:21:03.5701885Z ^[[2m Test Files ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m147 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m4 skipped^[[39m^[[90m (152)^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:21:03.5746301Z ^[[2m      Tests ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m3283 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m6 skipped^[[39m^[[90m (3290)^[[39m
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:21:03.6707397Z ##[error]TestingLibraryElementError: Unable to find role="dialog" and name "Add an observation"
+Tests, types, and the data-safety guards	Run npm test	2026-10-17T01:21:03.6954608Z ##[error]Process completed with exit code 1.

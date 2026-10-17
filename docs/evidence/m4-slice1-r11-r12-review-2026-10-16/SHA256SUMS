@@ -1,10 +1,12 @@
-5051aa26566f494f2d0c26e26f90ba19d61663e8eebb11d7796e43656668a27a  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/README.md
+43d52072c1e8edce2c55eb5c25593b8ee81d94fa1923ae4b7ac6a598eb822610  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/README.md
 3122bd4640ad7a5b64bd139f1d47c63387bb615fa5a059b0361a4c5db61cfa14  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/ci-excerpt.log
 4d55df07c9ce565a6d9d459f3756cd80f82acab224e2179b23730f2b76914e6f  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/ci-verification.json
 7877771d42fb65349afc34728fa8d3bb3fe2f3ce40db452fa35375fb9c70b086  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/frozen-badge-ownership.test.ts
 cb09c3ad7e6cdf2d1f4cc08f9841c16a610437eae14818af8e1ee2762857f5e2  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/frozen-control-adaptation.txt
 8b7ea7d4e201c0283a7736d9ab239658d57b0340a815b520325e2dc3ef7c6ff7  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/frozen-retired-followup.test.ts
 62595e3982de2b6134c9a469d03b63a44558e628be2afb37255e7777cd88d386  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/new-diagnostics.log
+0b3ae2b179e305028c13157a6e1350e15bc11b717c899573e55af512a2855fef  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/pr191-ci-failed-excerpt.log
+ca8060e4992e88c8b9ec29c1ec2b705f5ccd397aac7ce94a2014da0a4177e074  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/pr191-integration-findings.json
 00b869030003354635b669b66b15102616527576015386fbcc0a56f85955ba85  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/previous-and-focused.log
 9a94669c6ad968e3af8ceeb0d0c566cd6de7ffc9755417eaf54d9f1b04d91df5  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-adapted.log
 e02adb4add7e41b71cd133043aed5b2b8a439dcb4b198c402b56dfa9d93aae78  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-second-unadapted.log
@@ -12,3 +14,4 @@ e02adb4add7e41b71cd133043aed5b2b8a439dcb4b198c402b56dfa9d93aae78  docs/evidence/
 8aadff67d00df4cfe983c6caf0da5eea344ca8f6b9160e9312d12da20c56ec35  docs/evidence/m4-slice1-r11-r12-review-2026-10-16/submitted-snapshot.json
 9fb6687e85d3fe730ab440fbc5ccaf430cce54cb185add9382de37e8f0458665  docs/M4_SLICE1_R11_R12_REVIEW_2026-10-16.md
 fd93e07bb7632d82e178f1df621573971e76aaae9a595331632a08d607cc2876  docs/M4_SLICE1_R11_R12_CORRECTIONS_PROMPT_2026-10-16.md
+564c282e1b78f63145c642dad111316880af034fc283005f70f6085b1a1298ec  docs/PR191_INTEGRATION_REVIEW_2026-10-16.md

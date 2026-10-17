@@ -1,0 +1,29 @@
+{
+  "head": "5f06d97986c4e599c8c28819692b1960ee76b4d9",
+  "run": 38989843373,
+  "conclusion": "failure",
+  "scope": "Integration and evidence checks only; formatter implementation not accepted by this bounded pass",
+  "trackerMismatches": [
+    {
+      "path": "STATUS.md",
+      "recorded": "56650f6edfcef0b9386bde6817f9eb639b3e3696aabf682c8f212fde6ba2536d",
+      "actual": "9b503323004a505772088da1ce9ffdc57c99490f38421bca5ae109f760ac44f3",
+      "recordedBytes": 240564,
+      "actualBytes": 241654
+    },
+    {
+      "path": "ROADMAP.md",
+      "recorded": "bccc817bf7837877ae7df0ec273a4652b3c16565435c62cfac40b61516eb43b0",
+      "actual": "307bd8e64e6e1ef39758811e2c6171757a5d86d9410cea1ab3f0754d5cbed440",
+      "recordedBytes": 118059,
+      "actualBytes": 119149
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "recorded": "aec9cd595f532317668475f7ed662f316dc425e6ab696aa900d7ff3cd388fa8c",
+      "actual": "f9dfd1bedcc1ea11fb1484a763d05d6927e7aaf4f016461cc853234089a85d2c",
+      "recordedBytes": 149564,
+      "actualBytes": 150649
+    }
+  ]
+}
