@@ -126,3 +126,12 @@ evidence/m4-slice1-r11-r12-review-2026-10-16/previous-and-focused.log -text -dif
 evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-adapted.log -text -diff
 evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-second-unadapted.log -text -diff
 evidence/m4-slice1-r11-r12-review-2026-10-16/pr191-ci-failed-excerpt.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/build.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/cargo-lock.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/fmt.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/focused-final.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/focused-first.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/frozen-final.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/full-frontend.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/helper.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/hygiene.log -text -diff
