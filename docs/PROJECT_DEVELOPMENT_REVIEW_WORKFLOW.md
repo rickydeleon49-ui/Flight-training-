@@ -50,9 +50,9 @@ After each review, Codex provides a precise, copy-ready prompt for the next assi
 
 ## Local verification gate
 
-Run the checks relevant to the release, including typecheck, lint, unit tests, PostgreSQL tests, browser tests, desktop tests, production builds, migration checks, and `git diff --check` where applicable.
+Run the checks relevant to the change: typecheck, lint, focused unit tests, SQLite repository and migration tests, browser or desktop checks, production builds, and `git diff --check` where applicable. Desktop data lives in SQLite; browser mode uses sql.js. This project does not require a PostgreSQL service or a PostgreSQL CI job.
 
-Use the existing local PostgreSQL 16 service. Reuse one service or keep-alive process; do not start duplicates. Do not run overlapping full test matrices. Record exact commands, exit codes, and test counts. Distinguish tests actually run from results reported by another agent.
+Reuse valid receipts for unchanged source and run focused regressions for corrections. Run the applicable full local gate once when the implementation is ready; repeat or broaden it only for changed behavior, a failure or an unresolved concern. Required exact-head CI remains the final merge gate. Do not start duplicate services or overlapping full test matrices. Record exact commands, exit codes, and test counts. Distinguish tests actually run from results reported by another agent.
 
 Tests must use disposable databases and profiles. Never let a test write to the owner's real application data. Do not delete suspected test data from a real profile without the owner's explicit direction.
 
@@ -64,7 +64,7 @@ GitHub Actions is the final confirmation gate, not the debugging environment.
 - Cancel superseded runs.
 - Skip expensive jobs for documentation-only changes when safe.
 - Use one supported Node version for normal pull requests.
-- Keep PostgreSQL checks in the existing PostgreSQL job.
+- Keep SQLite repository, migration and backup/restore coverage in the existing checks workflow; do not provision an unrelated database service.
 - Keep Windows jobs focused on genuinely Windows-specific behavior.
 - Do not weaken security, migration, database, desktop, or tenant-isolation coverage to save minutes.
 - If CI fails, inspect the failed step, reproduce it locally where possible, make the smallest justified correction, and push that correction once.
