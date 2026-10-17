@@ -71,6 +71,7 @@ d9a6d2d5bc0d54bf6b2ca107beb920342e825934f953747652f58feac85ad01e  docs/evidence/
 f5eab4342cf0c4d99705744d93821b494fa48da49134e785ac294738c8c44e1a  docs/evidence/p54-02-search-evaluation-2026-10-16/pdf-extraction.time.log
 ca2a9a0df532916af6de31422a52a15fcd0e024fa8b8e677e3a9a8db192c413f  docs/evidence/p54-02-search-evaluation-2026-10-16/preservation.json
 b5e9b8303fc5060d490d9a2e275f05dd8431cc674e70dea80c7dcad13f553df6  docs/evidence/p54-02-search-evaluation-2026-10-16/probe-input-identity.json
+9ac34e4bb6ac85c5c5e9a46a157c77543c11d1287db17afe7047c2b4b8e524db  docs/evidence/p54-02-search-evaluation-2026-10-16/publication-integrity.json
 5b3842959dd5e06b6784c8b84bb4c6f6866b9306f9542d0a53a04c8f91f7f15a  docs/evidence/p54-02-search-evaluation-2026-10-16/run-evaluation.py
 b6aeeea5ecf3eecb1e11416617a97dd70dad074c727cf5d5a70a65a4f57124c7  docs/evidence/p54-02-search-evaluation-2026-10-16/runtime.json
 581d0456ba4d18a8a56dd0f3db9881cd2384651f7705f0ff3dd99364f826b80e  docs/evidence/p54-02-search-evaluation-2026-10-16/search-node-probe.mjs
