@@ -5,9 +5,11 @@
 //! nothing here reads the database, the documents folder or the network.
 //!
 //! The write is all-or-nothing: the bytes go to a temporary file beside the
-//! destination, are flushed to disk and then renamed over it. A failed or
-//! interrupted save leaves any file already at that name untouched and
-//! removes its temporary file.
+//! destination, are flushed to disk and then renamed over it. A recoverable
+//! failed save leaves any file already at that name untouched and
+//! attempts to remove its temporary file. A forced process termination or an
+//! OS refusal of cleanup can leave a temporary file; a partial write is never
+//! renamed to the destination.
 
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -177,6 +179,20 @@ pub(crate) fn write_export(
     bytes: &[u8],
     limit: u64,
 ) -> Result<SavedExport, ExportError> {
+    write_export_with(path, bytes, limit, |file, bytes| {
+        file.write_all(bytes)?;
+        file.sync_all()
+    })
+}
+
+/// Keep validation, replacement and cleanup identical when a test injects an
+/// actual partial-write or flush failure. No environment or path test bypass.
+fn write_export_with(
+    path: &Path,
+    bytes: &[u8],
+    limit: u64,
+    persist: impl FnOnce(&mut File, &[u8]) -> std::io::Result<()>,
+) -> Result<SavedExport, ExportError> {
     if bytes.len() as u64 > limit {
         return Err(ExportError::TooLarge);
     }
@@ -209,9 +225,7 @@ pub(crate) fn write_export(
         .open(&temporary)
         .map_err(|_| ExportError::WriteFailed)?;
     let mut pending = Pending(Some(temporary.clone()));
-    file.write_all(bytes)
-        .map_err(|_| ExportError::WriteFailed)?;
-    file.sync_all().map_err(|_| ExportError::WriteFailed)?;
+    persist(&mut file, bytes).map_err(|_| ExportError::WriteFailed)?;
     drop(file);
     std::fs::rename(&temporary, path).map_err(|_| ExportError::WriteFailed)?;
     pending.0 = None;
@@ -357,6 +371,74 @@ mod tests {
             assert_eq!(std::fs::read_to_string(&path).unwrap(), "old");
         }
         assert_eq!(entries(&dir), vec!["Packet.json".to_string()]);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn partial_write_failure_keeps_old_destination_and_cleans_temporary() {
+        let dir = scratch("partial-write");
+        let path = dir.join("Packet.json");
+        std::fs::write(&path, b"original").unwrap();
+        let result = write_export_with(&path, b"replacement", MAX_PACKET_BYTES, |file, bytes| {
+            file.write_all(&bytes[..3])?;
+            Err(std::io::Error::other("injected write failure"))
+        });
+        assert_eq!(result, Err(ExportError::WriteFailed));
+        assert_eq!(std::fs::read(&path).unwrap(), b"original");
+        assert_eq!(entries(&dir), vec!["Packet.json"]);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn flush_failure_on_new_export_cleans_temporary_without_publishing() {
+        let dir = scratch("flush");
+        let path = dir.join("Handout.html");
+        let result = write_export_with(
+            &path,
+            b"complete bytes",
+            MAX_HANDOUT_BYTES,
+            |file, bytes| {
+                file.write_all(bytes)?;
+                Err(std::io::Error::other("injected flush failure"))
+            },
+        );
+        assert_eq!(result, Err(ExportError::WriteFailed));
+        assert!(!path.exists());
+        assert!(entries(&dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn persistence_panic_cleans_temporary_during_unwinding() {
+        let dir = scratch("panic");
+        let path = dir.join("Packet.json");
+        let result = std::panic::catch_unwind(|| {
+            let _ = write_export_with(&path, b"replacement", MAX_PACKET_BYTES, |file, bytes| {
+                file.write_all(bytes).unwrap();
+                panic!("injected persistence panic");
+            });
+        });
+        assert!(result.is_err());
+        assert!(!path.exists());
+        assert!(entries(&dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn rename_failure_after_complete_write_cleans_temporary() {
+        let dir = scratch("rename-after-write");
+        let path = dir.join("Taken.json");
+        let result = write_export_with(&path, b"complete", MAX_PACKET_BYTES, |file, bytes| {
+            file.write_all(bytes)?;
+            file.sync_all()?;
+            // A directory appears after the initial destination check. Rename
+            // really fails here, after temporary bytes exist, on every host.
+            std::fs::create_dir(&path)?;
+            std::fs::write(path.join("keep"), b"keep")
+        });
+        assert_eq!(result, Err(ExportError::WriteFailed));
+        assert_eq!(entries(&dir), vec!["Taken.json"]);
+        assert_eq!(std::fs::read(path.join("keep")).unwrap(), b"keep");
         std::fs::remove_dir_all(dir).unwrap();
     }
 

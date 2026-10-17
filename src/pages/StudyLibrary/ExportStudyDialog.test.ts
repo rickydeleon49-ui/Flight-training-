@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AiStudySet, PracticeTest } from "@/domain/types";
@@ -121,4 +121,61 @@ describe("Share or print", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("looks like a password or access key");
     expect(saveStudyExport).not.toHaveBeenCalled();
   });
+});
+
+function heldSave() {
+  let resolve!: (value: { fileName: string; byteLength: number } | null) => void;
+  const promise = new Promise<{ fileName: string; byteLength: number } | null>(yes => { resolve = yes; });
+  saveStudyExport.mockReturnValue(promise);
+  return { promise, resolve };
+}
+
+it("same-render Save events dispatch only one native save", async () => {
+  const held = heldSave(); open();
+  const button = screen.getByRole("button", { name: "Save…" });
+  try {
+    act(() => { button.click(); button.click(); });
+    expect(saveStudyExport).toHaveBeenCalledTimes(1);
+  } finally {
+    await act(async () => { held.resolve(null); await held.promise; });
+  }
+  expect(screen.getByRole("button", { name: "Save…" }).hasAttribute("disabled")).toBe(false);
+});
+
+it("selection, output and answer-key controls stay fixed while the save is pending", async () => {
+  const held = heldSave(); open();
+  fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+  try {
+    const inputs = [...document.querySelectorAll("input")];
+    expect(inputs.length).toBeGreaterThan(0);
+    for (const input of inputs) expect(input.matches(":disabled"), input.outerHTML).toBe(true);
+  } finally {
+    await act(async () => { held.resolve(null); await held.promise; });
+  }
+  expect([...document.querySelectorAll("input")].every(input => !input.matches(":disabled"))).toBe(true);
+});
+
+it("a failed save releases the synchronous lock for an intentional retry", async () => {
+  saveStudyExport.mockRejectedValueOnce(new StudyExportError("write_failed"));
+  saveStudyExport.mockResolvedValueOnce({ fileName: "retry.html", byteLength: 12 });
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+  await screen.findByRole("alert");
+  fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+  expect((await screen.findByRole("status")).textContent).toContain("retry.html");
+  expect(saveStudyExport).toHaveBeenCalledTimes(2);
+});
+
+it("a validation refusal releases the lock before a corrected selection is saved", async () => {
+  const leaked = { ...source, studySet: { ...set, summary: `AIza${"B".repeat(35)}` } };
+  saveStudyExport.mockResolvedValue({ fileName: "cards.json", byteLength: 12 });
+  render(h(ExportStudyDialog, { open: true, source: leaked, onClose: () => {} }));
+  fireEvent.click(screen.getByLabelText(/Study packet \(\.json\)/));
+  fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+  await screen.findByRole("alert");
+  expect(saveStudyExport).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByLabelText(/^Study guide/));
+  fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+  expect((await screen.findByRole("status")).textContent).toContain("cards.json");
+  expect(saveStudyExport).toHaveBeenCalledTimes(1);
 });

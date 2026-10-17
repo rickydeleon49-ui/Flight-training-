@@ -1,0 +1,22 @@
+{
+  "upstreamHead": "a490dac707b0484b0e7e0a1e8d4b81db4b242d3d",
+  "acceptedMain": "3266f193c63a82308ba3850b5dc53f334bca0420",
+  "preCorrectionMergeHead": "304603513a75c225e60929ee3787acfb0bbe75ba",
+  "files": [
+    {
+      "path": "src/pages/StudyLibrary/ExportStudyDialog.tsx",
+      "bytes": 7419,
+      "sha256": "8d3a71345825a50152ae85816cc67eb3378309c72c40200b1d36e132d3916a11"
+    },
+    {
+      "path": "src/pages/StudyLibrary/ExportStudyDialog.test.ts",
+      "bytes": 8261,
+      "sha256": "06bd6822970bd8f4a0fcc849f9c40b59aa60766bcbc5b9c5e048c9fa3387585b"
+    },
+    {
+      "path": "src-tauri/src/study_export.rs",
+      "bytes": 16782,
+      "sha256": "0a85d06aa0ee5b61751980b6538d9efa760301a5cfbfe3efe761cf2f28d75617"
+    }
+  ]
+}

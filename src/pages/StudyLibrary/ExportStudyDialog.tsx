@@ -11,7 +11,7 @@
  * Nothing in her library changes. Only this material's chosen study content
  * is written; practice history, other materials and settings never are.
  */
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { Button, Dialog } from "@/components/ui";
 import { exportFileName, exportStudyPacket, exportableParts, type ExportSelection, type ExportSource } from "@/logic/studyExport";
@@ -36,6 +36,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
   const [output, setOutput] = useState<Output>("handout");
   const [answerKey, setAnswerKey] = useState(true);
   const [working, setWorking] = useState(false);
+  const busy = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
 
@@ -52,25 +53,29 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
   const questionCount = source.practiceTest?.questions.length ?? 0;
 
   const save = async () => {
+    // State disables the controls on render; this lock also covers two events
+    // delivered before that render commits. One intent opens one native dialog.
+    if (busy.current) return;
+    busy.current = true;
+    setWorking(true);
     setError(null);
     setSaved(null);
-    const now = new Date();
-    let contents: string;
-    let suggested: string;
-    if (output === "packet") {
-      const packet = exportStudyPacket(source, selection, now);
-      if (!packet.ok) {
-        setError(packet.message);
-        return;
-      }
-      contents = packet.text;
-      suggested = packet.fileName;
-    } else {
-      contents = buildHandoutHtml(source, selection, { answerKey }, now);
-      suggested = exportFileName(source.material.title, "html");
-    }
-    setWorking(true);
     try {
+      const now = new Date();
+      let contents: string;
+      let suggested: string;
+      if (output === "packet") {
+        const packet = exportStudyPacket(source, selection, now);
+        if (!packet.ok) {
+          setError(packet.message);
+          return;
+        }
+        contents = packet.text;
+        suggested = packet.fileName;
+      } else {
+        contents = buildHandoutHtml(source, selection, { answerKey }, now);
+        suggested = exportFileName(source.material.title, "html");
+      }
       const result = await saveStudyExport(output, suggested, contents);
       if (result) setSaved(`Saved “${result.fileName}”.`);
     } catch (caught) {
@@ -78,6 +83,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
       else if (caught instanceof StudyExportError) setError(caught.message);
       else setError("The file could not be saved. Nothing was changed.");
     } finally {
+      busy.current = false;
       setWorking(false);
     }
   };
@@ -103,7 +109,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
       }
     >
       <div className="stack stack--4">
-        <fieldset className="export-study__choices">
+        <fieldset className="export-study__choices" disabled={working}>
           <legend className="field__label">Include</legend>
           {available.guide ? (
             <Choice checked={selection.guide} onChange={toggle("guide")} label="Study guide" detail={plural(set?.sections.length ?? 0, "section")} />
@@ -116,7 +122,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
           ) : null}
         </fieldset>
 
-        <fieldset className="export-study__choices">
+        <fieldset className="export-study__choices" disabled={working}>
           <legend className="field__label">Save as</legend>
           <label className="small">
             <input type="radio" name={`${ids}-output`} checked={output === "handout"} onChange={() => setOutput("handout")} /> Printable handout
@@ -132,6 +138,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
           <Choice
             checked={answerKey}
             onChange={setAnswerKey}
+            disabled={working}
             label="Add an answer key at the end"
             detail="On its own page, so you can quiz yourself first."
           />
@@ -163,10 +170,10 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
 /** A plain choice; the shared Checkbox strikes through its label, which reads as "done". */
-function Choice({ checked, onChange, label, detail }: { checked: boolean; onChange: (checked: boolean) => void; label: string; detail: string }) {
+function Choice({ checked, onChange, label, detail, disabled = false }: { checked: boolean; onChange: (checked: boolean) => void; label: string; detail: string; disabled?: boolean }) {
   return (
     <label className="small export-study__option">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /> {label}{" "}
+      <input type="checkbox" disabled={disabled} checked={checked} onChange={(event) => onChange(event.target.checked)} /> {label}{" "}
       <span className="tiny dim">· {detail}</span>
     </label>
   );
