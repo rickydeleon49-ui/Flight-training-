@@ -1,0 +1,32 @@
+[
+  {
+    "commit": "06f4bf3952edb32d076ec2bee377785110cb900b",
+    "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/p54_worker_proof.rs",
+    "bytes": 94535,
+    "sha256": "f3bfd6200fdcf147c0410ac81b7146d5cc60e3569f8d8d8fad4d0fc8b5f5f295"
+  },
+  {
+    "commit": "06f4bf3952edb32d076ec2bee377785110cb900b",
+    "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/run-phase2.py",
+    "bytes": 15855,
+    "sha256": "2eade88e64b5e268ea989fa350bce353b0dbc3b2c81217dc825f5809a07f5108"
+  },
+  {
+    "commit": "06f4bf3952edb32d076ec2bee377785110cb900b",
+    "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py",
+    "bytes": 10088,
+    "sha256": "f963834191b4701cc140d1d0bab65882527820370c23ff41041614b878c3f3f5"
+  },
+  {
+    "commit": "06f4bf3952edb32d076ec2bee377785110cb900b",
+    "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/SHA256SUMS",
+    "bytes": 5621,
+    "sha256": "32cc08926beb0fbc03f86b704525630fa886ab9ca659359cbbf0445ede63f55a"
+  },
+  {
+    "commit": "06f4bf3952edb32d076ec2bee377785110cb900b",
+    "path": "docs/P54_02_PHASE2_CORRECTIONS_REPORT_2026-10-17.md",
+    "bytes": 9869,
+    "sha256": "fe7584b1cc0d251a8c321b6851ff8bff04c1a9f6321dde7693315142d8e7bf7c"
+  }
+]
