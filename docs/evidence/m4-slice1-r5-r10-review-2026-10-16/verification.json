@@ -1,0 +1,72 @@
+{
+  "reviewedHead": "6d8c6080426d99e73399eb447412e09426b72bba",
+  "base": "c13889bd4614cf38a6d03482b7f58b46638d343f",
+  "checks": [
+    {
+      "name": "focused-existing",
+      "exit": 0,
+      "passed": 183,
+      "receipt": "author-focused.log"
+    },
+    {
+      "name": "Rust-full",
+      "exit": 0,
+      "passed": 512,
+      "ignored": 6,
+      "receipt": "rust-full.log"
+    },
+    {
+      "name": "typecheck-and-web-build",
+      "exit": 0,
+      "receipt": "build.log"
+    },
+    {
+      "name": "Clippy-all-targets-deny-warnings",
+      "exit": 0,
+      "receipt": "clippy.log"
+    },
+    {
+      "name": "fmt",
+      "exit": 0
+    },
+    {
+      "name": "submitted-diff-hygiene",
+      "exit": 0
+    },
+    {
+      "name": "schema14-helper",
+      "exit": 0,
+      "passed": 26,
+      "receipt": "helper.log"
+    },
+    {
+      "name": "current-helper-checksums",
+      "exit": 0,
+      "verified": 21
+    },
+    {
+      "name": "frozen-TS-diagnostics-with-controls",
+      "exit": 1,
+      "passed": 9,
+      "failed": 4,
+      "receipt": "new-diagnostics.log"
+    },
+    {
+      "name": "frozen-native-count-diagnostic",
+      "exit": 101,
+      "passed": 0,
+      "failed": 1,
+      "receipt": "native-new-diagnostic.log"
+    },
+    {
+      "name": "exact-head-CI",
+      "conclusion": "failure",
+      "runId": 38985040191,
+      "head": "6d8c6080426d99e73399eb447412e09426b72bba",
+      "frontendPassed": 3422,
+      "frontendFailed": 1,
+      "skipped": 6,
+      "receipt": "ci-failed.log"
+    }
+  ]
+}

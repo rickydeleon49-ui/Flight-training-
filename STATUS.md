@@ -1,3 +1,7 @@
+## M4 Slice1 PR189 requires R5–R10 corrections — 16 October 2026
+
+The feature is implemented but not accepted at reviewed head6d8c608. Independent review reproduced stale-bookmark opening, bookmark-draft rebinding, late reload publication, superseded guidance opening and native cached-count bounds defects; exact-head CI also failed one existing skill-screen case. [Re-review](docs/M4_SLICE1_REREVIEW_2026-10-16.md), [one correction assignment](docs/M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md). Existing512 native tests and183 focused frontend tests pass, but five new diagnostics fail; no merge is authorized by those passing subsets. All66 submitted paths are frozen and the author checkout is preserved. Owner approval OD-1–OD-10 persists; queue order unchanged. No app/profile/provider/installer/release work. Historical entries follow unchanged.
+
 ## M4 Slice1 document navigation complete; submitted for review — 16 October 2026
 
 **SUBMITTED FOR CODEX REVIEW; not accepted or merged.** One source PR on `claude/m4-slice1` delivers the owner-approved Slice1 (OD-1–OD-10, OD-6 refuse-and-explain) and closes the partial review's four findings at source level. [Report](docs/M4_SLICE1_COMPLETION_REPORT_2026-10-16.md).
