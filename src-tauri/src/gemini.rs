@@ -592,6 +592,8 @@ pub async fn generate_study_aid(
          Use only facts supported by the source. Do not invent regulations, procedures, numbers, or page references. \
          Return JSON only with: title (string), summary (string), sections (array of objects with heading and body), \
          flashcards (10-20 objects with front, back, and sourcePage as a page number or null), and sourceNotes (string). \
+         A section body may use simple Markdown: \"- \" or \"1. \" lists, **bold**, *italic*, \"> \" quotes and pipe tables \
+         with a header row. Do not use links, images or HTML. \
          Keep explanations clear for a student pilot. When the source is ambiguous or may be outdated, say so. \
          This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, \
          flight-school, and instructor guidance.";

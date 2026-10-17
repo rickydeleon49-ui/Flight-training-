@@ -13,6 +13,8 @@ import { DesktopOnlyError } from "@/services/documents";
 import { buildImportOperation, pickStudyPacket, StudyPacketReadError } from "@/services/studyPackets";
 import { useAppData } from "@/state/AppDataContext";
 
+import { GuideBody } from "./GuideBody";
+
 export const IMPORT_REFRESH_WARNING =
   "Imported, but the screen could not refresh. Your study packet is saved; reopen the Study Library to see it.";
 
@@ -322,7 +324,7 @@ function PreviewView({ preview }: { preview: Preview }) {
                 {data.guide.sections.map((section, index) => (
                   <div className="ai-guide__section" key={`${section.heading}-${index}`}>
                     <h4 className="small">{section.heading}</h4>
-                    <p className="small ai-copy">{section.body}</p>
+                    <GuideBody className="small" text={section.body} />
                   </div>
                 ))}
               </div>

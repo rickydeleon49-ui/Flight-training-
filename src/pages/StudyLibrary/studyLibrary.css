@@ -167,6 +167,38 @@
 .ai-guide__section h4 { margin: 0 0 var(--space-2); }
 .ai-copy { white-space: pre-wrap; }
 
+/* A guide body's formatting (P54-03): lists, quotes and tables, nothing loaded. */
+.guide-body { display: flex; flex-direction: column; gap: var(--space-2); overflow-wrap: anywhere; }
+.guide-body p { margin: 0; white-space: pre-wrap; }
+.guide-body ul,
+.guide-body ol { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: var(--space-1); }
+.guide-body li > .guide-body__heading,
+.guide-body li > p,
+.guide-body li > ul,
+.guide-body li > ol { margin-top: var(--space-1); }
+.guide-body blockquote {
+  margin: 0;
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.guide-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  padding: 0 0.25em;
+  border-radius: 4px;
+  background: var(--surface-sunken);
+}
+.guide-body__table { max-width: 100%; overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
+.guide-body table { border-collapse: collapse; width: 100%; }
+.guide-body th,
+.guide-body td { padding: var(--space-1) var(--space-2); text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-subtle); }
+.guide-body th { background: var(--surface-sunken); font-weight: 600; }
+.guide-body tbody tr:last-child td { border-bottom: none; }
+
 .flashcard {
   width: 100%;
   min-height: 12rem;

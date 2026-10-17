@@ -1,0 +1,14 @@
+[
+  {
+    "check": "build",
+    "exit": 0
+  },
+  {
+    "check": "helper",
+    "exit": 0
+  },
+  {
+    "check": "hygiene",
+    "exit": 0
+  }
+]

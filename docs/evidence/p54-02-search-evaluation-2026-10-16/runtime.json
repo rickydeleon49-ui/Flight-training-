@@ -1,0 +1,15 @@
+{
+  "os": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "architecture": "arm64",
+  "cpu": "Apple M5",
+  "memoryBytes": 34359738368,
+  "loadBefore": [
+    1.62890625,
+    3.52099609375,
+    4.77880859375
+  ],
+  "sourceHead": "3266f193c63a82308ba3850b5dc53f334bca0420",
+  "mode": "Cargo debug native + Node22; synthetic all-match query microbenchmark, not native painted interaction",
+  "startedUnix": 1792202588.6429498,
+  "node": "v22.23.3"
+}

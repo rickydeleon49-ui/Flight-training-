@@ -1,0 +1,13 @@
+libsqlite3-sys v0.30.1
+├── rusqlite v0.32.1
+│   └── her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-post-v054-roadmap/src-tauri)
+└── sqlx-sqlite v0.8.6
+    └── sqlx v0.8.6
+        └── tauri-plugin-sql v2.4.1
+            └── her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-post-v054-roadmap/src-tauri)
+
+libsqlite3-sys v0.30.1
+└── sqlx-sqlite v0.8.6
+    └── sqlx-macros-core v0.8.6
+        └── sqlx-macros v0.8.6 (proc-macro)
+            └── sqlx v0.8.6 (*)
