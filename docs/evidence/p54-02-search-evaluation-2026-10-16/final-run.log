@@ -1,0 +1,19 @@
+native-100-1 okay
+mini-100-1 okay
+native-100-2 okay
+mini-100-2 okay
+native-100-3 okay
+mini-100-3 okay
+native-1000-1 okay
+mini-1000-1 okay
+native-1000-2 okay
+mini-1000-2 okay
+native-1000-3 okay
+mini-1000-3 okay
+native-10000-1 okay
+mini-10000-1 okay
+native-10000-2 okay
+mini-10000-2 okay
+native-10000-3 okay
+mini-10000-3 okay
+PASS:18 engine runs;36 matching query-result-set checks;9 documented accent differences; temporary example removed

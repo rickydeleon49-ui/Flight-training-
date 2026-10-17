@@ -1,0 +1,11 @@
+{
+  "protectedInputsUnchanged": {
+    "package.json": "e72ab9a10b9d974900d45427ef0db3fbb184980479c56c99813e4067e56d93b0",
+    "package-lock.json": "9b844ed46faea0ed4e3b84ca87c131a264f91ce11deaf4cc88223014b77721d9",
+    "src-tauri/Cargo.toml": "f932047d55da1449652fe3501bcd3adf90db338da6a30cf049cc0e252f7ae2b1",
+    "src-tauri/Cargo.lock": "13b7296dbb7a8a99f225a373a9e416c90cd581579983ffc0b9113c74f36ac992"
+  },
+  "temporaryExampleRemoved": true,
+  "applicationProfileAccessed": false,
+  "productionDependencyAdded": false
+}
