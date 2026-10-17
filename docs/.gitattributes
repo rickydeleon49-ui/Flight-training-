@@ -137,3 +137,9 @@ evidence/p54-04-save-recovery-2026-10-16/hygiene.log -text -diff
 evidence/p54-04-save-recovery-2026-10-16/lock.log -text -diff
 evidence/p54-04-save-recovery-2026-10-16/native.log -text -diff
 evidence/p54-04-save-recovery-2026-10-16/ui-before.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/build.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/focused-frontend.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/native-study-export.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/regressions-on-original-a490dac.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/review-test.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/typecheck.log -text -diff
