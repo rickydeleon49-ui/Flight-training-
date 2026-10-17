@@ -1,0 +1,17 @@
+82b81260e62638e51acc1c7db5eaadb282e21da0f02c47c53f92f1fbd1f16f9f  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/README.md
+9c01d5f2ae3f292462827d6e318f29cc9e4924a65f3ff80043850ea90297e8c7  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/author-focused.log
+2c70cb052eb58c5e3f55626276860a9f3b0558543d0415d90a53c48ce81716d6  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/build.log
+15cd4fedd274d09d9f46a0606b942566d7634c584bacca662ffa6da0c4ffd129  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/ci-failed.log
+bd43faba4b1d384aaa0cdc3d5fa75921fed0ea8abdf6e498a4def2bc9311ac17  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/clippy.log
+504a499796ebb09202aa2dabdfce2248555729814216e35d632e89d24992cd92  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/frozen-hook-guidance-diagnostics.test.ts
+3ddb4c426a7867107738e30a5a7fe0ea15b8898a960aa17986379897e0f978fa  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/frozen-native-count-diagnostic.patch
+4408b43299b4b60a8cab9ab3ff21ef7ed202fa1850b1c7b15d2ef7d934d58754  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/frozen-ui-diagnostics.test.ts
+c13b5183c425e9c84641e4fe861acf3d87aa3ee018c639ddc4a6518fae647769  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/helper.log
+7ca628fe22deadca6f2823c2bb48050d8aecf6c36356272fc72387f8841614fc  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/native-focused-after-scratch.log
+d03d85ea1323b7a74e0a31794311289623de193ac4129c24c40b3e30902ffef8  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/native-new-diagnostic.log
+2a2339f21ff58ecb0b354115f1a8e7343db86ffd12a5c7679af4332d7876d10a  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/new-diagnostics.log
+9df81245669dfd6b2220c7d6d68d071ea10f633ce6244d6218d00e19f1f9ef03  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/rust-full.log
+ab747042371bc60e45fe8b19d558f142a8b39d1bf575876962baf4af750685b2  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/submitted-snapshot.json
+9b53960be20f29d8109214397bcb496a55add7a670bf108d7df8624864c138a9  docs/evidence/m4-slice1-r5-r10-review-2026-10-16/verification.json
+85e945e34e82b44359be2e47d7b4fa2db065679efbc19d6b79c9d0bcc3b0c81d  docs/M4_SLICE1_REREVIEW_2026-10-16.md
+27f391850ddf4d8cf35b0ad4bac9534f00542e1b094118d53e531d2678a39aed  docs/M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md

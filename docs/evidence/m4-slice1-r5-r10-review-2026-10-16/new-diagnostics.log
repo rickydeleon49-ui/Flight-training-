@@ -1,0 +1,117 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/pages/StudyLibrary/navigation/ReviewerNavigation.review.test.ts src/state/navigation/ReviewerNavigation.review.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+ ❯ src/state/navigation/ReviewerNavigation.review.test.ts (2 tests | 2 failed) 12ms
+   × [R7] an older material reload cannot overwrite newer content state 10ms
+   × [R8] a superseded guidance inspection must not launch its old document 1ms
+(node:86710) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/navigation/ReviewerNavigation.review.test.ts (11 tests | 2 failed) 854ms
+     × [R5] opening a saved A bookmark must not silently target replacement B 46ms
+     × [R6] an open bookmark draft must retain its original content after a background refresh 108ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/navigation/ReviewerNavigation.review.test.ts > [R7] an older material reload cannot overwrite newer content state
+AssertionError: late A must not replace B: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…' // Object.is equality
+
+Expected: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+ ❯ src/state/navigation/ReviewerNavigation.review.test.ts:17:91
+     15|  expect(result.result.current.state?.identity?.contentSha256).toBe(B);
+     16|  await act(async()=>{first.resolve(state(A));await first.promise;});
+     17|  expect(result.result.current.state?.identity?.contentSha256,"late A m…
+       |                                                                                           ^
+     18| });
+     19| it("[R8] a superseded guidance inspection must not launch its old docu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/state/navigation/ReviewerNavigation.review.test.ts > [R8] a superseded guidance inspection must not launch its old document
+AssertionError: retired guidance A must not open after B: expected [ 'm2', 'm1' ] to deeply equal [ 'm2' ]
+
+- Expected
++ Received
+
+  [
+    "m2",
++   "m1",
+  ]
+
+ ❯ src/state/navigation/ReviewerNavigation.review.test.ts:27:60
+     25|  first.resolve({materialId:"m1",contentSha256:A,totalPages:5,verifiedA…
+     26|  expect(await older).toBeNull();
+     27|  expect(opened,"retired guidance A must not open after B").toEqual(["m…
+       |                                                            ^
+     28| });
+     29|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/pages/StudyLibrary/navigation/ReviewerNavigation.review.test.ts > reviewer content-binding diagnostics > [R5] opening a saved A bookmark must not silently target replacement B
+AssertionError: A bookmark must not open B: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
++     "materialId": "nav-material",
++   },
++ ]
+
+ ❯ src/pages/StudyLibrary/navigation/ReviewerNavigation.review.test.ts:262:49
+    260|     fireEvent.click(open);
+    261|     await waitFor(()=>expect(observedController.status().kind).not.toB…
+    262|     expect(opened,"A bookmark must not open B").toEqual([]);
+       |                                                 ^
+    263|     expect(await tuple(),"do not save its old coordinate against B").t…
+    264|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/pages/StudyLibrary/navigation/ReviewerNavigation.review.test.ts > reviewer content-binding diagnostics > [R6] an open bookmark draft must retain its original content after a background refresh
+AssertionError: old draft must not bind itself to B: expected [ { …(10) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "created_at": "2026-10-17T00:30:13.575Z",
++     "id": "53301cb5-8522-4006-8e4c-10962d265ae7",
++     "material_id": "nav-material",
++     "notes": "",
++     "originating_content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
++     "page_index": 4,
++     "page_label": null,
++     "status": "verified",
++     "title": "Draft for A",
++     "updated_at": "2026-10-17T00:30:13.575Z",
++   },
++ ]
+
+ ❯ src/pages/StudyLibrary/navigation/ReviewerNavigation.review.test.ts:278:103
+    276|     fireEvent.click(within(dialog).getByRole("button",{name:"Save book…
+    277|     await waitFor(()=>expect(screen.queryByRole("button",{name:"Saving…
+    278|     expect(await db.select("SELECT * FROM material_bookmarks"),"old dr…
+       |                                                                                                       ^
+    279|   });
+    280| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 9 passed (13)
+   Start at  17:30:11
+   Duration  1.79s (transform 418ms, setup 0ms, import 625ms, tests 866ms, environment 783ms)
+

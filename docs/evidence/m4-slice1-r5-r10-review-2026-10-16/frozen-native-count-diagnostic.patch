@@ -1,0 +1,22 @@
+diff --git a/src-tauri/src/navigation_tests.rs b/src-tauri/src/navigation_tests.rs
+index 33ee7fa..cc21cb0 100644
+--- a/src-tauri/src/navigation_tests.rs
++++ b/src-tauri/src/navigation_tests.rs
+@@ -1475,3 +1475,17 @@ fn the_shared_validation_cases_hold_natively() {
+         assert_eq!(outcome, case["expect"].as_str().unwrap(), "{name}");
+     }
+ }
++
++#[test]
++fn reviewer_r10_an_inflated_cached_count_cannot_authorize_a_nonexistent_pdf_page() {
++    let dir = TempDir::new("review-r10");
++    let (mut conn, hash) = seeded(dir.path());
++    conn.execute("UPDATE material_content_identities SET total_pages=500 WHERE material_id=?1", [MAT]).unwrap();
++    // This is admissible to the current navigation backup verifier.
++    crate::backup::verify_schema_15_navigation_semantics(&conn).unwrap();
++    let before=tuple(&conn);
++    let token=begin_op(&mut conn,None).unwrap();
++    let result=checked(&mut conn, dir.path(),commit_json(token,&hash,450)).unwrap();
++    assert_ne!(result["committed"],true,"a 50-page file cannot authorize page450 even with an inflated cache");
++    assert_eq!(tuple(&conn),before);
++}
