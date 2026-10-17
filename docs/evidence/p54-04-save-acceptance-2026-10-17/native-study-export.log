@@ -1,0 +1,21 @@
+   Compiling her-flight-deck v0.5.5 (/private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p544/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.66s
+     Running unittests src/lib.rs (/Users/rickymac/code/Flight-training-post-v054-roadmap/src-tauri/target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 13 tests
+test study_export::tests::failures_never_include_a_path ... ok
+test study_export::tests::refuses_more_than_the_limit_before_writing ... ok
+test study_export::tests::a_missing_folder_fails_without_creating_anything ... ok
+test study_export::tests::suggested_names_are_plain_file_names_with_the_right_extension ... ok
+test study_export::tests::flush_failure_on_new_export_cleans_temporary_without_publishing ... ok
+test study_export::tests::persistence_panic_cleans_temporary_during_unwinding ... ok
+test study_export::tests::refuses_a_folder_at_the_chosen_name_and_changes_nothing ... ok
+test study_export::tests::a_failed_rename_keeps_the_old_file_and_removes_the_temporary_one ... ok
+test study_export::tests::refuses_a_symlink_at_the_chosen_name ... ok
+test study_export::tests::partial_write_failure_keeps_old_destination_and_cleans_temporary ... ok
+test study_export::tests::rename_failure_after_complete_write_cleans_temporary ... ok
+test study_export::tests::replaces_an_existing_file_only_with_the_complete_new_bytes ... ok
+test study_export::tests::writes_exact_bytes_and_leaves_no_temporary_file ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 483 filtered out; finished in 0.03s
+
