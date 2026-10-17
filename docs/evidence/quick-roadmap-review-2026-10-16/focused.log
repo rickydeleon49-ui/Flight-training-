@@ -1,0 +1,71 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/pages/StudyLibrary/navigation/ReviewerPanelNotice.test.ts src/state/navigation/useDocumentNavigationLifecycle.test.ts src/state/navigation/useDocumentNavigation.test.ts src/state/navigation/controller.test.ts src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts src/pages/StudyLibrary/navigation/SourcePageBadgeLifecycle.test.ts src/pages/StudyLibrary/GuideBody.test.ts src/logic/guideFormat.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+(node:33474) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/navigation/ReviewerPanelNotice.test.ts (2 tests | 2 failed) 124ms
+   × a retired check's success must not announce an old-context notice 97ms
+   × a retired check's failure must not announce an old-context notice 26ms
+(node:33472) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/navigation/ReviewerPanelNotice.test.ts > a retired check's success must not announce an old-context notice
+AssertionError: expected <p class="tiny" role="status"></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p
+  class="tiny"
+  role="status"
+>
+  This file changed since it was last checked. Places saved for the earlier version are marked.
+</p>
+
+ ❯ src/pages/StudyLibrary/navigation/ReviewerPanelNotice.test.ts:27:111
+     25|  await act(async()=>{if(outcome==="success")old.resolve({...state(50).…
+     26|  await waitFor(()=>expect(screen.getByText("This PDF has 70 pages.")).…
+     27|  expect(screen.queryByText(/This file changed since it was last checke…
+       |                                                                                                               ^
+     28| });
+     29|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/navigation/ReviewerPanelNotice.test.ts > a retired check's failure must not announce an old-context notice
+AssertionError: expected <p class="field__error" role="alert"></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p
+  class="field__error"
+  role="alert"
+>
+  Synthetic old-context file missing
+</p>
+
+ ❯ src/pages/StudyLibrary/navigation/ReviewerPanelNotice.test.ts:27:111
+     25|  await act(async()=>{if(outcome==="success")old.resolve({...state(50).…
+     26|  await waitFor(()=>expect(screen.getByText("This PDF has 70 pages.")).…
+     27|  expect(screen.queryByText(/This file changed since it was last checke…
+       |                                                                                                               ^
+     28| });
+     29|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  2 failed | 126 passed (128)
+   Start at  21:41:51
+   Duration  2.90s (transform 1.27s, setup 0ms, import 1.99s, tests 4.54s, environment 2.53s)
+
