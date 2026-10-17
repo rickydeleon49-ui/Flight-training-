@@ -1,4 +1,5 @@
-//! Saving an exported study packet or printable handout (P54-04).
+//! Saving an exported study packet or printable handout (P54-04), or a
+//! printable lesson brief (P54-05).
 //!
 //! The webview prepares the text; this command asks her where to save it with
 //! the native dialog and writes it there. The webview never names a path, and
@@ -24,6 +25,10 @@ use crate::study_packet::MAX_PACKET_BYTES;
 
 /// A handout holds the same content plus markup; twice a packet is ample.
 const MAX_HANDOUT_BYTES: u64 = 2 * MAX_PACKET_BYTES;
+/// A lesson brief is one page of her own short lines; 1 MiB is far beyond
+/// any real lesson and still refuses runaway input before the dialog opens.
+const MAX_BRIEF_BYTES: u64 = 1024 * 1024;
+const _: () = assert!(MAX_BRIEF_BYTES < MAX_HANDOUT_BYTES);
 /// Suggested names longer than this are shortened.
 const MAX_SUGGESTED_NAME_CHARS: usize = 120;
 
@@ -32,20 +37,21 @@ const MAX_SUGGESTED_NAME_CHARS: usize = 120;
 pub enum ExportKind {
     Packet,
     Handout,
+    Brief,
 }
 
 impl ExportKind {
     fn extension(self) -> &'static str {
         match self {
             Self::Packet => "json",
-            Self::Handout => "html",
+            Self::Handout | Self::Brief => "html",
         }
     }
 
     fn filter_name(self) -> &'static str {
         match self {
             Self::Packet => "Study packet",
-            Self::Handout => "Web page",
+            Self::Handout | Self::Brief => "Web page",
         }
     }
 
@@ -53,6 +59,7 @@ impl ExportKind {
         match self {
             Self::Packet => "Save study packet",
             Self::Handout => "Save printable handout",
+            Self::Brief => "Save lesson brief",
         }
     }
 
@@ -60,6 +67,7 @@ impl ExportKind {
         match self {
             Self::Packet => MAX_PACKET_BYTES,
             Self::Handout => MAX_HANDOUT_BYTES,
+            Self::Brief => MAX_BRIEF_BYTES,
         }
     }
 }
@@ -448,6 +456,30 @@ mod tests {
         let path = dir.join("Big.json");
         assert_eq!(
             write_export(&path, &[b'x'; 11], 10),
+            Err(ExportError::TooLarge)
+        );
+        assert!(entries(&dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_lesson_brief_is_its_own_bounded_html_kind() {
+        let kind: ExportKind = serde_json::from_str("\"brief\"").unwrap();
+        assert_eq!(kind, ExportKind::Brief);
+        assert_eq!(kind.extension(), "html");
+        assert_eq!(kind.title(), "Save lesson brief");
+        assert_eq!(kind.limit(), MAX_BRIEF_BYTES);
+        assert_eq!(
+            suggested_file_name("Lesson brief 2026-10-24 Pattern work.json", kind),
+            "Lesson brief 2026-10-24 Pattern work.json.html"
+        );
+        assert!(serde_json::from_str::<ExportKind>("\"Brief\"").is_err());
+
+        let dir = scratch("brief-limit");
+        let path = dir.join("Brief.html");
+        let oversized = vec![b'x'; MAX_BRIEF_BYTES as usize + 1];
+        assert_eq!(
+            write_export(&path, &oversized, kind.limit()),
             Err(ExportError::TooLarge)
         );
         assert!(entries(&dir).is_empty());

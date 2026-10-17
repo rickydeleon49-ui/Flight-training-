@@ -84,7 +84,8 @@ function pageRef(page: number | null): string {
   return page ? ` <span class="ref">(source p. ${page})</span>` : "";
 }
 
-const STYLE = `
+/** The printable-page styles, shared with the lesson brief (P54-05). */
+export const PRINT_STYLE = `
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
 body { margin: 0 auto; max-width: 46rem; padding: 2rem 1.5rem 3rem; font: 11.5pt/1.5 -apple-system, "Helvetica Neue", Arial, sans-serif; color: #1f2328; background: #fff; }
@@ -169,7 +170,7 @@ export function buildHandoutHtml(source: ExportSource, selection: ExportSelectio
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>${escapeHtml(title)}</title>
-<style>${STYLE}</style>
+<style>${PRINT_STYLE}</style>
 </head>
 <body>
 <header>

@@ -1,5 +1,6 @@
 /**
- * Saving an exported study packet or printable handout (P54-04).
+ * Saving an exported study packet or printable handout (P54-04), or a
+ * printable lesson brief (P54-05).
  *
  * The Rust command opens the native save dialog and writes the file all at
  * once, so the webview never names a path. Cancelling the dialog resolves to
@@ -10,7 +11,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "@/data";
 import { DesktopOnlyError } from "./documents";
 
-export type StudyExportKind = "packet" | "handout";
+export type StudyExportKind = "packet" | "handout" | "brief";
 
 export interface SavedStudyExport {
   fileName: string;

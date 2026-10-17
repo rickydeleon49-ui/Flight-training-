@@ -1,0 +1,2 @@
+src/logic/lessonBrief.test.ts(200,86): error TS2532: Object is possibly 'undefined'.
+src/pages/Schedule/LessonBriefDialog.test.ts(111,24): error TS2532: Object is possibly 'undefined'.

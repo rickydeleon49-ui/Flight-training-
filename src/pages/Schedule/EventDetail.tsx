@@ -29,6 +29,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
 import { EventFormDialog, type EventDraft } from "./EventFormDialog";
+import { LessonBriefDialog } from "./LessonBriefDialog";
 import "./schedule.css";
 
 export function EventDetail() {
@@ -40,6 +41,7 @@ export function EventDetail() {
 
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
   const [addingAction, setAddingAction] = useState(false);
   const [newPrepItem, setNewPrepItem] = useState("");
   const [materialToAttach, setMaterialToAttach] = useState("");
@@ -149,6 +151,7 @@ export function EventDetail() {
             <Link className="button button--ghost" to="/schedule">
               Back
             </Link>
+            <Button onClick={() => setBriefOpen(true)}>Lesson brief</Button>
             <Button onClick={() => setEditing(true)}>Edit</Button>
             <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
               Delete
@@ -454,6 +457,8 @@ export function EventDetail() {
           ) : null}
         </div>
       </div>
+
+      <LessonBriefDialog open={briefOpen} event={event} onClose={() => setBriefOpen(false)} />
 
       <EventFormDialog
         open={editing}
