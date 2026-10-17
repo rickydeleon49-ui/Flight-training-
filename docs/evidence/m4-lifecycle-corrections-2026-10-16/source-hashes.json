@@ -1,0 +1,27 @@
+{
+  "upstreamHead": "c234005185250f14b2f67bf5d977a5b67b853126",
+  "mainMerged": "333db29b73af3e67f4c98132e8aa4cdbe50bf038",
+  "mergeHead": "2826f87d71ed47f072b147f066ab40108e2a0f2d",
+  "files": [
+    {
+      "path": "src/state/navigation/useDocumentNavigation.ts",
+      "bytes": 7499,
+      "sha256": "70b8d0d2130a9b17354e58ade26cf2969013d5c6537a3d5a7f64aa2905fca612"
+    },
+    {
+      "path": "src/state/navigation/useDocumentNavigationLifecycle.test.ts",
+      "bytes": 7857,
+      "sha256": "b2b0faf682272bb675c3ab5957dd6551922e2bf284fddc81a4c0227e23712472"
+    },
+    {
+      "path": "src/pages/StudyLibrary/navigation/SourcePageBadge.tsx",
+      "bytes": 4266,
+      "sha256": "3a5e5acaee03c744765d5bd61ae2c51bda4518a35e13d435f9036ad14fea43a0"
+    },
+    {
+      "path": "src/pages/StudyLibrary/navigation/SourcePageBadgeLifecycle.test.ts",
+      "bytes": 6429,
+      "sha256": "63435aea5fa6120de59bfdf1df481fa20523d6cbaed36c9964fddadeabdb280d"
+    }
+  ]
+}

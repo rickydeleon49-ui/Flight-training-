@@ -1,0 +1,25 @@
+{
+  "head": "c234005185250f14b2f67bf5d977a5b67b853126",
+  "base": "d97e1a960c9cca394b5b9ea4a81c46a189f48ebf",
+  "run": 38988724371,
+  "conclusion": "success",
+  "checkoutMerge": "805ee2a",
+  "frontendPassed": 3455,
+  "frontendSkipped": 6,
+  "linuxRustPassed": 517,
+  "rustIgnored": 6,
+  "localExistingAuthorSuites": {
+    "files": 7,
+    "passed": 179
+  },
+  "previousFrozenAfterDocumentedControlSelectorAdaptation": {
+    "passed": 13,
+    "exit": 0
+  },
+  "newDiagnostics": {
+    "passed": 1,
+    "failed": 3,
+    "exit": 1
+  },
+  "scope": "Published committed source only. No test or source edit in the active implementation worktree."
+}
