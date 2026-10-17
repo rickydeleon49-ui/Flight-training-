@@ -33,7 +33,7 @@
 //! The browser twin is `src/data/navigationTransaction.ts`; the shared cases
 //! in `fixtures/navigation/operation-cases.json` hold the two sides equal.
 //! Every refusal is one allowlisted code with its fixed message
-//! (`NAVIGATION_ERROR_MESSAGES` in `src/data/navigationShapes.ts`).
+//! (`NAVIGATION_ERROR_MESSAGES` in `src/data/navigationTransaction.ts`).
 
 use std::path::Path;
 use std::time::Duration;
@@ -65,7 +65,7 @@ pub const MAX_SAFE: i64 = 9_007_199_254_740_991;
 /* ------------------------------------------------------------------ */
 
 /// The navigation refusals. Messages match `NAVIGATION_ERROR_MESSAGES` in
-/// `src/data/navigationShapes.ts` word for word.
+/// `src/data/navigationTransaction.ts` word for word.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NavigationErrorCode {

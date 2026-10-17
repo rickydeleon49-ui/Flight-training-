@@ -26,32 +26,15 @@ Recovery note for whoever continues this work. It is **not** a completion report
 - **R3:** fixed natively (`run_operation_checked`, `open_verified_on`). Tests: replacement, deletion and relinking after inspection; held open; held actions; save-only retry; wire path.
 - **R4:** the genuine case is restored. The defect was in the test driver only (it migrated the file in place before refusing); the browser driver already stored nothing. Before-fix receipt: `docs/evidence/m4-slice1-completion-2026-10-16/failed/r4-schema14-tamper-before-driver-fix.log`.
 
-## Remaining
+## Final state (superseding the "remaining" list this note held earlier)
 
-1. UI:
-   - `SourcePageBadge` in `MaterialDetail`, `PracticeTestPanel`, `CardReviewPanel` and `PracticeHistory`;
-   - a `DocumentPagesPanel` in `MaterialDetail`: check pages, open at a physical page, last requested page, mark read / clear, retry, bookmark add/list/open/delete, missing-file restore/locate;
-   - a `useDocumentNavigation` hook;
-   - UI tests.
-2. Final report and tracker entries (STATUS, ROADMAP, PROJECT_HANDOFF); manifest refresh only if a bound helper file changed.
-3. The full sequential gate on Node 22 (`PATH=/opt/homebrew/opt/node@22/bin:$PATH`). Local Node 26 fails some existing writable-schema tests (`table sqlite_master may not be modified`), which is unrelated to this work.
-4. Push, open the PR, wait for CI, then stop for Codex.
+All of the following are done. See [the completion report](M4_SLICE1_COMPLETION_REPORT_2026-10-16.md).
 
-## Tests run so far (Node 22 unless noted)
+- Shared validation cases: ebe2c8f.
+- UI: 20f31b2.
+- The full Node 22 gate: every step exited 0. Receipts are in `docs/evidence/m4-slice1-completion-2026-10-16/final/`.
+- Report and trackers.
 
-| Test | Result |
-| --- | --- |
-| Native navigation tests (`cargo test navigation`) | 34 passed after the latest additions |
-| Clippy `-D warnings`, fmt | clean |
-| `src/data`, `src/acceptance`, `currentSchemaVerification` | 1905 passed, 2 skipped (before the parity, shapes and controller files were added) |
-| Parity | 68 passed |
-| Shapes | 36 passed |
-| Domain | 21 passed |
-| Controller | 20 passed |
-| Schema-14 helper suite | 26/26 (Node 26) |
+**Next:** push, open the PR, wait for exact-head CI, then stop for Codex review.
 
-The full gate has not been run yet.
-
-## Temporary files
-
-The scratchpad holds snapshot and patch copies only. There are no background jobs.
+No temporary files or background jobs are left. The scratchpad holds copies only.

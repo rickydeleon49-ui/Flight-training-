@@ -1,3 +1,16 @@
+## M4 Slice1 document navigation complete; submitted for review — 16 October 2026
+
+**SUBMITTED FOR CODEX REVIEW; not accepted or merged.** One source PR on `claude/m4-slice1` delivers the owner-approved Slice1 (OD-1–OD-10, OD-6 refuse-and-explain) and closes the partial review's four findings at source level. [Report](M4_SLICE1_COMPLETION_REPORT_2026-10-16.md).
+
+- **R1:** read confirmation names the content hash and saved generation it was made for; bookmarks name the content. Stale requests change nothing.
+- **R2:** success replies must match every request-bound field.
+- **R3:** native commits, confirmations and bookmarks reread the managed file inside their own transaction; deletion, relinking or replacement after inspection cannot authorize a save. A verified native open hands only checked content to the default reader.
+- **R4:** the genuine tampered schema-14 case is restored; the node test driver (not production) now leaves a refused file unchanged.
+- **Feature:** migration 0015 (four tables), shared native/browser operation and validation cases, request controller with local epochs and durable supersession, source badges in four study views, and a "Find your place" panel with page entry, last requested page, separate read mark, bookmarks, save-only retry and file restore.
+- **Schema-14 helper:** still frozen at 14; its pins are compared with the registered 1–14 prefix and it refuses a schema-15 library.
+
+Source tests only; installed reader/IPC behaviour is unverified. No release, version bump, dependency, app launch, profile or provider use. Queue order is unchanged. Historical entries follow unchanged.
+
 ## M4 Slice1 scope approved; partial implementation needs completion — 16 October 2026
 
 The owner directly approved OD-1–OD-10, including OD-6 refuse-and-explain. [Approval](M4_PRODUCTION_SCOPE_OWNER_APPROVAL_2026-10-16.md). The isolated `claude/m4-slice1` worktree has saved checkpoints ed82811/07fdcfa plus one preserved trim patch; it is not accepted or on main. Independent review reproduced stale read-confirmation and inconsistent-acknowledgement defects, identified native cached-file validation and tamper-test coverage gaps, and confirmed the remaining schema14 helper failure. [Review](M4_SLICE1_PARTIAL_REVIEW_2026-10-16.md). Complete the approved feature and corrections together under [the continuation assignment](M4_SLICE1_CONTINUATION_PROMPT_2026-10-16.md), then stop for independent review. No release/profile/build/provider authorization is implied; queue order is unchanged.
