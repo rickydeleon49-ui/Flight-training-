@@ -1,0 +1,74 @@
+{
+  "189": {
+    "baseRefName": "main",
+    "baseRefOid": "6b4d408386a09c9c6178ae350d450df53b10e42d",
+    "headRefOid": "c9ad7438b8203aba28b1dc13bb5307f42c8d6285",
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/39003239028/job/117310371353",
+        "name": "Tests, types, and the data-safety guards",
+        "startedAt": "2026-10-17T04:37:09Z",
+        "status": "IN_PROGRESS",
+        "workflowName": "Checks"
+      }
+    ]
+  },
+  "193": {
+    "baseRefName": "claude/p54-03-formatted-guides",
+    "baseRefOid": "66b9f247ab02b1762437e7f6a1a86f3c90017d1e",
+    "headRefOid": "27c39711b46f0737c0b7e42b7b2f4d81b752b02c",
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-17T04:41:40Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/39002710742/job/117308817557",
+        "name": "Tests, types, and the data-safety guards",
+        "startedAt": "2026-10-17T04:28:46Z",
+        "status": "COMPLETED",
+        "workflowName": "Checks"
+      }
+    ]
+  },
+  "194": {
+    "baseRefName": "claude/m4-slice1",
+    "baseRefOid": "c234005185250f14b2f67bf5d977a5b67b853126",
+    "headRefOid": "35bd450c65151b464abb79b1d6a496ecec3bd196",
+    "state": "MERGED",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-17T02:28:20Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38994008611/job/117282376271",
+        "name": "Tests, types, and the data-safety guards",
+        "startedAt": "2026-10-17T02:12:32Z",
+        "status": "COMPLETED",
+        "workflowName": "Checks"
+      }
+    ]
+  },
+  "195": {
+    "baseRefName": "claude/p54-04-study-export",
+    "baseRefOid": "a490dac707b0484b0e7e0a1e8d4b81db4b242d3d",
+    "headRefOid": "bb57c4bd463ee6f59fffa4a1eab1d3f126c0a2dc",
+    "state": "MERGED",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-17T02:25:28Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38994010677/job/117282383272",
+        "name": "Tests, types, and the data-safety guards",
+        "startedAt": "2026-10-17T02:12:34Z",
+        "status": "COMPLETED",
+        "workflowName": "Checks"
+      }
+    ]
+  }
+}

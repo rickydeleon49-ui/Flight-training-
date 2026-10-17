@@ -154,3 +154,5 @@ evidence/p54-03-acceptance-2026-10-16/ci-summary.log -text -diff
 evidence/p54-03-acceptance-2026-10-16/frontend.log -text -diff
 evidence/p54-03-acceptance-2026-10-16/helper.log -text -diff
 evidence/p54-03-acceptance-2026-10-16/hygiene.log -text -diff
+evidence/quick-roadmap-review-2026-10-16/focused.log -text -diff
+evidence/quick-roadmap-review-2026-10-16/build.log -text -diff
