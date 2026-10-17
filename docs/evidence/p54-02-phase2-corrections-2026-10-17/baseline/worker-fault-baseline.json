@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "review-eof-stall",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": true,
+    "exit": -9,
+    "elapsedSeconds": 3.0055264169932343,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "mode": "review-done-nonzero",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.020391208003275096,
+    "stdout": "{\"indexed\":1,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":11.365958000000001,\"exit\":\"exit:3\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":40916,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  }
+]

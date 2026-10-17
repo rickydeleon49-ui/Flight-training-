@@ -1,0 +1,195 @@
+{
+  "extraction": [
+    {
+      "pages": 10,
+      "runs": [
+        {
+          "completed": true,
+          "expectedTextPages": 10,
+          "fileBytes": 6961,
+          "peakRssBytes": 5242880,
+          "textPages": 10,
+          "wallMs": 5.931334,
+          "workerExit": 0,
+          "workerSucceeded": true
+        },
+        {
+          "completed": true,
+          "expectedTextPages": 10,
+          "fileBytes": 6961,
+          "peakRssBytes": 5242880,
+          "textPages": 10,
+          "wallMs": 5.924833,
+          "workerExit": 0,
+          "workerSucceeded": true
+        },
+        {
+          "completed": true,
+          "expectedTextPages": 10,
+          "fileBytes": 6961,
+          "peakRssBytes": 5242880,
+          "textPages": 10,
+          "wallMs": 5.8935,
+          "workerExit": 0,
+          "workerSucceeded": true
+        }
+      ]
+    },
+    {
+      "pages": 100,
+      "runs": [
+        {
+          "completed": true,
+          "expectedTextPages": 100,
+          "fileBytes": 63559,
+          "peakRssBytes": 5963776,
+          "textPages": 100,
+          "wallMs": 40.036457999999996,
+          "workerExit": 0,
+          "workerSucceeded": true
+        },
+        {
+          "completed": true,
+          "expectedTextPages": 100,
+          "fileBytes": 63559,
+          "peakRssBytes": 5832704,
+          "textPages": 100,
+          "wallMs": 39.510083,
+          "workerExit": 0,
+          "workerSucceeded": true
+        },
+        {
+          "completed": true,
+          "expectedTextPages": 100,
+          "fileBytes": 63559,
+          "peakRssBytes": 5980160,
+          "textPages": 100,
+          "wallMs": 38.854125,
+          "workerExit": 0,
+          "workerSucceeded": true
+        }
+      ]
+    },
+    {
+      "pages": 300,
+      "runs": [
+        {
+          "completed": true,
+          "expectedTextPages": 300,
+          "fileBytes": 193225,
+          "peakRssBytes": 6684672,
+          "textPages": 300,
+          "wallMs": 173.15212499999998,
+          "workerExit": 0,
+          "workerSucceeded": true
+        },
+        {
+          "completed": true,
+          "expectedTextPages": 300,
+          "fileBytes": 193225,
+          "peakRssBytes": 6488064,
+          "textPages": 300,
+          "wallMs": 173.80166699999998,
+          "workerExit": 0,
+          "workerSucceeded": true
+        },
+        {
+          "completed": true,
+          "expectedTextPages": 300,
+          "fileBytes": 193225,
+          "peakRssBytes": 6504448,
+          "textPages": 300,
+          "wallMs": 174.33083399999998,
+          "workerExit": 0,
+          "workerSucceeded": true
+        }
+      ]
+    }
+  ],
+  "ipc": {
+    "bytes": 52432164,
+    "frames": 14724,
+    "mbPerSecond": 120.2507754742577,
+    "parseMs": 436.0235
+  },
+  "spawnToFirstFrameMedianMs": 1.386167,
+  "spawnToFirstFrameMs": [
+    1.775541,
+    1.480333,
+    1.435667,
+    1.3762500000000002,
+    1.406625,
+    1.40525,
+    1.386167,
+    1.402625,
+    1.384417,
+    1.421416,
+    1.368334,
+    1.382583,
+    1.3778329999999999,
+    1.3720830000000002,
+    1.38575
+  ],
+  "spawnToFirstFrameWorkers": [
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    },
+    {
+      "completed": true,
+      "workerExit": 0
+    }
+  ]
+}

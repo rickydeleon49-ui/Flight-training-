@@ -1,0 +1,20 @@
+[
+  {
+    "commit": "2351d3682940f4d2a36eb1b1704e1a8dbb3d2e6a",
+    "path": "docs/evidence/p54-02-phase2-final-corrections-2026-10-17/p54_worker_proof.rs",
+    "bytes": 101744,
+    "sha256": "94ca78ed75f2efdeead3983efe9c7d18abb159bb6d2fa26541d5016b184d216f"
+  },
+  {
+    "commit": "2351d3682940f4d2a36eb1b1704e1a8dbb3d2e6a",
+    "path": "docs/evidence/p54-02-phase2-final-corrections-2026-10-17/run-phase2.py",
+    "bytes": 16658,
+    "sha256": "522dbd03b9c7de4adf6b9d9fb16e097628e8813d0cba823336035b959f40f351"
+  },
+  {
+    "commit": "2351d3682940f4d2a36eb1b1704e1a8dbb3d2e6a",
+    "path": "docs/evidence/p54-02-phase2-final-corrections-2026-10-17/test_run_phase2.py",
+    "bytes": 12634,
+    "sha256": "096a2772b80f624e56453548b55f76c0c049f7b2df7cb9d1f4e038068a5700b5"
+  }
+]

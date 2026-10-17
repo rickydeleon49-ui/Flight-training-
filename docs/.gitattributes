@@ -156,6 +156,51 @@ evidence/p54-03-acceptance-2026-10-16/helper.log -text -diff
 evidence/p54-03-acceptance-2026-10-16/hygiene.log -text -diff
 evidence/quick-roadmap-review-2026-10-16/focused.log -text -diff
 evidence/quick-roadmap-review-2026-10-16/build.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/build.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-100-1.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-100-2.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-100-3.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-1000-1.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-1000-2.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-1000-3.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-10000-1.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-10000-2.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/index-10000-3.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/measure-extract.stderr.log -text -diff
+evidence/p54-02-worker-proof-2026-10-16/final/suite.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/baseline/baseline-extra-build.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/baseline/diagnostic-build.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/baseline/runner-regressions-on-submitted.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner-console.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner-regressions.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/build.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-1.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-2.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-3.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-1.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-2.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-3.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-1.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-2.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-3.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/measure-extract.stderr.log -text -diff
+evidence/p54-02-phase2-corrections-2026-10-17/final/runner/suite.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/baseline/runner-regressions-on-06f4bf3.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/baseline/trailing-baseline-build.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner-console.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner-regressions.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/build.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-100-1.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-100-2.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-100-3.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-1000-1.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-1000-2.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-1000-3.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-10000-1.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-10000-2.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/index-10000-3.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/measure-extract.stderr.log -text -diff
+evidence/p54-02-phase2-final-corrections-2026-10-17/final/runner/suite.stderr.log -text -diff
 
 # Preserve independent review raw receipts byte-for-byte.
 evidence/nav-worker-independent-review-2026-10-16/diagnostic-build.log -text -diff
@@ -167,10 +212,16 @@ evidence/nav-worker-independent-review-2026-10-16/navigation-tests.log -text -di
 evidence/nav-worker-independent-review-2026-10-16/proof-build.log -text -diff
 evidence/nav-worker-independent-review-2026-10-16/proof-suite.stderr.log -text -diff
 evidence/nav-worker-independent-review-2026-10-16/review-doc-helper-tests.log -text -diff
-
 # Preserve phase2 re-review raw receipts.
 evidence/p54-02-phase2-rereview-2026-10-17/proof-build.log -text -diff
 evidence/p54-02-phase2-rereview-2026-10-17/runner-regressions.log -text -diff
 evidence/p54-02-phase2-rereview-2026-10-17/stream-diagnostic-build.log -text -diff
 evidence/p54-02-phase2-rereview-2026-10-17/suite.stderr.log -text -diff
 evidence/p54-02-phase2-rereview-2026-10-17/helper-tests.log -text -diff
+
+# Independent phase2 acceptance raw receipts.
+evidence/p54-02-phase2-acceptance-2026-10-17/frozen-diagnostic-build.log -text -diff
+evidence/p54-02-phase2-acceptance-2026-10-17/proof-build.log -text -diff
+evidence/p54-02-phase2-acceptance-2026-10-17/runner-tests.log -text -diff
+evidence/p54-02-phase2-acceptance-2026-10-17/suite.stderr.log -text -diff
+evidence/p54-02-phase2-acceptance-2026-10-17/helper-acceptance.log -text -diff

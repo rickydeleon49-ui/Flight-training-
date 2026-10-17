@@ -1,0 +1,14 @@
+{
+  "100": {
+    "corpusSha256": "ed28118b2092b630ab125e31717b303aead2732d943a5af5b37a681951fc41c3",
+    "corpusBytes": 732854
+  },
+  "1000": {
+    "corpusSha256": "75acf263d862bbe00098b92d51765e5e4cadc65fb7f440c0daa6bb3d39f0f378",
+    "corpusBytes": 7210640
+  },
+  "10000": {
+    "corpusSha256": "8e88d7b2181b328fb51c9f7cda755c2c6f05dc77c391ab71605a8c6b080dee97",
+    "corpusBytes": 72149084
+  }
+}
