@@ -1,3 +1,11 @@
+## P54-05 part A (lesson brief) implemented; pending independent review — 17 October 2026
+
+**PENDING REVIEW; NO SELF-MERGE.** Claude implemented the approved lesson brief on `claude/p54-05-lesson-brief`, from main 32582f2. Every schedule item now has a Lesson brief dialog with:
+- a printable page showing the stored details, `lessonPreparation()` readiness with exact parity, and attached reading (title, type, topic);
+- only the follow-ups she ticks, from the newest earlier journal entry and open goal questions, de-duplicated.
+
+Saved through the shared native path as a new `brief` kind (html, 1 MiB cap); browser mode prints instead. Lesson notes, reflections, finances, material notes and paths are never included (sentinel tests). Full frontend 3,584/6 skipped; native 532/6 ignored; typecheck, build, strict Clippy, fmt, lock and helper 26/26 pass. First-attempt typecheck and Clippy failures are retained. No dependency or migration; navigation page labels deferred. Part B (calendar) follows acceptance. [Report](docs/P54_05_LESSON_BRIEF_REPORT_2026-10-17.md).
+
 ## Navigation and export accepted for combined main integration — 17 October 2026 (UTC)
 
 PR203's independent save-correction acceptance is verified and merged into PR193 atc99fcb2. PR193 now contains the accepted navigation head69768bf and current main3e59d71, preserving both feature histories. Full combined local gate9/9 passes:3,563 frontend/6 skips,531 Mac native/6 ignored, build/types, strict Clippy/fmt/lock/helper26/26/hygiene. Only MaterialDetail and native command registration combine reviewed feature contributions; other feature source is unchanged. [Integration acceptance](docs/NAV_EXPORT_INTEGRATION_ACCEPTANCE_2026-10-17.md). Final exact-head current-main CI still gates the containing PR193 merge, which will also contain all PR189 commits.
