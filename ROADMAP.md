@@ -1,3 +1,7 @@
+## NAV-UI-01 [P3] panel notices implemented; pending independent review — 16 October 2026
+
+**PENDING REVIEW; NO SELF-MERGE.** Claude implemented the quick review's follow-up on `claude/nav-ui-01-panel-notices`, stacked on PR189 b5e6b99. Pages-panel notices (check result, read-mark and removal failures) are now owned by the repository/controller/material context that started the action: a retired completion publishes nothing, and a context change clears old notices. 7 permanent cases; 4 fail on the unfixed panel. Navigation 101/101, full frontend 3,527/6 skipped, typecheck/build/helper pass. R11/R12 source unchanged. [Report](docs/NAV_UI_01_PANEL_NOTICES_REPORT_2026-10-16.md).
+
 ## Quick review: corrections integrated into feature branches; one nonblocking UI follow-up — 16 October 2026
 
 PR194 and PR195 are merged into their feature branches; earlier "draft/pending correction" entries below are historical. PR189 headc9ad743 has Claude's recorded R11/R12 independent acceptance and current-main merge, with combined-source CI pending at review time. PR193 head27c3971 is green against the old formatted-guide base; it still needs a recorded independent export acceptance, retarget/reconciliation with main and final current-base CI before integration.

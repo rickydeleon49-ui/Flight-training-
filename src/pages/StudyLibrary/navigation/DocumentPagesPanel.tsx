@@ -14,8 +14,11 @@
  * - A bookmark opens only on the content it was saved on (M4S1-R5). A new
  *   bookmark is bound to the content, page count and material shown when its
  *   dialog opened, and a later refresh never rebinds it (M4S1-R6).
+ * - A check, read mark or removal reports back only to the repository and
+ *   material it started on; one that finishes after they changed says
+ *   nothing over the new ones (NAV-UI-01).
  */
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { Button, Card, CardBody, CardHeader, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
 import type { NavigationBookmark, StudyMaterial } from "@/domain/types";
@@ -86,6 +89,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const [removePending, setRemovePending] = useState(false);
   const [readPending, setReadPending] = useState(false);
   const headingId = useId();
+  const notices = useRef<object | null>(null);
 
   // Leaving the material retires its pending request: nothing more is opened,
   // saved or shown for it. A save that already landed stays saved.
@@ -96,6 +100,25 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
       if ("materialId" in current && current.materialId === material.id && current.kind === "working") controller.abort();
     };
   }, [controller, material.id]);
+
+  // Notices belong to one repository, controller and material. A change
+  // retires them, and a completion that started under the old ones is
+  // refused before it can publish (NAV-UI-01).
+  useEffect(() => {
+    const owner = {};
+    notices.current = owner;
+    return () => {
+      if (notices.current === owner) notices.current = null;
+      setCheckNote(null);
+      setActionError(null);
+    };
+  }, [repo, controller, material.id]);
+
+  /** Whether a notice from an action started now may still be shown when it finishes. */
+  const noticeOwner = () => {
+    const owner = notices.current;
+    return () => owner !== null && notices.current === owner;
+  };
 
   // A draft belongs to the material it was started on.
   useEffect(() => {
@@ -149,24 +172,26 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   };
 
   const checkPages = async () => {
+    const current = noticeOwner();
     setActionError(null);
     setCheckNote(null);
     try {
       const changed = await nav.checkPages();
-      setCheckNote(changed ? "This file changed since it was last checked. Places saved for the earlier version are marked." : null);
+      if (current()) setCheckNote(changed ? "This file changed since it was last checked. Places saved for the earlier version are marked." : null);
     } catch (error) {
-      setActionError(navigationMessage(error));
+      if (current()) setActionError(navigationMessage(error));
     }
   };
 
   const toggleRead = async (confirmed: boolean) => {
     if (!reading) return;
+    const current = noticeOwner();
     setActionError(null);
     setReadPending(true);
     try {
       await nav.setRead(reading, confirmed);
     } catch (error) {
-      setActionError(navigationMessage(error));
+      if (current()) setActionError(navigationMessage(error));
     } finally {
       setReadPending(false);
     }
@@ -174,12 +199,13 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
 
   const remove = async () => {
     if (!removing) return;
+    const current = noticeOwner();
     setRemovePending(true);
     try {
       await nav.deleteBookmark(removing.id);
       setRemoving(null);
     } catch (error) {
-      setActionError(navigationMessage(error));
+      if (current()) setActionError(navigationMessage(error));
       setRemoving(null);
     } finally {
       setRemovePending(false);
