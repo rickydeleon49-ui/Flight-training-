@@ -1,0 +1,13 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/state/navigation/ReviewerFrozenR11.test.ts src/pages/StudyLibrary/navigation/ReviewerFrozenR12.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  18:47:29
+   Duration  748ms (transform 190ms, setup 0ms, import 310ms, tests 276ms, environment 503ms)
+

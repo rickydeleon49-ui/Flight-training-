@@ -1,3 +1,7 @@
+## P54-04 save correction source gate — 16 October 2026
+
+Codex implemented the save-intent lock and pending-control corrections; independent acceptance remains pending.3,320 frontend and490 Mac native tests pass on SDK26.5, strict Clippy/build/fmt/lock/helper pass. No installed save-dialog, WebKit print or VoiceOver claim is made. [Report](P54_04_SAVE_RECOVERY_REPORT_2026-10-16.md). Historical checklist follows unchanged.
+
 **8 October C2 production source accepted for integration:** C2SRC-R1/R2 closed. All 32 source hashes, 57 original and 30 correction evidence checksums verify. Independent affected/frozen tests: 112 passed / 1 skipped; typecheck/build pass. R2's prior baseline precondition error is corrected in the acceptance; semantic revert independently fails at the real assertion. Submitted final gate: 2,808 frontend pass / 5 skips / zero unhandled; 420 Rust pass / 6 ignored. [Source acceptance](M2_CARD_REVIEW_C2_SOURCE_ACCEPTANCE_2026-10-08.md); containing source PR supplies exact-head CI and merge. Library-wide views are complete; split lineage and installed/platform M2 acceptance remain. [Next model-neutral split-lineage scope/proof assignment](M2_SPLIT_LINEAGE_SCOPE_PROMPT_2026-10-08.md). Earlier pending C2 rows are historical after merge. No signing/release activation.
 
 # macOS parity and implementation tracker

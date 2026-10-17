@@ -1,0 +1,187 @@
+{
+ "description": "Shared schema-15 navigation validation cases: each case applies its statements to a fresh library with every registered migration plus the baseline, then whole-library validation must give the listed outcome natively (verify_application_connection, navigation_tests.rs) and in the browser/test twin (validateApplicationDatabase, navigationValidationParity.test.ts) on node:sqlite and sql.js.",
+ "baseline": [
+  "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('mat', 'Synthetic', 'x', 'x'), ('other', 'Synthetic', 'x', 'x')",
+  "INSERT INTO material_content_identities VALUES ('mat', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 20, 'x')",
+  "INSERT INTO material_operation_claims VALUES ('mat', 3, 2, 'x')",
+  "INSERT INTO material_reading_state VALUES ('mat', 5, 'iv', 1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'active', 3, 'x')",
+  "INSERT INTO material_bookmarks (id, material_id, page_index, page_label, originating_content_sha256, title, notes, status, created_at, updated_at) VALUES ('b1', 'mat', 4, NULL, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'Charts', '', 'verified', 'x', 'x')"
+ ],
+ "cases": [
+  {
+   "name": "the populated baseline is accepted",
+   "category": "control",
+   "sql": [],
+   "expect": "accept"
+  },
+  {
+   "name": "empty navigation tables are accepted",
+   "category": "control",
+   "sql": [
+    "DELETE FROM material_bookmarks",
+    "DELETE FROM material_reading_state",
+    "DELETE FROM material_operation_claims",
+    "DELETE FROM material_content_identities"
+   ],
+   "expect": "accept"
+  },
+  {
+   "name": "saved places with an unknown origin, unverified, are accepted",
+   "category": "control",
+   "sql": [
+    "UPDATE material_reading_state SET originating_content_sha256 = NULL, status = 'unverified'",
+    "UPDATE material_bookmarks SET originating_content_sha256 = NULL, status = 'unverified'"
+   ],
+   "expect": "accept"
+  },
+  {
+   "name": "drifted saved places for other content are accepted",
+   "category": "control",
+   "sql": [
+    "UPDATE material_content_identities SET content_sha256 = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
+    "UPDATE material_reading_state SET status = 'drifted'",
+    "UPDATE material_bookmarks SET status = 'drifted'"
+   ],
+   "expect": "accept"
+  },
+  {
+   "name": "exactly 500 bookmarks are accepted",
+   "category": "control",
+   "sql": [
+    "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 499) INSERT INTO material_bookmarks (id, material_id, page_index, originating_content_sha256, title, created_at, updated_at) SELECT 'seed' || i, 'mat', 1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 't', 'x', 'x' FROM n"
+   ],
+   "expect": "accept"
+  },
+  {
+   "name": "501 bookmarks for one material are refused",
+   "category": "limits",
+   "sql": [
+    "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 500) INSERT INTO material_bookmarks (id, material_id, page_index, originating_content_sha256, title, created_at, updated_at) SELECT 'seed' || i, 'mat', 1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 't', 'x', 'x' FROM n"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a claim that cancels a never-issued request is refused",
+   "category": "ownership",
+   "sql": [
+    "UPDATE material_operation_claims SET cancelled_generation = 4"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a saved position owned by a never-issued request is refused",
+   "category": "ownership",
+   "sql": [
+    "UPDATE material_reading_state SET owner_generation = 4"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a saved position with no claim at all is refused",
+   "category": "ownership",
+   "sql": [
+    "DELETE FROM material_operation_claims"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "an orphaned bookmark is refused",
+   "category": "schema-fk",
+   "sql": [
+    "PRAGMA foreign_keys = OFF",
+    "INSERT INTO material_bookmarks (id, material_id, page_index, title, created_at, updated_at) VALUES ('orphan', 'gone', 1, 't', 'x', 'x')"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "an orphaned identity is refused",
+   "category": "schema-fk",
+   "sql": [
+    "PRAGMA foreign_keys = OFF",
+    "INSERT INTO material_content_identities VALUES ('gone', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 2, 'x')"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a dropped idx_material_content_sha is refused",
+   "category": "schema-index",
+   "sql": [
+    "DROP INDEX idx_material_content_sha"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a dropped idx_material_reading_state_owner is refused",
+   "category": "schema-index",
+   "sql": [
+    "DROP INDEX idx_material_reading_state_owner"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a dropped idx_material_bookmarks_material is refused",
+   "category": "schema-index",
+   "sql": [
+    "DROP INDEX idx_material_bookmarks_material"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a dropped idx_material_bookmarks_page is refused",
+   "category": "schema-index",
+   "sql": [
+    "DROP INDEX idx_material_bookmarks_page"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a dropped idx_material_bookmarks_hash is refused",
+   "category": "schema-index",
+   "sql": [
+    "DROP INDEX idx_material_bookmarks_hash"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "an identity table without its lowercase-hex CHECK is refused",
+   "category": "schema-check",
+   "sql": [
+    "PRAGMA foreign_keys = OFF",
+    "ALTER TABLE material_content_identities RENAME TO old_t",
+    "CREATE TABLE material_content_identities (material_id TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE, content_sha256 TEXT NOT NULL, total_pages INTEGER NOT NULL CHECK (TYPEOF(total_pages) = 'integer' AND total_pages >= 1), verified_at TEXT NOT NULL)",
+    "INSERT INTO material_content_identities SELECT * FROM old_t",
+    "DROP TABLE old_t",
+    "CREATE INDEX idx_material_content_sha ON material_content_identities(content_sha256)"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a claims table without cascade on material deletion is refused",
+   "category": "schema-fk",
+   "sql": [
+    "PRAGMA foreign_keys = OFF",
+    "ALTER TABLE material_operation_claims RENAME TO old_t",
+    "CREATE TABLE material_operation_claims (material_id TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id), reserved_generation INTEGER NOT NULL DEFAULT 0 CHECK (TYPEOF(reserved_generation) = 'integer' AND reserved_generation >= 0), cancelled_generation INTEGER NOT NULL DEFAULT 0 CHECK (TYPEOF(cancelled_generation) = 'integer' AND cancelled_generation >= 0), updated_at TEXT NOT NULL)",
+    "INSERT INTO material_operation_claims SELECT * FROM old_t",
+    "DROP TABLE old_t"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "an extra column on the reading state is refused",
+   "category": "schema",
+   "sql": [
+    "ALTER TABLE material_reading_state ADD COLUMN extra TEXT"
+   ],
+   "expect": "refuse"
+  },
+  {
+   "name": "a missing bookmarks table is refused",
+   "category": "schema",
+   "sql": [
+    "DROP TABLE material_bookmarks"
+   ],
+   "expect": "refuse"
+  }
+ ]
+}

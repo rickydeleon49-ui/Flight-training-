@@ -31,6 +31,7 @@ import {
 } from "@/logic/practiceAttemptReview";
 import { useAppData } from "@/state/AppDataContext";
 import "./studyLibrary.css";
+import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 /**
  * Route/request generation. Bumped whenever the displayed identity changes or
@@ -686,8 +687,12 @@ function AttemptReviewPage({
             <Card key={item.id}>
               <CardHeader
                 title={`Question ${number} of ${items.length}`}
-                eyebrow={item.sourcePage ? `Source p. ${item.sourcePage}` : "Check source"}
-                action={<Badge tone={resultTone}>{resultLabel}</Badge>}
+                action={
+                  <span className="row">
+                    <SourcePageBadge page={item.sourcePage} materialId={attempt.sourceMaterialId} />
+                    <Badge tone={resultTone}>{resultLabel}</Badge>
+                  </span>
+                }
               />
               <CardBody>
                 <div className="stack stack--3">

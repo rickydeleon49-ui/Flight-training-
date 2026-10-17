@@ -1,0 +1,48 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/state/navigation/useDocumentNavigationLifecycle.test.ts src/pages/StudyLibrary/navigation/SourcePageBadgeLifecycle.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+ ❯ src/state/navigation/useDocumentNavigationLifecycle.test.ts (24 tests | 1 failed) 3143ms
+     × StrictMode's retired action cannot borrow the replayed lifetime's lease 1020ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/navigation/useDocumentNavigationLifecycle.test.ts > R11: action ownership survives awaited work > StrictMode's retired action cannot borrow the replayed lifetime's lease
+AssertionError: expected [ { promise: Promise{…}, …(2) } ] to have a length of 2 but got 1
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/state/navigation/useDocumentNavigationLifecycle.test.ts:118:45
+    116|     const wrapper = ({ children }: PropsWithChildren) => createElement…
+    117|     renderHook(() => { const nav = useMaterialNavigation("m1", repo, I…
+    118|     await waitFor(() => expect(inspections).toHaveLength(2));
+       |                                             ^
+    119|     const initialReads = reads;
+    120|     await act(async () => { inspections[0]!.resolve(); await completio…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 32 passed (33)
+   Start at  18:46:47
+   Duration  3.70s (transform 215ms, setup 0ms, import 326ms, tests 3.23s, environment 514ms)
+

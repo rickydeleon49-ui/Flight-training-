@@ -11,6 +11,7 @@ mod debrief;
 mod documents;
 mod gemini;
 mod lineage;
+mod navigation;
 mod pdf;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any
 // command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
@@ -20,6 +21,7 @@ mod practice_sessions;
 mod secrets;
 mod skill_evidence;
 mod storage;
+mod study_export;
 mod study_packet;
 
 use tauri::Manager;
@@ -27,7 +29,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 14;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 15;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -119,6 +121,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0014_skills_evidence.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 15,
+            description: "document_navigation",
+            sql: include_str!("../migrations/0015_document_navigation.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -189,6 +197,7 @@ pub fn run() {
             lineage::reconcile_split_batch,
             lineage::fingerprint_stored_documents,
             study_packet::pick_study_packet,
+            study_export::save_study_export,
             study_packet::save_structured_study_material_atomically,
             practice_sessions::save_practice_session_atomically,
             practice_sessions::erase_practice_history_atomically,
@@ -203,6 +212,9 @@ pub fn run() {
             skill_evidence::read_skill_summary,
             skill_evidence::list_skills,
             skill_evidence::read_observation_history,
+            navigation::navigation_operation,
+            navigation::inspect_navigation_identity,
+            navigation::open_navigation_document,
             documents::save_material_operation,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,

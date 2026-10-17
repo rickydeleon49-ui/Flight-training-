@@ -1,0 +1,278 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m4-slice1
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts (15 tests | 13 failed) 139ms
+     × an older material reload cannot overwrite newer content state 10ms
+     × a stale error does not erase a later success 3ms
+     × a stale completion does not end the latest read's loading 3ms
+     × a change of material retires the old material's read and clears its state 3ms
+     × a change of repository retires reads from the old one 4ms
+     × follow-up reads after a mutation and after a settled request still win over an older read 55ms
+     × a page check's follow-up read is owned the same way 54ms
+     × under StrictMode the replayed read wins and the hook keeps working afterwards 3ms
+     × a superseded guidance inspection must not launch its old document 1ms
+     × abort while the inspection is held: nothing opens 0ms
+     × dispose while the inspection is held: nothing opens 0ms
+     × a newer request that fails still retires the older guidance 0ms
+     × a newer page request retires older guidance before its open 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > an older material reload cannot overwrite newer content state
+AssertionError: late A must not replace B: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…' // Object.is equality
+
+Expected: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:86:65
+     84|       await reads[0]!.gate.promise;
+     85|     });
+     86|     expect(hashOf(result.current), "late A must not replace B").toBe(B…
+       |                                                                 ^
+     87|   });
+     88|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > a stale error does not erase a later success
+AssertionError: expected 'The change could not be saved.' to be null
+
+- Expected:
+null
+
++ Received:
+"The change could not be saved."
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:103:34
+    101|     });
+    102|     expect(hashOf(result.current)).toBe(B);
+    103|     expect(result.current.error).toBeNull();
+       |                                  ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > a stale completion does not end the latest read's loading
+AssertionError: the newer read is still loading: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:118:71
+    116|       await reads[0]!.gate.promise;
+    117|     });
+    118|     expect(result.current.loading, "the newer read is still loading").…
+       |                                                                       ^
+    119|     expect(hashOf(result.current)).toBeNull();
+    120|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > a change of material retires the old material's read and clears its state
+AssertionError: m1's state is not shown for m2: expected { materialId: 'm1', …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "bookmarks": [],
+  "identity": {
+    "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "materialId": "m1",
+    "totalPages": 50,
+    "verifiedAt": "x",
+  },
+  "materialId": "m1",
+  "readingState": null,
+}
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:142:68
+    140|     held = reads[1]!.gate;
+    141|     rerender({ id: "m2" });
+    142|     expect(result.current.state, "m1's state is not shown for m2").toB…
+       |                                                                    ^
+    143|     await waitFor(() => expect(reads).toHaveLength(3));
+    144|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > a change of repository retires reads from the old one
+AssertionError: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…' // Object.is equality
+
+Expected: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:167:36
+    165|       first.reads[0]!.gate.resolve(state(A));
+    166|     });
+    167|     expect(hashOf(result.current)).toBe(B);
+       |                                    ^
+    168|   });
+    169|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > follow-up reads after a mutation and after a settled request still win over an older read
+AssertionError: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…' // Object.is equality
+
+Expected: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:186:36
+    184|       reads[0]!.gate.resolve(state(A));
+    185|     });
+    186|     expect(hashOf(result.current)).toBe(B);
+       |                                    ^
+    187|
+    188|     // A request for this material settles while an older reload is he…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > a page check's follow-up read is owned the same way
+AssertionError: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…' // Object.is equality
+
+Expected: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:219:36
+    217|       reads[0]!.gate.resolve(state(A));
+    218|     });
+    219|     expect(hashOf(result.current)).toBe(B);
+       |                                    ^
+    220|   });
+    221|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > only the latest read publishes (M4S1-R7) > under StrictMode the replayed read wins and the hook keeps working afterwards
+AssertionError: the read retired by StrictMode's cleanup does not publish: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…' // Object.is equality
+
+Expected: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:253:97
+    251|       reads[0]!.gate.resolve(state(A));
+    252|     });
+    253|     expect(hashOf(result.current), "the read retired by StrictMode's c…
+       |                                                                                                 ^
+    254|     expect(result.current.loading).toBe(false);
+    255|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > guidance opens only while it is current, on the real port composition (M4S1-R8) > a superseded guidance inspection must not launch its old document
+AssertionError: retired guidance A must not open after B: expected [ 'm2:b', 'm1:a' ] to deeply equal [ 'm2:b' ]
+
+- Expected
++ Received
+
+  [
+    "m2:b",
++   "m1:a",
+  ]
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:305:66
+    303|     first.resolve(identity("m1", A));
+    304|     expect(await older).toBeNull();
+    305|     expect(r.opened, "retired guidance A must not open after B").toEqu…
+       |                                                                  ^
+    306|     expect(r.writes).toEqual([]);
+    307|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > guidance opens only while it is current, on the real port composition (M4S1-R8) > abort while the inspection is held: nothing opens
+AssertionError: expected [ 'm1:a' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "m1:a",
++ ]
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:325:22
+    323|     held.resolve(identity("m1", A));
+    324|     expect(await pending).toBeNull();
+    325|     expect(r.opened).toEqual([]);
+       |                      ^
+    326|     expect(controller.status().kind).toBe("idle");
+    327|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > guidance opens only while it is current, on the real port composition (M4S1-R8) > dispose while the inspection is held: nothing opens
+AssertionError: expected [ 'm1:a' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "m1:a",
++ ]
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:337:22
+    335|     held.resolve(identity("m1", A));
+    336|     expect(await pending).toBeNull();
+    337|     expect(r.opened).toEqual([]);
+       |                      ^
+    338|   });
+    339|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > guidance opens only while it is current, on the real port composition (M4S1-R8) > a newer request that fails still retires the older guidance
+AssertionError: expected [ 'm1:a' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "m1:a",
++ ]
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:349:22
+    347|     held.resolve(identity("m1", A));
+    348|     expect(await older).toBeNull();
+    349|     expect(r.opened).toEqual([]);
+       |                      ^
+    350|     expect(controller.status()).toMatchObject({ kind: "failed", materi…
+    351|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/state/navigation/useDocumentNavigation.test.ts > guidance opens only while it is current, on the real port composition (M4S1-R8) > a newer page request retires older guidance before its open
+AssertionError: expected [ 'm1:a' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "m1:a",
++ ]
+
+ ❯ src/state/navigation/useDocumentNavigation.test.ts:362:22
+    360|     held.resolve(identity("m1", A));
+    361|     expect(await older).toBeNull();
+    362|     expect(r.opened).toEqual([]);
+       |                      ^
+    363|   });
+    364| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 2 passed (15)
+   Start at  17:46:55
+   Duration  666ms (transform 137ms, setup 0ms, import 197ms, tests 139ms, environment 240ms)
+

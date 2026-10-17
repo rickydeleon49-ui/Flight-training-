@@ -420,3 +420,8 @@ export function useAppData(): AppDataContextValue {
     throw new Error("useAppData must be used inside AppDataProvider");
   return context;
 }
+
+/** The app data when inside AppDataProvider, or null (for parts that also render standalone). */
+export function useOptionalAppData(): AppDataContextValue | null {
+  return useContext(AppDataContext);
+}

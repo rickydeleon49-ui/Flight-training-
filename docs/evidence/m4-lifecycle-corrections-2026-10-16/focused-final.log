@@ -1,0 +1,17 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/state/navigation/useDocumentNavigationLifecycle.test.ts src/pages/StudyLibrary/navigation/SourcePageBadgeLifecycle.test.ts src/state/navigation/useDocumentNavigation.test.ts src/state/navigation/controller.test.ts src/pages/StudyLibrary/navigation/
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+(node:17768) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17769) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  5 passed (5)
+      Tests  94 passed (94)
+   Start at  18:47:08
+   Duration  2.69s (transform 850ms, setup 0ms, import 1.32s, tests 4.24s, environment 1.28s)
+

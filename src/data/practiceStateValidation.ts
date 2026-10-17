@@ -239,6 +239,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 12) await validateCardReviewState(query, reference);
   if (newest >= 13) await validateSplitLineageState(query, reference);
   if (newest >= 14) await validateSkillEvidenceState(query, reference);
+  if (newest >= 15) await validateNavigationState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -1346,5 +1347,106 @@ export async function validateSkillEvidenceState(query: ValidationQuery, referen
     if (!owned(r["operation_id"], action, r["skill_id"], r["sequence"])) {
       refuse(`Skill ${String(r["skill_id"])} ${String(r["kind"])} entry ${String(r["sequence"])} has no matching operation record.`);
     }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 15: document navigation                                      */
+/* (native twin: `verify_schema_15_navigation_semantics`)              */
+/* ------------------------------------------------------------------ */
+
+export const NAVIGATION_TABLES = [
+  "material_content_identities",
+  "material_reading_state",
+  "material_bookmarks",
+  "material_operation_claims",
+] as const;
+
+export const NAVIGATION_INDEXES = [
+  ["material_content_identities", "idx_material_content_sha"],
+  ["material_reading_state", "idx_material_reading_state_owner"],
+  ["material_bookmarks", "idx_material_bookmarks_material"],
+  ["material_bookmarks", "idx_material_bookmarks_page"],
+  ["material_bookmarks", "idx_material_bookmarks_hash"],
+] as const;
+
+/** Bookmarks one material may hold (native `MAX_BOOKMARKS_PER_MATERIAL`). */
+const NAVIGATION_BOOKMARKS_PER_MATERIAL = 500;
+
+async function navigationColumns(query: ValidationQuery, table: string): Promise<string[]> {
+  const rows = await query(
+    `SELECT name, type, "notnull" AS required, pk, dflt_value FROM pragma_table_info('${table}') ORDER BY name`,
+    [],
+  );
+  return rows.map(
+    (row) => `${text(row, "name")}|${text(row, "type").toLowerCase()}|${int(row, "required")}|${int(row, "pk")}|${optText(row, "dflt_value") ?? ""}`,
+  );
+}
+
+async function navigationKeyIndexes(query: ValidationQuery, table: string): Promise<string[]> {
+  const out: string[] = [];
+  for (const row of await query(`SELECT name, origin FROM pragma_index_list('${table}') WHERE origin IN ('pk', 'u')`, [])) {
+    out.push(`${text(row, "origin")}|${(await indexColumns(query, text(row, "name"))).join(",")}`);
+  }
+  return out.sort();
+}
+
+async function navigationIndexShape(query: ValidationQuery, table: string, index: string): Promise<string | null> {
+  const [listed] = await query(`SELECT "unique" AS uniq FROM pragma_index_list('${table}') WHERE name = ?`, [index]);
+  if (!listed) return null;
+  return `${int(listed, "uniq")}|${(await indexColumns(query, index)).join(",")}`;
+}
+
+/**
+ * The schema-15 navigation contract: the four tables exactly as migration
+ * 0015 defines them, their indexes, rows that point at real materials, and
+ * ownership that is internally consistent.
+ */
+export async function validateNavigationState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  for (const table of NAVIGATION_TABLES) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])) !== 1) {
+      refuse(`The database is missing required table: ${table}`);
+    }
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table))) {
+      refuse(`Table ${table} columns do not match the registered migration contract.`);
+    }
+    if (!same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table))) {
+      refuse(`Table ${table} foreign keys do not match the registered migration contract.`);
+    }
+    if (!same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table)))) {
+      refuse(`Table ${table} CHECK constraints do not match the registered migration contract.`);
+    }
+    if (!same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table))) {
+      refuse(`Table ${table} keys do not match the registered migration contract.`);
+    }
+    if ((await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length !== 0) {
+      refuse(`Table ${table} has rows for study materials that no longer exist.`);
+    }
+  }
+  for (const [table, index] of NAVIGATION_INDEXES) {
+    if ((await navigationIndexShape(query, table, index)) !== (await navigationIndexShape(reference, table, index))) {
+      refuse(`The database is missing required index: ${index}`);
+    }
+  }
+  if ((await count(query, "SELECT COUNT(*) AS n FROM material_operation_claims WHERE cancelled_generation > reserved_generation")) !== 0) {
+    refuse("A navigation claim cancels a request that was never issued.");
+  }
+  if (
+    (await count(
+      query,
+      `SELECT COUNT(*) AS n FROM material_reading_state s
+         LEFT JOIN material_operation_claims c ON c.material_id = s.material_id
+        WHERE s.owner_generation > COALESCE(c.reserved_generation, 0)`,
+    )) !== 0
+  ) {
+    refuse("A saved reading position belongs to a request that was never issued.");
+  }
+  if (
+    (await count(
+      query,
+      `SELECT COUNT(*) AS n FROM (SELECT material_id FROM material_bookmarks GROUP BY material_id HAVING COUNT(*) > ${NAVIGATION_BOOKMARKS_PER_MATERIAL})`,
+    )) !== 0
+  ) {
+    refuse("A study material has more bookmarks than the app supports.");
   }
 }

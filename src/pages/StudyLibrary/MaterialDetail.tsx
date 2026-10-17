@@ -67,9 +67,12 @@ import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
+import { ExportStudyDialog } from "./ExportStudyDialog";
 import { GuideBody } from "./GuideBody";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
+import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
+import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 interface ActiveGeminiOperation {
   requestId: number;
@@ -130,6 +133,7 @@ function MaterialDetailPage({
   const [newQuestion, setNewQuestion] = useState("");
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [splittingManually, setSplittingManually] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
@@ -712,6 +716,15 @@ function MaterialDetailPage({
             </Card>
           ) : null}
 
+          {material.filePath ? (
+            <DocumentPagesPanel
+              material={material}
+              fileMissing={fileMissing}
+              restoring={restoringFile}
+              onRestore={() => void restoreFile()}
+            />
+          ) : null}
+
           {material.filePath || studySet ? (
             <Card>
               <CardHeader
@@ -724,17 +737,26 @@ function MaterialDetailPage({
                       : "Guide and flashcards"
                 }
                 action={
-                  canOfferGemini ? (
-                    <Button
-                      size="small"
-                      variant={studySet ? "secondary" : "primary"}
-                      disabled={isGeneratingAny || fileMissing}
-                      onClick={() => {
-                        if (!isGeneratingAny && !activeGeminiOpRef.current) setConfirmingAi(true);
-                      }}
-                    >
-                      {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
-                    </Button>
+                  canOfferGemini || studySet || practiceTest ? (
+                    <div className="row row--wrap">
+                      {studySet || practiceTest ? (
+                        <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
+                          Share or print
+                        </Button>
+                      ) : null}
+                      {canOfferGemini ? (
+                        <Button
+                          size="small"
+                          variant={studySet ? "secondary" : "primary"}
+                          disabled={isGeneratingAny || fileMissing}
+                          onClick={() => {
+                            if (!isGeneratingAny && !activeGeminiOpRef.current) setConfirmingAi(true);
+                          }}
+                        >
+                          {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
+                        </Button>
+                      ) : null}
+                    </div>
                   ) : undefined
                 }
               />
@@ -797,11 +819,7 @@ function MaterialDetailPage({
                               Card {cardIndex + 1} of {studySet.flashcards.length}
                             </h3>
                           </div>
-                          <Badge tone="study">
-                            {studySet.flashcards[cardIndex]?.sourcePage
-                              ? `Source p. ${studySet.flashcards[cardIndex]?.sourcePage}`
-                              : "Check source"}
-                          </Badge>
+                          <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
                         </div>
                         <button
                           className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
@@ -1188,6 +1206,14 @@ function MaterialDetailPage({
             setSplitting(false);
             navigate("/study");
           }}
+        />
+      ) : null}
+
+      {studySet || practiceTest ? (
+        <ExportStudyDialog
+          open={exporting}
+          source={{ material, studySet: studySet ?? null, practiceTest: practiceTest ?? null }}
+          onClose={() => setExporting(false)}
         />
       ) : null}
 

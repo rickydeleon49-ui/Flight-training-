@@ -1,0 +1,105 @@
+[
+  {
+    "stage": "frontend",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exit": 0,
+    "passed": 3563,
+    "skipped": 6
+  },
+  {
+    "stage": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 3.8712190419901162
+  },
+  {
+    "stage": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 4.995954000012716
+  },
+  {
+    "stage": "native",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--lib"
+    ],
+    "exit": 0,
+    "seconds": 60.88709158397978
+  },
+  {
+    "stage": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit": 0,
+    "seconds": 3.521720541990362
+  },
+  {
+    "stage": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.2517655419942457
+  },
+  {
+    "stage": "lock",
+    "command": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "exit": 0,
+    "seconds": 2.113056542002596
+  },
+  {
+    "stage": "helper",
+    "command": [
+      "node",
+      "--test",
+      "scripts/mac-schema14-profile-snapshot.test.mjs"
+    ],
+    "exit": 0,
+    "seconds": 3.488709208002547
+  },
+  {
+    "stage": "hygiene",
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.017171666986541823
+  }
+]

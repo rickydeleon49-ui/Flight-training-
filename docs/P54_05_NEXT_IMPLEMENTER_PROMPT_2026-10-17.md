@@ -1,3 +1,5 @@
+**Integration update:** Phase1 is complete; PR203 records independent acceptance. Once PR193's combined integration is on main, use [the direct PartA implementation prompt](P54_05_LESSON_BRIEF_IMPLEMENTATION_PROMPT_2026-10-17.md). The earlier phased assignment below is retained as history.
+
 # Continue the approved roadmap toward the lesson brief
 
 You are the next owner-selected model. First close the independent export-save review prerequisite; then implement the approved lesson brief **only once PR193 is on origin/main**. Do not self-merge. These are two phases of one continuation, with a Codex integration boundary between them when required.

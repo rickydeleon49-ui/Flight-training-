@@ -1462,3 +1462,133 @@ export interface SkillListEntry {
   retired: boolean;
   revision: number;
 }
+
+/* ------------------------------------------------------------------ */
+/* Document navigation (M4 Slice 1, schema 15)                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The verified identity of a material's managed PDF. Written only by the
+ * native inspector from the file's own bytes; the interface never supplies a
+ * hash or page count.
+ */
+export interface NavigationIdentity {
+  materialId: Id;
+  contentSha256: string;
+  totalPages: number;
+  verifiedAt: IsoDateTime;
+}
+
+export interface InspectedNavigationIdentity extends NavigationIdentity {
+  /** True when this check found different bytes or a different length than before. */
+  changed: boolean;
+}
+
+/** active: matches the current file. unverified: saved without a known file. drifted: the file changed since. */
+export type ReadingStateStatus = "active" | "unverified" | "drifted";
+export type BookmarkStatus = "verified" | "unverified" | "drifted";
+
+/** The last page she asked to open, kept apart from an explicit read confirmation. */
+export interface NavigationReadingState {
+  materialId: Id;
+  lastRequestedPage: number;
+  lastRequestedPageLabel: string | null;
+  confirmedRead: boolean;
+  originatingContentSha256: string | null;
+  status: ReadingStateStatus;
+  ownerGeneration: number;
+  updatedAt: IsoDateTime;
+}
+
+export interface NavigationBookmark {
+  id: string;
+  materialId: Id;
+  physicalPage: number;
+  pageLabel: string | null;
+  originatingContentSha256: string | null;
+  title: string;
+  notes: string;
+  status: BookmarkStatus;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}
+
+export interface NavigationState {
+  materialId: Id;
+  identity: NavigationIdentity | null;
+  readingState: NavigationReadingState | null;
+  bookmarks: NavigationBookmark[];
+}
+
+export type NavigationCommitRefusal =
+  | "unreserved"
+  | "superseded"
+  | "cancelled"
+  | "replayed"
+  | "identity_unknown"
+  | "identity_changed"
+  | "out_of_bounds";
+
+export type NavigationCommitVerdict =
+  | { committed: true; reason: null; readingState: NavigationReadingState }
+  | { committed: false; reason: NavigationCommitRefusal; readingState: NavigationReadingState | null };
+
+export type NavigationOperation =
+  | { kind: "begin"; materialId: Id; supersedeGeneration: number | null }
+  | { kind: "cancel"; materialId: Id; generation: number }
+  | {
+      kind: "commit";
+      materialId: Id;
+      generation: number;
+      contentSha256: string;
+      physicalPage: number;
+      pageLabel: string | null;
+    }
+  | { kind: "read"; materialId: Id }
+  | {
+      /** Bound to the saved request the person saw (M4S1-R1). */
+      kind: "set_read";
+      materialId: Id;
+      expectedContentSha256: string;
+      expectedOwnerGeneration: number;
+      physicalPage: number;
+      confirmed: boolean;
+    }
+  | {
+      /** Bound to the content the person was looking at (M4S1-R1). */
+      kind: "add_bookmark";
+      materialId: Id;
+      expectedContentSha256: string;
+      bookmarkId: string;
+      physicalPage: number;
+      pageLabel: string | null;
+      title: string;
+      notes: string;
+    }
+  | { kind: "delete_bookmark"; materialId: Id; bookmarkId: string };
+
+/** The result each operation kind returns. */
+export interface NavigationResultByKind {
+  begin: { generation: number };
+  cancel: { cancelledGeneration: number };
+  commit: NavigationCommitVerdict;
+  read: NavigationState;
+  set_read: NavigationReadingState;
+  add_bookmark: NavigationBookmark;
+  delete_bookmark: { deleted: boolean };
+}
+
+export type NavigationErrorCode =
+  | "INVALID_ARGUMENT"
+  | "NOT_FOUND"
+  | "FILE_MISSING"
+  | "NOT_A_PDF"
+  | "FILE_CHANGED"
+  | "IDENTITY_UNKNOWN"
+  | "PAGE_OUT_OF_RANGE"
+  | "STALE_STATE"
+  | "LIMIT_EXCEEDED"
+  | "STORAGE_FAILURE"
+  /** Browser mode only: there is no managed file to inspect. */
+  | "OPEN_FAILED"
+  | "DESKTOP_ONLY";

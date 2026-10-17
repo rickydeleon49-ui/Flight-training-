@@ -126,6 +126,23 @@ evidence/m4-slice1-r11-r12-review-2026-10-16/previous-and-focused.log -text -dif
 evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-adapted.log -text -diff
 evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-second-unadapted.log -text -diff
 evidence/m4-slice1-r11-r12-review-2026-10-16/pr191-ci-failed-excerpt.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/build.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/clippy.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/fmt.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/focused-native.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/focused-ui-final.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/frontend.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/helper.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/hygiene.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/lock.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/native.log -text -diff
+evidence/p54-04-save-recovery-2026-10-16/ui-before.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/build.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/focused-frontend.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/native-study-export.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/regressions-on-original-a490dac.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/review-test.log -text -diff
+evidence/p54-04-save-acceptance-2026-10-17/typecheck.log -text -diff
 evidence/p54-02-search-evaluation-2026-10-16/final-run.log -text -diff
 evidence/p54-02-search-evaluation-2026-10-16/mini-100-1.time.log -text -diff
 evidence/p54-02-search-evaluation-2026-10-16/mini-100-2.time.log -text -diff
@@ -228,3 +245,24 @@ evidence/p54-02-phase2-acceptance-2026-10-17/helper-acceptance.log -text -diff
 
 # P54-05 scope review raw helper receipt.
 evidence/p54-05-scope-review-2026-10-17/helper-scope.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/build.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/cargo-lock.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/fmt.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/focused-final.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/focused-first.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/frozen-final.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/full-frontend.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/helper.log -text -diff
+evidence/m4-lifecycle-corrections-2026-10-16/hygiene.log -text -diff
+
+# Combined integration raw receipts remain byte-exact.
+evidence/nav-export-integration-2026-10-17/build.log -text -diff
+evidence/nav-export-integration-2026-10-17/clippy.log -text -diff
+evidence/nav-export-integration-2026-10-17/fmt.log -text -diff
+evidence/nav-export-integration-2026-10-17/frontend.log -text -diff
+evidence/nav-export-integration-2026-10-17/helper.log -text -diff
+evidence/nav-export-integration-2026-10-17/hygiene.log -text -diff
+evidence/nav-export-integration-2026-10-17/lock.log -text -diff
+evidence/nav-export-integration-2026-10-17/native.log -text -diff
+evidence/nav-export-integration-2026-10-17/typecheck.log -text -diff
+evidence/nav-export-integration-2026-10-17/post-report-helper.log -text -diff
