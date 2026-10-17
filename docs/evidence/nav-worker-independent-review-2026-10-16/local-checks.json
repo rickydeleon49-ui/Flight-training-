@@ -1,0 +1,58 @@
+[
+  {
+    "head": "cb4afba",
+    "command": "npm test -- src/pages/StudyLibrary/navigation (with exact frozen diagnostic temporarily beside panel)",
+    "exit": 0,
+    "passed": 36,
+    "log": "navigation-tests.log"
+  },
+  {
+    "head": "cb4afba",
+    "command": "npm test -- navigation",
+    "exit": 0,
+    "passed": 234,
+    "log": "navigation-all-tests.log"
+  },
+  {
+    "head": "cb4afba",
+    "command": "npm run typecheck",
+    "exit": 0,
+    "log": "nav-typecheck.log"
+  },
+  {
+    "head": "cb4afba",
+    "command": "npm run build",
+    "exit": 0,
+    "log": "nav-build.log"
+  },
+  {
+    "head": "cb4afba",
+    "command": "node --test scripts/mac-schema14-profile-snapshot.test.mjs",
+    "exit": 0,
+    "passed": 26,
+    "log": "nav-helper-tests.log"
+  },
+  {
+    "head": "9b202c0",
+    "command": "cargo build --locked --manifest-path src-tauri/Cargo.toml --example p54_worker_proof",
+    "exit": 0,
+    "log": "proof-build.log"
+  },
+  {
+    "head": "9b202c0",
+    "command": "p54_worker_proof suite NEW-OWNED-SCRATCH",
+    "exit": 0,
+    "passed": 63,
+    "json": "proof-suite.json"
+  },
+  {
+    "kind": "expected failing behavior observations",
+    "worker": "worker-exit-diagnostics.json",
+    "runner": "runner-gate-diagnostic.json"
+  },
+  {
+    "head": "cb4afba",
+    "command": "git diff --check b5e6b99 cb4afba",
+    "exit": 0
+  }
+]

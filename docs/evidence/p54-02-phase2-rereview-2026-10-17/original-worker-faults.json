@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "eof-stall",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.20478683299734257,
+    "stdout": "{\"indexed\":0,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":200.787625,\"exit\":\"signal:9\",\"outcome\":\"failed:stream_closed_while_running\",\"peakRssKiB\":0,\"pid\":44200,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "done-nonzero",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.009737915999721736,
+    "stdout": "{\"indexed\":0,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":3.837958,\"exit\":\"exit:3\",\"outcome\":\"failed:worker_exit\",\"peakRssKiB\":0,\"pid\":44204,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "done-stall",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.208716708002612,
+    "stdout": "{\"indexed\":0,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":203.213875,\"exit\":\"signal:9\",\"outcome\":\"failed:no_exit_after_result\",\"peakRssKiB\":0,\"pid\":44206,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "normal",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.02191300000413321,
+    "stdout": "{\"indexed\":1,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":11.825292,\"exit\":\"exit:0\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":44208,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  }
+]

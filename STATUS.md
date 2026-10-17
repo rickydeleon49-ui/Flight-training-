@@ -1,3 +1,7 @@
+## P54-02 phase2 proof independently accepted for integration — 17 October 2026 (UTC)
+
+P54P2-R1–R6 are closed for the exploratory proof at2351d36: independent77/77 native cases,17/17 runner tests and the prior frozen stream/ownership diagnostics pass;55 final and58 prior evidence members verify from Git. Current-main integration preserves all histories and proof bytes. The containing PR199 commit supplies final exact-head CI/merge. [Acceptance](docs/P54_02_PHASE2_ACCEPTANCE_2026-10-17.md). This accepts the proof/evidence package, not production search:8/10 measured targets, no hard worker memory cap, real-document/native fidelity and owner adoption decisions remain open. P54-05 proposal is separately under owner-approved-default review. Navigation/export integration remains separate; no app/profile/provider/installer/release work.
+
 ## P54-02 phase 2 final corrections R5–R6 delivered; pending independent review — 17 October 2026
 
 **PROOF CORRECTIONS ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude completed P54P2-R5–R6 on PR199. R5: a checked result now needs exit 0 and a clean, fully framed end of stream. Trailing frames, malformed or oversized trailing lines, a partial final frame and reader errors are failures that index nothing; all four failed (indexed) on 06f4bf3. R6: the runner captures source bytes once, creates its example exclusively, and removes it only if it still holds those bytes, so a matching edit by another writer is preserved and fails. 06f4bf3 deleted it. Suite 77/77; runner regressions 17/17. The same 8/10 pre-registered targets met, both misses unchanged. Prior evidence untouched; no application change. [Report](docs/P54_02_PHASE2_FINAL_CORRECTIONS_REPORT_2026-10-17.md).
@@ -9,6 +13,20 @@
 ## P54-02 phase 2 worker proof delivered; pending independent review — 16 October 2026
 
 **PROOF ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude delivered the bounded extraction-worker and search-contract proof on `claude/p54-02-worker-proof`. Limits and targets were pre-registered in a7813e7 before any code ran. Suite 63/63 (first run 62/63 retained). Pre-registered targets: 8 of 10 met; **missed** warm-query p95 at 10,000 (61.8 ms vs 50) and whole-process peak RSS (285 MiB vs 256), reported unchanged. macOS refuses `ulimit -v`; the sampled RSS watchdog overshot by up to 270 MiB, so there is **no hard memory bound** yet. Proposed contract: native FTS5 in a separate disposable cache, literal AND queries, no implicit prefix/fuzzy, diacritic folding, hash-bound page destinations, browser metadata fallback. No engine or dependency adopted; no application file changed. [Report](docs/P54_02_PHASE2_WORKER_PROOF_REPORT_2026-10-16.md).
+
+## P54-02 phase2 re-review: original fixes verified; two final corrections — 17 October 2026 (UTC)
+
+PR199 head06f4bf3 remains pending acceptance. Independent checks reproduce71/71 native proof cases and13/13 runner regressions; all58 replacement evidence members verify from Git. Original EOF/exit failures, caller bounds and false-PASS gates are corrected, with original missing logs honestly disclosed. Two further boundary failures remain: **P54P2-R5**, a completed child can leave trailing frames/malformed or partial output unvalidated and still index; **P54P2-R6**, matching edits to the source and temporary example can fool cleanup into deleting another writer's work. [Re-review](docs/P54_02_PHASE2_REREVIEW_2026-10-17.md); [one consolidated final correction prompt](docs/P54_02_PHASE2_FINAL_CORRECTIONS_PROMPT_2026-10-17.md). Preserve all prior fixes, receipts, preregistered budgets and the two measured misses. No production adoption.
+
+PR189's69768bf CI is green but it still needs current-main reconciliation/final exact-head integration; PR193 still needs its independent export acceptance/current-base integration. Queue order and owner decisions remain unchanged. No app/profile/provider/installer/release work. Earlier dated entries below are historical.
+
+## Independent review: panel fix accepted; search proof needs four corrections — 16 October 2026
+
+**NAV-UI-01 accepted:** PR198 at cb4afba passed independent234 navigation tests, the two original frozen diagnostics, typecheck/build and helper26/26; exact-head CI39004376950 is green. Merged into PR189 as69768bf. PR189 remains open: reconcile current main and require final combined-source exact-head CI before main integration. Accepted R11/R12 are preserved.
+
+**P54-02 phase2 / PR199 requires P54P2-R1–R4:**30/42 submitted evidence members exist and verify in Git;12 logs are missing. The original63/63 suite reproduces, but new diagnostics show EOF can hang past deadline, a complete-result worker exiting3 can still index, and the runner can print PASS after failed measurements or preservation. Caller hashing also lacks the preregistered input boundary. [Independent review](docs/NAV_WORKER_INDEPENDENT_REVIEW_2026-10-16.md); [one precise correction assignment](docs/P54_02_PHASE2_CORRECTIONS_PROMPT_2026-10-16.md). Keep original receipts/preregistration and reported8/10 targets unchanged; no production engine/default adoption.
+
+**Next integration order:** finish current-base navigation integration, record independent export acceptance and retarget/reconcile PR193 with main, then complete/review PR199 corrections in the approved queue. No app/profile/provider/installer/release work is needed. Earlier entries below are retained as historical snapshots.
 
 ## Quick review: corrections integrated into feature branches; one nonblocking UI follow-up — 16 October 2026
 

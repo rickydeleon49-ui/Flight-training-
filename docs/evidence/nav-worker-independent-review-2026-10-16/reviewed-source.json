@@ -1,0 +1,44 @@
+[
+  {
+    "commit": "cb4afba67c7bb7e7c886f5f42438e7c48f985d1d",
+    "path": "src/pages/StudyLibrary/navigation/DocumentPagesPanel.tsx",
+    "bytes": 19574,
+    "sha256": "ccfc95bafd3db30bcf2a4f652bf2352f74a491c5e995ed11d9f06434d9d9f56b"
+  },
+  {
+    "commit": "cb4afba67c7bb7e7c886f5f42438e7c48f985d1d",
+    "path": "src/pages/StudyLibrary/navigation/DocumentPagesPanelNotices.test.ts",
+    "bytes": 7189,
+    "sha256": "ed9c6cd6c2c6a2923760abf74c06303cfbb804fcb2084008f91f094816c1633a"
+  },
+  {
+    "commit": "9b202c0373c875192fe6425301bb936ba0810048",
+    "path": "docs/evidence/p54-02-worker-proof-2026-10-16/p54_worker_proof.rs",
+    "bytes": 82431,
+    "sha256": "f6da09efcd788c251d506622563f48a7cd5c7894ce25ac7fabf4180bfdb786a2"
+  },
+  {
+    "commit": "9b202c0373c875192fe6425301bb936ba0810048",
+    "path": "docs/evidence/p54-02-worker-proof-2026-10-16/run-phase2.py",
+    "bytes": 8062,
+    "sha256": "7bc0d925b6963faec89c9166f1bdfb9e17fe0a98d9fd748d7f246f37a802ac53"
+  },
+  {
+    "commit": "9b202c0373c875192fe6425301bb936ba0810048",
+    "path": "docs/evidence/p54-02-worker-proof-2026-10-16/SHA256SUMS",
+    "bytes": 3788,
+    "sha256": "25627cb752d63239fbb44893586d178bc4b4b32b4bfb93edf5eec693e3e47f1f"
+  },
+  {
+    "commit": "9b202c0373c875192fe6425301bb936ba0810048",
+    "path": "docs/P54_02_PHASE2_PREREGISTRATION_2026-10-16.md",
+    "bytes": 6086,
+    "sha256": "dd3190a7fbd356f0ffc7f133ed5d174807a3d6581ec669efbb17f88481a734fb"
+  },
+  {
+    "commit": "9b202c0373c875192fe6425301bb936ba0810048",
+    "path": "docs/P54_02_PHASE2_WORKER_PROOF_REPORT_2026-10-16.md",
+    "bytes": 13013,
+    "sha256": "ddce42055f5498d97272d809d881208a8597e0fd5783d72464befb077ec4ba73"
+  }
+]
