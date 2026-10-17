@@ -1,6 +1,6 @@
 # M4 Slice 1 completion report — 16 October 2026
 
-**Status: submitted for Codex review; not accepted, not merged.** This is one source PR containing the approved document-navigation feature and the corrections for the four partial-review findings (M4S1-R1–R4).
+**Status: submitted for Codex review; not accepted, not merged.** The R5–R10 re-review found further defects; they are corrected in [the R5–R10 correction report](M4_SLICE1_R5_R10_CORRECTION_REPORT_2026-10-16.md), which supersedes this report where they differ. This is one source PR containing the approved document-navigation feature and the corrections for the four partial-review findings (M4S1-R1–R4).
 
 The scope is the owner's approval of all ten defaults, including OD-6 "refuse and explain" ([approval](M4_PRODUCTION_SCOPE_OWNER_APPROVAL_2026-10-16.md)). The work follows [the continuation assignment](M4_SLICE1_CONTINUATION_PROMPT_2026-10-16.md), [the partial review](M4_SLICE1_PARTIAL_REVIEW_2026-10-16.md) and [the current handoff](M4_SLICE1_CURRENT_HANDOFF_2026-10-16.md).
 
@@ -30,7 +30,7 @@ A successful open means that the file at the material's managed path had exactly
 
 The app cannot control what an external reader reads afterwards. It also cannot make the reader jump to a page, so the page is always shown as guidance.
 
-A file replaced and then restored between two reads is seen as a change. The first save after a restore is therefore refused and the identity recorded again, and the next save succeeds.
+**Corrected in the R5–R10 round:** an earlier version of this paragraph said that a file replaced and then restored between two reads is always seen as a change. That is not guaranteed. Each check compares the bytes read at that moment with the recorded identity, so it detects a change only if some check (an inspection, a checked write or the verified open) actually read different bytes. A replacement that was restored to the same bytes before the next check (an unobserved A→B→A interval) leaves the endpoints equal and is not detected. Nothing is wrongly saved in that case, because the content is again the content the request was made for. When a check did record B, the restored A is a change against that record: the next save is refused, the identity is recorded again, and the save after that succeeds (`a_save_only_retry_rechecks_the_file_and_the_token`). The page count is now derived from the bytes as well (M4S1-R10). See [the R5–R10 correction report](M4_SLICE1_R5_R10_CORRECTION_REPORT_2026-10-16.md).
 
 Browser mode has no managed files. Its operations use the recorded identity only, so they prove the database half, not a real file check.
 

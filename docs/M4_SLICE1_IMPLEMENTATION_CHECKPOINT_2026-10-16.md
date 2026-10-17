@@ -51,4 +51,7 @@ Assignment: `docs/M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md`; review: `d
 
 - c14afff: R9. The test clicked "Add an observation" while it was disabled (skill list still loading). A held `listSkills` reproduces it (`r9-diagnostic.log`). Both evidence-card tests now wait for the button to be enabled.
 
-**Next:** the final Node 22 gate into `final/` at c14afff (or later source), then the correction report, source hashes, evidence SHA256SUMS, trackers, manifest rebind (`node <scratch>/rebind.cjs` logic: recompute every entry of `docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json`, then SHA256SUMS), push, and exact-head CI.
+- Final gate at fad8d3a: every step exited 0 (receipts in `final/`), including cargo steps rerun with SDKROOT scoped to MacOSX26.5.
+- Documentation commit: correction report, completion-report ABA correction, source hashes, evidence SHA256SUMS, trackers, helper manifest rebind.
+
+**Next:** push `claude/m4-slice1`, update the PR #189 description, wait for exact-head CI, then stop for Codex review. Do not merge.
