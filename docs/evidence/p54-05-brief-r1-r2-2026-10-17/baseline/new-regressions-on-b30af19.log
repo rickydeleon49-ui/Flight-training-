@@ -1,0 +1,1169 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/brief
+
+ ❯ src/pages/Schedule/LessonBriefDialog.test.ts (14 tests | 5 failed) 281ms
+     × BRIEF-R1: a choice made for one lesson is not carried to another while the dialog stays open 9ms
+     × BRIEF-R2: when the old lesson's save resolves after a change of lesson, the new lesson shows nothing 30ms
+     × BRIEF-R2: when the old lesson's save rejects after a change of lesson, the new lesson shows nothing 21ms
+     × BRIEF-R2: a save still pending when the dialog is closed and reopened says nothing in the new session 24ms
+     × BRIEF-R2: an old save finishing cannot release the newer session's pending save 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/Schedule/LessonBriefDialog.test.ts > Lesson brief > BRIEF-R1: a choice made for one lesson is not carried to another while the dialog stays open
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/Schedule/LessonBriefDialog.test.ts:179:83
+    177|     changeLesson();
+    178|     expect(preview()).toContain("Lesson B");
+    179|     expect((screen.getByLabelText(/Crab or slip\?/) as HTMLInputElemen…
+       |                                                                                   ^
+    180|     expect(preview()).not.toContain("Crab or slip?");
+    181|     fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/pages/Schedule/LessonBriefDialog.test.ts > Lesson brief > BRIEF-R2: when the old lesson's save resolves after a change of lesson, the new lesson shows nothing
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Save…"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Lesson brief":
+  [36m<dialog[39m
+    [33maria-labelledby[39m=[32m"_r_9_"[39m
+    [33mclass[39m=[32m"dialog"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Lesson brief":
+  [36m<h2[39m
+    [33mclass[39m=[32m"dialog__title"[39m
+    [33mid[39m=[32m"_r_9_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"dialog__description"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"tiny dim"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"icon-button"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Saving…":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--primary"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Add follow-ups":
+  [36m<fieldset[39m
+    [33mclass[39m=[32m"lesson-brief__choices"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Crab or slip? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Flap settings? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<dialog[39m
+      [33maria-labelledby[39m=[32m"_r_9_"[39m
+      [33mclass[39m=[32m"dialog"[39m
+      [33mopen[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"dialog__title"[39m
+            [33mid[39m=[32m"_r_9_"[39m
+          [36m>[39m
+            [0mLesson brief[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"dialog__description"[39m
+          [36m>[39m
+            [0mA printable page for this lesson. Save it, then open it in a browser to print or save as PDF.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"icon-button"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtitle[39m=[32m"Close"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"18"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mClose[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"stack stack--4"[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"lesson-brief__choices"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<legend[39m
+              [33mclass[39m=[32m"field__label"[39m
+            [36m>[39m
+              [0mAdd follow-ups[0m
+            [36m</legend>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"tiny dim"[39m
+            [36m>[39m
+              [0mOnly what you tick is added. Your journal reflections and lesson notes are never included.[0m
+            [36m</p>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mCrab or slip?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mFlap settings?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<iframe[39m
+            [33mclass[39m=[32m"lesson-brief__preview"[39m
+            [33msandbox[39m=[32m"allow-same-origin allow-modals"[39m
+            [33msrcdoc[39m=[32m"<!doctype html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<meta name=\"referrer\" content=\"no-referrer\">
+<title>Lesson brief: Lesson B</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0 auto; max-width: 46rem; padding: 2rem 1.5rem 3rem; font: 11.5pt/1.5 -apple-system, \"Helvetica Neue\", Arial, sans-serif; color: #1f2328; background: #fff; }
+h1 { font-size: 20pt; margin: 0 0 .25rem; }
+h2 { font-size: 14pt; margin: 2rem 0 .75rem; padding-bottom: .25rem; border-bottom: 1px solid #c9ccd1; }
+h3 { font-size: 12pt; margin: 1.25rem 0 .5rem; }
+p { margin: 0 0 .6rem; }
+.meta, .ref { color: #57606a; font-size: 9.5pt; }
+.notice { margin: 1rem 0 0; padding: .6rem .8rem; border: 1px solid #c9ccd1; border-radius: 6px; font-size: 9.5pt; }
+.subhead { font-weight: 600; }
+ul, ol { margin: 0 0 .6rem; padding-left: 1.4rem; }
+li { margin: .15rem 0; }
+blockquote { margin: 0 0 .6rem; padding: .1rem 0 .1rem .8rem; border-left: 3px solid #c9ccd1; color: #444c56; }
+code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
+table { border-collapse: collapse; width: 100%; margin: 0 0 .8rem; }
+th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+th { background: #f3f4f6; }
+.cards td { width: 50%; }
+.cards tr, .question, li { break-inside: avoid; }
+.question { margin: 0 0 1rem; }
+.choices { list-style: none; padding-left: .5rem; }
+.answer-key { break-before: page; }
+@page { margin: 0.6in; }
+@media print { body { padding: 0; max-width: none; } h2 { break-after: avoid; } }
+
+.facts th { width: 8rem; background: none; border: none; padding-left: 0; color: #57606a; font-weight: 500; }
+.facts td { border: none; }
+.brief-lines { list-style: none; padding-left: 0; }</style>
+</head>
+<body>
+<header>
+<h1>Lesson B</h1>
+<p class=\"meta\">Lesson brief from Her Flight Deck · October 17, 2026</p>
+<table class=\"facts\"><tbody><tr><th scope=\"row\">Type</th><td>Flight Lesson</td></tr><tr><th scope=\"row\">Date</th><td>Saturday, October 24, 2026</td></tr><tr><th scope=\"row\">Time</th><td>10:30 AM</td></tr></tbody></table>
+</header>
+<section><h2>Get ready</h2><p>Nothing to prepare is listed for this lesson.</p></section>
+<section><h2>Read before</h2><p>No reading is attached to this lesson.</p></section>
+
+</body>
+</html>
+"[39m
+            [33mtitle[39m=[32m"Lesson brief preview"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__footer"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCancel[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSaving…[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</dialog>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/Schedule/LessonBriefDialog.test.ts:196:19
+    194|     fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    195|     changeLesson();
+    196|     expect(screen.getByRole("button", { name: "Save…" }).hasAttribute(…
+       |                   ^
+    197|     await act(async () => {
+    198|       if (outcome === "resolves") finish({ fileName: "OLD-LESSON.html"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/pages/Schedule/LessonBriefDialog.test.ts > Lesson brief > BRIEF-R2: when the old lesson's save rejects after a change of lesson, the new lesson shows nothing
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Save…"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Lesson brief":
+  [36m<dialog[39m
+    [33maria-labelledby[39m=[32m"_r_a_"[39m
+    [33mclass[39m=[32m"dialog"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Lesson brief":
+  [36m<h2[39m
+    [33mclass[39m=[32m"dialog__title"[39m
+    [33mid[39m=[32m"_r_a_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"dialog__description"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"tiny dim"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"icon-button"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Saving…":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--primary"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Add follow-ups":
+  [36m<fieldset[39m
+    [33mclass[39m=[32m"lesson-brief__choices"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Crab or slip? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Flap settings? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<dialog[39m
+      [33maria-labelledby[39m=[32m"_r_a_"[39m
+      [33mclass[39m=[32m"dialog"[39m
+      [33mopen[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"dialog__title"[39m
+            [33mid[39m=[32m"_r_a_"[39m
+          [36m>[39m
+            [0mLesson brief[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"dialog__description"[39m
+          [36m>[39m
+            [0mA printable page for this lesson. Save it, then open it in a browser to print or save as PDF.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"icon-button"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtitle[39m=[32m"Close"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"18"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mClose[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"stack stack--4"[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"lesson-brief__choices"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<legend[39m
+              [33mclass[39m=[32m"field__label"[39m
+            [36m>[39m
+              [0mAdd follow-ups[0m
+            [36m</legend>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"tiny dim"[39m
+            [36m>[39m
+              [0mOnly what you tick is added. Your journal reflections and lesson notes are never included.[0m
+            [36m</p>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mCrab or slip?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mFlap settings?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<iframe[39m
+            [33mclass[39m=[32m"lesson-brief__preview"[39m
+            [33msandbox[39m=[32m"allow-same-origin allow-modals"[39m
+            [33msrcdoc[39m=[32m"<!doctype html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<meta name=\"referrer\" content=\"no-referrer\">
+<title>Lesson brief: Lesson B</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0 auto; max-width: 46rem; padding: 2rem 1.5rem 3rem; font: 11.5pt/1.5 -apple-system, \"Helvetica Neue\", Arial, sans-serif; color: #1f2328; background: #fff; }
+h1 { font-size: 20pt; margin: 0 0 .25rem; }
+h2 { font-size: 14pt; margin: 2rem 0 .75rem; padding-bottom: .25rem; border-bottom: 1px solid #c9ccd1; }
+h3 { font-size: 12pt; margin: 1.25rem 0 .5rem; }
+p { margin: 0 0 .6rem; }
+.meta, .ref { color: #57606a; font-size: 9.5pt; }
+.notice { margin: 1rem 0 0; padding: .6rem .8rem; border: 1px solid #c9ccd1; border-radius: 6px; font-size: 9.5pt; }
+.subhead { font-weight: 600; }
+ul, ol { margin: 0 0 .6rem; padding-left: 1.4rem; }
+li { margin: .15rem 0; }
+blockquote { margin: 0 0 .6rem; padding: .1rem 0 .1rem .8rem; border-left: 3px solid #c9ccd1; color: #444c56; }
+code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
+table { border-collapse: collapse; width: 100%; margin: 0 0 .8rem; }
+th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+th { background: #f3f4f6; }
+.cards td { width: 50%; }
+.cards tr, .question, li { break-inside: avoid; }
+.question { margin: 0 0 1rem; }
+.choices { list-style: none; padding-left: .5rem; }
+.answer-key { break-before: page; }
+@page { margin: 0.6in; }
+@media print { body { padding: 0; max-width: none; } h2 { break-after: avoid; } }
+
+.facts th { width: 8rem; background: none; border: none; padding-left: 0; color: #57606a; font-weight: 500; }
+.facts td { border: none; }
+.brief-lines { list-style: none; padding-left: 0; }</style>
+</head>
+<body>
+<header>
+<h1>Lesson B</h1>
+<p class=\"meta\">Lesson brief from Her Flight Deck · October 17, 2026</p>
+<table class=\"facts\"><tbody><tr><th scope=\"row\">Type</th><td>Flight Lesson</td></tr><tr><th scope=\"row\">Date</th><td>Saturday, October 24, 2026</td></tr><tr><th scope=\"row\">Time</th><td>10:30 AM</td></tr></tbody></table>
+</header>
+<section><h2>Get ready</h2><p>Nothing to prepare is listed for this lesson.</p></section>
+<section><h2>Read before</h2><p>No reading is attached to this lesson.</p></section>
+
+</body>
+</html>
+"[39m
+            [33mtitle[39m=[32m"Lesson brief preview"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__footer"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCancel[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSaving…[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</dialog>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/Schedule/LessonBriefDialog.test.ts:196:19
+    194|     fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    195|     changeLesson();
+    196|     expect(screen.getByRole("button", { name: "Save…" }).hasAttribute(…
+       |                   ^
+    197|     await act(async () => {
+    198|       if (outcome === "resolves") finish({ fileName: "OLD-LESSON.html"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/pages/Schedule/LessonBriefDialog.test.ts > Lesson brief > BRIEF-R2: a save still pending when the dialog is closed and reopened says nothing in the new session
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Save…"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Lesson brief":
+  [36m<dialog[39m
+    [33maria-labelledby[39m=[32m"_r_b_"[39m
+    [33mclass[39m=[32m"dialog"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Lesson brief":
+  [36m<h2[39m
+    [33mclass[39m=[32m"dialog__title"[39m
+    [33mid[39m=[32m"_r_b_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"dialog__description"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"tiny dim"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"icon-button"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Saving…":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--primary"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Add follow-ups":
+  [36m<fieldset[39m
+    [33mclass[39m=[32m"lesson-brief__choices"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Crab or slip? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Flap settings? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<dialog[39m
+      [33maria-labelledby[39m=[32m"_r_b_"[39m
+      [33mclass[39m=[32m"dialog"[39m
+      [33mopen[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"dialog__title"[39m
+            [33mid[39m=[32m"_r_b_"[39m
+          [36m>[39m
+            [0mLesson brief[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"dialog__description"[39m
+          [36m>[39m
+            [0mA printable page for this lesson. Save it, then open it in a browser to print or save as PDF.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"icon-button"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtitle[39m=[32m"Close"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"18"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mClose[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"stack stack--4"[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"lesson-brief__choices"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<legend[39m
+              [33mclass[39m=[32m"field__label"[39m
+            [36m>[39m
+              [0mAdd follow-ups[0m
+            [36m</legend>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"tiny dim"[39m
+            [36m>[39m
+              [0mOnly what you tick is added. Your journal reflections and lesson notes are never included.[0m
+            [36m</p>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mCrab or slip?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mFlap settings?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<iframe[39m
+            [33mclass[39m=[32m"lesson-brief__preview"[39m
+            [33msandbox[39m=[32m"allow-same-origin allow-modals"[39m
+            [33msrcdoc[39m=[32m"<!doctype html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<meta name=\"referrer\" content=\"no-referrer\">
+<title>Lesson brief: Pattern work</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0 auto; max-width: 46rem; padding: 2rem 1.5rem 3rem; font: 11.5pt/1.5 -apple-system, \"Helvetica Neue\", Arial, sans-serif; color: #1f2328; background: #fff; }
+h1 { font-size: 20pt; margin: 0 0 .25rem; }
+h2 { font-size: 14pt; margin: 2rem 0 .75rem; padding-bottom: .25rem; border-bottom: 1px solid #c9ccd1; }
+h3 { font-size: 12pt; margin: 1.25rem 0 .5rem; }
+p { margin: 0 0 .6rem; }
+.meta, .ref { color: #57606a; font-size: 9.5pt; }
+.notice { margin: 1rem 0 0; padding: .6rem .8rem; border: 1px solid #c9ccd1; border-radius: 6px; font-size: 9.5pt; }
+.subhead { font-weight: 600; }
+ul, ol { margin: 0 0 .6rem; padding-left: 1.4rem; }
+li { margin: .15rem 0; }
+blockquote { margin: 0 0 .6rem; padding: .1rem 0 .1rem .8rem; border-left: 3px solid #c9ccd1; color: #444c56; }
+code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
+table { border-collapse: collapse; width: 100%; margin: 0 0 .8rem; }
+th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+th { background: #f3f4f6; }
+.cards td { width: 50%; }
+.cards tr, .question, li { break-inside: avoid; }
+.question { margin: 0 0 1rem; }
+.choices { list-style: none; padding-left: .5rem; }
+.answer-key { break-before: page; }
+@page { margin: 0.6in; }
+@media print { body { padding: 0; max-width: none; } h2 { break-after: avoid; } }
+
+.facts th { width: 8rem; background: none; border: none; padding-left: 0; color: #57606a; font-weight: 500; }
+.facts td { border: none; }
+.brief-lines { list-style: none; padding-left: 0; }</style>
+</head>
+<body>
+<header>
+<h1>Pattern work</h1>
+<p class=\"meta\">Lesson brief from Her Flight Deck · October 17, 2026</p>
+<table class=\"facts\"><tbody><tr><th scope=\"row\">Type</th><td>Flight Lesson</td></tr><tr><th scope=\"row\">Date</th><td>Saturday, October 24, 2026</td></tr><tr><th scope=\"row\">Time</th><td>10:30 AM</td></tr></tbody></table>
+</header>
+<section><h2>Get ready</h2><p class=\"meta\">0 of 1 ready</p><ul class=\"brief-lines\"><li><strong>To do:</strong> Check weather</li></ul></section>
+<section><h2>Read before</h2><p>No reading is attached to this lesson.</p></section>
+
+</body>
+</html>
+"[39m
+            [33mtitle[39m=[32m"Lesson brief preview"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__footer"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCancel[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSaving…[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</dialog>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/Schedule/LessonBriefDialog.test.ts:215:19
+    213|     rerender(true);
+    214|     expect((screen.getByLabelText(/Crab or slip\?/) as HTMLInputElemen…
+    215|     expect(screen.getByRole("button", { name: "Save…" }).hasAttribute(…
+       |                   ^
+    216|     await act(async () => {
+    217|       held.resolve({ fileName: "OLD-SESSION.html", byteLength: 10 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/pages/Schedule/LessonBriefDialog.test.ts > Lesson brief > BRIEF-R2: an old save finishing cannot release the newer session's pending save
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Save…"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Lesson brief":
+  [36m<dialog[39m
+    [33maria-labelledby[39m=[32m"_r_c_"[39m
+    [33mclass[39m=[32m"dialog"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Lesson brief":
+  [36m<h2[39m
+    [33mclass[39m=[32m"dialog__title"[39m
+    [33mid[39m=[32m"_r_c_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"dialog__description"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"tiny dim"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"icon-button"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Saving…":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--primary"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Add follow-ups":
+  [36m<fieldset[39m
+    [33mclass[39m=[32m"lesson-brief__choices"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Crab or slip? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Flap settings? · Journal, Saturday, October 17, 2026":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<dialog[39m
+      [33maria-labelledby[39m=[32m"_r_c_"[39m
+      [33mclass[39m=[32m"dialog"[39m
+      [33mopen[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"dialog__title"[39m
+            [33mid[39m=[32m"_r_c_"[39m
+          [36m>[39m
+            [0mLesson brief[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"dialog__description"[39m
+          [36m>[39m
+            [0mA printable page for this lesson. Save it, then open it in a browser to print or save as PDF.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"icon-button"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtitle[39m=[32m"Close"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"18"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mClose[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"stack stack--4"[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"lesson-brief__choices"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<legend[39m
+              [33mclass[39m=[32m"field__label"[39m
+            [36m>[39m
+              [0mAdd follow-ups[0m
+            [36m</legend>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"tiny dim"[39m
+            [36m>[39m
+              [0mOnly what you tick is added. Your journal reflections and lesson notes are never included.[0m
+            [36m</p>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mCrab or slip?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"small lesson-brief__option"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m [0m
+              [0mFlap settings?[0m
+              [0m [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tiny dim"[39m
+              [36m>[39m
+                [0m· [0m
+                [0mJournal, Saturday, October 17, 2026[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<iframe[39m
+            [33mclass[39m=[32m"lesson-brief__preview"[39m
+            [33msandbox[39m=[32m"allow-same-origin allow-modals"[39m
+            [33msrcdoc[39m=[32m"<!doctype html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<meta name=\"referrer\" content=\"no-referrer\">
+<title>Lesson brief: Lesson B</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0 auto; max-width: 46rem; padding: 2rem 1.5rem 3rem; font: 11.5pt/1.5 -apple-system, \"Helvetica Neue\", Arial, sans-serif; color: #1f2328; background: #fff; }
+h1 { font-size: 20pt; margin: 0 0 .25rem; }
+h2 { font-size: 14pt; margin: 2rem 0 .75rem; padding-bottom: .25rem; border-bottom: 1px solid #c9ccd1; }
+h3 { font-size: 12pt; margin: 1.25rem 0 .5rem; }
+p { margin: 0 0 .6rem; }
+.meta, .ref { color: #57606a; font-size: 9.5pt; }
+.notice { margin: 1rem 0 0; padding: .6rem .8rem; border: 1px solid #c9ccd1; border-radius: 6px; font-size: 9.5pt; }
+.subhead { font-weight: 600; }
+ul, ol { margin: 0 0 .6rem; padding-left: 1.4rem; }
+li { margin: .15rem 0; }
+blockquote { margin: 0 0 .6rem; padding: .1rem 0 .1rem .8rem; border-left: 3px solid #c9ccd1; color: #444c56; }
+code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
+table { border-collapse: collapse; width: 100%; margin: 0 0 .8rem; }
+th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+th { background: #f3f4f6; }
+.cards td { width: 50%; }
+.cards tr, .question, li { break-inside: avoid; }
+.question { margin: 0 0 1rem; }
+.choices { list-style: none; padding-left: .5rem; }
+.answer-key { break-before: page; }
+@page { margin: 0.6in; }
+@media print { body { padding: 0; max-width: none; } h2 { break-after: avoid; } }
+
+.facts th { width: 8rem; background: none; border: none; padding-left: 0; color: #57606a; font-weight: 500; }
+.facts td { border: none; }
+.brief-lines { list-style: none; padding-left: 0; }</style>
+</head>
+<body>
+<header>
+<h1>Lesson B</h1>
+<p class=\"meta\">Lesson brief from Her Flight Deck · October 17, 2026</p>
+<table class=\"facts\"><tbody><tr><th scope=\"row\">Type</th><td>Flight Lesson</td></tr><tr><th scope=\"row\">Date</th><td>Saturday, October 24, 2026</td></tr><tr><th scope=\"row\">Time</th><td>10:30 AM</td></tr></tbody></table>
+</header>
+<section><h2>Get ready</h2><p>Nothing to prepare is listed for this lesson.</p></section>
+<section><h2>Read before</h2><p>No reading is attached to this lesson.</p></section>
+
+</body>
+</html>
+"[39m
+            [33mtitle[39m=[32m"Lesson brief preview"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dialog__footer"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCancel[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSaving…[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</dialog>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../../Users/rickymac/code/Flight-training-post-v054-roadmap/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/Schedule/LessonBriefDialog.test.ts:229:28
+    227|     fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    228|     changeLesson();
+    229|     fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+       |                            ^
+    230|     expect(saveStudyExport).toHaveBeenCalledTimes(2);
+    231|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 9 passed (14)
+   Start at  00:12:05
+   Duration  835ms (transform 170ms, setup 0ms, import 251ms, tests 281ms, environment 223ms)
+

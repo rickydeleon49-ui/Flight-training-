@@ -3,7 +3,8 @@
  * The lesson brief dialog (P54-05 part A): choices start unticked and live
  * only in the dialog, the preview is the exact page that is saved, one click
  * saves once, controls stay fixed while a save is pending, failures can be
- * retried, and the browser build prints instead of saving. The native save
+ * retried, and the browser build prints instead of saving. Choices and save
+ * results belong to one lesson's open session (BRIEF-R1/R2). The native save
  * is a stand-in; jsdom does not lay out or print the preview.
  */
 import { createElement as h, type ContextType } from "react";
@@ -48,10 +49,17 @@ function open(props: { open?: boolean } = {}) {
   const value = { repositories: null, data, status: "ready", error: null, mutate: async () => null, deleteWithUndo: () => undefined } as unknown as ContextType<
     typeof AppDataContext
   >;
-  const element = (isOpen: boolean) => h(AppDataContext.Provider, { value }, h(LessonBriefDialog, { open: isOpen, event: lesson, onClose: () => {} }));
+  const element = (isOpen: boolean, shown = lesson) => h(AppDataContext.Provider, { value }, h(LessonBriefDialog, { open: isOpen, event: shown, onClose: () => {} }));
   const view = render(element(props.open ?? true));
-  return { view, rerender: (isOpen: boolean) => view.rerender(element(isOpen)) };
+  return {
+    view,
+    rerender: (isOpen: boolean) => view.rerender(element(isOpen)),
+    /** The still-open dialog moves to another lesson that shares the same earlier journal entry. */
+    changeLesson: () => view.rerender(element(true, lessonB)),
+  };
 }
+
+const lessonB = makeEvent({ ...lesson, id: "lesson-B", title: "Lesson B" });
 
 const preview = () => screen.getByTitle("Lesson brief preview").getAttribute("srcdoc") ?? "";
 
@@ -159,6 +167,82 @@ describe("Lesson brief", () => {
     fireEvent.click(screen.getByRole("button", { name: "Print…" }));
     expect(print).toHaveBeenCalledTimes(1);
     expect(saveStudyExport).not.toHaveBeenCalled();
+  });
+
+  it("BRIEF-R1: a choice made for one lesson is not carried to another while the dialog stays open", async () => {
+    saveStudyExport.mockResolvedValue({ fileName: "b.html", byteLength: 10 });
+    const { changeLesson } = open();
+    fireEvent.click(screen.getByLabelText(/Crab or slip\?/));
+    expect(preview()).toContain("Crab or slip?");
+    changeLesson();
+    expect(preview()).toContain("Lesson B");
+    expect((screen.getByLabelText(/Crab or slip\?/) as HTMLInputElement).checked).toBe(false);
+    expect(preview()).not.toContain("Crab or slip?");
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    await screen.findByRole("status");
+    const [, name, contents] = saveStudyExport.mock.calls[0] ?? [];
+    expect(name).toBe("Lesson brief 2026-10-24 Lesson B.html");
+    expect(String(contents)).not.toContain("Crab or slip?");
+  });
+
+  it.each(["resolves", "rejects"] as const)("BRIEF-R2: when the old lesson's save %s after a change of lesson, the new lesson shows nothing", async (outcome) => {
+    let finish!: (value: unknown) => void;
+    let fail!: (reason: unknown) => void;
+    const pending = new Promise((done, reject) => ((finish = done), (fail = reject)));
+    saveStudyExport.mockReturnValueOnce(pending);
+    const { changeLesson } = open();
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    changeLesson();
+    expect(screen.getByRole("button", { name: "Save…" }).hasAttribute("disabled")).toBe(false);
+    await act(async () => {
+      if (outcome === "resolves") finish({ fileName: "OLD-LESSON.html", byteLength: 10 });
+      else fail(new StudyExportError("write_failed"));
+      await pending.catch(() => undefined);
+    });
+    expect(preview()).toContain("Lesson B");
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("BRIEF-R2: a save still pending when the dialog is closed and reopened says nothing in the new session", async () => {
+    const held = heldSave();
+    const { rerender } = open();
+    fireEvent.click(screen.getByLabelText(/Crab or slip\?/));
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    rerender(false);
+    rerender(true);
+    expect((screen.getByLabelText(/Crab or slip\?/) as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByRole("button", { name: "Save…" }).hasAttribute("disabled")).toBe(false);
+    await act(async () => {
+      held.resolve({ fileName: "OLD-SESSION.html", byteLength: 10 });
+      await held.promise;
+    });
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("BRIEF-R2: an old save finishing cannot release the newer session's pending save", async () => {
+    const first = heldSave();
+    const second = heldSave();
+    const { changeLesson } = open();
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    changeLesson();
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    expect(saveStudyExport).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      first.resolve({ fileName: "OLD-LESSON.html", byteLength: 10 });
+      await first.promise;
+    });
+    // Lesson B's own save is still pending: still locked, and no third dispatch.
+    const saving = screen.getByRole("button", { name: "Saving…" });
+    expect(saving.hasAttribute("disabled")).toBe(true);
+    act(() => saving.click());
+    expect(saveStudyExport).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("status")).toBeNull();
+    await act(async () => {
+      second.resolve({ fileName: "LESSON-B.html", byteLength: 10 });
+      await second.promise;
+    });
+    expect(screen.getByRole("status").textContent).toBe("Saved “LESSON-B.html”.");
   });
 
   it("previews a page that can run nothing", () => {

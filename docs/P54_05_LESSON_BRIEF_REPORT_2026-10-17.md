@@ -1,6 +1,6 @@
 # P54-05 part A: lesson brief: implementation report
 
-**IMPLEMENTED, PENDING INDEPENDENT REVIEW; NO SELF-MERGE.** Claude implemented part A of the [approved scope](P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md) ([approval](P54_05_SCOPE_APPROVAL_2026-10-17.md)), following the [continuation assignment](P54_05_NEXT_IMPLEMENTER_PROMPT_2026-10-17.md).
+**IMPLEMENTED; REVIEW CORRECTIONS BRIEF-R1/R2 APPLIED; PENDING INDEPENDENT RE-REVIEW; NO SELF-MERGE.** Claude implemented part A of the [approved scope](P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md) ([approval](P54_05_SCOPE_APPROVAL_2026-10-17.md)), following the [continuation assignment](P54_05_NEXT_IMPLEMENTER_PROMPT_2026-10-17.md).
 - **Branch and base:** `claude/p54-05-lesson-brief`, from main 32582f2. PR193 is on main and its save API is present.
 - **Not included:** no calendar writer (that is part B), no dependency, no migration, no stored preference, no provider call.
 
@@ -88,6 +88,35 @@ Source identities are in [`source-hashes.json`](evidence/p54-05-lesson-brief-202
 - **Clippy** rejected a runtime `assert!` on constants.
 
 The fixes were test typing and a compile-time `const` assertion; no behavior was weakened. Both full suites were rerun on the final source. During development, two of my own test assertions were too naive: a `%` search hit CSS, and an `href=` search hit escaped text. They were replaced with stricter checks (body-only text, and an allow-list of tags) before the receipts were taken.
+
+## Review corrections BRIEF-R1 and BRIEF-R2
+
+Codex's review of head b30af19 found that the dialog's state was not bound to the lesson it was opened for. Both findings were reproduced with the review's own tests before any change (`baseline/`).
+
+- **BRIEF-R1: choices carried into a different lesson.** Ticking a follow-up in lesson A, then the open dialog moving to lesson B (which shares that journal entry), left the box ticked and the follow-up in B's export.
+- **BRIEF-R2: an old save published into the new lesson.** A's save finishing after the move showed "Saved “OLD-LESSON.html”." in B. Its cleanup could also release a newer save's lock.
+
+**Fix (`LessonBriefDialog.tsx` only).**
+- **One session state.** All dialog state (choices, creation date, pending flag, notices) is a single session record, keyed to the lesson while the dialog is open.
+- **Fresh session in the same render.** Moving to another lesson, or closing and reopening, replaces the session during that very render. No render can show or save the previous session's choices.
+- **Owned updates.** Each session has an owner identity. Every update, including a save's success, error and cleanup, applies only if its session is still current; a late result from an earlier session changes nothing.
+- **Owned lock.** The one-dispatch lock is held by the session that started the save and released only by that same session.
+- **Unchanged:** native save behavior, the one-dispatch lock within a session, and pending non-dismissibility. Logic, native code and output format are unchanged.
+
+| Finding | Permanent regression (`LessonBriefDialog.test.ts`) | On b30af19 | Fixed |
+| --- | --- | --- | --- |
+| R1 | Choice in A, dialog moves to B: unticked, absent from B's preview **and** B's saved bytes, B's file name | fail | pass |
+| R2 | A's save **resolves** after the move: no notice in B, B's Save enabled | fail | pass |
+| R2 | A's save **rejects** after the move: no alert in B | fail | pass |
+| R2 | Save pending, dialog closed and reopened: choices reset, no notice when the old save finishes | fail | pass |
+| R2 | A's save finishes while B's own save is pending: B stays locked (no third dispatch), then shows only B's result | fail | pass |
+
+**Checks (Node 22.23.3; receipts in [`evidence/p54-05-brief-r1-r2-2026-10-17/`](evidence/p54-05-brief-r1-r2-2026-10-17/README.md)):**
+- The 5 new regressions fail on b30af19 and pass on the fix.
+- The review's own reproduction file passes 11/11 on the fix; it failed 2 on b30af19.
+- The focused Schedule, brief and P54-04 export suites pass 53/53, with no React warnings.
+- Typecheck exits 0.
+- Native code and the earlier full-gate receipts are unchanged and kept. The frontend integration gate is the required exact-head CI on the corrected head.
 
 ## Deferred and unverified
 

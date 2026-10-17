@@ -1,0 +1,79 @@
+{
+  "source": "git index blobs, before commit",
+  "members": 12,
+  "verified": 12,
+  "results": [
+    {
+      "path": "README.md",
+      "expected": "1b24af0a57a0eb1e1e09dc7e9e03a858156c3a0bb7e44ba3280c47c13886beb4",
+      "indexBlobSha256": "1b24af0a57a0eb1e1e09dc7e9e03a858156c3a0bb7e44ba3280c47c13886beb4",
+      "ok": true
+    },
+    {
+      "path": "baseline/new-regressions-on-b30af19.exit",
+      "expected": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "indexBlobSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "ok": true
+    },
+    {
+      "path": "baseline/new-regressions-on-b30af19.log",
+      "expected": "9cb8440020f7a1237d72c8ba8c45bb93ad00e2165832eb6bb9fb29cb47b4466d",
+      "indexBlobSha256": "9cb8440020f7a1237d72c8ba8c45bb93ad00e2165832eb6bb9fb29cb47b4466d",
+      "ok": true
+    },
+    {
+      "path": "baseline/review-tests-on-b30af19.exit",
+      "expected": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "indexBlobSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "ok": true
+    },
+    {
+      "path": "baseline/review-tests-on-b30af19.log",
+      "expected": "52bea85e86b52e1c4ad853a7073a59c3fefd501161e19e5d6ab31316cda1b462",
+      "indexBlobSha256": "52bea85e86b52e1c4ad853a7073a59c3fefd501161e19e5d6ab31316cda1b462",
+      "ok": true
+    },
+    {
+      "path": "focused.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "focused.log",
+      "expected": "017bc5998600590976b00a9d80b0988ed9a363634f0edd8ca39bbb0b0ca5c206",
+      "indexBlobSha256": "017bc5998600590976b00a9d80b0988ed9a363634f0edd8ca39bbb0b0ca5c206",
+      "ok": true
+    },
+    {
+      "path": "node-version.txt",
+      "expected": "33e26f35db6e57ce0c486ddc815fe966867e4f649e418eaf323f75f4720eb8e9",
+      "indexBlobSha256": "33e26f35db6e57ce0c486ddc815fe966867e4f649e418eaf323f75f4720eb8e9",
+      "ok": true
+    },
+    {
+      "path": "review-tests-on-fix.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "review-tests-on-fix.log",
+      "expected": "ee2cc526e5896dceb50afc2e41e695c2e01c1fdfd3d6c214d0eb9ee221a08a93",
+      "indexBlobSha256": "ee2cc526e5896dceb50afc2e41e695c2e01c1fdfd3d6c214d0eb9ee221a08a93",
+      "ok": true
+    },
+    {
+      "path": "typecheck.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "typecheck.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "indexBlobSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ok": true
+    }
+  ]
+}

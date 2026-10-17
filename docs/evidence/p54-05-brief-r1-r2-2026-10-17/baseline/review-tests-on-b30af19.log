@@ -1,0 +1,58 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/brief
+
+ ❯ src/pages/Schedule/LessonBriefDialog.review.test.ts (11 tests | 2 failed) 197ms
+     × clears selected follow-ups when an open dialog changes lesson 8ms
+     × does not publish an old lesson save into a different lesson 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/Schedule/LessonBriefDialog.review.test.ts > Reviewer context regressions > clears selected follow-ups when an open dialog changes lesson
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/Schedule/LessonBriefDialog.review.test.ts:179:83
+    177|     changeLesson();
+    178|     expect(preview()).toContain("Lesson B");
+    179|     expect((screen.getByLabelText(/Crab or slip\?/) as HTMLInputElemen…
+       |                                                                                   ^
+    180|     expect(preview()).not.toContain("Crab or slip?");
+    181|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/Schedule/LessonBriefDialog.review.test.ts > Reviewer context regressions > does not publish an old lesson save into a different lesson
+AssertionError: expected <p class="small" role="status"></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p
+  class="small"
+  role="status"
+>
+  Saved “OLD-LESSON.html”.
+</p>
+
+ ❯ src/pages/Schedule/LessonBriefDialog.review.test.ts:192:42
+    190|     });
+    191|     expect(preview()).toContain("Lesson B");
+    192|     expect(screen.queryByRole("status")).toBeNull();
+       |                                          ^
+    193|   });
+    194| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  00:11:10
+   Duration  764ms (transform 179ms, setup 0ms, import 261ms, tests 197ms, environment 225ms)
+

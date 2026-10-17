@@ -1,3 +1,11 @@
+## P54-05 lesson brief: review corrections BRIEF-R1/R2 applied; pending re-review — 17 October 2026
+
+**PENDING RE-REVIEW; NO SELF-MERGE.** Claude fixed both findings from Codex's PR204 review in `LessonBriefDialog.tsx`:
+- **BRIEF-R1:** choices no longer carry into another lesson.
+- **BRIEF-R2:** a late save from an earlier lesson or session no longer shows a notice or releases a newer save's lock.
+
+Dialog state is now one session per open lesson, replaced in the same render on a lesson change or reopen, and every save result is owned by its session. 5 permanent held-promise regressions: all fail on b30af19 and pass on the fix. The review's reproductions pass 11/11; focused 53/53; typecheck clean. Native code unchanged; part B not started. [Report](P54_05_LESSON_BRIEF_REPORT_2026-10-17.md).
+
 ## P54-05 part A (lesson brief) implemented; pending independent review — 17 October 2026
 
 **PENDING REVIEW; NO SELF-MERGE.** Claude implemented the approved lesson brief on `claude/p54-05-lesson-brief`, from main 32582f2. Every schedule item now has a Lesson brief dialog with:

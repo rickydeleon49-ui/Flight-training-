@@ -3,10 +3,16 @@
  * tick any follow-ups to add, then save it (desktop) or print it (browser).
  *
  * The preview is the exact page that is saved or printed: both come from the
- * same text, built once per choice from what she sees. Follow-up choices last
- * only while the dialog is open and always start unticked.
+ * same text, built once per choice from what she sees.
+ *
+ * Everything she does here belongs to one session: this lesson, opened once.
+ * Opening it again, or the dialog moving to another lesson, starts a new
+ * session in that same render, with no choices, notices or old date
+ * (BRIEF-R1). A save reports back, and releases its lock, only within the
+ * session that started it; a late result from an earlier session says nothing
+ * (BRIEF-R2).
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Button, Dialog } from "@/components/ui";
 import { isTauri } from "@/data";
@@ -24,55 +30,74 @@ interface Props {
 
 export const BRIEF_DESKTOP_ONLY = "Saving a file needs the desktop application. Use Print… here instead.";
 
+/** One open dialog for one lesson. `owner` identifies it to its own saves. */
+interface Session {
+  owner: object;
+  /** The lesson it belongs to, or null while closed. */
+  lessonId: string | null;
+  chosen: ReadonlySet<string>;
+  createdAt: Date;
+  working: boolean;
+  error: string | null;
+  saved: string | null;
+}
+
+const freshSession = (lessonId: string | null): Session => ({
+  owner: {},
+  lessonId,
+  chosen: new Set(),
+  createdAt: new Date(),
+  working: false,
+  error: null,
+  saved: null,
+});
+
 export function LessonBriefDialog({ open, event, onClose }: Props) {
   const { data } = useAppData();
   const desktop = isTauri();
-  const [chosen, setChosen] = useState<ReadonlySet<string>>(() => new Set());
-  const [createdAt, setCreatedAt] = useState(() => new Date());
-  const [working, setWorking] = useState(false);
-  const busy = useRef(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
+  const lessonId = open ? event.id : null;
+  const [stored, setStored] = useState(() => freshSession(lessonId));
+  // A new lesson or a reopening replaces the session before anything renders.
+  const session = stored.lessonId === lessonId ? stored : freshSession(lessonId);
+  if (session !== stored) setStored(session);
+  const { owner, chosen, createdAt, working, error, saved } = session;
+  /** The session whose save holds the lock; only that session releases it. */
+  const busy = useRef<object | null>(null);
   const preview = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    setChosen(new Set());
-    setCreatedAt(new Date());
-    setError(null);
-    setSaved(null);
-  }, [open]);
+  /** Applies a change only if that session is still the current one. */
+  const update = (of: object, change: (current: Session) => Partial<Session>) =>
+    setStored((current) => (current.owner === of ? { ...current, ...change(current) } : current));
 
   const brief = useMemo(() => lessonBrief(event, data), [event, data]);
   const html = useMemo(() => buildBriefHtml(brief, chosen, createdAt), [brief, chosen, createdAt]);
 
   const toggle = (id: string, on: boolean) =>
-    setChosen((current) => {
-      const next = new Set(current);
+    update(owner, (current) => {
+      const next = new Set(current.chosen);
       if (on) next.add(id);
       else next.delete(id);
-      return next;
+      return { chosen: next };
     });
 
   const save = async () => {
     // State disables the controls on render; this lock also covers two clicks
     // delivered before that render commits. One intent opens one dialog.
-    if (busy.current) return;
-    busy.current = true;
-    setWorking(true);
-    setError(null);
-    setSaved(null);
+    if (busy.current === owner) return;
+    busy.current = owner;
+    update(owner, () => ({ working: true, error: null, saved: null }));
+    let outcome: Partial<Session> = {};
     try {
       // The page shown in the preview is the page that is saved.
       const result = await saveStudyExport("brief", briefFileName(event), html);
-      if (result) setSaved(`Saved “${result.fileName}”.`);
+      if (result) outcome = { saved: `Saved “${result.fileName}”.` };
     } catch (caught) {
-      if (caught instanceof DesktopOnlyError) setError(BRIEF_DESKTOP_ONLY);
-      else if (caught instanceof StudyExportError) setError(caught.message);
-      else setError("The file could not be saved. Nothing was changed.");
+      if (caught instanceof DesktopOnlyError) outcome = { error: BRIEF_DESKTOP_ONLY };
+      else if (caught instanceof StudyExportError) outcome = { error: caught.message };
+      else outcome = { error: "The file could not be saved. Nothing was changed." };
     } finally {
-      busy.current = false;
-      setWorking(false);
+      if (busy.current === owner) busy.current = null;
+      update(owner, () => ({ ...outcome, working: false }));
     }
   };
 
