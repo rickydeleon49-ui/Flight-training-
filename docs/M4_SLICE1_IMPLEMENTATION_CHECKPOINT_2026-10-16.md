@@ -38,3 +38,15 @@ All of the following are done. See [the completion report](M4_SLICE1_COMPLETION_
 **Next:** push, open the PR, wait for exact-head CI, then stop for Codex review.
 
 No temporary files or background jobs are left. The scratchpad holds copies only.
+
+## R5–R10 correction round (in progress)
+
+Assignment: `docs/M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md`; review: `docs/M4_SLICE1_REREVIEW_2026-10-16.md`.
+
+- Reviewed head 6d8c608 verified: 66 of 66 frozen hashes matched, tree clean.
+- 91ec3fc: merge of origin/main d97e1a9 (#190). Tracker conflicts kept both entries (review above submission). The schema-14 completion manifest was rebound to the merged files, keeping the feature's helper-test bindings; all sums verify.
+- Before-fix receipts in `docs/evidence/m4-slice1-r5-r10-corrections-2026-10-16/failed/` (force-add: `*.log` is gitignored): TS diagnostics 9 passed / 4 failed, exit 1; native R10 exit 101.
+- e756353: R10 (native count validation) with permanent tests.
+- 86a438a: R5–R8 with permanent tests; the reviewer copies were removed after promotion.
+
+**Next:** R9 (CI failure in `skillScreens.test.ts`, "two quick clicks on Save record one observation"), then the report, receipts, trackers, manifest rebind, the final Node 22 gate, push, and exact-head CI.
