@@ -8,6 +8,8 @@ This supersedes the implementation instructions in `M4_CONDITIONAL_IMPLEMENTATIO
 
 **Latest review:** PR#189 now contains the full feature but is not accepted. Independent review reproduced five new source defects and preserved its red exact-head CI. Continue with [R5–R10 corrections](M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md) and [re-review](M4_SLICE1_REREVIEW_2026-10-16.md); the older partial-checkpoint continuation is historical. Owner scope approval persists.
 
+**Latest lifecycle review:** published PR189 headc234005 passes CI and corrects the original R5–R10 cases, but [R11–R12](M4_SLICE1_R11_R12_REVIEW_2026-10-16.md) still need correction before integration. Use [the focused handoff](M4_SLICE1_R11_R12_CORRECTIONS_PROMPT_2026-10-16.md) and reconcile Claude’s ongoing terminal work; older pending-review notes below are historical.
+
 ## Read and establish identity
 
 Fetch first. Read latest STATUS/ROADMAP/PROJECT_HANDOFF, `M4_ROUND6_ACCEPTANCE_2026-10-16.md`, the owner decision packet, and the actual owner answer. Use current accepted main and a clean isolated implementation branch/worktree; reuse a suitable clean owned worktree when possible. Do not overwrite the preserved dirty M4 review checkout or another agent's OPENFOLDER-01 work.
