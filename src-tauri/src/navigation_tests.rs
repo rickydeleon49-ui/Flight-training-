@@ -1475,3 +1475,225 @@ fn the_shared_validation_cases_hold_natively() {
         assert_eq!(outcome, case["expect"].as_str().unwrap(), "{name}");
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* The recorded page count is checked against the bytes (M4S1-R10)     */
+/* ------------------------------------------------------------------ */
+
+fn set_count(conn: &Connection, total: i64) {
+    conn.execute(
+        "UPDATE material_content_identities SET total_pages = ?2 WHERE material_id = ?1",
+        params![MAT, total],
+    )
+    .unwrap();
+}
+
+fn recorded_count(conn: &Connection) -> i64 {
+    identity_of(conn, MAT).unwrap().unwrap().total_pages
+}
+
+fn bookmark_json_op(id: &str, hash: &str, page: i64) -> Value {
+    json!({
+        "kind": "add_bookmark", "materialId": MAT, "expectedContentSha256": hash,
+        "bookmarkId": id, "physicalPage": page, "pageLabel": null, "title": "t", "notes": "",
+    })
+}
+
+/// Promoted from the frozen review diagnostic: a real 50-page PDF behind a
+/// recorded count of 500, which the navigation verifier accepts.
+#[test]
+fn an_inflated_cached_count_cannot_authorize_a_nonexistent_pdf_page() {
+    let dir = TempDir::new("r10-inflated");
+    let (mut conn, hash) = seeded(dir.path());
+    set_count(&conn, 500);
+    // This is admissible to the navigation backup verifier.
+    crate::backup::verify_schema_15_navigation_semantics(&conn).unwrap();
+    let before = tuple(&conn);
+    let token = begin_op(&mut conn, None).unwrap();
+    let result = checked(&mut conn, dir.path(), commit_json(token, &hash, 450)).unwrap();
+    assert_ne!(
+        result["committed"], true,
+        "a 50-page file cannot authorize page450 even with an inflated cache"
+    );
+    assert_eq!(result["reason"], "identity_changed");
+    assert_eq!(tuple(&conn), before);
+    assert_eq!(
+        recorded_count(&conn),
+        50,
+        "the count is repaired from the bytes"
+    );
+    assert_eq!(identity_hash(&conn).as_deref(), Some(hash.as_str()));
+    // Made again against the real count, the page is out of bounds, not clamped.
+    let token = begin_op(&mut conn, None).unwrap();
+    let again = checked(&mut conn, dir.path(), commit_json(token, &hash, 450)).unwrap();
+    assert_eq!(again["reason"], "out_of_bounds");
+    assert_eq!(tuple(&conn), before);
+    // A page that exists is saved normally.
+    let token = begin_op(&mut conn, None).unwrap();
+    let saved = checked(&mut conn, dir.path(), commit_json(token, &hash, 50)).unwrap();
+    assert_eq!(saved["committed"], true);
+    assert_eq!(tuple(&conn).unwrap().0, 50);
+}
+
+#[test]
+fn a_deflated_cached_count_is_repaired_and_the_request_made_again_succeeds() {
+    let dir = TempDir::new("r10-deflated");
+    let (mut conn, hash) = seeded(dir.path());
+    // A bookmark on page 30 looks past the end of a 10-page record.
+    checked(&mut conn, dir.path(), bookmark_json_op("deep", &hash, 30)).unwrap();
+    set_count(&conn, 10);
+    conn.execute(
+        "UPDATE material_bookmarks SET status = 'drifted' WHERE id = 'deep'",
+        [],
+    )
+    .unwrap();
+    let before = tuple(&conn);
+    let token = begin_op(&mut conn, None).unwrap();
+    let verdict = checked(&mut conn, dir.path(), commit_json(token, &hash, 30)).unwrap();
+    assert_eq!(verdict["reason"], "identity_changed");
+    assert_eq!(tuple(&conn), before);
+    assert_eq!(recorded_count(&conn), 50);
+    let state = op(&mut conn, json!({ "kind": "read", "materialId": MAT })).unwrap();
+    assert_eq!(
+        state["bookmarks"][0]["status"], "verified",
+        "repair reconciles saved places against the real count"
+    );
+    let token = begin_op(&mut conn, None).unwrap();
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 30)).unwrap()["committed"],
+        true
+    );
+}
+
+#[test]
+fn a_correct_cached_identity_is_left_alone() {
+    let dir = TempDir::new("r10-unchanged");
+    let (mut conn, hash) = seeded(dir.path());
+    let verified_at: String = conn
+        .query_row(
+            "SELECT verified_at FROM material_content_identities WHERE material_id = ?1",
+            [MAT],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let token = begin_op(&mut conn, None).unwrap();
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &hash, 12)).unwrap()["committed"],
+        true
+    );
+    let after: String = conn
+        .query_row(
+            "SELECT verified_at FROM material_content_identities WHERE material_id = ?1",
+            [MAT],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(
+        after, verified_at,
+        "no identity rewrite when nothing changed"
+    );
+    assert_eq!(recorded_count(&conn), 50);
+}
+
+#[test]
+fn bytes_that_are_not_a_pdf_behind_a_matching_cache_are_refused_and_nothing_is_written() {
+    let dir = TempDir::new("r10-not-pdf");
+    let (mut conn, _) = seeded(dir.path());
+    let junk = b"not a pdf at all".to_vec();
+    write_file(dir.path(), "ifh.pdf", &junk);
+    let junk_hash = calculate_sha256(&junk);
+    conn.execute(
+        "UPDATE material_content_identities SET content_sha256 = ?2, total_pages = 5 WHERE material_id = ?1",
+        params![MAT, junk_hash],
+    )
+    .unwrap();
+    let before = (tuple(&conn), identity_hash(&conn), recorded_count(&conn));
+    let token = begin_op(&mut conn, None).unwrap();
+    let claim_before = claim(&conn);
+    assert_eq!(
+        checked(&mut conn, dir.path(), commit_json(token, &junk_hash, 3)),
+        Err(Code::NotAPdf)
+    );
+    assert_eq!(
+        checked(
+            &mut conn,
+            dir.path(),
+            bookmark_json_op("junk", &junk_hash, 3)
+        ),
+        Err(Code::NotAPdf)
+    );
+    assert_eq!(
+        (tuple(&conn), identity_hash(&conn), recorded_count(&conn)),
+        before
+    );
+    assert_eq!(claim(&conn), claim_before);
+    let seen = opener(|| {}, false);
+    assert_eq!(
+        open_verified_on(&conn, dir.path(), MAT, &junk_hash, &seen),
+        Err(Code::NotAPdf)
+    );
+    assert!(seen.opened.borrow().is_empty());
+}
+
+#[test]
+fn bookmarks_and_read_confirmation_are_bounded_by_the_real_count() {
+    let dir = TempDir::new("r10-bounds");
+    let (mut conn, hash) = seeded(dir.path());
+    // An impossible active tuple at page 450 behind an inflated count.
+    set_count(&conn, 500);
+    conn.execute(
+        "UPDATE material_reading_state SET last_requested_page = 450 WHERE material_id = ?1",
+        [MAT],
+    )
+    .unwrap();
+    let owner = tuple(&conn).unwrap().5;
+    let confirm = json!({
+        "kind": "set_read", "materialId": MAT, "expectedContentSha256": hash,
+        "expectedOwnerGeneration": owner, "physicalPage": 450, "confirmed": true,
+    });
+    assert_eq!(
+        checked(&mut conn, dir.path(), confirm.clone()),
+        Err(Code::FileChanged)
+    );
+    let after = tuple(&conn).unwrap();
+    assert_eq!((after.0, after.2), (450, 0), "not confirmed, not moved");
+    assert_eq!(
+        after.4, "drifted",
+        "the impossible place is visibly drifted"
+    );
+    assert_eq!(recorded_count(&conn), 50);
+    assert_eq!(
+        checked(&mut conn, dir.path(), confirm),
+        Err(Code::StaleState),
+        "still refused once the count is right"
+    );
+
+    set_count(&conn, 500);
+    assert_eq!(
+        checked(&mut conn, dir.path(), bookmark_json_op("far", &hash, 450)),
+        Err(Code::FileChanged)
+    );
+    assert_eq!(
+        checked(&mut conn, dir.path(), bookmark_json_op("far", &hash, 450)),
+        Err(Code::PageOutOfRange)
+    );
+    let state = op(&mut conn, json!({ "kind": "read", "materialId": MAT })).unwrap();
+    assert!(state["bookmarks"].as_array().unwrap().is_empty());
+}
+
+#[test]
+fn opening_refuses_a_recorded_count_the_bytes_do_not_have() {
+    let dir = TempDir::new("r10-open");
+    let (conn, hash) = seeded(dir.path());
+    set_count(&conn, 500);
+    let seen = opener(|| {}, false);
+    assert_eq!(
+        open_verified_on(&conn, dir.path(), MAT, &hash, &seen),
+        Err(Code::FileChanged)
+    );
+    assert!(seen.opened.borrow().is_empty());
+    assert_eq!(recorded_count(&conn), 500, "opening writes nothing");
+    set_count(&conn, 50);
+    assert!(open_verified_on(&conn, dir.path(), MAT, &hash, &seen).is_ok());
+    assert_eq!(seen.opened.borrow().len(), 1);
+}

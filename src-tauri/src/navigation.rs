@@ -1008,8 +1008,9 @@ enum FileCheck {
     /// The file at the material's current path still has the recorded identity
     /// (or no identity has been recorded yet, which the operation refuses).
     Current,
-    /// The file differs from the recorded identity. The new identity has been
-    /// recorded and saved places reconciled in this transaction.
+    /// The file differs from the recorded identity, in content or in page
+    /// count. The identity derived from the bytes has been recorded and saved
+    /// places reconciled in this transaction.
     Replaced,
 }
 
@@ -1018,20 +1019,27 @@ enum FileCheck {
 /// commit, read confirmation or bookmark relies on, not an earlier inspection:
 /// a file deleted, relinked or replaced since then is seen here. A missing or
 /// unreadable file is an error and the transaction writes nothing.
+///
+/// Both halves of the identity come from the bytes (M4S1-R10). A matching
+/// hash does not vouch for the recorded page count: a restored or corrupted
+/// row can pair the right hash with the wrong count, and bounds are checked
+/// against that count. A wrong count is repaired and reconciled here, like a
+/// replacement, and the request is refused so it is made again against the
+/// real count. Bytes that are not a PDF are refused (NOT_A_PDF) and nothing
+/// is written, whatever the recorded row says.
 fn check_current_file(tx: &Transaction<'_>, root: &Path, material_id: &str) -> Check<FileCheck> {
     if !material_exists(tx, material_id)? {
         return Err(Code::NotFound);
     }
     let relative = material_file(tx, material_id)?;
     let bytes = read_managed(root, &relative)?;
-    let hash = calculate_sha256(&bytes);
     let Some(recorded) = identity_of(tx, material_id)? else {
         return Ok(FileCheck::Current);
     };
-    if recorded.content_sha256 == hash {
+    let (hash, total) = identity_of_bytes(&bytes)?;
+    if recorded.content_sha256 == hash && recorded.total_pages == total {
         return Ok(FileCheck::Current);
     }
-    let (hash, total) = identity_of_bytes(&bytes)?;
     record_identity(tx, material_id, &hash, total)?;
     Ok(FileCheck::Replaced)
 }
@@ -1113,9 +1121,11 @@ impl DocumentOpener for SystemDocumentOpener {
 
 /// Hand the material's managed file to the default reader, but only after its
 /// bytes, read now, match both the content the request was resolved against
-/// and the recorded identity. What this guarantees: the file at that path had
-/// exactly that content when it was handed over. It cannot control what the
-/// reader reads later, and it does not jump to a page; the page is guidance.
+/// and the recorded identity, page count included (M4S1-R10). What this
+/// guarantees: the file at that path had exactly that content when it was
+/// handed over. It cannot control what the reader reads later, and it does not
+/// jump to a page; the page is guidance. It writes nothing: a stale recorded
+/// count is refused here and repaired by the next inspection or checked write.
 pub fn open_verified_on<O: DocumentOpener>(
     connection: &Connection,
     root: &Path,
@@ -1128,10 +1138,13 @@ pub fn open_verified_on<O: DocumentOpener>(
     }
     let relative = material_file(connection, material_id)?;
     let bytes = read_managed(root, &relative)?;
-    let hash = calculate_sha256(&bytes);
-    drop(bytes);
     let recorded = identity_of(connection, material_id)?.ok_or(Code::IdentityUnknown)?;
-    if hash != expected_hash || recorded.content_sha256 != expected_hash {
+    if calculate_sha256(&bytes) != expected_hash || recorded.content_sha256 != expected_hash {
+        return Err(Code::FileChanged);
+    }
+    let (_, total) = identity_of_bytes(&bytes)?;
+    drop(bytes);
+    if recorded.total_pages != total {
         return Err(Code::FileChanged);
     }
     let safe = safe_relative_path(&relative).map_err(|_| Code::FileMissing)?;
