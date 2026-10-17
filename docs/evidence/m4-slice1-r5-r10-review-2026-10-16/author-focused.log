@@ -1,0 +1,29 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/data/navigationParity.test.ts src/data/navigationShapes.test.ts src/data/navigationUpgrade.test.ts src/data/navigationValidationParity.test.ts src/logic/navigation.test.ts src/state/navigation/controller.test.ts src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts src/logic/currentSchemaVerification.test.ts src/pages/FlightPath/skills/skillScreens.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m4-slice1
+
+(node:86766) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86764) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86765) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86761) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86763) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86762) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86759) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86760) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  9 passed (9)
+      Tests  183 passed (183)
+   Start at  17:30:26
+   Duration  2.43s (transform 1.75s, setup 0ms, import 2.57s, tests 6.77s, environment 676ms)
+

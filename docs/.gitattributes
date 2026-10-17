@@ -110,3 +110,13 @@ evidence/m4-slice1-partial-review-2026-10-16/diagnostics.log -text -diff
 evidence/m4-slice1-partial-review-2026-10-16/focused-existing.log -text -diff
 evidence/m4-slice1-partial-review-2026-10-16/focused-native.log -text -diff
 evidence/m4-slice1-partial-review-2026-10-16/typecheck.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/author-focused.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/build.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/ci-failed.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/clippy.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/helper.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/native-focused-after-scratch.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/native-new-diagnostic.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/new-diagnostics.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/rust-full.log -text -diff
+evidence/m4-slice1-r5-r10-review-2026-10-16/frozen-native-count-diagnostic.patch -text -diff
