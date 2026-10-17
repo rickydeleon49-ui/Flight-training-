@@ -1,0 +1,1185 @@
+{
+  "cases": [
+    {
+      "case": "physical order despite reordered object ids",
+      "detail": {
+        "settled": {
+          "elapsedMs": 104.46674999999999,
+          "exit": "exit:0",
+          "outcome": "checked",
+          "peakRssKiB": 7968,
+          "pid": 46244,
+          "reaped": true,
+          "rssSamples": 4
+        },
+        "statuses": [
+          [
+            1,
+            "text"
+          ],
+          [
+            2,
+            "no_extractable_text"
+          ],
+          [
+            3,
+            "refused_page_output_limit"
+          ],
+          [
+            4,
+            "text"
+          ]
+        ]
+      },
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "image-only page is no_extractable_text (not proof of a scan)",
+      "detail": [
+        2,
+        "no_extractable_text"
+      ],
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "compressed oversized page refused at page limit (post-allocation)",
+      "detail": {
+        "compressedFileBytes": 3315,
+        "page3": [
+          3,
+          "refused_page_output_limit"
+        ]
+      },
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "WinAnsi accented text (café) extracted as Unicode",
+      "detail": {
+        "extracted": "accent café check"
+      },
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "current success publishes and starts indexing once",
+      "detail": {
+        "indexed": 1
+      },
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "malformed input reported as malformed",
+      "detail": {
+        "elapsedMs": 1.7852919999999999,
+        "exit": "exit:0",
+        "outcome": "malformed",
+        "peakRssKiB": 352,
+        "pid": 46249,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "truncated input reported as malformed",
+      "detail": {
+        "elapsedMs": 1.685958,
+        "exit": "exit:0",
+        "outcome": "malformed",
+        "peakRssKiB": 352,
+        "pid": 46251,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "R4: initial input over the limit is refused by the caller before any worker is spawned",
+      "detail": {
+        "fileBytes": 3315,
+        "limit": 1024,
+        "settled": {
+          "elapsedMs": 0.0,
+          "exit": null,
+          "outcome": "refused:input_limit",
+          "peakRssKiB": 0,
+          "pid": null,
+          "reaped": null,
+          "rssSamples": 0
+        },
+        "workersSpawned": 0
+      },
+      "group": "input-boundary",
+      "pass": true
+    },
+    {
+      "case": "R4: input exactly at the limit is accepted, checked and published",
+      "detail": {
+        "callerBytesRead": 3315,
+        "limit": 3315,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 95.41266599999999,
+          "exit": "exit:0",
+          "outcome": "checked",
+          "peakRssKiB": 7984,
+          "pid": 46253,
+          "reaped": true,
+          "rssSamples": 4
+        }
+      },
+      "group": "input-boundary",
+      "pass": true
+    },
+    {
+      "case": "R4: growth between the size check and the read is refused after at most limit + 1 bytes",
+      "detail": {
+        "limit": 3315,
+        "result": "Err((\"input_limit\", 3316))"
+      },
+      "group": "input-boundary",
+      "pass": true
+    },
+    {
+      "case": "R4: the worker still refuses over-limit input independently (take(limit + 1))",
+      "detail": {
+        "frames": "{\"status\":\"refused_input_limit\",\"type\":\"done\"}",
+        "workerExit": "exit:0"
+      },
+      "group": "input-boundary",
+      "pass": true
+    },
+    {
+      "case": "R4: an oversized replacement at publication is refused unread, with no indexing",
+      "detail": {
+        "callerBytesRead": 0,
+        "limit": 65536,
+        "publish": "Err(\"replacement_over_input_limit\")",
+        "replacementBytes": 2097152
+      },
+      "group": "input-boundary",
+      "pass": true
+    },
+    {
+      "case": "R2: stdout closed while the worker stays alive settles as a bounded failure; nothing checked is retained or indexed",
+      "detail": {
+        "deadlineMs": 300,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 302.20691700000003,
+          "exit": "signal:9",
+          "outcome": "failed:stream_closed_while_running",
+          "peakRssKiB": 0,
+          "pid": 46264,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "settlement",
+      "pass": true
+    },
+    {
+      "case": "R2: a complete genuine result followed by exit 3 settles as a bounded failure; nothing checked is retained or indexed",
+      "detail": {
+        "deadlineMs": 300,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 125.51875000000001,
+          "exit": "exit:3",
+          "outcome": "failed:worker_exit",
+          "peakRssKiB": 0,
+          "pid": 46266,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "settlement",
+      "pass": true
+    },
+    {
+      "case": "R2: a complete genuine result followed by a stall settles as a bounded failure; nothing checked is retained or indexed",
+      "detail": {
+        "deadlineMs": 300,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 302.549333,
+          "exit": "signal:9",
+          "outcome": "failed:no_exit_after_result",
+          "peakRssKiB": 0,
+          "pid": 46268,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "settlement",
+      "pass": true
+    },
+    {
+      "case": "R2 control: a complete result with exit 0 succeeds and indexes once",
+      "detail": {
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 122.924875,
+          "exit": "exit:0",
+          "outcome": "checked",
+          "peakRssKiB": 0,
+          "pid": 46270,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "settlement",
+      "pass": true
+    },
+    {
+      "case": "decompression bomb stopped by RSS watchdog (sampled; overshoot recorded)",
+      "detail": {
+        "bombFileBytes": 391950,
+        "decompressedBytes": 402653184,
+        "overshootKiB": 254112,
+        "settled": {
+          "elapsedMs": 607.0074159999999,
+          "exit": "signal:9",
+          "outcome": "cancelled:memory_watchdog",
+          "peakRssKiB": 778400,
+          "pid": 46272,
+          "reaped": true,
+          "rssSamples": 24
+        },
+        "watchdogKiB": 524288
+      },
+      "group": "extraction",
+      "pass": true
+    },
+    {
+      "case": "real deadline: bomb killed and reaped within deadline + 500 ms",
+      "detail": {
+        "elapsedMs": 1006.3164170000001,
+        "exit": "signal:9",
+        "outcome": "cancelled:deadline",
+        "peakRssKiB": 0,
+        "pid": 46299,
+        "reaped": true,
+        "rssSamples": 0
+      },
+      "group": "lifecycle",
+      "pass": true
+    },
+    {
+      "case": "ulimit -v 512 MiB attempt recorded (enforcement observed, not assumed)",
+      "detail": {
+        "interpretation": "failed:memory_limit_unsupported => the shell refused ulimit -v and the worker never ran; failed:worker_exit with signal:6 => allocation refused under the limit; cancelled:memory_watchdog (2 GiB) or deadline => limit accepted but not enforced",
+        "observedOutcome": "failed:memory_limit_unsupported",
+        "settled": {
+          "elapsedMs": 2.66175,
+          "exit": "exit:97",
+          "outcome": "failed:memory_limit_unsupported",
+          "peakRssKiB": 32,
+          "pid": 46301,
+          "reaped": true,
+          "rssSamples": 1
+        }
+      },
+      "group": "memory",
+      "pass": true
+    },
+    {
+      "case": "file replaced before read is refused",
+      "detail": {
+        "elapsedMs": 1.790708,
+        "exit": "exit:0",
+        "outcome": "refused:identity_mismatch",
+        "peakRssKiB": 320,
+        "pid": 46303,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "identity",
+      "pass": true
+    },
+    {
+      "case": "file replaced after read is refused at the publication re-check",
+      "detail": {
+        "publish": "Err(\"replaced_before_publication\")",
+        "settled": {
+          "elapsedMs": 2.809209,
+          "exit": "exit:0",
+          "outcome": "checked",
+          "peakRssKiB": 4864,
+          "pid": 46305,
+          "reaped": true,
+          "rssSamples": 1
+        }
+      },
+      "group": "identity",
+      "pass": true
+    },
+    {
+      "case": "request change while held: old worker killed and reaped; newer publishes",
+      "detail": {
+        "newer": {
+          "elapsedMs": 2.7356659999999997,
+          "exit": "exit:0",
+          "outcome": "checked",
+          "peakRssKiB": 384,
+          "pid": 46308,
+          "reaped": true,
+          "rssSamples": 1
+        },
+        "oldExit": "signal:9",
+        "oldPid": 46307
+      },
+      "group": "identity",
+      "pass": true
+    },
+    {
+      "case": "old success settled before supersession cannot publish or index",
+      "detail": {
+        "publish": "Err(\"superseded\")"
+      },
+      "group": "identity",
+      "pass": true
+    },
+    {
+      "case": "old error settled before supersession publishes nothing",
+      "detail": {
+        "publish": "Err(\"superseded\")"
+      },
+      "group": "identity",
+      "pass": true
+    },
+    {
+      "case": "explicit cancel kills and reaps a held worker",
+      "detail": {
+        "elapsedMs": 0.044583000000000005,
+        "exit": "signal:9",
+        "outcome": "cancelled:cancelled",
+        "peakRssKiB": 0,
+        "pid": 46316,
+        "reaped": true,
+        "rssSamples": 0
+      },
+      "group": "lifecycle",
+      "pass": true
+    },
+    {
+      "case": "a cancelled request publishes nothing and starts no indexing",
+      "detail": {
+        "publish": "Err(\"cancelled\")"
+      },
+      "group": "lifecycle",
+      "pass": true
+    },
+    {
+      "case": "R5: a frame after the result, from a worker that already exited 0, is a failure; nothing checked is retained or indexed",
+      "detail": {
+        "exitObservedBeforeSettle": true,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 98.01025,
+          "exit": "exit:0",
+          "outcome": "failed:frame_after_result",
+          "peakRssKiB": 0,
+          "pid": 46318,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "stream",
+      "pass": true
+    },
+    {
+      "case": "R5: malformed JSON after the result, from a worker that already exited 0, is a failure; nothing checked is retained or indexed",
+      "detail": {
+        "exitObservedBeforeSettle": true,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 98.242541,
+          "exit": "exit:0",
+          "outcome": "failed:malformed_json",
+          "peakRssKiB": 0,
+          "pid": 46319,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "stream",
+      "pass": true
+    },
+    {
+      "case": "R5: an unterminated partial frame at EOF, from a worker that already exited 0, is a failure; nothing checked is retained or indexed",
+      "detail": {
+        "exitObservedBeforeSettle": true,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 96.926333,
+          "exit": "exit:0",
+          "outcome": "failed:partial_frame",
+          "peakRssKiB": 0,
+          "pid": 46320,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "stream",
+      "pass": true
+    },
+    {
+      "case": "R5: an oversized line after the result, from a worker that already exited 0, is a failure; nothing checked is retained or indexed",
+      "detail": {
+        "exitObservedBeforeSettle": true,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 100.462125,
+          "exit": "exit:0",
+          "outcome": "failed:frame_limit",
+          "peakRssKiB": 0,
+          "pid": 46321,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "stream",
+      "pass": true
+    },
+    {
+      "case": "R5 control: a clean result from an already-exited worker is checked and indexed once",
+      "detail": {
+        "exitObservedBeforeSettle": true,
+        "publish": "Ok(())",
+        "settled": {
+          "elapsedMs": 98.163334,
+          "exit": "exit:0",
+          "outcome": "checked",
+          "peakRssKiB": 0,
+          "pid": 46322,
+          "reaped": true,
+          "rssSamples": 0
+        }
+      },
+      "group": "stream",
+      "pass": true
+    },
+    {
+      "case": "R5 reader: clean stream ends in eof; partial final frame and read errors end in a refusal, never eof",
+      "detail": {
+        "clean": [
+          "frame",
+          "eof"
+        ],
+        "partial": [
+          "frame",
+          "protocol:partial_frame"
+        ],
+        "readError": [
+          "frame",
+          "protocol:read_error"
+        ]
+      },
+      "group": "stream",
+      "pass": true
+    },
+    {
+      "case": "oversized-line settles as a bounded failure",
+      "detail": {
+        "elapsedMs": 4.538042,
+        "exit": "signal:9",
+        "outcome": "failed:frame_limit",
+        "peakRssKiB": 528,
+        "pid": 46323,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "invalid-utf8 settles as a bounded failure",
+      "detail": {
+        "elapsedMs": 1.5317079999999998,
+        "exit": "exit:0",
+        "outcome": "failed:invalid_utf8",
+        "peakRssKiB": 496,
+        "pid": 46326,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "bad-json settles as a bounded failure",
+      "detail": {
+        "elapsedMs": 1.4835829999999999,
+        "exit": "exit:0",
+        "outcome": "failed:malformed_json",
+        "peakRssKiB": 352,
+        "pid": 46329,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "exit-nonzero settles as a bounded failure",
+      "detail": {
+        "elapsedMs": 1.5078330000000002,
+        "exit": "exit:3",
+        "outcome": "failed:worker_exit",
+        "peakRssKiB": 336,
+        "pid": 46332,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "no-result settles as a bounded failure",
+      "detail": {
+        "elapsedMs": 1.487083,
+        "exit": "exit:0",
+        "outcome": "failed:no_result",
+        "peakRssKiB": 320,
+        "pid": 46335,
+        "reaped": true,
+        "rssSamples": 1
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "flood settles as a bounded failure",
+      "detail": {
+        "elapsedMs": 773.988,
+        "exit": "signal:9",
+        "outcome": "failed:stream_limit",
+        "peakRssKiB": 2816,
+        "pid": 46338,
+        "reaped": true,
+        "rssSamples": 31
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "stalled worker settles at the deadline and is reaped",
+      "detail": {
+        "elapsedMs": 800.9921250000001,
+        "exit": "signal:9",
+        "outcome": "cancelled:deadline",
+        "peakRssKiB": 2784,
+        "pid": 46371,
+        "reaped": true,
+        "rssSamples": 29
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "third request waits while two workers run, then is admitted",
+      "detail": {
+        "admittedAfterCancel": true,
+        "queuedWhileTwoRan": true
+      },
+      "group": "admission",
+      "pass": true
+    },
+    {
+      "case": "ninth retained result evicts the least recently used",
+      "detail": [
+        "r2",
+        "r3",
+        "r4",
+        "r5",
+        "r6",
+        "r7",
+        "r0",
+        "r8"
+      ],
+      "group": "admission",
+      "pass": true
+    },
+    {
+      "case": "every produced outcome code carries no path, content or credential",
+      "detail": {
+        "distinctCodes": [
+          "cancelled:cancelled",
+          "cancelled:deadline",
+          "cancelled:memory_watchdog",
+          "cancelled:superseded",
+          "checked",
+          "failed:frame_after_result",
+          "failed:frame_limit",
+          "failed:invalid_utf8",
+          "failed:malformed_json",
+          "failed:memory_limit_unsupported",
+          "failed:no_exit_after_result",
+          "failed:no_result",
+          "failed:partial_frame",
+          "failed:stream_closed_while_running",
+          "failed:stream_limit",
+          "failed:worker_exit",
+          "malformed",
+          "refused:identity_mismatch",
+          "refused:input_limit"
+        ],
+        "produced": 36
+      },
+      "group": "protocol",
+      "pass": true
+    },
+    {
+      "case": "no live or unreaped worker remains",
+      "detail": {
+        "live": [],
+        "unreaped": 0,
+        "workersSpawned": 35
+      },
+      "group": "lifecycle",
+      "pass": true
+    },
+    {
+      "case": "owned scratch removed; non-owned file untouched",
+      "detail": {
+        "leftovers": []
+      },
+      "group": "lifecycle",
+      "pass": true
+    },
+    {
+      "case": "fresh cache needs a rebuild",
+      "detail": "NeedsRebuild(\"absent\")",
+      "group": "cache",
+      "pass": true
+    },
+    {
+      "case": "literal word",
+      "detail": [
+        "m1:p1",
+        "m3:note",
+        "m3:p1"
+      ],
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "case folding (METAR = metar)",
+      "detail": [
+        "m1:p1",
+        "m3:note",
+        "m3:p1"
+      ],
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "quoted phrase requires adjacency",
+      "detail": {
+        "phrase": [
+          "m2:guide",
+          "m2:p1"
+        ],
+        "reversed": []
+      },
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "words are ANDed",
+      "detail": {
+        "crosswind density": [
+          "m2:guide",
+          "m2:p1",
+          "m3:note"
+        ],
+        "crosswind slip": [
+          "m2:p1"
+        ]
+      },
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "OR is a literal word, not an operator",
+      "detail": [
+        "m3:p1"
+      ],
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "FTS operator text is compiled as literal strings and never errors",
+      "detail": [
+        {
+          "compiled": "Match(\"\\\"title:metar\\\"\")",
+          "hits": 1,
+          "input": "title:metar"
+        },
+        {
+          "compiled": "Match(\"\\\"NEAR(crosswind\\\" AND \\\"density)\\\"\")",
+          "hits": 1,
+          "input": "NEAR(crosswind density)"
+        },
+        {
+          "compiled": "Match(\"\\\"-fuel\\\"\")",
+          "hits": 2,
+          "input": "-fuel"
+        },
+        {
+          "compiled": "Match(\"\\\"^approach\\\"\")",
+          "hits": 2,
+          "input": "^approach"
+        },
+        {
+          "compiled": "Match(\"\\\"crossw*\\\"\")",
+          "hits": 1,
+          "input": "crossw*"
+        },
+        {
+          "compiled": "Empty",
+          "hits": 0,
+          "input": "("
+        },
+        {
+          "compiled": "Empty",
+          "hits": 0,
+          "input": ")"
+        },
+        {
+          "compiled": "Empty",
+          "hits": 0,
+          "input": "\""
+        },
+        {
+          "compiled": "Match(\"\\\"a\\\"\\\"b\\\"\")",
+          "hits": 0,
+          "input": "a\"b"
+        },
+        {
+          "compiled": "Match(\"\\\"AND\\\"\")",
+          "hits": 0,
+          "input": "AND"
+        },
+        {
+          "compiled": "Match(\"\\\"NOT\\\" AND \\\"x\\\"\")",
+          "hits": 0,
+          "input": "NOT x"
+        },
+        {
+          "compiled": "Empty",
+          "hits": 0,
+          "input": "*"
+        },
+        {
+          "compiled": "Match(\"\\\"{m1}\\\"\")",
+          "hits": 0,
+          "input": "{m1}"
+        },
+        {
+          "compiled": "Match(\"\\\"x:y:z\\\"\")",
+          "hits": 0,
+          "input": "x:y:z"
+        }
+      ],
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "no implicit prefix: crossw does not match crosswind",
+      "detail": [
+        "m3:note"
+      ],
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "punctuation splits tokens: VOR/DME = phrase vor dme",
+      "detail": [
+        "m3:p1"
+      ],
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "accent folding both ways (cafe/café/CAFÉ)",
+      "detail": {
+        "CAFÉ": [
+          "m1:p2"
+        ],
+        "cafe": [
+          "m1:p2"
+        ]
+      },
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "Unicode diacritics and case: zurich, naive, resume, αλφα",
+      "detail": {
+        "zurich": [
+          "m1:p2"
+        ],
+        "αλφα": [
+          "m3:p1"
+        ]
+      },
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "documented gap: ß is not folded to ss (straße and strasse find different records)",
+      "detail": {
+        "strasse": [
+          "m3:note"
+        ],
+        "straße": [
+          "m3:p1"
+        ]
+      },
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "documented gap: unspaced CJK run is one token (no substring match)",
+      "detail": {
+        "full": [
+          "m3:p1"
+        ],
+        "partial": []
+      },
+      "group": "semantics",
+      "pass": true
+    },
+    {
+      "case": "query over 256 characters refused",
+      "detail": null,
+      "group": "bounds",
+      "pass": true
+    },
+    {
+      "case": "more than 8 terms refused",
+      "detail": null,
+      "group": "bounds",
+      "pass": true
+    },
+    {
+      "case": "punctuation-only or empty query keeps the metadata filter only",
+      "detail": null,
+      "group": "bounds",
+      "pass": true
+    },
+    {
+      "case": "results capped at 50 with a truncation flag",
+      "detail": {
+        "returned": 50,
+        "truncated": true
+      },
+      "group": "bounds",
+      "pass": true
+    },
+    {
+      "case": "excerpt is plain text: no highlight markup added, source text kept verbatim for text rendering",
+      "detail": {
+        "excerpt": "Density altitude rises with temperature. <b>bold</b> crosswind <script>x()</script>"
+      },
+      "group": "bounds",
+      "pass": true
+    },
+    {
+      "case": "excerpt length bounded on a 45 KB record",
+      "detail": {
+        "excerptChars": 216
+      },
+      "group": "bounds",
+      "pass": true
+    },
+    {
+      "case": "a current page hit carries its content hash and physical page",
+      "detail": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        1
+      ],
+      "group": "destinations",
+      "pass": true
+    },
+    {
+      "case": "guide/note hits never carry a page destination",
+      "detail": null,
+      "group": "destinations",
+      "pass": true
+    },
+    {
+      "case": "an obsolete hash is never offered as a destination",
+      "detail": "None",
+      "group": "destinations",
+      "pass": true
+    },
+    {
+      "case": "a material missing from the library is dropped from results",
+      "detail": [
+        "m3:note",
+        "m3:p1"
+      ],
+      "group": "destinations",
+      "pass": true
+    },
+    {
+      "case": "duplicate titles stay distinct by material id",
+      "detail": [
+        "m1",
+        "m2"
+      ],
+      "group": "index",
+      "pass": true
+    },
+    {
+      "case": "replacement swaps one material's records atomically",
+      "detail": null,
+      "group": "index",
+      "pass": true
+    },
+    {
+      "case": "update cancelled while pending leaves the index unchanged",
+      "detail": "Err(\"superseded\")",
+      "group": "index",
+      "pass": true
+    },
+    {
+      "case": "replacement after extraction but before publication is refused",
+      "detail": "Err(\"superseded\")",
+      "group": "index",
+      "pass": true
+    },
+    {
+      "case": "deletion removes a material's records",
+      "detail": [
+        "m3:note",
+        "m3:p1"
+      ],
+      "group": "index",
+      "pass": true
+    },
+    {
+      "case": "reopen keeps a complete cache",
+      "detail": "Ready",
+      "group": "persistence",
+      "pass": true
+    },
+    {
+      "case": "deleted cache rebuilds to identical result ids",
+      "detail": null,
+      "group": "persistence",
+      "pass": true
+    },
+    {
+      "case": "synthetic restore (new fingerprint) disposes the cache",
+      "detail": "NeedsRebuild(\"fingerprint\")",
+      "group": "persistence",
+      "pass": true
+    },
+    {
+      "case": "process killed mid-rebuild: the unfinished cache is detected and disposed",
+      "detail": {
+        "childExit": "signal:6",
+        "state": "NeedsRebuild(\"incomplete_build\")"
+      },
+      "group": "persistence",
+      "pass": true
+    },
+    {
+      "case": "process killed mid-update: the uncommitted transaction rolls back",
+      "detail": {
+        "childExit": "signal:6"
+      },
+      "group": "persistence",
+      "pass": true
+    }
+  ],
+  "passed": 77,
+  "total": 77,
+  "workerProcesses": [
+    {
+      "exit": "exit:0",
+      "pid": 46244,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46249,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46251,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46253,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46259,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46264,
+      "reaped": true
+    },
+    {
+      "exit": "exit:3",
+      "pid": 46266,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46268,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46270,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46272,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46299,
+      "reaped": true
+    },
+    {
+      "exit": "exit:97",
+      "pid": 46301,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46303,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46305,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46307,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46308,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46311,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46313,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46314,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46316,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46318,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46319,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46320,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46321,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46322,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46323,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46326,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46329,
+      "reaped": true
+    },
+    {
+      "exit": "exit:3",
+      "pid": 46332,
+      "reaped": true
+    },
+    {
+      "exit": "exit:0",
+      "pid": 46335,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46338,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46371,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46402,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46403,
+      "reaped": true
+    },
+    {
+      "exit": "signal:9",
+      "pid": 46404,
+      "reaped": true
+    }
+  ]
+}

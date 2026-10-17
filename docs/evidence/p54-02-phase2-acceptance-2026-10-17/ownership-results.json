@@ -1,0 +1,29 @@
+{
+  "exampleBytes": "new work from the other writer\n",
+  "exit": 4,
+  "printed": "PRESERVATION FAILED: build cleanup: temporary example changed during the build and was left in place; proof source changed during the build; the binary was built from the captured bytes 94ca78ed75f2efdeead3983efe9c7d18abb159bb6d2fa26541d5016b184d216f; examples directory created by this run is not empty. Receipts kept in /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-p54-runner-test-xjjpgzh9/receipts; scratch kept in /private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-p54-runner-test-xjjpgzh9/scratch.\n",
+  "summary": {
+    "stages": {
+      "build": {
+        "proofSourceSha256": "94ca78ed75f2efdeead3983efe9c7d18abb159bb6d2fa26541d5016b184d216f",
+        "exit": 0
+      }
+    },
+    "preservation": {
+      "cleanupProblems": [
+        "temporary example changed during the build and was left in place",
+        "proof source changed during the build; the binary was built from the captured bytes 94ca78ed75f2efdeead3983efe9c7d18abb159bb6d2fa26541d5016b184d216f",
+        "examples directory created by this run is not empty"
+      ]
+    },
+    "result": {
+      "exit": 4,
+      "stage": "build cleanup",
+      "reason": "temporary example changed during the build and was left in place; proof source changed during the build; the binary was built from the captured bytes 94ca78ed75f2efdeead3983efe9c7d18abb159bb6d2fa26541d5016b184d216f; examples directory created by this run is not empty"
+    }
+  },
+  "measuredExtract": false,
+  "built": true,
+  "scratchKept": true,
+  "exampleLeft": true
+}

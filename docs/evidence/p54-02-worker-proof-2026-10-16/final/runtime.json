@@ -1,0 +1,16 @@
+{
+  "os": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "cpu": "Apple M5",
+  "memoryBytes": 34359738368,
+  "loadBefore": [
+    6.65185546875,
+    2.82421875,
+    2.3427734375
+  ],
+  "sourceHead": "a7813e724b2572726a8be0dfc666eda6ddef373e",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Homebrew)",
+  "build": "Cargo debug example (not a release build)",
+  "proofSourceSha256": "f6da09efcd788c251d506622563f48a7cd5c7894ce25ac7fabf4180bfdb786a2",
+  "startedUnix": 1792213569.780332
+}

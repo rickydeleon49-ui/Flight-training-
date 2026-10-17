@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "eof-stall",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.20728854098706506,
+    "stdout": "{\"indexed\":0,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":202.644708,\"exit\":\"signal:9\",\"outcome\":\"failed:stream_closed_while_running\",\"peakRssKiB\":0,\"pid\":45725,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "done-nonzero",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.016207875014515594,
+    "stdout": "{\"indexed\":0,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":6.581333,\"exit\":\"exit:3\",\"outcome\":\"failed:worker_exit\",\"peakRssKiB\":0,\"pid\":45727,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "done-stall",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.2108701670076698,
+    "stdout": "{\"indexed\":0,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":202.57879200000002,\"exit\":\"signal:9\",\"outcome\":\"failed:no_exit_after_result\",\"peakRssKiB\":0,\"pid\":45729,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "normal",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.015743249998195097,
+    "stdout": "{\"indexed\":1,\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":5.635542,\"exit\":\"exit:0\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":45731,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  }
+]

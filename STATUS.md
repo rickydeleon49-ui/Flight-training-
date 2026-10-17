@@ -1,3 +1,9 @@
+## P54-05 direction approved; phase2 proof merged — 17 October 2026 (UTC)
+
+The owner approved following Claude's recommendations unless a concrete technical issue required a correction. **P54-05 both parts approved:** brief first, calendar second; dialog-only choices, floating local times, one-hour default, rescheduled-as-cancelled representation, checklist off by default, single-lesson scope. The reviewer corrected the minute-derived SEQUENCE collision and omitted METHOD:PUBLISH from this organizer-free snapshot export. No schema/dependency or update/sync promise is added. [Approval and exact decisions](docs/P54_05_SCOPE_APPROVAL_2026-10-17.md); [updated scope](docs/P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md); [next substantial model-neutral assignment](docs/P54_05_NEXT_IMPLEMENTER_PROMPT_2026-10-17.md).
+
+**P54-02 phase2 proof is accepted and merged via PR199 atc9347fe:** independent77/77 proof cases,17/17 runner regressions, frozen diagnostics,26 helper checks,55 final/58 prior evidence members and green exact-head CI39008744348. This is exploratory evidence, not production adoption. Existing budget/memory/fidelity/owner-decision gaps remain. PR193 still needs independent acceptance of Codex's save correction and current-main integration before brief implementation; PR189 integration remains separately pending. Preserve queue order and all earlier history. No app/profile/provider/installer/release work occurred in this scope approval.
+
 ## P54-05 lesson brief and calendar export: scope proposed for review — 17 October 2026
 
 **PROPOSED SCOPE ONLY; NOTHING IMPLEMENTED OR APPROVED.** P54-02 phase 2 is pending review and owner decisions, so Claude drafted the next queue item's scope for Codex review; queue order is unchanged. Two independently approvable parts:
@@ -5,6 +11,22 @@
 - **B, a one-time `.ics` file:** an in-house RFC 5545 writer with a stable UID, explicitly not sync, and no new dependency.
 
 Both reuse P54-04's save and printable-HTML path, so PR193 must reach main first. Eight owner decisions are listed, including the calendar time model (floating local time recommended), default duration, SEQUENCE and what `rescheduled` means. [Scope](docs/P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md).
+
+## P54-02 phase2 proof independently accepted for integration — 17 October 2026 (UTC)
+
+P54P2-R1–R6 are closed for the exploratory proof at2351d36: independent77/77 native cases,17/17 runner tests and the prior frozen stream/ownership diagnostics pass;55 final and58 prior evidence members verify from Git. Current-main integration preserves all histories and proof bytes. The containing PR199 commit supplies final exact-head CI/merge. [Acceptance](docs/P54_02_PHASE2_ACCEPTANCE_2026-10-17.md). This accepts the proof/evidence package, not production search:8/10 measured targets, no hard worker memory cap, real-document/native fidelity and owner adoption decisions remain open. P54-05 proposal is separately under owner-approved-default review. Navigation/export integration remains separate; no app/profile/provider/installer/release work.
+
+## P54-02 phase 2 final corrections R5–R6 delivered; pending independent review — 17 October 2026
+
+**PROOF CORRECTIONS ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude completed P54P2-R5–R6 on PR199. R5: a checked result now needs exit 0 and a clean, fully framed end of stream. Trailing frames, malformed or oversized trailing lines, a partial final frame and reader errors are failures that index nothing; all four failed (indexed) on 06f4bf3. R6: the runner captures source bytes once, creates its example exclusively, and removes it only if it still holds those bytes, so a matching edit by another writer is preserved and fails. 06f4bf3 deleted it. Suite 77/77; runner regressions 17/17. The same 8/10 pre-registered targets met, both misses unchanged. Prior evidence untouched; no application change. [Report](docs/P54_02_PHASE2_FINAL_CORRECTIONS_REPORT_2026-10-17.md).
+
+## P54-02 phase 2 corrections R1–R4 delivered; pending independent review — 17 October 2026
+
+**PROOF CORRECTIONS ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude completed P54P2-R1–R4 on PR199 (`claude/p54-02-worker-proof`). R2: one bounded settlement loop; success needs a complete result and exit 0 (EOF-alive, result+exit 3 and result+stall now settle as failures by themselves, nothing indexed). R3: fail-closed runner with content-hash preservation; 13 permanent runner regressions (13/13 corrected, 11 fail and 2 error on submitted). R4: caller size check before spawn and bounded incremental hashing; an oversized publication replacement is refused unread. R1: the 12 original raw logs were ignored by Git and lost; disclosed, with a labeled replacement run and Git-blob-verified manifests. Suite 71/71; the same 8/10 pre-registered targets met, both misses unchanged. Pre-registration and original evidence untouched; no application change. [Report](docs/P54_02_PHASE2_CORRECTIONS_REPORT_2026-10-17.md).
+
+## P54-02 phase 2 worker proof delivered; pending independent review — 16 October 2026
+
+**PROOF ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude delivered the bounded extraction-worker and search-contract proof on `claude/p54-02-worker-proof`. Limits and targets were pre-registered in a7813e7 before any code ran. Suite 63/63 (first run 62/63 retained). Pre-registered targets: 8 of 10 met; **missed** warm-query p95 at 10,000 (61.8 ms vs 50) and whole-process peak RSS (285 MiB vs 256), reported unchanged. macOS refuses `ulimit -v`; the sampled RSS watchdog overshot by up to 270 MiB, so there is **no hard memory bound** yet. Proposed contract: native FTS5 in a separate disposable cache, literal AND queries, no implicit prefix/fuzzy, diacritic folding, hash-bound page destinations, browser metadata fallback. No engine or dependency adopted; no application file changed. [Report](docs/P54_02_PHASE2_WORKER_PROOF_REPORT_2026-10-16.md).
 
 ## P54-02 phase2 re-review: original fixes verified; two final corrections — 17 October 2026 (UTC)
 

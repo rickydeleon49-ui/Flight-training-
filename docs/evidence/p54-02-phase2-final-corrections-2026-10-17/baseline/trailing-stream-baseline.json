@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "review-trailing-frame",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.22143249999498948,
+    "stdout": "{\"indexed\":1,\"mode\":\"review-trailing-frame\",\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":7.895417,\"exit\":\"exit:0\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":45280,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "review-trailing-invalid",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.008902916015358642,
+    "stdout": "{\"indexed\":1,\"mode\":\"review-trailing-invalid\",\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":3.9758750000000003,\"exit\":\"exit:0\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":45282,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "review-trailing-partial",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.008737916010431945,
+    "stdout": "{\"indexed\":1,\"mode\":\"review-trailing-partial\",\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":3.965458,\"exit\":\"exit:0\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":45284,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "mode": "normal",
+    "externalSafetyTimeoutSeconds": 3,
+    "externalSafetyKillNeeded": false,
+    "exit": 0,
+    "elapsedSeconds": 0.008474250003928319,
+    "stdout": "{\"indexed\":1,\"mode\":\"normal\",\"publication\":\"Ok(())\",\"settled\":{\"elapsedMs\":3.960417,\"exit\":\"exit:0\",\"outcome\":\"checked\",\"peakRssKiB\":0,\"pid\":45286,\"reaped\":true,\"rssSamples\":0}}\n",
+    "stderr": ""
+  }
+]
