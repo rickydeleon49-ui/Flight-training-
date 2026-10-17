@@ -1,3 +1,17 @@
+## P54-05 direction approved; phase2 proof merged — 17 October 2026 (UTC)
+
+The owner approved following Claude's recommendations unless a concrete technical issue required a correction. **P54-05 both parts approved:** brief first, calendar second; dialog-only choices, floating local times, one-hour default, rescheduled-as-cancelled representation, checklist off by default, single-lesson scope. The reviewer corrected the minute-derived SEQUENCE collision and omitted METHOD:PUBLISH from this organizer-free snapshot export. No schema/dependency or update/sync promise is added. [Approval and exact decisions](docs/P54_05_SCOPE_APPROVAL_2026-10-17.md); [updated scope](docs/P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md); [next substantial model-neutral assignment](docs/P54_05_NEXT_IMPLEMENTER_PROMPT_2026-10-17.md).
+
+**P54-02 phase2 proof is accepted and merged via PR199 atc9347fe:** independent77/77 proof cases,17/17 runner regressions, frozen diagnostics,26 helper checks,55 final/58 prior evidence members and green exact-head CI39008744348. This is exploratory evidence, not production adoption. Existing budget/memory/fidelity/owner-decision gaps remain. PR193 still needs independent acceptance of Codex's save correction and current-main integration before brief implementation; PR189 integration remains separately pending. Preserve queue order and all earlier history. No app/profile/provider/installer/release work occurred in this scope approval.
+
+## P54-05 lesson brief and calendar export: scope proposed for review — 17 October 2026
+
+**PROPOSED SCOPE ONLY; NOTHING IMPLEMENTED OR APPROVED.** P54-02 phase 2 is pending review and owner decisions, so Claude drafted the next queue item's scope for Codex review; queue order is unchanged. Two independently approvable parts:
+- **A, a printable lesson brief:** the existing prep checklist and "Ask:" questions, attached reading and ticked follow-ups only. Lesson notes, journal reflections and finances are never included.
+- **B, a one-time `.ics` file:** an in-house RFC 5545 writer with a stable UID, explicitly not sync, and no new dependency.
+
+Both reuse P54-04's save and printable-HTML path, so PR193 must reach main first. Eight owner decisions are listed, including the calendar time model (floating local time recommended), default duration, SEQUENCE and what `rescheduled` means. [Scope](docs/P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md).
+
 ## P54-02 phase2 proof independently accepted for integration — 17 October 2026 (UTC)
 
 P54P2-R1–R6 are closed for the exploratory proof at2351d36: independent77/77 native cases,17/17 runner tests and the prior frozen stream/ownership diagnostics pass;55 final and58 prior evidence members verify from Git. Current-main integration preserves all histories and proof bytes. The containing PR199 commit supplies final exact-head CI/merge. [Acceptance](docs/P54_02_PHASE2_ACCEPTANCE_2026-10-17.md). This accepts the proof/evidence package, not production search:8/10 measured targets, no hard worker memory cap, real-document/native fidelity and owner adoption decisions remain open. P54-05 proposal is separately under owner-approved-default review. Navigation/export integration remains separate; no app/profile/provider/installer/release work.

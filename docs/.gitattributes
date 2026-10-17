@@ -225,3 +225,6 @@ evidence/p54-02-phase2-acceptance-2026-10-17/proof-build.log -text -diff
 evidence/p54-02-phase2-acceptance-2026-10-17/runner-tests.log -text -diff
 evidence/p54-02-phase2-acceptance-2026-10-17/suite.stderr.log -text -diff
 evidence/p54-02-phase2-acceptance-2026-10-17/helper-acceptance.log -text -diff
+
+# P54-05 scope review raw helper receipt.
+evidence/p54-05-scope-review-2026-10-17/helper-scope.log -text -diff
