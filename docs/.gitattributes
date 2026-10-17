@@ -120,3 +120,9 @@ evidence/m4-slice1-r5-r10-review-2026-10-16/native-new-diagnostic.log -text -dif
 evidence/m4-slice1-r5-r10-review-2026-10-16/new-diagnostics.log -text -diff
 evidence/m4-slice1-r5-r10-review-2026-10-16/rust-full.log -text -diff
 evidence/m4-slice1-r5-r10-review-2026-10-16/frozen-native-count-diagnostic.patch -text -diff
+evidence/m4-slice1-r11-r12-review-2026-10-16/ci-excerpt.log -text -diff
+evidence/m4-slice1-r11-r12-review-2026-10-16/new-diagnostics.log -text -diff
+evidence/m4-slice1-r11-r12-review-2026-10-16/previous-and-focused.log -text -diff
+evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-adapted.log -text -diff
+evidence/m4-slice1-r11-r12-review-2026-10-16/previous-frozen-second-unadapted.log -text -diff
+evidence/m4-slice1-r11-r12-review-2026-10-16/pr191-ci-failed-excerpt.log -text -diff
