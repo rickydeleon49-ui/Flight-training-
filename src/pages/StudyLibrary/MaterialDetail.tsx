@@ -67,6 +67,7 @@ import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
+import { GuideBody } from "./GuideBody";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
 
@@ -779,7 +780,7 @@ function MaterialDetailPage({
                       {studySet.sections.map((section, index) => (
                         <div className="ai-guide__section" key={`${section.heading}-${index}`}>
                           <h4>{section.heading}</h4>
-                          <p className="small ai-copy">{section.body}</p>
+                          <GuideBody className="small" text={section.body} />
                         </div>
                       ))}
                       {studySet.sourceNotes ? (
