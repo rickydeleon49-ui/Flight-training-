@@ -8,9 +8,13 @@ Delivery order is **GEN-REL-01 → GEN-REL-02 → GEN-REL-03 → GEN-REL-04 → 
 
 **Additional owner request,18 October2026:** generate more flashcards. Queue **GEN-REL-05 after01–04**, before resuming the earlier feature queue. The owner requested a larger set, not a specific number; proposed implementation defaults are40 cards with20/40/60 choices, delivered in batches of up to10. These numbers are a recommendation, not a quotation of owner-approved counts. This does not enlarge Claude's active GEN-REL-01 assignment.
 
-Current source baseline is main2e3f7fee6f84dd094c23ac0dfd7cd1053d2ccc4d. A friend reports slow/failed generation, but her app version, exact error and source size are still pending. Those details can refine diagnosis; their absence does not block the source-confirmed reliability work. Do not label every failure as her internet or Google's capacity.
+The original planning baseline was main2e3f7fee6f84dd094c23ac0dfd7cd1053d2ccc4d. GEN-REL-01 has since integrated through PR212; consult the latest roadmap and its acceptance/report before continuing. The baseline behavior below describes the pre-GEN-REL-01 implementation, not a claim that PDF reuse is still absent from current source.
 
-## Confirmed source behavior
+**Confirmed user screenshot,18 October2026:** the study-aid panel shows “Gemini did not answer in time. Check the internet connection and try again.” This matches `describe_transport_error`'s timeout branch. Current source still has a300-second generation-request timeout; the screenshot does not measure elapsed time or establish her installed build. Her app version, document size/pages, selected model and exact transport stage remain unknown. It does not prove that her internet, her key, a quota or Google alone caused the failure. Source integration is not proof that her installed application contains that change.
+
+Carry this evidence into GEN-REL-02/03/04: preserve recoverable work, distinguish timeout stages with bounded sanitized diagnostics, exercise delayed uploads/response headers/body and dropped connections, and avoid automatically blaming the user's internet. Simulate these failures without live provider calls; retain existing generation/source/history guards. The first source-reuse improvement does not close background/retry/progress or installed/live-provider acceptance. The current one-at-a-time delivery order remains unchanged.
+
+## Confirmed behavior at the original planning baseline
 
 `src-tauri/src/gemini.rs` sends the complete selected file inline for both study-aid and practice-test requests. Requests use a300-second timeout, up to four primary HTTP attempts and one fallback; that is not one overall job deadline. Connection/timeout/body-read errors escape through `?`, outside the HTTP retry path. JSON is parsed after the whole response arrives. `MaterialDetail.tsx` persists results only after generation and rejects callbacks whose original page/material/file context is obsolete. These guards protect data and must not simply be removed to make background generation appear to work.
 

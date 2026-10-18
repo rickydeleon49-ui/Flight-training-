@@ -1,3 +1,9 @@
+## User-reported generation timeout: confirmed message — 18 October 2026
+
+The owner supplied a screenshot of study-aid generation showing **“Gemini did not answer in time. Check the internet connection and try again.”** This confirms the timeout-message path, not a proven cause or a measured five-minute wait. Current native source sets300 seconds per generation request; the friend's app version, file size/pages, selected model and upload/server stage remain unknown. Do not claim a bad key, exhausted quota or faulty internet from this screenshot alone.
+
+[Generation reliability plan](GENERATION_RELIABILITY_PLAN_2026-10-18.md) now records the evidence. GEN-REL-01 source integration in PR212 does not establish what her installed build contains or close live-provider/installed acceptance. Keep GEN-REL-02 next, then03's classified bounded recovery and04's honest progress/cancel behavior. Exercise delayed upload/headers/body and dropped connections with synthetic transport; preserve validated results and prior study content. This evidence update changes no application code or delivery/merge authority. Earlier entries remain historical.
+
 ## GEN-REL-01 accepted by Codex review (round 4 GREEN) and integrated by Claude — 18 October 2026
 
 **Owner authority change (18 October 2026):** for the GEN-REL-01 to 05 series only, the owner instructed Claude: "once codex says its green i want you to merge and automatically move on", with at least five review rounds allowed. Each GEN-REL item is therefore merged by Claude after a GREEN Codex read-only review and green exact-head CI, and the next item starts immediately. All other work keeps the rule that agents do not merge.

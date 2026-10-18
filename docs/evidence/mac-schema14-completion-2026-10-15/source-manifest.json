@@ -1,6 +1,6 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-18T18:50:57.498611+00:00",
+  "generatedAt": "2026-10-18T19:26:41.150839+00:00",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
   "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
@@ -8,13 +8,13 @@
   "files": [
     {
       "path": "STATUS.md",
-      "bytes": 277378,
-      "sha256": "c01ee3345dc85e748e12ae5ef022bb7421f8da584a61afa197a6ce1773c6ac30"
+      "bytes": 278537,
+      "sha256": "13f9518a6f1b48808523763ec50e53611eca957589b04eafee3f63552c43172b"
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 158211,
-      "sha256": "f77bf623c9eba09cedff081fa1af612c40e66f707c3702f182af2da42b8a251e"
+      "bytes": 159370,
+      "sha256": "a1740c28bfa37215aa2adda0c7fe215b5e7c22cb4759d86169de27d160fac818"
     },
     {
       "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
@@ -78,8 +78,8 @@
     },
     {
       "path": "docs/PROJECT_HANDOFF.md",
-      "bytes": 186153,
-      "sha256": "af1adfc361599458194f6103ac4958ec260e923debdda23fc87a7fc52083092f"
+      "bytes": 187307,
+      "sha256": "fafcf0fa37dd64bdac57573b4ee768bdb3b79dbf2995cd156c04f9224bb437bf"
     },
     {
       "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md",
@@ -107,7 +107,7 @@
       "sha256": "f329ca092b1ed4eab95f0de2584cbc7ca458457c9a7f4e262f06d7fdd1c886b1"
     }
   ],
-  "historicalReceipts": "Original accepted executions remain unchanged; F1–F3 executions are in docs/evidence/mac-schema14-followup-2026-10-15/verification.json; QA-01/QA-02 executions are in docs/evidence/mac-local-v054-qa-followup-2026-10-15/.",
+  "historicalReceipts": "Original accepted executions remain unchanged; F1\u2013F3 executions are in docs/evidence/mac-schema14-followup-2026-10-15/verification.json; QA-01/QA-02 executions are in docs/evidence/mac-local-v054-qa-followup-2026-10-15/.",
   "exclusions": {
     "self": "listed in SHA256SUMS",
     "SHA256SUMS": "never hashes itself"
