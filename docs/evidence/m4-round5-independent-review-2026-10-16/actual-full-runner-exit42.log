@@ -1,0 +1,3 @@
+=== round-5 integration proof runner | node v26.10.0 | docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+PROOF RUN FAILED:
+- 01b engine install: verified-reuse has no valid install execution record (recorded install exit is 42, not 0)

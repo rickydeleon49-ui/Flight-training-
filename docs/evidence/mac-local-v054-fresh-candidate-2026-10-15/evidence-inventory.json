@@ -1,0 +1,129 @@
+{
+  "schema": "hfd-local-v054-fresh-candidate-inventory/1",
+  "generatedAt": "2026-10-16T01:52:12.188Z",
+  "sourceCommit": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "reportBranch": "codex/local-v054-fresh-candidate",
+  "note": "Current evidence for this candidate only. Historical build and implementation manifests are unchanged snapshots of their own commits.",
+  "submittedFiles": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 84905,
+      "sha256": "ea411853042945f30fc74981b04360074bcb1e2b0b7b215c0003da96e9e6a5ae"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 212145,
+      "sha256": "cce70333226595a6ac8767c2844abd05cf65d0d4438fcbf0f3ca6746dea6a589"
+    },
+    {
+      "path": "docs/MAC_LOCAL_V054_FRESH_CANDIDATE_REPORT_2026-10-15.md",
+      "bytes": 11299,
+      "sha256": "4c8b69ede16675b49c3d8d6955b019453d317a9515b3d2cbcd6e90a0f6d9b51a"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 121275,
+      "sha256": "930e893424c380bf05b2456cf4aa6020d478438c1f73e2b47c4a8efdfeaeaaa3"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/README.md",
+      "bytes": 1525,
+      "sha256": "951f53f6878554077d662053211e2ece471bebb00bed79168fc89be6fde47bde"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional-archived.mjs",
+      "bytes": 15213,
+      "sha256": "caeffe5ef81e4996cac12d52d218d9b2c20502b6cf9d50dbeacf8f334dda12c8"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/console.log",
+      "bytes": 965,
+      "sha256": "29c6229edbd9054f6111901c1fc055ed6660c772f17518ce8168dd823bc9fc69"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/finances-populated.png",
+      "bytes": 182503,
+      "sha256": "8944100b0dee1c32aa92e64b37947c8d6e167edb8fa461e72e265fc789299373"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/medical-conflict.png",
+      "bytes": 158271,
+      "sha256": "0b495bab3e1ae3b5c708d3b25fcc70a4f1d1db1bcbffa43b0d25da1be87c5c87"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/medical-reconciled.png",
+      "bytes": 130182,
+      "sha256": "25cfd475043e4a518dd1f06e862370ccf7e41f23ab12c4d69af0d3f428c8ce36"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/medical-settings-note.png",
+      "bytes": 467317,
+      "sha256": "1e0756d717ec75f375230ef6184ab606492a44eaf6001d47ed30d7d6b1c58cc8"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/results.json",
+      "bytes": 2486,
+      "sha256": "14875d0a2ed9aea0a77645d17b7b569620109a7117fd581e3e2abcbc24677d2f"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/browser-functional/skill-status-confidence.png",
+      "bytes": 79138,
+      "sha256": "8d14cd887d87edefc2abd1b5ff4fb451ba22eccd4f3c0610b373106c98dd544a"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/build-receipt.json",
+      "bytes": 646,
+      "sha256": "f151388f47bff8b45bfad6dd819ceba74643029a45b01c2b043d63d6be372403"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/cargo-lock.txt",
+      "bytes": 254,
+      "sha256": "768e7aa90eeb6effedc2a58ecb6dd887057c21961d43300b81a2f94a089c6e7c"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/helper-tests.txt",
+      "bytes": 8306,
+      "sha256": "9ae908448896f5fa35687248d0b4e5a32d6dcafb4a4c4e4ca7020c615dc9aaa5"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/native-build.log",
+      "bytes": 9031,
+      "sha256": "a1724c2010e16ac3783a3ccfcfe56ebf4765d6f3914add26f9fb5c282a7b84d6"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/packaging-receipt.json",
+      "bytes": 10639,
+      "sha256": "bdb397951f79fb410970e093961716e3cc811f6060dba31775a392cfe15b6850"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/preserved-artifacts.json",
+      "bytes": 526,
+      "sha256": "e7757bc8b7a87a402ace8008035435ed785065c22d6d225e752dcb25d0756466"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/replay-e928601.json",
+      "bytes": 60607,
+      "sha256": "7a35b974c4a5e646ac9664b41df2eadbdec7f1a74a9ad1ae6696ed6252e1fb38"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-fresh-candidate-2026-10-15/source-freeze.json",
+      "bytes": 1949,
+      "sha256": "c3887c4a0a6053648982e2c6e4fa3e2d28791c61661a6d66b4437e46d42ed19b"
+    }
+  ],
+  "candidate": {
+    "dir": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601",
+    "artifactSha256sums": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/ARTIFACT_SHA256SUMS",
+    "artifactSha256sumsSha256": "3b1567d2bb13dc9f5a72e2a3af92abb315b8a985fdd24bcd0736c3dd69dd04f8",
+    "dmg": {
+      "bytes": 5090023,
+      "sha256": "7a93541a1fe7c9ccaa540deb8b164ac0ac09da8bc5c33b8ae1fed6755ad499b9"
+    },
+    "zip": {
+      "bytes": 4833453,
+      "sha256": "068695bf981b6f4d903b10413b9eb8fabdf18cd281480e2f516070b3d0decf47"
+    },
+    "finalExecutableSha256": "b60d2e6c04fd18ee31d4a8bd6439ed9388039c3c390ff62e09275c1464848822",
+    "rawExecutableSha256": "051b225d924a2976b5cbf4ab155c9051bbb755f8bd5a8e0c09d6af026e52ef98"
+  }
+}

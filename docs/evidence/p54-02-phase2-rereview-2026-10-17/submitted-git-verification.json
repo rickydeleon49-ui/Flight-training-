@@ -1,0 +1,354 @@
+{
+  "head": "06f4bf3952edb32d076ec2bee377785110cb900b",
+  "verified": 58,
+  "members": [
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/README.md",
+      "expected": "d95c963d0ca92383ae98a8fc3adee491c8b0fba7c20516cc2d3c437630cb39e7",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/baseline-extra-adapters.rs",
+      "expected": "a660b9079092510387eabd5b14762d55351db3e0cc955bddf598192e9a1850c1",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/baseline-extra-build.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/baseline-extra-build.log",
+      "expected": "92d0fc00300e7688aa7540258500efe950c178af718809e52dc42f2595d45035",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/diagnostic-build.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/diagnostic-build.log",
+      "expected": "569d6be028fc9941d985bd51b68c50979d4047108c824e4553e1e15e8e96bd2c",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/runner-gate-baseline.json",
+      "expected": "619966af842e812e16da9f74bbfa7ee0a51eafe1bf78e3f88c9a0f2ca8bff348",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/runner-regressions-on-submitted.exit",
+      "expected": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/runner-regressions-on-submitted.log",
+      "expected": "cb158af2c79b0fde5b2bcade68a491ad5f7e09828c7df7509c96048674dc753a",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/worker-fault-baseline-extra.json",
+      "expected": "1b99ba18751f217a7635922e3fcabdf094edb38ec2a716ac0a709b831af33c81",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/baseline/worker-fault-baseline.json",
+      "expected": "79bef196a46f390f4bf50c6ccaad454121ab142a03b7d05538e7dac8ef960da8",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner-console.log",
+      "expected": "1e0dcdfe70eaf1c8f0ee825c5c528b08dd557fc5771010d47aacd44925f6b59d",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner-regressions.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner-regressions.log",
+      "expected": "2321a7446f7d7dbc11d55d5486352d16a01c395d6c856754e4dee75bbcdc660a",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/build.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/build.log",
+      "expected": "5f6d6d31c4c1b4c150816555bb5342cf085bd84ba546057093f4760b853b3d68",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-1.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-1.json",
+      "expected": "1747c53fe1863190a34fdfa6ed8342f8b610201528bea93e43b54a661b73251a",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-1.stderr.log",
+      "expected": "d9c1ff8bd2c237e7c1d7bd0084fb5717c7e2776b638086ed8adc4e84fa302d22",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-2.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-2.json",
+      "expected": "f3c28e0e6866e5033d571377becaee9c4800a346eb23a6eb97d884e994496e4c",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-2.stderr.log",
+      "expected": "897bdc0052fedc3a2393bd344a6c2e048ea1a376884e4c3f39a1cee5de2f8adb",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-3.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-3.json",
+      "expected": "108e96de384879ddba7d4c4691879e1a6ba3b5f8d8bce003557b5bbbdee34f08",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-100-3.stderr.log",
+      "expected": "eba9617a246fea3e846366c9aec43193b24168a7fd8463de11130d7d8971c298",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-1.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-1.json",
+      "expected": "8cb7a82d29058f0585f899020fcbc7f4889d273f9b141c1f5175ad15f91532ee",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-1.stderr.log",
+      "expected": "5e6764368a452b756c1bc32cafed5284ac01075b652f8e9e01c43daa2eba8cf6",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-2.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-2.json",
+      "expected": "dad17b73d28dea3f9a3aef9240c5e2021100f2320bcdfd87bb8b71e4241d195a",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-2.stderr.log",
+      "expected": "d100c7b5694a2c185d0bf3d64548d5b949c66a52178621173a4bedda31f6c709",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-3.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-3.json",
+      "expected": "1056a040cf60b37114bedd3faad85e6db9999285edd3954105dd817b9df753a2",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-1000-3.stderr.log",
+      "expected": "4e77268eb5bfc95abebf4a3aa2ad47a2d7bd98ae883e6e2d1daf379556aba427",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-1.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-1.json",
+      "expected": "a644af7d730ad8eafb517f2e4a39a749177d3286aa1b4e7be51e741df86f169e",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-1.stderr.log",
+      "expected": "337dd87016071f5efb31cc43d02fb8e3842bf26d8d0a8ddf5b8401ea64c9a6e4",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-2.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-2.json",
+      "expected": "8ba88f44d35da7f9d642589c0778b4212e3e01ba35abe5d506a87a0279b439cc",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-2.stderr.log",
+      "expected": "56162e00fd099f3ca8361b7e10250e5f347a188afd113d8a22b47c04bcc294c3",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-3.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-3.json",
+      "expected": "8983eef2629b2f73552ed1702764d586f50d106abbfac05d05b184dc654d38da",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-10000-3.stderr.log",
+      "expected": "35410daba231d9b767b2954254e1045942d9a286dc528edd5fca0a20c1a06ec5",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/index-corpora.json",
+      "expected": "916c6752b72261664f6f0dbe217c9015746c93ad1681761c514cdb0134f63565",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/measure-extract.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/measure-extract.json",
+      "expected": "96bfd9d8f2c5261e0f26da614eabb1e5d5dad465af82ac611ae1e05493fafbb6",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/measure-extract.stderr.log",
+      "expected": "754cb37dfab0aeb3eedd40336af4e837e55bc256473544038464f51a6bc6d639",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/runtime.json",
+      "expected": "32b4272919855484596701ef4debb6d1857aab0dbf3b1a8972b7fcfdd1012500",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/suite.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/suite.json",
+      "expected": "e087ee046531a846008e0980a3e56eedb98d5eb2eda8505f4e1dd0ad67d78b42",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/suite.stderr.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/runner/summary.json",
+      "expected": "812cfb2890580f0a475dc41726f619f59a9b2a16f1c715a2e172dbfdbfd3944f",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/final/worker-fault-final.json",
+      "expected": "6ec293db9989b22f84f7bb70c0808c486311367f084d53b90a26bbd9468016a7",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/inventory.json",
+      "expected": "03594e0d1ec1eb696f4dd3b42b2e6a44881786a96933aaf33a89c18aa7c566e5",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/p54_worker_proof.rs",
+      "expected": "f3bfd6200fdcf147c0410ac81b7146d5cc60e3569f8d8d8fad4d0fc8b5f5f295",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/run-phase2.py",
+      "expected": "2eade88e64b5e268ea989fa350bce353b0dbc3b2c81217dc825f5809a07f5108",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/test_run_phase2.py",
+      "expected": "f963834191b4701cc140d1d0bab65882527820370c23ff41041614b878c3f3f5",
+      "present": true,
+      "matches": true
+    },
+    {
+      "path": "docs/evidence/p54-02-phase2-corrections-2026-10-17/worker-fault-driver.py",
+      "expected": "ab885ed9707a381ced67721c16817aa0ad66285eb72aafe3a60c52bddd94ee27",
+      "present": true,
+      "matches": true
+    }
+  ]
+}

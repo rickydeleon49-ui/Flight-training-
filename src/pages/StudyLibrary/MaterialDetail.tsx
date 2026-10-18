@@ -27,7 +27,7 @@ import {
   REVIEW_STATUS_OPTIONS,
   TOPIC_LABELS,
 } from "@/domain/types";
-import { formatLongDate, nowIso, todayIso } from "@/lib/dates";
+import { formatLocalDay, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
 import { checkAiSubmission } from "@/logic/aiSafety";
@@ -48,6 +48,7 @@ import {
   geminiErrorMessage,
   generatePracticeTest,
   generateStudyAid,
+  geminiModelName,
   getGeminiStatus,
   watchGeminiProgress,
   type GeminiStatus,
@@ -66,8 +67,12 @@ import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
+import { ExportStudyDialog } from "./ExportStudyDialog";
+import { GuideBody } from "./GuideBody";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
+import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
+import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 interface ActiveGeminiOperation {
   requestId: number;
@@ -128,6 +133,7 @@ function MaterialDetailPage({
   const [newQuestion, setNewQuestion] = useState("");
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [splittingManually, setSplittingManually] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
@@ -710,6 +716,15 @@ function MaterialDetailPage({
             </Card>
           ) : null}
 
+          {material.filePath ? (
+            <DocumentPagesPanel
+              material={material}
+              fileMissing={fileMissing}
+              restoring={restoringFile}
+              onRestore={() => void restoreFile()}
+            />
+          ) : null}
+
           {material.filePath || studySet ? (
             <Card>
               <CardHeader
@@ -722,17 +737,26 @@ function MaterialDetailPage({
                       : "Guide and flashcards"
                 }
                 action={
-                  canOfferGemini ? (
-                    <Button
-                      size="small"
-                      variant={studySet ? "secondary" : "primary"}
-                      disabled={isGeneratingAny || fileMissing}
-                      onClick={() => {
-                        if (!isGeneratingAny && !activeGeminiOpRef.current) setConfirmingAi(true);
-                      }}
-                    >
-                      {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
-                    </Button>
+                  canOfferGemini || studySet || practiceTest ? (
+                    <div className="row row--wrap">
+                      {studySet || practiceTest ? (
+                        <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
+                          Share or print
+                        </Button>
+                      ) : null}
+                      {canOfferGemini ? (
+                        <Button
+                          size="small"
+                          variant={studySet ? "secondary" : "primary"}
+                          disabled={isGeneratingAny || fileMissing}
+                          onClick={() => {
+                            if (!isGeneratingAny && !activeGeminiOpRef.current) setConfirmingAi(true);
+                          }}
+                        >
+                          {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
+                        </Button>
+                      ) : null}
+                    </div>
                   ) : undefined
                 }
               />
@@ -759,7 +783,7 @@ function MaterialDetailPage({
                       <p className="tiny">
                         {importedSet
                           ? IMPORTED_CONTENT_DISCLAIMER
-                          : "AI-generated study aid. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it."}
+                          : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
                       </p>
                     </div>
 
@@ -778,7 +802,7 @@ function MaterialDetailPage({
                       {studySet.sections.map((section, index) => (
                         <div className="ai-guide__section" key={`${section.heading}-${index}`}>
                           <h4>{section.heading}</h4>
-                          <p className="small ai-copy">{section.body}</p>
+                          <GuideBody className="small" text={section.body} />
                         </div>
                       ))}
                       {studySet.sourceNotes ? (
@@ -795,11 +819,7 @@ function MaterialDetailPage({
                               Card {cardIndex + 1} of {studySet.flashcards.length}
                             </h3>
                           </div>
-                          <Badge tone="study">
-                            {studySet.flashcards[cardIndex]?.sourcePage
-                              ? `Source p. ${studySet.flashcards[cardIndex]?.sourcePage}`
-                              : "Check source"}
-                          </Badge>
+                          <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
                         </div>
                         <button
                           className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
@@ -957,7 +977,7 @@ function MaterialDetailPage({
                         <p className="tiny">
                           {importedTest
                             ? IMPORTED_CONTENT_DISCLAIMER
-                            : "AI-generated practice test. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it."}
+                            : `AI-generated practice test${practiceTest.model ? ` (made with ${geminiModelName(practiceTest.model)})` : ""}. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it.`}
                         </p>
                       </div>
                       {completedCount > 0 ? (
@@ -1120,7 +1140,9 @@ function MaterialDetailPage({
                 </Button>
                 {material.lastReviewedAt ? (
                   <p className="tiny dim">
-                    Last reviewed {formatLongDate(material.lastReviewedAt.slice(0, 10), today)}.
+                    {formatLocalDay(material.lastReviewedAt, today)
+                      ? `Last reviewed ${formatLocalDay(material.lastReviewedAt, today)}.`
+                      : "Reviewed before; the date can't be read."}
                   </p>
                 ) : (
                   <p className="tiny dim">Not reviewed yet.</p>
@@ -1158,7 +1180,7 @@ function MaterialDetailPage({
                   </>
                 ) : null}
                 <dt>Added</dt>
-                <dd>{formatLongDate(material.createdAt.slice(0, 10), today)}</dd>
+                <dd>{formatLocalDay(material.createdAt, today) ?? "Unknown"}</dd>
               </dl>
 
               {material.tags.length > 0 ? (
@@ -1184,6 +1206,14 @@ function MaterialDetailPage({
             setSplitting(false);
             navigate("/study");
           }}
+        />
+      ) : null}
+
+      {studySet || practiceTest ? (
+        <ExportStudyDialog
+          open={exporting}
+          source={{ material, studySet: studySet ?? null, practiceTest: practiceTest ?? null }}
+          onClose={() => setExporting(false)}
         />
       ) : null}
 
@@ -1224,7 +1254,7 @@ function MaterialDetailPage({
       <ConfirmDialog
         open={confirmingAi && !isGeneratingAny}
         title="Send this file to Google?"
-        message={importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ${aiCheck.reason}` : aiCheck.reason}
+        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${aiCheck.reason}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
         destructive={false}
         onConfirm={() => {
@@ -1240,8 +1270,8 @@ function MaterialDetailPage({
         title="Send this file to Google?"
         message={
           practiceTest
-            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason}`
-            : aiCheck.reason
+            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason}${geminiModelSentence(gemini)}`
+            : `${aiCheck.reason}${geminiModelSentence(gemini)}`
         }
         confirmLabel="Send to Gemini"
         destructive={false}
@@ -1283,6 +1313,15 @@ function MaterialDetailPage({
  * Said before Gemini replaces imported content. Each names only what that
  * button replaces: regenerating the guide leaves an imported test alone.
  */
+/** Which model will read the file, added to the "Send this file to Google?" message. */
+export function geminiModelSentence(status: GeminiStatus | null): string {
+  if (!status || typeof status.model !== "string" || !status.model) return "";
+  const name = geminiModelName(status.model);
+  return status.choice === "most-capable"
+    ? ` It will be read by ${name}, which costs more per document on a key with billing turned on.`
+    : ` It will be read by ${name}.`;
+}
+
 export const IMPORT_GUIDE_REGENERATE_WARNING =
   "This will replace your imported study guide and flashcards with AI-generated content.";
 export const IMPORT_TEST_REGENERATE_WARNING =

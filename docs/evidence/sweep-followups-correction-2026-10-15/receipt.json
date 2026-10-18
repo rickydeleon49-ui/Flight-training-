@@ -1,0 +1,105 @@
+{
+  "schema": "sweep-followups-correction-receipt/1",
+  "runtime": {
+    "node": "v22.23.3",
+    "platform": "darwin-arm64"
+  },
+  "cwd": "/Users/rickymac/code/Flight-training-sweep-followups",
+  "env": "PATH=/opt/homebrew/opt/node@22/bin:$PATH",
+  "startingIdentity": {
+    "submittedHashes": "13 entries, 0 mismatches",
+    "reviewerSha256sums": "9/9 OK",
+    "originMain": "f2a7090190c74fdc3779785ae3684049d16b2a0e"
+  },
+  "commands": [
+    {
+      "argv": [
+        "npx",
+        "vitest",
+        "run",
+        "src/pages/PilotToolkit/SweepReviewerDiagnostic.test.ts",
+        "-t",
+        "independent reviewer diagnostics"
+      ],
+      "when": "before correction",
+      "exit": 1,
+      "result": "Tests  2 failed | 5 skipped (7)",
+      "output": "diagnostic-before.txt",
+      "temporaryCopyRemoved": true
+    },
+    {
+      "argv": [
+        "npx",
+        "vitest",
+        "run",
+        "src/pages/PilotToolkit/SweepReviewerDiagnostic.test.ts"
+      ],
+      "when": "after correction",
+      "exit": 0,
+      "result": "Tests  7 passed (7)",
+      "output": "diagnostic-after.txt",
+      "temporaryCopyRemoved": true
+    },
+    {
+      "argv": [
+        "npx",
+        "vitest",
+        "run",
+        "src/pages/PilotToolkit/medicalDateConflict.test.ts",
+        "src/logic/toolkit.test.ts",
+        "src/logic/flightLog.test.ts",
+        "src/pages/FlightJournal/flightTimeChecks.test.ts"
+      ],
+      "exit": 0,
+      "result": "Tests  42 passed (42)",
+      "output": "focused.txt"
+    },
+    {
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "exit": 0,
+      "result": "Tests  3221 passed | 6 skipped (3227)",
+      "files": "Test Files  141 passed | 4 skipped (145)",
+      "output": "npm-test.txt"
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0,
+      "output": "typecheck.txt"
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "output": "build.txt"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "note": "tracked changes, and new files via git add -N then git reset"
+    }
+  ],
+  "mutationChecks": {
+    "archived": false,
+    "note": "Run in place, files restored byte-identical (cmp); results read from console.",
+    "results": {
+      "M1 guard never blocks": "caught: locks both choices while the first is saving",
+      "M2 fresh-state validation removed": "caught: 3 tests (logic stale, record changed while queued, Settings changed/record removed)",
+      "M3 guard not released on a failed save": "caught: failed save then retry",
+      "M4 guard held by the card": "caught: tab switch while saving"
+    }
+  }
+}

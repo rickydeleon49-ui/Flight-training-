@@ -1,3 +1,380 @@
+## P54-05 lesson brief: review corrections BRIEF-R1/R2 applied; pending re-review — 17 October 2026
+
+**PENDING RE-REVIEW; NO SELF-MERGE.** Claude fixed both findings from Codex's PR204 review in `LessonBriefDialog.tsx`:
+- **BRIEF-R1:** choices no longer carry into another lesson.
+- **BRIEF-R2:** a late save from an earlier lesson or session no longer shows a notice or releases a newer save's lock.
+
+Dialog state is now one session per open lesson, replaced in the same render on a lesson change or reopen, and every save result is owned by its session. 5 permanent held-promise regressions: all fail on b30af19 and pass on the fix. The review's reproductions pass 11/11; focused 53/53; typecheck clean. Native code unchanged; part B not started. [Report](docs/P54_05_LESSON_BRIEF_REPORT_2026-10-17.md).
+
+## P54-05 part A (lesson brief) implemented; pending independent review — 17 October 2026
+
+**PENDING REVIEW; NO SELF-MERGE.** Claude implemented the approved lesson brief on `claude/p54-05-lesson-brief`, from main 32582f2. Every schedule item now has a Lesson brief dialog with:
+- a printable page showing the stored details, `lessonPreparation()` readiness with exact parity, and attached reading (title, type, topic);
+- only the follow-ups she ticks, from the newest earlier journal entry and open goal questions, de-duplicated.
+
+Saved through the shared native path as a new `brief` kind (html, 1 MiB cap); browser mode prints instead. Lesson notes, reflections, finances, material notes and paths are never included (sentinel tests). Full frontend 3,584/6 skipped; native 532/6 ignored; typecheck, build, strict Clippy, fmt, lock and helper 26/26 pass. First-attempt typecheck and Clippy failures are retained. No dependency or migration; navigation page labels deferred. Part B (calendar) follows acceptance. [Report](docs/P54_05_LESSON_BRIEF_REPORT_2026-10-17.md).
+
+## Navigation and export accepted for combined main integration — 17 October 2026 (UTC)
+
+PR203's independent save-correction acceptance is verified and merged into PR193 atc99fcb2. PR193 now contains the accepted navigation head69768bf and current main3e59d71, preserving both feature histories. Full combined local gate9/9 passes:3,563 frontend/6 skips,531 Mac native/6 ignored, build/types, strict Clippy/fmt/lock/helper26/26/hygiene. Only MaterialDetail and native command registration combine reviewed feature contributions; other feature source is unchanged. [Integration acceptance](docs/NAV_EXPORT_INTEGRATION_ACCEPTANCE_2026-10-17.md). Final exact-head current-main CI still gates the containing PR193 merge, which will also contain all PR189 commits.
+
+**Next, once this integration is on origin/main:** proceed directly to approved P54-05 PartA. The old continuation's Phase1 is complete; no repeated independent review or owner-default questionnaire. [Direct lesson-brief implementation prompt](docs/P54_05_LESSON_BRIEF_IMPLEMENTATION_PROMPT_2026-10-17.md). Calendar follows PartA review. Source integration does not imply installed/release acceptance; no app/profile/provider/installer/signing/release operations. Earlier pending entries below are historical after the containing PR merges.
+
+## P54-04 save corrections implemented; P54-03 integrated — 16 October 2026
+
+P54-03/#191 independently accepted and merged at3266f193 after exact-head CI and independent3,284 frontend/build/helper checks. P54-04/#193 remains pending: Codex implemented a synchronous one-save lock and fixed pending content/output/answer-key controls;4 new UI cases include2 baseline failures. Added meaningful native partial-write/flush/unwind/post-write-rename coverage; retracted the unproven Windows cleanup suspicion. Final gate8/8:3,320 frontend/490 native, strict Clippy/build/types/fmt/lock/helper26/26/hygiene. [Correction report](docs/P54_04_SAVE_RECOVERY_REPORT_2026-10-16.md), [reviewer assignment](docs/P54_04_SAVE_REVIEWER_PROMPT_2026-10-16.md). Our source needs independent review and exact-head CI; no self-merge. M4 correction#194 likewise awaits independent review. Queue order persists; no app/profile/provider/installer/release operation. History follows unchanged.
+
+## P54-04 study export and printable handouts implemented; pending review — 16 October 2026
+
+**IMPLEMENTED, PENDING CODEX REVIEW; NO SELF-MERGE.** Stacked on P54-03 (PR #191), whose guide formatter the handout reuses; review #191 first. **Share or print** on a material saves the chosen guide, flashcards and/or practice questions as a printable handout (.html; optional answer key on its own page) or as an `hfd-study-packet` v1 file. Every packet passes the import's own validator and must import exactly as chosen, or nothing is written. A new native command saves through the macOS dialog with an all-or-nothing write. Only chosen study content travels: no paths, ids, notes, history or settings. No dependency, schema, capability or version change. Checks: 3,316 frontend / 486 Rust tests, typecheck, build, clippy, fmt, lock and diff checks pass. The installed save dialog, end-to-end re-import and WebKit printing are unverified. [Report](docs/P54_04_STUDY_EXPORT_REPORT_2026-10-16.md). Queue order unchanged; next is P54-02. Historical entries follow unchanged.
+
+## P54-05 direction approved; phase2 proof merged — 17 October 2026 (UTC)
+
+The owner approved following Claude's recommendations unless a concrete technical issue required a correction. **P54-05 both parts approved:** brief first, calendar second; dialog-only choices, floating local times, one-hour default, rescheduled-as-cancelled representation, checklist off by default, single-lesson scope. The reviewer corrected the minute-derived SEQUENCE collision and omitted METHOD:PUBLISH from this organizer-free snapshot export. No schema/dependency or update/sync promise is added. [Approval and exact decisions](docs/P54_05_SCOPE_APPROVAL_2026-10-17.md); [updated scope](docs/P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md); [next substantial model-neutral assignment](docs/P54_05_NEXT_IMPLEMENTER_PROMPT_2026-10-17.md).
+
+**P54-02 phase2 proof is accepted and merged via PR199 atc9347fe:** independent77/77 proof cases,17/17 runner regressions, frozen diagnostics,26 helper checks,55 final/58 prior evidence members and green exact-head CI39008744348. This is exploratory evidence, not production adoption. Existing budget/memory/fidelity/owner-decision gaps remain. PR193 still needs independent acceptance of Codex's save correction and current-main integration before brief implementation; PR189 integration remains separately pending. Preserve queue order and all earlier history. No app/profile/provider/installer/release work occurred in this scope approval.
+
+## P54-05 lesson brief and calendar export: scope proposed for review — 17 October 2026
+
+**PROPOSED SCOPE ONLY; NOTHING IMPLEMENTED OR APPROVED.** P54-02 phase 2 is pending review and owner decisions, so Claude drafted the next queue item's scope for Codex review; queue order is unchanged. Two independently approvable parts:
+- **A, a printable lesson brief:** the existing prep checklist and "Ask:" questions, attached reading and ticked follow-ups only. Lesson notes, journal reflections and finances are never included.
+- **B, a one-time `.ics` file:** an in-house RFC 5545 writer with a stable UID, explicitly not sync, and no new dependency.
+
+Both reuse P54-04's save and printable-HTML path, so PR193 must reach main first. Eight owner decisions are listed, including the calendar time model (floating local time recommended), default duration, SEQUENCE and what `rescheduled` means. [Scope](docs/P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md).
+
+## P54-02 phase2 proof independently accepted for integration — 17 October 2026 (UTC)
+
+P54P2-R1–R6 are closed for the exploratory proof at2351d36: independent77/77 native cases,17/17 runner tests and the prior frozen stream/ownership diagnostics pass;55 final and58 prior evidence members verify from Git. Current-main integration preserves all histories and proof bytes. The containing PR199 commit supplies final exact-head CI/merge. [Acceptance](docs/P54_02_PHASE2_ACCEPTANCE_2026-10-17.md). This accepts the proof/evidence package, not production search:8/10 measured targets, no hard worker memory cap, real-document/native fidelity and owner adoption decisions remain open. P54-05 proposal is separately under owner-approved-default review. Navigation/export integration remains separate; no app/profile/provider/installer/release work.
+
+## P54-02 phase 2 final corrections R5–R6 delivered; pending independent review — 17 October 2026
+
+**PROOF CORRECTIONS ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude completed P54P2-R5–R6 on PR199. R5: a checked result now needs exit 0 and a clean, fully framed end of stream. Trailing frames, malformed or oversized trailing lines, a partial final frame and reader errors are failures that index nothing; all four failed (indexed) on 06f4bf3. R6: the runner captures source bytes once, creates its example exclusively, and removes it only if it still holds those bytes, so a matching edit by another writer is preserved and fails. 06f4bf3 deleted it. Suite 77/77; runner regressions 17/17. The same 8/10 pre-registered targets met, both misses unchanged. Prior evidence untouched; no application change. [Report](docs/P54_02_PHASE2_FINAL_CORRECTIONS_REPORT_2026-10-17.md).
+
+## P54-02 phase 2 corrections R1–R4 delivered; pending independent review — 17 October 2026
+
+**PROOF CORRECTIONS ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude completed P54P2-R1–R4 on PR199 (`claude/p54-02-worker-proof`). R2: one bounded settlement loop; success needs a complete result and exit 0 (EOF-alive, result+exit 3 and result+stall now settle as failures by themselves, nothing indexed). R3: fail-closed runner with content-hash preservation; 13 permanent runner regressions (13/13 corrected, 11 fail and 2 error on submitted). R4: caller size check before spawn and bounded incremental hashing; an oversized publication replacement is refused unread. R1: the 12 original raw logs were ignored by Git and lost; disclosed, with a labeled replacement run and Git-blob-verified manifests. Suite 71/71; the same 8/10 pre-registered targets met, both misses unchanged. Pre-registration and original evidence untouched; no application change. [Report](docs/P54_02_PHASE2_CORRECTIONS_REPORT_2026-10-17.md).
+
+## P54-02 phase 2 worker proof delivered; pending independent review — 16 October 2026
+
+**PROOF ONLY; PENDING REVIEW; NO SELF-MERGE.** Claude delivered the bounded extraction-worker and search-contract proof on `claude/p54-02-worker-proof`. Limits and targets were pre-registered in a7813e7 before any code ran. Suite 63/63 (first run 62/63 retained). Pre-registered targets: 8 of 10 met; **missed** warm-query p95 at 10,000 (61.8 ms vs 50) and whole-process peak RSS (285 MiB vs 256), reported unchanged. macOS refuses `ulimit -v`; the sampled RSS watchdog overshot by up to 270 MiB, so there is **no hard memory bound** yet. Proposed contract: native FTS5 in a separate disposable cache, literal AND queries, no implicit prefix/fuzzy, diacritic folding, hash-bound page destinations, browser metadata fallback. No engine or dependency adopted; no application file changed. [Report](docs/P54_02_PHASE2_WORKER_PROOF_REPORT_2026-10-16.md).
+
+## P54-02 phase2 re-review: original fixes verified; two final corrections — 17 October 2026 (UTC)
+
+PR199 head06f4bf3 remains pending acceptance. Independent checks reproduce71/71 native proof cases and13/13 runner regressions; all58 replacement evidence members verify from Git. Original EOF/exit failures, caller bounds and false-PASS gates are corrected, with original missing logs honestly disclosed. Two further boundary failures remain: **P54P2-R5**, a completed child can leave trailing frames/malformed or partial output unvalidated and still index; **P54P2-R6**, matching edits to the source and temporary example can fool cleanup into deleting another writer's work. [Re-review](docs/P54_02_PHASE2_REREVIEW_2026-10-17.md); [one consolidated final correction prompt](docs/P54_02_PHASE2_FINAL_CORRECTIONS_PROMPT_2026-10-17.md). Preserve all prior fixes, receipts, preregistered budgets and the two measured misses. No production adoption.
+
+PR189's69768bf CI is green but it still needs current-main reconciliation/final exact-head integration; PR193 still needs its independent export acceptance/current-base integration. Queue order and owner decisions remain unchanged. No app/profile/provider/installer/release work. Earlier dated entries below are historical.
+
+## Independent review: panel fix accepted; search proof needs four corrections — 16 October 2026
+
+**NAV-UI-01 accepted:** PR198 at cb4afba passed independent234 navigation tests, the two original frozen diagnostics, typecheck/build and helper26/26; exact-head CI39004376950 is green. Merged into PR189 as69768bf. PR189 remains open: reconcile current main and require final combined-source exact-head CI before main integration. Accepted R11/R12 are preserved.
+
+**P54-02 phase2 / PR199 requires P54P2-R1–R4:**30/42 submitted evidence members exist and verify in Git;12 logs are missing. The original63/63 suite reproduces, but new diagnostics show EOF can hang past deadline, a complete-result worker exiting3 can still index, and the runner can print PASS after failed measurements or preservation. Caller hashing also lacks the preregistered input boundary. [Independent review](docs/NAV_WORKER_INDEPENDENT_REVIEW_2026-10-16.md); [one precise correction assignment](docs/P54_02_PHASE2_CORRECTIONS_PROMPT_2026-10-16.md). Keep original receipts/preregistration and reported8/10 targets unchanged; no production engine/default adoption.
+
+**Next integration order:** finish current-base navigation integration, record independent export acceptance and retarget/reconcile PR193 with main, then complete/review PR199 corrections in the approved queue. No app/profile/provider/installer/release work is needed. Earlier entries below are retained as historical snapshots.
+
+## NAV-UI-01 [P3] panel notices implemented; pending independent review — 16 October 2026
+
+**PENDING REVIEW; NO SELF-MERGE.** Claude implemented the quick review's follow-up on `claude/nav-ui-01-panel-notices`, stacked on PR189 b5e6b99. Pages-panel notices (check result, read-mark and removal failures) are now owned by the repository/controller/material context that started the action: a retired completion publishes nothing, and a context change clears old notices. 7 permanent cases; 4 fail on the unfixed panel. Navigation 101/101, full frontend 3,527/6 skipped, typecheck/build/helper pass. R11/R12 source unchanged. [Report](docs/NAV_UI_01_PANEL_NOTICES_REPORT_2026-10-16.md).
+
+## Quick review: corrections integrated into feature branches; one nonblocking UI follow-up — 16 October 2026
+
+PR194 and PR195 are merged into their feature branches; earlier "draft/pending correction" entries below are historical. PR189 headc9ad743 has Claude's recorded R11/R12 independent acceptance and current-main merge, with combined-source CI pending at review time. PR193 head27c3971 is green against the old formatted-guide base; it still needs a recorded independent export acceptance, retarget/reconciliation with main and final current-base CI before integration.
+
+**NAV-UI-01 [P3], after navigation integration:** a held Check pages result from repositoryA can leave an obsolete success/error message after the mounted panel switches toB. Two diagnostics reproduce it; B's saved/current state stays correct. Bind panel notices to the initiating context/lifetime; retain live messages and existing persistence guards.126 existing focused tests and combined build/types pass;2 new diagnostic assertions fail as expected. [Review, exact fix scope and receipts](docs/QUICK_ROADMAP_CODE_REVIEW_2026-10-16.md). Do not reopen accepted R11/R12 or delay their integration solely for this rare display issue. P54-03 is merged; P54-02 phase2 worker/search proof remains next in the approved order. No new dependency, app/profile/provider/installer/release work. History follows unchanged.
+
+## M4 R11–R12 correction accepted and merged into PR189; current-base CI pending — 16 October 2026
+
+Independent review of Codex's correction found no defects; PR194 merged into `claude/m4-slice1` at 4f2aef8 with the exact-head guard. PR189 now includes current main (P54-03 guides, search evidence) with all tracker histories retained. It merges into main only after green exact-head CI on this combined source. [Acceptance](docs/M4_LIFECYCLE_ACCEPTANCE_2026-10-16.md).
+
+## Roadmap delivery checkpoint: formatted guides merged; corrections awaiting review; search proof recorded — 16 October 2026
+
+**P54-03 accepted:** PR191 merged at3266f193 after independent source review,3,284 local frontend tests/build/helper26/26 and green exact-head CI. [Acceptance](docs/P54_03_ACCEPTANCE_2026-10-16.md). **M4/P54-01:** Codex implemented R11/R12 in draft[PR194](https://github.com/rickydeleon49-ui/Flight-training-/pull/194), stacked on189,33 new cases and3,488 frontend tests; application source passed CI38992516422; receipt-only publication head35bd450 is rechecking, independent review still required. **P54-04:** duplicate-save and editable-pending-selection fixes plus native failure proofs are in draft[PR195](https://github.com/rickydeleon49-ui/Flight-training-/pull/195), stacked on193;3,320 frontend/490 Mac native and full8-check gate pass; independent review required. Source is not self-accepted. Both PRs carry detailed reviewer assignments and preserved failure receipts.
+
+**P54-02 phase1 exploratory evidence recorded:** actual native FTS5 works, browser sql.js FTS5 is absent;3KB compressed PDF yields1MB extracted text before a length check.18 engine runs on100/1,000/10,000 synthetic materials,36 identical result-id set checks and9 accent-folding differences. No engine/dependency or production feature selected. [Report](docs/P54_02_SEARCH_EVALUATION_2026-10-16.md), [next substantial worker-proof assignment](docs/P54_02_EXTRACTION_WORKER_PROOF_PROMPT_2026-10-16.md). Native interaction, real handbook fidelity, hard extraction/cancellation limits and production restore/index lifecycle remain pending. Approved queue order persists. Primary settings, active Claude worktrees, owner profiles/keys and historical evidence remain untouched; no app/provider/installer/signing/release operation. [Full independent review and integration order](docs/ROADMAP_REVIEW_HANDOFF_2026-10-16.md). History follows unchanged.
+
+## M4 R11–R12 implemented by Codex; independent review pending — 16 October 2026
+
+Owner assigned Codex implementation duties. Isolated `codex/m4-lifecycle-corrections` stacks on published PR189; Claude's active work is preserved. Per-context/lifetime action leases prevent retired refresh dispatches; unique click/controller markers preserve source-badge cleanup.33 new permanent cases;94 focused and4 frozen tests pass; full frontend3,488 pass/6 skipped, build/types and helper26/26 pass. [Implementation report](docs/M4_LIFECYCLE_CORRECTIONS_REPORT_2026-10-16.md), [independent reviewer assignment](docs/M4_LIFECYCLE_REVIEWER_PROMPT_2026-10-16.md). This is implementation evidence, not acceptance; exact-head CI and independent review still gate PR189. No native source, schema/version, app/profile/provider/installer/release work. Prior history follows unchanged.
+
+## P54-03 integration fixes R1–R2 applied; pending review — 16 October 2026
+
+**PENDING CODEX REVIEW; NO SELF-MERGE.** Both findings of the [PR191 integration review](docs/PR191_INTEGRATION_REVIEW_2026-10-16.md) are addressed on `claude/p54-03-formatted-guides` after merging current main (`333db29`). **R1:** only the observation-test readiness gate from `c14afff` is ported (`skillScreens.test.ts`, waits for "Add an observation" to be enabled); no M4 source. The preserved held-skill-list diagnostic, appended temporarily, passed 2/2 on this branch (the old click opens no dialog; the gated sequence records one observation) and was then removed. The red run 38989843373 is preserved. **R2:** only the three current tracker bindings (bytes, SHA-256), `generatedAt`, and their four SHA256SUMS lines are refreshed; historical bindings are unchanged; all checksum entries verify; the schema-14 helper was rerun in a fresh disposable clone with no build output. Full formatter acceptance remains pending. Historical entries follow unchanged.
+
+## P54-03 formatted study guides implemented; pending review — 16 October 2026
+
+**IMPLEMENTED, PENDING CODEX REVIEW; NO SELF-MERGE.** P54-01's first slice (PR #189) awaits review and its later substeps depend on it, so work moved to the next unblocked queue item; queue order is unchanged. The owner chose an in-house formatter over react-markdown: no new dependency. Study-guide section bodies (saved guides and the import preview) now show lists, nested bullets, numbered steps, bold/italic, quotes, inline code and pipe tables. Nothing becomes a link, image or HTML; stored text, backups and schema are unchanged; plain guides read as before. The Gemini prompt now allows that simple formatting (no provider call made). Checks: 3,284 frontend / 477 Rust tests, typecheck, build, clippy, fmt, lock and diff checks pass; the schema-14 helper fails one case locally only because rust-analyzer wrote `src-tauri/target/flycheck0`. Installed WKWebView and VoiceOver behaviour are unverified. [Report](docs/P54_03_FORMATTED_GUIDES_REPORT_2026-10-16.md). Historical entries follow unchanged.
+
+## P54-03 PR191 integration fixes recorded — 16 October 2026
+
+Before accepting the guide-formatting PR191 at reviewed head5f06d97: **P54-03-R1**, port the bounded observation-test readiness correction without importing unaccepted M4 source, and get green exact-head CI; **P54-03-R2**, reconcile current tracker history and refresh its3 stale current manifest bindings/checksums (all3 mismatches verified). [Integration findings](docs/PR191_INTEGRATION_REVIEW_2026-10-16.md). Full formatter/parser/rendering acceptance remains pending; this was a bounded integration review. Preserve Claude's active terminal work and reconcile newer changes first. M4 R11–R12 remain the separate preceding integration fixes; queue order unchanged. Historical entries follow unchanged.
+
+## M4 Slice1 review: R11–R12 lifecycle fixes before integration — 16 October 2026
+
+Published PR189 headc234005 corrects the original R5–R10 failure sequences and has green exact-head CI (3455 frontend/517 Linux Rust). Independent review still reproduces2 bounded lifecycle defects: **R11**, an old action's finally can start a fresh read on a retired repository and replace current state; **R12**, an old source-badge completion can clear a newer request's cleanup marker, allowing an open after unmount. Fix both before accepting PR189;3 new regression cases fail and the single-request control passes. [Precise review](docs/M4_SLICE1_R11_R12_REVIEW_2026-10-16.md), [correction handoff](docs/M4_SLICE1_R11_R12_CORRECTIONS_PROMPT_2026-10-16.md). Claude is actively working through Terminal: reconcile its newer work before editing; no competing implementation was started by the reviewer. Owner scope approvals and queue order persist. Source tests do not verify installed behavior. Historical entries follow unchanged.
+
+## M4 Slice1 R5–R10 corrected; PR189 resubmitted for review — 16 October 2026
+
+**SUBMITTED FOR CODEX REVIEW; not accepted or merged.** All six re-review findings are corrected on `claude/m4-slice1` (PR189). [Correction report](docs/M4_SLICE1_R5_R10_CORRECTION_REPORT_2026-10-16.md). R5: bookmarks open only on the content they were saved on. R6: a bookmark draft keeps its original content after a refresh. R7: only the latest reload publishes. R8: guidance checks ownership before opening; source badges retire on unmount. R9: the CI failure was a test clicking a still-disabled button while the skill list loaded, reproduced with a held load and fixed with a readiness wait. R10: native checks derive the page count from the PDF bytes, repair a wrong cached count and refuse the request. The completion report's restore claim is corrected (an unobserved A→B→A is not detectable). Frozen diagnostics are permanent regressions. Final gate exit 0: 3,455 frontend and 518 native tests, build, Clippy, fmt, lock sync, schema-14 helper 26/26, diff check; native steps also pass on SDK 26.5. Source tests only; installed behaviour is unverified. No release, version, dependency, schema, app, profile or provider work.
+
+## M4 Slice1 PR189 requires R5–R10 corrections — 16 October 2026
+
+The feature is implemented but not accepted at reviewed head6d8c608. Independent review reproduced stale-bookmark opening, bookmark-draft rebinding, late reload publication, superseded guidance opening and native cached-count bounds defects; exact-head CI also failed one existing skill-screen case. [Re-review](docs/M4_SLICE1_REREVIEW_2026-10-16.md), [one correction assignment](docs/M4_SLICE1_R5_R10_CORRECTIONS_PROMPT_2026-10-16.md). Existing512 native tests and183 focused frontend tests pass, but five new diagnostics fail; no merge is authorized by those passing subsets. All66 submitted paths are frozen and the author checkout is preserved. Owner approval OD-1–OD-10 persists; queue order unchanged. No app/profile/provider/installer/release work. Historical entries follow unchanged.
+
+## M4 Slice1 document navigation complete; submitted for review — 16 October 2026
+
+**SUBMITTED FOR CODEX REVIEW; not accepted or merged.** One source PR on `claude/m4-slice1` delivers the owner-approved Slice1 (OD-1–OD-10, OD-6 refuse-and-explain) and closes the partial review's four findings at source level. [Report](docs/M4_SLICE1_COMPLETION_REPORT_2026-10-16.md).
+
+- **R1:** read confirmation names the content hash and saved generation it was made for; bookmarks name the content. Stale requests change nothing.
+- **R2:** success replies must match every request-bound field.
+- **R3:** native commits, confirmations and bookmarks reread the managed file inside their own transaction; deletion, relinking or replacement after inspection cannot authorize a save. A verified native open hands only checked content to the default reader.
+- **R4:** the genuine tampered schema-14 case is restored; the node test driver (not production) now leaves a refused file unchanged.
+- **Feature:** migration 0015 (four tables), shared native/browser operation and validation cases, request controller with local epochs and durable supersession, source badges in four study views, and a "Find your place" panel with page entry, last requested page, separate read mark, bookmarks, save-only retry and file restore.
+- **Schema-14 helper:** still frozen at 14; its pins are compared with the registered 1–14 prefix and it refuses a schema-15 library.
+
+Source tests only; installed reader/IPC behaviour is unverified. No release, version bump, dependency, app launch, profile or provider use. Queue order is unchanged. Historical entries follow unchanged.
+
+## M4 Slice1 scope approved; partial implementation needs completion — 16 October 2026
+
+The owner directly approved OD-1–OD-10, including OD-6 refuse-and-explain. [Approval](docs/M4_PRODUCTION_SCOPE_OWNER_APPROVAL_2026-10-16.md). The isolated `claude/m4-slice1` worktree has saved checkpoints ed82811/07fdcfa plus one preserved trim patch; it is not accepted or on main. Independent review reproduced stale read-confirmation and inconsistent-acknowledgement defects, identified native cached-file validation and tamper-test coverage gaps, and confirmed the remaining schema14 helper failure. [Review](docs/M4_SLICE1_PARTIAL_REVIEW_2026-10-16.md). Complete the approved feature and corrections together under [the continuation assignment](docs/M4_SLICE1_CONTINUATION_PROMPT_2026-10-16.md), then stop for independent review. No release/profile/build/provider authorization is implied; queue order is unchanged.
+
+OPENFOLDER-01 is independently accepted and merged as PR#187 at774f730; its earlier submitted-for-review entry below is historical. Installed Finder behavior on those bytes remains unverified. Historical entries follow unchanged.
+
+## OPENFOLDER-01 empty-folder fallback corrected; submitted for review — 16 October 2026
+
+The empty/unreadable Mac data-folder fallback in `open_data_folder` is corrected in `src-tauri/src/backup.rs`. For an empty `.app` root, the command now asks the opener to *reveal* the folder instead of *opening* it, and Finder's behaviour on an installed Mac was **not observed** because no app launch was performed. Read/enumeration failures return an informative I/O error instead of falling back to `open_path`; an unreadable individual entry inside the folder now stops the reveal with an error, where it was previously skipped. Working database and child reveal behavior are preserved, permissions remain narrow, and an opener test adapter tests routing, missing root, and permission-denied listing without opening Finder. `open_data_folder_in` is private. [Report](docs/OPEN_DATA_FOLDER_FOLLOWUP_COMPLETION_2026-10-16.md).
+
+Checks: full frontend 3,252 passed / 6 skipped, Rust 477 passed / 6 ignored, cargo clippy `--locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`, cargo fmt, lock sync, typecheck, build, 21/21 schema-14 checksums, and 26 schema-helper tests pass. Submitted for Codex review; no self-merge.
+
+The separate model-budget/timeout evaluation and M4 R37–R39 retain their existing assignments. The eight-item queue order is unchanged. Historical entries follow unchanged.
+
+## M4 prototype accepted for integration; production scope decision next — 16 October 2026
+
+**R37–R39 closed in the evidence-only prototype**, effective after this acceptance PR passes exact-head CI and merges. Independent current-main Node22/26 runners pass104 mapped tests and24 mutants; assigned five, previous four and adapted frozen five pass on each. Direct unadapted4/5 remains disclosed. [Acceptance](docs/M4_ROUND6_ACCEPTANCE_2026-10-16.md). All709 submitted files are preserved; old tracker prefixes are reconciled with current history rather than replacing it.
+
+**Next:** owner dispositions of [OD-1–OD-10](docs/M4_PRODUCTION_SCOPE_DECISIONS_2026-10-16.md), then real native-reader source links/bookmarks/last-requested tracking under the [current handoff](docs/M4_SLICE1_CURRENT_HANDOFF_2026-10-16.md). OD-6 explicitly recommends refusing invalid references, matching the tested resolver; the earlier clamping proposal is unapproved. The old conditional implementation draft is superseded, preserved historically, and must not drive a production port.
+
+No production M4 source or migration0015 registration, embedded-viewer dependency, installed/provider test or new release is included. The eight-item roadmap order is unchanged; OPENFOLDER-01 and model-budget evaluation remain separate. Source acceptance is not owner approval of the new feature scope. Historical author and project entries follow unchanged.
+
+## M4 round 6 (R37–R39) corrected — pending Codex review — 16 October 2026
+
+**IMPLEMENTED, UNCOMMITTED, PENDING CODEX REVIEW.** Claude corrected the three findings of the [round-5 review](docs/M4_ROUND5_INDEPENDENT_REVIEW_2026-10-16.md) in the existing M4 checkout.
+
+- **R37:** a newer request now retires older work before any ownership read or reservation can fail.
+- **R38:** a reservation now proves its claim persisted before issuing a token.
+- **R39:** the install record keeps the real signal.
+- **Diagnostics:** the review's five new ones pass 5/5 on Node 22 and 26; the earlier ones are preserved.
+- **Lanes:** both lanes pass with 104 mapped tests and 24 mutants (Node 22 live npm 10 install; Node 26 validated npm 10 reuse).
+- **Not done:** M4 stays evidence-only. OD-1–OD-10 stay proposed, P54-01 and migration 0015 are unstarted, and the eight-item queue order is unchanged. [Report](docs/M4_DOCUMENT_NAVIGATION_ROUND6_CORRECTIONS_REPORT_2026-10-16.md).
+- **Note:** this checkout's trackers date from `7e49558`. Reconcile with current `main` when committing.
+
+## GEM-01 wording follow-up accepted and merged — 16 October 2026
+
+PR #184 merged at4a8a92f after independent source review and successful exact-head CI. Settings now distinguishes Argon's rate/capacity fallback from403 access refusal, matching Rust and README. Independent Settings tests3/3, typecheck/build/hygiene pass; CI covers3,252 frontend,474 Linux Rust and26 helper tests. [Acceptance](docs/GEM01_WORDING_ACCEPTANCE_2026-10-16.md). No new release or live provider verification is claimed.
+
+The separate model-budget/timeout evaluation remains open. M4 R37–R39 and OPENFOLDER-01 retain their existing assignments, and the eight-item queue order is unchanged. Historical entries follow unchanged.
+
+## M4 round5 reviewed: ownership corrections required; release record accepted — 16 October 2026
+
+**M4 stays evidence-only and unmerged.** Both independent Node22/26 runners pass93 mapped tests and20 mutants; prior four diagnostics pass and frozen five pass through the disclosed seed adapter. New diagnostics expose **R37** (failed newer reservation leaves older opener/save live: page5 becomes10 and UI reverts to opened) and **R38** (ignored claim INSERT/UPDATE issues duplicate undurable tokens). **R39**, a non-blocking receipt issue, loses an install child's real termination signal. All five new assertions fail on both lanes. [Review](docs/M4_ROUND5_INDEPENDENT_REVIEW_2026-10-16.md) · [single precise correction assignment](docs/M4_ROUND5_CORRECTIONS_PROMPT_2026-10-16.md).
+
+**RELREC-01 is resolved:** PR #178 merged at2f4cca2 after exact-head CI38952463917 on2d6c432. Six tracked native screenshots inspected; complete21-entry evidence inventory and21 helper checksums verify;26 helper tests pass. Existing raw receipts/artifact hashes are preserved. This accepts existing release evidence and adds no new installed/provider verification.
+
+**Next:** finish R37–R39 in the existing uncommitted M4 worktree and return for Codex review; preserve all round5 receipts and594 frozen input hashes. P54-01 production, OD-1–OD-10 dispositions and migration0015 remain unapproved/unstarted. The eight-item queue order is unchanged. The merged Open folder fix and its separate OPENFOLDER-01 follow-up retain their prior status; no new release is built or published. Historical entries follow unchanged.
+
+## PR #178 release record: six screenshots published (RELREC-01) — 16 October 2026
+
+**PENDING CODEX REVIEW; NOT MERGED.** PR #178's release record now tracks its six native screenshots.
+
+- **Screenshots:** all six are synthetic, with no key value, and sit in `docs/evidence/mac-v055-release-2026-10-16/screenshots/`. They were force-added by exact path, and the global image-ignore rule is unchanged. The [release record](docs/MAC_V055_RELEASE_2026-10-16.md) links each one.
+- **Inventory:** a new `EVIDENCE_SHA256SUMS` lists the report and every evidence file. `ARTIFACT_SHA256SUMS` stays the separate binary-artifact inventory.
+- **Not done:** no rebuild or native rerun, and no installer, profile, database or key committed.
+- **Branch:** reconciled with main `4d38733`. Tracker history and the eight-item queue are unchanged; only the schema-14 helper's current tracker hashes were refreshed.
+
+## Open folder fix accepted and merged; empty-folder follow-up tracked — 16 October 2026
+
+PR #180's native Finder correction passes independent source review: **3,252 frontend tests / 475 Rust tests**, typecheck/build/lint/fmt/lock/hygiene and26 schema-helper tests pass. The nine reviewed application files remain identical after updating the branch to current main. Final head `0b818860` passed exact-head CI; #180 merged at `2a203df`, with all nine application hashes confirmed again. No new release is built or published; released v0.5.5 bytes are unchanged. [Review](docs/OPEN_DATA_FOLDER_REVIEW_2026-10-16.md).
+
+**OPENFOLDER-01 (non-blocking):** the empty-root macOS branch still uses plain open-path on the `.app` directory; enumeration failures are indistinguishable from emptiness. Normal startup/library behavior is fixed. Track the bounded [follow-up](docs/OPEN_DATA_FOLDER_FOLLOWUP_PROMPT_2026-10-16.md) before claiming every recovery-state folder opens. Keep this maintenance item separate from the unchanged eight-item post-release queue.
+
+**Other work:** #179 is already merged. #178 needs RELREC-01 screenshot publication/inventory. The active M4 prototype still needs R33–R36 under its existing correction prompt; no production adoption or migration0015. Claude's native Finder observation is implementer evidence; this reviewer ran automated checks and inspected saved metadata, without launching the app, manipulating a profile, reading a key or calling a provider. Preserve historical entries below.
+
+## Independent review: M4 corrections required; release follow-ups triaged — 16 October 2026
+
+**M4 remains evidence-only; corrections R33–R36 are required before adoption.** Independent Node22/26 replays preserve72 mapped tests and16 mutants, and the prior frozen five diagnostics pass. Four new diagnostics fail on both lanes: claim-write errors return undurable tokens, unreserved future tokens commit, verified-reuse lacks validated install execution evidence, and active invented mutant IDs can evade the report checker. The real runner also reproduces both evidence false positives. [Review](docs/M4_RELEASE_INDEPENDENT_REVIEW_2026-10-16.md) · [one correction handoff](docs/M4_RELEASE_REVIEW_CORRECTIONS_PROMPT_2026-10-16.md).
+
+**Release follow-ups:** PR176/177 received bounded retrospective source/artifact review;13 relevant frontend tests and typecheck pass, and published v0.5.4/v0.5.5 assets match tested candidates. No paid Gemini call or new native/Rust run was performed. PR178 stays open for RELREC-01: six locally present native screenshots are ignored and missing from its Git tree; publish them with a complete evidence inventory. PR179's owner-scoped Gatekeeper documentation was independently reviewed and merged at b88e80a after exact-head CI. Signed/notarized, standard-account, VoiceOver and other unverified limits remain explicit.
+
+**Next:** Claude, as owner-selected M4 implementer, corrects the existing prototype and PR178 separately, preserving all receipts/checkouts. No merge before Codex re-review. P54-01 production work and migration0015 stay unstarted pending M4 acceptance and disposition of proposed OD-1–OD-10. The eight-item queue order is unchanged; small GEM-01 wording/budget evaluation observations are recorded in the review and do not reorder it. Historical entries below retain their original status.
+
+## v0.5.5 published with the Gemini 4 Argon choice; Codex review restored before merges — 16 October 2026
+
+**PUBLISHED; RETROSPECTIVE CODEX REVIEW REQUESTED.** [v0.5.5](https://github.com/rickydeleon49-ui/Flight-training-/releases/tag/v0.5.5) is the Latest release: the exact tested `7e49558` DMG `620ed755…`, ad-hoc only, with `spctl` rejecting it. [v0.5.4](https://github.com/rickydeleon49-ui/Flight-training-/releases/tag/v0.5.4) (`1048e463…`) was published earlier the same day.
+
+- **GEM-01 is released.** The installed 0.5.5 upgraded from 0.5.4, and the Settings Standard/Argon choice works with a placeholder key and no provider call. The send dialog names Argon and was cancelled. Restore plus foreground recovery passes, and Cmd-Q quits. Data matches apart from the accepted daily-plan rollover.
+- **Process:** #176 and #177 were merged and v0.5.4/v0.5.5 published by Claude on the owner's instruction, **without independent Codex review**. The owner has restored the rule that **Codex reviews before any merge**; those PRs and this record are submitted for review.
+- **Next:** the post-release queue resumes at P54-01, unchanged in order. All work is left as PRs for Codex.
+
+[Release record](docs/MAC_V055_RELEASE_2026-10-16.md). Historical entries below keep their original status.
+
+## Owner-requested Gemini model choice (GEM-01): implemented, pending review — 16 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW.** The owner asked for a better Gemini model on a paid key ("option 1"). This is a new owner-added item, outside the eight-item post-release queue (P54-01…08, unchanged and still waiting). It targets the next version, 0.5.5 or later. The released v0.5.4 bytes are unchanged.
+
+- **What it does:**
+  - Settings → Gemini offers **Standard (Gemini Flash)** or **Most capable (Gemini 4 Argon, `gemini-4-argon`)**.
+  - The choice is stored in a `gemini-model` file beside the key. It is never in SQLite or a backup (the archive allowlist admits only the database and `documents/`), and a missing or unreadable choice means Standard.
+  - **Send this file to Google?** names the model that will read the file, and saved study aids and practice tests say which model made them.
+- **Fallback:** Argon falls back to Gemini Flash once. A `429` from Argon (no billing, or its limit reached) moves to Flash at once. A `403` from Argon explains that billing is needed and points to the Standard choice. Standard's retry and Flash-Lite behaviour is unchanged.
+- **Google facts checked on 16 October 2026** (ai.google.dev models, deprecations and pricing pages):
+  - `gemini-4-argon` is stable and accepts PDFs. It is not on the free tier: $2 / $10 per 1M tokens in / out, rising to $4 / $20 on 1 December 2026.
+  - `gemini-3.5-flash` has no shutdown date, and Google routes it to `gemini-3.6-flash`.
+  - Google recommends `gemini-3.8-flash` for new projects. Repinning Standard is left as a separate decision.
+- **Checks:** 474 Rust tests (7 new), clippy `-D warnings`, fmt, 3,251 frontend tests (8 new, run in UTC), typecheck, build and the Cargo lock check all pass. There was no native run and no provider call.
+- **Not verified:** a live request to `gemini-4-argon`, and Google's exact refusal for a key without billing (the `403`/`429` handling follows the documented codes).
+
+## v0.5.4 Mac release authorized by the owner, with signing waived — 16 October 2026
+
+**Owner decision:** publish the accepted, unsigned fbff255 v0.5.4 Mac build as a GitHub release. Apple Developer ID signing and notarization will follow another day. REL-05 (signing) and REL-08 (standard account, interrupted save) are **waived by the owner for this release, not passed**.
+
+- **Asset:** the exact verified bytes, uploaded unchanged. DMG `1048e4636190d07afcbf2da76fc38822cd13189552b03a0ed69265870857676d` (5,086,379 B), executable `a809e7b1…a181a8f`. Tag `v0.5.4` targets `fbff255`. There is no CI rebuild, so published bytes are tested bytes.
+- **Gatekeeper:** `spctl` rejects the build, so downloaders should expect macOS to block it. The release notes do not describe a way around it.
+- **Visibility:** the repository is private, so the release is visible to collaborators only.
+- **Release policy:** Mac candidate version set to 0.5.4. The v0.5.3 draft stays frozen, 0.5.2 stays retired, and Windows stays held on v0.5.1 with no Windows asset.
+- **Housekeeping:** the old 0.5.3 app was retired from this Mac's `/Applications` (`824688…eb28`, reversible).
+- **Sequence:** this PR with green CI, then a draft release with the asset re-downloaded and hash-checked, then publication on the owner's explicit "publish".
+
+[Release record and notes](docs/MAC_V054_RELEASE_2026-10-16.md). The eight-item post-release queue (P54-01…08) is unchanged. Historical entries below keep their original status.
+
+## Final private v0.5.4 candidate accepted for local testing — 15 October 2026
+
+**Independent review ACCEPTED within the selected administrator UID501 synthetic-data lane, through the containing PR's exact-head checks.** No blocking application defect found. Exact fbff255 candidate artifacts and installed executable matched; native screenshots/observer logs support corrected dates, automatic restart and foreground recovery. Independent checks:26 helper tests,57 focused tests and Cargo-lock passed. Offline verification confirms complete schema definitions, exact ledger coverage/checksums, retained ledger rows, seeded contents, PDFs, integrity and foreign keys.
+
+**Schema12 disposition:** the one `daily_plan_session` difference is expected local-day rollover; it remains reported, not excluded or converted to an identical-rows verdict. No training record or document loss found. Standard-account, minimum-OS, VoiceOver, erasure/native-fault, Developer ID/notarization and public publication retain their unverified/deferred status. Gatekeeper assessment rejects the ad-hoc candidate. The owner profile is returned; no reviewer app launch/profile/key access occurred.
+
+**Next:** owner local testing using the exact installed fbff255 path. No new build or implementation is required by this review. [Acceptance](docs/MAC_V054_FINAL_CANDIDATE_ACCEPTANCE_2026-10-15.md) · [local-use handoff](docs/MAC_V054_LOCAL_USE_HANDOFF_2026-10-15.md). The eight-item improvement queue remains unchanged and starts after v0.5.4. Historical entries below retain their original status.
+
+## Final private v0.5.4 candidate (fbff255): installed verification complete in the UID501 lane — pending independent review — 16 October 2026
+
+**BUILT AND VERIFIED ON THE INSTALLED CANDIDATE; PENDING INDEPENDENT REVIEW.** Uncommitted on `main` at `fbff255` (tree `713eb74f909367c72b31bdf3da0bf63301256dd1`). Administrator UID501, synthetic data only; not a standard-account pass.
+
+- **Candidate:** `local-candidates/2026-10-15-v0.5.4-fbff255/`. DMG `1048e463…`, ZIP `7e55ccc7…`, executable `a809e7b1…`; 6/6 artifact checksums OK. Installed at `~/Applications/Her Flight Deck Verification fbff255/`.
+  - **Gatekeeper:** `spctl` rejects it (exit 3). This is an ad-hoc seal only, not Developer ID or notarized.
+- **Restores into the exact candidate:** populated schema 14, genuine schema 13 and genuine old-app schema 12 (`6845044f…`). Each restarted automatically, with an on-screen window within 0.5 s.
+  - **Foreground recovery confirmed on these bytes:** with Claude confirmed frontmost while the new process ran (schema 13 and 12), the restored app brought itself forward 0.17–0.45 s later.
+- **Offline comparisons:** retained rows, original schema, original ledger rows (all columns) and managed PDFs are identical. New migrations 13 and 14 have shipped checksums, success 1 and seed 15/15.
+  - **One honest difference (schema 12):** the app regenerated the stale 2026-10-11 `daily_plan_session` for today after the restore. It is not excluded.
+- **Date labels at 23:00 PDT (UTC already 16 October):** Added, Last reviewed, Settings safety copies and confirmation, and the Data Recovery list and confirmation all read "Thursday, October 15".
+- **Quit:** Cmd-Q each time, with the process confirmed ended.
+- **Your profile:** returned intact; the Gemini key was never read. No old binary opened, nothing deleted, no provider calls.
+
+Not executed: erasure UI, VoiceOver, standard account/minimum OS, mid-save fault injection, signing and notarization. [Report](docs/MAC_V054_FINAL_CANDIDATE_REPORT_2026-10-15.md). The eight-item post-release queue (P54-01…08) is unchanged. Historical entries below keep their original status.
+
+## Desktop corrections accepted; fresh final v0.5.4 candidate next — 15 October 2026
+
+**Independent source review ACCEPTED, effective after the containing PR passes exact-head CI and merges.** DESKTOP-V054-01 (material dates), -04 (backup dates) and -03 (post-restore foreground activation) pass review with no blocking code findings. DESKTOP-V054-02 remains investigated/not reproduced; its original automation no-window outputs retain an unconfirmed cause. Independent gate9/9 exit0:44 focused,3,242 frontend/6 skipped,467 Rust/6 ignored, typecheck/build/fmt/Clippy/lock/hygiene clean. Submitted47 hashes and35 checksums matched; private test-build binary/signature matched read-only. Native evidence is one counted implementer focus run, not a new reviewer-installed test. [Acceptance](docs/MAC_V054_DESKTOP_CORRECTIONS_ACCEPTANCE_2026-10-15.md).
+
+**Next:** [fresh private local v0.5.4 candidate and exact-candidate verification](docs/MAC_V054_FINAL_CANDIDATE_PROMPT_2026-10-15.md) from the containing PR's accepted merged main. Preserve e928601/fee7869/UNCOMMITTED artifacts. Original dirty implementation package remains intact. No new build, app launch/profile access, signing or publication was performed by this review. Remaining installed/platform gaps stay explicit; all eight selected improvements remain queued after v0.5.4, in the owner-approved order below. Earlier entries retain their historical status.
+
+## v0.5.4 desktop corrections: 01, 03, 04 fixed; 02 not reproduced — pending independent review — 15 October 2026
+
+**IMPLEMENTED (01, 03, 04) AND INVESTIGATED (02); PENDING INDEPENDENT REVIEW.** Claude, uncommitted (03 and 04 added on the owner's instruction to complete every fix found) on `codex/v054-desktop-corrections` (base `7f2a624`).
+
+- **DESKTOP-V054-01, fixed:** Material detail "Added" and "Last reviewed" now show the local calendar day, via `localDayOf`, with an explicit fallback for unreadable values.
+  - Rendered tests fail 4/5 on the old source.
+  - Date suites pass 63/63 in UTC, Los Angeles and Kiritimati.
+  - Full suite 3,232 passed; typecheck and build pass.
+- **DESKTOP-V054-02, not reproduced:** two native restores (populated schema 14, then genuine schema 13 from a self-restarted process) each showed an on-screen main window within about 2 s, observed independently through the window server.
+  - **Confirmed instead:** the self-restarted app is never activated (Tauri spawns the binary directly), so it can come back behind other windows.
+  - The schema-13 restored data matched the earlier frozen restore exactly.
+  - No app code was changed for 02.
+- **DESKTOP-V054-03, fixed:** after a completed startup restore, `setup` shows and focuses the main window (`set_focus` activates the app). Refused, rolled-back and blocked restores are unchanged.
+  - Rust: 467 passed, clippy `-D warnings` clean; two new outcome tests.
+  - Native, separately labelled local build (`…-desktop-corrections-UNCOMMITTED`, ad-hoc, not a release candidate): with Claude confirmed frontmost while the restarted process finished the restore, the restored app became frontmost on its own about 3 s later, with an on-screen window throughout.
+- **DESKTOP-V054-04, fixed:** Settings and Data Recovery list safety copies by the local day parsed from the UTC name (`backupLocalDay`), with an explicit unknown-date fallback. Rendered test fails 3/3 on the old source; seen natively as "Thursday, October 15" for copies named 2026-10-16.
+- **Full checks after all fixes:** 3,242 frontend tests passed; typecheck, build and `git diff --check` pass.
+- **Still open:**
+  - **Six installed copies share the bundle ID**, including 0.5.3 in `/Applications`; launch by exact path only.
+
+Not executed: the schema-14 restore data comparison and the schema-12 exact-candidate restore. The older-backup matrix is incomplete; tombstone UI, VoiceOver, standard account and signing remain open. The original profile was returned intact. [Report](docs/MAC_V054_DESKTOP_CORRECTIONS_REPORT_2026-10-15.md). Historical entries below keep their original status.
+
+## Native v0.5.4 run completed; two follow-ups open — 15 October 2026
+
+Owner authorized fresh synthetic data in this account, explicitly an **administrator-account UID501 test**. Actual e928601 candidate installed and launched. Save/restart, PDF picker/Open/chapter, genuine populated13→14 retention, current/older backup data restoration, Skills saves/history, cancellation, guarded-backup failure and damaged-archive refusal passed their bounded checks. **DESKTOP-V054-01:** Added/Last reviewed display the UTC day in the evening (confirmed P2). **DESKTOP-V054-02:** two restore self-restarts left no accessible window, although data restored; root cause unconfirmed, independent lifecycle/tooling investigation required. [Native report](docs/MAC_V054_DESKTOP_VERIFICATION_2026-10-15.md) · [one model-neutral correction prompt](docs/MAC_V054_DESKTOP_CORRECTIONS_PROMPT_2026-10-15.md).
+
+**Next task:** fix01 and disposition02 with focused tests; then verify affected behavior on an independently identified corrected local candidate. Standard-account/hfdtest, exact-candidate schema12 restore, deliberate erased-observation/tombstone UI coverage, VoiceOver, minimum macOS, signing/notarization and publication remain unverified/deferred. Gatekeeper assessment rejected the ad-hoc candidate; normal local launch succeeded without a bypass. No full-release acceptance is claimed. App stopped; original synthetic profile/key preserved at the default root; other test profiles/backups recoverable locally. Historical entries below retain their original status.
+
+## Fresh v0.5.4 local candidate accepted — 15 October 2026
+
+**Independent review ACCEPTED for the private local lane, with report integration through exact-head CI in the containing PR.** The fresh candidate is built from frozen source **e9286017d3ca8b1faa1c8f5568c708d43e0b3050**, including PR167 and PR169. Independent review matched all candidate14/14 and earlier-candidate37/37 hashes, verified the local ad-hoc app/ZIP/read-only DMG contents and matching executable identity, reran26 helper tests plus lock checks and all17 browser scenarios. No application/version/dependency change was made by this report integration. [Acceptance and independent evidence](docs/MAC_LOCAL_V054_FRESH_CANDIDATE_ACCEPTANCE_2026-10-15.md).
+
+Candidate folder: `/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/`. DMG SHA256: `7a93541a1fe7c9ccaa540deb8b164ac0ac09da8bc5c33b8ae1fed6755ad499b9`. Signature is **local ad-hoc only**, not Developer ID/notarized. The native candidate was not rebuilt or launched during review; oldfee7869 artifacts remain intact.
+
+**Release position:** source/version preparation and the fresh local build/package/browser lane are complete. Desktop launch/install, standard-account use, installed populated-data upgrade and older-backup restore, native pickers/PDF flow, Gatekeeper and VoiceOver remain **UNVERIFIED/deferred**. Existing deferral persists; do not open another preparatory audit or launch a profile automatically. The next release action is an owner-selected installed/use lane when requested. Signing/publication remains deferred. M4 remains a separately owned prototype; M5 refunds/requirements decisions remain separate and unapproved.
+
+## Fresh local v0.5.4 candidate built from e928601 — pending independent review — 15 October 2026
+
+**BUILT AND VERIFIED WITHIN THE LOCAL LANE; PENDING INDEPENDENT REVIEW.** Claude, uncommitted on report branch `codex/local-v054-fresh-candidate`. Frozen source `e9286017d3ca8b1faa1c8f5568c708d43e0b3050` (PR #167, including PR #169). One `aarch64-apple-darwin` app was built with `--bundles app` (exit 0, 59 s), then sealed ad-hoc on a staged copy and packaged once through the recorded bounded lane. The DMG was created in 4 s with no stall, inspected read-only and detached.
+
+- **Candidate:** `/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/`.
+  - DMG SHA-256 `7a93541a…d499b9`;
+  - ZIP `068695bf…decf47`;
+  - final executable `b60d2e6c…848822`.
+- **Status:** LOCAL_ADHOC, private test only. No Developer ID, notarization or Gatekeeper claim.
+- **Checks:**
+  - helper tests 26/26 on the new ARM64 output;
+  - Cargo lock check passes;
+  - RUNBOOK component replay 12/12 (helper on baseline `16f9cf3` only);
+  - browser QA 17/17, including both medical-date directions and nothing written before a choice;
+  - frontend 3,221 reused from the identical accepted tree.
+- **Preserved:** the `fee7869` candidate still verifies 37/37 and was not relabelled.
+
+[Report and reviewer handoff](docs/MAC_LOCAL_V054_FRESH_CANDIDATE_REPORT_2026-10-15.md). Desktop launch, installation, hfdtest, installed upgrade and restore, Gatekeeper, VoiceOver, signing and publication remain UNVERIFIED/deferred. Historical entries below keep their original status.
+
+## v0.5.4 source preparation and QA tooling accepted — 15 October 2026
+
+**Independent review ACCEPTED for exact-head CI/integration in PR #167.** QA-01 and QA-02 are closed in source: real ARM64 Cargo output is recognized with its strict shape/link/tracked-file guards, and helper replay permits only the two synchronized root application-version fields. The five version files consistently declare **0.5.4**, with no dependency change. PR #169's flight-time/medical fixes are included and unchanged. [Acceptance](docs/MAC_LOCAL_V054_QA_ACCEPTANCE_2026-10-15.md).
+
+Independent combined verification: **26 helper tests passed / 0 skipped**, **3,221 frontend passed / 6 skipped**, typecheck, frontend build and Cargo-lock checks pass. The submitted corrected helper replay passes all **12 stages**, with all 15 walker cases; refreshed combined replay/CI identities are recorded in the containing PR closeout. Historical failure receipts and original submission manifests remain snapshots, not claims about later tracker bytes.
+
+**Next task:** [fresh private local v0.5.4 candidate from the accepted merged source](docs/MAC_LOCAL_V054_FRESH_CANDIDATE_PROMPT_2026-10-15.md). The existing fee7869 app/ZIP/DMG remains hash-identical and predates PR169; no new native candidate was built by this review. Freeze the containing PR's merged source before a new build; preserve older artifacts. The earlier automatic DMG stall remains unexplained and requires truthful receipts if repeated. Current authorization remains local unsigned/ad-hoc plus automated/browser testing; desktop launch, hfdtest, signing credentials/notarization and public publication remain deferred. M4 prototype and M5 policy/requirements decisions remain separate.
+
+## Local v0.5.4 QA-01/QA-02 tooling corrections — pending independent review — 15 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW.** Claude, uncommitted on `codex/local-v054-build-check` (HEAD `93a88df`), per the [QA follow-up prompt](docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md). Scripts and docs only; no application source, dependency, migration, version, signing or native-artifact change.
+
+- **LOCAL-V054-QA-01:** the build-output recognizer now accepts the one supported cross-target folder, `src-tauri/target/aarch64-apple-darwin`, only in Cargo's exact shape: its own single-linked cache tag and real `debug`/`release` profiles. Unknown or lookalike target names, stray entries, symlinked folders or profiles, missing, invalid, symlinked or hard-linked tags, and tracked paths inside build output still refuse. The original 11 walker scenarios are kept, with 4 added.
+- **LOCAL-V054-QA-02:** the post-merge replay now permits only the two synchronized application-version fields in `package-lock.json`, decided by the tested `compareDependencyLock` before any worktree is created. An identical lock passes as before. The replay still installs the baseline lock on the immutable `16f9cf3` baseline and certifies only the helper component.
+
+Measured results, the check-only replay of the new bytes and preserved original failures: [reviewer handoff](docs/MAC_LOCAL_V054_QA_FOLLOWUP_HANDOFF_2026-10-15.md). The automatic DMG stall stays a separate, unexplained observation. Installed tests, desktop launch, hfdtest, signing and publication remain deferred. Historical entries below keep their original status.
+
+## Local v0.5.4 build tested; tooling follow-ups open — 15 October 2026
+
+A provisional local ARM64 v0.5.4 test artifact was built from clean version-only commit `fee7869` (accepted functional parent `f2a7090`). Staged ad-hoc app and private DMG verified read-only, hashes matched, image detached. Automated results: frontend 3,202 passed / 6 skipped; native Mac Rust 465 / 6 ignored; 12 browser routes and 13 functional scenarios passed. No installed app/profile/hfdtest use; desktop launch remains deferred by the owner's current choice.
+
+**Open:** LOCAL-V054-QA-01, helper suite 22/23 because genuine `target/aarch64-apple-darwin` output is classified as unexpected; LOCAL-V054-QA-02, replay recipe refuses version-only package-lock metadata. The automatic Tauri DMG phase stalled once; manual local image creation/verification succeeded, cause unconfirmed. Do not call the whole gate green or silently weaken/delete fixtures. Version configuration is prepared on `codex/local-v054-build-check`, not yet integrated into main. [Build report](docs/MAC_LOCAL_V054_BUILD_AND_BUG_TEST_2026-10-15.md) · [precise next-model task](docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md).
+
+Next: independently review version/evidence and complete the bounded tooling follow-up; preserve the test artifact. Public release/signing, installed tests, M4 production and unapproved requirements remain separate/deferred. Historical entries below describe their original checkpoints.
+
+## Sweep follow-ups accepted; next release work — 15 October 2026
+
+**Independent source review ACCEPTED for exact-head CI/integration in the containing PR.** SWEEP-1014-TIMES and SWEEP-1014-MEDICAL, including SWEEP-R1, pass re-review. The original seven-case diagnostic passes unchanged; independently rerun frontend: **3,221 passed / 6 skipped**, typecheck and production bundle pass. [Acceptance and evidence](docs/SWEEP_FOLLOWUPS_ACCEPTANCE_2026-10-15.md). Earlier submission/review receipts remain historical and unchanged. Installed Mac behavior remains unverified/deferred.
+
+**Current roadmap position:** M1 daily planning and M2 study/review source work are delivered; the first M3 skills/evidence slice is delivered. This sweep completes the two historical flight-time/medical-conflict follow-ups after the containing PR passes exact-head CI and merges. M4 viewer/navigation remains an unshipped evidence prototype with separate ownership. M5 cost analytics have a delivered first slice; refunds/credits and requirement decisions RQ-D1–D7 remain open. No additional requirement implementation or provider adoption is authorized by this acceptance.
+
+**Next priority:** resolve QA-01 (real Apple Silicon Cargo target output rejected by the schema14 helper) and disposition QA-02 (version-only lockfile replay restriction), using the [existing model-neutral follow-up in PR #167](https://github.com/rickydeleon49-ui/Flight-training-/blob/codex/local-v054-build-check/docs/MAC_LOCAL_V054_QA_FOLLOWUP_PROMPT_2026-10-15.md). Preserve its build/failure evidence and check for an existing owner before editing. PR #167's provisional local ad-hoc v0.5.4 artifact predates this sweep: it does not contain these new fixes. Its CI passed, but tooling findings, independent version review and the exact final candidate source remain open. Do not merge it or rebuild solely because this sweep is accepted. Desktop launch/hfdtest, Apple signing/notarization and public publication stay deferred.
+
+## Schema14 package accepted; F1–F3 follow-up — 15 October 2026
+
+The independently reviewed package merged unchanged in [PR #165](https://github.com/rickydeleon49-ui/Flight-training-/pull/165) at `8450526` after exact-head CI run 38803089531 passed (3,202 frontend / 464 Rust; original skips/ignores retained). F1–F3 are a separate non-blocking follow-up: precise Linux helper CI step, [canonical post-merge reproduction](docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md#7-post-merge-source-only-reproduction-f2), and named full-self-check refusals with a meaningful regression. Helper tests now 23/23, zero skips; schema14 self-check remains 102/102. Final exact-head CI and reproduction identities are recorded with the follow-up PR closeout and [report](docs/MAC_SCHEMA14_FOLLOWUP_F1_F3_2026-10-15.md).
+
+No pin, overlay allowlist, production comparison rule, migration or frozen evidence changed. Earlier pending-review entries below are historical. Next: exact-head CI/integration of this follow-up, then local unsigned v0.5.4 source/version preparation. Installed hfdtest, signing/publication and packaged Mac checks remain deferred; primary and separately owned work remain untouched.
+
+## Schema14 preparation completed for review — 15 October 2026
+
+**IMPLEMENTED, PENDING INDEPENDENT REVIEW.** The saved REL-01 / MAINT-143-KEYS package is recovered onto accepted main `16f9cf3` in `codex/schema14-verification-completion` at `/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-`. Original saved hashes verified 10/10 and evidence checksums 4/4; original worktree preserved. Current focused checks: 117 Vitest, 21 helper tests, proof 12/12 (schema14 self-check 102/102), typecheck and Cargo-lock pass. The intentional historical schema13 ceiling alarm remains. Current inventory/evidence and exact review steps: [reviewer handoff](docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md).
+
+The proof binds the repository overlay to `16f9cf3` while retaining the immutable `8a260c0` schema contract and unchanged migrations/fixtures. Source-only synthetic evidence does not close installed gates. Next action: independent review/CI/integration, then the selected local unsigned v0.5.4 source/version preparation. hfdtest, signing/publication and M4 production remain deferred/separately owned. No commit, push, build or profile access. Older entries below retain their historical status.
+
 ## Claude consolidation accepted — 14 October 2026
 
 The reviewed consolidation contains the nine-defect bug sweep, the first M5 cost-analytics slice, material Again clock refresh with repaired asynchronous tests, timezone maintenance and screenshot routing. Integration remains subject to required exact-head CI. M5 requirements are published as a proposal only; RQ-D1–D7 and knowledgeable human review remain pending. Current release direction is local unsigned v0.5.4; schema14 preparation/metadata proofs and version freeze precede that build, while signing/publication and hfdtest remain deferred. [Independent review](docs/CLAUDE_WORK_CONSOLIDATION_REVIEW_2026-10-14.md) and [current roadmap](ROADMAP.md) supersede the older snapshot statuses below.

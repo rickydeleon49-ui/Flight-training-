@@ -1,0 +1,82 @@
+[
+  {
+    "path": "README.md",
+    "sha256": "d98c408e13df56cfb0072acec4df042a55672341611e54eb90b6a9369351d148"
+  },
+  {
+    "path": "candidate/candidate_migration_0015.sql",
+    "sha256": "e4b097fd13b316326a60e135f252a7c64c0544f123ac6c2c63652f274d93129c"
+  },
+  {
+    "path": "issue-to-test-map.json",
+    "sha256": "17284971724721970d08d4c70d6eb656d31e479bbe89d0106f05ef1763e60a89"
+  },
+  {
+    "path": "proof/contractModel.mjs",
+    "sha256": "c3c18d20f30156b5b7360aeb4d206089ee7795911f2b615e0ddc8b530cf90275"
+  },
+  {
+    "path": "proof/databaseLifecycle.test.mjs",
+    "sha256": "0bc28cf5b769cc04685e97211232ed83985e912d97e5f7e735588b2971fc53b7"
+  },
+  {
+    "path": "proof/openerController.mjs",
+    "sha256": "20af8452bbbc8519c67ea61847d1824029e247236dff0f357d970c367b62c393"
+  },
+  {
+    "path": "proof/persistenceProtocol.mjs",
+    "sha256": "b38f7bc8900d5d8dfb079f3f9dec704c0ad9af6109c7b69f6d3bc54e048c7a2b"
+  },
+  {
+    "path": "proof/proof.test.mjs",
+    "sha256": "bd6e3c14ff514e6f600d197aaed271502b000cbb2aeb9045c8a3d60c5aec6aa6"
+  },
+  {
+    "path": "proof/realParserDemonstration.mjs",
+    "sha256": "09e86a1af061489dfd99e9ec74c975bfea4349eb196d1ffe45cdb4f8725d8377"
+  },
+  {
+    "path": "proof/sensitivityMutants.test.mjs",
+    "sha256": "58e1ba979a1ed1c4137355838dfabf18dace3e2d8991b8a1fbdea2449164a741"
+  },
+  {
+    "path": "proof/shippedLedger.mjs",
+    "sha256": "37195156b0a34451b19c753804946b2d810b79a9f9aa2c58c94005a0cc031711"
+  },
+  {
+    "path": "scratch/pdfjs-engine/package-lock.json",
+    "sha256": "fb26bde35dc1544d9d57d8ef27f20f497b71feb5104d0684784b93e95afafd64"
+  },
+  {
+    "path": "scratch/pdfjs-engine/package.json",
+    "sha256": "86e4a0ddfd469bf9a901e030ad0b723ad50f036ec38ce6a7f35e854ddaaf1539"
+  },
+  {
+    "path": "scratch/pdfjs-engine/scratch-artifacts.json",
+    "sha256": "e1d920a81d96f7810284c13cbc6021d09263d30e7554d8ba5a9fdbebe146e6c7"
+  },
+  {
+    "path": "scripts/evidenceChecks.mjs",
+    "sha256": "879dfa7097fb26eb6909969fd6b5d090efe1823ab006e9a80cbf0f683fbea9bb"
+  },
+  {
+    "path": "scripts/parser-entrypoint.mjs",
+    "sha256": "28de9e50635766c2405a2c575302ef4f78fd2eb587c2066022e74ce03336617b"
+  },
+  {
+    "path": "scripts/pre-edit-inventory.mjs",
+    "sha256": "7a29951e86a0fd0daaf434a20e4dbe3580ef18e8150b77d454a73f1cff7870d2"
+  },
+  {
+    "path": "scripts/prepare-accepted-main.mjs",
+    "sha256": "a23e341b96ab63735e163883668e2d3b9f76dfc84437b36de61c40c20c4bcc09"
+  },
+  {
+    "path": "scripts/record-scratch-artifacts.mjs",
+    "sha256": "b33718f25f493fb83ab86bcb9376e274b51aa19732db2ceafbd10a1b45965695"
+  },
+  {
+    "path": "scripts/run_integration_proof.mjs",
+    "sha256": "553995ba338ba704611ef6be636aedd5cbf92ce994e048a17edaf50d6bf74bbf"
+  }
+]

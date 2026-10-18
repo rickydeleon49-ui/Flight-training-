@@ -1,0 +1,20 @@
+{
+  "schema": "hfd-m4-engine-install-execution/1",
+  "command": "npm ci --prefix docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine --no-audit --no-fund --ignore-scripts",
+  "cwd": "/private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/r6lane26",
+  "nodeVersion": "v22.23.3",
+  "npmVersion": "10.9.9",
+  "exit": 0,
+  "signal": null,
+  "spawnError": null,
+  "startedAt": "2026-10-16T19:47:23.299Z",
+  "finishedAt": "2026-10-16T19:47:23.626Z",
+  "stdout": "\nadded 3 packages in 265ms\n",
+  "stderr": "",
+  "bindings": {
+    "package.json": "86e4a0ddfd469bf9a901e030ad0b723ad50f036ec38ce6a7f35e854ddaaf1539",
+    "package-lock.json": "fb26bde35dc1544d9d57d8ef27f20f497b71feb5104d0684784b93e95afafd64",
+    "node_modules/pdfjs-dist/package.json": "3fcf6a22713e12b62ac8430e54bf00547d664b3248b618aa57915840c7f8b617",
+    "node_modules/pdfjs-dist/legacy/build/pdf.mjs": "91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d"
+  }
+}

@@ -1,0 +1,18 @@
+=== 01b scratch engine install audit ===
+node: v22.23.3  platform: darwin/arm64
+mode: live-install (executed npm ci)
+command: npm ci --prefix docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine --no-audit --no-fund --ignore-scripts
+cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/r6lane22
+exit: 0
+signal: none
+installed package: pdfjs-dist@6.3.289
+scratch-artifacts.json sha256: e1d920a81d96f7810284c13cbc6021d09263d30e7554d8ba5a9fdbebe146e6c7
+RESULT: PASS - pack-local scratch engine installed and verified
+npm: 10.9.9
+execution record: scratch/pdfjs-engine/install-execution.json sha256 0e79fceea34c3030ebff57c1b43c2e3fb9af4e8970e0fd9de54956062e292772
+--- stdout ---
+
+added 3 packages in 264ms
+
+--- stderr ---
+

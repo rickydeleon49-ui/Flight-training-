@@ -1,0 +1,26 @@
+{
+  "pr": {
+    "baseRefOid": "4d3873357ed7b4c41f8d23c22ed4297069b8d6fd",
+    "headRefOid": "2d6c432c8ba1b352d3a9d9dbb8600a1e03e666d1",
+    "mergeStateStatus": "CLEAN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T19:06:54Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38952463917/job/117146985065",
+        "name": "Tests, types, and the data-safety guards",
+        "startedAt": "2026-10-16T19:06:44Z",
+        "status": "COMPLETED",
+        "workflowName": "Checks"
+      }
+    ]
+  },
+  "run": {
+    "conclusion": "success",
+    "headSha": "2d6c432c8ba1b352d3a9d9dbb8600a1e03e666d1",
+    "status": "completed",
+    "url": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38952463917"
+  },
+  "mainAtDecision": "4d3873357ed7b4c41f8d23c22ed4297069b8d6fd"
+}

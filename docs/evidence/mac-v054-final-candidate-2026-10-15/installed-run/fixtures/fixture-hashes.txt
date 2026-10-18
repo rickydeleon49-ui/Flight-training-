@@ -1,0 +1,6 @@
+e211caa07d9938a307b4d37a5906fccf53c05e3e9641725e2b9f9e6073bdae46  /Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/private-backups/synthetic-skills-schema14.hfdbackup
+38072 bytes Oct 15 20:54:00 2026
+afb0feb2d34ecf09c3bacc177a67cb2c5f51c7eec9386a64910c30f7cd58b2bc  /Users/rickymac/.codex/task-recovery/v054-desktop-verification-20261015/private-backups/her-flight-deck-20synthetic-schema13.hfdbackup26-10-16.hfdbackup
+31159 bytes Oct 15 20:46:29 2026
+6845044f4743b9a4031fd2a9170b76ff9e217bc8a801b8022ce3c143726b3155  /Users/rickymac/Documents/Codex/2026-10-11/referenced-chatgpt-conversation-this-is-an/outputs/flight-deck-team/current-account-installed-run/final-workspace/evidence/run-current-account-20261011/hfdbackup-schema12.hfdbackup
+54078180 bytes Oct 11 16:21:39 2026

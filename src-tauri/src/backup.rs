@@ -645,6 +645,116 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 14 {
         verify_schema_14_skill_evidence_semantics(connection)?;
     }
+    if newest_migration >= 15 {
+        verify_schema_15_navigation_semantics(connection)?;
+    }
+    Ok(())
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 15: document navigation                                      */
+/* (TS twin: `validateNavigationState`)                                */
+/* ------------------------------------------------------------------ */
+
+pub(crate) const NAVIGATION_TABLES: [&str; 4] = [
+    "material_content_identities",
+    "material_reading_state",
+    "material_bookmarks",
+    "material_operation_claims",
+];
+
+pub(crate) const NAVIGATION_INDEXES: [(&str, &str); 5] = [
+    ("material_content_identities", "idx_material_content_sha"),
+    ("material_reading_state", "idx_material_reading_state_owner"),
+    ("material_bookmarks", "idx_material_bookmarks_material"),
+    ("material_bookmarks", "idx_material_bookmarks_page"),
+    ("material_bookmarks", "idx_material_bookmarks_hash"),
+];
+
+/// The navigation contract a restored or opened database must meet: the four
+/// tables exactly as migration 0015 defines them, their indexes, rows that
+/// point at real materials, and ownership that is internally consistent — a
+/// cancelled token was issued, and a saved tuple belongs to an issued token.
+pub(crate) fn verify_schema_15_navigation_semantics(connection: &Connection) -> Result<(), String> {
+    let count = |sql: &str, params: &[&dyn rusqlite::ToSql]| -> Result<i64, String> {
+        connection
+            .query_row(sql, params, |r| r.get(0))
+            .map_err(|e| format!("Could not check document navigation: {e}"))
+    };
+    let reference = get_reference_schema_connection()?;
+    for table in NAVIGATION_TABLES {
+        if count(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )? != 1
+        {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+        if m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)? {
+            return Err(format!(
+                "Table {table} keys do not match the registered migration contract."
+            ));
+        }
+        let orphans = count(
+            &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+            &[],
+        )?;
+        if orphans != 0 {
+            return Err(format!(
+                "Table {table} has rows for study materials that no longer exist."
+            ));
+        }
+    }
+    for (table, index) in NAVIGATION_INDEXES {
+        if m3_index_shape(connection, table, index)? != m3_index_shape(&reference, table, index)? {
+            return Err(format!("The database is missing required index: {index}"));
+        }
+    }
+    if count(
+        "SELECT COUNT(*) FROM material_operation_claims WHERE cancelled_generation > reserved_generation",
+        &[],
+    )? != 0
+    {
+        return Err("A navigation claim cancels a request that was never issued.".to_string());
+    }
+    if count(
+        "SELECT COUNT(*) FROM material_reading_state s
+           LEFT JOIN material_operation_claims c ON c.material_id = s.material_id
+          WHERE s.owner_generation > COALESCE(c.reserved_generation, 0)",
+        &[],
+    )? != 0
+    {
+        return Err(
+            "A saved reading position belongs to a request that was never issued.".to_string(),
+        );
+    }
+    if count(
+        &format!(
+            "SELECT COUNT(*) FROM (SELECT material_id FROM material_bookmarks GROUP BY material_id HAVING COUNT(*) > {})",
+            crate::navigation::MAX_BOOKMARKS_PER_MATERIAL
+        ),
+        &[],
+    )? != 0
+    {
+        return Err("A study material has more bookmarks than the app supports.".to_string());
+    }
     Ok(())
 }
 
@@ -4874,7 +4984,7 @@ pub fn backup_if_upgraded(app: &AppHandle) -> Result<(), String> {
 }
 
 /// The version-change check itself, against a plain directory so it can be tested.
-fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), String> {
+pub(crate) fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), String> {
     std::fs::create_dir_all(root)
         .map_err(|e| format!("Could not create the application data directory: {e}"))?;
 
@@ -7207,19 +7317,27 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
     }
 }
 
-pub fn handle_startup_restore(app: &AppHandle) -> Result<(), String> {
+/// Installs or resolves any pending restore before SQLite opens. Returns
+/// whether this startup finished a restore, so the caller can bring the
+/// restarted window forward: the restart execs the binary directly rather than
+/// through LaunchServices, and macOS would otherwise leave it behind whatever
+/// was in front.
+pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
     let root = app_root(app)?;
-    match handle_startup_restore_in(&root)? {
-        StartupRestoreDecision::ProceedNormally | StartupRestoreDecision::RestoreCompleted => {
-            Ok(())
-        }
+    startup_restore_outcome(handle_startup_restore_in(&root)?)
+}
+
+fn startup_restore_outcome(decision: StartupRestoreDecision) -> Result<bool, String> {
+    match decision {
+        StartupRestoreDecision::ProceedNormally => Ok(false),
+        StartupRestoreDecision::RestoreCompleted => Ok(true),
         StartupRestoreDecision::StagingRefusedUnchanged { reason } => {
             eprintln!("Pending restore refused: {reason}; current data unchanged.");
-            Ok(())
+            Ok(false)
         }
         StartupRestoreDecision::RolledBackRecovered { reason } => {
             eprintln!("Pending restore failed: {reason}; previous data was recovered.");
-            Ok(())
+            Ok(false)
         }
         StartupRestoreDecision::BlockedUnresolved {
             reason,
@@ -7259,7 +7377,7 @@ pub fn list_backups(app: AppHandle) -> Result<Vec<BackupInfo>, String> {
     list_backups_in(&app_root(&app)?)
 }
 
-fn list_backups_in(root: &Path) -> Result<Vec<BackupInfo>, String> {
+pub(crate) fn list_backups_in(root: &Path) -> Result<Vec<BackupInfo>, String> {
     let dir = backup_dir(root)?;
     let mut backups: Vec<BackupInfo> = std::fs::read_dir(&dir)
         .map_err(|e| format!("Could not read the backup directory: {e}"))?
@@ -7299,6 +7417,88 @@ fn directory_size(path: &Path) -> u64 {
 #[tauri::command]
 pub fn data_directory(app: AppHandle) -> Result<String, String> {
     Ok(app_root(&app)?.to_string_lossy().to_string())
+}
+
+/// Open her data folder in Finder or File Explorer.
+///
+/// The folder is resolved here from `app_root`, never taken from the webview,
+/// so this needs no path scope and opens exactly the folder `data_directory`
+/// shows.
+///
+/// On macOS that folder is named after the bundle identifier,
+/// `com.herflightdeck.app`, and anything ending in `.app` is treated as an
+/// application: `/usr/bin/open` on it fails with "The application cannot be
+/// opened because its executable is missing", which is exactly what an
+/// installed Mac reported. Revealing an item *inside* the folder makes Finder
+/// open the folder itself with that item selected, and needs no extra
+/// permission, so that is what macOS does here. For a truly empty folder,
+/// revealing the folder itself in its parent displays the folder in Finder
+/// without Launch Services executing it as an application.
+#[tauri::command]
+pub fn open_data_folder(app: AppHandle) -> Result<(), String> {
+    let root = app_root(&app)?;
+    open_data_folder_in(&root)
+}
+
+/// System opener operations used to show the data folder.
+trait FolderOpener {
+    fn reveal_item_in_dir(&self, path: &Path) -> Result<(), String>;
+    fn open_path(&self, path: &Path) -> Result<(), String>;
+}
+
+struct SystemFolderOpener;
+
+impl FolderOpener for SystemFolderOpener {
+    fn reveal_item_in_dir(&self, path: &Path) -> Result<(), String> {
+        tauri_plugin_opener::reveal_item_in_dir(path).map_err(|e| e.to_string())
+    }
+
+    fn open_path(&self, path: &Path) -> Result<(), String> {
+        tauri_plugin_opener::open_path(path, None::<&str>).map_err(|e| e.to_string())
+    }
+}
+
+fn open_data_folder_in(root: &Path) -> Result<(), String> {
+    open_data_folder_with(root, cfg!(target_os = "macos"), &SystemFolderOpener)
+}
+
+fn open_data_folder_with<O: FolderOpener>(
+    root: &Path,
+    is_macos: bool,
+    opener: &O,
+) -> Result<(), String> {
+    let opened = if is_macos {
+        match item_to_reveal_in(root) {
+            Ok(item) => opener.reveal_item_in_dir(&item),
+            Err(e) => Err(e.to_string()),
+        }
+    } else {
+        opener.open_path(root)
+    };
+    opened.map_err(|e| format!("Could not open {}: {e}", root.display()))
+}
+
+/// What to select so Finder shows the inside of `root`:
+/// - the database when it is there,
+/// - otherwise the first item in the folder in name order,
+/// - otherwise `root` itself when the directory is truly empty,
+/// - or an I/O error if the directory cannot be inspected.
+fn item_to_reveal_in(root: &Path) -> std::io::Result<PathBuf> {
+    let database = root.join(DB_FILES[0]);
+    if database.is_file() {
+        return Ok(database);
+    }
+    let entries = std::fs::read_dir(root)?;
+    let mut items: Vec<PathBuf> = Vec::new();
+    for entry in entries {
+        items.push(entry?.path());
+    }
+    items.sort();
+    if let Some(first) = items.into_iter().next() {
+        Ok(first)
+    } else {
+        Ok(root.to_path_buf())
+    }
 }
 
 #[cfg(test)]
@@ -13765,5 +13965,219 @@ mod tests {
                 "startup conversion and direct session write both succeed for validator-refused state"
             );
         }
+    }
+
+    #[test]
+    fn only_a_completed_restore_asks_for_the_window_to_come_forward() {
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::RestoreCompleted),
+            Ok(true)
+        );
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::ProceedNormally),
+            Ok(false)
+        );
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::StagingRefusedUnchanged {
+                reason: "damaged".to_string()
+            }),
+            Ok(false)
+        );
+        assert_eq!(
+            startup_restore_outcome(StartupRestoreDecision::RolledBackRecovered {
+                reason: "disk full".to_string()
+            }),
+            Ok(false)
+        );
+    }
+
+    #[test]
+    fn an_unresolved_restore_still_blocks_startup() {
+        let outcome = startup_restore_outcome(StartupRestoreDecision::BlockedUnresolved {
+            reason: "active data obstructed".to_string(),
+            recovery_folder: Some(PathBuf::from(
+                "/tmp/hfd/backups/2026-10-16-035630-before-restore",
+            )),
+        });
+        let message = outcome.expect_err("an ambiguous restore must block startup");
+        assert!(message.starts_with("Startup blocked to prevent data loss: active data obstructed"));
+        assert!(message.contains("2026-10-16-035630-before-restore"));
+    }
+
+    #[derive(Debug, PartialEq, Eq, Clone)]
+    enum OpenerCall {
+        Reveal(PathBuf),
+        OpenPath(PathBuf),
+    }
+
+    #[derive(Default)]
+    struct TestFolderOpener {
+        calls: std::sync::Mutex<Vec<OpenerCall>>,
+        fail_with: Option<String>,
+    }
+
+    impl FolderOpener for TestFolderOpener {
+        fn reveal_item_in_dir(&self, path: &Path) -> Result<(), String> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(OpenerCall::Reveal(path.to_path_buf()));
+            match &self.fail_with {
+                Some(err) => Err(err.clone()),
+                None => Ok(()),
+            }
+        }
+
+        fn open_path(&self, path: &Path) -> Result<(), String> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(OpenerCall::OpenPath(path.to_path_buf()));
+            match &self.fail_with {
+                Some(err) => Err(err.clone()),
+                None => Ok(()),
+            }
+        }
+    }
+
+    #[test]
+    fn item_to_reveal_distinguishes_content_emptiness_and_errors() {
+        let root = std::env::temp_dir().join(format!("hfd-reveal-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+
+        // An empty folder has nothing inside, so the folder itself is selected in its parent.
+        assert_eq!(item_to_reveal_in(&root).unwrap(), root);
+
+        // Without the database, the first item in name order is selected.
+        std::fs::create_dir_all(root.join("documents")).unwrap();
+        std::fs::create_dir_all(root.join("backups")).unwrap();
+        assert_eq!(item_to_reveal_in(&root).unwrap(), root.join("backups"));
+
+        // The database is preferred whenever it is there.
+        std::fs::write(root.join(DB_FILES[0]), b"db").unwrap();
+        assert_eq!(item_to_reveal_in(&root).unwrap(), root.join(DB_FILES[0]));
+
+        // A missing folder or inspection failure returns Err instead of None.
+        assert!(item_to_reveal_in(&root.join("missing")).is_err());
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn open_data_folder_routes_command_through_opener_adapter() {
+        let root = scratch("open-routing.app");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+
+        // 1. Empty .app root on macOS reveals the directory itself (not open_path).
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::Reveal(root.clone())]
+        );
+
+        // 2. Database-absent, nonempty root on macOS reveals the first child.
+        std::fs::create_dir_all(root.join("documents")).unwrap();
+        std::fs::create_dir_all(root.join("backups")).unwrap();
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::Reveal(root.join("backups"))]
+        );
+
+        // 3. Database-present root on macOS reveals the database file.
+        std::fs::write(root.join(DB_FILES[0]), b"db").unwrap();
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::Reveal(root.join(DB_FILES[0]))]
+        );
+
+        // 4. Listing error on missing root returns an inspection error and dispatches nothing.
+        let missing = root.join("missing_dir.app");
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&missing, true, &opener);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.starts_with(&format!("Could not open {}", missing.display())),
+            "unexpected error: {err}"
+        );
+        assert!(
+            opener.calls.lock().unwrap().is_empty(),
+            "opener should not be called on listing error"
+        );
+
+        // 5. Non-macOS platforms route directly to open_path.
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, false, &opener);
+        assert!(result.is_ok());
+        assert_eq!(
+            opener.calls.lock().unwrap().as_slice(),
+            &[OpenerCall::OpenPath(root.clone())]
+        );
+
+        // 6. Opener failure is formatted with "Could not open <root>: <err>".
+        let opener = TestFolderOpener {
+            calls: std::sync::Mutex::new(Vec::new()),
+            fail_with: Some("access denied".to_string()),
+        };
+        let result = open_data_folder_with(&root, true, &opener);
+        assert_eq!(
+            result,
+            Err(format!("Could not open {}: access denied", root.display()))
+        );
+
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn open_data_folder_handles_permission_denied_listing() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = scratch("open-perm-denied.app");
+        let child = root.join("child.txt");
+        std::fs::write(&child, b"content").unwrap();
+
+        struct PermissionGuard<'a>(&'a Path);
+        impl Drop for PermissionGuard<'_> {
+            fn drop(&mut self) {
+                let _ = std::fs::set_permissions(self.0, std::fs::Permissions::from_mode(0o755));
+                let _ = std::fs::remove_dir_all(self.0);
+            }
+        }
+
+        let _guard = PermissionGuard(&root);
+        std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o000)).unwrap();
+
+        // If running as root (e.g. in some container environments), root can read 0o000 directories.
+        if std::fs::read_dir(&root).is_ok() {
+            // When running as root, permissions are ignored by the OS; skip assertion.
+            return;
+        }
+
+        let opener = TestFolderOpener::default();
+        let result = open_data_folder_with(&root, true, &opener);
+        assert!(
+            result.is_err(),
+            "expected error for permission-denied directory"
+        );
+        let err = result.unwrap_err();
+        let expected_prefix = format!("Could not open {}", root.display());
+        assert!(
+            err.starts_with(&expected_prefix),
+            "expected error to start with '{expected_prefix}', got '{err}'"
+        );
+        assert!(
+            opener.calls.lock().unwrap().is_empty(),
+            "opener should not be called when listing fails with permission denied"
+        );
     }
 }

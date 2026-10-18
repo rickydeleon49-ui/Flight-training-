@@ -1,0 +1,22 @@
+=== ZIP members (absolute/traversal check) ===
+Her Flight Deck.app/
+Her Flight Deck.app/Contents/
+Her Flight Deck.app/Contents/_CodeSignature/
+Her Flight Deck.app/Contents/_CodeSignature/CodeResources
+__MACOSX/
+__MACOSX/Her Flight Deck.app/
+__MACOSX/Her Flight Deck.app/Contents/
+__MACOSX/Her Flight Deck.app/Contents/_CodeSignature/
+__MACOSX/Her Flight Deck.app/Contents/_CodeSignature/._CodeResources
+__MACOSX/Her Flight Deck.app/Contents/.__CodeSignature
+Her Flight Deck.app/Contents/MacOS/
+Her Flight Deck.app/Contents/MacOS/her-flight-deck
+...(member count:       23)
+absolute or traversing paths:
+NONE
+=== mounted DMG metadata read-only proof ===
+(metadata file missing)
+=== detached proof ===
+no task image in hdiutil info
+=== mounted image contents ===
+Her Flight Deck.app

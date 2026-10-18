@@ -201,7 +201,8 @@ fn migration_14_is_the_reviewed_candidate_byte_for_byte() {
     ))
     .unwrap();
     assert_eq!(migration_14(), candidate);
-    assert_eq!(crate::CURRENT_SCHEMA_VERSION, 14);
+    // Schema 15 (M4 navigation) follows 14; migration 14 itself stays byte-identical.
+    const _: () = assert!(crate::CURRENT_SCHEMA_VERSION >= 14);
 }
 
 #[test]

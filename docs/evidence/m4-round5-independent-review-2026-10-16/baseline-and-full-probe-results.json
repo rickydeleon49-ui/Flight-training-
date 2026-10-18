@@ -1,0 +1,32 @@
+[
+  {
+    "lane": "node22",
+    "case": "original-four",
+    "exit": 1
+  },
+  {
+    "lane": "node22",
+    "case": "original-five",
+    "exit": 0
+  },
+  {
+    "lane": "node26",
+    "case": "original-four",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "case": "original-five",
+    "exit": 0
+  },
+  {
+    "lane": "node26",
+    "case": "exit42",
+    "exit": 1
+  },
+  {
+    "lane": "node26",
+    "case": "unknown-mutant",
+    "exit": 1
+  }
+]

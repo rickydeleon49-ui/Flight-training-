@@ -1,0 +1,320 @@
+{
+  "source": "fbff255312d3b900f1aa9c64b742cef8d4dd9df5",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 99131,
+      "sha256": "8bce9806923a11e2724c6d1cc4dec92e67d208d2835d9db2443cfccdb40a0728"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 221636,
+      "sha256": "66ad68272981ec34e66e09f37fa74f15f71ac78f37196f704de86c5df0e1f94f"
+    },
+    {
+      "path": "docs/MAC_V054_FINAL_CANDIDATE_REPORT_2026-10-15.md",
+      "bytes": 15326,
+      "sha256": "93a584404cacfbfc36e54a086934e3945f7c9f76d93192c705217b3dc9608f74"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 130731,
+      "sha256": "a81388f1a20f97c110a3c4a0040a361df0ec9fc982d0636e5af7bdc5fa7bfdf3"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+      "bytes": 2562,
+      "sha256": "caeb4f003cab4f82c4774ee999b0f46c39199f10f36b1e451daf5bcc9d942e50"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+      "bytes": 4641,
+      "sha256": "c80d14162cd3a2c9b256be35c26b5b4f8ff7c8a9e2f9a5df24bc4f9a8055fe5c"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/README.md",
+      "bytes": 1583,
+      "sha256": "2b956ad0d5e75238b9e82bfc006bdaf4cdfb9dfb983ba383c9e726910ac61a33"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/SHA256SUMS",
+      "bytes": 8788,
+      "sha256": "22066df01bbbb4e0d3e4fc8e603dffb0c12125a2755c6b2defee631a04109b9d"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/dmg-readonly-proof.txt",
+      "bytes": 433,
+      "sha256": "b29d6006ffee4da8918c190c3e81465a01f159f93467667eccd27594e084f5b9"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/evidence-inventory.json",
+      "bytes": 12675,
+      "sha256": "700d14bee29979ba9ca0a97fd018534015b718d08559c58cb706fdb79dd2b7db"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/first-quit-check.txt",
+      "bytes": 200,
+      "sha256": "52ea6a2feb2459ca1727a9e4ec6be6ef05029657c41c4738e79e553fc3134550"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/fresh-candidate-db-audit.json",
+      "bytes": 1461,
+      "sha256": "8cb0a9c8e5db767ff4df69437fbd81757a5f0f2e070b35388eeb1b38f65b5b5f"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/helper-lock-checks-first-failed.txt",
+      "bytes": 10128,
+      "sha256": "2248a4d80e6e3523ccafe209883d200b04cd39efced1035711e85717dde7c829"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/helper-lock-checks.txt",
+      "bytes": 8783,
+      "sha256": "75fa03e8b490fe92ac940eccaeed16e4186f9f36e15a5de6b4e8c31509f0ed0e"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/compare.py",
+      "bytes": 5306,
+      "sha256": "b523907cdf22454406969d84a96c91de61838d12b3a10d503fc2ff662b3361b4"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/comparisons/restore12-compare.json",
+      "bytes": 5578,
+      "sha256": "c2d17400d3b0679021be3c211caf198f8f338cd0612f4e6823926c92aada767c"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/comparisons/restore13-compare.json",
+      "bytes": 4113,
+      "sha256": "ca6172a1420feba4f830168607f0c66e5c2ec531d965c22641e7536804932203"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/comparisons/restore14-compare-seedquery-fixed.json",
+      "bytes": 2712,
+      "sha256": "f955d693be0601bb70c9aaf7f54a253ce7ce09579ddcfbdaa39274e01d53fe91"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/comparisons/restore14-compare.json",
+      "bytes": 2695,
+      "sha256": "fe34fd356100e9aea43dece8ed5646738e88acd087cae3645a8d3e92cd59c5df"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/fixtures/fixture-hashes.txt",
+      "bytes": 801,
+      "sha256": "7e6208ea15518c3d93850e9fde624dca61952bfe3c10ec507da15090577dd9af"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/fixtures/s12-manifest.json",
+      "bytes": 123,
+      "sha256": "d3dfe8bd83ea34e348be3eae92853bfc7928f5f7ff70c04545a794de548374eb"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/fixtures/s13-manifest.json",
+      "bytes": 123,
+      "sha256": "86f002104e0fd6b956234312cb3828f6d8b04d3bc3c3907264b71903b47f51b8"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/fixtures/s14-manifest.json",
+      "bytes": 123,
+      "sha256": "71179f8d8e01535e98019169e4d21999540fe7e2e469d68a03e8f7f8f24722d4"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/datarecovery.jsonl",
+      "bytes": 25915,
+      "sha256": "d2e5db42fad3843dc712e005cfd05d34947201205d902739e0f042cf7f19e732"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/datarecovery.summary.txt",
+      "bytes": 197,
+      "sha256": "093b65f6d93ae0d0889780210328d344562884cc339941e6954f7a47ce19d42f"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/launch1.jsonl",
+      "bytes": 33109,
+      "sha256": "45685994e60152fccf206dde6c0b2532cead1994ea976c73b675ca2dd71529f1"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/launch1.summary.txt",
+      "bytes": 337,
+      "sha256": "23838f1c5773b878366b25d9c32ac3ec91c2843e1e958ee0044f1fc0c2bad784"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/launch2.jsonl",
+      "bytes": 25131,
+      "sha256": "ec883040bd92cc946b76c629aff365d99a8e616828354eb6c9b6ef4fd5372556"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/launch2.summary.txt",
+      "bytes": 197,
+      "sha256": "38f434ca34d38b8d4b62c51f3b0abe87bdabda32e1af13be402d064cc7f30a40"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/launch3.jsonl",
+      "bytes": 25927,
+      "sha256": "5e13efa9ee22faa7f4dd6fc2ba91593187407a7540547fdb28431bb05e21cf35"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/launch3.summary.txt",
+      "bytes": 289,
+      "sha256": "0391623dd18d869ce9b4f8b9657874a8d0736b3a12ab60d5fca7f460219afd37"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/material-last-reviewed-db.txt",
+      "bytes": 88,
+      "sha256": "85244e3ba21b9c3e3dce0b24a67c18ab7e788498527934d5e1b3a7c10f2ee894"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/r12.jsonl",
+      "bytes": 144636,
+      "sha256": "5ca55908f270bdafdb05068b417f44fc2edb2ea48a09cb8a94bb77d652b38ea6"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/r12.summary.txt",
+      "bytes": 900,
+      "sha256": "d33c4fc04f16d58651df9c80fe921a3b848539f4e0f1ca5798ca2f98fc549342"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/r13.jsonl",
+      "bytes": 142584,
+      "sha256": "5be2b8e194199791d4d54647af2a4b31858edaa6719fd081c95e70d822406e5e"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/r13.summary.txt",
+      "bytes": 1220,
+      "sha256": "03cb9b1055ae10b489d2a0ad408dcf285cd3ece4f1091edc7b65ea2421a87e7c"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/r14.jsonl",
+      "bytes": 132344,
+      "sha256": "b0d5624178d9a0828f69bf85d84476768b147b56012df6e84464f755985b0d16"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observations/r14.summary.txt",
+      "bytes": 412,
+      "sha256": "d29568638c137534e8439a214ede973cb54fc5532b0cff658cc7fedd30928ea1"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/observe.py",
+      "bytes": 2245,
+      "sha256": "117b8b8d32e56e2cc44e29a5aeee11076f249f28a2e204a206000625a8eade8d"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/profile-handoff.txt",
+      "bytes": 609,
+      "sha256": "7836b8c2e94e5c0e5d21f007c3c93fc4b25a3850c70fb4c13f0d83e6a2ba615a"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/datarecovery-confirmation.jpg",
+      "bytes": 55287,
+      "sha256": "5cfcd46f43e3c1381c2da4900ab27a0e6a44ffdb266bdb56ca28524f086acee0"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/datarecovery-list.jpg",
+      "bytes": 55002,
+      "sha256": "f72452132b683f8916cfd5386264667361a48e5609398cffa3d1cf72c1ac0c19"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/material-last-reviewed.jpg",
+      "bytes": 60858,
+      "sha256": "b16b3b9d79c38ae2b248ab7fdf0698bd8a8b1cad404ef14f8394d14f63a37550"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r12-after-restart.jpg",
+      "bytes": 70754,
+      "sha256": "d9eef33c14029e6559bb68929bf02be093564ad61c635deb49853fb16c38eceb"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r12-confirm.jpg",
+      "bytes": 65691,
+      "sha256": "2df0a34ccaf08361217bd9d7aa2a7ee763993d8d37531dfc952e976898240ef6"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r13-after-restart.jpg",
+      "bytes": 65838,
+      "sha256": "41427bc287b696a3f750c03ba489e4c87b4ea37f66e4d140a7bfee3a59023ebf"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r13-confirm.jpg",
+      "bytes": 66884,
+      "sha256": "7b4d4fb173bb19e40ad786702a2a65c9912a6fa8bfd70582eb05d2ea5ba1e268"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r14-after-restart.jpg",
+      "bytes": 64332,
+      "sha256": "e8143f8ee472d9f3b76d26236086561c8574c25d5c92b684ef2b24674ddbd776"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r14-confirm.jpg",
+      "bytes": 65374,
+      "sha256": "aa5afa19c7ef66e7aedc3f40282a505cc5a9292e811aaf360f58e30b5067ea03"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r14-material-added.jpg",
+      "bytes": 60298,
+      "sha256": "ada71566432b10abf8a9cf39f8924bc24a39469657aadd8383953907fca52921"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r14-settings-confirmation.jpg",
+      "bytes": 73388,
+      "sha256": "cee9ebee9ef373d12bb60cecd6c6a190c6fae0b6f323edec10d3ad31ff428109"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/r14-settings-safety-copies.jpg",
+      "bytes": 70467,
+      "sha256": "9322ca091852aadf1d1e7e98b7832b5300ee95961ad6ac1f9432900346d7f78d"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/screenshots/settings-two-copies.jpg",
+      "bytes": 66073,
+      "sha256": "3278e72ceae09266c108fdb8a1a6e4d6b6d46efbe10b4b2b0e4e5588cb83a411"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/installed-run/summarize.py",
+      "bytes": 627,
+      "sha256": "3dbbcb464f93bc676183f5214f5e4cc897d532c186e2e0ccc33c6d1213d5e65b"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/launch-and-identity.txt",
+      "bytes": 2618,
+      "sha256": "7b0d2445549dd4aa567302821ca97c7122053aa4e9216723af671a45c212c39b"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/native-build.txt",
+      "bytes": 8691,
+      "sha256": "0cded027f379c804ee6a86b96920a394f4bf15bdba74fdfed3d039c92cf72465"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/native-install.txt",
+      "bytes": 1169,
+      "sha256": "d92f5150675831234c3a347992043f772f65efc4cd87b1d3d1258f3436795627"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/original-profile-listing.txt",
+      "bytes": 4259,
+      "sha256": "34c5271a57be965cada911b934a8856990fd49bded63379a2be4dd631aa2afc6"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/package-checks.txt",
+      "bytes": 781,
+      "sha256": "91d62211326c9852928297ba3fe7c621f4c5d5d34c852c317fe80aec8bdfb55e"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/package-identity.txt",
+      "bytes": 1252,
+      "sha256": "0cf85c661e40a56e10faa6ea15c0bf47f5cc76e180dfafb3d3e97e87bc3232ce"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/preserved-artifacts-after-packaging.txt",
+      "bytes": 547,
+      "sha256": "352b519646247e3f01709d4af1c002c7f6259101ddf01b009baa2fe405e0dcfa"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/raw-build-identity.txt",
+      "bytes": 701,
+      "sha256": "95aa3f796841e07fa0f3c464f79d809208e0f003aa92ee9eb002a953274b382d"
+    },
+    {
+      "path": "docs/evidence/mac-v054-final-candidate-2026-10-15/shipped-frontend-identity.txt",
+      "bytes": 570,
+      "sha256": "17296d00a04ec2bcb2b5a09ecda921e368395c75993afa4c883aafd02bfebb35"
+    }
+  ]
+}

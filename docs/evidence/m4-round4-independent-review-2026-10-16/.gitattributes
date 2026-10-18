@@ -1,0 +1,12 @@
+# Exact raw runner outputs and failed diagnostic receipts keep their original bytes.
+gemini-focused.txt -whitespace
+new-diagnostics-node22.txt -whitespace
+new-diagnostics-node26.txt -whitespace
+portable-diagnostics-node22.txt -whitespace
+portable-diagnostics-node26.txt -whitespace
+typecheck.txt -whitespace
+node22-baseline-receipts/01b-engine-install.txt -whitespace
+node22-baseline-receipts/09-parser-legacy.txt -whitespace
+node22-baseline-receipts/10-parser-modern-historical.txt -whitespace
+node26-baseline-receipts/09-parser-legacy.txt -whitespace
+node26-baseline-receipts/10-parser-modern-historical.txt -whitespace

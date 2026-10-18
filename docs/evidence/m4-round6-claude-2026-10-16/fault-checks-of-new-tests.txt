@@ -1,0 +1,8 @@
+Fault checks of the round-6 tests (Claude, 16 October 2026, Node v22.23.3)
+Each fault was applied in a DISPOSABLE dev clone only, the named tests were run, and the files were
+restored byte-identical afterwards (cmp). The sensitivity suite separately pins M21–M24.
+
+F1 runner hard-codes signal: null in the live install execution record
+   caught: [M4-R39] a signal-terminated live install keeps exit null and its real signal, and fails the run
+F2 save-only retry without its epoch and cancellation pre-checks
+   caught: [M4-R37] a save-only retry of a partially saved operation is refused after a newer failed reservation

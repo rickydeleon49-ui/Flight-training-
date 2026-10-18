@@ -1,0 +1,130 @@
+// @vitest-environment jsdom
+/**
+ * When Settings and her saved medical record give different expiry dates, the
+ * Pilot Toolkit says so and asks which matches her certificate. Only her
+ * choice changes anything, and it changes only the other record. Real SQLite.
+ */
+import { createElement as h } from "react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { createRepositories, type Repositories } from "@/data/repositories";
+import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
+import type { CredentialRecord } from "@/domain/types";
+import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { Settings } from "@/pages/Settings/Settings";
+import { PilotToolkit } from "./PilotToolkit";
+
+let testDb: TestDatabase;
+vi.mock("@/data", () => ({
+  getDatabase: () => Promise.resolve(testDb),
+  isTauri: () => false,
+}));
+
+let repos: Repositories;
+let status = "";
+let flushWrites: () => Promise<unknown>;
+function Probe() {
+  const app = useAppData();
+  status = app.status;
+  flushWrites = () => app.mutate(async () => true);
+  return null;
+}
+
+const medical: CredentialRecord = {
+  id: "med-new", type: "medical", title: "Third-class medical", identifier: "", issuedOn: "2026-10-01",
+  expiresOn: "2031-10-31", notes: "", materialId: null,
+};
+const previous: CredentialRecord = { ...medical, id: "med-old", title: "Previous medical", expiresOn: "2026-03-31" };
+
+async function showRecords() {
+  render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe), h(PilotToolkit))));
+  await waitFor(() => expect(status).toBe("ready"));
+  fireEvent.click(await screen.findByRole("tab", { name: "Certificates" }));
+}
+
+beforeEach(async () => {
+  testDb = await createNodeSqliteDatabase();
+  repos = createRepositories(testDb);
+  await repos.profile.get();
+  const toolkit = await repos.toolkit.get();
+  await repos.toolkit.save({ ...toolkit, credentials: [previous, medical] });
+});
+
+afterEach(() => {
+  cleanup();
+  testDb.close();
+});
+
+describe("two different medical dates", () => {
+  it("asks which is right, and changes nothing until she chooses", async () => {
+    await repos.profile.update({ medicalExpiry: "2031-11-30" });
+    await showRecords();
+    const note = await screen.findByRole("note", { name: "Medical dates differ" });
+    expect(note.textContent).toMatch(/Settings says your medical expires .*November 30, 2031\..*“Third-class medical” says .*October 31, 2031\..*Nothing changes until you choose/);
+    expect((await repos.profile.get()).medicalExpiry).toBe("2031-11-30");
+    expect((await repos.toolkit.get()).credentials.map((c) => c.expiresOn)).toEqual(["2026-03-31", "2031-10-31"]);
+  });
+
+  it("updates Settings when she says the record's date is right", async () => {
+    await repos.profile.update({ medicalExpiry: "2031-11-30" });
+    await showRecords();
+    const note = await screen.findByRole("note", { name: "Medical dates differ" });
+    await act(async () => {
+      fireEvent.click(within(note).getByRole("button", { name: /October 31, 2031 is right/ }));
+    });
+    await waitFor(() => expect(screen.queryByRole("note", { name: "Medical dates differ" })).toBeNull());
+    expect((await repos.profile.get()).medicalExpiry).toBe("2031-10-31");
+    expect((await repos.toolkit.get()).credentials.map((c) => c.expiresOn)).toEqual(["2026-03-31", "2031-10-31"]);
+  });
+
+  it("updates only the latest record when she says the Settings date is right", async () => {
+    await repos.profile.update({ medicalExpiry: "2031-11-30" });
+    await showRecords();
+    const note = await screen.findByRole("note", { name: "Medical dates differ" });
+    await act(async () => {
+      fireEvent.click(within(note).getByRole("button", { name: /November 30, 2031 is right/ }));
+    });
+    await waitFor(() => expect(screen.queryByRole("note", { name: "Medical dates differ" })).toBeNull());
+    expect((await repos.profile.get()).medicalExpiry).toBe("2031-11-30");
+    // The earlier medical is history and keeps its own date.
+    expect((await repos.toolkit.get()).credentials.map((c) => c.expiresOn)).toEqual(["2026-03-31", "2031-11-30"]);
+  });
+
+  it("is pointed out in Settings beside the medical date", async () => {
+    await repos.profile.update({ medicalExpiry: "2031-11-30" });
+    render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe), h(Settings))));
+    await waitFor(() => expect(status).toBe("ready"));
+    const note = await screen.findByText(/Your saved medical record “Third-class medical” in the Pilot Toolkit/);
+    expect(note.getAttribute("role")).toBe("note");
+    expect(note.textContent).toMatch(/October 31, 2031, which differs from the date saved here.*under Certificates in the Pilot Toolkit/);
+  });
+
+  it("says nothing when the dates agree", async () => {
+    await repos.profile.update({ medicalExpiry: "2031-10-31" });
+    await showRecords();
+    await screen.findByText("Add a certificate or record");
+    expect(screen.queryByRole("note", { name: "Medical dates differ" })).toBeNull();
+  });
+});
+
+
+describe("independent reviewer diagnostics", () => {
+  it.each(["record", "settings"])("retains the first authority choice when %s is clicked before the opposite choice", async (first) => {
+    await repos.profile.update({ medicalExpiry: "2031-11-30" });
+    await showRecords();
+    const note = await screen.findByRole("note", { name: "Medical dates differ" });
+    const recordButton = within(note).getByRole("button", { name: /October 31, 2031 is right/ });
+    const settingsButton = within(note).getByRole("button", { name: /November 30, 2031 is right/ });
+    await act(async () => {
+      fireEvent.click(first === "record" ? recordButton : settingsButton);
+      fireEvent.click(first === "record" ? settingsButton : recordButton);
+      await flushWrites();
+    });
+    const settings = (await repos.profile.get()).medicalExpiry;
+    const record = (await repos.toolkit.get()).credentials.find(c => c.id === medical.id)!.expiresOn;
+    const authoritative = first === "record" ? "2031-10-31" : "2031-11-30";
+    expect({ settings, record }).toEqual({ settings: authoritative, record: authoritative });
+  });
+});

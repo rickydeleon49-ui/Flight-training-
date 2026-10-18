@@ -1,0 +1,12 @@
+=== 13 manifest generation ===
+node: v26.10.0  platform: darwin/arm64
+cwd: /Users/rickymac/.codex/task-recovery/claude-m4-release-review-20261016/node26-disposable/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+stage 1 payload entries: 114
+stage 2 delivery entries: 117
+architecture: two-stage manifest resolving checksum self-reference
+  - Stage 1: PAYLOAD_SHA256SUMS seals 114 immutable payload files
+  - Stage 1 verification: measured execution recorded in receipts/16-manifest-verification.txt
+  - Stage 2: SHA256SUMS seals complete delivery including payload manifest and receipts 15 & 16
+  - Final seal verification: recorded as outer execution result outside covered set
+included scratch artifacts: package.json, package-lock.json, scratch-artifacts.json
+excluded by design: node_modules and scratch/accepted-main (prepared on demand)

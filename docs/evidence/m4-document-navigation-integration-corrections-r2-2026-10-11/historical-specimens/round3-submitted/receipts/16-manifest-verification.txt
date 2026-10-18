@@ -1,0 +1,52 @@
+=== 16 manifest verification ===
+node: v26.10.0  platform: darwin/arm64
+cwd: /Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+command: shasum -a 256 -c SHA256SUMS
+exit: 0
+RESULT: PASS - all 45 files verified against SHA256SUMS
+--- verified files (summary) ---
+candidate/candidate_migration_0015.sql: OK
+fixtures/fixtures-manifest.json: OK
+fixtures/handbook_root_sample.pdf: OK
+fixtures/malformed_sample.pdf: OK
+fixtures/multi_page_sample.pdf: OK
+fixtures/single_page.pdf: OK
+fixtures/split_part_sample.pdf: OK
+issue-to-test-map.json: OK
+proof/contractModel.mjs: OK
+proof/databaseLifecycle.test.mjs: OK
+proof/openerController.mjs: OK
+proof/persistenceProtocol.mjs: OK
+proof/proof.test.mjs: OK
+proof/realParserDemonstration.mjs: OK
+proof/sensitivityMutants.test.mjs: OK
+proof/shippedLedger.mjs: OK
+README.md: OK
+receipts/00-pre-edit-inventory.json: OK
+receipts/01-accepted-main.json: OK
+receipts/01-toolchain.txt: OK
+receipts/01b-engine-install.txt: OK
+receipts/02-accepted-main.txt: OK
+receipts/03-subject-pack-inventory.txt: OK
+receipts/04-frozen-submitted-paths.txt: OK
+receipts/05-suite-proof.txt: OK
+receipts/06-suite-lifecycle.txt: OK
+receipts/07-suite-sensitivity.txt: OK
+receipts/08-issue-map-traceability.txt: OK
+receipts/08b-report-readme-traceability.txt: OK
+receipts/09-parser-legacy.txt: OK
+receipts/10-parser-modern-historical.txt: OK
+receipts/11-historical-reproductions.txt: OK
+receipts/12-hygiene.txt: OK
+receipts/13-manifest.txt: OK
+receipts/14-manifest-tamper-selftest.txt: OK
+receipts/15-run-summary.json: OK
+receipts/16-manifest-verification.txt: OK
+scratch/pdfjs-engine/package-lock.json: OK
+scratch/pdfjs-engine/package.json: OK
+scratch/pdfjs-engine/scratch-artifacts.json: OK
+scripts/parser-entrypoint.mjs: OK
+scripts/pre-edit-inventory.mjs: OK
+scripts/prepare-accepted-main.mjs: OK
+scripts/record-scratch-artifacts.mjs: OK
+scripts/run_integration_proof.mjs: OK

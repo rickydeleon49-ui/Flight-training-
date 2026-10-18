@@ -231,13 +231,24 @@ describe("the skill page", () => {
   });
 });
 
+/**
+ * "Add an observation" stays disabled until the skill list has loaded, and a
+ * click on a disabled button does nothing. Finding the button is not enough:
+ * under load the list can still be loading (M4S1-R9, CI run 38985040191).
+ */
+async function addObservationWhenReady(): Promise<HTMLButtonElement> {
+  const button = (await screen.findByRole("button", { name: "Add an observation" })) as HTMLButtonElement;
+  await waitFor(() => expect(button.disabled).toBe(false));
+  return button;
+}
+
 describe("a debrief's Skill evidence card", () => {
   it("adds an observation through the dialog, deliberately, with honest attribution", async () => {
     const journalId = await debrief();
     expect(await db.select("SELECT COUNT(*) AS n FROM skill_observations")).toEqual([{ n: 0 }]);
     await mount(`/journal/${journalId}`, [["/journal/:entryId", h(JournalEntryDetail)]]);
     await screen.findByText("No observations from this debrief yet.");
-    fireEvent.click(screen.getByRole("button", { name: "Add an observation" }));
+    fireEvent.click(await addObservationWhenReady());
     const dialog = await screen.findByRole("dialog", { name: "Add an observation" });
     const who = within(dialog).getByRole("group", { name: "Who said it?" });
     expect(within(who).getByLabelText(/My instructor \(I'm writing down what they said\)/)).toBeTruthy();
@@ -269,7 +280,7 @@ describe("a debrief's Skill evidence card", () => {
   it("two quick clicks on Save record one observation", async () => {
     const journalId = await debrief();
     await mount(`/journal/${journalId}`, [["/journal/:entryId", h(JournalEntryDetail)]]);
-    fireEvent.click(await screen.findByRole("button", { name: "Add an observation" }));
+    fireEvent.click(await addObservationWhenReady());
     const dialog = await screen.findByRole("dialog", { name: "Add an observation" });
     fireEvent.change(within(dialog).getByLabelText("What was said or noticed"), { target: { value: "Once only." } });
     const save = within(dialog).getByRole("button", { name: "Save observation" });

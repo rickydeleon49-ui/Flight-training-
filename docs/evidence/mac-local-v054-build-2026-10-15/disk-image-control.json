@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "hdiutil",
+    "create",
+    "-srcfolder",
+    "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-disk-image-control-_gcuhmui/empty",
+    "-size",
+    "64m",
+    "-fs",
+    "APFS",
+    "-volname",
+    "HFD QA Empty Control",
+    "-format",
+    "UDRW",
+    "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-disk-image-control-_gcuhmui/empty-apfs.dmg"
+  ],
+  "durationSeconds": 3.0273780822753906,
+  "exit": 0,
+  "timedOut": false,
+  "stdout": "created: /var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-disk-image-control-_gcuhmui/empty-apfs.dmg\n",
+  "stderr": "hdiutil: WARNING: 'hdiutil create -size -volname -format ...' is deprecated. Please use 'diskutil image create from/blank -size --volumeName --format ...' instead.\n",
+  "scope": "Empty disposable source-folder control; no app/profile. First invalid command is preserved separately.",
+  "root": "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-disk-image-control-_gcuhmui"
+}

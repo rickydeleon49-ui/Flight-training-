@@ -1,0 +1,21 @@
+### normal installation from the exact candidate DMG
+2026-10-15T22:34:15-0700
+--- attach read-only/nobrowse
+expected   CRC32 $BC51F743
+hdiutil: WARNING: 'hdiutil attach -readonly -nobrowse -mountpoint ...' is deprecated. Please use 'diskutil image attach --readOnly --mountOptions nobrowse --mountPoint ...' instead.
+/dev/disk4          	GUID_partition_scheme          	
+/dev/disk4s1        	Apple_HFS                      	/Users/rickymac/.codex/task-recovery/v054-final-candidate-20261015/install-mnt
+attach exit=0
+--- source from mounted image: Her Flight Deck.app
+ditto exit=0
+--- strict verify of installed copy
+installed verify exit=0
+--- installed executable hash
+a809e7b16743c9410b790dfb7634ef4d6aee956f23777aca6d9583bf3a181a8f  /Users/rickymac/Applications/Her Flight Deck Verification fbff255/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+--- detached
+hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.
+"disk4" ejected.
+detach exit=0
+--- Gatekeeper assessment (reported verbatim, no bypass attempted)
+/Users/rickymac/Applications/Her Flight Deck Verification fbff255/Her Flight Deck.app: rejected
+spctl exit=3

@@ -1,0 +1,118 @@
+[
+  {
+    "check": "focused",
+    "command": [
+      "npm",
+      "exec",
+      "vitest",
+      "run",
+      "src/lib/dates.test.ts",
+      "src/lib/backups.test.ts",
+      "src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts",
+      "src/components/recovery/DataRecoveryLocalDates.test.ts",
+      "--maxWorkers=2"
+    ],
+    "exit": 0,
+    "seconds": 1.68,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/focused.txt"
+  },
+  {
+    "check": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 3.61,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/typecheck.txt"
+  },
+  {
+    "check": "frontend",
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--maxWorkers=2"
+    ],
+    "exit": 0,
+    "seconds": 88.57,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/frontend.txt"
+  },
+  {
+    "check": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 5.05,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/build.txt"
+  },
+  {
+    "check": "rust",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "exit": 0,
+    "seconds": 39.98,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/rust.txt"
+  },
+  {
+    "check": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.22,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/fmt.txt"
+  },
+  {
+    "check": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit": 0,
+    "seconds": 0.34,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/clippy.txt"
+  },
+  {
+    "check": "cargo-lock",
+    "command": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "exit": 0,
+    "seconds": 1.65,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/cargo-lock.txt"
+  },
+  {
+    "check": "hygiene",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.01,
+    "log": "/Users/rickymac/.codex/task-recovery/v054-desktop-corrections-review-20261015/hygiene.txt"
+  }
+]

@@ -1,0 +1,245 @@
+{
+  "sourceCommit": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "candidateDir": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601",
+  "commands": [
+    {
+      "argv": [
+        "lipo",
+        "-archs",
+        "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.489,
+      "stdout": "arm64\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app"
+      ],
+      "exit": 1,
+      "timedOut": false,
+      "durationSeconds": 0.015,
+      "stdout": "",
+      "stderr": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app: code has no resources but signature indicates they must be present\n"
+    },
+    {
+      "argv": [
+        "ditto",
+        "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.005,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--timestamp=none",
+        "--identifier",
+        "com.herflightdeck.app",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.022,
+      "stdout": "",
+      "stderr": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app: replacing existing signature\n"
+    },
+    {
+      "argv": [
+        "codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.01,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "codesign",
+        "-d",
+        "--verbose=4",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.006,
+      "stdout": "",
+      "stderr": "Executable=/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20400 size=17134 flags=0x2(adhoc) hashes=529+3 location=embedded\nVersionPlatform=1\nVersionMin=786432\nVersionSDK=1705216\nHash type=sha256 size=32\nCandidateCDHash sha256=9f75f53bdad7c01bd11b2abc224e416f744727ef\nCandidateCDHashFull sha256=9f75f53bdad7c01bd11b2abc224e416f744727efe0f7d9dea54daaa1723bb70d\nHash choices=sha256\nCMSDigest=9f75f53bdad7c01bd11b2abc224e416f744727efe0f7d9dea54daaa1723bb70d\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=8339456\nExecutable Segment flags=0x1\nPage size=16384\nCDHash=9f75f53bdad7c01bd11b2abc224e416f744727ef\nSignature=adhoc\nInfo.plist entries=16\nTeamIdentifier=not set\nSealed Resources version=2 rules=13 files=1\nInternal requirements count=0 size=12\nTotal signatures=1\nChosen signature=1\n"
+    },
+    {
+      "argv": [
+        "lipo",
+        "-archs",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app/Contents/MacOS/her-flight-deck"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.008,
+      "stdout": "arm64\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "ditto",
+        "-c",
+        "-k",
+        "--sequesterRsrc",
+        "--keepParent",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.app.zip"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.191,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "ditto",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-e928601-image-stage-6i4ij530/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.004,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "hdiutil",
+        "create",
+        "-srcfolder",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-e928601-image-stage-6i4ij530",
+        "-size",
+        "64m",
+        "-fs",
+        "HFS+",
+        "-volname",
+        "Her Flight Deck Local Test",
+        "-format",
+        "UDZO",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 4.025,
+      "stdout": "created: /Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg\n",
+      "stderr": "hdiutil: WARNING: 'hdiutil create -size -volname -format ...' is deprecated. Please use 'diskutil image create from/blank -size --volumeName --format ...' instead.\n"
+    },
+    {
+      "argv": [
+        "hdiutil",
+        "attach",
+        "-readonly",
+        "-nobrowse",
+        "-mountpoint",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-e928601-readonly-inspect-umowrko2/volume",
+        "-plist",
+        "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 3.494,
+      "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>system-entities</key>\n\t<array>\n\t\t<dict>\n\t\t\t<key>content-hint</key>\n\t\t\t<string>Apple_HFS</string>\n\t\t\t<key>dev-entry</key>\n\t\t\t<string>/dev/disk4s1</string>\n\t\t\t<key>mount-point</key>\n\t\t\t<string>/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-e928601-readonly-inspect-umowrko2/volume</string>\n\t\t\t<key>potentially-mountable</key>\n\t\t\t<true/>\n\t\t\t<key>unmapped-content-hint</key>\n\t\t\t<string>48465300-0000-11AA-AA11-00306543ECAC</string>\n\t\t\t<key>volume-kind</key>\n\t\t\t<string>hfs</string>\n\t\t</dict>\n\t\t<dict>\n\t\t\t<key>content-hint</key>\n\t\t\t<string>GUID_partition_scheme</string>\n\t\t\t<key>dev-entry</key>\n\t\t\t<string>/dev/disk4</string>\n\t\t\t<key>potentially-mountable</key>\n\t\t\t<false/>\n\t\t\t<key>unmapped-content-hint</key>\n\t\t\t<string>GUID_partition_scheme</string>\n\t\t</dict>\n\t</array>\n</dict>\n</plist>\n",
+      "stderr": "hdiutil: WARNING: 'hdiutil attach -readonly -nobrowse -mountpoint ...' is deprecated. Please use 'diskutil image attach --readOnly --mountOptions nobrowse --mountPoint ...' instead.\n"
+    },
+    {
+      "argv": [
+        "codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-e928601-readonly-inspect-umowrko2/volume/Her Flight Deck.app"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.047,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "hdiutil",
+        "detach",
+        "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-e928601-readonly-inspect-umowrko2/volume"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.056,
+      "stdout": "\"disk4\" ejected.\n",
+      "stderr": "hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.\n"
+    },
+    {
+      "argv": [
+        "hdiutil",
+        "info"
+      ],
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 0.009,
+      "stdout": "framework       : 704\ndriver          : 704\n",
+      "stderr": ""
+    }
+  ],
+  "rawBundle": {
+    "path": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app",
+    "CFBundleShortVersionString": "0.5.4",
+    "CFBundleVersion": "0.5.4",
+    "CFBundleIdentifier": "com.herflightdeck.app",
+    "LSMinimumSystemVersion": "12.0",
+    "executableSha256": "051b225d924a2976b5cbf4ab155c9051bbb755f8bd5a8e0c09d6af026e52ef98",
+    "lipo": "arm64"
+  },
+  "app": {
+    "path": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app",
+    "executableSha256": "b60d2e6c04fd18ee31d4a8bd6439ed9388039c3c390ff62e09275c1464848822",
+    "signature": "adhoc",
+    "teamIdentifier": "not set",
+    "lipo": "arm64"
+  },
+  "zip": {
+    "path": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.app.zip",
+    "bytes": 4833453,
+    "sha256": "068695bf981b6f4d903b10413b9eb8fabdf18cd281480e2f516070b3d0decf47"
+  },
+  "dmg": {
+    "path": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg",
+    "bytes": 5090023,
+    "sha256": "7a93541a1fe7c9ccaa540deb8b164ac0ac09da8bc5c33b8ae1fed6755ad499b9"
+  },
+  "mountedImage": {
+    "entries": [
+      "Her Flight Deck.app"
+    ],
+    "CFBundleShortVersionString": "0.5.4",
+    "CFBundleIdentifier": "com.herflightdeck.app",
+    "executableSha256": "b60d2e6c04fd18ee31d4a8bd6439ed9388039c3c390ff62e09275c1464848822",
+    "executableMatchesStagedApp": true
+  },
+  "success": true,
+  "cleanup": {
+    "taskImageStillAttached": false,
+    "mountPointExists": false,
+    "tempDirsRemoved": true
+  }
+}

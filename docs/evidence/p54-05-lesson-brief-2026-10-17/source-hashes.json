@@ -1,0 +1,50 @@
+{
+  "base": "32582f2e08544b6d5264e4e2baa33dfda370da53",
+  "files": [
+    {
+      "path": "src/logic/lessonBrief.ts",
+      "bytes": 9110,
+      "sha256": "be59a0c8c7c1adf8ec6331d997af904447e3ba2a88a94547a02f48f148f26351"
+    },
+    {
+      "path": "src/logic/lessonBrief.test.ts",
+      "bytes": 11615,
+      "sha256": "de2e09987cb329d169c93802f4fd8ab8ff93e1469b5d737f8bed1954f015caaa"
+    },
+    {
+      "path": "src/pages/Schedule/LessonBriefDialog.tsx",
+      "bytes": 5411,
+      "sha256": "dae9e954c33143485acba12b8f78f543f0f6558030c35bdc6a56df7871642eeb"
+    },
+    {
+      "path": "src/pages/Schedule/LessonBriefDialog.test.ts",
+      "bytes": 7498,
+      "sha256": "96609d9c2af52acaee4b02b51caadde30350ea5aab0e9936757568319c675160"
+    },
+    {
+      "path": "src/pages/Schedule/EventDetail.tsx",
+      "bytes": 18114,
+      "sha256": "dc4e8b1eb4a50edaa1cda105c8acf32612264297cf5652f53a707278f00aee0d"
+    },
+    {
+      "path": "src/pages/Schedule/schedule.css",
+      "bytes": 3181,
+      "sha256": "124d54c93caf9535d5589a85ce0608f031832a72ed513d452b7baf8b2fabd101"
+    },
+    {
+      "path": "src/logic/studyHandout.ts",
+      "bytes": 7774,
+      "sha256": "2c948e0cb2d479d36fc2a769bb90f5b5855ad6972b6e0b85905a3f994ba35091"
+    },
+    {
+      "path": "src/services/studyExport.ts",
+      "bytes": 2517,
+      "sha256": "6c4d4a65798eefac10dc27ffbe4cb8b23f087c15bf7a363aa4539dd64d89cfac"
+    },
+    {
+      "path": "src-tauri/src/study_export.rs",
+      "bytes": 18177,
+      "sha256": "5cb6b5697f00fa8d74f3086ffb7df7aacf064a5763fa19ed17c250c8cbbd7078"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import { Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorNote } from "@/
 import { formatRestorePreviewMissingNotice, restoreWarning } from "@/logic/dataSafety";
 import {
   backupErrorMessage,
+  backupLocalDay,
   backupsAvailable,
   chooseCompleteBackup,
   dataDirectory,
@@ -22,7 +23,7 @@ import {
   inspectCompleteBackup,
   listBackups,
   restartForRestore,
-  revealFolder,
+  openDataFolder,
   stageCompleteRestore,
   stageLocalRestore,
   type BackupInfo,
@@ -43,6 +44,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
   const [busy, setBusy] = useState(false);
   const [archiveCandidate, setArchiveCandidate] = useState<CompleteBackupInfo | null>(null);
   const [copyCandidate, setCopyCandidate] = useState<BackupInfo | null>(null);
+  const [folderOpenError, setFolderOpenError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!backupsAvailable()) return;
@@ -148,7 +150,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
                       {restorable.slice(0, 6).map((backup) => (
                         <div className="row row--between" key={backup.name}>
                           <span className="small truncate">
-                            {describeBackup(backup.name)} · {backup.name.slice(0, 10)}
+                            {describeBackup(backup.name)} · {backupLocalDay(backup.name) ?? "date unknown"}
                           </span>
                           <span className="row" style={{ gap: "var(--space-3)" }}>
                             <span className="tiny dim numeric">{formatBytes(backup.bytes)}</span>
@@ -182,10 +184,25 @@ export function DataRecovery({ error }: DataRecoveryProps) {
                 <CardBody>
                   <div className="row row--between" style={{ gap: "var(--space-3)" }}>
                     <code className="tiny wrap-anywhere">{dataPath}</code>
-                    <Button size="small" onClick={() => revealFolder(dataPath)}>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setFolderOpenError(null);
+                        openDataFolder().catch((error: unknown) => {
+                          setFolderOpenError(
+                            backupErrorMessage(error, "That folder could not be opened."),
+                          );
+                        });
+                      }}
+                    >
                       Open folder
                     </Button>
                   </div>
+                  {folderOpenError ? (
+                    <p className="small" role="alert" style={{ color: "var(--status-danger)", marginTop: "var(--space-2)" }}>
+                      {folderOpenError}
+                    </p>
+                  ) : null}
                   <p className="tiny dim" style={{ marginTop: "var(--space-3)" }}>
                     Copy this whole folder somewhere safe before trying anything else. It
                     contains your database, your uploaded documents, and every safety copy.
@@ -237,7 +254,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
         title="Put this safety copy back?"
         message={
           copyCandidate
-            ? `This copy was ${describeBackup(copyCandidate.name).toLowerCase()}, on ${copyCandidate.name.slice(0, 10)}. It brings back your records, lessons, notes and settings as they were then. Uploaded files are not touched, and a recoverable copy of the current data is kept first.`
+            ? `This copy was ${describeBackup(copyCandidate.name).toLowerCase()}, on ${backupLocalDay(copyCandidate.name) ?? "an unknown date"}. It brings back your records, lessons, notes and settings as they were then. Uploaded files are not touched, and a recoverable copy of the current data is kept first.`
             : ""
         }
         confirmLabel="Put it back and restart"

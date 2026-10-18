@@ -1,0 +1,16 @@
+{
+  "pr": 165,
+  "sourceHead": "8297e7bf2a6a306fa1807a5ba528b43cf1818a53",
+  "merge": "845052623b731d4955f15d820e91d1e7a60683ef",
+  "run": 38803089531,
+  "conclusion": "success",
+  "frontend": {
+    "passed": 3202,
+    "skipped": 6
+  },
+  "rust": {
+    "passed": 464,
+    "ignored": 6
+  },
+  "url": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38803089531"
+}

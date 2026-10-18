@@ -1,0 +1,86 @@
+[
+  {
+    "mode": "review-trailing-frame",
+    "exit": 0,
+    "externalKill": false,
+    "pass": true,
+    "observed": {
+      "indexed": 0,
+      "mode": "review-trailing-frame",
+      "publication": "Ok(())",
+      "settled": {
+        "elapsedMs": 6.673583000000001,
+        "exit": "exit:0",
+        "outcome": "failed:frame_after_result",
+        "peakRssKiB": 0,
+        "pid": 48288,
+        "reaped": true,
+        "rssSamples": 0
+      }
+    },
+    "stderr": ""
+  },
+  {
+    "mode": "review-trailing-invalid",
+    "exit": 0,
+    "externalKill": false,
+    "pass": true,
+    "observed": {
+      "indexed": 0,
+      "mode": "review-trailing-invalid",
+      "publication": "Ok(())",
+      "settled": {
+        "elapsedMs": 5.1860409999999995,
+        "exit": "exit:0",
+        "outcome": "failed:malformed_json",
+        "peakRssKiB": 0,
+        "pid": 48290,
+        "reaped": true,
+        "rssSamples": 0
+      }
+    },
+    "stderr": ""
+  },
+  {
+    "mode": "review-trailing-partial",
+    "exit": 0,
+    "externalKill": false,
+    "pass": true,
+    "observed": {
+      "indexed": 0,
+      "mode": "review-trailing-partial",
+      "publication": "Ok(())",
+      "settled": {
+        "elapsedMs": 5.241375000000001,
+        "exit": "exit:0",
+        "outcome": "failed:partial_frame",
+        "peakRssKiB": 0,
+        "pid": 48292,
+        "reaped": true,
+        "rssSamples": 0
+      }
+    },
+    "stderr": ""
+  },
+  {
+    "mode": "normal",
+    "exit": 0,
+    "externalKill": false,
+    "pass": true,
+    "observed": {
+      "indexed": 1,
+      "mode": "normal",
+      "publication": "Ok(())",
+      "settled": {
+        "elapsedMs": 3.939667,
+        "exit": "exit:0",
+        "outcome": "checked",
+        "peakRssKiB": 0,
+        "pid": 48294,
+        "reaped": true,
+        "rssSamples": 0
+      }
+    },
+    "stderr": ""
+  }
+]

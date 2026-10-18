@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "tauri",
+    "--",
+    "build",
+    "--target",
+    "aarch64-apple-darwin",
+    "--bundles",
+    "app",
+    "--no-sign",
+    "--ci"
+  ],
+  "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+  "startedAt": "2026-10-16T01:46:44.500410+00:00",
+  "durationSeconds": 58.92298769950867,
+  "exit": 0,
+  "timedOut": false,
+  "env": {
+    "PATH-prefix": "/opt/homebrew/opt/node@22/bin:/Users/rickymac/.cargo/bin",
+    "SDKROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+    "CARGO_BUILD_JOBS": "4"
+  },
+  "log": "native-build.log (stdout and stderr combined)"
+}

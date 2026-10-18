@@ -460,6 +460,18 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         return readObservationHistory(query, input);
       });
     },
+    /** Document navigation (M4). Reads stay in memory; every change is stored before it is acknowledged. */
+    navigationOperation<K extends import("@/domain/types").NavigationOperation["kind"]>(
+      operation: Extract<import("@/domain/types").NavigationOperation, { kind: K }>,
+    ): Promise<import("@/domain/types").NavigationResultByKind[K]> {
+      return owner.exclusive(async () => {
+        if (connectionBroken) throw connectionBroken;
+        const { executeNavigationOperation } = await import("./navigationTransaction");
+        const work = () => executeNavigationOperation(exec, run, query, operation);
+        const result = operation.kind === "read" ? await work() : await durableWrite(work);
+        return result as import("@/domain/types").NavigationResultByKind[K];
+      });
+    },
     /** Every acknowledged write is already stored; this re-stores and reports failure. */
     persist(): Promise<void> {
       return owner.exclusive(() => {

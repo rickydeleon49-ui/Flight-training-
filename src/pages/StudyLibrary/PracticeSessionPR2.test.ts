@@ -62,7 +62,7 @@ beforeEach(async () => {
   };
 
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
-  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "" });
+  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "", choice: "standard" });
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(true);
   vi.spyOn(documentService, "documentExists").mockResolvedValue(true);
 });

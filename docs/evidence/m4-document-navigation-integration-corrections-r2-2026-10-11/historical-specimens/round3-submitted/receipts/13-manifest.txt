@@ -1,0 +1,7 @@
+=== 13 manifest generation ===
+node: v26.10.0  platform: darwin/arm64
+cwd: /Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11
+entries: 45
+included scratch artifacts: package.json, package-lock.json, scratch-artifacts.json
+excluded by design: node_modules and scratch/accepted-main (prepared on demand)
+status: manifest prepared with 45 entries; verification recorded in 16-manifest-verification.txt

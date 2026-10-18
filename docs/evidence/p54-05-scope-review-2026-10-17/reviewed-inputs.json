@@ -1,0 +1,32 @@
+[
+  {
+    "commit": "827b40870860c099fad27a8fe88ac0cd932b3cc4",
+    "path": "docs/P54_05_LESSON_BRIEF_CALENDAR_SCOPE_2026-10-17.md",
+    "sha256": "0408de976395332fbeba5ffdeb2a48e2202b2eabc50353089d025a5dca4b85ae"
+  },
+  {
+    "commit": "c9347fe8f33e83f490be66d337794ccd5c3ca670",
+    "path": "src/domain/types.ts",
+    "sha256": "4db041bd9d23801fb84a73ce902a2a307a4f5d60545808f2de9ef8ca5256be48"
+  },
+  {
+    "commit": "c9347fe8f33e83f490be66d337794ccd5c3ca670",
+    "path": "src/logic/preparation.ts",
+    "sha256": "f2bbe703082aeb6e72f1f830d9baeb3d81aec849140721930e7ab84a2b02f96c"
+  },
+  {
+    "commit": "c9347fe8f33e83f490be66d337794ccd5c3ca670",
+    "path": "src/lib/dates.ts",
+    "sha256": "55143c7c2b6e3a1bf0a91ed1185262c1e8f30511e8e6d8afbd156e4bd584a4f2"
+  },
+  {
+    "commit": "c9347fe8f33e83f490be66d337794ccd5c3ca670",
+    "path": "src/pages/Schedule/EventFormDialog.tsx",
+    "sha256": "823ef2da2f47c1ec95983e7cc3b97b2d3dfd2d89fe9802bd9c2969b326d7ab46"
+  },
+  {
+    "commit": "c9347fe8f33e83f490be66d337794ccd5c3ca670",
+    "path": "src/data/repositories/scheduleRepository.ts",
+    "sha256": "c40feb6a15cbc2f4077f0a425f56c966156bfde1a5f6c676fee20b93dd24b4f0"
+  }
+]

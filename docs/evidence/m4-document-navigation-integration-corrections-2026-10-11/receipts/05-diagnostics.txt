@@ -1,0 +1,370 @@
+=== Her Flight Deck M4 Integration Corrections - Diagnostics Receipt ===
+Timestamp: 2026-10-11T20:28:05.248Z
+Current Modules Status: 16 of 16 diagnostic assertions pass against current proof modules
+Historical Reproduction 1 (diagnostics.test.mjs in rereview pack): Exit 1 (14 failed, 2 passed controls)
+Historical Reproduction 2 (historical-current.test.mjs): Exit 0 (10 passed)
+Historical Reproduction 3 (prior-current.test.mjs): Exit 1 (14 passed, 1 failed scanner)
+
+--- Historical Diagnostics Output (14 fail / 2 pass) ---
+✔ [control] bounded physical reference and complete nested translation work (1.006584ms)
+✔ [control] newer missing-path intent still blocks obsolete opener (0.279583ms)
+✖ [M4-R9] unknown and invalid totals cannot resolve physical destinations (0.773333ms)
+✖ [M4-R9] label maps without bounds cannot resolve a verified destination (0.152792ms)
+✖ [M4-R9] genuine first-level nullable parent metadata permits root navigation (0.138083ms)
+✖ [M4-R9] live root translation requires complete range metadata (0.102875ms)
+✖ [M4-R9] reverse translation cannot succeed without destination identity (0.1035ms)
+✖ [M4-R9] translated arithmetic must remain a safe integer (0.096167ms)
+✖ [M4-R10] persisted bookmark cannot default verified outside active bounds (0.543916ms)
+✖ [M4-R10] identity replacement atomically invalidates bookmark and reading state (0.2155ms)
+✖ [M4-R10] reading state cannot be active outside persisted content bounds (0.16225ms)
+✖ [M4-R10] unknown bounds cannot reverify a matching-hash bookmark (0.244792ms)
+✖ [M4-R11] same material with different content cannot inherit prior requested page (0.2285ms)
+✖ [M4-R11] held old save commits after newer save and must be fenced (0.494208ms)
+✖ [M4-R11] public progress accessor must not leak A after failed B (0.159959ms)
+✖ [M4-R11] opener refuses out-of-bounds destination before native invocation (0.140041ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 2
+ℹ fail 14
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 216.847625
+
+✖ failing tests:
+
+test at diagnostics.test.mjs:27:1
+✖ [M4-R9] unknown and invalid totals cannot resolve physical destinations (0.773333ms)
+  AssertionError [ERR_ASSERTION]: undefined
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:28:72)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:30:1
+✖ [M4-R9] label maps without bounds cannot resolve a verified destination (0.152792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:31:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:33:1
+✖ [M4-R9] genuine first-level nullable parent metadata permits root navigation (0.138083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:35:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:37:1
+✖ [M4-R9] live root translation requires complete range metadata (0.102875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:38:53)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:40:1
+✖ [M4-R9] reverse translation cannot succeed without destination identity (0.1035ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:41:50)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:43:1
+✖ [M4-R9] translated arithmetic must remain a safe integer (0.096167ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:45:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:47:1
+✖ [M4-R10] persisted bookmark cannot default verified outside active bounds (0.543916ms)
+  Error: ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/src-tauri/migrations'
+      at Object.readdirSync (node:fs:1952:26)
+      at withDb (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:14:64)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:47:86)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'scandir',
+    path: '/Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/src-tauri/migrations'
+  }
+
+test at diagnostics.test.mjs:51:1
+✖ [M4-R10] identity replacement atomically invalidates bookmark and reading state (0.2155ms)
+  Error: ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/src-tauri/migrations'
+      at Object.readdirSync (node:fs:1952:26)
+      at withDb (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:14:64)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:51:92)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'scandir',
+    path: '/Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/src-tauri/migrations'
+  }
+
+test at diagnostics.test.mjs:57:1
+✖ [M4-R10] reading state cannot be active outside persisted content bounds (0.16225ms)
+  Error: ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/src-tauri/migrations'
+      at Object.readdirSync (node:fs:1952:26)
+      at withDb (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:14:64)
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:57:85)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'scandir',
+    path: '/Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/src-tauri/migrations'
+  }
+
+test at diagnostics.test.mjs:61:1
+✖ [M4-R10] unknown bounds cannot reverify a matching-hash bookmark (0.244792ms)
+  AssertionError [ERR_ASSERTION]: Expected "actual" to be strictly unequal to:
+  
+  'verified'
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:63:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'verified',
+    expected: 'verified',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:65:1
+✖ [M4-R11] same material with different content cannot inherit prior requested page (0.2285ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  42 !== null
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:68:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 42,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:71:1
+✖ [M4-R11] held old save commits after newer save and must be fenced (0.494208ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  42 !== 3
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:74:187)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 42,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:76:1
+✖ [M4-R11] public progress accessor must not leak A after failed B (0.159959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  42 !== null
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:78:55)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 42,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:80:1
+✖ [M4-R11] opener refuses out-of-bounds destination before native invocation (0.140041ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/diagnostics.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+--- Historical Controls Output (10 pass) ---
+✔ control: valid bounded physical page and child-to-root translation (0.830417ms)
+✔ control: root page outside child range is rejected (0.103958ms)
+✔ M4-R2: NaN total page count is rejected (0.816542ms)
+✔ M4-R2: Infinity total page count is rejected (0.244875ms)
+✔ M4-R2: fractional total page count is rejected (0.175917ms)
+✔ M4-R2: NaN split page cannot produce a successful destination (0.113083ms)
+✔ M4-R2: string split page cannot produce a successful destination (0.073167ms)
+✔ M4-R2: unknown printed label cannot invent physical page one (0.201ms)
+✔ M4-R2: numeric printed label without provenance remains unresolved (0.115708ms)
+✔ M4-R2: deleted root cannot be substituted by immediate parent using root coordinates (0.20025ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 205.562542
+
+--- Prior Current Output (14 pass / 1 fail) ---
+✔ [control] validated physical index and complete nested parent range work (1.082041ms)
+✔ [control] explicit abort refuses obsolete opener success (0.333833ms)
+✔ [M4-R5] unsafe integer totals cannot validate a physical destination (0.092667ms)
+✔ [M4-R5] integer sourcePage without coordinate provenance remains unresolved (0.186916ms)
+✔ [M4-R5] explicit physical zero cannot become a resolved destination (0.250416ms)
+✔ [M4-R5] parent ranges cannot concatenate string coordinates (0.136541ms)
+✔ [M4-R5] parent range length must match child length (0.109084ms)
+✔ [M4-R5] root destination cannot exceed known root page count (0.101209ms)
+✔ [M4-R5] reverse translation includes the destination child identity (0.111167ms)
+✔ [M4-R6] same-hash revalidation cannot verify an out-of-bounds bookmark (0.273792ms)
+✔ [M4-R7] later missing-path request supersedes earlier pending opener (0.15975ms)
+✔ [M4-R7] failing another material cannot expose prior material requested page (0.168917ms)
+✔ [M4-R7] malformed destination is refused before invoking opener (0.08475ms)
+✔ [M4-R7] successful open exercises injected durable persistence (0.129458ms)
+✖ [M4-R8] custom parser cannot establish page-tree consistency (2.189ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 205.755167
+
+✖ failing tests:
+
+test at prior-current.test.mjs:61:1
+✖ [M4-R8] custom parser cannot establish page-tree consistency (2.189ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-integration-rereview-2026-10-11/prior-current.test.mjs:67:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

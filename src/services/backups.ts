@@ -7,10 +7,9 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
-import { todayIso } from "@/lib/dates";
+import { formatLocalDay, todayIso } from "@/lib/dates";
 
 export interface BackupInfo {
   name: string;
@@ -125,10 +124,15 @@ export async function dataDirectory(): Promise<string> {
   return invoke<string>("data_directory");
 }
 
-/** Open a folder in the system file manager. */
-export async function revealFolder(path: string): Promise<void> {
+/**
+ * Open her data folder in Finder or File Explorer.
+ *
+ * The desktop shell resolves the folder itself (`open_data_folder`), so the
+ * page never passes a path and needs no file-system scope for it.
+ */
+export async function openDataFolder(): Promise<void> {
   if (!isTauri()) throw new Error("This needs the desktop application.");
-  await openPath(path);
+  await invoke("open_data_folder");
 }
 
 /** Describes an automatic copy in words, e.g. "before version 0.2.0". */
@@ -138,6 +142,20 @@ export function describeBackup(name: string): string {
   if (upgrade) return `Taken before updating to ${upgrade[1]}`;
   if (name.endsWith("-manual")) return "Taken by you";
   return "Database copy";
+}
+
+/**
+ * The local day an automatic copy was made, read from its name.
+ *
+ * The desktop shell names copies by UTC time ("2026-10-16-035630-manual"), so
+ * the first ten characters are the UTC day, which is tomorrow on a US evening.
+ * Returns null when the name does not start with a readable time.
+ */
+export function backupLocalDay(name: string, today: string = todayIso()): string | null {
+  const match = name.match(/^(\d{4}-\d{2}-\d{2})-(\d{2})(\d{2})(\d{2})(?:-|$)/);
+  if (!match) return null;
+  const [, day, hours, minutes, seconds] = match;
+  return formatLocalDay(`${day}T${hours}:${minutes}:${seconds}Z`, today);
 }
 
 export const formatBytes = (bytes: number): string => {

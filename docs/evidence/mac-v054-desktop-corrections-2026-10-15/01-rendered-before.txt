@@ -1,0 +1,274 @@
+
+ RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-
+
+(node:29188) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts (5 tests | 4 failed) 1276ms
+     × shows the native run's evening timestamps as Thursday, not the UTC Friday 66ms
+     × says today after Mark as reviewed today in the evening 1111ms
+     × reads SQLite's UTC form in a positive-offset zone 42ms
+     × says plainly when a stored date can't be read, instead of inventing one 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts > Material detail dates are local calendar days > shows the native run's evening timestamps as Thursday, not the UTC Friday
+AssertionError: expected 'Friday, October 16' to be 'Thursday, October 15' // Object.is equality
+
+Expected: "Thursday, October 15"
+Received: "Friday, October 16"
+
+ ❯ src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts:87:29
+     85|     const id = await material("2026-10-16T02:26:19.480Z", "2026-10-16T…
+     86|     await openMaterial(id);
+     87|     expect(detail("Added")).toBe("Thursday, October 15");
+       |                             ^
+     88|     expect(lastReviewed()).toBe("Last reviewed Thursday, October 15.");
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts > Material detail dates are local calendar days > says today after Mark as reviewed today in the evening
+AssertionError: expected 'Last reviewed Friday, October 16.' to be 'Last reviewed Thursday, October 15.' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mSynthetic chapter[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · Aerodynamics[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mPersonal notes[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<textarea[39m
+                [33maria-label[39m=[32m"Personal notes"[39m
+                [33mclass[39m=[32m"textarea"[39m
+                [33mplaceholder[39m=[32m"What matters in this material, and what you want to remember."[39m
+                [33mrows[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mNext actions[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"button button--secondary button--small"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14M5 12h14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Add[0m
+              [36m</button>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body card__body--flush"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"small muted"[39m
+                [33mstyle[39m=[32m"padding: 0 var(--space-5) var(--space-5);"[39m
+              [36m>[39m
+                [0mWhat should you do with this material? “Review pages 4–8 before Saturday” is more useful than “study”.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mQuestions from this material[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"inline-add"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"New question"[39m
+                    [33mclass[39m=[32m"input"[39m
+                    [33mplaceholder[39m=[32m"Something to ask your instructor"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mdisabled[39m=[32m""[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAdd[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mReview status[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--4"[39m
+       ...
+
+Expected: "Last reviewed Thursday, October 15."
+Received: "Last reviewed Friday, October 16."
+
+ ❯ src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts:99:48
+     97|       fireEvent.click(screen.getByRole("button", { name: "Mark as revi…
+     98|     });
+     99|     await waitFor(() => expect(lastReviewed()).toBe("Last reviewed Thu…
+       |                                                ^
+    100|   });
+    101|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts > Material detail dates are local calendar days > reads SQLite's UTC form in a positive-offset zone
+AssertionError: expected 'Thursday, October 15' to be 'Friday, October 16' // Object.is equality
+
+Expected: "Friday, October 16"
+Received: "Thursday, October 15"
+
+ ❯ src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts:106:29
+    104|     const id = await material("2026-10-15 10:00:00", "2026-10-15 09:59…
+    105|     await openMaterial(id);
+    106|     expect(detail("Added")).toBe("Friday, October 16");
+       |                             ^
+    107|     expect(lastReviewed()).toBe("Last reviewed Thursday, October 15.");
+    108|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts > Material detail dates are local calendar days > says plainly when a stored date can't be read, instead of inventing one
+AssertionError: expected 'undefined, undefined NaN, NaN' to be 'Unknown' // Object.is equality
+
+Expected: "Unknown"
+Received: "undefined, undefined NaN, NaN"
+
+ ❯ src/pages/StudyLibrary/MaterialDetailLocalDates.test.ts:122:29
+    120|     const id = await material("not a date", "2026-02-30T12:00:00Z");
+    121|     await openMaterial(id);
+    122|     expect(detail("Added")).toBe("Unknown");
+       |                             ^
+    123|     expect(lastReviewed()).toBe("Reviewed before; the date can't be re…
+    124|     expect(document.body.textContent).not.toMatch(/NaN|undefined/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  21:18:27
+   Duration  1.98s (transform 283ms, setup 0ms, import 393ms, tests 1.28s, environment 234ms)
+
+exit=1

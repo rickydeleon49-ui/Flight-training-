@@ -1,0 +1,11 @@
+{
+  "src-tauri/capabilities/default.json": "eb250188dfa201f9cb8c88fbdb2ff66f9d1f2916f8334507506377d282db5cb7",
+  "src-tauri/src/backup.rs": "d47d2f300cedaeaf92f77419aa64390998c54eb0df786a9f1239cd3ef9dceff4",
+  "src-tauri/src/documents.rs": "ce79d68179d954a4799b0b9539e0642edbab4054498146252ec3a772fc7f7544",
+  "src-tauri/src/lib.rs": "ae7524c6040496aec7e817f86bdbaf902ac2a264a4b8f1eed74ca7e0e01bb80a",
+  "src/components/recovery/DataRecovery.tsx": "948f300ac95e4ba63581a890719efa71450630319d01d6d508242e8172cc6795",
+  "src/components/recovery/DataRecoveryLocalDates.test.ts": "4e43e623f16f2722d7be952930e2d3382a27cdb087a97cacd71fd3d233f4cfc8",
+  "src/pages/Settings/Settings.tsx": "f0fe9d8064f75f5959650ea65301397810a895f7f49fffbf91d089efb376b0de",
+  "src/services/backups.test.ts": "9ae04573e2b7dac8611f988bb4ede6edcbb82eadab4e9df0642c79848532c748",
+  "src/services/backups.ts": "5f73f0cdfd52784d9193ba5cb8e2aaf3a50bd8a8000fd84b523b9b8b307372ea"
+}

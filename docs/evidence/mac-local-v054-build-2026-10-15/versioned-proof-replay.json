@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "python3",
+    "/Users/rickymac/.codex/task-recovery/schema14-followup-20261015/runbook-extracted.py"
+  ],
+  "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+  "sourceCommit": "fee78699dde736b016747c6a2ec3513a9677a556",
+  "exit": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"/Users/rickymac/.codex/task-recovery/schema14-followup-20261015/runbook-extracted.py\", line 29, in <module>\n    assert git('show', f'{commit}:package-lock.json') == git('show', f'{BASE}:package-lock.json')\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "classification": "Metadata-only version bump changes root package-lock version; exact pinned-lock assertion refuses; no dependency identities changed. Existing original f2a7090 replay remains valid."
+}

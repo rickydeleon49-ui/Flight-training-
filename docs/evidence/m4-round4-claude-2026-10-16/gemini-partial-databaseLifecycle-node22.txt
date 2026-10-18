@@ -1,0 +1,215 @@
+TAP version 13
+# (node:7574) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [M4-R21] populated schema 1-14 upgrade preserves all prior rows including M3 skills evidence
+not ok 1 - [M4-R21] populated schema 1-14 upgrade preserves all prior rows including M3 skills evidence
+  ---
+  duration_ms: 0.917875
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:52:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:55:21)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: [M4-R21] candidate 0015 coexists with shipped 0014 for the navigation writers
+not ok 2 - [M4-R21] candidate 0015 coexists with shipped 0014 for the navigation writers
+  ---
+  duration_ms: 0.130583
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:117:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:120:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: [M4-R21] pointing the ledger back at this worktree's own migrations fails the verification
+not ok 3 - [M4-R21] pointing the ledger back at this worktree's own migrations fails the verification
+  ---
+  duration_ms: 0.552042
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:140:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    precondition: this worktree is behind accepted main
+    
+    14 !== 13
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 13
+  actual: 14
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:143:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R21] an altered byte in the extracted ledger fails verification before any database is built
+not ok 4 - [M4-R21] an altered byte in the extracted ledger fails verification before any database is built
+  ---
+  duration_ms: 0.47225
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:151:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:154:24)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R21] older binary refuses a candidate-upgraded database using the derived ceiling
+not ok 5 - [M4-R21] older binary refuses a candidate-upgraded database using the derived ceiling
+  ---
+  duration_ms: 0.115791
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:163:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:166:25)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] atomic replacement transaction rolls back completely upon injected fault
+not ok 6 - [M4-R10] atomic replacement transaction rolls back completely upon injected fault
+  ---
+  duration_ms: 0.066458
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:197:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:200:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] file-backed SQLite database safely closes and reopens
+not ok 7 - [M4-R10] file-backed SQLite database safely closes and reopens
+  ---
+  duration_ms: 0.354
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:225:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:230:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] synthetic backup and restore preserves state and detects drift/missing files
+not ok 8 - [M4-R10] synthetic backup and restore preserves state and detects drift/missing files
+  ---
+  duration_ms: 1.106833
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:256:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:276:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state
+not ok 9 - [M4-R10] deleting study_materials cascades to content identities, bookmarks, and reading state
+  ---
+  duration_ms: 0.226666
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:319:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:322:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] replacement of a drifted document leaves prior navigation visible but unverified
+not ok 10 - [M4-R10] replacement of a drifted document leaves prior navigation visible but unverified
+  ---
+  duration_ms: 0.212417
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:340:1'
+  failureType: 'testCodeFailure'
+  error: 'migration ledger directory missing: /Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    loadVerifiedLedger (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:45:34)
+    applyShippedMigrations (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/shippedLedger.mjs:66:30)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/databaseLifecycle.test.mjs:343:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 0
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 70.659125

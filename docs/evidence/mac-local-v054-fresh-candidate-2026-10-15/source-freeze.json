@@ -1,0 +1,37 @@
+{
+  "sourceCommit": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "sourceTree": "655ccd11598ab88309eeb1d01ae57feb0b8b0760",
+  "pr167HeadTreeIdentical": true,
+  "containsPR169": "04d1c67 is an ancestor",
+  "originMainAtStart": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "cleanAtStart": true,
+  "checkout": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+  "reportBranch": "codex/local-v054-fresh-candidate (created at e928601 for reports only)",
+  "versionFiles": {
+    "package.json": "0.5.4",
+    "package-lock.json (version, packages[\"\"].version)": "0.5.4, 0.5.4",
+    "src-tauri/tauri.conf.json": "0.5.4",
+    "src-tauri/Cargo.toml": "0.5.4",
+    "src-tauri/Cargo.lock (her-flight-deck)": "0.5.4"
+  },
+  "bundleIdentifier": "com.herflightdeck.app",
+  "competingBuildCheck": "no tauri/cargo/rustc/hdiutil/vite process running; only the earlier fee7869 candidate directory existed",
+  "toolchain": {
+    "node": "v22.23.3",
+    "npm": "10.9.9",
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Homebrew)",
+    "cargo": "cargo 1.99.0 (5f94df478 2026-08-27) (Homebrew)",
+    "rustHost": "host: aarch64-apple-darwin",
+    "sdkroot": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk (present)",
+    "xcodeSelect": "/Applications/Xcode.app/Contents/Developer",
+    "macOS": "27.0.1 (26A434)",
+    "arch": "arm64",
+    "globalSettingsChanged": false
+  },
+  "prebuildBundleExecutableSha256": "0eb41b81786257083f9a72e3839a8677422df07f773f4ba7928c550e6777ec5c (the fee7869 raw build, replaced by this build)",
+  "acceptedChecksReused": {
+    "reason": "merge commit e928601 has the identical tree to the accepted PR #167 head 10d67359",
+    "results": "3,221 frontend passed / 6 skipped, typecheck, frontend build (MAC_LOCAL_V054_QA_ACCEPTANCE_2026-10-15.md); exact-head CI run 38834876609 passed",
+    "note": "frontend typecheck and bundle also ran again as Tauri's before-build command in this build"
+  }
+}

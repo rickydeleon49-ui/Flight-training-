@@ -1,0 +1,366 @@
+{
+  "members": [
+    {
+      "path": "README.md",
+      "bytes": 3624,
+      "sha256": "d95c963d0ca92383ae98a8fc3adee491c8b0fba7c20516cc2d3c437630cb39e7",
+      "role": "evidence guide"
+    },
+    {
+      "path": "baseline/baseline-extra-adapters.rs",
+      "bytes": 1734,
+      "sha256": "a660b9079092510387eabd5b14762d55351db3e0cc955bddf598192e9a1850c1",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/baseline-extra-build.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/baseline-extra-build.log",
+      "bytes": 212,
+      "sha256": "92d0fc00300e7688aa7540258500efe950c178af718809e52dc42f2595d45035",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/diagnostic-build.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/diagnostic-build.log",
+      "bytes": 213,
+      "sha256": "569d6be028fc9941d985bd51b68c50979d4047108c824e4553e1e15e8e96bd2c",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/runner-gate-baseline.json",
+      "bytes": 668,
+      "sha256": "619966af842e812e16da9f74bbfa7ee0a51eafe1bf78e3f88c9a0f2ca8bff348",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/runner-regressions-on-submitted.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/runner-regressions-on-submitted.log",
+      "bytes": 24389,
+      "sha256": "cb158af2c79b0fde5b2bcade68a491ad5f7e09828c7df7509c96048674dc753a",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/worker-fault-baseline-extra.json",
+      "bytes": 617,
+      "sha256": "1b99ba18751f217a7635922e3fcabdf094edb38ec2a716ac0a709b831af33c81",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "baseline/worker-fault-baseline.json",
+      "bytes": 629,
+      "sha256": "79bef196a46f390f4bf50c6ccaad454121ab142a03b7d05538e7dac8ef960da8",
+      "role": "baseline reproduction on 9b202c0"
+    },
+    {
+      "path": "final/runner-console.log",
+      "bytes": 1388,
+      "sha256": "1e0dcdfe70eaf1c8f0ee825c5c528b08dd557fc5771010d47aacd44925f6b59d",
+      "role": "corrected-proof receipt"
+    },
+    {
+      "path": "final/runner-regressions.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "corrected-proof receipt"
+    },
+    {
+      "path": "final/runner-regressions.log",
+      "bytes": 1527,
+      "sha256": "2321a7446f7d7dbc11d55d5486352d16a01c395d6c856754e4dee75bbcdc660a",
+      "role": "corrected-proof receipt"
+    },
+    {
+      "path": "final/runner/build.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/build.log",
+      "bytes": 212,
+      "sha256": "5f6d6d31c4c1b4c150816555bb5342cf085bd84ba546057093f4760b853b3d68",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-1.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-1.json",
+      "bytes": 2884,
+      "sha256": "1747c53fe1863190a34fdfa6ed8342f8b610201528bea93e43b54a661b73251a",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-1.stderr.log",
+      "bytes": 777,
+      "sha256": "d9c1ff8bd2c237e7c1d7bd0084fb5717c7e2776b638086ed8adc4e84fa302d22",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-2.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-2.json",
+      "bytes": 2821,
+      "sha256": "f3c28e0e6866e5033d571377becaee9c4800a346eb23a6eb97d884e994496e4c",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-2.stderr.log",
+      "bytes": 777,
+      "sha256": "897bdc0052fedc3a2393bd344a6c2e048ea1a376884e4c3f39a1cee5de2f8adb",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-3.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-3.json",
+      "bytes": 2897,
+      "sha256": "108e96de384879ddba7d4c4691879e1a6ba3b5f8d8bce003557b5bbbdee34f08",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-100-3.stderr.log",
+      "bytes": 777,
+      "sha256": "eba9617a246fea3e846366c9aec43193b24168a7fd8463de11130d7d8971c298",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-1.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-1.json",
+      "bytes": 2925,
+      "sha256": "8cb7a82d29058f0585f899020fcbc7f4889d273f9b141c1f5175ad15f91532ee",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-1.stderr.log",
+      "bytes": 777,
+      "sha256": "5e6764368a452b756c1bc32cafed5284ac01075b652f8e9e01c43daa2eba8cf6",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-2.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-2.json",
+      "bytes": 3083,
+      "sha256": "dad17b73d28dea3f9a3aef9240c5e2021100f2320bcdfd87bb8b71e4241d195a",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-2.stderr.log",
+      "bytes": 777,
+      "sha256": "d100c7b5694a2c185d0bf3d64548d5b949c66a52178621173a4bedda31f6c709",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-3.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-3.json",
+      "bytes": 2868,
+      "sha256": "1056a040cf60b37114bedd3faad85e6db9999285edd3954105dd817b9df753a2",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-1000-3.stderr.log",
+      "bytes": 777,
+      "sha256": "4e77268eb5bfc95abebf4a3aa2ad47a2d7bd98ae883e6e2d1daf379556aba427",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-1.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-1.json",
+      "bytes": 3038,
+      "sha256": "a644af7d730ad8eafb517f2e4a39a749177d3286aa1b4e7be51e741df86f169e",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-1.stderr.log",
+      "bytes": 777,
+      "sha256": "337dd87016071f5efb31cc43d02fb8e3842bf26d8d0a8ddf5b8401ea64c9a6e4",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-2.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-2.json",
+      "bytes": 3037,
+      "sha256": "8ba88f44d35da7f9d642589c0778b4212e3e01ba35abe5d506a87a0279b439cc",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-2.stderr.log",
+      "bytes": 777,
+      "sha256": "56162e00fd099f3ca8361b7e10250e5f347a188afd113d8a22b47c04bcc294c3",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-3.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-3.json",
+      "bytes": 2967,
+      "sha256": "8983eef2629b2f73552ed1702764d586f50d106abbfac05d05b184dc654d38da",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-10000-3.stderr.log",
+      "bytes": 777,
+      "sha256": "35410daba231d9b767b2954254e1045942d9a286dc528edd5fca0a20c1a06ec5",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/index-corpora.json",
+      "bytes": 399,
+      "sha256": "916c6752b72261664f6f0dbe217c9015746c93ad1681761c514cdb0134f63565",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/measure-extract.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/measure-extract.json",
+      "bytes": 4038,
+      "sha256": "96bfd9d8f2c5261e0f26da614eabb1e5d5dad465af82ac611ae1e05493fafbb6",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/measure-extract.stderr.log",
+      "bytes": 777,
+      "sha256": "754cb37dfab0aeb3eedd40336af4e837e55bc256473544038464f51a6bc6d639",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/runtime.json",
+      "bytes": 591,
+      "sha256": "32b4272919855484596701ef4debb6d1857aab0dbf3b1a8972b7fcfdd1012500",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/suite.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/suite.json",
+      "bytes": 24607,
+      "sha256": "e087ee046531a846008e0980a3e56eedb98d5eb2eda8505f4e1dd0ad67d78b42",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/suite.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/runner/summary.json",
+      "bytes": 3304,
+      "sha256": "812cfb2890580f0a475dc41726f619f59a9b2a16f1c715a2e172dbfdbfd3944f",
+      "role": "replacement corrected run (not original bytes)"
+    },
+    {
+      "path": "final/worker-fault-final.json",
+      "bytes": 1662,
+      "sha256": "6ec293db9989b22f84f7bb70c0808c486311367f084d53b90a26bbd9468016a7",
+      "role": "corrected-proof receipt"
+    },
+    {
+      "path": "p54_worker_proof.rs",
+      "bytes": 94535,
+      "sha256": "f3bfd6200fdcf147c0410ac81b7146d5cc60e3569f8d8d8fad4d0fc8b5f5f295",
+      "role": "corrected proof source"
+    },
+    {
+      "path": "run-phase2.py",
+      "bytes": 15855,
+      "sha256": "2eade88e64b5e268ea989fa350bce353b0dbc3b2c81217dc825f5809a07f5108",
+      "role": "corrected fail-closed runner"
+    },
+    {
+      "path": "test_run_phase2.py",
+      "bytes": 10088,
+      "sha256": "f963834191b4701cc140d1d0bab65882527820370c23ff41041614b878c3f3f5",
+      "role": "runner regressions"
+    },
+    {
+      "path": "worker-fault-driver.py",
+      "bytes": 1841,
+      "sha256": "ab885ed9707a381ced67721c16817aa0ad66285eb72aafe3a60c52bddd94ee27",
+      "role": "fault driver"
+    }
+  ],
+  "originalDirectory": {
+    "root": "docs/evidence/p54-02-worker-proof-2026-10-16",
+    "members": 42,
+    "present": 30,
+    "missing": [
+      "final/build.log",
+      "final/index-100-1.stderr.log",
+      "final/index-100-2.stderr.log",
+      "final/index-100-3.stderr.log",
+      "final/index-1000-1.stderr.log",
+      "final/index-1000-2.stderr.log",
+      "final/index-1000-3.stderr.log",
+      "final/index-10000-1.stderr.log",
+      "final/index-10000-2.stderr.log",
+      "final/index-10000-3.stderr.log",
+      "final/measure-extract.stderr.log",
+      "final/suite.stderr.log"
+    ],
+    "missingDisposition": "ignored by the root *.log rule, never committed, local copies deleted with scratch; not recoverable; replacement run is final/runner/"
+  }
+}

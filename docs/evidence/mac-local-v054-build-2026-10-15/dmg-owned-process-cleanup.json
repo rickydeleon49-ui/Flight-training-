@@ -1,0 +1,12 @@
+[
+  {
+    "pid": 89706,
+    "command": "/System/Library/PrivateFrameworks/DiskImages.framework/Resources/diskimages-helper -uuid E25FB86E-9E3F-4E55-B9A6-30EE224F2D96 -post-exec 4",
+    "signal": "SIGKILL; owned child did not respond to SIGTERM"
+  },
+  {
+    "pid": 89703,
+    "command": "hdiutil create -srcfolder /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app -volname Her Flight Deck -fs HFS+ -fsargs -c c=64,a=16,e=16 -format UDRW /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/rw.89682.Her Flight Deck_0.5.4_aarch64.dmg",
+    "signal": "SIGKILL; owned child did not respond to SIGTERM"
+  }
+]

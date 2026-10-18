@@ -1,0 +1,50 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/logic/currentSchemaVerification.test.ts src/data/skillEvidenceUpgrade.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-m4-slice1
+
+(node:74950) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:74951) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/logic/currentSchemaVerification.test.ts (8 tests | 1 failed) 901ms
+     × pins migrations 1–14 with the registered descriptions and SQLx SHA-384 checksums of their exact bytes 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/logic/currentSchemaVerification.test.ts > the schema-14 helper contract is the registered source > pins migrations 1–14 with the registered descriptions and SQLx SHA-384 checksums of their exact bytes
+AssertionError: expected [ [ 1, 'initial_schema' ], …(13) ] to deeply equal [ [ 1, 'initial_schema' ], …(14) ]
+
+- Expected
++ Received
+
+@@ -53,10 +53,6 @@
+    ],
+    [
+      14,
+      "skills_evidence",
+    ],
+-   [
+-     15,
+-     "document_navigation",
+-   ],
+  ]
+
+ ❯ src/logic/currentSchemaVerification.test.ts:198:77
+    196|   it("pins migrations 1–14 with the registered descriptions and SQLx S…
+    197|     expect(helper.PINNED_SOURCE).toMatchObject({ commit: "8a260c0b32bc…
+    198|     expect(helper.PINNED_MIGRATIONS.map((m) => [m.version, m.descripti…
+       |                                                                             ^
+    199|     for (const m of MIGRATIONS) {
+    200|       const pinned = helper.PINNED_MIGRATIONS.find((p) => p.version ==…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 13 passed (14)
+   Start at  15:28:07
+   Duration  1.13s (transform 341ms, setup 0ms, import 410ms, tests 1.21s, environment 0ms)
+

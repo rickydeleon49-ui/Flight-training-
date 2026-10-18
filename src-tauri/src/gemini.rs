@@ -41,6 +41,99 @@ const MODEL: &str = "gemini-3.5-flash";
 /// support status is checked before each release exactly like `MODEL`.
 const FALLBACK_MODEL: &str = "gemini-3.5-flash-lite";
 
+/// The more capable model she can choose in Settings instead of `MODEL`.
+///
+/// Google offers it only to keys with billing turned on, and each document
+/// costs noticeably more, so it is never the default and is only used once she
+/// has chosen it. Pinned and checked against the official model documentation
+/// before release, exactly like `MODEL`.
+const CAPABLE_MODEL: &str = "gemini-4-argon";
+
+/// Her model choice, kept beside the key in the application data folder.
+///
+/// Like the key it is never part of a backup: `allowed_archive_path` admits
+/// only the database and `documents/`, so no archive carries or plants it.
+const MODEL_CHOICE_FILE: &str = "gemini-model";
+/// Where a partly written choice waits before it replaces the real one.
+const MODEL_CHOICE_WRITING: &str = "gemini-model.writing";
+
+/// Which Gemini model her documents go to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ModelChoice {
+    /// `MODEL`: fast, inexpensive and available on Google's free tier.
+    Standard,
+    /// `CAPABLE_MODEL`: slower and costlier, for long or complex material.
+    MostCapable,
+}
+
+impl ModelChoice {
+    fn as_str(self) -> &'static str {
+        match self {
+            ModelChoice::Standard => "standard",
+            ModelChoice::MostCapable => "most-capable",
+        }
+    }
+
+    fn parse(value: &str) -> Option<Self> {
+        match value.trim() {
+            "standard" => Some(ModelChoice::Standard),
+            "most-capable" => Some(ModelChoice::MostCapable),
+            _ => None,
+        }
+    }
+
+    /// The model asked first.
+    fn primary(self) -> &'static str {
+        match self {
+            ModelChoice::Standard => MODEL,
+            ModelChoice::MostCapable => CAPABLE_MODEL,
+        }
+    }
+
+    /// The model asked once when the primary stays busy or is unavailable.
+    fn fallback(self) -> &'static str {
+        match self {
+            ModelChoice::Standard => FALLBACK_MODEL,
+            ModelChoice::MostCapable => MODEL,
+        }
+    }
+
+    /// What she is told when the request moves to the fallback.
+    fn fallback_notice(self) -> &'static str {
+        match self {
+            ModelChoice::Standard => "Trying the backup Gemini model…",
+            ModelChoice::MostCapable => {
+                "Gemini 4 Argon is not answering right now, so trying the standard Gemini model…"
+            }
+        }
+    }
+}
+
+/// Her saved choice. Anything missing, unreadable or unrecognised means the
+/// standard model, so a damaged preference never sends a document to the
+/// costlier one.
+fn load_choice(root: &Path) -> ModelChoice {
+    std::fs::read_to_string(root.join(MODEL_CHOICE_FILE))
+        .ok()
+        .and_then(|value| ModelChoice::parse(&value))
+        .unwrap_or(ModelChoice::Standard)
+}
+
+/// Save her choice, replacing any previous one.
+fn save_choice(root: &Path, choice: ModelChoice) -> Result<(), String> {
+    std::fs::create_dir_all(root)
+        .map_err(|e| format!("Could not create the application data directory: {e}"))?;
+    // Write beside the target and rename over it, so an interrupted write
+    // leaves the previous choice rather than an unreadable one.
+    let writing = root.join(MODEL_CHOICE_WRITING);
+    std::fs::write(&writing, choice.as_str())
+        .map_err(|e| format!("Could not save the Gemini model choice: {e}"))?;
+    std::fs::rename(&writing, root.join(MODEL_CHOICE_FILE)).map_err(|e| {
+        let _ = std::fs::remove_file(&writing);
+        format!("Could not save the Gemini model choice: {e}")
+    })
+}
+
 /* ------------------------------------------------------------------ */
 /* What Google will accept                                             */
 /* ------------------------------------------------------------------ */
@@ -243,7 +336,20 @@ static LEGACY_CHECKED: AtomicBool = AtomicBool::new(false);
 #[serde(rename_all = "camelCase")]
 pub struct GeminiStatus {
     configured: bool,
+    /// The model her documents are sent to first, given her choice.
     model: &'static str,
+    /// "standard" or "most-capable".
+    choice: &'static str,
+}
+
+impl GeminiStatus {
+    fn new(configured: bool, choice: ModelChoice) -> Self {
+        GeminiStatus {
+            configured,
+            model: choice.primary(),
+            choice: choice.as_str(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -369,14 +475,27 @@ fn compact_error(raw: &str) -> String {
 
 #[tauri::command]
 pub fn gemini_status(app: AppHandle) -> GeminiStatus {
-    GeminiStatus {
-        configured: app_root(&app)
-            .and_then(|root| current_key(&root))
-            .ok()
-            .flatten()
-            .is_some(),
-        model: MODEL,
-    }
+    let root = app_root(&app).ok();
+    let configured = root
+        .as_deref()
+        .map(|root| current_key(root).ok().flatten().is_some())
+        .unwrap_or(false);
+    let choice = root
+        .as_deref()
+        .map(load_choice)
+        .unwrap_or(ModelChoice::Standard);
+    GeminiStatus::new(configured, choice)
+}
+
+/// Choose which model her documents go to. The key is untouched.
+#[tauri::command]
+pub fn set_gemini_model(app: AppHandle, choice: String) -> Result<GeminiStatus, String> {
+    let choice = ModelChoice::parse(&choice)
+        .ok_or_else(|| "That is not one of the Gemini models this version offers.".to_string())?;
+    let root = app_root(&app)?;
+    save_choice(&root, choice)?;
+    let configured = current_key(&root).ok().flatten().is_some();
+    Ok(GeminiStatus::new(configured, choice))
 }
 
 #[tauri::command]
@@ -386,26 +505,22 @@ pub async fn configure_gemini(app: AppHandle, api_key: String) -> Result<GeminiS
         return Err("Paste the complete Gemini API key from Google AI Studio.".to_string());
     }
     verify_key(trimmed).await?;
-    secrets::save_key(&app_root(&app)?, trimmed)?;
-    Ok(GeminiStatus {
-        configured: true,
-        model: MODEL,
-    })
+    let root = app_root(&app)?;
+    secrets::save_key(&root, trimmed)?;
+    Ok(GeminiStatus::new(true, load_choice(&root)))
 }
 
 #[tauri::command]
 pub fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
-    secrets::forget_key(&app_root(&app)?)?;
+    let root = app_root(&app)?;
+    secrets::forget_key(&root)?;
     // Clear anything still sitting in the old credential manager as well, so
     // disconnecting really does leave no key behind. Best effort: on macOS an
     // updated build is usually refused access to its predecessor's item.
     if let Ok(entry) = Entry::new(LEGACY_SERVICE, LEGACY_ACCOUNT) {
         let _ = entry.delete_credential();
     }
-    Ok(GeminiStatus {
-        configured: false,
-        model: MODEL,
-    })
+    Ok(GeminiStatus::new(false, load_choice(&root)))
 }
 
 fn mime_type(file_name: &str) -> Result<&'static str, String> {
@@ -477,6 +592,8 @@ pub async fn generate_study_aid(
          Use only facts supported by the source. Do not invent regulations, procedures, numbers, or page references. \
          Return JSON only with: title (string), summary (string), sections (array of objects with heading and body), \
          flashcards (10-20 objects with front, back, and sourcePage as a page number or null), and sourceNotes (string). \
+         A section body may use simple Markdown: \"- \" or \"1. \" lists, **bold**, *italic*, \"> \" quotes and pipe tables \
+         with a header row. Do not use links, images or HTML. \
          Keep explanations clear for a student pilot. When the source is ambiguous or may be outdated, say so. \
          This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, \
          flight-school, and instructor guidance.";
@@ -523,7 +640,8 @@ pub async fn generate_study_aid(
             "maxOutputTokens": 8192
         }
     });
-    let (raw, model_used) = generate_with_retries(&app, &api_key, &body).await?;
+    let choice = load_choice(&app_root(&app)?);
+    let (raw, model_used) = generate_with_retries(&app, &api_key, &body, choice).await?;
 
     let envelope: Value = serde_json::from_str(&raw)
         .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
@@ -664,7 +782,8 @@ pub async fn generate_practice_test(
             "maxOutputTokens": 8192
         }
     });
-    let (raw, model_used) = generate_with_retries(&app, &api_key, &body).await?;
+    let choice = load_choice(&app_root(&app)?);
+    let (raw, model_used) = generate_with_retries(&app, &api_key, &body, choice).await?;
     let text = extract_text(&raw)?;
     let result: GeneratedPracticeTest = serde_json::from_str(&text).map_err(|_| {
         "Gemini's practice test was incomplete. Try generating it again.".to_string()
@@ -717,21 +836,27 @@ async fn generate_with_retries(
     app: &AppHandle,
     api_key: &str,
     body: &Value,
+    choice: ModelChoice,
 ) -> Result<(String, &'static str), String> {
     let http = client(GENERATE_TIMEOUT)?;
+    let primary = choice.primary();
+    let fallback = choice.fallback();
     let mut primary_rate_limited = false;
 
     for attempt in 0..MAX_ATTEMPTS {
-        match generate_once(&http, api_key, MODEL, body).await? {
-            Attempt::Answered(raw) => return Ok((raw, MODEL)),
+        match generate_once(&http, api_key, primary, body).await? {
+            Attempt::Answered(raw) => return Ok((raw, primary)),
             Attempt::Refused { status, body } => {
                 primary_rate_limited |= status == 429;
+                if moves_straight_to_fallback(choice, status) {
+                    break;
+                }
                 if !is_retryable(status) {
                     return Err(describe_refusal(
                         RefusalContext::Generation,
                         status,
                         &body,
-                        MODEL,
+                        primary,
                     ));
                 }
                 if attempt + 1 < MAX_ATTEMPTS {
@@ -744,15 +869,15 @@ async fn generate_with_retries(
     }
 
     // A model-specific rate or capacity limit may spare the backup model.
-    say(app, "Trying the backup Gemini model…".to_string());
-    match generate_once(&http, api_key, FALLBACK_MODEL, body).await? {
-        Attempt::Answered(raw) => return Ok((raw, FALLBACK_MODEL)),
+    say(app, choice.fallback_notice().to_string());
+    match generate_once(&http, api_key, fallback, body).await? {
+        Attempt::Answered(raw) => return Ok((raw, fallback)),
         Attempt::Refused { status, body } if !is_retryable(status) => {
             return Err(describe_refusal(
                 RefusalContext::Generation,
                 status,
                 &body,
-                FALLBACK_MODEL,
+                fallback,
             ));
         }
         Attempt::Refused { status: 429, .. } => return Err(rate_limit_message()),
@@ -764,6 +889,17 @@ async fn generate_with_retries(
     } else {
         Err(busy_message())
     }
+}
+
+/// Whether a refusal from the chosen model should skip the waiting and go
+/// straight to the fallback.
+///
+/// Gemini 4 Argon answers a key without billing — or one that has reached its
+/// paid limit — with 429. Waiting that out cannot help, and the standard model
+/// can usually still answer, so she is not kept waiting through every pause
+/// first. The standard model keeps its full patience.
+fn moves_straight_to_fallback(choice: ModelChoice, status: u16) -> bool {
+    choice == ModelChoice::MostCapable && status == 429
 }
 
 /// What the interface says during one of the pauses.
@@ -865,6 +1001,9 @@ fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &st
         },
         401 => {
             "Google did not accept the authentication credentials. Check your API key in Google AI Studio and try again.".to_string()
+        }
+        403 if model == CAPABLE_MODEL => {
+            "Google did not allow this key to use Gemini 4 Argon. It needs a key with billing turned on. Turn on billing for this key in Google AI Studio, or choose the standard model in Settings.".to_string()
         }
         403 => {
             "Google denied project or API access. Check API key restrictions, API enablement, permissions, or project/billing configuration in Google AI Studio or Google Cloud Console.".to_string()
@@ -1243,5 +1382,108 @@ mod tests {
             extract_text(r#"{"candidates":[{"content":{"parts":[{"text":"hello"}]}}]}"#).unwrap(),
             "hello"
         );
+    }
+
+    /// A private directory to play the part of her application data folder.
+    fn choice_scratch(label: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "hfd-gemini-choice-{label}-{}-{}",
+            std::process::id(),
+            jitter_millis()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn each_choice_names_its_models_and_round_trips_its_label() {
+        assert_eq!(ModelChoice::Standard.primary(), MODEL);
+        assert_eq!(ModelChoice::Standard.fallback(), FALLBACK_MODEL);
+        assert_eq!(ModelChoice::MostCapable.primary(), CAPABLE_MODEL);
+        // When Argon cannot answer, her request falls back to the standard
+        // model rather than straight to the lightest one.
+        assert_eq!(ModelChoice::MostCapable.fallback(), MODEL);
+        for choice in [ModelChoice::Standard, ModelChoice::MostCapable] {
+            assert_eq!(ModelChoice::parse(choice.as_str()), Some(choice));
+        }
+        assert_eq!(
+            ModelChoice::parse(" most-capable\n"),
+            Some(ModelChoice::MostCapable)
+        );
+        assert_eq!(ModelChoice::parse("gemini-4-argon"), None);
+        assert_eq!(ModelChoice::parse(""), None);
+    }
+
+    #[test]
+    fn a_missing_damaged_or_unknown_choice_means_the_standard_model() {
+        let root = choice_scratch("default");
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        std::fs::write(root.join(MODEL_CHOICE_FILE), "pro-please").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        std::fs::write(root.join(MODEL_CHOICE_FILE), [0xff, 0xfe, 0x00]).unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_saved_choice_survives_and_can_be_changed_back() {
+        let root = choice_scratch("save");
+        save_choice(&root, ModelChoice::MostCapable).unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::MostCapable);
+        assert!(!root.join(MODEL_CHOICE_WRITING).exists());
+        save_choice(&root, ModelChoice::Standard).unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        // The key file is a different file and is never touched.
+        assert_ne!(MODEL_CHOICE_FILE, crate::secrets::KEY_FILE);
+        assert!(!root.join(crate::secrets::KEY_FILE).exists());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn status_reports_the_model_her_choice_sends_documents_to() {
+        let standard = GeminiStatus::new(true, ModelChoice::Standard);
+        assert_eq!((standard.model, standard.choice), (MODEL, "standard"));
+        let capable = GeminiStatus::new(false, ModelChoice::MostCapable);
+        assert_eq!(
+            (capable.model, capable.choice),
+            (CAPABLE_MODEL, "most-capable")
+        );
+    }
+
+    #[test]
+    fn only_argons_rate_limit_skips_straight_to_the_standard_model() {
+        assert!(moves_straight_to_fallback(ModelChoice::MostCapable, 429));
+        for status in [400, 403, 404, 500, 502, 503, 504] {
+            assert!(!moves_straight_to_fallback(
+                ModelChoice::MostCapable,
+                status
+            ));
+        }
+        for status in [429, 503] {
+            assert!(!moves_straight_to_fallback(ModelChoice::Standard, status));
+        }
+    }
+
+    #[test]
+    fn a_403_from_argon_explains_billing_and_the_standard_choice() {
+        let message = describe_refusal(RefusalContext::Generation, 403, "{}", CAPABLE_MODEL);
+        assert!(message.contains("Gemini 4 Argon"));
+        assert!(message.contains("billing"));
+        assert!(message.contains("standard model in Settings"));
+        let standard = describe_refusal(RefusalContext::Generation, 403, "{}", MODEL);
+        assert!(!standard.contains("Argon"));
+        assert!(standard.contains("billing configuration"));
+    }
+
+    #[test]
+    fn the_fallback_notices_name_what_is_happening() {
+        assert_eq!(
+            ModelChoice::Standard.fallback_notice(),
+            "Trying the backup Gemini model…"
+        );
+        assert!(ModelChoice::MostCapable
+            .fallback_notice()
+            .contains("trying the standard Gemini model"));
     }
 }

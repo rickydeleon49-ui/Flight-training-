@@ -1,0 +1,7 @@
+captured step: engine install for the Node 26 reuse lane
+cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m4-final-node26
+command: /opt/homebrew/opt/node@22/bin/npm ci --prefix docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine --no-audit --no-fund --ignore-scripts
+npm: 10.9.9 (node v22.23.3)
+
+added 3 packages in 362ms
+exit: 0

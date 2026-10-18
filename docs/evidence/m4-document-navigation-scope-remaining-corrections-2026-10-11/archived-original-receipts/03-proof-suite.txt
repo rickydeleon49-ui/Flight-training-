@@ -1,0 +1,20 @@
+=== M4 Disposable Proof Execution Receipt ===
+Timestamp: 2026-10-11T17:15:14.832Z
+Command: node --test docs/evidence/m4-document-navigation-eval-2026-10-11/proof/proof.test.mjs
+Exit Code: 0
+--- Standard Output ---
+✔ M4-P1: Physical Page Indexing & Clamping (0.522708ms)
+✔ M4-P2: Printed Page Labels vs Physical Page Indexes (0.164209ms)
+✔ M4-P3: Split-Lineage Page Coordinate Translation (0.098833ms)
+✔ M4-P4: Content Replacement & Hash Drift Detection (0.266417ms)
+✔ M4-P5: Native Jump Fallback Messaging (0.066916ms)
+✔ M4-P6: WebKit & Browser Compatibility Constraints Audit (0.040709ms)
+✔ M4-P7: Synthetic PDF Fixtures Structural Integrity (0.363833ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.100708

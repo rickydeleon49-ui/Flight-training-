@@ -1,0 +1,220 @@
+{
+  "schema": "hfd-local-v054-qa-followup-receipts/1",
+  "implementer": "Claude (claude-opus-5-5)",
+  "checkout": {
+    "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+    "branch": "codex/local-v054-build-check",
+    "head": "93a88df0523f047fc56a29a9b13a7ab4d4478910",
+    "originMain": "04d1c67",
+    "startingState": "clean tree at branch head; no process using the checkout; last modified hours earlier; build evidence SHA256SUMS all OK"
+  },
+  "runtime": {
+    "node": "v22.23.3",
+    "platform": "darwin-arm64",
+    "env": {
+      "PATH": "/opt/homebrew/opt/node@22/bin:/Users/rickymac/.cargo/bin:$PATH",
+      "SDKROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk"
+    }
+  },
+  "qa01": {
+    "reproducedBefore": {
+      "argv": [
+        "node",
+        "--test",
+        "scripts/mac-schema14-profile-snapshot.test.mjs"
+      ],
+      "exit": 1,
+      "counts": [
+        "# tests 23",
+        "# pass 22",
+        "# fail 1",
+        "# skipped 0"
+      ],
+      "failure": "src-tauri/target: unexpected top-level entries: aarch64-apple-darwin",
+      "output": "qa01-helper-before.txt"
+    },
+    "newTestsBeforeFix": {
+      "argv": [
+        "node",
+        "--test",
+        "--test-name-pattern=build-output|source walker|Apple Silicon|walker",
+        "scripts/mac-schema14-profile-snapshot.test.mjs"
+      ],
+      "exit": 1,
+      "note": "new tests and 4 new walker scenarios written first; they failed on the unchanged recognizer",
+      "output": "qa01-new-tests-before-fix.txt"
+    },
+    "realBuildTree": "src-tauri/target/aarch64-apple-darwin = {CACHEDIR.TAG (1 link, 177 bytes, Cargo signature), release/}; left untouched",
+    "mutations": {
+      "archived": false,
+      "note": "run in place, file restored byte-identical (cmp); results read from console",
+      "results": {
+        "Q1 any directory accepted as a target": "caught: walker test and target-shape test (unknown target name accepted)",
+        "Q2 target folder's own tag unchecked": "caught: target-shape test (missing target cache tag accepted)",
+        "Q3 stray entries inside the target folder allowed": "caught: target-shape test",
+        "Q4 symlinked profile followed": "caught: target-shape test (symlinked target profile accepted)"
+      }
+    }
+  },
+  "qa02": {
+    "reproducedBefore": {
+      "argv": [
+        "python3",
+        "<RUNBOOK §7 recipe extracted from 93a88df>"
+      ],
+      "env": {
+        "HFD_SCHEMA14_SOURCE_COMMIT": "fee78699dde736b016747c6a2ec3513a9677a556"
+      },
+      "exit": 1,
+      "failure": "AssertionError at the raw package-lock.json equality (line 29); no worktree created",
+      "output": "qa02-recipe-before.stderr.txt",
+      "lockDiff": "only top-level version and packages[\"\"].version differ (0.5.3 -> 0.5.4); identical after removing those two fields"
+    },
+    "policy": "bounded normalization (option 2): only the two synchronized application-version fields may differ; candidate must be byte-identical to the baseline lock in npm format with that version substituted; identical locks pass without the function; decided before any worktree is created",
+    "mutations": {
+      "archived": false,
+      "note": "run in place, file restored byte-identical (cmp)",
+      "results": {
+        "L1 root versions not required to agree": "caught by the named-reason assertion (still refused, less precisely)",
+        "L2 formatting ignored": "caught: reformatted lock accepted",
+        "L3 whole root package entry ignored": "caught: direct dependency added was accepted"
+      }
+    }
+  },
+  "checkOnlyCommits": {
+    "note": "local only, made in a temporary detached worktree at 93a88df that was removed afterwards; never pushed; the branch is unchanged",
+    "positive": {
+      "sha": "c2c33c8153d67f65da5f4ca1a8833f100d68e4c7",
+      "content": "exactly the 8 changed files, byte-identical to the working tree"
+    },
+    "negativeIntegrity": {
+      "sha": "5c61b64ca1ca6e29d1d67b01fa08b92290dbf122",
+      "parent": "c2c33c8153d67f65da5f4ca1a8833f100d68e4c7",
+      "change": "one package integrity in package-lock.json"
+    },
+    "negativeRootVersion": {
+      "sha": "2874ce72ee6f811cc1a43a69fd9ae3b2110e98b9",
+      "parent": "c2c33c8153d67f65da5f4ca1a8833f100d68e4c7",
+      "change": "top-level version 0.5.9 only"
+    }
+  },
+  "replays": [
+    {
+      "commit": "c2c33c8153d67f65da5f4ca1a8833f100d68e4c7",
+      "recipe": "RUNBOOK §7 extracted from that commit",
+      "exit": 0,
+      "result": "PASS; 12/12 stages; dependencyLock versionOnly 0.5.3->0.5.4; walker 15 cases incl. Apple Silicon; cleanup exit 0, worktreeRemoved true; sourceCheckoutStatusUnchanged true",
+      "receipt": "replay-check-commit.json"
+    },
+    {
+      "commit": "5c61b64ca1ca6e29d1d67b01fa08b92290dbf122",
+      "exit": 1,
+      "result": "refused before any worktree: candidate lock differs from the baseline in more than the application version; worktree count 11 -> 11",
+      "output": "replay-negative-integrity.stderr.txt"
+    },
+    {
+      "commit": "2874ce72ee6f811cc1a43a69fd9ae3b2110e98b9",
+      "exit": 1,
+      "result": "refused before any worktree: candidate lock root versions disagree (0.5.9 vs packages[\"\"] 0.5.4); worktree count 11 -> 11",
+      "output": "replay-negative-root-version.stderr.txt"
+    },
+    {
+      "commit": "fee78699dde736b016747c6a2ec3513a9677a556",
+      "exit": 1,
+      "result": "refused before any worktree: its proof predates QA-02 and has no compareDependencyLock export (documented)",
+      "output": "replay-fee7869.stderr.txt"
+    },
+    {
+      "commit": "f2a7090190c74fdc3779785ae3684049d16b2a0e",
+      "exit": 0,
+      "result": "PASS; identical lock; 12/12 stages; cleanup exit 0; sourceCheckoutStatusUnchanged true",
+      "receipt": "replay-f2a7090.json"
+    }
+  ],
+  "finalChecks": [
+    {
+      "argv": [
+        "node",
+        "--test",
+        "scripts/mac-schema14-profile-snapshot.test.mjs"
+      ],
+      "exit": 0,
+      "counts": [
+        "# tests 26",
+        "# pass 26",
+        "# fail 0",
+        "# skipped 0"
+      ],
+      "note": "includes this checkout's real aarch64-apple-darwin build output",
+      "output": "helper-tests-final.txt"
+    },
+    {
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--no-cache",
+        "src/logic/currentSchemaVerification.test.ts",
+        "src/data/skillEvidenceUpgrade.test.ts",
+        "src/data/skillEvidenceValidationParity.test.ts",
+        "src/data/migrationSafety.test.ts",
+        "src/data/migrations.test.ts"
+      ],
+      "exit": 0,
+      "counts": [
+        "Test Files  5 passed (5)",
+        "Tests  117 passed (117)"
+      ],
+      "output": "vitest-focused.txt"
+    },
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "--maxWorkers=2"
+      ],
+      "exit": 0,
+      "counts": [
+        "Test Files  139 passed | 4 skipped (143)",
+        "Tests  3202 passed | 6 skipped (3208)"
+      ],
+      "note": "branch predates #169, so 3,202 as in the build report",
+      "output": "npm-test.txt"
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0,
+      "output": "typecheck.txt"
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "test:cargo-lock"
+      ],
+      "exit": 0,
+      "output": "cargo-lock.txt"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "notRun": "no app rebuild, desktop launch, install, hfdtest, profile access, provider call, signing or publication; no native Rust rerun (no Rust changed); the DMG stall was not investigated",
+  "preserved": [
+    "docs/evidence/mac-local-v054-build-2026-10-15/: no file edited. Its SHA256SUMS now verifies 33/36 on disk; the 3 others are ROADMAP.md, STATUS.md and docs/PROJECT_HANDOFF.md, which this follow-up updates as instructed. Their recorded hashes equal those files at 93a88df (checked with git show), so the frozen snapshot identity is intact.",
+    "native artifacts outside Git (untouched)",
+    "historical schema13 ceiling alarm, schema contract 8a260c0, baseline 16f9cf3 and PINNED_TREE digest, HEAD/index/allowlist gates, three restore-only receipt exclusions"
+  ]
+}

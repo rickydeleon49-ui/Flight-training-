@@ -1,0 +1,311 @@
+=== Rereview Diagnostics & Frozen Current Execution Receipt ===
+Timestamp: 2026-10-11T18:40:53.561Z
+Command 1: node --test diagnostics.test.mjs (in rereview pack)
+Exit Code: 1 (expected 1: 13 failed, 2 passed controls)
+Command 2: node --test frozen-current.test.mjs (in rereview pack)
+Exit Code: 0 (expected 0: 10 passed)
+
+--- Diagnostics Output (13 fail / 2 pass) ---
+✔ [control] validated physical index and complete nested parent range work (0.4365ms)
+✔ [control] explicit abort refuses obsolete opener success (0.108667ms)
+✖ [M4-R5] unsafe integer totals cannot validate a physical destination (0.355375ms)
+✖ [M4-R5] integer sourcePage without coordinate provenance remains unresolved (0.098166ms)
+✖ [M4-R5] explicit physical zero cannot become a resolved destination (0.076583ms)
+✖ [M4-R5] parent ranges cannot concatenate string coordinates (0.0475ms)
+✖ [M4-R5] parent range length must match child length (0.049917ms)
+✖ [M4-R5] root destination cannot exceed known root page count (0.04525ms)
+✖ [M4-R5] reverse translation includes the destination child identity (0.089583ms)
+✖ [M4-R6] same-hash revalidation cannot verify an out-of-bounds bookmark (0.111542ms)
+✖ [M4-R7] later missing-path request supersedes earlier pending opener (0.08575ms)
+✖ [M4-R7] failing another material cannot expose prior material requested page (0.090542ms)
+✖ [M4-R7] malformed destination is refused before invoking opener (0.0615ms)
+✖ [M4-R7] successful open exercises injected durable persistence (0.060125ms)
+✖ [M4-R8] custom parser cannot establish page-tree consistency (0.38475ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 2
+ℹ fail 13
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.598291
+
+✖ failing tests:
+
+test at diagnostics.test.mjs:17:1
+✖ [M4-R5] unsafe integer totals cannot validate a physical destination (0.355375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:18:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:20:1
+✖ [M4-R5] integer sourcePage without coordinate provenance remains unresolved (0.098166ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  42 !== null
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:21:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 42,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:23:1
+✖ [M4-R5] explicit physical zero cannot become a resolved destination (0.076583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:24:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:26:1
+✖ [M4-R5] parent ranges cannot concatenate string coordinates (0.0475ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:27:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:29:1
+✖ [M4-R5] parent range length must match child length (0.049917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:30:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:32:1
+✖ [M4-R5] root destination cannot exceed known root page count (0.04525ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:33:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:35:1
+✖ [M4-R5] reverse translation includes the destination child identity (0.089583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + undefined
+  - 'child'
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:36:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'child',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:38:1
+✖ [M4-R6] same-hash revalidation cannot verify an out-of-bounds bookmark (0.111542ms)
+  AssertionError [ERR_ASSERTION]: Expected "actual" to be strictly unequal to:
+
+  'verified'
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:41:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'verified',
+    expected: 'verified',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:43:1
+✖ [M4-R7] later missing-path request supersedes earlier pending opener (0.08575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:46:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:48:1
+✖ [M4-R7] failing another material cannot expose prior material requested page (0.090542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  42 !== null
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:51:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 42,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:53:1
+✖ [M4-R7] malformed destination is refused before invoking opener (0.0615ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:55:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:57:1
+✖ [M4-R7] successful open exercises injected durable persistence (0.060125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  0 !== 1
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:59:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at diagnostics.test.mjs:61:1
+✖ [M4-R8] custom parser cannot establish page-tree consistency (0.38475ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-viewer-evaluation/docs/evidence/m4-document-navigation-scope-rereview-2026-10-11/diagnostics.test.mjs:67:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+--- Frozen Current Output (10 pass) ---
+✔ control: valid bounded physical page and child-to-root translation (0.380125ms)
+✔ control: root page outside child range is rejected (0.045459ms)
+✔ M4-R2: NaN total page count is rejected (0.286334ms)
+✔ M4-R2: Infinity total page count is rejected (0.048083ms)
+✔ M4-R2: fractional total page count is rejected (0.043917ms)
+✔ M4-R2: NaN split page cannot produce a successful destination (0.049208ms)
+✔ M4-R2: string split page cannot produce a successful destination (0.0315ms)
+✔ M4-R2: unknown printed label cannot invent physical page one (0.128875ms)
+✔ M4-R2: numeric printed label without provenance remains unresolved (0.069125ms)
+✔ M4-R2: deleted root cannot be substituted by immediate parent using root coordinates (0.083334ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 84.293666

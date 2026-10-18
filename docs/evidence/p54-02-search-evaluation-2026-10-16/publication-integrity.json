@@ -1,0 +1,40 @@
+{
+  "codex/m4-lifecycle-corrections": {
+    "head": "35bd450c65151b464abb79b1d6a496ecec3bd196",
+    "trackedManifestMembersVerified": 19,
+    "productionInputsMatchSourceManifest": true,
+    "applicationSourceUnchangedFromGreenCIHead": "138b9253856ba289bcd15592d26ab86f0ce81cfd",
+    "publicationOnlyChangedPaths": [
+      "docs/.gitattributes",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/build.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/cargo-lock.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/fmt.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/focused-final.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/focused-first.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/frozen-final.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/full-frontend.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/helper.log",
+      "docs/evidence/m4-lifecycle-corrections-2026-10-16/hygiene.log"
+    ]
+  },
+  "codex/study-export-save-recovery": {
+    "head": "bb57c4bd463ee6f59fffa4a1eab1d3f126c0a2dc",
+    "trackedManifestMembersVerified": 25,
+    "productionInputsMatchSourceManifest": true,
+    "applicationSourceUnchangedFromGreenCIHead": "f0a298294edc5ae6a2e443d72f7f3036e9b5ffff",
+    "publicationOnlyChangedPaths": [
+      "docs/.gitattributes",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/build.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/clippy.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/fmt.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/focused-native.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/focused-ui-final.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/frontend.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/helper.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/hygiene.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/lock.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/native.log",
+      "docs/evidence/p54-04-save-recovery-2026-10-16/ui-before.log"
+    ]
+  }
+}

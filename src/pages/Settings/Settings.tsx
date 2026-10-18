@@ -17,10 +17,12 @@ import {
 import { restoreAirlineStarterPack } from "@/data/starter";
 import type { LastCompleteBackup } from "@/data/repositories/appRepository";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
+import { formatLongDate } from "@/lib/dates";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
   appVersion,
   backupErrorMessage,
+  backupLocalDay,
   createBackup,
   backupsAvailable,
   chooseCompleteBackup,
@@ -33,7 +35,7 @@ import {
   inspectCompleteBackup,
   listBackups,
   restartForRestore,
-  revealFolder,
+  openDataFolder,
   stageCompleteRestore,
   stageLocalRestore,
   type BackupInfo,
@@ -47,6 +49,7 @@ import {
   restoreWarning,
 } from "@/logic/dataSafety";
 import { trainingDuration } from "@/logic/keyDates";
+import { medicalDateConflict } from "@/logic/toolkit";
 import {
   canHandleFiles,
   checkLibrary,
@@ -63,10 +66,14 @@ import {
 import {
   configureGemini,
   disconnectGemini,
+  GEMINI_MODEL_CHOICES,
   geminiAvailable,
   geminiErrorMessage,
+  geminiModelName,
   getGeminiStatus,
   openGeminiKeyPage,
+  setGeminiModel,
+  type GeminiModelChoice,
   type GeminiStatus,
 } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
@@ -137,6 +144,7 @@ function MacNote({ children }: { children: ReactNode }) {
 
 export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
+  const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -317,6 +325,24 @@ export function Settings() {
       setGemini(status);
       setGeminiKey("");
       setGeminiNote("Gemini connected. Study tools are ready.");
+    } catch (error) {
+      setGeminiProblem(true);
+      setGeminiNote(geminiErrorMessage(error));
+    } finally {
+      setGeminiBusy(false);
+    }
+  };
+
+  const chooseGeminiModel = async (choice: GeminiModelChoice) => {
+    if (gemini?.choice === choice) return;
+    setGeminiBusy(true);
+    setGeminiProblem(false);
+    try {
+      const status = await setGeminiModel(choice);
+      setGemini(status);
+      setGeminiNote(
+        `New study aids will use ${geminiModelName(status.model)}. Saved study guides and flashcards are unchanged.`,
+      );
     } catch (error) {
       setGeminiProblem(true);
       setGeminiNote(geminiErrorMessage(error));
@@ -694,6 +720,14 @@ export function Settings() {
                   />
                 )}
               </Field>
+              {medicalConflict ? (
+                <p className="small" role="note" style={{ gridColumn: "1 / -1" }}>
+                  Your saved medical record “{medicalConflict.record.title}” in the Pilot Toolkit
+                  says it expires {formatLongDate(medicalConflict.record.expiresOn)}, which
+                  differs from the date saved here. Check your certificate, then choose the right
+                  date under Certificates in the Pilot Toolkit or correct it here.
+                </p>
+              ) : null}
             </div>
 
             <div className="row" style={{ marginTop: "var(--space-5)" }}>
@@ -1028,11 +1062,9 @@ export function Settings() {
                       size="small"
                       onClick={() => {
                         setFolderOpenError(null);
-                        revealFolder(dataPath).catch((error: unknown) => {
+                        openDataFolder().catch((error: unknown) => {
                           setFolderOpenError(
-                            error instanceof Error
-                              ? error.message
-                              : "That folder could not be opened.",
+                            backupErrorMessage(error, "That folder could not be opened."),
                           );
                         });
                       }}
@@ -1076,7 +1108,7 @@ export function Settings() {
                       <span className="small truncate">{describeBackup(backup.name)}</span>
                       <span className="row" style={{ gap: "var(--space-3)" }}>
                         <span className="tiny dim numeric">
-                          {backup.name.slice(0, 10)} · {formatBytes(backup.bytes)}
+                          {backupLocalDay(backup.name) ?? "Date unknown"} · {formatBytes(backup.bytes)}
                         </span>
                         {backup.restorable ? (
                           <Button
@@ -1156,7 +1188,9 @@ export function Settings() {
                   </span>
                   <div>
                     <p className="small strong">Ready to use</p>
-                    <p className="tiny dim">{gemini.model} · key saved on this computer</p>
+                    <p className="tiny dim">
+                      {geminiModelName(gemini.model)} · key saved on this computer
+                    </p>
                   </div>
                 </div>
               ) : geminiAvailable() ? (
@@ -1192,6 +1226,33 @@ export function Settings() {
                 <p className="tiny dim">Gemini setup is available in the desktop application.</p>
               )}
 
+              {gemini?.configured ? (
+                <fieldset className="gemini-model-choice stack stack--2">
+                  <legend className="field__label">Model for new study aids</legend>
+                  {(["standard", "most-capable"] as const).map((choice) => (
+                    <label key={choice} className="small">
+                      <input
+                        type="radio"
+                        name="gemini-model-choice"
+                        checked={gemini.choice === choice}
+                        disabled={geminiBusy}
+                        onChange={() => void chooseGeminiModel(choice)}
+                      />{" "}
+                      <span className="strong">{GEMINI_MODEL_CHOICES[choice].label}</span>
+                      <span className="tiny dim"> — {GEMINI_MODEL_CHOICES[choice].detail}</span>
+                    </label>
+                  ))}
+                  {gemini.choice === "most-capable" ? (
+                    <p className="tiny dim">
+                      If Google is busy, or this key has reached its limit for Gemini 4 Argon,
+                      Her Flight Deck tries Gemini Flash instead and shows which model made each
+                      study aid. If Google does not allow this key to use Argon, you will see a
+                      message asking you to turn on billing or choose Standard.
+                    </p>
+                  ) : null}
+                </fieldset>
+              ) : null}
+
               {geminiNote ? (
                 <p
                   className="small"
@@ -1212,10 +1273,10 @@ export function Settings() {
               <p className="tiny dim">
                 <span className="strong">If Gemini keeps saying it is busy:</span> a “503 —
                 high demand” is Google&rsquo;s capacity, not your key. Her Flight Deck already
-                waits, retries, and tries Flash-Lite before reporting it. If it happens often,
+                waits, retries, and tries a backup model before reporting it. If it happens often,
                 enabling billing for the same Google Cloud project moves the key to paid Tier 1,
-                which has higher rate limits. Billing does not change or upgrade the configured
-                model (<code>gemini-3.5-flash</code>), nor does it guarantee that a model will
+                which has higher rate limits. Billing alone does not change the model: choose
+                Gemini 4 Argon above if you want the more capable one. No model is guaranteed to
                 always have capacity, so you may still need to try again later.
               </p>
 
@@ -1260,7 +1321,7 @@ export function Settings() {
         title="Put this safety copy back?"
         message={
           localRestoreCandidate
-            ? `This copy was ${describeBackup(localRestoreCandidate.name).toLowerCase()}, on ${localRestoreCandidate.name.slice(0, 10)}. Your records, lessons, notes and settings go back to how they were then; anything added since will not be in them. Your uploaded files are not touched. The app keeps a recoverable copy of the current data first, then restarts.`
+            ? `This copy was ${describeBackup(localRestoreCandidate.name).toLowerCase()}, on ${backupLocalDay(localRestoreCandidate.name) ?? "an unknown date"}. Your records, lessons, notes and settings go back to how they were then; anything added since will not be in them. Your uploaded files are not touched. The app keeps a recoverable copy of the current data first, then restarts.`
             : ""
         }
         confirmLabel="Put it back and restart"

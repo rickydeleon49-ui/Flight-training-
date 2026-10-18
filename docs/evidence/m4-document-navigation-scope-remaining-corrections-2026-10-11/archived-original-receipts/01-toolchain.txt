@@ -1,0 +1,8 @@
+=== Toolchain Receipt ===
+Date: 2026-10-11T17:14:40Z
+Node: v26.10.0
+npm: 12.2.0
+Rustc: not invoked
+Cargo: not invoked
+OS: macOS 27.0.1 (26A434)
+Arch: arm64

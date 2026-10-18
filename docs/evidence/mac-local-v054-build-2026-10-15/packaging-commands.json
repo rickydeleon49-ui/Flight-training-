@@ -1,0 +1,142 @@
+[
+  {
+    "argv": [
+      "ditto",
+      "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "durationSeconds": 0.004650115966796875
+  },
+  {
+    "argv": [
+      "codesign",
+      "--force",
+      "--sign",
+      "-",
+      "--timestamp=none",
+      "--identifier",
+      "com.herflightdeck.app",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app: replacing existing signature\n",
+    "durationSeconds": 0.016470909118652344
+  },
+  {
+    "argv": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "durationSeconds": 0.010264158248901367
+  },
+  {
+    "argv": [
+      "codesign",
+      "-d",
+      "--verbose=4",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "Executable=/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20400 size=17134 flags=0x2(adhoc) hashes=529+3 location=embedded\nVersionPlatform=1\nVersionMin=786432\nVersionSDK=1705216\nHash type=sha256 size=32\nCandidateCDHash sha256=a6dffc5b7906854d6d270f0b8f40ae224baa172d\nCandidateCDHashFull sha256=a6dffc5b7906854d6d270f0b8f40ae224baa172debb4ba64612dd2c0847eda1d\nHash choices=sha256\nCMSDigest=a6dffc5b7906854d6d270f0b8f40ae224baa172debb4ba64612dd2c0847eda1d\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=8339456\nExecutable Segment flags=0x1\nPage size=16384\nCDHash=a6dffc5b7906854d6d270f0b8f40ae224baa172d\nSignature=adhoc\nInfo.plist entries=16\nTeamIdentifier=not set\nSealed Resources version=2 rules=13 files=1\nInternal requirements count=0 size=12\nTotal signatures=1\nChosen signature=1\n",
+    "durationSeconds": 0.0057010650634765625
+  },
+  {
+    "argv": [
+      "ditto",
+      "-c",
+      "-k",
+      "--sequesterRsrc",
+      "--keepParent",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.app.zip"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "durationSeconds": 0.19690227508544922
+  },
+  {
+    "argv": [
+      "ditto",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app",
+      "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-image-stage-kn9edw9j/Her Flight Deck.app"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "durationSeconds": 0.00410914421081543
+  },
+  {
+    "argv": [
+      "hdiutil",
+      "create",
+      "-srcfolder",
+      "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-image-stage-kn9edw9j",
+      "-size",
+      "64m",
+      "-fs",
+      "HFS+",
+      "-volname",
+      "Her Flight Deck Local Test",
+      "-format",
+      "UDZO",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg"
+    ],
+    "exit": 0,
+    "stdout": "created: /Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg\n",
+    "stderr": "hdiutil: WARNING: 'hdiutil create -size -volname -format ...' is deprecated. Please use 'diskutil image create from/blank -size --volumeName --format ...' instead.\n",
+    "durationSeconds": 5.0506978034973145,
+    "timedOut": false
+  },
+  {
+    "argv": [
+      "hdiutil",
+      "attach",
+      "-readonly",
+      "-nobrowse",
+      "-mountpoint",
+      "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-readonly-inspect-bur_7519/volume",
+      "-plist",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her.Flight.Deck_0.5.4_aarch64_LOCAL_ADHOC.dmg"
+    ],
+    "exit": 0,
+    "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>system-entities</key>\n\t<array>\n\t\t<dict>\n\t\t\t<key>content-hint</key>\n\t\t\t<string>Apple_HFS</string>\n\t\t\t<key>dev-entry</key>\n\t\t\t<string>/dev/disk4s1</string>\n\t\t\t<key>mount-point</key>\n\t\t\t<string>/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-readonly-inspect-bur_7519/volume</string>\n\t\t\t<key>potentially-mountable</key>\n\t\t\t<true/>\n\t\t\t<key>unmapped-content-hint</key>\n\t\t\t<string>48465300-0000-11AA-AA11-00306543ECAC</string>\n\t\t\t<key>volume-kind</key>\n\t\t\t<string>hfs</string>\n\t\t</dict>\n\t\t<dict>\n\t\t\t<key>content-hint</key>\n\t\t\t<string>GUID_partition_scheme</string>\n\t\t\t<key>dev-entry</key>\n\t\t\t<string>/dev/disk4</string>\n\t\t\t<key>potentially-mountable</key>\n\t\t\t<false/>\n\t\t\t<key>unmapped-content-hint</key>\n\t\t\t<string>GUID_partition_scheme</string>\n\t\t</dict>\n\t</array>\n</dict>\n</plist>\n",
+    "stderr": "hdiutil: WARNING: 'hdiutil attach -readonly -nobrowse -mountpoint ...' is deprecated. Please use 'diskutil image attach --readOnly --mountOptions nobrowse --mountPoint ...' instead.\n",
+    "durationSeconds": 3.5196609497070312
+  },
+  {
+    "argv": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-readonly-inspect-bur_7519/volume/Her Flight Deck.app"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "durationSeconds": 0.020637989044189453
+  },
+  {
+    "argv": [
+      "hdiutil",
+      "detach",
+      "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-v054-readonly-inspect-bur_7519/volume"
+    ],
+    "exit": 0,
+    "stdout": "\"disk4\" ejected.\n",
+    "stderr": "hdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.\n",
+    "durationSeconds": 0.03753399848937988
+  }
+]

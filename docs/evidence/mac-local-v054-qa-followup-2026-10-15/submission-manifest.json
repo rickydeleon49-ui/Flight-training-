@@ -1,0 +1,153 @@
+{
+  "schema": "hfd-local-v054-qa-followup-submission/1",
+  "generatedAt": "2026-10-16T01:15:26.783Z",
+  "branch": "codex/local-v054-build-check",
+  "head": "93a88df0523f047fc56a29a9b13a7ab4d4478910",
+  "note": "Uncommitted correction package. Excludes SHA256SUMS and this manifest (listed in SHA256SUMS).",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 78399,
+      "sha256": "6cf1b0a2629c94419fdbcb548245cfe5515c9e64a81dc61f709d654707c8ae20",
+      "status": "modified"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 206828,
+      "sha256": "9773a1b9af3fdefb929baef61156c06b47c726a4af96d76b425904d4a2010d39",
+      "status": "modified"
+    },
+    {
+      "path": "docs/MAC_LOCAL_V054_QA_FOLLOWUP_HANDOFF_2026-10-15.md",
+      "bytes": 12069,
+      "sha256": "c594bd4aa70ef5367d86f3ec957c5e12082bc484fc7c9e16f6ae48494216c2ac",
+      "status": "new"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 115978,
+      "sha256": "d0207edb94d199dc5a57bbdaccb91cdad204d76c6b9974d020f7587f4e41161c",
+      "status": "modified"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/README.md",
+      "bytes": 1392,
+      "sha256": "ecdc95a4e4cb7ca512e7e8f1915d64b245b7e8377b3862b2303ea2bc2ca14b1d",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/cargo-lock.txt",
+      "bytes": 254,
+      "sha256": "768e7aa90eeb6effedc2a58ecb6dd887057c21961d43300b81a2f94a089c6e7c",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/helper-tests-final.txt",
+      "bytes": 8314,
+      "sha256": "608fb8f7e9f03ae35d349da7137a3309b5a9bd63a0955636c5281f76332b14f8",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/npm-test.txt",
+      "bytes": 12288,
+      "sha256": "b7751d8b5670b1cfc8918c881488f3a4e04f6ba987dd8794990660a1d853ad15",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/qa01-helper-before.txt",
+      "bytes": 8727,
+      "sha256": "cd2142c072c31e5c1ba9cdc26276fdabbab08cc29675948027c1bf40e0468d67",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/qa01-new-tests-before-fix.txt",
+      "bytes": 5006,
+      "sha256": "84b8dc58e76f4e26c49344aae56e06447853d7e9de58877ea127b14bff4fb32e",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/qa02-recipe-before.stderr.txt",
+      "bytes": 393,
+      "sha256": "e4c6618dea2cfe04ec7135a05653e27ad0c6ec6346ceb8a313fd67529747364f",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/receipts.json",
+      "bytes": 8323,
+      "sha256": "1a5f52ee8ec811bddd8a52cda4a23a8b9d0b1ece6bb291ce8ec75519d01f9cd3",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-check-commit.json",
+      "bytes": 60599,
+      "sha256": "26917fa5f0db061b62dca9dffbef942a890a75ab266721535ab9fb0504a6f107",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-f2a7090.json",
+      "bytes": 57743,
+      "sha256": "a2ad1660cdce1ee11ad46694a83c1129badc764b57bd2da3f3859aefa8001384",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-fee7869.stderr.txt",
+      "bytes": 3097,
+      "sha256": "e86c7110165bd774634bd89ffd676e1252098b1b2d809a4cd15f2077850a2d37",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-negative-integrity.stderr.txt",
+      "bytes": 400,
+      "sha256": "5b802c95b0e5e1bb29c9d33fe6995ca217d6806d0c7fbab5885ce1f7a0789f08",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/replay-negative-root-version.stderr.txt",
+      "bytes": 390,
+      "sha256": "520680385188ee4e2a8e3f21ae92a4d94d762aa29844bc469c3d12b52556113c",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/typecheck.txt",
+      "bytes": 51,
+      "sha256": "b4fbc39bfda7f22755a4421672874761bd4db5d80b7661fde6c9e62cf27de03a",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-local-v054-qa-followup-2026-10-15/vitest-focused.txt",
+      "bytes": 937,
+      "sha256": "3f31104c9b3fdc575a9b4fb75bfee0de9027ce4151dd64c3c8e850eebb354ffc",
+      "status": "new"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md",
+      "bytes": 15705,
+      "sha256": "a74b82a86311d60101f28abebca2393694aa0c15eb0a3d4a07f64b1760cd2cb8",
+      "status": "modified"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+      "bytes": 2562,
+      "sha256": "9af60d9cabb597f5979889782d14f342adf058ce11a0b3e9213220e89649580b",
+      "status": "modified"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+      "bytes": 4630,
+      "sha256": "f047ffc5067d052ea82482839c95166b5b585922419b016d54433f23a941e720",
+      "status": "modified"
+    },
+    {
+      "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
+      "bytes": 29122,
+      "sha256": "6691e718ad3098696311b3d389364af15bdd55f2ab88d77b314d5a01a96a2e83",
+      "status": "modified"
+    },
+    {
+      "path": "scripts/mac-schema14-verification-proof.mjs",
+      "bytes": 67838,
+      "sha256": "b7517d5757c77191971fc4dbe76cdf0c2219031eb4681361b3fd08d6d94a1ff4",
+      "status": "modified"
+    }
+  ]
+}

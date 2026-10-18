@@ -1,0 +1,232 @@
+TAP version 13
+# (node:4986) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: distributed helper
+    # Subtest: exports nothing, has one operator entry, one fixed lane and no test or environment route
+    ok 1 - exports nothing, has one operator entry, one fixed lane and no test or environment route
+      ---
+      duration_ms: 0.942458
+      type: 'test'
+      ...
+    # Subtest: the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes
+    ok 2 - the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes
+      ---
+      duration_ms: 773.254625
+      type: 'test'
+      ...
+    1..2
+ok 1 - distributed helper
+  ---
+  duration_ms: 774.849458
+  type: 'suite'
+  ...
+# Subtest: full self-check reporting
+    # Subtest: reports lost special keys as named failures, completes all checks and exits nonzero
+    ok 1 - reports lost special keys as named failures, completes all checks and exits nonzero
+      ---
+      duration_ms: 656.277333
+      type: 'test'
+      ...
+    # Subtest: runs the historical schema13 self-check with only its intentional schema-ceiling alarm
+    ok 2 - runs the historical schema13 self-check with only its intentional schema-ceiling alarm
+      ---
+      duration_ms: 490.629041
+      type: 'test'
+      ...
+    1..2
+ok 2 - full self-check reporting
+  ---
+  duration_ms: 1146.994125
+  type: 'suite'
+  ...
+# Subtest: proof source walker
+    # Subtest: sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files
+    ok 1 - sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files
+      ---
+      duration_ms: 17.15775
+      type: 'test'
+      ...
+    # Subtest: recognizes only the two exact build-output paths, and this checkout's real ones when present
+    not ok 2 - recognizes only the two exact build-output paths, and this checkout's real ones when present
+      ---
+      duration_ms: 0.564459
+      type: 'test'
+      location: '/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/scripts/mac-schema14-profile-snapshot.test.mjs:139:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        src-tauri/target: unexpected top-level entries: aarch64-apple-darwin
+        
+        false !== true
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/scripts/mac-schema14-profile-snapshot.test.mjs:145:14)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1442:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..2
+not ok 3 - proof source walker
+  ---
+  duration_ms: 17.92925
+  type: 'suite'
+  location: '/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/scripts/mac-schema14-profile-snapshot.test.mjs:126:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: operator CLI refusals
+    # Subtest: snapshot outside the approved lane refuses and writes nothing
+    ok 1 - snapshot outside the approved lane refuses and writes nothing
+      ---
+      duration_ms: 75.730416
+      type: 'test'
+      ...
+    # Subtest: no flag retargets the lane or relaxes a rule
+    ok 2 - no flag retargets the lane or relaxes a rule
+      ---
+      duration_ms: 190.12175
+      type: 'test'
+      ...
+    # Subtest: the account guard refuses any uid other than the approved standard account
+    ok 3 - the account guard refuses any uid other than the approved standard account
+      ---
+      duration_ms: 0.358583
+      type: 'test'
+      ...
+    1..3
+ok 4 - operator CLI refusals
+  ---
+  duration_ms: 266.326542
+  type: 'suite'
+  ...
+# Subtest: operator CLI compare
+    # Subtest: writes a fresh receipt for a genuine upgrade, then never clobbers it or an input
+    ok 1 - writes a fresh receipt for a genuine upgrade, then never clobbers it or an input
+      ---
+      duration_ms: 269.736208
+      type: 'test'
+      ...
+    # Subtest: refuses the original PR \#142 installed receipts instead of reinterpreting them, leaving them byte-identical
+    ok 2 - refuses the original PR \#142 installed receipts instead of reinterpreting them, leaving them byte-identical
+      ---
+      duration_ms: 52.746917
+      type: 'test'
+      ...
+    # Subtest: refuses oversized and symlinked receipts before reading them
+    ok 3 - refuses oversized and symlinked receipts before reading them
+      ---
+      duration_ms: 147.38
+      type: 'test'
+      ...
+    1..3
+ok 5 - operator CLI compare
+  ---
+  duration_ms: 469.933834
+  type: 'suite'
+  ...
+# Subtest: the disposable copy's scratch lane
+    # Subtest: refuses roots outside task-owned scratch, outside the temporary directory, or not named for the app
+    ok 1 - refuses roots outside task-owned scratch, outside the temporary directory, or not named for the app
+      ---
+      duration_ms: 0.304667
+      type: 'test'
+      ...
+    # Subtest: is never selected outside a takeSnapshot call
+    ok 2 - is never selected outside a takeSnapshot call
+      ---
+      duration_ms: 34.931334
+      type: 'test'
+      ...
+    # Subtest: clones are independent single-linked files, so the hard-link guard is never tripped by fixture copies
+    ok 3 - clones are independent single-linked files, so the hard-link guard is never tripped by fixture copies
+      ---
+      duration_ms: 44.312958
+      type: 'test'
+      ...
+    1..3
+ok 6 - the disposable copy's scratch lane
+  ---
+  duration_ms: 79.61475
+  type: 'suite'
+  ...
+# Subtest: special metadata keys on real SQLite
+    # Subtest: capture __proto__, constructor, toString and Unicode keys as own digests in a prototype-free map
+    ok 1 - capture __proto__, constructor, toString and Unicode keys as own digests in a prototype-free map
+      ---
+      duration_ms: 0.314709
+      type: 'test'
+      ...
+    # Subtest: retained special keys pass upgrade and restore; changed, removed or added ones fail restore by name
+    ok 2 - retained special keys pass upgrade and restore; changed, removed or added ones fail restore by name
+      ---
+      duration_ms: 80.888375
+      type: 'test'
+      ...
+    # Subtest: sets aside exactly the three receipt keys, only for restore
+    ok 3 - sets aside exactly the three receipt keys, only for restore
+      ---
+      duration_ms: 73.124625
+      type: 'test'
+      ...
+    1..3
+ok 7 - special metadata keys on real SQLite
+  ---
+  duration_ms: 154.398958
+  type: 'suite'
+  ...
+# Subtest: inventory and runtime-root boundaries
+    # Subtest: inventories sqlite-like user objects that a LIKE wildcard would hide, and compare names them
+    ok 1 - inventories sqlite-like user objects that a LIKE wildcard would hide, and compare names them
+      ---
+      duration_ms: 62.009833
+      type: 'test'
+      ...
+    # Subtest: refuses a symlinked backups/ root before listing it and writes no receipt
+    ok 2 - refuses a symlinked backups/ root before listing it and writes no receipt
+      ---
+      duration_ms: 38.960584
+      type: 'test'
+      ...
+    # Subtest: refuses a symlinked .restore-staging/ root before listing it and writes no receipt
+    ok 3 - refuses a symlinked .restore-staging/ root before listing it and writes no receipt
+      ---
+      duration_ms: 40.217209
+      type: 'test'
+      ...
+    # Subtest: refuses a symlinked .restore-pending/ root before listing it and writes no receipt
+    ok 4 - refuses a symlinked .restore-pending/ root before listing it and writes no receipt
+      ---
+      duration_ms: 38.9545
+      type: 'test'
+      ...
+    # Subtest: still records a real (non-symlinked) backups/ root as runtime disclosure
+    ok 5 - still records a real (non-symlinked) backups/ root as runtime disclosure
+      ---
+      duration_ms: 46.000084
+      type: 'test'
+      ...
+    1..5
+ok 8 - inventory and runtime-root boundaries
+  ---
+  duration_ms: 226.248542
+  type: 'suite'
+  ...
+1..8
+# tests 23
+# suites 8
+# pass 22
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3234.946583

@@ -88,6 +88,7 @@ beforeEach(async () => {
   vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({
     configured: true,
     model: "gemini-3.5-flash-configured-in-settings",
+    choice: "standard",
   });
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(true);
@@ -365,6 +366,7 @@ describe("MaterialDetail saved content provenance integration", () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({
       configured: false,
       model: "gemini-disconnected-default",
+      choice: "standard",
     });
     await openMaterial(mat.id);
 

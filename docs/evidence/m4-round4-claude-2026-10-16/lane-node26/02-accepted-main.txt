@@ -1,0 +1,15 @@
+=== 02 accepted-main ===
+node: v26.10.0  platform: darwin/arm64
+cwd: /private/tmp/claude-501/-Users-rickymac-code/87cc7222-5af2-43b4-bca3-7d3b41c974e3/scratchpad/m4-final-node26
+command: /opt/homebrew/Cellar/node/26.10.0_1/bin/node docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scripts/prepare-accepted-main.mjs e8720003a76be680812dfe3605d58e7eb6372d00
+exit: 0
+RESULT: PASS
+--- stdout ---
+accepted-main ready: 14 migrations verified, ceiling=14, review pack 29/29 digests OK
+
+--- stderr ---
+
+
+--- derived ---
+derived from: e8720003a76be680812dfe3605d58e7eb6372d00 [source: default (hardcoded accepted-main baseline)]
+accepted-main ready: 14 migrations verified, ceiling=14, review pack 29/29 digests OK

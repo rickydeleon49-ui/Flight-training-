@@ -1,0 +1,7 @@
+{
+  "reason": "Native compile/app bundle completed; disk-image create had no observable progress for over five minutes. Stopping only this task-owned packaging child.",
+  "pid": 89703,
+  "command": "hdiutil create -srcfolder /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app -volname Her Flight Deck -fs HFS+ -fsargs -c c=64,a=16,e=16 -format UDRW /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/rw.89682.Her Flight Deck_0.5.4_aarch64.dmg",
+  "observedAt": 1792104622.716745,
+  "action": "SIGTERM to owned hdiutil child"
+}

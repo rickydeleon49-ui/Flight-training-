@@ -1,0 +1,6 @@
+# Preserve raw R5–R10 gate, diagnostic and failure receipts byte-for-byte (tool output pads with spaces).
+# Reports, maps and source keep normal whitespace checks.
+failed/*.log -whitespace
+final/*.log -whitespace
+final/*.txt -whitespace
+r9-diagnostic.log -whitespace

@@ -1,0 +1,9 @@
+{
+  "status": "failed",
+  "ranAt": "2026-10-16T19:47:42.500Z",
+  "node": "v26.10.0",
+  "stoppedAt": "01b engine install",
+  "failures": [
+    "01b engine install: verified-reuse has no valid install execution record (recorded install exit is 42, not 0)"
+  ]
+}

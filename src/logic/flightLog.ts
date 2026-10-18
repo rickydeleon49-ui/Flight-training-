@@ -111,6 +111,25 @@ export function flightTimeProblem(times: FlightTimes): string | null {
   return null;
 }
 
+export interface FlightTimeCheck {
+  entry: JournalEntry;
+  problem: string;
+}
+
+/**
+ * Saved entries whose times can't all be true of one flight, newest first.
+ *
+ * Entries saved before the form checked times can still hold, say, more dual
+ * than total time. They are only pointed out: the times stay exactly as she
+ * logged them, and still count in every total, until she corrects them.
+ */
+export function flightTimeChecks(entries: JournalEntry[]): FlightTimeCheck[] {
+  return entries
+    .map((entry) => ({ entry, problem: flightTimeProblem(entry) }))
+    .filter((check): check is FlightTimeCheck => check.problem !== null)
+    .sort((a, b) => b.entry.date.localeCompare(a.entry.date));
+}
+
 export interface FlightActivity {
   flightsLast30Days: number;
   hoursLast30Days: number;

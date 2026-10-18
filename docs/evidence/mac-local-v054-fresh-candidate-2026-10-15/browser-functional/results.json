@@ -1,0 +1,97 @@
+{
+  "scope": "Compiled frontend preview; isolated browser SQLite only, not an installed Mac app test",
+  "runtime": "v22.23.3",
+  "sourceCommit": "e9286017d3ca8b1faa1c8f5568c708d43e0b3050",
+  "results": [
+    {
+      "name": "Profile saves and survives reload without school or instructor",
+      "status": "PASS",
+      "durationMs": 2246
+    },
+    {
+      "name": "Notes create edit pin and reload persistence",
+      "status": "PASS",
+      "durationMs": 1897
+    },
+    {
+      "name": "Notes cancel deletion then delete and undo",
+      "status": "PASS",
+      "durationMs": 1290
+    },
+    {
+      "name": "Question and answer persist after reload",
+      "status": "PASS",
+      "durationMs": 1525
+    },
+    {
+      "name": "Flight Fund contribution persists",
+      "status": "PASS",
+      "durationMs": 1788
+    },
+    {
+      "name": "Zero expense refused then valid expense affects balance",
+      "status": "PASS",
+      "durationMs": 1091
+    },
+    {
+      "name": "Schedule lesson with estimate survives reload",
+      "status": "PASS",
+      "durationMs": 1488
+    },
+    {
+      "name": "Quick debrief saves without flight-time invention",
+      "status": "PASS",
+      "durationMs": 1390
+    },
+    {
+      "name": "M3 skill status and confidence persist independently",
+      "status": "PASS",
+      "durationMs": 1805
+    },
+    {
+      "name": "Custom skill create rename retire restore",
+      "status": "PASS",
+      "durationMs": 2033
+    },
+    {
+      "name": "Medical conflict is explained and nothing changes before a choice",
+      "status": "PASS",
+      "durationMs": 4564
+    },
+    {
+      "name": "Choosing the record date updates only Settings",
+      "status": "PASS",
+      "durationMs": 1971
+    },
+    {
+      "name": "Choosing the Settings date updates only the record",
+      "status": "PASS",
+      "durationMs": 2269
+    },
+    {
+      "name": "Matching medical dates show no conflict note in Settings",
+      "status": "PASS",
+      "durationMs": 10
+    },
+    {
+      "name": "Minimum desktop width has no horizontal overflow",
+      "status": "PASS",
+      "durationMs": 115
+    },
+    {
+      "name": "Fresh browser context cannot see synthetic saved records",
+      "status": "PASS",
+      "durationMs": 948
+    },
+    {
+      "name": "No browser exceptions HTTP errors or external requests",
+      "status": "PASS",
+      "durationMs": 1
+    }
+  ],
+  "errors": [],
+  "httpErrors": [],
+  "external": [],
+  "passed": 17,
+  "failed": 0
+}

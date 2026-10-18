@@ -1,0 +1,11 @@
+# SHA-256 of every source/test file changed in the R5–R10 round (6d8c608..fad8d3a), at fad8d3a.
+1a3db47c5a883be3fe27a20e661c65476447443a92b2c433891a06d165b2b2e2  src-tauri/src/navigation.rs
+73fa3e3ae39685ba56360930814bea0336022f4ae704e30cf017924357ecd13d  src-tauri/src/navigation_tests.rs
+ceff6ea10f82e7528ecd8fca9267b94840d6efa00dc07b5a3de016b5a844ac29  src/pages/FlightPath/skills/skillScreens.test.ts
+817a18cdc5db40db3f9049f87654118ce8db1730625dd3ea595469e2cf096fa2  src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts
+de231db28cb75f14f203ebadcc6225ce2036b1db93e632b4b730a3976fb11df5  src/pages/StudyLibrary/navigation/DocumentPagesPanel.tsx
+d2645ef1457a591ff0f136248afb0d7e18127820ddf079ba92cf8f85d623eda1  src/pages/StudyLibrary/navigation/SourcePageBadge.tsx
+52df2f1567fd93938732e8d6148be1be72b95d3ea1e7ff6d3aa1b28dff7627cc  src/state/navigation/controller.test.ts
+99ed6491d25d6609407d9a0c339b1e908414ce909820bea8e60f234ac2b8a9a6  src/state/navigation/controller.ts
+e93b370171e7c2fe77e58223ed85b6786c500d87220701520a711128c34a5bd8  src/state/navigation/useDocumentNavigation.test.ts
+ea485ddb9bfdb27d7995d98b58d156d6bfc519b1a3767877c09ae494ac3cb00d  src/state/navigation/useDocumentNavigation.ts

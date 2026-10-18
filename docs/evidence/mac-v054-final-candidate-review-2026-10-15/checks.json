@@ -1,0 +1,36 @@
+[
+  {
+    "name": "helper",
+    "command": [
+      "node",
+      "--test",
+      "scripts/mac-schema14-profile-snapshot.test.mjs"
+    ],
+    "exit": 0,
+    "seconds": 3.4
+  },
+  {
+    "name": "focused",
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=2",
+      "src/logic/dailyPlan.test.ts",
+      "src/components/dailyPlan/DailyPlanCard.test.ts",
+      "src/logic/currentSchemaVerification.test.ts"
+    ],
+    "exit": 0,
+    "seconds": 2.28
+  },
+  {
+    "name": "cargo-lock",
+    "command": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "exit": 0,
+    "seconds": 22.3
+  }
+]

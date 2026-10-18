@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "src/pages/PilotToolkit/SweepReviewerDiagnostic.test.ts",
+    "-t",
+    "independent reviewer diagnostics"
+  ],
+  "exit": 1,
+  "sha256": "529646ad0662771ecf360335b3e033b005d1cc89b35e13b6f8c0f9dc4fb78636"
+}

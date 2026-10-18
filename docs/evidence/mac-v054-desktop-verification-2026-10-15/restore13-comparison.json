@@ -1,0 +1,9 @@
+{
+  "retainedDataIdenticalOutsideReceiptKeys": true,
+  "differingTables": [],
+  "schemaIdentical": true,
+  "documentsIdentical": true,
+  "ledger14ChecksumAndSuccessIdentical": true,
+  "migration14ExecutionTimeExcludedFromCrossMigrationComparison": true,
+  "automaticRestartWindow": "not observed; recovered with process termination and manual relaunch"
+}

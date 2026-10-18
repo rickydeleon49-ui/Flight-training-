@@ -1,0 +1,87 @@
+Window: "Her Flight Deck", App: Her Flight Deck.
+0 standard window Her Flight Deck, Secondary Actions: Raise
+	1 scroll area
+		2 HTML content Description: Her Flight Deck, URL: tauri://localhost#/study/10167dfd-355d-47c1-9100-675454d5ab3c
+			3 container
+				4 text Her Flight Deck Training companion
+				5 button Search ⌘K
+				6 container Main
+					7 link Flight Deck, Value: tauri://localhost#/
+					8 link Flight Path, Value: tauri://localhost#/flight-path
+					9 link Study Library, Value: tauri://localhost#/study
+					10 link Schedule, Value: tauri://localhost#/schedule
+					11 link Flight Log, Value: tauri://localhost#/journal
+					12 link Questions, Value: tauri://localhost#/questions
+					13 link Notes, Value: tauri://localhost#/notes
+					14 link Finances, Value: tauri://localhost#/finances
+					15 link Pilot Toolkit, Value: tauri://localhost#/toolkit
+				16 link Settings, Value: tauri://localhost#/settings
+				17 text Your instructor and official aviation guidance stay authoritative. This is here to keep your training organized.
+			18 container
+				19 heading synthetic-small-checklist, Value: 1
+					20 text synthetic-small-checklist
+				21 text Study Guide · General
+				22 link Back, Value: tauri://localhost#/study
+				23 button Edit
+				24 button Delete
+				25 text synthetic-small-checklist.pdf 3 KB
+				26 button Split automatically
+				27 button Take out a chapter
+				28 button Open
+				29 text GUIDE AND FLASHCARDS
+				30 heading Gemini study assistant, Value: 2
+					31 text Gemini study assistant
+				32 text Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available.
+				33 link Open Settings, Value: tauri://localhost#/settings
+				34 heading Personal notes, Value: 2
+					35 text Personal notes
+				36 text entry area (settable) Personal notes, Value: [text entry area: Personal notes], Placeholder: What matters in this material, and what you want to remember.
+					37 text What matters in this material, and what you want to remember.
+				38 heading Next actions, Value: 2
+					39 text Next actions
+				40 button Add
+				41 text What should you do with this material? “Review pages 4–8 before Saturday” is more useful than “study”.
+				42 heading Questions from this material, Value: 2
+					43 text Questions from this material
+				44 text field (settable) New question, Placeholder: Something to ask your instructor
+				45 button (disabled) Add
+				46 heading Review status, Value: 2
+					47 text Review status
+				48 pop up button (collapsed) Review status, Value: Needs Review, Secondary Actions: Expand
+				49 button Mark as reviewed today
+				50 text Not reviewed yet.
+				51 heading Details, Value: 2
+					52 text Details
+				53 description list
+					54 text Type
+					55 text Study Guide
+					56 text Topic
+					57 text General
+					58 text Priority
+					59 text Later
+					60 text Status
+					61 text Needs Review
+					62 text Added
+					63 text Friday, October 16
+				64 menu Secondary Actions: Cancel
+				65 menu Secondary Actions: Cancel
+				66 menu Secondary Actions: Cancel
+				67 menu Secondary Actions: Cancel
+				68 menu Secondary Actions: Cancel
+				69 menu Secondary Actions: Cancel
+				70 menu Secondary Actions: Cancel
+				71 menu Secondary Actions: Cancel
+		72 scroll bar (settable, float) 0
+	73 close button
+	74 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	75 minimize button
+	76 text Her Flight Deck
+77 menu bar
+	78 Her Flight Deck
+	79 File
+	80 Edit
+	81 View
+	82 Window
+	83 Help
+
+The focused UI element is 2 HTML content Description: Her Flight Deck, URL: tauri://localhost#/study/10167dfd-355d-47c1-9100-675454d5ab3c

@@ -1,0 +1,199 @@
+{
+  "pr": {
+    "baseRefOid": "a76fa9b048d0d66160746047385dcec52d153a83",
+    "headRefOid": "0b81886015b20b0bf6866a7a547ef0db91cb4a25",
+    "mergeStateStatus": "CLEAN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:54:53Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38949154063/job/117136041860",
+        "name": "Tests, types, and the data-safety guards",
+        "startedAt": "2026-10-16T18:41:07Z",
+        "status": "COMPLETED",
+        "workflowName": "Checks"
+      }
+    ]
+  },
+  "run": {
+    "conclusion": "success",
+    "headSha": "0b81886015b20b0bf6866a7a547ef0db91cb4a25",
+    "jobs": [
+      {
+        "completedAt": "2026-10-16T18:54:53Z",
+        "conclusion": "success",
+        "databaseId": 117136041860,
+        "name": "Tests, types, and the data-safety guards",
+        "startedAt": "2026-10-16T18:41:07Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-16T18:41:10Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-16T18:41:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:41:13Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-10-16T18:41:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:41:14Z",
+            "conclusion": "success",
+            "name": "Detect change scope",
+            "number": 3,
+            "startedAt": "2026-10-16T18:41:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:41:14Z",
+            "conclusion": "skipped",
+            "name": "Fast documentation verification",
+            "number": 4,
+            "startedAt": "2026-10-16T18:41:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:41:16Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+            "number": 5,
+            "startedAt": "2026-10-16T18:41:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:41:20Z",
+            "conclusion": "success",
+            "name": "Run npm ci",
+            "number": 6,
+            "startedAt": "2026-10-16T18:41:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:50:35Z",
+            "conclusion": "success",
+            "name": "Run npm test",
+            "number": 7,
+            "startedAt": "2026-10-16T18:41:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:50:44Z",
+            "conclusion": "success",
+            "name": "Schema verification helper regressions",
+            "number": 8,
+            "startedAt": "2026-10-16T18:50:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:51:05Z",
+            "conclusion": "success",
+            "name": "Run npm run build",
+            "number": 9,
+            "startedAt": "2026-10-16T18:50:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:51:33Z",
+            "conclusion": "success",
+            "name": "Linux desktop libraries",
+            "number": 10,
+            "startedAt": "2026-10-16T18:51:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:51:43Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87",
+            "number": 11,
+            "startedAt": "2026-10-16T18:51:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:52:17Z",
+            "conclusion": "success",
+            "name": "Run swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c",
+            "number": 12,
+            "startedAt": "2026-10-16T18:51:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:52:19Z",
+            "conclusion": "success",
+            "name": "Rust formatting",
+            "number": 13,
+            "startedAt": "2026-10-16T18:52:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:52:33Z",
+            "conclusion": "success",
+            "name": "Rust lint",
+            "number": 14,
+            "startedAt": "2026-10-16T18:52:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:54:45Z",
+            "conclusion": "success",
+            "name": "Run cargo test --locked --manifest-path src-tauri/Cargo.toml",
+            "number": 15,
+            "startedAt": "2026-10-16T18:52:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:54:50Z",
+            "conclusion": "success",
+            "name": "Cargo lockfile synchronization check",
+            "number": 16,
+            "startedAt": "2026-10-16T18:54:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:54:50Z",
+            "conclusion": "success",
+            "name": "Post Run swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c",
+            "number": 30,
+            "startedAt": "2026-10-16T18:54:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:54:50Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+            "number": 31,
+            "startedAt": "2026-10-16T18:54:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:54:51Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 32,
+            "startedAt": "2026-10-16T18:54:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-16T18:54:51Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 33,
+            "startedAt": "2026-10-16T18:54:51Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38949154063/job/117136041860"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/38949154063"
+  },
+  "mainAtDecision": "a76fa9b048d0d66160746047385dcec52d153a83"
+}

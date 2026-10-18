@@ -1,0 +1,15 @@
+Fault checks of the round-5 tests (Claude, 16 October 2026, Node v22.23.3)
+Each fault was applied in a DISPOSABLE dev clone only, the R35/R36 tests were run, and the files were
+restored byte-identical afterwards (cmp). The sensitivity suite separately pins M17–M20.
+
+F1 runner reuse ignores the install execution record (reuseOk = integrityOk)
+   caught: [M4-R35] the real runner's reuse route rejects missing install evidence
+   caught: [M4-R35] the real runner's reuse route rejects exit42 install evidence
+   caught: [M4-R35] the real runner's reuse route rejects wrong-cwd install evidence
+   caught: [M4-R35] the real runner's reuse route rejects wrong-binding install evidence
+   caught: [M4-R35] the real runner's reuse route rejects malformed install evidence
+F2 checker exempts mutant IDs containing NAVIGATION
+   caught: [M4-R36] active unexecuted mutant claims cannot escape via NAVIGATION in their ID
+   caught: [M4-R36] the real runner rejects a current report claiming M99_NAVIGATION_NEVER_EXECUTED
+F3 live install writes a zero exit whatever npm returned
+   caught: [M4-R35] a live install that fails writes its real non-zero execution record and a FAILED receipt

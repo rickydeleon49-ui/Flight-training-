@@ -1,0 +1,36 @@
+{
+  "bundleIdentifier": "com.herflightdeck.app",
+  "observedAt": "2026-10-16T04:08Z",
+  "copies": [
+    {
+      "version": "0.5.4",
+      "executableSha256": "b60d2e6c04fd18ee31d4a8bd6439ed9388039c3c390ff62e09275c1464848822",
+      "path": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-e928601/Her Flight Deck.app"
+    },
+    {
+      "version": "0.5.4",
+      "executableSha256": "b60d2e6c04fd18ee31d4a8bd6439ed9388039c3c390ff62e09275c1464848822",
+      "path": "/Users/rickymac/Applications/Her Flight Deck Verification e928601/Her Flight Deck.app"
+    },
+    {
+      "version": "0.5.3",
+      "executableSha256": "2e44bfbbd1dd65e93697d65ca8b5beff5237173e4dbf8484a89ee21f9c98842a",
+      "path": "/Users/rickymac/Documents/Codex/2026-10-11/referenced-chatgpt-conversation-this-is-an/outputs/flight-deck-team/current-account-installed-run/Applications/HFD-OLD-2a6a415/Her Flight Deck.app"
+    },
+    {
+      "version": "0.5.3",
+      "executableSha256": "824688939086c16bd5ec8be7312545725d79ce284ebab2fe3ed0d1eaf400eb28",
+      "path": "/Users/rickymac/Documents/Codex/2026-10-11/referenced-chatgpt-conversation-this-is-an/outputs/flight-deck-team/current-account-installed-run/Applications/HFD-NEW-36a7b39/Her Flight Deck.app"
+    },
+    {
+      "version": "0.5.3",
+      "executableSha256": "824688939086c16bd5ec8be7312545725d79ce284ebab2fe3ed0d1eaf400eb28",
+      "path": "/Applications/Her Flight Deck.app"
+    },
+    {
+      "version": "0.5.4",
+      "executableSha256": "33743263ab6c1bb3ef7db0b882808c8da0656c216530b8c27b985f49da4d6e02",
+      "path": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-15-v0.5.4-fee7869/Her Flight Deck.app"
+    }
+  ]
+}

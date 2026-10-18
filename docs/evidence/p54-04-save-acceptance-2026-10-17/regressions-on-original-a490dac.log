@@ -1,0 +1,46 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-rickymac/35cb7c04-441c-4e1c-9714-5cb2707b2a21/scratchpad/p544
+
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts (11 tests | 2 failed) 194ms
+   × same-render Save events dispatch only one native save 7ms
+   × selection, output and answer-key controls stay fixed while the save is pending 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/ExportStudyDialog.test.ts > same-render Save events dispatch only one native save
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts:138:29
+    136|   try {
+    137|     act(() => { button.click(); button.click(); });
+    138|     expect(saveStudyExport).toHaveBeenCalledTimes(1);
+       |                             ^
+    139|   } finally {
+    140|     await act(async () => { held.resolve(null); await held.promise; });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/ExportStudyDialog.test.ts > selection, output and answer-key controls stay fixed while the save is pending
+AssertionError: <input type="checkbox" checked="">: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts:151:85
+    149|     const inputs = [...document.querySelectorAll("input")];
+    150|     expect(inputs.length).toBeGreaterThan(0);
+    151|     for (const input of inputs) expect(input.matches(":disabled"), inp…
+       |                                                                                     ^
+    152|   } finally {
+    153|     await act(async () => { held.resolve(null); await held.promise; });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  23:14:43
+   Duration  646ms (transform 83ms, setup 0ms, import 147ms, tests 194ms, environment 223ms)
+

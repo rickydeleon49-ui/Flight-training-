@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { describeRelativeDate, formatLongDate, formatShortDate, localDayOf } from "./dates";
+import { describeRelativeDate, formatLocalDay, formatLongDate, formatShortDate, localDayOf } from "./dates";
 
 /**
  * Runs the enclosing describe block in `zone`, then puts process.env.TZ back
@@ -134,5 +134,61 @@ describe("formatShortDate", () => {
     expect(formatShortDate("2028-10-20", "2026-10-14")).toBe("Oct 20, 2028");
     expect(formatShortDate("2025-12-03", "2026-10-14")).toBe("Dec 3, 2025");
     expect(describeRelativeDate("2027-01-05", "2026-12-20")).toBe("Jan 5, 2027");
+  });
+});
+
+// DESKTOP-V054-01: "Added" and "Last reviewed" named the UTC day in the evening.
+describe("formatLocalDay", () => {
+  const today = "2026-10-15";
+
+  describe("in America/Los_Angeles", () => {
+    inTimeZone("America/Los_Angeles");
+
+    it("names the local evening's day for the timestamps from the native run", () => {
+      // 20:56 PDT on Thursday 15 October: both stored as Friday 16 October UTC.
+      expect(formatLocalDay("2026-10-16T02:26:19.480Z", today)).toBe("Thursday, October 15");
+      expect(formatLocalDay("2026-10-16T03:56:14.075Z", today)).toBe("Thursday, October 15");
+      expect(formatLocalDay("2026-10-16 03:56:14", today)).toBe("Thursday, October 15");
+      expect(formatLocalDay("2026-10-16T06:59:59Z", today)).toBe("Thursday, October 15");
+      expect(formatLocalDay("2026-10-16T07:00:00Z", today)).toBe("Friday, October 16");
+    });
+
+    it("follows daylight saving on both 2026 transitions", () => {
+      // Clocks fall back on 1 November: midnight PST is 08:00 UTC.
+      expect(formatLocalDay("2026-11-02T07:59:59Z", today)).toBe("Sunday, November 1");
+      expect(formatLocalDay("2026-11-02T08:00:00Z", today)).toBe("Monday, November 2");
+      // Clocks spring forward on 8 March: midnight PDT is 07:00 UTC.
+      expect(formatLocalDay("2026-03-09T06:59:59Z", today)).toBe("Sunday, March 8");
+      expect(formatLocalDay("2026-03-09T07:00:00Z", today)).toBe("Monday, March 9");
+    });
+
+    it("keeps a bare calendar day and honours an explicit offset", () => {
+      expect(formatLocalDay("2026-10-16", today)).toBe("Friday, October 16");
+      expect(formatLocalDay("2026-10-16T01:00:00+05:30", today)).toBe("Thursday, October 15");
+    });
+
+    it("returns null for anything it can't read, never a made-up date", () => {
+      for (const bad of MALFORMED) expect(formatLocalDay(bad, today), String(bad)).toBeNull();
+    });
+  });
+
+  describe("in Pacific/Kiritimati", () => {
+    inTimeZone("Pacific/Kiritimati");
+
+    it("names the following day once UTC reaches 10:00", () => {
+      expect(formatLocalDay("2026-10-15T09:59:59Z", today)).toBe("Thursday, October 15");
+      expect(formatLocalDay("2026-10-15T10:00:00Z", today)).toBe("Friday, October 16");
+      expect(formatLocalDay("2026-10-15 10:00:00", today)).toBe("Friday, October 16");
+      expect(formatLocalDay("2026-10-16", today)).toBe("Friday, October 16");
+    });
+  });
+
+  describe("in UTC", () => {
+    inTimeZone("UTC");
+
+    it("matches the UTC day and adds the year outside the current one", () => {
+      expect(formatLocalDay("2026-10-16T03:56:14.075Z", today)).toBe("Friday, October 16");
+      expect(formatLocalDay("2025-12-31T23:59:59Z", today)).toBe("Wednesday, December 31, 2025");
+    });
   });
 });

@@ -1,0 +1,21 @@
+{
+  "version": "7.2.0",
+  "dist.integrity": "sha512-dqT2XBYUOZOiC5t2HRnwADjhNS2cecp9u+TJRiJ1Qp/f5qjkeT5APcGPjHw+bz89Ms8Jp+cG4AlE+QZ/QnDglg==",
+  "dist.tarball": "https://registry.npmjs.org/minisearch/-/minisearch-7.2.0.tgz",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest",
+    "test-watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "benchmark": "yarn build-benchmark && NODE_ENV=production node --expose-gc benchmarks/dist/index.cjs",
+    "build-benchmark": "BENCHMARKS=true yarn build",
+    "build": "yarn clean-build && NODE_ENV=production rollup -c",
+    "clean-build": "rm -rf dist",
+    "build-minified": "MINIFY=true yarn build",
+    "build-docs": "typedoc --options typedoc.json && yarn build-demo",
+    "build-demo": "mkdir -p ./docs/demo && cp -r ./examples/plain_js/. ./docs/demo",
+    "lint": "eslint 'src/**/*.{js,ts}'",
+    "lintfix": "eslint --fix 'src/**/*.{js,ts}'",
+    "prepublishOnly": "yarn test && yarn build"
+  }
+}

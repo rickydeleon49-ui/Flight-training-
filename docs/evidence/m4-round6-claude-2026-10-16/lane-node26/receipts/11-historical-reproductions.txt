@@ -1,0 +1,4 @@
+=== 11 historical reproductions (frozen rereview pack) ===
+diagnostics: recorded exit=1 pass=2 fail=14 @v22.23.3 | observed exit=1 pass=2 fail=14 @v26.10.0 | OBSERVED (different lane; not comparable)
+historical-current: recorded exit=0 pass=10 fail=0 @v22.23.3 | observed exit=0 pass=10 fail=0 @v26.10.0 | OBSERVED (different lane; not comparable)
+prior-current: recorded exit=1 pass=14 fail=1 @v22.23.3 | observed exit=1 pass=14 fail=1 @v26.10.0 | OBSERVED (different lane; not comparable)

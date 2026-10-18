@@ -1,0 +1,2080 @@
+{
+ "description": "Shared M4 Slice 1 navigation operation cases, run by navigation_tests.rs (native, database half) and navigationParity.test.ts (browser/test twin on node:sqlite and sql.js). $A and $B stand for two 64-hex content hashes. Materials 'mat' and 'other' exist in every case. A step with 'sql' runs that statement directly between operations. 'final.tuple' is [page, label, confirmed_read, origin hash, status, owner generation].",
+ "hashes": {
+  "$A": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "$B": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+ },
+ "cases": [
+  {
+   "name": "strict decoding refuses every malformed request before any transaction",
+   "setup": [],
+   "steps": [
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null,
+      "status": "active"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 0,
+      "pageLabel": null
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 2.5,
+      "pageLabel": null
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 9007199254740992,
+      "pageLabel": null
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": -1,
+      "pageLabel": null
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": " iv"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": "iv "
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": "﻿iv"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "../x",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 3,
+      "pageLabel": null
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "erase",
+      "materialId": "mat"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": "begin",
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": null,
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": [],
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "",
+      "notes": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": " Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "notes": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "bad id",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 0,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": "yes"
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "short",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "cancel",
+      "materialId": "mat",
+      "generation": 0
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    }
+   ],
+   "final": {
+    "claim": null,
+    "tuple": null,
+    "bookmarks": 0
+   }
+  },
+  {
+   "name": "labels at the limits: 100 code points and a zero-width space inside are accepted; Unicode trimming agrees",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": "​iv"
+     },
+     "expect": {
+      "ok": {
+       "committed": true,
+       "readingState": {
+        "lastRequestedPageLabel": "​iv"
+       }
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 2,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": "🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩"
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "titles count code points, not UTF-16 units",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩",
+      "notes": ""
+     },
+     "expect": {
+      "ok": {
+       "id": "b1",
+       "title": "🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩"
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b2",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩🛩",
+      "notes": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    }
+   ],
+   "final": {
+    "bookmarks": 1
+   }
+  },
+  {
+   "name": "reservations are increasing; a supersede cancels the earlier token in the same step",
+   "setup": [],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": 2
+     },
+     "expect": {
+      "ok": {
+       "generation": 3
+      }
+     }
+    }
+   ],
+   "final": {
+    "claim": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "name": "a supersede must name an issued token",
+   "setup": [],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": 5
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    }
+   ],
+   "final": {
+    "claim": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "reservation refuses overflow without changing the claim",
+   "setup": [
+    "INSERT INTO material_operation_claims VALUES ('mat', 9007199254740990, 0, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "error": "LIMIT_EXCEEDED"
+     }
+    }
+   ],
+   "final": {
+    "claim": [
+     9007199254740990,
+     0
+    ]
+   }
+  },
+  {
+   "name": "reservation starts above a saved owner even without a claim row",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')",
+    "INSERT INTO material_reading_state VALUES ('mat', 2, NULL, 0, '$A', 'active', 7, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 8
+      }
+     }
+    }
+   ],
+   "final": {
+    "claim": [
+     8,
+     0
+    ]
+   }
+  },
+  {
+   "name": "an unknown material cannot reserve",
+   "setup": [],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "nope",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "error": "NOT_FOUND"
+     }
+    }
+   ],
+   "final": {
+    "claim": null
+   }
+  },
+  {
+   "name": "an ignored claim write issues no token and changes nothing (R38)",
+   "setup": [
+    "CREATE TRIGGER ignore_claim BEFORE INSERT ON material_operation_claims BEGIN SELECT RAISE(IGNORE); END"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "error": "STORAGE_FAILURE"
+     }
+    }
+   ],
+   "final": {
+    "claim": null
+   }
+  },
+  {
+   "name": "a claim write that is blocked issues no token (R33)",
+   "setup": [
+    "CREATE TRIGGER block_claim BEFORE UPDATE ON material_operation_claims BEGIN SELECT RAISE(ABORT, 'blocked'); END"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "error": "STORAGE_FAILURE"
+     }
+    }
+   ],
+   "final": {
+    "claim": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "a claim that persists the wrong token fails closed and rolls back (R38)",
+   "setup": [
+    "CREATE TRIGGER skew AFTER INSERT ON material_operation_claims BEGIN UPDATE material_operation_claims SET reserved_generation = 99 WHERE material_id = NEW.material_id; END"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "error": "STORAGE_FAILURE"
+     }
+    }
+   ],
+   "final": {
+    "claim": null
+   }
+  },
+  {
+   "name": "cancelling an older token is a no-op; an unissued one is refused",
+   "setup": [],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "cancel",
+      "materialId": "mat",
+      "generation": 2
+     },
+     "expect": {
+      "ok": {
+       "cancelledGeneration": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "cancel",
+      "materialId": "mat",
+      "generation": 1
+     },
+     "expect": {
+      "ok": {
+       "cancelledGeneration": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "cancel",
+      "materialId": "mat",
+      "generation": 3
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    }
+   ],
+   "final": {
+    "claim": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "name": "only the exact current token commits the whole tuple, unconfirmed and active (R34)",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 7,
+      "pageLabel": "3-1"
+     },
+     "expect": {
+      "ok": {
+       "committed": true,
+       "reason": null,
+       "readingState": {
+        "lastRequestedPage": 7,
+        "lastRequestedPageLabel": "3-1",
+        "confirmedRead": false,
+        "originatingContentSha256": "$A",
+        "status": "active",
+        "ownerGeneration": 1
+       }
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     7,
+     "3-1",
+     0,
+     "$A",
+     "active",
+     1
+    ]
+   }
+  },
+  {
+   "name": "a commit with no claim is refused and writes nothing",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "unreserved",
+       "readingState": null
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": null
+   }
+  },
+  {
+   "name": "a token never reserved is refused",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 2,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "unreserved"
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": null
+   }
+  },
+  {
+   "name": "once a later token exists the earlier one is refused and the winner's tuple stands",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 2,
+      "contentSha256": "$A",
+      "physicalPage": 9,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 4,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "superseded",
+       "readingState": {
+        "lastRequestedPage": 9,
+        "ownerGeneration": 2
+       }
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     9,
+     null,
+     0,
+     "$A",
+     "active",
+     2
+    ]
+   }
+  },
+  {
+   "name": "a cancelled token is refused at commit",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": 1
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "cancelled"
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": null
+   }
+  },
+  {
+   "name": "commit needs a recorded identity",
+   "setup": [],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "identity_unknown"
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": null
+   }
+  },
+  {
+   "name": "commit refuses other content",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$B",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "identity_changed"
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": null
+   }
+  },
+  {
+   "name": "commit refuses a page past the trusted count, never clamping",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 21,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "out_of_bounds"
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 20,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     20,
+     null,
+     0,
+     "$A",
+     "active",
+     1
+    ]
+   }
+  },
+  {
+   "name": "a replayed commit is refused",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 6,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": false,
+       "reason": "replayed"
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     5,
+     null,
+     0,
+     "$A",
+     "active",
+     1
+    ]
+   }
+  },
+  {
+   "name": "a commit whose write fails rolls back and keeps the saved tuple",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')",
+    "CREATE TRIGGER fail_update BEFORE UPDATE ON material_reading_state BEGIN SELECT RAISE(ABORT, 'disk'); END"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 2,
+      "contentSha256": "$A",
+      "physicalPage": 9,
+      "pageLabel": null
+     },
+     "expect": {
+      "error": "STORAGE_FAILURE"
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     5,
+     null,
+     0,
+     "$A",
+     "active",
+     1
+    ],
+    "claim": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "a new request resets read confirmation",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "ok": {
+       "confirmedRead": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 2,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true,
+       "readingState": {
+        "confirmedRead": false
+       }
+      }
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     5,
+     null,
+     0,
+     "$A",
+     "active",
+     2
+    ]
+   }
+  },
+  {
+   "name": "read confirmation and clearing apply to exactly the saved request named",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "ok": {
+       "confirmedRead": true,
+       "ownerGeneration": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": false
+     },
+     "expect": {
+      "ok": {
+       "confirmedRead": false
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 6,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     5,
+     null,
+     0,
+     "$A",
+     "active",
+     1
+    ]
+   }
+  },
+  {
+   "name": "a held confirmation or clear for content A at the same page cannot touch content B (M4S1-R1)",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "ok": {
+       "confirmedRead": true
+      }
+     }
+    },
+    {
+     "op": {
+      "sql": "UPDATE material_content_identities SET content_sha256 = '$B' WHERE material_id = 'mat'"
+     },
+     "expect": null
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 2,
+      "contentSha256": "$B",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": false
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 2,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$B",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     5,
+     null,
+     0,
+     "$B",
+     "active",
+     2
+    ]
+   }
+  },
+  {
+   "name": "a held confirmation from an older generation of the same content and page is stale (M4S1-R1)",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 1
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 1,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "begin",
+      "materialId": "mat",
+      "supersedeGeneration": null
+     },
+     "expect": {
+      "ok": {
+       "generation": 2
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "commit",
+      "materialId": "mat",
+      "generation": 2,
+      "contentSha256": "$A",
+      "physicalPage": 5,
+      "pageLabel": null
+     },
+     "expect": {
+      "ok": {
+       "committed": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 2,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "ok": {
+       "confirmedRead": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": false
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 1,
+      "physicalPage": 5,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     5,
+     null,
+     1,
+     "$A",
+     "active",
+     2
+    ]
+   }
+  },
+  {
+   "name": "a saved place with an unknown origin stays unverified and cannot be confirmed",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')",
+    "INSERT INTO material_reading_state VALUES ('mat', 2, NULL, 0, NULL, 'unverified', 3, 'x')",
+    "INSERT INTO material_bookmarks (id, material_id, page_index, originating_content_sha256, title, status, created_at, updated_at) VALUES ('old', 'mat', 1, NULL, 'Old', 'unverified', 'x', 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "read",
+      "materialId": "mat"
+     },
+     "expect": {
+      "ok": {
+       "readingState": {
+        "originatingContentSha256": null,
+        "status": "unverified"
+       },
+       "bookmarks": [
+        {
+         "id": "old",
+         "originatingContentSha256": null,
+         "status": "unverified"
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 3,
+      "physicalPage": 2,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     2,
+     null,
+     0,
+     null,
+     "unverified",
+     3
+    ]
+   }
+  },
+  {
+   "name": "a drifted saved place cannot be confirmed",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')",
+    "INSERT INTO material_reading_state VALUES ('mat', 2, NULL, 0, '$A', 'drifted', 3, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "set_read",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "expectedOwnerGeneration": 3,
+      "physicalPage": 2,
+      "confirmed": true
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    }
+   ],
+   "final": {
+    "tuple": [
+     2,
+     null,
+     0,
+     "$A",
+     "drifted",
+     3
+    ]
+   }
+  },
+  {
+   "name": "bookmarks need the named, recorded content and an in-range page; ids are unique",
+   "setup": [],
+   "steps": [
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "IDENTITY_UNKNOWN"
+     }
+    },
+    {
+     "op": {
+      "sql": "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+     },
+     "expect": null
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$B",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 21,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "PAGE_OUT_OF_RANGE"
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 3,
+      "pageLabel": "3-12",
+      "title": "Charts",
+      "notes": "Check with my instructor."
+     },
+     "expect": {
+      "ok": {
+       "id": "b1",
+       "physicalPage": 3,
+       "pageLabel": "3-12",
+       "originatingContentSha256": "$A",
+       "status": "verified",
+       "notes": "Check with my instructor."
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "b1",
+      "physicalPage": 4,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "INVALID_ARGUMENT"
+     }
+    },
+    {
+     "op": {
+      "kind": "delete_bookmark",
+      "materialId": "mat",
+      "bookmarkId": "b1"
+     },
+     "expect": {
+      "ok": {
+       "deleted": true
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "delete_bookmark",
+      "materialId": "mat",
+      "bookmarkId": "b1"
+     },
+     "expect": {
+      "ok": {
+       "deleted": false
+      }
+     }
+    }
+   ],
+   "final": {
+    "bookmarks": 0
+   }
+  },
+  {
+   "name": "a held bookmark for replaced content is refused (M4S1-R1)",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "sql": "UPDATE material_content_identities SET content_sha256 = '$B' WHERE material_id = 'mat'"
+     },
+     "expect": null
+    },
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "held",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "STALE_STATE"
+     }
+    }
+   ],
+   "final": {
+    "bookmarks": 0
+   }
+  },
+  {
+   "name": "bookmarks are limited per material",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')",
+    "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 500) INSERT INTO material_bookmarks (id, material_id, page_index, originating_content_sha256, title, created_at, updated_at) SELECT 'seed' || i, 'mat', 1, '$A', 't', 'x', 'x' FROM n"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "add_bookmark",
+      "materialId": "mat",
+      "expectedContentSha256": "$A",
+      "bookmarkId": "one-more",
+      "physicalPage": 3,
+      "pageLabel": null,
+      "title": "Charts",
+      "notes": ""
+     },
+     "expect": {
+      "error": "LIMIT_EXCEEDED"
+     }
+    }
+   ],
+   "final": {
+    "bookmarks": 500
+   }
+  },
+  {
+   "name": "another material's bookmark cannot be deleted from here",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')",
+    "INSERT INTO material_bookmarks (id, material_id, page_index, originating_content_sha256, title, created_at, updated_at) VALUES ('b1', 'mat', 1, '$A', 't', 'x', 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "delete_bookmark",
+      "materialId": "other",
+      "bookmarkId": "b1"
+     },
+     "expect": {
+      "ok": {
+       "deleted": false
+      }
+     }
+    }
+   ],
+   "final": {
+    "bookmarks": 1
+   }
+  },
+  {
+   "name": "read returns identity, state and bookmarks in page order",
+   "setup": [
+    "INSERT INTO material_content_identities VALUES ('mat', '$A', 20, 'x')",
+    "INSERT INTO material_bookmarks (id, material_id, page_index, originating_content_sha256, title, created_at, updated_at) VALUES ('b1', 'mat', 9, '$A', 't', 'x', 'x'), ('b2', 'mat', 1, '$A', 't', 'x', 'x')"
+   ],
+   "steps": [
+    {
+     "op": {
+      "kind": "read",
+      "materialId": "mat"
+     },
+     "expect": {
+      "ok": {
+       "materialId": "mat",
+       "identity": {
+        "materialId": "mat",
+        "contentSha256": "$A",
+        "totalPages": 20
+       },
+       "readingState": null,
+       "bookmarks": [
+        {
+         "id": "b2",
+         "physicalPage": 1
+        },
+        {
+         "id": "b1",
+         "physicalPage": 9
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": {
+      "kind": "read",
+      "materialId": "other"
+     },
+     "expect": {
+      "ok": {
+       "materialId": "other",
+       "identity": null,
+       "readingState": null,
+       "bookmarks": []
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

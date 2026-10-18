@@ -1,0 +1,87 @@
+{
+  "scope": "Compiled frontend preview; isolated browser SQLite only, not an installed Mac app test",
+  "runtime": "v22.23.3",
+  "sourceCommit": "fee7869",
+  "results": [
+    {
+      "name": "Profile saves and survives reload without school or instructor",
+      "status": "PASS",
+      "durationMs": 2272
+    },
+    {
+      "name": "Notes create edit pin and reload persistence",
+      "status": "FAIL",
+      "durationMs": 15935,
+      "error": "locator.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('article').filter({ has: getByRole('heading', { name: 'Synthetic smoke note', exact: true }) }).getByRole('textbox', { name: 'Note', exact: true })\u001b[22m\n\n    at /Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:26:546\n    at async run (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:18:58)\n    at async file:///Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:26:2",
+      "body": "Notes\n\nSomewhere to write it down without deciding where it goes first.\n\nWrite something down\nSaved here only — nothing is sent anywhere.\nSave note\nYour notes\n1 saved\nSave changes\nCancel"
+    },
+    {
+      "name": "Notes cancel deletion then delete and undo",
+      "status": "FAIL",
+      "durationMs": 15045,
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Delete note: Synthetic smoke note', exact: true })\u001b[22m\n\n    at /Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:27:133\n    at async run (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:18:58)\n    at async file:///Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:27:2",
+      "body": "Notes\n\nSomewhere to write it down without deciding where it goes first.\n\nWrite something down\nSaved here only — nothing is sent anywhere.\nSave note\nYour notes\n1 saved\nSave changes\nCancel"
+    },
+    {
+      "name": "Question and answer persist after reload",
+      "status": "FAIL",
+      "durationMs": 15914,
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('article').filter({ has: getByText('Synthetic smoke question?', { exact: true }) }).getByRole('button', { name: 'Add answer', exact: true })\u001b[22m\n\n    at /Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:28:428\n    at async run (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:18:58)\n    at async file:///Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:28:2",
+      "body": "Questions\n\nThings you don't want to forget to ask.\n\nAdd a question\nWeather\nNavigation\nRegulations\nCommunications\nAerodynamics\nAircraft Systems\nFlight Planning\nAirports\nPerformance\nEmergency Procedures\nLandings\nGeneral\nAny lesson\nSave question\nYour questions\n1 total\nEverythingTo AskAskedAnsweredRevisit\n\nSynthetic smoke question?\n\nGeneral\nTo Ask\nTo Ask\nAsked\nAnswered\nRevisit\nAdd answer\nDelete question: Synthetic smoke question?"
+    },
+    {
+      "name": "Flight Fund contribution persists",
+      "status": "PASS",
+      "durationMs": 1488
+    },
+    {
+      "name": "Zero expense refused then valid expense affects balance",
+      "status": "PASS",
+      "durationMs": 215
+    },
+    {
+      "name": "Schedule lesson with estimate survives reload",
+      "status": "PASS",
+      "durationMs": 1469
+    },
+    {
+      "name": "Quick debrief saves without flight-time invention",
+      "status": "FAIL",
+      "durationMs": 15103,
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('tab', { name: 'Quick debrief', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"tab\" type=\"button\" class=\"filter-chip\" aria-selected=\"false\">Quick debrief</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <dialog open=\"\" aria-labelledby=\"_r_0_\" class=\"dialog dialog--narrow\">…</dialog> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <dialog open=\"\" aria-labelledby=\"_r_0_\" class=\"dialog dialog--narrow\">…</dialog> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    27 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <dialog open=\"\" aria-labelledby=\"_r_0_\" class=\"dialog dialog--narrow\">…</dialog> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:32:161\n    at async run (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:18:58)\n    at async file:///Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:32:2",
+      "body": "Log a training flight\n\nRecord the flight and debrief while it is fresh.\n\nCancel\nQuick debrief\nFull flight log & debrief\n\nPERSONAL FLIGHT-TIME RECORD\n\nTraining flight\n\nCopy flight times from the entry agreed with her instructor. Categories can overlap, so the application does not calculate PIC, solo, instrument, or cross-country time. Keep the instructor-endorsed logbook as the authoritative record.\n\nDate\nLesson\nNot linked to a scheduled lesson\nSynthetic smoke lesson · 2026-10-20\nTitle\nAircraft type / model\nTail number / identifier\nDeparture airport\nArrival airport\nInstructor name\nTotal flight time\n\nHours, e.g. 1.3\n\nDual received\n\nTraining time with an authorized instructor\n\nSolo flight time\nPilot in command (PIC)\nCross-country\nNight flight time\nActual instrument\nSimulated instrument\n\nUnder the hood / view-limiting device\n\nDay landings\nNight landings\nToday's mission\n\nWhat was this lesson for?\n\nWhat did you practise?\nWhat went well?\nWhat was difficult?\nInstructor feedback\nQuestions for next time\nRelated goal\nNot linked to a goal\nCreate an airline-career training plan\nEarn the Private Pilot Certificate\nAdd the Instrument-Airplane Rating\nEarn the Commercial Pilot Certificate\nComplete the planned Multi-Engine training\nSelect and prepare for a professional flying path\nTrack progress toward ATP eligibility\nComplete the applicable ATP pathway\nBecome ready for an airline hiring process\nHow confident do you feel?\n1\n2\n3\n4\n5\n\nYour own sense of it — not an official proficiency rating.\n\nDELIBERATE NEXT STEPS\n\nWhat happens next?\nBecause of this lesson, what should you do next?\n\nDeliberately review and edit proposed actions before adding them to your Flight Plan.\n\nSave flight record\nQuick debrief\nCancel"
+    },
+    {
+      "name": "M3 skill status and confidence persist independently",
+      "status": "PASS",
+      "durationMs": 1777
+    },
+    {
+      "name": "Custom skill create rename retire restore",
+      "status": "FAIL",
+      "durationMs": 17090,
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'Synthetic renamed skill', exact: true }) to be visible\u001b[22m\n\n    at visible (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:16:47)\n    at /Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:34:1116\n    at async run (/Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:18:58)\n    at async file:///Users/rickymac/.codex/task-recovery/local-v054-build-20261015/browser-smoke.mjs:34:2",
+      "body": "Flight Path\n\nWhere you are going, and what you are working toward.\n\nBuild Your Training Foundation\nCurrent\n0 of 1 goals comfortable or complete\nGoal\nMove Build Your Training Foundation earlier\nMove Build Your Training Foundation later\nEdit Build Your Training Foundation\nDelete Build Your Training Foundation\n\nChoose a training route, protect your long-term options, and make a sustainable plan.\n\nCreate an airline-career training plan\nWorking On\nPrivate Pilot Certificate\n0 of 1 goals comfortable or complete\nGoal\nMove Private Pilot Certificate earlier\nMove Private Pilot Certificate later\nEdit Private Pilot Certificate\nDelete Private Pilot Certificate\n\nBuild the knowledge, judgment, and flying foundation for every stage that follows.\n\nEarn the Private Pilot Certificate\nNot Started\nInstrument Rating\n0 of 1 goals comfortable or complete\nGoal\nMove Instrument Rating earlier\nMove Instrument Rating later\nEdit Instrument Rating\nDelete Instrument Rating\n\nDevelop instrument procedures, weather judgment, and precise aircraft control.\n\nAdd the Instrument-Airplane Rating\nNot Started\nCommercial Pilot Certificate\n0 of 1 goals comfortable or complete\nGoal\nMove Commercial Pilot Certificate earlier\nMove Commercial Pilot Certificate later\nEdit Commercial Pilot Certificate\nDelete Commercial Pilot Certificate\n\nRaise knowledge, judgment, and aircraft control to commercial-pilot standards.\n\nEarn the Commercial Pilot Certificate\nNot Started\nMulti-Engine Training\n0 of 1 goals comfortable or complete\nGoal\nMove Multi-Engine Training earlier\nMove Multi-Engine Training later\nEdit Multi-Engine Training\nDelete Multi-Engine Training\n\nAdd multiengine knowledge and privileges appropriate to the planned career route.\n\nComplete the planned Multi-Engine training\nNot Started\nChoose a Time-Building Path\n0 of 1 goals comfortable or complete\nGoal\nMove Choose a Time-Building Path earlier\nMove Choose a Time-Building Path later\nEdit Choose a Time-Building Path\nDelete Choose a Time-Building Path\n\nFlight instructing is common, but it is not the only route; choose deliberately.\n\nSelect and prepare for a professional flying path\nNot Started\nBuild Airline-Qualifying Experience\n0 of 1 goals comfortable or complete\nGoal\nMove Build Airline-Qualifying Experience earlier\nMove Build Airline-Qualifying Experience later\nEdit Build Airline-Qualifying Experience\nDelete Build Airline-Qualifying Experience\n\nBuild quality experience while keeping accurate records and strong professional habits.\n\nTrack progress toward ATP eligibility\nNot Started\nATP-CTP and ATP Certificate\n0 of 1 goals comfortable or complete\nGoal\nMove ATP-CTP and ATP Certificate earlier\nMove ATP-CTP and ATP Certificate later\nEdit ATP-CTP and ATP Certificate\nDelete ATP-CTP and ATP Certificate\n\nPrepare for the certification stage used for airline transport operations.\n\nComplete the applicable ATP pathway\nNot Started\nAirline Applications and Type Rating\n0 of 1 goals comfortable or complete\nGoal\nMove Airline Applications and Type Rating earlier\nMove Airline Applications and Type Rating later\nEdit Airline Applications and Type Rating\nDelete Airline Applications and Type Rating\n\nPrepare a professional application, interview record, and airline-training mindset.\n\nBecome ready for an airline hiring process\nNot Started\nMilestone\n\nTraining requirements differ by location, school, instructor and certificate. These stages are yours — your instructor and the official requirements remain authoritative.\n\nYOUR OWN RECORD\n\nSkills\nAdd your own skill\n\nYour status and observations for each skill. It's your own record, not an instructor sign-off or a proficiency rating.\n\nAERODYNAMICS\nSlow flight\nNot set · No observations yet.\nBuilt-in\nStalls and recovery\nNot set · No observations yet.\nBuilt-in\nSteep turns\nNot set · No observations yet.\nBuilt-in\nAIRCRAFT SYSTEMS\nPreflight inspection\nNot set · No observations yet.\nBuilt-in\nAIRPORTS\nTaxiing\nPracticing · No observations yet.\nBuilt-in\nTraffic pattern\nNot set · No observations yet.\nBuilt-in\nCOMMUNICATIONS\nRadio communications\nNot set · No observations yet.\nBuilt-in\nEMERGENCY PROCEDURES\nEmergency approach and landing\nNot set · No observations yet.\nBuilt-in\nGENERAL\nUsing checklists\nNot set · No observations yet.\nBuilt-in\nLANDINGS\nCrosswind landing\nNot set · No observations yet.\nBuilt-in\nGo-around\nNot set · No observations yet.\nBuilt-in\nNormal approach and landing\nNot set · No observations yet.\nBuilt-in\nNAVIGATION\nGround reference maneuvers\nNot set · No observations yet.\nBuilt-in\nPERFORMANCE\nNormal takeoff and climb\nNot set · No observations yet.\nBuilt-in\nWEATHER\nWeather decisions\nNot set · No observations yet.\nBuilt-in\nShow retired skills"
+    },
+    {
+      "name": "Minimum desktop width has no horizontal overflow",
+      "status": "PASS",
+      "durationMs": 58
+    },
+    {
+      "name": "Fresh browser context cannot see synthetic saved records",
+      "status": "PASS",
+      "durationMs": 940
+    },
+    {
+      "name": "No browser exceptions HTTP errors or external requests",
+      "status": "PASS",
+      "durationMs": 3
+    }
+  ],
+  "errors": [],
+  "httpErrors": [],
+  "external": [],
+  "passed": 8,
+  "failed": 5
+}

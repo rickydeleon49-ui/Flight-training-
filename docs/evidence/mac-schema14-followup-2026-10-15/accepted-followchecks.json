@@ -1,0 +1,84 @@
+[
+  {
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/pages/StudyLibrary/CardReviewPanel.test.ts"
+    ],
+    "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+    "startedAt": 1792096350.93824,
+    "duration": 4.9593799114227295,
+    "exit": 0,
+    "stdout": "\n RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-\n\n\n Test Files  1 passed (1)\n      Tests  29 passed (29)\n   Start at  13:32:31\n   Duration  4.77s (transform 318ms, setup 0ms, import 426ms, tests 4.04s, environment 224ms)\n\n",
+    "stderr": "(node:51247) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+  },
+  {
+    "argv": [
+      "npm",
+      "test",
+      "--",
+      "--maxWorkers=2"
+    ],
+    "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+    "startedAt": 1792096355.897981,
+    "duration": 88.40514397621155,
+    "exit": 0,
+    "stdout": "\n> her-flight-deck@0.5.3 test\n> vitest run --maxWorkers=2\n\n\n RUN  v4.1.11 /Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-\n\n\n Test Files  139 passed | 4 skipped (143)\n      Tests  3202 passed | 6 skipped (3208)\n   Start at  13:32:36\n   Duration  88.12s (transform 1.85s, setup 0ms, import 8.83s, tests 139.85s, environment 14.13s)\n\n",
+    "stderr": "(node:51275) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51276) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51310) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51323) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51326) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51327) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51331) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51334) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51335) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51338) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51339) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51584) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51688) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51749) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51692) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51750) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51756) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51757) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51758) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51759) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51765) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51764) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51769) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51768) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51770) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51771) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51773) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51789) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51790) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51791) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51794) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51798) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51799) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51802) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51806) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51808) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51809) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51811) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51813) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51816) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51818) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51819) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51820) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51822) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51823) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51826) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51825) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51828) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51827) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51857) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51881) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:51969) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52022) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52220) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52203) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52250) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52272) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52292) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52339) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52378) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52421) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52386) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52460) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52482) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52519) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52525) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52627) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52654) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52701) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52719) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:52746) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+    "startedAt": 1792096444.303353,
+    "duration": 4.344291925430298,
+    "exit": 0,
+    "stdout": "\n> her-flight-deck@0.5.3 typecheck\n> tsc --noEmit\n\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+    "startedAt": 1792096448.6479099,
+    "duration": 0.6283812522888184,
+    "exit": 0,
+    "stdout": "\n> her-flight-deck@0.5.3 test:cargo-lock\n> node scripts/test-cargo-lock-sync.mjs\n\nChecking Cargo toolchain and lockfile synchronization (read-only)...\nCargo lockfile synchronization verified: her-flight-deck is at 0.5.3 in both Cargo.toml and Cargo.lock\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+    "startedAt": 1792096449.2765381,
+    "duration": 0.011404752731323242,
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "shasum",
+      "-a",
+      "256",
+      "-c",
+      "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS"
+    ],
+    "cwd": "/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-",
+    "startedAt": 1792096449.288137,
+    "duration": 0.018748998641967773,
+    "exit": 0,
+    "stdout": "STATUS.md: OK\nROADMAP.md: OK\ndocs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md: OK\ndocs/evidence/mac-schema14-completion-2026-10-15/baseline.json: OK\ndocs/evidence/mac-schema14-completion-2026-10-15/execution-receipts.json: OK\ndocs/evidence/mac-schema14-completion-2026-10-15/proof-receipt.json: OK\ndocs/evidence/mac-schema14-completion-2026-10-15/README.md: OK\ndocs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md: OK\nscripts/mac-schema13-profile-snapshot.mjs: OK\nscripts/mac-schema14-profile-snapshot.mjs: OK\nscripts/mac-schema14-profile-snapshot.test.mjs: OK\nscripts/mac-schema14-verification-proof.mjs: OK\nsrc/logic/currentSchemaVerification.test.ts: OK\ndocs/MAC_SCHEMA14_VERIFICATION_PREPARATION_REPORT_2026-10-11.md: OK\ndocs/PROJECT_HANDOFF.md: OK\ndocs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md: OK\ndocs/evidence/mac-schema14-verification-preparation-2026-10-11/RUNBOOK.md: OK\ndocs/evidence/mac-schema14-verification-preparation-2026-10-11/verification-receipts.json: OK\ndocs/evidence/mac-schema14-verification-preparation-2026-10-11/source-manifest.json: OK\ndocs/evidence/mac-schema14-verification-preparation-2026-10-11/SHA256SUMS: OK\ndocs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json: OK\n",
+    "stderr": ""
+  }
+]

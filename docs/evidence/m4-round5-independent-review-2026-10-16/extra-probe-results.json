@@ -1,0 +1,26 @@
+[
+  {
+    "lane": "node22",
+    "frozenFiveExit": 0
+  },
+  {
+    "lane": "node26",
+    "frozenFiveExit": 0
+  },
+  {
+    "lane": "node22",
+    "runnerExit": 1,
+    "controlChildReturnCode": -15,
+    "expectedSignal": "SIGTERM",
+    "actualRecordedSignal": null,
+    "actualRecordedExit": null
+  },
+  {
+    "lane": "node26",
+    "runnerExit": 1,
+    "controlChildReturnCode": -15,
+    "expectedSignal": "SIGTERM",
+    "actualRecordedSignal": null,
+    "actualRecordedExit": null
+  }
+]

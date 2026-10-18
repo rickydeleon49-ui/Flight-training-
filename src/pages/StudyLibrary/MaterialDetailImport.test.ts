@@ -79,7 +79,7 @@ beforeEach(async () => {
   HTMLDialogElement.prototype.close = function () {
     this.removeAttribute("open");
   };
-  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: true, model: "gemini-3.5-flash" });
+  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(true);
   vi.spyOn(documentService, "documentExists").mockResolvedValue(true);
@@ -154,7 +154,9 @@ describe("imported content in MaterialDetail", () => {
     expect(await screen.findByText("Gemini study assistant")).toBeTruthy();
     expect(screen.getByText(/AI-generated study aid/)).toBeTruthy();
     expect(screen.queryByText(IMPORTED_CONTENT_DISCLAIMER)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+    // The button appears only once the Gemini status read resolves, which can
+    // land after the heading renders, so wait for it rather than racing it.
+    fireEvent.click(await screen.findByRole("button", { name: "Regenerate" }));
     const confirm = await screen.findByRole("dialog", { name: "Send this file to Google?" });
     expect(confirm.textContent).not.toContain("imported");
   });

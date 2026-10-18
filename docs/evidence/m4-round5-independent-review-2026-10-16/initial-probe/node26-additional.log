@@ -1,0 +1,84 @@
+✖ a newer failed reservation supersedes an older held opener (2.128167ms)
+✖ a newer failed reservation supersedes an older held persistence (0.556584ms)
+✖ an ignored INSERT cannot issue an unpersisted reservation token (0.399833ms)
+✖ an ignored UPDATE cannot issue an unpersisted reservation token (0.3105ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82.49125
+
+✖ failing tests:
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:22:2
+✖ a newer failed reservation supersedes an older held opener (2.128167ms)
+  AssertionError [ERR_ASSERTION]: the superseded opener must not report success
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:35:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:22:2
+✖ a newer failed reservation supersedes an older held persistence (0.556584ms)
+  AssertionError [ERR_ASSERTION]: the superseded persistence must not report success
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:35:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:43:2
+✖ an ignored INSERT cannot issue an unpersisted reservation token (0.399833ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception: a no-op claim write must be treated as a reservation failure
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:48:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../../.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:43:2
+✖ an ignored UPDATE cannot issue an unpersisted reservation token (0.3105ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception: a no-op claim write must be treated as a reservation failure
+      at TestContext.<anonymous> (file:///Users/rickymac/.codex/task-recovery/m4-round5-review-20261016/additional-diagnostics.test.mjs:48:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }

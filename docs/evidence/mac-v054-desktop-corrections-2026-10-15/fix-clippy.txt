@@ -1,0 +1,2 @@
+    Checking her-flight-deck v0.5.4 (/Users/rickymac/.codex/worktrees/m2-card-c2-source-rereview/Flight-training-/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.96s

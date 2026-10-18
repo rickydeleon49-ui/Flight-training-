@@ -1,0 +1,39 @@
+[
+  {
+    "label": "frontend-install",
+    "command": [
+      "npm",
+      "ci",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "exit": 0,
+    "seconds": 2.28
+  },
+  {
+    "label": "gemini-focused",
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=2",
+      "src/services/geminiModel.test.ts",
+      "src/pages/Settings/SettingsGeminiModel.test.ts",
+      "src/pages/StudyLibrary/MaterialDetailGeminiModel.test.ts",
+      "src/pages/StudyLibrary/MaterialDetailImport.test.ts"
+    ],
+    "exit": 0,
+    "seconds": 4.24
+  },
+  {
+    "label": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 8.32
+  }
+]

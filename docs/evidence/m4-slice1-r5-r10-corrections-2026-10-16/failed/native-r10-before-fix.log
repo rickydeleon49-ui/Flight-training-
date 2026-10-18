@@ -1,0 +1,25 @@
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-m4-slice1/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.63s
+     Running unittests src/lib.rs (target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 1 test
+test navigation::tests::reviewer_r10_an_inflated_cached_count_cannot_authorize_a_nonexistent_pdf_page ... FAILED
+
+failures:
+
+---- navigation::tests::reviewer_r10_an_inflated_cached_count_cannot_authorize_a_nonexistent_pdf_page stdout ----
+
+thread 'navigation::tests::reviewer_r10_an_inflated_cached_count_cannot_authorize_a_nonexistent_pdf_page' (2945250) panicked at src/navigation_tests.rs:1489:5:
+assertion `left != right` failed: a 50-page file cannot authorize page450 even with an inflated cache
+  left: Bool(true)
+ right: true
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    navigation::tests::reviewer_r10_an_inflated_cached_count_cannot_authorize_a_nonexistent_pdf_page
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 518 filtered out; finished in 0.09s
+
+error: test failed, to rerun pass `--lib`
+exit=101

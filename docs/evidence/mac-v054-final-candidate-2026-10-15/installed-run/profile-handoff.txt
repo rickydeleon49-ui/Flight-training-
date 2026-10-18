@@ -1,0 +1,10 @@
+original root: inode=21671262 uid=501 gid=20 mode=drwxr-xr-x
+returned root: inode=21671262 uid=501 gid=20 mode=drwxr-xr-x
+swapped at: 2026-10-15T22:57:03-0700
+returned at: 2026-10-15T23:05:09-0700
+ls -laR diff (original vs returned):
+3c3
+< drwx------+ 61 rickymac  staff    1952 Oct 15 22:40 ..
+---
+> drwx------+ 61 rickymac  staff    1952 Oct 15 23:05 ..
+Original moved (not copied) to /Users/rickymac/.codex/task-recovery/v054-final-candidate-20261015/installed-run-20261016/profile-handoff/original-default-profile during the run and moved back. Saved Gemini key: never read, hashed, displayed or deleted.

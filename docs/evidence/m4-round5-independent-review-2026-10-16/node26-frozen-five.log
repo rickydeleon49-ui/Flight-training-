@@ -1,0 +1,19 @@
+{"case":"R28-tokens","olderToken":1,"newerToken":2}
+{"case":"R28","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":null,"persistedPage":null},"newResult":{"success":true,"state":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20.","saved":true,"saveError":null,"persistedStatus":"active","lastRequestedPage":20,"confirmedRead":false},"finalPage":20}
+{"case":"R29","result":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":5,"persistedPage":5},"finalPage":5,"controllerState":"aborted"}
+{"case":"R30-normal","oldResult":{"success":false,"state":"aborted","superseded":true,"lastRequestedPage":10,"persistedPage":10},"durablePage":20,"controllerPage":20}
+{"case":"R30-retry","late":{"success":false,"state":"aborted","superseded":true,"reason":"superseded","persistedPage":20},"durablePage":20,"controllerPage":20}
+{"case":"R30-failure","durablePage":20,"controllerState":"opened","notice":"Opened 'IFH' in default viewer. Turn to page 20."}
+✔ [M4-R28] overlapping controllers with earlier completion still retain later request (38.140583ms)
+✔ [M4-R29] abort while persistence is pending cannot change the saved page (5.435167ms)
+✔ [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress (4.978667ms)
+✔ [M4-R30] late retry acknowledgement cannot overwrite newer controller progress (5.245625ms)
+✔ [M4-R30] obsolete opener failure must leave the winner notice and state intact (5.045708ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.456625

@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   backupErrorMessage,
+  backupLocalDay,
   describeBackup,
   formatBackupDate,
   formatBytes,
@@ -56,5 +57,94 @@ describe("formatBytes", () => {
 describe("formatBackupDate", () => {
   it("turns a stored Unix timestamp into a readable local date", () => {
     expect(formatBackupDate(0)).not.toContain("1970-01-01T00:00:00");
+  });
+});
+
+function inTimeZone(zone: string) {
+  let hadTz = false;
+  let originalTz: string | undefined;
+  beforeAll(() => {
+    hadTz = "TZ" in process.env;
+    originalTz = process.env.TZ;
+    process.env.TZ = zone;
+  });
+  afterAll(() => {
+    if (hadTz) process.env.TZ = originalTz;
+    else delete process.env.TZ;
+  });
+}
+
+describe("backupLocalDay in Los Angeles", () => {
+  inTimeZone("America/Los_Angeles");
+
+  it("reads a copy made on a California evening as that evening's day, not the UTC day", () => {
+    expect(backupLocalDay("2026-10-16-035630-manual", "2026-10-15")).toBe(
+      "Thursday, October 15",
+    );
+    expect(backupLocalDay("2026-10-16-035630-before-restore", "2026-10-15")).toBe(
+      "Thursday, October 15",
+    );
+  });
+
+  it("changes day at local midnight (07:00Z in daylight time)", () => {
+    expect(backupLocalDay("2026-10-16-065959-manual", "2026-10-16")).toBe(
+      "Thursday, October 15",
+    );
+    expect(backupLocalDay("2026-10-16-070000-manual", "2026-10-16")).toBe(
+      "Friday, October 16",
+    );
+  });
+
+  it("reads names disambiguated within the same second and upgrade copies", () => {
+    expect(backupLocalDay("2026-10-16-035630-2-before-0.5.4", "2026-10-15")).toBe(
+      "Thursday, October 15",
+    );
+    expect(
+      backupLocalDay("2026-10-16-035630-1792115790-before-restore", "2026-10-15"),
+    ).toBe("Thursday, October 15");
+  });
+
+  it("adds the year when it is not the current one", () => {
+    expect(backupLocalDay("2025-01-01-050000-manual", "2026-10-15")).toBe(
+      "Tuesday, December 31, 2024",
+    );
+  });
+
+  it("returns null for names without a readable time", () => {
+    for (const name of [
+      "",
+      "something-else",
+      "before-restore-test",
+      "2026-13-01-120000-manual",
+      "2026-02-30-120000-manual",
+      "2026-10-16-250000-manual",
+      "2026-10-16-12000-manual",
+      "2026-10-16manual",
+    ]) {
+      expect(backupLocalDay(name, "2026-10-15")).toBeNull();
+    }
+  });
+});
+
+describe("backupLocalDay in Kiritimati", () => {
+  inTimeZone("Pacific/Kiritimati");
+
+  it("moves a UTC morning copy to the next local day", () => {
+    expect(backupLocalDay("2026-10-15-095959-manual", "2026-10-15")).toBe(
+      "Thursday, October 15",
+    );
+    expect(backupLocalDay("2026-10-15-100000-manual", "2026-10-16")).toBe(
+      "Friday, October 16",
+    );
+  });
+});
+
+describe("backupLocalDay in UTC", () => {
+  inTimeZone("UTC");
+
+  it("keeps the named day", () => {
+    expect(backupLocalDay("2026-10-16-035630-manual", "2026-10-16")).toBe(
+      "Friday, October 16",
+    );
   });
 });

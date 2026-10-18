@@ -231,3 +231,12 @@
   .flight-log-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .flight-rhythm { grid-template-columns: 1fr; }
 }
+
+/* A saved flight whose times don't add up: what to check, and where. */
+.time-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}

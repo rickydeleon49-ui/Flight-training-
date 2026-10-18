@@ -1,0 +1,8 @@
+=== raw build identity ===
+55dfcf50054acbe7524ad95611cf628bfa6a6994f2abdb356fe39715b18fc282  /Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+=== lipo/arch ===
+arm64
+/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app/Contents/MacOS/her-flight-deck: Mach-O 64-bit executable arm64
+=== raw no-sign strict verify (expected failure, preserved) ===
+/Users/rickymac/code/Flight-training-/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app: code has no resources but signature indicates they must be present
+exit=1

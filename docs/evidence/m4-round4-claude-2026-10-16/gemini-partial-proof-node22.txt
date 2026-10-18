@@ -1,0 +1,719 @@
+TAP version 13
+# (node:7542) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [control] bounded physical reference with trusted identity and complete nested translation work
+ok 1 - [control] bounded physical reference with trusted identity and complete nested translation work
+  ---
+  duration_ms: 0.914916
+  type: 'test'
+  ...
+# Subtest: [control] newer missing-path intent still blocks obsolete opener
+ok 2 - [control] newer missing-path intent still blocks obsolete opener
+  ---
+  duration_ms: 0.291583
+  type: 'test'
+  ...
+# Subtest: [M4-R9] unknown and invalid totals cannot resolve physical destinations
+ok 3 - [M4-R9] unknown and invalid totals cannot resolve physical destinations
+  ---
+  duration_ms: 0.067333
+  type: 'test'
+  ...
+# Subtest: [M4-R9] printed label map without a declared identity cannot resolve
+ok 4 - [M4-R9] printed label map without a declared identity cannot resolve
+  ---
+  duration_ms: 0.050542
+  type: 'test'
+  ...
+# Subtest: [M4-R9] genuine first-level nullable parent metadata permits root navigation
+ok 5 - [M4-R9] genuine first-level nullable parent metadata permits root navigation
+  ---
+  duration_ms: 0.086458
+  type: 'test'
+  ...
+# Subtest: [M4-R9] live root translation requires complete range metadata
+ok 6 - [M4-R9] live root translation requires complete range metadata
+  ---
+  duration_ms: 0.034416
+  type: 'test'
+  ...
+# Subtest: [M4-R9] reverse translation cannot succeed without destination identity
+ok 7 - [M4-R9] reverse translation cannot succeed without destination identity
+  ---
+  duration_ms: 0.063583
+  type: 'test'
+  ...
+# Subtest: [M4-R9] deleted root document returns structured snapshot guidance
+ok 8 - [M4-R9] deleted root document returns structured snapshot guidance
+  ---
+  duration_ms: 0.316417
+  type: 'test'
+  ...
+# Subtest: [M4-R9] deleted parent document returns structured snapshot guidance
+ok 9 - [M4-R9] deleted parent document returns structured snapshot guidance
+  ---
+  duration_ms: 0.180083
+  type: 'test'
+  ...
+# Subtest: [M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds
+ok 10 - [M4-R9] physical index validation rejects non-integers, zeros, and out-of-bounds
+  ---
+  duration_ms: 0.211333
+  type: 'test'
+  ...
+# Subtest: [M4-R15] unknown or malformed destination count cannot produce a verified destination
+ok 11 - [M4-R15] unknown or malformed destination count cannot produce a verified destination
+  ---
+  duration_ms: 0.186709
+  type: 'test'
+  ...
+# Subtest: [M4-R16] a label map bound to different content is stale and cannot resolve
+ok 12 - [M4-R16] a label map bound to different content is stale and cannot resolve
+  ---
+  duration_ms: 0.0765
+  type: 'test'
+  ...
+# Subtest: [M4-R16] a bound map still cannot resolve a mapped page outside the trusted count
+ok 13 - [M4-R16] a bound map still cannot resolve a mapped page outside the trusted count
+  ---
+  duration_ms: 0.02675
+  type: 'test'
+  ...
+# Subtest: [M4-R17] resolveDestination refuses any reference without a trusted identity
+ok 14 - [M4-R17] resolveDestination refuses any reference without a trusted identity
+  ---
+  duration_ms: 0.031833
+  type: 'test'
+  ...
+# Subtest: [M4-R17] a caller-inflated count cannot open a destination beyond persisted identity
+ok 15 - [M4-R17] a caller-inflated count cannot open a destination beyond persisted identity
+  ---
+  duration_ms: 0.045458
+  type: 'test'
+  ...
+# Subtest: [M4-R17] resolver -> controller -> protocol compose into one durable destination
+not ok 16 - [M4-R17] resolver -> controller -> protocol compose into one durable destination
+  ---
+  duration_ms: 0.340125
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:242:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:245:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R18] translated pages stay inside the bounded root range so arithmetic cannot overflow
+ok 17 - [M4-R18] translated pages stay inside the bounded root range so arithmetic cannot overflow
+  ---
+  duration_ms: 0.054708
+  type: 'test'
+  ...
+# Subtest: [M4-R10] persisted bookmark cannot default verified outside active bounds
+not ok 18 - [M4-R10] persisted bookmark cannot default verified outside active bounds
+  ---
+  duration_ms: 0.07525
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:298:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:301:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] identity replacement atomically invalidates bookmark and reading state
+not ok 19 - [M4-R10] identity replacement atomically invalidates bookmark and reading state
+  ---
+  duration_ms: 0.062791
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:309:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:312:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R10] unknown bounds cannot reverify a matching-hash bookmark
+ok 20 - [M4-R10] unknown bounds cannot reverify a matching-hash bookmark
+  ---
+  duration_ms: 0.051209
+  type: 'test'
+  ...
+# Subtest: [M4-R10] content drift detector distinguishes verified, drifted and unknown
+ok 21 - [M4-R10] content drift detector distinguishes verified, drifted and unknown
+  ---
+  duration_ms: 0.217166
+  type: 'test'
+  ...
+# Subtest: [M4-R19] navigation writers with unknown or malformed identity persist unverified without throwing
+not ok 22 - [M4-R19] navigation writers with unknown or malformed identity persist unverified without throwing
+  ---
+  duration_ms: 0.08275
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:349:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:352:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R11] same material with different content cannot inherit prior requested page
+ok 23 - [M4-R11] same material with different content cannot inherit prior requested page
+  ---
+  duration_ms: 0.074209
+  type: 'test'
+  ...
+# Subtest: [M4-R11] public progress accessor must not leak A after failed B
+ok 24 - [M4-R11] public progress accessor must not leak A after failed B
+  ---
+  duration_ms: 0.042167
+  type: 'test'
+  ...
+# Subtest: [M4-R11] explicit abort refuses obsolete opener and prevents state publication
+ok 25 - [M4-R11] explicit abort refuses obsolete opener and prevents state publication
+  ---
+  duration_ms: 0.047709
+  type: 'test'
+  ...
+# Subtest: [M4-R13] held obsolete save is rejected at commit and page 42 never reaches storage
+not ok 26 - [M4-R13] held obsolete save is rejected at commit and page 42 never reaches storage
+  ---
+  duration_ms: 0.081792
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:421:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:424:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R13] a fenced commit that throws is surfaced honestly and cannot leave the stale page
+not ok 27 - [M4-R13] a fenced commit that throws is surfaced honestly and cannot leave the stale page
+  ---
+  duration_ms: 0.067583
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:466:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:469:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R14] a mid-flight content replacement commits the winner's whole tuple and nothing else
+not ok 28 - [M4-R14] a mid-flight content replacement commits the winner's whole tuple and nothing else
+  ---
+  duration_ms: 0.068917
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:491:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:494:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R11] opener refuses an out-of-bounds destination before native invocation
+ok 29 - [M4-R11] opener refuses an out-of-bounds destination before native invocation
+  ---
+  duration_ms: 0.034292
+  type: 'test'
+  ...
+# Subtest: [M4-R11] partial save failure offers deliberate save-only retry carrying same ownership
+ok 30 - [M4-R11] partial save failure offers deliberate save-only retry carrying same ownership
+  ---
+  duration_ms: 0.152334
+  type: 'test'
+  ...
+# Subtest: [M4-R23] session 1 saves several pages, then a new controller on the same database commits a new page
+not ok 31 - [M4-R23] session 1 saves several pages, then a new controller on the same database commits a new page
+  ---
+  duration_ms: 0.244041
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:560:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:565:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R23] two controllers on one database: the later request wins and the earlier held request is rejected
+not ok 32 - [M4-R23] two controllers on one database: the later request wins and the earlier held request is rejected
+  ---
+  duration_ms: 0.160208
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:603:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:607:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R24] retrySave sends the retried operation's own generation and is rejected once superseded by a newer request
+not ok 33 - [M4-R24] retrySave sends the retried operation's own generation and is rejected once superseded by a newer request
+  ---
+  duration_ms: 0.103208
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:656:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:659:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R13] same-content repeat commits with advanced generation and preserves final database state
+not ok 34 - [M4-R13] same-content repeat commits with advanced generation and preserves final database state
+  ---
+  duration_ms: 0.058334
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:700:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:703:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R13] changed content with same material ID commits new tuple and preserves final database state
+not ok 35 - [M4-R13] changed content with same material ID commits new tuple and preserves final database state
+  ---
+  duration_ms: 0.05575
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:723:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:726:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R13] route navigation A -> B -> A commits each destination and preserves final database state for both materials
+not ok 36 - [M4-R13] route navigation A -> B -> A commits each destination and preserves final database state for both materials
+  ---
+  duration_ms: 0.063917
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:747:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:750:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R13] explicit abort/unmount prevents in-flight operation from committing to storage
+not ok 37 - [M4-R13] explicit abort/unmount prevents in-flight operation from committing to storage
+  ---
+  duration_ms: 0.053833
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:783:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:786:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R13] delayed failure of earlier operation cannot overwrite or corrupt newer committed progress
+not ok 38 - [M4-R13] delayed failure of earlier operation cannot overwrite or corrupt newer committed progress
+  ---
+  duration_ms: 0.058958
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:814:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:817:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R14] superseded or drifted generation row remains visibly unverified, never active
+not ok 39 - [M4-R14] superseded or drifted generation row remains visibly unverified, never active
+  ---
+  duration_ms: 0.054084
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:854:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:857:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R28] file-backed DB: overlapping controllers, earlier completion released first, later request wins
+not ok 40 - [M4-R28] file-backed DB: overlapping controllers, earlier completion released first, later request wins
+  ---
+  duration_ms: 0.298167
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:901:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:905:14)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R28] file-backed DB: overlapping controllers, later completion released first, earlier completion rejected
+not ok 41 - [M4-R28] file-backed DB: overlapping controllers, later completion released first, earlier completion rejected
+  ---
+  duration_ms: 0.211875
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:940:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:944:14)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R28] earlier pending operation is fenced from becoming a durable stale winner once later claim exists
+not ok 42 - [M4-R28] earlier pending operation is fenced from becoming a durable stale winner once later claim exists
+  ---
+  duration_ms: 0.0645
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:977:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:980:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R29] abort while persistence is pending fences the operation before commit and preserves previous saved tuple
+not ok 43 - [M4-R29] abort while persistence is pending fences the operation before commit and preserves previous saved tuple
+  ---
+  duration_ms: 0.071625
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1000:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1004:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R29] an old operation cancellation cannot cancel or release a newer operation claim
+not ok 44 - [M4-R29] an old operation cancellation cannot cancel or release a newer operation claim
+  ---
+  duration_ms: 0.053792
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1028:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1031:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R29] post-commit delayed acknowledgement retains storage result but suppresses publication
+not ok 45 - [M4-R29] post-commit delayed acknowledgement retains storage result but suppresses publication
+  ---
+  duration_ms: 0.071041
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1049:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1053:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+not ok 46 - [M4-R30] late fulfilled commit acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 0.057375
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1084:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1088:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+not ok 47 - [M4-R30] late retry acknowledgement cannot overwrite newer controller progress
+  ---
+  duration_ms: 0.0595
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1115:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1120:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R30] obsolete opener failure must leave winner notice and state intact
+not ok 48 - [M4-R30] obsolete opener failure must leave winner notice and state intact
+  ---
+  duration_ms: 0.061209
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1145:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1149:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R30] route navigation A -> B -> A with delayed persistence leaves final winner intact
+not ok 49 - [M4-R30] route navigation A -> B -> A with delayed persistence leaves final winner intact
+  ---
+  duration_ms: 0.058958
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1171:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, scandir '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/accepted-main/src-tauri/migrations'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readdirSync (node:fs:1590:26)
+    applySchema (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:290:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1175:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R31] delivered receipt altered after sealing causes runner verification failure and records truthful failure
+ok 50 - [M4-R31] delivered receipt altered after sealing causes runner verification failure and records truthful failure
+  ---
+  duration_ms: 19.158167
+  type: 'test'
+  ...
+# Subtest: [M4-R31] installer failure or verified reuse is recorded truthfully without fabricating zero-exit records
+not ok 51 - [M4-R31] installer failure or verified reuse is recorded truthfully without fabricating zero-exit records
+  ---
+  duration_ms: 0.092
+  type: 'test'
+  location: '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1229:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/scratch/pdfjs-engine/scratch-artifacts.json'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    TestContext.<anonymous> (file:///Users/rickymac/code/Flight-training-m4-round4/docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/proof.test.mjs:1233:34)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: [M4-R31] payload verification failure records truthful failure and does not claim success
+ok 52 - [M4-R31] payload verification failure records truthful failure and does not claim success
+  ---
+  duration_ms: 9.049375
+  type: 'test'
+  ...
+# Subtest: [M4-R32] report and README validator rejects unknown mutant claims including unexecuted probe IDs
+ok 53 - [M4-R32] report and README validator rejects unknown mutant claims including unexecuted probe IDs
+  ---
+  duration_ms: 0.61
+  type: 'test'
+  ...
+# Subtest: [M4-R32] report and README validator rejects cited tests that were not executed
+ok 54 - [M4-R32] report and README validator rejects cited tests that were not executed
+  ---
+  duration_ms: 0.08675
+  type: 'test'
+  ...
+# Subtest: [M4-R32] executed mutant IDs and failure outcomes are derived from execution records
+ok 55 - [M4-R32] executed mutant IDs and failure outcomes are derived from execution records
+  ---
+  duration_ms: 0.107833
+  type: 'test'
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 28
+# fail 27
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108.0435

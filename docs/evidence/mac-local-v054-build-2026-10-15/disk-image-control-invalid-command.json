@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "hdiutil",
+    "create",
+    "-size",
+    "64m",
+    "-fs",
+    "APFS",
+    "-volname",
+    "HFD QA Empty Control",
+    "-format",
+    "UDRW",
+    "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-disk-image-control-cxtbvp21/empty-apfs.dmg"
+  ],
+  "durationSeconds": 0.008646011352539062,
+  "exit": 1,
+  "timedOut": false,
+  "stdout": "",
+  "stderr": "hdiutil: create: -format requires -srcfolder or -srcdevice\nhdiutil: WARNING: 'hdiutil create ...' is deprecated. Please use 'diskutil image create ...' instead.\nUsage:\thdiutil create <sizespec> [options] <imagepath>\n\thdiutil create -help\n",
+  "scope": "Empty disposable disk-image control only; no app or real profile; no explicit mounting",
+  "root": "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-disk-image-control-cxtbvp21"
+}

@@ -1,0 +1,78 @@
+{
+  "schema": "sweep-followups-correction-manifest/1",
+  "base": "f2a7090190c74fdc3779785ae3684049d16b2a0e",
+  "generatedAt": "2026-10-16T00:41:21.931Z",
+  "note": "Uncommitted correction package; excludes the reviewer's own report and evidence, which are unchanged.",
+  "files": {
+    "ROADMAP.md": {
+      "sha256": "51f2942d56ab2cc414ccde823d966b0b3eb1dec451f55e6ba36c9864f6fef2ac",
+      "bytes": 76521,
+      "changedFromReviewed": true
+    },
+    "src/logic/flightLog.test.ts": {
+      "sha256": "4b19f9c72fcb0a51b80715677db2d86886513520b34754536e330faac869ff75",
+      "bytes": 5936,
+      "changedFromReviewed": false
+    },
+    "src/logic/flightLog.ts": {
+      "sha256": "252a92dac6b92494ff5ba4b510ff5aa9fbe1a769055f486cdd4d1e564523cfc9",
+      "bytes": 7343,
+      "changedFromReviewed": false
+    },
+    "src/logic/toolkit.test.ts": {
+      "sha256": "9ae32ea96eab5e16cde0a9b05a3e5a54235d15ea5a70010210b2c98c7821803e",
+      "bytes": 9290,
+      "changedFromReviewed": true
+    },
+    "src/logic/toolkit.ts": {
+      "sha256": "3cb5242d284db8fef845d3c12d3995d69f4962fa8fe03e5144e63d361151b07e",
+      "bytes": 15880,
+      "changedFromReviewed": true
+    },
+    "src/pages/FlightJournal/FlightJournal.tsx": {
+      "sha256": "73cb0f88bbec44054c1aeec76b5824b229a389592cf50bfbc02886a2830c5a8d",
+      "bytes": 18275,
+      "changedFromReviewed": false
+    },
+    "src/pages/FlightJournal/JournalEntryDetail.tsx": {
+      "sha256": "03be1cf68953ca64e2f0e4fa78b75e36756b507b757831897d2c858915b21e6c",
+      "bytes": 12278,
+      "changedFromReviewed": false
+    },
+    "src/pages/FlightJournal/journal.css": {
+      "sha256": "709d0887934e00bf213ee02e17126d62b0f59833740f2a16eb27b2bc6f2881b6",
+      "bytes": 5995,
+      "changedFromReviewed": false
+    },
+    "src/pages/PilotToolkit/PilotToolkit.tsx": {
+      "sha256": "5a28115d1eb1a46512eb4bd9aba44e930623b32d4622146c27afc24a50c4c48c",
+      "bytes": 46691,
+      "changedFromReviewed": true
+    },
+    "src/pages/Settings/Settings.tsx": {
+      "sha256": "0248afb415b201406b2a3b459de70d37aab54616ddd6cb7013546520df3ef357",
+      "bytes": 51336,
+      "changedFromReviewed": false
+    },
+    "docs/SWEEP_FOLLOWUPS_REPORT_2026-10-15.md": {
+      "sha256": "23a113e37c5a78aae92d4992e58704175f7ae029df595f9b52a1519928d181c0",
+      "bytes": 5399,
+      "changedFromReviewed": true
+    },
+    "src/pages/FlightJournal/flightTimeChecks.test.ts": {
+      "sha256": "af223829618287dc5c9c48952969fb50885ff6adf495cbfe9138e906e5adae5d",
+      "bytes": 3841,
+      "changedFromReviewed": false
+    },
+    "src/pages/PilotToolkit/medicalDateConflict.test.ts": {
+      "sha256": "3a266ef689d20b8589398b5beff54275ce20f5101d8276353c557a701fc7799c",
+      "bytes": 15200,
+      "changedFromReviewed": true
+    },
+    "docs/SWEEP_FOLLOWUPS_CORRECTION_R1_2026-10-15.md": {
+      "sha256": "e489d91ea04e25f76cd0b3198c62c94c9fe932727bbf98c279affb8caf8c60ea",
+      "bytes": 9033,
+      "changedFromReviewed": "new"
+    }
+  }
+}

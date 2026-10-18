@@ -1,0 +1,108 @@
+### launch by exact app path (several copies share com.herflightdeck.app)
+2026-10-15T22:34:37-0700
+open exit=0
+pid=55575
+--- executable path of that PID (proc_pidpath via lsof)
+55575 /Users/rickymac/ Thu Oct 15 22:34:37 2026    
+--- verified byte identity of the RUNNING executable
+running executable path: /Users/rickymac/Applications/Her Flight Deck Verification fbff255/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+--- hash that exact path
+a809e7b16743c9410b790dfb7634ef4d6aee956f23777aca6d9583bf3a181a8f  /Users/rickymac/Applications/Her Flight Deck Verification fbff255/Her Flight Deck.app/Contents/MacOS/her-flight-deck
+--- frontmost + window server observation
+{"frontPid":55575,"frontName":"Her Flight Deck","frontPath":"/Users/rickymac/Applications/Her Flight Deck Verification fbff255/Her Flight Deck.app"}
+{
+  "observedAt" : "2026-10-16T05:34:44Z",
+  "pid" : 55575,
+  "windows" : [
+    {
+      "alpha" : 1,
+      "bounds" : {
+        "Height" : 500,
+        "Width" : 500,
+        "X" : 0,
+        "Y" : 456
+      },
+      "layer" : 0,
+      "number" : 4664,
+      "onscreen" : false,
+      "owner" : "Her Flight Deck",
+      "pid" : 55575
+    },
+    {
+      "alpha" : 1,
+      "bounds" : {
+        "Height" : 836,
+        "Width" : 1249,
+        "X" : 75,
+        "Y" : 33
+      },
+      "layer" : 0,
+      "number" : 4662,
+      "onscreen" : true,
+      "owner" : "Her Flight Deck",
+      "pid" : 55575
+    },
+    {
+      "alpha" : 1,
+      "bounds" : {
+        "Height" : 33,
+        "Width" : 1470,
+        "X" : 0,
+        "Y" : 0
+      },
+      "layer" : 0,
+      "number" : 4661,
+      "onscreen" : false,
+      "owner" : "Her Flight Deck",
+      "pid" : 55575
+    },
+    {
+      "alpha" : 1,
+      "bounds" : {
+        "Height" : 33,
+        "Width" : 1470,
+        "X" : 0,
+        "Y" : 0
+      },
+      "layer" : 0,
+      "number" : 4660,
+      "onscreen" : false,
+      "owner" : "Her Flight Deck",
+      "pid" : 55575
+    },
+    {
+      "alpha" : 1,
+      "bounds" : {
+        "Height" : 33,
+        "Width" : 1470,
+        "X" : 0,
+        "Y" : 0
+      },
+      "layer" : 0,
+      "number" : 4659,
+      "onscreen" : false,
+      "owner" : "Her Flight Deck",
+      "pid" : 55575
+    },
+    {
+      "alpha" : 1,
+      "bounds" : {
+        "Height" : 33,
+        "Width" : 1470,
+        "X" : 0,
+        "Y" : 0
+      },
+      "layer" : 0,
+      "number" : 4658,
+      "onscreen" : false,
+      "owner" : "Her Flight Deck",
+      "pid" : 55575
+    }
+  ]
+}
+--- synthetic root after first launch
+backups
+her-flight-deck.db
+her-flight-deck.db-shm
+her-flight-deck.db-wal
+last-run-version.txt

@@ -1,0 +1,97 @@
+{
+  "source": "git index blobs, before commit",
+  "members": 15,
+  "verified": 15,
+  "results": [
+    {
+      "path": "README.md",
+      "expected": "495b11eb41dbb3eccde99d73d378a5c817b70f6243e7e34424110e1ce9037b0b",
+      "indexBlobSha256": "495b11eb41dbb3eccde99d73d378a5c817b70f6243e7e34424110e1ce9037b0b",
+      "ok": true
+    },
+    {
+      "path": "build.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "build.log",
+      "expected": "1afe20f47b3c5d437092ec78744980cb2bf3f08565a5accb845e6a22245b8515",
+      "indexBlobSha256": "1afe20f47b3c5d437092ec78744980cb2bf3f08565a5accb845e6a22245b8515",
+      "ok": true
+    },
+    {
+      "path": "focused-frontend.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "focused-frontend.log",
+      "expected": "e90ac2f2ca76559e1271413df923944e08043dd4c4eba7e1efd73d1968b523b4",
+      "indexBlobSha256": "e90ac2f2ca76559e1271413df923944e08043dd4c4eba7e1efd73d1968b523b4",
+      "ok": true
+    },
+    {
+      "path": "native-study-export.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "native-study-export.log",
+      "expected": "e55dd1f2a9499aa50fb36349feb2aeca75248ef1e6cf10129e006fd02e181332",
+      "indexBlobSha256": "e55dd1f2a9499aa50fb36349feb2aeca75248ef1e6cf10129e006fd02e181332",
+      "ok": true
+    },
+    {
+      "path": "node-version.txt",
+      "expected": "33e26f35db6e57ce0c486ddc815fe966867e4f649e418eaf323f75f4720eb8e9",
+      "indexBlobSha256": "33e26f35db6e57ce0c486ddc815fe966867e4f649e418eaf323f75f4720eb8e9",
+      "ok": true
+    },
+    {
+      "path": "regressions-on-original-a490dac.exit",
+      "expected": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "indexBlobSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "ok": true
+    },
+    {
+      "path": "regressions-on-original-a490dac.log",
+      "expected": "40d5758628d01c2e8a9fc9df3bc02d5085354a9d684dc7ebfa02a02563a50aaa",
+      "indexBlobSha256": "40d5758628d01c2e8a9fc9df3bc02d5085354a9d684dc7ebfa02a02563a50aaa",
+      "ok": true
+    },
+    {
+      "path": "review-dispatched-bytes.test.fragment.ts",
+      "expected": "40f71afc2760418d3d6782b89a141d0066b999e8c692e070b5e9f67bced77b65",
+      "indexBlobSha256": "40f71afc2760418d3d6782b89a141d0066b999e8c692e070b5e9f67bced77b65",
+      "ok": true
+    },
+    {
+      "path": "review-test.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "review-test.log",
+      "expected": "45bbc312983890fa303805fc662cbe6d2fecd4a7249ca06246c21968dd7e47cb",
+      "indexBlobSha256": "45bbc312983890fa303805fc662cbe6d2fecd4a7249ca06246c21968dd7e47cb",
+      "ok": true
+    },
+    {
+      "path": "typecheck.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "typecheck.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "indexBlobSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ok": true
+    }
+  ]
+}

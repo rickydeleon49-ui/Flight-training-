@@ -102,7 +102,7 @@ beforeEach(async () => {
   await db.execute("INSERT INTO settings (key, value) VALUES ('airline_starter_pack', 'skipped-for-test')").catch(() => undefined);
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
-  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "" });
+  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "", choice: "standard" });
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(false);
   vi.spyOn(documentService, "documentExists").mockResolvedValue(true);

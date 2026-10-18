@@ -1,0 +1,30 @@
+{
+  "dependency": "lopdf0.42.0 exact existing lock",
+  "fixture": "generated Helvetica text/image-only/compressed oversized-text pages; not a real handbook corpus",
+  "hardExtractionAllocationBoundProven": false,
+  "malformedRefused": true,
+  "pages": [
+    {
+      "contentSha256": "eb196825b869f705cde9a35501ff88bd071df110fdd5f336e3bc343b88d4652e",
+      "extractedBytes": 23,
+      "physicalPage": 1,
+      "status": "text"
+    },
+    {
+      "contentSha256": "eb196825b869f705cde9a35501ff88bd071df110fdd5f336e3bc343b88d4652e",
+      "extractedBytes": 0,
+      "physicalPage": 2,
+      "status": "no_extractable_text"
+    },
+    {
+      "contentSha256": "eb196825b869f705cde9a35501ff88bd071df110fdd5f336e3bc343b88d4652e",
+      "extractedBytes": 1000023,
+      "physicalPage": 3,
+      "status": "over_proposed_output_budget_after_allocation"
+    }
+  ],
+  "parseAndExtractMs": 99.37516600000001,
+  "pdfBytes": 3034,
+  "reason": "extract_text allocates the complete page text before a caller can enforce an output budget; cancellation/memory isolation need separate proof",
+  "sha256": "eb196825b869f705cde9a35501ff88bd071df110fdd5f336e3bc343b88d4652e"
+}

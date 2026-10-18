@@ -1,0 +1,10 @@
+=== Her Flight Deck M4 Integration Corrections - Disposable Module Mutation Receipt ===
+Timestamp: 2026-10-11T20:28:05.248Z
+Baseline Suite: Exit 0 (all 5 regressions pass against clean modules)
+Mutants Tested: 5 actual disposable module copies in isolated temp directories
+Mutant 1 (MUTANT_1_ALLOW_MALFORMED_TOTALS): Fails with AssertionError: [M4-R9] totalPages undefined must not resolve
+Mutant 2 (MUTANT_2_REJECT_NULLABLE_PARENT): Fails with AssertionError: [M4-R9] first-level lineage must allow root navigation
+Mutant 3 (MUTANT_3_OMIT_ATOMIC_INVALIDATION): Fails with AssertionError: [M4-R10] bookmark must not remain verified after content replacement
+Mutant 4 (MUTANT_4_DISABLE_HELD_SAVE_FENCE): Fails with AssertionError: [M4-R11] database must remain at page 3 after obsolete page 42 completes
+Mutant 5 (MUTANT_5_IGNORE_CONTENT_PROGRESS_SCOPE): Fails with AssertionError: [M4-R11] new content B cannot inherit page 42 from content A
+Post-Mutation Worktree Check: All live source file SHA-256 hashes 100% identical to initial baseline.

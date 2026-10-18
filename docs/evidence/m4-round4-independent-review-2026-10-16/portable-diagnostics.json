@@ -1,0 +1,28 @@
+[
+  {
+    "lane": "node22",
+    "command": [
+      "/opt/homebrew/opt/node@22/bin/node",
+      "--test",
+      "--test-reporter=tap",
+      "/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs"
+    ],
+    "exit": 1,
+    "pass": 0,
+    "fail": 4,
+    "fixtureBinding": "published frozen submitted-pack; assertions unchanged"
+  },
+  {
+    "lane": "node26",
+    "command": [
+      "/opt/homebrew/bin/node",
+      "--test",
+      "--test-reporter=tap",
+      "/Users/rickymac/code/Flight-training-post-v054-roadmap/docs/evidence/m4-round4-independent-review-2026-10-16/remaining-diagnostics.test.mjs"
+    ],
+    "exit": 1,
+    "pass": 0,
+    "fail": 4,
+    "fixtureBinding": "published frozen submitted-pack; assertions unchanged"
+  }
+]

@@ -1,0 +1,10 @@
+=== Toolchain Receipt ===
+Date: 2026-10-11T18:36:00Z
+Node: v26.10.0
+npm: 12.2.0
+Rustc: not invoked (no toolchain installed)
+Cargo: not invoked
+OS: macOS 27.0.1 (26A434)
+Arch: arm64
+Evaluated PDF Engine: pdfjs-dist@6.3.289 (in scratch dependencies)
+SQLite Engine: node:sqlite DatabaseSync (SQLite 3.x)

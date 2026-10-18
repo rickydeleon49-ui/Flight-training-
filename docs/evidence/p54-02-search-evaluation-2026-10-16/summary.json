@@ -1,0 +1,59 @@
+[
+  {
+    "materials": 100,
+    "records": 600,
+    "engine": "actual native SQLite FTS5",
+    "coldIndexMedianMs": 3.837125,
+    "warmCrosswindMedianMs": 0.115375,
+    "peakProcessRssMiB": 6.828125,
+    "storedBytes": 487424
+  },
+  {
+    "materials": 100,
+    "records": 600,
+    "engine": "MiniSearch7.2.0",
+    "coldIndexMedianMs": 11.600207999999995,
+    "warmCrosswindMedianMs": 0.050625000000003695,
+    "peakProcessRssMiB": 56.859375,
+    "indexHeapDeltaMedianMiB": 1.0595474243164062,
+    "storedBytes": 506998
+  },
+  {
+    "materials": 1000,
+    "records": 6000,
+    "engine": "actual native SQLite FTS5",
+    "coldIndexMedianMs": 33.19625,
+    "warmCrosswindMedianMs": 1.445666,
+    "peakProcessRssMiB": 17.453125,
+    "storedBytes": 4534272
+  },
+  {
+    "materials": 1000,
+    "records": 6000,
+    "engine": "MiniSearch7.2.0",
+    "coldIndexMedianMs": 74.97779200000001,
+    "warmCrosswindMedianMs": 0.45216700000000287,
+    "peakProcessRssMiB": 135.359375,
+    "indexHeapDeltaMedianMiB": 8.243278503417969,
+    "storedBytes": 5245759
+  },
+  {
+    "materials": 10000,
+    "records": 60000,
+    "engine": "actual native SQLite FTS5",
+    "coldIndexMedianMs": 383.428125,
+    "warmCrosswindMedianMs": 15.812750000000001,
+    "peakProcessRssMiB": 90.9375,
+    "storedBytes": 47050752
+  },
+  {
+    "materials": 10000,
+    "records": 60000,
+    "engine": "MiniSearch7.2.0",
+    "coldIndexMedianMs": 846.288041,
+    "warmCrosswindMedianMs": 3.105583000000024,
+    "peakProcessRssMiB": 791.21875,
+    "indexHeapDeltaMedianMiB": 72.87065124511719,
+    "storedBytes": 54316042
+  }
+]
