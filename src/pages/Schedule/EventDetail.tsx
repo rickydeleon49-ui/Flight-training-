@@ -28,6 +28,7 @@ import { lessonPreparation } from "@/logic/preparation";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 
+import { CalendarExportDialog } from "./CalendarExportDialog";
 import { EventFormDialog, type EventDraft } from "./EventFormDialog";
 import { LessonBriefDialog } from "./LessonBriefDialog";
 import "./schedule.css";
@@ -42,6 +43,7 @@ export function EventDetail() {
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [briefOpen, setBriefOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [addingAction, setAddingAction] = useState(false);
   const [newPrepItem, setNewPrepItem] = useState("");
   const [materialToAttach, setMaterialToAttach] = useState("");
@@ -152,6 +154,9 @@ export function EventDetail() {
               Back
             </Link>
             <Button onClick={() => setBriefOpen(true)}>Lesson brief</Button>
+            {event.status !== "completed" ? (
+              <Button onClick={() => setCalendarOpen(true)}>Add to calendar…</Button>
+            ) : null}
             <Button onClick={() => setEditing(true)}>Edit</Button>
             <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
               Delete
@@ -459,6 +464,12 @@ export function EventDetail() {
       </div>
 
       <LessonBriefDialog open={briefOpen} event={event} onClose={() => setBriefOpen(false)} />
+
+      <CalendarExportDialog
+        open={calendarOpen}
+        event={event}
+        onClose={() => setCalendarOpen(false)}
+      />
 
       <EventFormDialog
         open={editing}

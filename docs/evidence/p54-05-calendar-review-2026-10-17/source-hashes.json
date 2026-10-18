@@ -1,0 +1,50 @@
+{
+  "originalSubmission": "ce3c948",
+  "files": [
+    {
+      "path": "src/logic/calendarExport.ts",
+      "bytes": 10208,
+      "sha256": "7afe45d00ea8bc2ab25d9bdda5a7c303c77ba46027440241df393454ce39e886"
+    },
+    {
+      "path": "src/logic/calendarExport.test.ts",
+      "bytes": 18200,
+      "sha256": "aa3fcf810a71816f8c25d1be73007cb7fabb9e6b97591ca131d94aa36a8f8204"
+    },
+    {
+      "path": "src/pages/Schedule/CalendarExportDialog.tsx",
+      "bytes": 8261,
+      "sha256": "39704d0f671ef06f0a764bd5d468672c2ea007b915540bef8a61ba298e0280cf"
+    },
+    {
+      "path": "src/pages/Schedule/CalendarExportDialog.test.ts",
+      "bytes": 17096,
+      "sha256": "e19852bd54d6df8c43c38e62bef10a6e1ac338a01e2d66af0cc565252506f871"
+    },
+    {
+      "path": "src/pages/Schedule/EventDetail.tsx",
+      "bytes": 18527,
+      "sha256": "cc38a66c5c477da4a3eda3df3ba51db2595deaf09ce76c16f6060f99c3e1b351"
+    },
+    {
+      "path": "src/logic/studyExport.ts",
+      "bytes": 9977,
+      "sha256": "6004e25e5561a68de22bbe32ce15e25aa2e6d68b14728c9ea015e5248f925d48"
+    },
+    {
+      "path": "src/services/studyExport.ts",
+      "bytes": 2530,
+      "sha256": "d7009ba6ac42c093bc1bd5725e32af34bc8ea6f0a6e2b7957b80558f0655d410"
+    },
+    {
+      "path": "src-tauri/src/study_export.rs",
+      "bytes": 19844,
+      "sha256": "20eb07c3f96731273961f5c8904fc592fb7c952e4bb387acfae7b57030f2005d"
+    },
+    {
+      "path": "src/logic/calendarExport.boundary.test.ts",
+      "bytes": 3020,
+      "sha256": "0b4f867e54ecc9a80af0311563a38d8b91e047a97a9eb3a64c4eff121a69460a"
+    }
+  ]
+}

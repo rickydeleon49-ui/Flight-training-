@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  20:16:34
+   Duration  171ms (transform 108ms, setup 0ms, import 167ms, tests 11ms, environment 0ms)
+

@@ -1,3 +1,20 @@
+## P54-05 calendar reviewed; boundary corrections pending independent review — 17 October 2026
+
+Gemini's ce3c948 submission matches8 source hashes/23 evidence checksums. Codex reproduced six boundary failures and fixed UID property injection, noncanonical-date output and invalid timestamp/end-range handling in an isolated review branch;11 permanent cases plus the existing focused suites pass81/81. Raw author full-gate receipts remain unchanged; final diff/log treatment and current tracker bindings are corrected. [Review and precise reviewer assignment](docs/P54_05_CALENDAR_INDEPENDENT_REVIEW_2026-10-17.md). No merge authorized. Installed Calendar/save-dialog behavior remains unverified; the separate scheduler evaluation does not authorize production adoption. Earlier history follows unchanged.
+
+## P54-05 part B (single-lesson calendar export) implemented; pending review — 17 October 2026
+
+**PENDING REVIEW; NO SELF-MERGE.** Gemini implemented part B of the approved P54-05 scope on `gemini/p54-05-calendar-export`, from accepted main `2fc27b90aacd33183a8e5c0f3047008df37383b4`. Every eligible schedule item (scheduled, cancelled, rescheduled) has an "Add to calendar…" dialog:
+- Saves a single-lesson `.ics` file using an in-house RFC 5545 writer with stable UID (`<event.id>@herflightdeck.invalid`), UTC `DTSTAMP`, and floating local times without `Z` or `TZID` (preserving clock times across DST boundaries).
+- Honors approved reviewer corrections: `METHOD` and `SEQUENCE` are strictly omitted; no `ORGANIZER`, attendees, or alarms.
+- Date-only arithmetic provides default 1-hour duration for start-only events with rollover across midnight, month-end, leap day, and year-end; all-day events use `VALUE=DATE` with exclusive next-day end. Equal/earlier end, end without start, and malformed dates/times are rejected with clear errors.
+- Rescheduled lessons export as cancelled with an explanation that the replacement lesson needs its own file.
+- Plain language explains file-only import, duplicate risks upon re-import, floating local times, and browser mode limitations (no native save attempted).
+- Preparation checklist export starts unticked (false by default) and resets on dialog close or lesson change.
+- Stored notes, journal entries, questions, materials, and finances are strictly excluded (verified via unique sentinel tests).
+- Reuses native atomic save with new `ExportKind::Calendar` (`.ics`, 64 KiB cap). Dialog implements BRIEF-R1/R2 session ownership and duplicate-click guards.
+- Verification gates: 70 focused tests, full frontend 3,629 passed / 6 skipped, native 533 passed / 6 ignored, typecheck, build, strict Clippy, fmt, lock sync, and schema helper (26/26) all pass with exit 0. [Report](docs/P54_05_CALENDAR_EXPORT_REPORT_2026-10-17.md), [Reviewer prompt](docs/P54_05_CALENDAR_EXPORT_REVIEWER_PROMPT_2026-10-17.md).
+
 ## Study Guide hub directions approved — 17 October 2026
 
 Owner approved all eight recommendations, recorded as STUDY-HUB-01–08 in ROADMAP, in this order: source-linked explanations; connected topics; corrections/version handling; explainable study sessions; better wrong-answer explanations; questions grounded in selected documents; study-informed lesson preparation; visible processing quality. [Detailed acceptance criteria](docs/STUDY_HUB_ROADMAP_2026-10-17.md). Planning only; retain the current P54 queue and active calendar assignment, and reuse overlapping source/navigation/scheduling/FAA work. No application, dependency, migration or provider change. No merge authorized in this documentation task. Earlier entries follow unchanged.

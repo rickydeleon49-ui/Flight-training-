@@ -29,6 +29,10 @@ const MAX_HANDOUT_BYTES: u64 = 2 * MAX_PACKET_BYTES;
 /// any real lesson and still refuses runaway input before the dialog opens.
 const MAX_BRIEF_BYTES: u64 = 1024 * 1024;
 const _: () = assert!(MAX_BRIEF_BYTES < MAX_HANDOUT_BYTES);
+/// A calendar file contains one VCALENDAR with one VEVENT; 64 KiB is far beyond
+/// any single-lesson calendar export and still refuses runaway input before the dialog opens.
+const MAX_CALENDAR_BYTES: u64 = 64 * 1024;
+const _: () = assert!(MAX_CALENDAR_BYTES < MAX_BRIEF_BYTES);
 /// Suggested names longer than this are shortened.
 const MAX_SUGGESTED_NAME_CHARS: usize = 120;
 
@@ -38,6 +42,7 @@ pub enum ExportKind {
     Packet,
     Handout,
     Brief,
+    Calendar,
 }
 
 impl ExportKind {
@@ -45,6 +50,7 @@ impl ExportKind {
         match self {
             Self::Packet => "json",
             Self::Handout | Self::Brief => "html",
+            Self::Calendar => "ics",
         }
     }
 
@@ -52,6 +58,7 @@ impl ExportKind {
         match self {
             Self::Packet => "Study packet",
             Self::Handout | Self::Brief => "Web page",
+            Self::Calendar => "Calendar file",
         }
     }
 
@@ -60,6 +67,7 @@ impl ExportKind {
             Self::Packet => "Save study packet",
             Self::Handout => "Save printable handout",
             Self::Brief => "Save lesson brief",
+            Self::Calendar => "Save calendar file",
         }
     }
 
@@ -68,6 +76,7 @@ impl ExportKind {
             Self::Packet => MAX_PACKET_BYTES,
             Self::Handout => MAX_HANDOUT_BYTES,
             Self::Brief => MAX_BRIEF_BYTES,
+            Self::Calendar => MAX_CALENDAR_BYTES,
         }
     }
 }
@@ -173,7 +182,10 @@ pub(crate) fn suggested_file_name(suggested: &str, kind: ExportKind) -> String {
         .collect();
     let stem = stem.trim();
     let stem = if stem.is_empty() {
-        "Study export"
+        match kind {
+            ExportKind::Calendar => "Lesson",
+            _ => "Study export",
+        }
     } else {
         stem
     };
@@ -478,6 +490,32 @@ mod tests {
         let dir = scratch("brief-limit");
         let path = dir.join("Brief.html");
         let oversized = vec![b'x'; MAX_BRIEF_BYTES as usize + 1];
+        assert_eq!(
+            write_export(&path, &oversized, kind.limit()),
+            Err(ExportError::TooLarge)
+        );
+        assert!(entries(&dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_calendar_export_is_its_own_bounded_ics_kind() {
+        let kind: ExportKind = serde_json::from_str("\"calendar\"").unwrap();
+        assert_eq!(kind, ExportKind::Calendar);
+        assert_eq!(kind.extension(), "ics");
+        assert_eq!(kind.filter_name(), "Calendar file");
+        assert_eq!(kind.title(), "Save calendar file");
+        assert_eq!(kind.limit(), MAX_CALENDAR_BYTES);
+        assert_eq!(
+            suggested_file_name("Lesson 2026-10-24 Pattern work.json", kind),
+            "Lesson 2026-10-24 Pattern work.json.ics"
+        );
+        assert_eq!(suggested_file_name("   ", kind), "Lesson.ics");
+        assert!(serde_json::from_str::<ExportKind>("\"Calendar\"").is_err());
+
+        let dir = scratch("calendar-limit");
+        let path = dir.join("Lesson.ics");
+        let oversized = vec![b'x'; MAX_CALENDAR_BYTES as usize + 1];
         assert_eq!(
             write_export(&path, &oversized, kind.limit()),
             Err(ExportError::TooLarge)
