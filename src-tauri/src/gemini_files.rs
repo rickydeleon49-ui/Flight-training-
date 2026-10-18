@@ -51,6 +51,8 @@ use std::task::{Context, Poll, Waker};
 use std::time::Duration;
 
 use reqwest::Client;
+
+use crate::gemini_budget::{Budget, Stage};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
@@ -169,6 +171,8 @@ pub(crate) enum FileState {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct RemoteFile {
     pub name: String,
+    /// The expected MIME type, validated while parsing the file response.
+    pub mime: String,
     pub uri: String,
     pub state: FileState,
     pub expires_at: Option<i64>,
@@ -256,6 +260,7 @@ pub(crate) fn parse_file(value: &Value, base: &str, mime: &str) -> Result<Remote
     };
     Ok(RemoteFile {
         name: name.to_string(),
+        mime: mime.to_string(),
         uri: uri.to_string(),
         state,
         expires_at,
@@ -322,19 +327,33 @@ pub(crate) fn parse_rfc3339(text: &str) -> Option<i64> {
 }
 
 /// A transport failure in words, without the request URL (an upload URL
-/// carries an upload session identifier).
-fn transport(error: reqwest::Error, doing: &str) -> String {
-    if error.is_timeout() {
-        format!("Gemini did not answer in time while {doing}. Check the internet connection and try again.")
-    } else if error.is_connect() {
+/// carries an upload session identifier). Only a failure to connect points at
+/// the internet connection: a timeout after connecting may be Google's side.
+fn transport(error: reqwest::Error, doing: &str, budget: &Budget) -> String {
+    if error.is_connect() {
+        budget.categorize("could not reach Google");
+        format!("Could not reach Google while {doing}. Check the internet connection; no complete study aid was saved.")
+    } else if error.is_timeout() {
+        budget.categorize("timed out");
         format!(
-            "Could not reach Gemini while {doing}. Check the internet connection and try again."
+            "Google did not finish {doing} within the {} Her Flight Deck allows for one study aid, so no complete study aid was saved. On a slow connection, choosing a chapter or fewer pages first sends less; otherwise try again later.",
+            crate::gemini_budget::describe(budget.total())
         )
     } else {
+        budget.categorize("connection interrupted");
         format!(
-            "The connection to Gemini was interrupted while {doing}. Nothing was saved; try again."
+            "The connection to Google was interrupted while {doing}. No complete study aid was saved; try again."
         )
     }
+}
+
+/// Said when the budget is already spent before a request could be made.
+pub(crate) fn out_of_time(budget: &Budget, doing: &str) -> String {
+    budget.categorize("time limit reached");
+    format!(
+        "Her Flight Deck stopped before {doing}: the {} it allows for one study aid had run out. Nothing was saved. Choosing a chapter or fewer pages first usually helps.",
+        crate::gemini_budget::describe(budget.total())
+    )
 }
 
 /// Why Google would not accept an upload, in words she can act on.
@@ -343,9 +362,9 @@ fn upload_refusal(status: u16) -> String {
         400 => "Google did not accept this PDF for upload. Try a different copy of the file.".to_string(),
         401 | 403 => "Google did not allow this key to upload files. Check the key and its project in Google AI Studio.".to_string(),
         413 => "This PDF is larger than Google accepts for upload. Choose a chapter or fewer pages first.".to_string(),
-        429 => "Google is limiting uploads for this project right now. Nothing was sent for generation; wait a few minutes and try again.".to_string(),
-        500..=599 => "Google's file service is busy right now. Nothing was sent for generation; try again in a few minutes.".to_string(),
-        _ => format!("Google refused the upload ({status}). Nothing was sent for generation."),
+        429 => "Google is limiting uploads for this project right now. No complete study aid was saved; wait a few minutes and try again.".to_string(),
+        500..=599 => "Google's file service is busy right now. No complete study aid was saved; try again in a few minutes.".to_string(),
+        _ => format!("Google refused the upload ({status}). No complete study aid was saved."),
     }
 }
 
@@ -357,7 +376,12 @@ pub(crate) async fn upload(
     api_key: &str,
     bytes: &[u8],
     mime: &str,
+    budget: &Budget,
 ) -> Result<RemoteFile, String> {
+    budget.at(Stage::Uploading);
+    let timeout = budget
+        .request_timeout()
+        .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
     let start = http
         .post(format!("{base}/upload/v1beta/files"))
         .header("x-goog-api-key", api_key)
@@ -369,11 +393,14 @@ pub(crate) async fn upload(
         )
         .header("X-Goog-Upload-Header-Content-Type", mime)
         .json(&json!({ "file": { "display_name": DISPLAY_NAME } }))
+        .timeout(timeout)
         .send()
         .await
-        .map_err(|e| transport(e, "starting the upload"))?;
+        .map_err(|e| transport(e, "starting the upload", budget))?;
     let status = start.status().as_u16();
+    budget.saw_status(status);
     if !(200..300).contains(&status) {
+        budget.categorize("upload refused");
         return Err(upload_refusal(status));
     }
     let session = start
@@ -386,21 +413,27 @@ pub(crate) async fn upload(
             "Google did not return a usable upload address, so the PDF was not sent.".to_string()
         })?;
 
+    let timeout = budget
+        .request_timeout()
+        .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
     let finished = http
         .post(session)
         .header("x-goog-api-key", api_key)
         .header("X-Goog-Upload-Offset", "0")
         .header("X-Goog-Upload-Command", "upload, finalize")
         .body(bytes.to_vec())
+        .timeout(timeout)
         .send()
         .await
-        .map_err(|e| transport(e, "uploading the PDF"))?;
+        .map_err(|e| transport(e, "uploading the PDF", budget))?;
     let status = finished.status().as_u16();
+    budget.saw_status(status);
     let raw = finished
         .text()
         .await
-        .map_err(|e| transport(e, "reading the upload result"))?;
+        .map_err(|e| transport(e, "confirming the upload", budget))?;
     if !(200..300).contains(&status) {
+        budget.categorize("upload refused");
         return Err(upload_refusal(status));
     }
     let value: Value = serde_json::from_str(&raw).map_err(|_| {
@@ -416,16 +449,21 @@ pub(crate) async fn lookup(
     api_key: &str,
     name: &str,
     mime: &str,
+    budget: &Budget,
 ) -> Result<RemoteFile, LookupFailure> {
     if !valid_name(name) {
         return Err(LookupFailure::Missing);
     }
+    let timeout = budget
+        .request_timeout()
+        .ok_or_else(|| LookupFailure::Other(out_of_time(budget, "checking the uploaded PDF")))?;
     let response = http
         .get(format!("{base}/v1beta/{name}"))
         .header("x-goog-api-key", api_key)
+        .timeout(timeout)
         .send()
         .await
-        .map_err(|e| LookupFailure::Other(transport(e, "checking the uploaded PDF")))?;
+        .map_err(|e| LookupFailure::Other(transport(e, "checking the uploaded PDF", budget)))?;
     let status = response.status().as_u16();
     // Only 404 shows the copy is gone. A 403 is an access refusal for this key
     // or project, not proof of a missing file, so it never leads to an upload.
@@ -440,7 +478,7 @@ pub(crate) async fn lookup(
     let raw = response
         .text()
         .await
-        .map_err(|e| LookupFailure::Other(transport(e, "checking the uploaded PDF")))?;
+        .map_err(|e| LookupFailure::Other(transport(e, "checking the uploaded PDF", budget)))?;
     if !(200..300).contains(&status) {
         return Err(LookupFailure::Other(upload_refusal(status)));
     }
@@ -801,6 +839,7 @@ impl PreparedSources {
         source: &Source<'_>,
         epoch: u64,
         avoid: Option<&str>,
+        budget: &Budget,
         say: &(dyn Fn(String) + Sync),
     ) -> Result<Lease<'a>, String> {
         let key = self.key_for(base, api_key, source);
@@ -811,8 +850,12 @@ impl PreparedSources {
             match claim {
                 Claim::Stale => return Err(STALE_CONTEXT.to_string()),
                 Claim::Cached(lease) => {
-                    match self.confirm(http, base, api_key, &lease, say).await {
-                        Ok(expires_at) if lease.is_current() => {
+                    match self.confirm(http, base, api_key, &lease, budget, say).await {
+                        // GENREL01-R12: the check itself takes time, so the
+                        // copy must still be in date once it has answered.
+                        Ok(expires_at)
+                            if lease.is_current() && !self.too_close_to_expiry(expires_at) =>
+                        {
                             self.count(|s| s.reuses += 1);
                             say("Using the copy of this PDF already prepared with Google; it is not uploaded again.".to_string());
                             let mut lease = lease;
@@ -820,8 +863,8 @@ impl PreparedSources {
                             lease.prepared.expires_at = expires_at;
                             return Ok(lease);
                         }
-                        Ok(_) => return Err(STALE_CONTEXT.to_string()),
-                        Err(NotReady::Unusable(_)) => {
+                        Ok(_) if !lease.is_current() => return Err(STALE_CONTEXT.to_string()),
+                        Ok(_) | Err(NotReady::Unusable(_)) => {
                             avoid = Some(lease.prepared.name.clone());
                         }
                         Err(NotReady::Other(message)) => return Err(message),
@@ -840,7 +883,7 @@ impl PreparedSources {
                 }
                 Claim::Own(guard) => {
                     return self
-                        .prepare_fresh(http, base, api_key, source, guard, epoch, say)
+                        .prepare_fresh(http, base, api_key, source, guard, epoch, budget, say)
                         .await
                 }
             }
@@ -955,16 +998,17 @@ impl PreparedSources {
         base: &str,
         api_key: &str,
         lease: &Lease<'_>,
+        budget: &Budget,
         say: &(dyn Fn(String) + Sync),
     ) -> Result<i64, NotReady> {
         let cached = &lease.prepared;
-        match lookup(http, base, api_key, &cached.name, &cached.mime).await {
+        match lookup(http, base, api_key, &cached.name, &cached.mime, budget).await {
             Ok(file) if file.state == FileState::Active => {
                 Ok(file.expires_at.unwrap_or(cached.expires_at))
             }
             Ok(file) if file.state == FileState::Processing => {
                 let file = self
-                    .wait_until_active(http, base, api_key, file, &cached.mime, say)
+                    .wait_until_active(http, base, api_key, file, budget, say)
                     .await?;
                 Ok(file.expires_at.unwrap_or(cached.expires_at))
             }
@@ -973,6 +1017,12 @@ impl PreparedSources {
             )),
             Err(LookupFailure::Other(message)) => Err(NotReady::Other(message)),
         }
+    }
+
+    /// Whether a copy expiring at `expires_at` is too close to expiry to be
+    /// used for a request that can itself take minutes.
+    fn too_close_to_expiry(&self, expires_at: i64) -> bool {
+        (self.clock)() >= expires_at - self.policy.reuse_margin_secs
     }
 
     /// Take up a copy another caller prepared, if its epoch is still current
@@ -993,7 +1043,8 @@ impl PreparedSources {
             base: key.base.clone(),
             name: shared.name.clone(),
         };
-        if !inner.alive(key, &id) {
+        // GENREL01-R12: a copy shared after a long wait must still be in date.
+        if !inner.alive(key, &id) || self.too_close_to_expiry(shared.expires_at) {
             return Ok(None);
         }
         inner.acquire(&id);
@@ -1017,6 +1068,7 @@ impl PreparedSources {
         source: &Source<'_>,
         mut guard: FlightGuard<'a>,
         epoch: u64,
+        budget: &Budget,
         say: &(dyn Fn(String) + Sync),
     ) -> Result<Lease<'a>, String> {
         // Retiring older copies may have awaited: never start an upload for a
@@ -1029,7 +1081,9 @@ impl PreparedSources {
 
         say("Uploading the selected PDF to Google's temporary file storage…".to_string());
         self.count(|s| s.uploads += 1);
-        let outcome = self.upload_and_wait(http, base, api_key, source, say).await;
+        let outcome = self
+            .upload_and_wait(http, base, api_key, source, budget, say)
+            .await;
 
         // Publish only into the context this preparation began in, and lease
         // the copy for this caller in the same critical section: the lease
@@ -1120,11 +1174,12 @@ impl PreparedSources {
         base: &str,
         api_key: &str,
         source: &Source<'_>,
+        budget: &Budget,
         say: &(dyn Fn(String) + Sync),
     ) -> Result<Prepared, String> {
-        let file = upload(http, base, api_key, source.bytes, source.mime).await?;
+        let file = upload(http, base, api_key, source.bytes, source.mime, budget).await?;
         let file = match self
-            .wait_until_active(http, base, api_key, file.clone(), source.mime, say)
+            .wait_until_active(http, base, api_key, file.clone(), budget, say)
             .await
         {
             Ok(file) => file,
@@ -1153,7 +1208,7 @@ impl PreparedSources {
         base: &str,
         api_key: &str,
         mut file: RemoteFile,
-        mime: &str,
+        budget: &Budget,
         say: &(dyn Fn(String) + Sync),
     ) -> Result<RemoteFile, NotReady> {
         let mut pause = self.policy.poll_interval;
@@ -1172,10 +1227,18 @@ impl PreparedSources {
             if polls == 0 {
                 say("Google is preparing the uploaded PDF…".to_string());
             }
-            tokio::time::sleep(pause).await;
+            // The wait is paid for out of the same budget as everything else.
+            if !budget.pause(pause).await {
+                budget.categorize("time limit reached");
+                return Err(NotReady::Other(format!(
+                    "Google was still preparing this PDF when the {} Her Flight Deck allows for one study aid ran out, so no study aid was made. Choosing a chapter or fewer pages first usually helps.",
+                    crate::gemini_budget::describe(budget.total())
+                )));
+            }
+            budget.at(Stage::WaitingForFile);
             pause = (pause * 2).min(self.policy.poll_cap);
             polls += 1;
-            file = match lookup(http, base, api_key, &file.name, mime).await {
+            file = match lookup(http, base, api_key, &file.name, &file.mime, budget).await {
                 Ok(next) => next,
                 Err(LookupFailure::Missing) => {
                     return Err(NotReady::Unusable("The uploaded copy of this PDF disappeared from Google before it was ready. Try again.".to_string()))

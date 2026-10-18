@@ -1,0 +1,39 @@
+{
+  "head": "8ea843932a46427c9c838c34289e0b940c30b92a",
+  "base": "17c80ee",
+  "node": "22.23.3",
+  "sdkroot": "MacOSX26.5",
+  "steps": {
+    "01-typecheck": {
+      "exit": 0
+    },
+    "02-npm-test": {
+      "exit": 0,
+      "passed": 3676,
+      "skipped": 6
+    },
+    "03-build": {
+      "exit": 0
+    },
+    "04-cargo-test": {
+      "exit": 0,
+      "passed": 642,
+      "ignored": 6
+    },
+    "05-clippy": {
+      "exit": 0
+    },
+    "06-fmt": {
+      "exit": 0
+    },
+    "07-cargo-lock": {
+      "exit": 0
+    },
+    "08-schema14-helper": {
+      "exit": 0
+    },
+    "09-diff-check": {
+      "exit": 0
+    }
+  }
+}

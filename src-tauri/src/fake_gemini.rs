@@ -97,6 +97,11 @@ pub(crate) struct Behaviour {
     pub lookup_status: Option<u16>,
     /// Statuses for the next generateContent calls, then normal answers.
     pub generate_statuses: Vec<(u16, String)>,
+    pub generate_retry_after: Option<String>,
+    pub drop_generations: u32,
+    pub partial_generations: u32,
+    pub generate_body_gate: Option<Arc<Gate>>,
+    pub generate_answer: Option<String>,
     /// A 200 generateContent body that is not a usable answer.
     pub garbage_answer: bool,
     /// Refuse generation with 400 when the referred file is deleted.
@@ -131,6 +136,11 @@ impl Default for Behaviour {
             expiration_time: Some("2099-01-01T00:00:00Z".to_string()),
             lookup_status: None,
             generate_statuses: Vec::new(),
+            generate_retry_after: None,
+            drop_generations: 0,
+            partial_generations: 0,
+            generate_body_gate: None,
+            generate_answer: None,
             garbage_answer: false,
             enforce_files: true,
             finalize_gate: None,
@@ -270,6 +280,8 @@ fn write_reply(stream: &mut TcpStream, status: u16, headers: &[(String, String)]
 enum Reply {
     Send(u16, Vec<(String, String)>, Vec<u8>),
     Drop,
+    Partial,
+    HeldBody(Arc<Gate>, Vec<u8>),
 }
 
 fn serve(stream: TcpStream, sim: &Arc<Mutex<Sim>>, base: &str) {
@@ -296,6 +308,20 @@ fn serve(stream: TcpStream, sim: &Arc<Mutex<Sim>>, base: &str) {
         }
         match respond(&request, sim, base) {
             Reply::Send(status, headers, body) => write_reply(&mut writer, status, &headers, &body),
+            Reply::Partial => {
+                let _ = writer.write_all(
+                    b"HTTP/1.1 200 OK\r\nContent-Length: 100000\r\n\r\n{\"candidates\":",
+                );
+                let _ = writer.shutdown(std::net::Shutdown::Both);
+                return;
+            }
+            Reply::HeldBody(gate, body) => {
+                let head = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", body.len());
+                let _ = writer.write_all(head.as_bytes());
+                let _ = writer.flush();
+                gate.pass();
+                let _ = writer.write_all(&body);
+            }
             Reply::Drop => {
                 let _ = writer.shutdown(std::net::Shutdown::Both);
                 return;
@@ -428,12 +454,32 @@ fn respond(request: &Recorded, sim: &Arc<Mutex<Sim>>, base: &str) -> Reply {
         };
     }
     if request.is_generate() {
+        if s.behaviour.drop_generations > 0 {
+            s.behaviour.drop_generations -= 1;
+            return Reply::Drop;
+        }
+        if s.behaviour.partial_generations > 0 {
+            s.behaviour.partial_generations -= 1;
+            return Reply::Partial;
+        }
+        if let Some(gate) = &s.behaviour.generate_body_gate {
+            return Reply::HeldBody(gate.clone(), b"{}".to_vec());
+        }
+        if let Some(answer) = &s.behaviour.generate_answer {
+            return Reply::Send(200, vec![], answer.as_bytes().to_vec());
+        }
         if let Some(to) = &s.behaviour.generate_redirect {
             return redirect(to);
         }
         if !s.behaviour.generate_statuses.is_empty() {
             let (status, body) = s.behaviour.generate_statuses.remove(0);
-            return Reply::Send(status, vec![], body.into_bytes());
+            let headers = s
+                .behaviour
+                .generate_retry_after
+                .clone()
+                .map(|v| vec![("Retry-After".to_string(), v)])
+                .unwrap_or_default();
+            return Reply::Send(status, headers, body.into_bytes());
         }
         let body = request.json();
         if s.behaviour.enforce_files {

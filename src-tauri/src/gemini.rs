@@ -17,6 +17,7 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter};
 
 use crate::documents;
+use crate::gemini_budget::{self, Budget, Stage, MAX_GENERATION_ATTEMPTS};
 use crate::gemini_files::{self, PreparedSources, Source, GOOGLE_BASE};
 use crate::gemini_jobs::{self, JobKind, JobRecord, JobStage};
 use crate::lineage::calculate_sha256;
@@ -193,6 +194,18 @@ const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
 /// with nothing to cancel it.
 const GENERATE_TIMEOUT: Duration = Duration::from_secs(300);
 
+/// The client for generation. Its overall timeout is only a backstop: every
+/// request is given what remains of the generation's one budget, and a
+/// connection that cannot be made in `CONNECT_TIMEOUT` counts as unreachable.
+fn generation_client() -> Result<Client, String> {
+    Client::builder()
+        .connect_timeout(gemini_budget::CONNECT_TIMEOUT)
+        .timeout(GENERATE_TIMEOUT)
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|e| format!("Could not start the connection to Gemini: {e}"))
+}
+
 /// Redirects are never followed: every address this client talks to is
 /// Google's own and validated before use, and a redirect would carry the key
 /// and a document's bytes to an address nobody checked. A 3xx is reported as
@@ -222,7 +235,7 @@ fn describe_transport_error(error: &reqwest::Error) -> String {
 /// 5xx failures retryable. Attempts and pauses are bounded below; other 4xx
 /// responses indicate a request or authorization problem.
 fn is_retryable(status: u16) -> bool {
-    matches!(status, 429 | 500 | 502 | 503 | 504)
+    matches!(status, 408 | 429 | 500 | 502 | 503 | 504)
 }
 
 /// A few milliseconds of noise, so retries do not march in lockstep.
@@ -353,12 +366,43 @@ fn say(app: &AppHandle, message: String) {
     let _ = app.emit(PROGRESS_EVENT, GeminiProgress { message });
 }
 
-/// What Google said when it would not produce a study aid.
+/// What one generation request came to.
 enum Attempt {
     /// The response body, ready to be parsed.
     Answered(String),
     /// Google replied, but not with a result.
-    Refused { status: u16, body: String },
+    Refused {
+        status: u16,
+        body: String,
+        retry_after: Option<Duration>,
+    },
+    /// No complete reply arrived.
+    Lost(Lost),
+}
+
+/// How a request ended without Google's reply in hand.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Lost {
+    /// No connection was made: nothing reached Google, so trying again is safe.
+    Unreachable,
+    /// Google had the request, but no reply arrived in the time left.
+    NoAnswerInTime,
+    /// Google began replying, but the rest did not arrive in the time left.
+    AnswerCutShort,
+    /// The connection broke after the request was sent: Google may or may not
+    /// have finished, and trying again may be charged again.
+    Dropped,
+}
+
+impl Lost {
+    fn category(self) -> &'static str {
+        match self {
+            Lost::Unreachable => "could not reach Google",
+            Lost::NoAnswerInTime => "no answer in time",
+            Lost::AnswerCutShort => "answer cut short",
+            Lost::Dropped => "connection interrupted",
+        }
+    }
 }
 
 /// Whether this run has already looked in the old credential manager.
@@ -669,6 +713,8 @@ struct GenContext<'a> {
     cache: &'a PreparedSources,
     /// The prepared-source context this generation began in.
     epoch: u64,
+    /// The one active budget every step of this generation draws from.
+    budget: &'a Budget,
     say: &'a (dyn Fn(String) + Sync),
 }
 
@@ -716,6 +762,40 @@ async fn run_generation(
     source: &LoadedSource,
     build: &(dyn Fn(Value) -> Value + Sync),
 ) -> Result<(String, &'static str), String> {
+    // Also bound cache coalescing, readiness and best-effort cleanup awaits.
+    // Dropping a lease queues its owned remote file for later cleanup.
+    match ctx
+        .budget
+        .run(run_generation_inner(ctx, source, build))
+        .await
+    {
+        Ok(result) if ctx.current() => result,
+        Ok(_) => Err(gemini_files::STALE_CONTEXT.to_string()),
+        Err(()) => {
+            let stage = ctx.budget.stage();
+            if matches!(stage, Stage::Generating | Stage::Reading) {
+                let lost = if stage == Stage::Reading {
+                    Lost::AnswerCutShort
+                } else {
+                    Lost::NoAnswerInTime
+                };
+                ctx.budget.categorize(lost.category());
+                Err(lost_message(lost, ctx.budget))
+            } else {
+                Err(gemini_files::out_of_time(
+                    ctx.budget,
+                    "finishing this study aid",
+                ))
+            }
+        }
+    }
+}
+
+async fn run_generation_inner(
+    ctx: &GenContext<'_>,
+    source: &LoadedSource,
+    build: &(dyn Fn(Value) -> Value + Sync),
+) -> Result<(String, &'static str), String> {
     if source.mime != "application/pdf" {
         let body = build(source_part(source, None));
         return generate_with_retries_at(ctx, &body)
@@ -732,6 +812,7 @@ async fn run_generation(
             &view,
             ctx.epoch,
             None,
+            ctx.budget,
             ctx.say,
         )
         .await?;
@@ -745,6 +826,7 @@ async fn run_generation(
                 ctx.api_key,
                 &prepared.name,
                 &prepared.mime,
+                ctx.budget,
             )
             .await
             {
@@ -762,6 +844,7 @@ async fn run_generation(
                             &view,
                             ctx.epoch,
                             Some(&prepared.name),
+                            ctx.budget,
                             ctx.say,
                         )
                         .await?;
@@ -994,7 +1077,9 @@ pub async fn generate_study_aid(
     let (api_key, source) = prepare_submission(&app, &relative_path).await?;
     let root = app_root(&app)?;
     let choice = load_choice(&root);
-    let http = client(GENERATE_TIMEOUT)?;
+    let http = generation_client()?;
+    // One budget for everything this generation does (GEN-REL-03).
+    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let progress = |message: String| say(&app, message);
     let ctx = GenContext {
         http: &http,
@@ -1003,6 +1088,7 @@ pub async fn generate_study_aid(
         choice,
         cache: prepared_sources(),
         epoch,
+        budget: &budget,
         say: &progress,
     };
     as_job(
@@ -1011,7 +1097,11 @@ pub async fn generate_study_aid(
         &material_id,
         base_revision.as_deref(),
         &source,
-        study_aid_with(&ctx, &source),
+        async {
+            study_aid_with(&ctx, &source)
+                .await
+                .map_err(|m| format!("{m}\n{}", budget.details(None)))
+        },
         &job_changed(&app),
     )
     .await
@@ -1079,15 +1169,10 @@ async fn study_aid_with(
     };
     let (raw, model_used) = run_generation(ctx, source, &build).await?;
 
-    let envelope: Value = serde_json::from_str(&raw)
-        .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
-    let text = envelope
-        .pointer("/candidates/0/content/parts/0/text")
-        .and_then(Value::as_str)
-        .ok_or_else(|| {
-            "Gemini did not return a study guide. Try the document again.".to_string()
-        })?;
-    let mut result: GeneratedStudyAid = serde_json::from_str(text)
+    ctx.budget.at(Stage::Validating);
+    ctx.budget.categorize("invalid or incomplete output");
+    let text = extract_text(&raw)?;
+    let mut result: GeneratedStudyAid = serde_json::from_str(&text)
         .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
     result.model = model_used.to_string();
     Ok(result)
@@ -1100,6 +1185,24 @@ async fn study_aid_with(
 fn extract_text(raw: &str) -> Result<String, String> {
     let envelope: Value = serde_json::from_str(raw)
         .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
+    if envelope
+        .pointer("/promptFeedback/blockReason")
+        .and_then(Value::as_str)
+        .is_some_and(|v| v != "BLOCK_REASON_UNSPECIFIED")
+    {
+        return Err("Gemini blocked this source and did not create a study aid. Check the selected source; repeating the same request may not help.".to_string());
+    }
+    if let Some(reason) = envelope
+        .pointer("/candidates/0/finishReason")
+        .and_then(Value::as_str)
+    {
+        match reason {
+            "STOP" => {},
+            "MAX_TOKENS" => return Err("Gemini's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.".to_string()),
+            "SAFETY" | "RECITATION" | "BLOCKLIST" | "PROHIBITED_CONTENT" | "SPII" => return Err("Gemini blocked this answer. Nothing was saved; check the selected source before trying again.".to_string()),
+            _ => return Err("Gemini stopped before completing its answer. Nothing was saved; try a smaller selected source.".to_string()),
+        }
+    }
     envelope
         .pointer("/candidates/0/content/parts/0/text")
         .and_then(Value::as_str)
@@ -1179,7 +1282,9 @@ pub async fn generate_practice_test(
     let (api_key, source) = prepare_submission(&app, &relative_path).await?;
     let root = app_root(&app)?;
     let choice = load_choice(&root);
-    let http = client(GENERATE_TIMEOUT)?;
+    let http = generation_client()?;
+    // One budget for everything this generation does (GEN-REL-03).
+    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let progress = |message: String| say(&app, message);
     let ctx = GenContext {
         http: &http,
@@ -1188,6 +1293,7 @@ pub async fn generate_practice_test(
         choice,
         cache: prepared_sources(),
         epoch,
+        budget: &budget,
         say: &progress,
     };
     as_job(
@@ -1196,7 +1302,11 @@ pub async fn generate_practice_test(
         &material_id,
         base_revision.as_deref(),
         &source,
-        practice_test_with(&ctx, &source),
+        async {
+            practice_test_with(&ctx, &source)
+                .await
+                .map_err(|m| format!("{m}\n{}", budget.details(None)))
+        },
         &job_changed(&app),
     )
     .await
@@ -1256,6 +1366,8 @@ async fn practice_test_with(
         })
     };
     let (raw, model_used) = run_generation(ctx, source, &build).await?;
+    ctx.budget.at(Stage::Validating);
+    ctx.budget.categorize("invalid or incomplete output");
     let text = extract_text(&raw)?;
     let result: GeneratedPracticeTest = serde_json::from_str(&text).map_err(|_| {
         "Gemini's practice test was incomplete. Try generating it again.".to_string()
@@ -1267,43 +1379,59 @@ async fn practice_test_with(
 
 /// One request to one model.
 async fn generate_once(
-    http: &Client,
-    base: &str,
-    api_key: &str,
+    ctx: &GenContext<'_>,
     model: &str,
     body: &Value,
-) -> Result<Attempt, String> {
-    let url = format!("{base}/v1beta/models/{model}:generateContent");
-    let response = http
+) -> Result<Attempt, Failure> {
+    // Every request has only what remains of the generation's one budget.
+    let Some(timeout) = ctx.budget.request_timeout() else {
+        return Err(gemini_files::out_of_time(ctx.budget, "asking Gemini").into());
+    };
+    ctx.budget.at(Stage::Generating);
+    let url = format!("{}/v1beta/models/{model}:generateContent", ctx.base);
+    let sent = ctx
+        .http
         .post(url)
-        .header("x-goog-api-key", api_key)
+        .header("x-goog-api-key", ctx.api_key)
         .json(body)
+        .timeout(timeout)
         .send()
-        .await
-        .map_err(|e| describe_transport_error(&e))?;
+        .await;
+    let response = match sent {
+        Ok(response) => response,
+        // Checked first: a connect timeout is also a timeout, but nothing
+        // reached Google, so it is safe to try again.
+        Err(error) if error.is_connect() => return Ok(Attempt::Lost(Lost::Unreachable)),
+        Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::NoAnswerInTime)),
+        Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
+    };
 
     let status = response.status().as_u16();
-    let raw = response
-        .text()
-        .await
-        .map_err(|e| format!("Could not read Gemini's response: {e}"))?;
+    ctx.budget.saw_status(status);
+    let retry_after = gemini_budget::retry_after(
+        response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok()),
+    );
+    ctx.budget.at(Stage::Reading);
+    let raw = match response.text().await {
+        Ok(raw) => raw,
+        Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
+        Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
+    };
 
     if (200..300).contains(&status) {
         Ok(Attempt::Answered(raw))
     } else {
-        Ok(Attempt::Refused { status, body: raw })
+        Ok(Attempt::Refused {
+            status,
+            body: raw,
+            retry_after,
+        })
     }
 }
 
-/// Ask until Google answers, moves the problem elsewhere, or is plainly busy.
-///
-/// "The model is overloaded" is the single most common way this fails, and it
-/// says nothing about her key, her quota or her document — Google's own
-/// capacity is short for a moment. Retrying with a growing pause is the
-/// documented answer, and an overload is usually specific to one model, so a
-/// primary that stays busy is worth one attempt on the standby.
-///
-/// Returns the response body and the model that produced it.
 /// Why generation ended without an answer: the message, and the status of a
 /// refusal Google will not reconsider (so a missing prepared file can be told
 /// apart from a missing model).
@@ -1321,105 +1449,234 @@ impl From<String> for Failure {
     }
 }
 
+/// What the last attempt ran into, for the closing message when the attempts
+/// or the time run out.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Setback {
+    Busy,
+    RateLimited,
+    Lost(Lost),
+}
+
+/// Ask until Google answers, refuses for good, or the attempts or the budget
+/// run out (GEN-REL-03).
+///
+/// At most `MAX_GENERATION_ATTEMPTS` requests, the backup model included: the
+/// main model, the main model again after a pause, then the backup. A pause is
+/// Google's own `Retry-After` when it gives one, otherwise a growing backoff,
+/// and it is taken only if it fits in what remains of the one budget. Only
+/// failures worth waiting out are retried: capacity (408, 5xx), a temporary
+/// rate limit, a connection that was never made, and a connection dropped
+/// after sending (honestly described, since Google may have finished it). A
+/// request that times out has used the whole budget, so nothing follows it.
+///
+/// Returns the response body and the model that produced it.
 async fn generate_with_retries_at(
     ctx: &GenContext<'_>,
     body: &Value,
 ) -> Result<(String, &'static str), Failure> {
-    let (http, base, api_key, choice) = (ctx.http, ctx.base, ctx.api_key, ctx.choice);
-    let primary = choice.primary();
-    let fallback = choice.fallback();
-    let mut primary_rate_limited = false;
+    let choice = ctx.choice;
+    let mut model = choice.primary();
+    let mut on_fallback = false;
+    let mut setback: Option<Setback> = None;
+    let mut retry = 0u32;
 
-    for attempt in 0..MAX_ATTEMPTS {
-        // Every request, including a retry after a pause, belongs to the
-        // context the generation began in.
+    loop {
+        // Every request, including one after a pause, belongs to the context
+        // the generation began in.
         if !ctx.current() {
             return Err(GenContext::stale());
         }
-        match generate_once(http, base, api_key, primary, body).await? {
-            Attempt::Answered(raw) => return Ok((raw, primary)),
-            Attempt::Refused { status, body } => {
-                primary_rate_limited |= status == 429;
-                if moves_straight_to_fallback(choice, status) {
-                    break;
-                }
-                if !is_retryable(status) {
+        if ctx.budget.remaining().is_zero() {
+            return Err(gemini_files::out_of_time(ctx.budget, "asking Gemini").into());
+        }
+        let Some(attempt) = ctx.budget.start_attempt() else {
+            break;
+        };
+        if attempt == MAX_GENERATION_ATTEMPTS && !on_fallback {
+            // The last attempt goes to the backup model: a model-specific
+            // capacity or rate limit may spare it.
+            model = choice.fallback();
+            on_fallback = true;
+            (ctx.say)(choice.fallback_notice().to_string());
+        }
+
+        let mut retry_after = None;
+        match generate_once(ctx, model, body).await? {
+            Attempt::Answered(raw) => return Ok((raw, model)),
+            Attempt::Refused {
+                status,
+                body,
+                retry_after: asked,
+            } => {
+                if status == 429 && is_lasting_quota(&body) {
+                    ctx.budget.categorize("quota used up");
                     return Err(Failure {
-                        message: describe_refusal(
-                            RefusalContext::Generation,
-                            status,
-                            &body,
-                            primary,
-                        ),
+                        message: quota_message(),
                         status: Some(status),
                     });
                 }
-                if attempt + 1 < MAX_ATTEMPTS {
-                    let pause = backoff_delay(attempt, jitter_millis());
-                    (ctx.say)(waiting_message(attempt, pause));
-                    tokio::time::sleep(pause).await;
+                if !is_retryable(status) {
+                    ctx.budget.categorize("refused");
+                    return Err(Failure {
+                        message: describe_refusal(RefusalContext::Generation, status, &body, model),
+                        status: Some(status),
+                    });
+                }
+                setback = Some(if status == 429 {
+                    Setback::RateLimited
+                } else {
+                    Setback::Busy
+                });
+                retry_after = asked;
+                if !on_fallback && moves_straight_to_fallback(choice, status) {
+                    model = choice.fallback();
+                    on_fallback = true;
+                    (ctx.say)(choice.fallback_notice().to_string());
                 }
             }
+            Attempt::Lost(lost @ (Lost::NoAnswerInTime | Lost::AnswerCutShort)) => {
+                // The request had all the time that was left.
+                ctx.budget.categorize(lost.category());
+                return Err(lost_message(lost, ctx.budget).into());
+            }
+            Attempt::Lost(lost) => setback = Some(Setback::Lost(lost)),
+        }
+
+        if ctx.budget.attempts() >= MAX_GENERATION_ATTEMPTS {
+            break;
+        }
+        let pause = retry_after.unwrap_or_else(|| backoff_delay(retry, jitter_millis()));
+        retry += 1;
+        (ctx.say)(waiting_message(setback, ctx.budget.attempts() + 1, pause));
+        if !ctx.budget.pause(pause).await {
+            ctx.budget.categorize("time limit reached");
+            return Err(match retry_after {
+                Some(asked) => retry_after_message(asked, ctx.budget),
+                None => gemini_files::out_of_time(ctx.budget, "trying again"),
+            }
+            .into());
         }
     }
 
-    // A model-specific rate or capacity limit may spare the backup model.
-    if !ctx.current() {
-        return Err(GenContext::stale());
-    }
-    (ctx.say)(choice.fallback_notice().to_string());
-    match generate_once(http, base, api_key, fallback, body).await? {
-        Attempt::Answered(raw) => return Ok((raw, fallback)),
-        Attempt::Refused { status, body } if !is_retryable(status) => {
-            return Err(Failure {
-                message: describe_refusal(RefusalContext::Generation, status, &body, fallback),
-                status: Some(status),
-            });
+    let tried = ctx.budget.attempts();
+    Err(match setback {
+        Some(Setback::RateLimited) => {
+            ctx.budget.categorize("rate limited");
+            rate_limit_message()
         }
-        Attempt::Refused { status: 429, .. } => return Err(rate_limit_message().into()),
-        Attempt::Refused { .. } => {}
+        Some(Setback::Lost(lost)) => {
+            ctx.budget.categorize(lost.category());
+            lost_message(lost, ctx.budget)
+        }
+        _ => {
+            ctx.budget.categorize("Google busy");
+            busy_message(tried, on_fallback)
+        }
     }
-
-    if primary_rate_limited {
-        Err(rate_limit_message().into())
-    } else {
-        Err(busy_message().into())
-    }
+    .into())
 }
 
 /// Whether a refusal from the chosen model should skip the waiting and go
 /// straight to the fallback.
 ///
-/// Gemini 4 Argon answers a key without billing — or one that has reached its
-/// paid limit — with 429. Waiting that out cannot help, and the standard model
-/// can usually still answer, so she is not kept waiting through every pause
-/// first. The standard model keeps its full patience.
+/// The capable model can be limited separately. Switch after a temporary 429,
+/// while still honoring Retry-After or the bounded backoff. Persistent quota
+/// exhaustion is stopped earlier, before choosing any fallback.
 fn moves_straight_to_fallback(choice: ModelChoice, status: u16) -> bool {
     choice == ModelChoice::MostCapable && status == 429
 }
 
 /// What the interface says during one of the pauses.
-fn waiting_message(attempt: u32, pause: Duration) -> String {
+fn waiting_message(setback: Option<Setback>, next: u32, pause: Duration) -> String {
     let seconds = pause.as_millis().div_ceil(1000);
+    let what = match setback {
+        Some(Setback::Lost(Lost::Unreachable)) => "Could not reach Google.",
+        Some(Setback::Lost(_)) => "The connection to Google was interrupted. Google may have processed the request; trying again may incur additional charges.",
+        _ => "Gemini is busy or rate-limited.",
+    };
+    format!("{what} Waiting {seconds} seconds, then trying again — attempt {next} of {MAX_GENERATION_ATTEMPTS}.")
+}
+
+/// Said after every attempt met a busy Google.
+///
+/// It names what was tried, not how long it took: each request may also have
+/// waited, so a duration worked out from the pauses alone would understate it.
+fn busy_message(tried: u32, used_backup: bool) -> String {
+    let backup = if used_backup {
+        ", the last of them with the backup Flash-Lite model,"
+    } else {
+        ""
+    };
     format!(
-        "Gemini is busy or rate-limited. Waiting {seconds} seconds, then trying again — attempt {} of {MAX_ATTEMPTS}.",
-        attempt + 2,
+        "Google's servers are busy. Her Flight Deck asked {tried} times{backup} pausing between \
+         attempts, and Google was still at capacity. This is Google's side, not your key or your \
+         document — the same file usually works a few minutes later."
     )
 }
 
-/// Said after generation has asked the main model every time and then the
-/// backup, and Google is still overloaded.
-///
-/// It names what was tried but not how long it took: the pauses are known, but
-/// each request can also take up to the generation timeout, so any duration
-/// worked out from the pauses alone would understate the real wait.
-fn busy_message() -> String {
+/// Said when a key has used up its allowance for the day, or has none for this
+/// model: waiting a few minutes cannot help, so nothing is retried.
+fn quota_message() -> String {
+    "Google reports an exhausted daily allowance or no available quota for this model. Automatic retries have stopped. Check the quota reset, plan and billing in Google AI Studio, or choose the standard model in Settings.".to_string()
+}
+
+/// Said when Google asked for a pause longer than the time that remains.
+fn retry_after_message(asked: Duration, budget: &Budget) -> String {
+    let wait = gemini_budget::describe(asked);
     format!(
-        "Google's servers are busy. Her Flight Deck asked the main model {MAX_ATTEMPTS} times, \
-         pausing between attempts, and then tried the backup Flash-Lite model, and Google was \
-         still at capacity. This is Google's side, not your key or your document — the same file \
-         usually works a few minutes later."
+        "Google asked Her Flight Deck to wait {wait} before trying again, which is longer than the time left of the {} it allows for one study aid. Nothing was saved; try again after that.",
+        gemini_budget::describe(budget.total())
     )
+}
+
+/// Said when no complete reply arrived. Only a connection that was never made
+/// points at the internet connection.
+fn lost_message(lost: Lost, budget: &Budget) -> String {
+    let limit = gemini_budget::describe(budget.total());
+    match lost {
+        Lost::Unreachable => "Could not reach Google, even after trying again. Check the internet connection. No complete answer was received; an earlier attempt may still have reached Google.".to_string(),
+        Lost::NoAnswerInTime => format!(
+            "Gemini did not answer within the {limit} Her Flight Deck allows for one study aid. Google may still have been working on it. Repeating the request may incur additional charges. Nothing was saved. Large documents take longest: choosing a chapter or fewer pages first usually helps. If short documents also stop like this, check the connection."
+        ),
+        Lost::AnswerCutShort => format!(
+            "Gemini started answering, but the rest did not arrive within the {limit} Her Flight Deck allows for one study aid. Nothing was saved. Google may have processed this request; repeating it may incur additional charges. Try a chapter or fewer pages to reduce the wait."
+        ),
+        Lost::Dropped => "The connection to Google was interrupted after the request was sent, even after trying again. Google may or may not have finished it. Repeated requests may incur additional provider charges. Nothing was saved. Try again in a few minutes.".to_string(),
+    }
+}
+
+/// Whether a 429 is a lasting quota rather than a moment's rate limit: a daily
+/// allowance used up, or none at all on this plan. Read from Google's error
+/// details only; the message text is never shown.
+fn is_lasting_quota(raw: &str) -> bool {
+    let Ok(value) = serde_json::from_str::<Value>(raw) else {
+        return false;
+    };
+    let violations = value
+        .pointer("/error/details")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|detail| detail.get("violations").and_then(Value::as_array))
+        .flatten();
+    let mut lasting = false;
+    for violation in violations {
+        let id = violation
+            .get("quotaId")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        if id.contains("PerDay") {
+            lasting = true;
+        }
+        if violation
+            .get("quotaValue")
+            .is_some_and(|v| v.as_str() == Some("0") || v.as_u64() == Some(0))
+        {
+            lasting = true;
+        }
+    }
+    lasting
 }
 
 /// Said after generation's retries and backup model ended on a rate limit.
@@ -1507,8 +1764,9 @@ fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &st
         // Google retires a model on a published date. When that day comes this
         // build asks for something that no longer exists, and the honest answer
         // is that the application needs updating, not that her key is wrong.
+        402 => "Google requires payment or additional credits for this request. Automatic retries have stopped; check billing in Google AI Studio.".to_string(),
         404 => format!(
-            "Google has retired the {model} model this version of Her Flight Deck uses. Install the latest version and try again."
+            "Google could not find the {model} model or does not support this request for it. Check for an app update and the model's availability for this project in Google AI Studio. A 404 alone does not establish model retirement."
         ),
         429 => rate_limited_now_message(context),
         500..=504 => busy_now_message(context),
@@ -1618,11 +1876,12 @@ mod tests {
     }
 
     #[test]
-    fn retired_model_404_mentions_model_retirement_and_update() {
+    fn missing_model_404_mentions_availability_and_update_without_inventing_retirement() {
         let message = describe_refusal(RefusalContext::Generation, 404, "{}", MODEL);
-        assert!(message.contains("retired"));
+        assert!(message.contains("could not find"));
+        assert!(!message.contains("has retired"));
         assert!(message.contains(MODEL));
-        assert!(message.contains("latest version"));
+        assert!(message.contains("app update"));
     }
 
     #[test]
@@ -1669,7 +1928,7 @@ mod tests {
 
     #[test]
     fn the_busy_message_blames_google_not_the_key() {
-        let message = busy_message();
+        let message = busy_message(MAX_GENERATION_ATTEMPTS, true);
         assert!(message.contains("busy"));
         assert!(message.contains("not your key"));
     }
@@ -1681,7 +1940,7 @@ mod tests {
             || message.contains("retried")
             || message.contains("backup")
             || message.contains("Flash-Lite")
-            || message.contains(&format!("{MAX_ATTEMPTS} times"))
+            || message.contains(&format!("{MAX_GENERATION_ATTEMPTS} times"))
     }
 
     #[test]
@@ -1689,7 +1948,7 @@ mod tests {
         // The nominal pauses leave out request time (up to the generation
         // timeout per request), jitter and the backup request, so any duration
         // here would understate the real wait.
-        let message = busy_message();
+        let message = busy_message(MAX_GENERATION_ATTEMPTS, true);
         assert!(!message.contains("second"), "{message}");
         assert!(!message.contains("over about"), "{message}");
         assert!(
@@ -1700,8 +1959,11 @@ mod tests {
 
     #[test]
     fn a6_the_exhausted_messages_still_say_what_generation_actually_tried() {
-        let busy = busy_message();
-        assert!(busy.contains(&format!("{MAX_ATTEMPTS} times")), "{busy}");
+        let busy = busy_message(MAX_GENERATION_ATTEMPTS, true);
+        assert!(
+            busy.contains(&format!("{MAX_GENERATION_ATTEMPTS} times")),
+            "{busy}"
+        );
         assert!(busy.contains("backup"), "{busy}");
         assert!(busy.contains("not your key"), "{busy}");
         let limited = rate_limit_message();
@@ -1735,11 +1997,11 @@ mod tests {
 
     #[test]
     fn a_wait_says_how_long_and_which_attempt_is_next() {
-        let message = waiting_message(0, Duration::from_millis(1_500));
+        let message = waiting_message(None, 2, Duration::from_millis(1_500));
         assert!(message.contains("2 seconds"));
         // Attempt 2 of 4: the one about to happen, counted the way she counts.
-        assert!(message.contains("attempt 2 of 4"));
-        assert!(waiting_message(2, Duration::from_millis(6_000)).contains("attempt 4 of 4"));
+        assert!(message.contains("attempt 2 of 3"));
+        assert!(waiting_message(None, 3, Duration::from_millis(6_000)).contains("attempt 3 of 3"));
     }
 
     #[test]
@@ -1991,3 +2253,7 @@ mod tests {
 #[cfg(test)]
 #[path = "gemini_generation_tests.rs"]
 mod generation_tests;
+
+#[cfg(test)]
+#[path = "gemini_recovery_tests.rs"]
+mod recovery_tests;

@@ -1,0 +1,6 @@
+{
+  "outcome": "compilation failed",
+  "testCompilationErrors": 16,
+  "separateCargoExitCaptured": false,
+  "note": "The original shell printed the final log lines after cargo, so its shell status did not retain the cargo status. The raw compiler log establishes failure, not a numeric exit receipt."
+}

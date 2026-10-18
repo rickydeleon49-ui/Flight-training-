@@ -1,0 +1,142 @@
+{
+  "schema": "hfd-gen-rel03-source/1",
+  "base": "17c80ee60f01e1fd3fd700c1872e975b5901d3a7",
+  "scope": "Final native implementation/test source, report, reviewers, trackers and explicit unchanged context; no installed/live-provider acceptance",
+  "files": [
+    {
+      "path": "src-tauri/src/gemini.rs",
+      "bytes": 89706,
+      "sha256": "08ba1cdbd3608098190c22dcc3ddb34ca2bde08b48f9062b5c5d58d254064f15"
+    },
+    {
+      "path": "src-tauri/src/gemini_files.rs",
+      "bytes": 45474,
+      "sha256": "7a9659454a58061b9d6dd5b9848956d12a0057485ba145edf16e8f4d98b5a498"
+    },
+    {
+      "path": "src-tauri/src/gemini_budget.rs",
+      "bytes": 13200,
+      "sha256": "4ebcc813979e822767bbc0b63cdedd53dd79d37917f60344e5e1d3f29d6a7531"
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "bytes": 9350,
+      "sha256": "e2c0fb065b518d91198edd93eec80f2bbf31a4993cffbb773dd234a31a99b042"
+    },
+    {
+      "path": "src-tauri/src/fake_gemini.rs",
+      "bytes": 17381,
+      "sha256": "f9feeddc21bd32c609b15c427886b3795382d497083d56a9cae37738b843db81"
+    },
+    {
+      "path": "src-tauri/src/gemini_generation_tests.rs",
+      "bytes": 40111,
+      "sha256": "5fa1d8e5e17fd7094829d09c3d9be60fe3146ad4b565cf45a0d5d2f93a7df66c"
+    },
+    {
+      "path": "src-tauri/src/gemini_files_tests.rs",
+      "bytes": 30092,
+      "sha256": "bf0d7e16389643921865e1b4be56309bdcbb71b21bf69549980fe55655f05367"
+    },
+    {
+      "path": "src-tauri/src/gemini_recovery_tests.rs",
+      "bytes": 14416,
+      "sha256": "8bd7f1de385eb8f21e43c4e2d00e14cf6d2884de67d2731051b36d4e6298c302"
+    },
+    {
+      "path": "src-tauri/src/gemini_jobs.rs",
+      "bytes": 17643,
+      "sha256": "3731b565f3e8bff5fdac7a0046a7410c22e330d5d382c9af7e7bfb39aa2af70f"
+    },
+    {
+      "path": "src-tauri/src/gemini_jobs_tests.rs",
+      "bytes": 17955,
+      "sha256": "c187908412bfa6d47c15b5d8def5f2637a8cd2174bc96a9b1cb7ffb7edb598ef"
+    },
+    {
+      "path": "ROADMAP.md",
+      "bytes": 161269,
+      "sha256": "2a2e97255279ba013253f3b174eb3a3804e6efb84182ea611241c130b1ea06c3"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 280436,
+      "sha256": "f9ceaa29e2870ffb278af30177875ecb517a3cde01a90cbc7aef60add5b72176"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 189211,
+      "sha256": "812af15b7458eaee1b5f6f1bf00688d2978acc8bc7462933a939fdfd6b4f6d4d"
+    },
+    {
+      "path": "docs/GEN_REL_03_IMPLEMENTATION_REPORT_2026-10-18.md",
+      "bytes": 10251,
+      "sha256": "c11020fbaf5c7f4e95cd82034e03c067e0267d880c8797f21c3e0c8e53fb344e"
+    },
+    {
+      "path": "docs/GEN_REL_03_REVIEWER_PROMPT_2026-10-18.md",
+      "bytes": 4837,
+      "sha256": "6ae499dad2c47bd1e4cf46e76b9ac0a563e72e9bf164db2f08da21941bbaf30d"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json",
+      "bytes": 4642,
+      "sha256": "ff6232d7870723933879e8336e866145b572bc6104dee91dae689128d404b6f2"
+    },
+    {
+      "path": "docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+      "bytes": 2562,
+      "sha256": "fcb2b4368c8857f38d835c22179448ae26a88bebaea478658d26a5a82d878b95"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1347,
+      "sha256": "e72ab9a10b9d974900d45427ef0db3fbb184980479c56c99813e4067e56d93b0"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 113946,
+      "sha256": "9b844ed46faea0ed4e3b84ca87c131a264f91ce11deaf4cc88223014b77721d9"
+    },
+    {
+      "path": "src-tauri/Cargo.toml",
+      "bytes": 1176,
+      "sha256": "f932047d55da1449652fe3501bcd3adf90db338da6a30cf049cc0e252f7ae2b1"
+    },
+    {
+      "path": "src-tauri/Cargo.lock",
+      "bytes": 157885,
+      "sha256": "13b7296dbb7a8a99f225a373a9e416c90cd581579983ffc0b9113c74f36ac992"
+    },
+    {
+      "path": "src-tauri/tauri.conf.json",
+      "bytes": 1465,
+      "sha256": "e1836ff58ab1c0799678d191dc3ea0ad4727a6330f207ab848959df40188c374"
+    },
+    {
+      "path": "src/state/GeminiJobs.tsx",
+      "bytes": 24894,
+      "sha256": "15faf3a72a599e9ded806e060de9d2131b927f43c70d075c71290ce382fec18f"
+    },
+    {
+      "path": "src/services/gemini.ts",
+      "bytes": 6715,
+      "sha256": "01d47866035221d857301dbf1675f5143b574de1a6e5edfaa3ed0228751cd6f9"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialDetail.tsx",
+      "bytes": 46130,
+      "sha256": "5b8f8b04a1af8b945884cabbae66d5e518e76e06d1fb0b3580ab578a4b84f0c9"
+    },
+    {
+      "path": ".github/workflows/checks.yml",
+      "bytes": 5075,
+      "sha256": "a625d493704f7d87313020bb071f8c2f795fae1ad1f8d197b40ddc95aeee66b0"
+    },
+    {
+      "path": "README.md",
+      "bytes": 26348,
+      "sha256": "9194fc2c46165064e99ca332fc36edebb7edb5f616a806c8e7113544c69169fc"
+    }
+  ]
+}
