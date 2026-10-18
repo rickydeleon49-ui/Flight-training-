@@ -1,3 +1,22 @@
+## GEN-REL-01 accepted by Codex review (round 4 GREEN) and integrated by Claude — 18 October 2026
+
+**Owner authority change (18 October 2026):** for the GEN-REL-01 to 05 series only, the owner instructed Claude: "once codex says its green i want you to merge and automatically move on", with at least five review rounds allowed. Each GEN-REL item is therefore merged by Claude after a GREEN Codex read-only review and green exact-head CI, and the next item starts immediately. All other work keeps the rule that agents do not merge.
+
+GEN-REL-01 passed four Codex rounds: R1–R5 (round 1), R6–R9 (round 2), then R10 and R11 (round 3), all corrected with regression tests. Round 4 was GREEN. [Report, including the round 1–3 corrections](docs/GEN_REL_01_IMPLEMENTATION_REPORT_2026-10-18.md) and [round-4 review](docs/evidence/gen-rel-01-2026-10-18/review-r3/codex-review-round4-green.md). Complete corrected gate: npm 3,648 passed / 6 skipped, cargo 585 passed / 6 ignored, typecheck, build, strict Clippy, fmt, cargo-lock, schema-14 helper 26/26, protected paths unchanged.
+
+**Open, non-blocking:** GENREL01-R12, the reuse expiry is not rechecked after a slow confirmation or on shared adoption. It is carried into GEN-REL-03 (bounded recovery). Live-provider and installed-Mac behavior remain UNVERIFIED. **Next:** GEN-REL-02 (recoverable background jobs), implemented by Claude.
+
+## GEN-REL-01 implemented; pending independent review — 18 October 2026
+
+**IMPLEMENTED, PENDING REVIEW; not accepted, committed or merged.** The uncommitted work is in the worktree `Flight-training-gen-rel-01` (`claude/gen-rel-01`, base main 45b4e2a). [Report](GEN_REL_01_IMPLEMENTATION_REPORT_2026-10-18.md), [reviewer assignment](GEN_REL_01_REVIEWER_PROMPT_2026-10-18.md).
+
+- **PDF reuse:** a PDF is uploaded once to Google's Files API and referred to by guide and practice-test requests; it is never sent inline again. Reuse is bound to the key's hash, the content SHA-256, the type and the selected source, held in a bounded session-only cache (16 entries) and confirmed `ACTIVE` before each reuse.
+- **Concurrency and recovery:** preparation is coalesced and epoch-guarded. Expired, failed or deleted copies are re-prepared at most once, and only this cache's uploads are deleted.
+- **Send confirmation:** offers "Choose a chapter or pages first" (the existing split; nothing is sent) and explains the temporary 48-hour Google copy and exactly what leaves the Mac.
+- **Inline sources:** images and text are now held to the encoded request limit.
+
+Synthetic loopback tests only. Final gate exit 0: 3,648 frontend and 561 native tests, build, Clippy, fmt, lock sync, helper 26/26 (after removing an editor build folder; the first run is kept), migrations unchanged. Live-provider and installed-Mac behaviour are UNVERIFIED. GEN-REL-02 has not started.
+
 ## TOP PRIORITY: generation reliability before other feature work — 18 October 2026
 
 The owner approved the four improvements after a friend reported slow/failed study-guide/test generation, requested **one at a time before anything else**, and assigned implementation to Claude. This instruction supersedes the earlier queue priority; it does not erase accepted work. [Detailed scope, defaults and acceptance matrix](GENERATION_RELIABILITY_PLAN_2026-10-18.md).

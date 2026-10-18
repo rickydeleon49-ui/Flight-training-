@@ -1,0 +1,13 @@
+# Native baseline at main 2e3f7fee6f84dd094c23ac0dfd7cd1053d2ccc4d (static: main had no endpoint seam, so no loopback test could run before the change).
+# Each generation command read the whole selected file and embedded it as base64 inline_data:
+425:    let url = format!("https://generativelanguage.googleapis.com/v1beta/models/{MODEL}");
+588:    let (api_key, bytes, mime) = prepare_submission(&app, &relative_path).await?;
+604:            {"inline_data": {"mime_type": mime, "data": BASE64.encode(bytes)}}
+738:    let (api_key, bytes, mime) = prepare_submission(&app, &relative_path).await?;
+754:            {"inline_data": {"mime_type": mime, "data": BASE64.encode(bytes)}}
+804:        format!("https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent");
+# Count of inline_data request parts: 2
+# Count of Files API (upload/file_data) references: 0
+# Consequence: a guide then a practice test on one PDF sent 2 x ceil(n/3)*4 base64 bytes of the same file (see MEASURE legacy_two_inline_requests_bytes in final/).
+# Inline images were bounded only by raw size <= 100 MB although the cap applies to the encoded request:
+150:const MAX_INLINE_BYTES: u64 = 100 * 1024 * 1024;

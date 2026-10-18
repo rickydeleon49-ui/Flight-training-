@@ -30,7 +30,7 @@ import {
 import { formatLocalDay, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
-import { checkAiSubmission } from "@/logic/aiSafety";
+import { checkAiSubmission, geminiSendDisclosure } from "@/logic/aiSafety";
 import { checkFileForGemini } from "@/logic/aiLimits";
 import { restoreDocumentCopy } from "@/logic/documentRecovery";
 import {
@@ -296,6 +296,19 @@ function MaterialDetailPage({
     .toLowerCase()
     .endsWith(".pdf");
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
+  // Before a PDF is sent, narrowing it to a chapter is a deliberate choice
+  // (GEN-REL-01): it opens the existing page chooser and sends nothing. The
+  // new part is generated only after its own explicit Send.
+  const chooseChapterFirst = (closeConfirmation: () => void) =>
+    canSplit
+      ? {
+          secondaryLabel: "Choose a chapter or pages first",
+          onSecondary: () => {
+            closeConfirmation();
+            setSplittingManually(true);
+          },
+        }
+      : {};
   // Whether Gemini can be offered this file at all; a missing file only disables
   // the button, so a file that reappears does not need a reload.
   const canOfferGemini = Boolean(gemini?.configured) && aiCheck.allowed && fileForAi.ready;
@@ -1256,9 +1269,10 @@ function MaterialDetailPage({
       <ConfirmDialog
         open={confirmingAi && !isGeneratingAny}
         title="Send this file to Google?"
-        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${aiCheck.reason}${geminiModelSentence(gemini)}`}
+        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
         destructive={false}
+        {...chooseChapterFirst(() => setConfirmingAi(false))}
         onConfirm={() => {
           setConfirmingAi(false);
           if (isGeneratingAny || activeGeminiOpRef.current !== null) return;
@@ -1272,11 +1286,12 @@ function MaterialDetailPage({
         title="Send this file to Google?"
         message={
           practiceTest
-            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason}${geminiModelSentence(gemini)}`
-            : `${aiCheck.reason}${geminiModelSentence(gemini)}`
+            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`
+            : `${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`
         }
         confirmLabel="Send to Gemini"
         destructive={false}
+        {...chooseChapterFirst(() => setConfirmingPracticeTest(false))}
         onConfirm={() => {
           setConfirmingPracticeTest(false);
           if (isGeneratingAny || activeGeminiOpRef.current !== null) return;

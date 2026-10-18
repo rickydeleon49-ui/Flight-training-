@@ -84,7 +84,7 @@ fn page_count(path: &Path) -> Result<u32, String> {
 /// Returns how many pages were written. The source is only ever read.
 /// (The commands read the source once through `read_pdf_once` instead.)
 #[cfg(test)]
-fn write_page_range(
+pub(crate) fn write_page_range(
     source: &Path,
     destination: &Path,
     first: u32,

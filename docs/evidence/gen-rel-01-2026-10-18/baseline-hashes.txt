@@ -1,0 +1,8 @@
+# SHA-256 at base 45b4e2a (identical to 2e3f7fe for these paths) of every pre-existing source/doc file this change modifies.
+1f23abace78b32ac551bbbbd879e5beb5818277cc6e8eadfec1415d35e3d3c00  README.md
+ce4763d665caf0e8f1ac62779cbc86050a458980d6612e6e8ac1c1ebdb1d6f79  src-tauri/src/gemini.rs
+24d1f28af31a8bb4952f79fcf750a2e906841483bb17628722f4e9fccd03e9cb  src-tauri/src/lib.rs
+e75cccde56038e8bc2dce0312a1ebd3d25791dfe9e70ac5ec2fceedcd6e3b254  src-tauri/src/pdf.rs
+ae608306441c3ad1102146807ab4cebaf6869ba8129b8671999b9d2c87e9032b  src/components/ui/Dialog.tsx
+d440574e802b84a8c3856c3f9fb254c3f91e1bf4f90a5052a092c89cb5cfdac2  src/logic/aiSafety.ts
+201178a30a7ce0ada8a3d2d6de050148b462c8b919c548bebd01f338f6293a72  src/pages/StudyLibrary/MaterialDetail.tsx

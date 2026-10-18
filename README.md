@@ -228,9 +228,22 @@ Gemini can analyze them.
 first — that ceiling is Google's and is the same however the file is sent, so a
 larger handbook has to be split into the chapter being studied. Text and
 Markdown are held to 4 MB, which is roughly what the model can hold in mind at
-once; images ride the 100 MB inline request cap. The application checks all of
-this before she clicks, so an oversized file is a next step rather than a wasted
-upload.
+once; images ride the 100 MB inline request cap, counted after base64 encoding.
+The application checks all of this before she clicks, so an oversized file is a
+next step rather than a wasted upload.
+
+**How a PDF is sent (GEN-REL-01).** A PDF is uploaded once to Google's Files API
+and every study-guide or practice-test request for that same selected file
+refers to the uploaded copy instead of sending the whole PDF again. Google keeps
+that copy temporarily (48 hours when this was written); the application asks
+Google to delete it sooner when the file's contents change, the copy is
+replaced or she disconnects Gemini. What the upload is bound to (the selected
+file's SHA-256, type, stored path and a hash of the key) is kept only in the
+running application's memory: never in SQLite, a backup or a log, and never the
+key itself. Before sending, the confirmation offers **Choose a chapter or pages
+first**, which opens the existing page chooser and sends nothing; the new part
+is sent only after its own **Send to Gemini**. Text and images are still sent
+inline with the one request.
 
 **Which model reads it.** Settings offers two choices once a key is connected.
 **Standard** sends documents to Gemini Flash (`gemini-3.5-flash`, which Google
