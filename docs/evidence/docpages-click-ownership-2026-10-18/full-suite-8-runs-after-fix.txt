@@ -1,0 +1,8 @@
+run 1:       Tests  3677 passed | 6 skipped (3683)
+run 2:       Tests  3677 passed | 6 skipped (3683)
+run 3:       Tests  3677 passed | 6 skipped (3683)
+run 4: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯  FAIL  src/pages/StudyLibrary/CardReviewPanel.test.ts > card reviews in MaterialDetail > C1-R2 real-provider/disposable-SQLite UI reset while page response is held keeps erased rows absent in DB and UI       Tests  1 failed | 3676 passed | 6 skipped (3683)
+run 5: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯  FAIL  src/pages/StudyLibrary/CardReviewPanel.test.ts > card reviews in MaterialDetail > C1-R2 real-provider/disposable-SQLite UI reset while page response is held keeps erased rows absent in DB and UI       Tests  1 failed | 3676 passed | 6 skipped (3683)
+run 6:       Tests  3677 passed | 6 skipped (3683)
+run 7: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯  FAIL  src/data/skillEvidenceValidationParity.test.ts > shared schema-14 validation contract > sql.js gives the listed outcome for every case       Tests  1 failed | 3676 passed | 6 skipped (3683)
+run 8:       Tests  3677 passed | 6 skipped (3683)

@@ -1,0 +1,5 @@
+=== a file replaced while the bookmark's inspection is held is refused
+Test timed out in 5000ms.
+6078 click done; waiting
+6080 read start
+6080 read done identity=null

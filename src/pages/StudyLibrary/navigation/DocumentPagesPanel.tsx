@@ -18,7 +18,7 @@
  *   material it started on; one that finishes after they changed says
  *   nothing over the new ones (NAV-UI-01).
  */
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { type FormEvent, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { Button, Card, CardBody, CardHeader, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
 import type { NavigationBookmark, StudyMaterial } from "@/domain/types";
@@ -103,8 +103,10 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
 
   // Notices belong to one repository, controller and material. A change
   // retires them, and a completion that started under the old ones is
-  // refused before it can publish (NAV-UI-01).
-  useEffect(() => {
+  // refused before it can publish (NAV-UI-01). Taken during the commit, like
+  // the navigation lease, so a click on freshly shown controls is never
+  // treated as belonging to no one.
+  useLayoutEffect(() => {
     const owner = {};
     notices.current = owner;
     return () => {

@@ -1,0 +1,32 @@
+# Pre-fix: useDocumentNavigation.ts at origin/main (lease taken in useEffect)
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-docpages-timing
+
+ ❯ src/state/navigation/useDocumentNavigationLifecycle.test.ts (25 tests | 1 failed | 24 skipped) 8ms
+     × an action started before passive effects have run still runs and refreshes 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/navigation/useDocumentNavigationLifecycle.test.ts > a click on freshly shown controls is never refused as stale > an action started before passive effects have run still runs and refreshes
+AssertionError: expected 'refused: This changed somewhere else.…' to be 'ran' // Object.is equality
+
+Expected: "ran"
+Received: "refused: This changed somewhere else. Reload to see the latest."
+
+ ❯ src/state/navigation/useDocumentNavigationLifecycle.test.ts:142:29
+    140|     expect(outcome).not.toBeNull();
+    141|     await act(async () => {
+    142|       expect(await outcome).toBe("ran");
+       |                             ^
+    143|     });
+    144|     expect(probe.mutations()).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 24 skipped (25)
+   Start at  16:28:18
+   Duration  494ms (transform 126ms, setup 0ms, import 183ms, tests 8ms, environment 223ms)
+
+EXIT 1

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { NavigationOperation, NavigationReadingState, NavigationState } from "@/domain/types";
@@ -120,5 +120,27 @@ describe("R11: action ownership survives awaited work", () => {
     expect(reads).toBe(initialReads);
     await act(async () => { inspections[1]!.resolve(); await completions[1]; });
     expect(reads).toBe(initialReads + 1);
+  });
+});
+
+describe("a click on freshly shown controls is never refused as stale", () => {
+  it("an action started before passive effects have run still runs and refreshes", async () => {
+    const probe = rig(() => A);
+    probe.upstream.resolve();
+    let outcome: Promise<string> | null = null;
+    // The probe's own layout effect runs during the commit, before any passive
+    // effect: the earliest moment a user's click could reach the new controls.
+    renderHook(() => {
+      const nav = useMaterialNavigation("m1", probe.repo, IDLE);
+      useLayoutEffect(() => {
+        outcome ??= nav.checkPages().then(() => "ran", (error: unknown) => `refused: ${String((error as Error)?.message ?? error)}`);
+      });
+      return nav;
+    });
+    expect(outcome).not.toBeNull();
+    await act(async () => {
+      expect(await outcome).toBe("ran");
+    });
+    expect(probe.mutations()).toBe(1);
   });
 });
