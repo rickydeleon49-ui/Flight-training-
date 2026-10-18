@@ -6,6 +6,7 @@
 
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
@@ -16,6 +17,8 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter};
 
 use crate::documents;
+use crate::gemini_files::{self, PreparedSources, Source, GOOGLE_BASE};
+use crate::lineage::calculate_sha256;
 use crate::pdf;
 use crate::secrets;
 use crate::storage::app_root;
@@ -149,6 +152,22 @@ const MAX_PDF_BYTES: u64 = 50 * 1024 * 1024;
 /// 20 MB to 100 MB in January 2026.
 const MAX_INLINE_BYTES: u64 = 100 * 1024 * 1024;
 
+/// Inline data is base64-encoded inside the JSON request, which makes it a
+/// third larger, and the request cap applies to the encoded request. A file
+/// that fits the cap raw can still overflow it once encoded, so an inline
+/// source is held to what fits after encoding, with room for the prompt and
+/// response schema. PDFs no longer travel inline (GEN-REL-01); this bounds the
+/// images and text that still do.
+const INLINE_REQUEST_OVERHEAD: u64 = 256 * 1024;
+
+/// The encoded size of `bytes` raw bytes sent inline, plus the request around it.
+fn inline_request_bytes(bytes: u64) -> u64 {
+    bytes
+        .div_ceil(3)
+        .saturating_mul(4)
+        .saturating_add(INLINE_REQUEST_OVERHEAD)
+}
+
 /// Plain text runs out of context window long before it runs out of request.
 /// The model reads roughly a million tokens and a megabyte of text is roughly
 /// a quarter of a million of them, so four megabytes is the honest ceiling —
@@ -173,9 +192,14 @@ const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
 /// with nothing to cancel it.
 const GENERATE_TIMEOUT: Duration = Duration::from_secs(300);
 
+/// Redirects are never followed: every address this client talks to is
+/// Google's own and validated before use, and a redirect would carry the key
+/// and a document's bytes to an address nobody checked. A 3xx is reported as
+/// the refusal it is.
 fn client(timeout: Duration) -> Result<Client, String> {
     Client::builder()
         .timeout(timeout)
+        .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| format!("Could not start the connection to Gemini: {e}"))
 }
@@ -249,14 +273,21 @@ fn check_size(mime: &str, bytes: u64) -> Result<(), String> {
         ),
     };
 
-    if bytes <= limit {
-        return Ok(());
+    if bytes > limit {
+        return Err(format!(
+            "That file is {}, over the {} limit for this kind of file. {advice}",
+            describe_size(bytes),
+            describe_size(limit),
+        ));
     }
-    Err(format!(
-        "That file is {}, over the {} limit for this kind of file. {advice}",
-        describe_size(bytes),
-        describe_size(limit),
-    ))
+    // Everything but a PDF is still sent inline, encoded.
+    if mime != "application/pdf" && inline_request_bytes(bytes) > MAX_INLINE_BYTES {
+        return Err(format!(
+            "That file is {}, too large to send in one request once it is encoded. {advice}",
+            describe_size(bytes),
+        ));
+    }
+    Ok(())
 }
 
 /// Whether a PDF is short enough for Google to read.
@@ -461,18 +492,6 @@ async fn verify_key(api_key: &str) -> Result<(), String> {
     ))
 }
 
-fn compact_error(raw: &str) -> String {
-    serde_json::from_str::<Value>(raw)
-        .ok()
-        .and_then(|value| {
-            value
-                .pointer("/error/message")
-                .and_then(Value::as_str)
-                .map(str::to_string)
-        })
-        .unwrap_or_else(|| "The request could not be completed.".to_string())
-}
-
 #[tauri::command]
 pub fn gemini_status(app: AppHandle) -> GeminiStatus {
     let root = app_root(&app).ok();
@@ -506,14 +525,20 @@ pub async fn configure_gemini(app: AppHandle, api_key: String) -> Result<GeminiS
     }
     verify_key(trimmed).await?;
     let root = app_root(&app)?;
+    let previous = current_key(&root).ok().flatten();
     secrets::save_key(&root, trimmed)?;
+    // A new key is a new context: nothing prepared with the old one is
+    // reused, and the old key's uploads are retired while it is still known.
+    end_prepared_context(previous).await;
     Ok(GeminiStatus::new(true, load_choice(&root)))
 }
 
 #[tauri::command]
-pub fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
+pub async fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
     let root = app_root(&app)?;
+    let previous = current_key(&root).ok().flatten();
     secrets::forget_key(&root)?;
+    end_prepared_context(previous).await;
     // Clear anything still sitting in the old credential manager as well, so
     // disconnecting really does leave no key behind. Best effort: on macOS an
     // updated build is usually refused access to its predecessor's item.
@@ -521,6 +546,18 @@ pub fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
         let _ = entry.delete_credential();
     }
     Ok(GeminiStatus::new(false, load_choice(&root)))
+}
+
+/// End the prepared-source context and retire, best effort and bounded, the
+/// uploads made with `previous_key`. Anything not removed expires at Google.
+async fn end_prepared_context(previous_key: Option<String>) {
+    let retired = prepared_sources().invalidate_all();
+    let (Some(key), false) = (previous_key, retired.is_empty()) else {
+        return;
+    };
+    if let Ok(http) = client(VERIFY_TIMEOUT) {
+        prepared_sources().retire(&http, &key, retired).await;
+    }
 }
 
 fn mime_type(file_name: &str) -> Result<&'static str, String> {
@@ -547,10 +584,40 @@ fn mime_type(file_name: &str) -> Result<&'static str, String> {
 /// Both `generate_study_aid` and `generate_practice_test` read the same
 /// stored document through this, so "Gemini reads only the selected study
 /// document" is one guarded path rather than two copies that could drift.
+/// The one selected source as read for this request.
+pub(crate) struct LoadedSource {
+    pub bytes: Vec<u8>,
+    pub mime: &'static str,
+    /// SHA-256 of exactly these bytes: what a prepared copy is bound to.
+    pub content_sha256: String,
+    /// The selected managed source (its stored path).
+    pub scope: String,
+}
+
+impl LoadedSource {
+    pub(crate) fn new(bytes: Vec<u8>, mime: &'static str, scope: &str) -> Self {
+        LoadedSource {
+            content_sha256: calculate_sha256(&bytes),
+            bytes,
+            mime,
+            scope: scope.to_string(),
+        }
+    }
+
+    fn as_source(&self) -> Source<'_> {
+        Source {
+            bytes: &self.bytes,
+            content_sha256: &self.content_sha256,
+            mime: self.mime,
+            scope: &self.scope,
+        }
+    }
+}
+
 async fn prepare_submission(
     app: &AppHandle,
     relative_path: &str,
-) -> Result<(String, Vec<u8>, &'static str), String> {
+) -> Result<(String, LoadedSource), String> {
     let api_key = stored_key(app)?;
     let path = documents::stored_document_path(app, relative_path)?;
     let metadata = std::fs::metadata(&path).map_err(|e| {
@@ -577,7 +644,163 @@ async fn prepare_submission(
             format!("Could not read that study file: {e}")
         }
     })?;
-    Ok((api_key, bytes, mime))
+    Ok((api_key, LoadedSource::new(bytes, mime, relative_path)))
+}
+
+/// The session's prepared PDFs (GEN-REL-01): native memory only.
+fn prepared_sources() -> &'static PreparedSources {
+    static PREPARED: OnceLock<PreparedSources> = OnceLock::new();
+    PREPARED.get_or_init(|| {
+        PreparedSources::new(
+            gemini_files::Policy::default(),
+            gemini_files::system_clock(),
+        )
+    })
+}
+
+/// Everything one generation needs, without the window: tests run the same
+/// code against a loopback endpoint.
+struct GenContext<'a> {
+    http: &'a Client,
+    base: &'a str,
+    api_key: &'a str,
+    choice: ModelChoice,
+    cache: &'a PreparedSources,
+    /// The prepared-source context this generation began in.
+    epoch: u64,
+    say: &'a (dyn Fn(String) + Sync),
+}
+
+impl GenContext<'_> {
+    /// False once the prepared-source context this generation began in has
+    /// ended (disconnect or a new key).
+    fn current(&self) -> bool {
+        self.cache.epoch() == self.epoch
+    }
+
+    fn stale() -> Failure {
+        Failure {
+            message: gemini_files::STALE_CONTEXT.to_string(),
+            status: None,
+        }
+    }
+}
+
+/// How the selected source appears in a request. A PDF is referred to by its
+/// prepared copy; it is never also embedded.
+fn source_part(source: &LoadedSource, prepared: Option<&gemini_files::Prepared>) -> Value {
+    match prepared {
+        Some(p) => json!({"file_data": {"mime_type": p.mime, "file_uri": p.uri}}),
+        None => {
+            json!({"inline_data": {"mime_type": source.mime, "data": BASE64.encode(&source.bytes)}})
+        }
+    }
+}
+
+/// Run one generation over the selected source. A PDF is prepared once and
+/// referred to; anything else is sent inline as before.
+///
+/// If Google refuses a request that referred to a prepared copy, the copy is
+/// checked: if it is gone or not ready, it is prepared again exactly once, and
+/// the request made once more. If the copy is fine, the refusal stands as it is
+/// (so a retired model still reads as a retired model, not as a missing
+/// upload). A lookup that itself fails is reported, never turned into an
+/// upload.
+///
+/// The copy stays leased while it is used, so replacing or evicting it cannot
+/// delete it mid-request. If the context ends (disconnect or a new key) at any
+/// point, the operation is refused and nothing it produced is returned.
+async fn run_generation(
+    ctx: &GenContext<'_>,
+    source: &LoadedSource,
+    build: &(dyn Fn(Value) -> Value + Sync),
+) -> Result<(String, &'static str), String> {
+    if source.mime != "application/pdf" {
+        let body = build(source_part(source, None));
+        return generate_with_retries_at(ctx, &body)
+            .await
+            .map_err(|f| f.message);
+    }
+    let view = source.as_source();
+    let lease = ctx
+        .cache
+        .prepare(
+            ctx.http,
+            ctx.base,
+            ctx.api_key,
+            &view,
+            ctx.epoch,
+            None,
+            ctx.say,
+        )
+        .await?;
+    let outcome = generate_on(ctx, source, &lease, build).await;
+    let outcome = match outcome {
+        Err(failure) if matches!(failure.status, Some(400 | 403 | 404)) => {
+            let prepared = lease.prepared().clone();
+            match gemini_files::lookup(
+                ctx.http,
+                ctx.base,
+                ctx.api_key,
+                &prepared.name,
+                &prepared.mime,
+            )
+            .await
+            {
+                Ok(file) if file.state == gemini_files::FileState::Active => Err(failure.message),
+                Err(gemini_files::LookupFailure::Other(message)) => Err(message),
+                _ => {
+                    ctx.cache.finish(lease, ctx.http, ctx.api_key).await;
+                    (ctx.say)("The prepared copy of this PDF was no longer available at Google, so it is being prepared once more.".to_string());
+                    let again = ctx
+                        .cache
+                        .prepare(
+                            ctx.http,
+                            ctx.base,
+                            ctx.api_key,
+                            &view,
+                            ctx.epoch,
+                            Some(&prepared.name),
+                            ctx.say,
+                        )
+                        .await?;
+                    let outcome = generate_on(ctx, source, &again, build)
+                        .await
+                        .map_err(|f| f.message);
+                    ctx.cache.finish(again, ctx.http, ctx.api_key).await;
+                    // Checked after the cleanup await, not before it.
+                    return if ctx.current() {
+                        outcome
+                    } else {
+                        Err(gemini_files::STALE_CONTEXT.to_string())
+                    };
+                }
+            }
+        }
+        other => other.map_err(|f| f.message),
+    };
+    ctx.cache.finish(lease, ctx.http, ctx.api_key).await;
+    // Checked after the cleanup await, not before it.
+    if ctx.current() {
+        outcome
+    } else {
+        Err(gemini_files::STALE_CONTEXT.to_string())
+    }
+}
+
+/// One generation request referring to a leased copy, refused before sending
+/// if the copy's context has already ended.
+async fn generate_on(
+    ctx: &GenContext<'_>,
+    source: &LoadedSource,
+    lease: &gemini_files::Lease<'_>,
+    build: &(dyn Fn(Value) -> Value + Sync),
+) -> Result<(String, &'static str), Failure> {
+    if !lease.is_current() {
+        return Err(GenContext::stale());
+    }
+    let body = build(source_part(source, Some(lease.prepared())));
+    generate_with_retries_at(ctx, &body).await
 }
 
 #[tauri::command]
@@ -585,8 +808,30 @@ pub async fn generate_study_aid(
     app: AppHandle,
     relative_path: String,
 ) -> Result<GeneratedStudyAid, String> {
-    let (api_key, bytes, mime) = prepare_submission(&app, &relative_path).await?;
+    // The context is recorded before the key is read, so a disconnect or key
+    // change at any later point makes this operation stale.
+    let epoch = prepared_sources().epoch();
+    let (api_key, source) = prepare_submission(&app, &relative_path).await?;
+    let choice = load_choice(&app_root(&app)?);
+    let http = client(GENERATE_TIMEOUT)?;
+    let progress = |message: String| say(&app, message);
+    let ctx = GenContext {
+        http: &http,
+        base: GOOGLE_BASE,
+        api_key: &api_key,
+        choice,
+        cache: prepared_sources(),
+        epoch,
+        say: &progress,
+    };
+    study_aid_with(&ctx, &source).await
+}
 
+/// The study guide and flashcards, from the selected source.
+async fn study_aid_with(
+    ctx: &GenContext<'_>,
+    source: &LoadedSource,
+) -> Result<GeneratedStudyAid, String> {
     let prompt =
         "Create an accurate private-pilot study aid from the attached source. \
          Use only facts supported by the source. Do not invent regulations, procedures, numbers, or page references. \
@@ -598,50 +843,51 @@ pub async fn generate_study_aid(
          This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, \
          flight-school, and instructor guidance.";
 
-    let body = json!({
-        "contents": [{"role": "user", "parts": [
-            {"text": prompt},
-            {"inline_data": {"mime_type": mime, "data": BASE64.encode(bytes)}}
-        ]}],
-        "generationConfig": {
-            "responseMimeType": "application/json",
-            "responseSchema": {
-                "type": "OBJECT",
-                "required": ["title", "summary", "sections", "flashcards", "sourceNotes"],
-                "properties": {
-                    "title": {"type": "STRING"},
-                    "summary": {"type": "STRING"},
-                    "sections": {
-                        "type": "ARRAY",
-                        "items": {
-                            "type": "OBJECT",
-                            "required": ["heading", "body"],
-                            "properties": {
-                                "heading": {"type": "STRING"},
-                                "body": {"type": "STRING"}
+    let build = |part: Value| {
+        json!({
+            "contents": [{"role": "user", "parts": [
+                {"text": prompt},
+                part
+            ]}],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "responseSchema": {
+                    "type": "OBJECT",
+                    "required": ["title", "summary", "sections", "flashcards", "sourceNotes"],
+                    "properties": {
+                        "title": {"type": "STRING"},
+                        "summary": {"type": "STRING"},
+                        "sections": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "required": ["heading", "body"],
+                                "properties": {
+                                    "heading": {"type": "STRING"},
+                                    "body": {"type": "STRING"}
+                                }
                             }
-                        }
-                    },
-                    "flashcards": {
-                        "type": "ARRAY",
-                        "items": {
-                            "type": "OBJECT",
-                            "required": ["front", "back", "sourcePage"],
-                            "properties": {
-                                "front": {"type": "STRING"},
-                                "back": {"type": "STRING"},
-                                "sourcePage": {"type": "INTEGER", "nullable": true}
+                        },
+                        "flashcards": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "required": ["front", "back", "sourcePage"],
+                                "properties": {
+                                    "front": {"type": "STRING"},
+                                    "back": {"type": "STRING"},
+                                    "sourcePage": {"type": "INTEGER", "nullable": true}
+                                }
                             }
-                        }
-                    },
-                    "sourceNotes": {"type": "STRING"}
-                }
-            },
-            "maxOutputTokens": 8192
-        }
-    });
-    let choice = load_choice(&app_root(&app)?);
-    let (raw, model_used) = generate_with_retries(&app, &api_key, &body, choice).await?;
+                        },
+                        "sourceNotes": {"type": "STRING"}
+                    }
+                },
+                "maxOutputTokens": 8192
+            }
+        })
+    };
+    let (raw, model_used) = run_generation(ctx, source, &build).await?;
 
     let envelope: Value = serde_json::from_str(&raw)
         .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
@@ -735,8 +981,31 @@ pub async fn generate_practice_test(
     app: AppHandle,
     relative_path: String,
 ) -> Result<GeneratedPracticeTest, String> {
-    let (api_key, bytes, mime) = prepare_submission(&app, &relative_path).await?;
+    // The context is recorded before the key is read, so a disconnect or key
+    // change at any later point makes this operation stale.
+    let epoch = prepared_sources().epoch();
+    let (api_key, source) = prepare_submission(&app, &relative_path).await?;
+    let choice = load_choice(&app_root(&app)?);
+    let http = client(GENERATE_TIMEOUT)?;
+    let progress = |message: String| say(&app, message);
+    let ctx = GenContext {
+        http: &http,
+        base: GOOGLE_BASE,
+        api_key: &api_key,
+        choice,
+        cache: prepared_sources(),
+        epoch,
+        say: &progress,
+    };
+    practice_test_with(&ctx, &source).await
+}
 
+/// A practice test from the selected source; the same prepared PDF a study
+/// guide used is referred to again, not re-sent.
+async fn practice_test_with(
+    ctx: &GenContext<'_>,
+    source: &LoadedSource,
+) -> Result<GeneratedPracticeTest, String> {
     let prompt =
         "Create an accurate private-pilot practice test from the attached source. \
          Use only facts supported by the source. Do not invent regulations, procedures, numbers, or page references. \
@@ -748,42 +1017,43 @@ pub async fn generate_practice_test(
          not operational flight instruction; the learner must verify every answer against current FAA material, \
          aircraft documentation, and their instructor.";
 
-    let body = json!({
-        "contents": [{"role": "user", "parts": [
-            {"text": prompt},
-            {"inline_data": {"mime_type": mime, "data": BASE64.encode(bytes)}}
-        ]}],
-        "generationConfig": {
-            "responseMimeType": "application/json",
-            "responseSchema": {
-                "type": "OBJECT",
-                "required": ["title", "questions"],
-                "properties": {
-                    "title": {"type": "STRING"},
-                    "questions": {
-                        "type": "ARRAY",
-                        "items": {
-                            "type": "OBJECT",
-                            "required": ["question", "options", "correctIndex", "explanation", "sourcePage"],
-                            "properties": {
-                                "question": {"type": "STRING"},
-                                "options": {
-                                    "type": "ARRAY",
-                                    "items": {"type": "STRING"}
-                                },
-                                "correctIndex": {"type": "INTEGER"},
-                                "explanation": {"type": "STRING"},
-                                "sourcePage": {"type": "INTEGER", "nullable": true}
+    let build = |part: Value| {
+        json!({
+            "contents": [{"role": "user", "parts": [
+                {"text": prompt},
+                part
+            ]}],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "responseSchema": {
+                    "type": "OBJECT",
+                    "required": ["title", "questions"],
+                    "properties": {
+                        "title": {"type": "STRING"},
+                        "questions": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "required": ["question", "options", "correctIndex", "explanation", "sourcePage"],
+                                "properties": {
+                                    "question": {"type": "STRING"},
+                                    "options": {
+                                        "type": "ARRAY",
+                                        "items": {"type": "STRING"}
+                                    },
+                                    "correctIndex": {"type": "INTEGER"},
+                                    "explanation": {"type": "STRING"},
+                                    "sourcePage": {"type": "INTEGER", "nullable": true}
+                                }
                             }
                         }
                     }
-                }
-            },
-            "maxOutputTokens": 8192
-        }
-    });
-    let choice = load_choice(&app_root(&app)?);
-    let (raw, model_used) = generate_with_retries(&app, &api_key, &body, choice).await?;
+                },
+                "maxOutputTokens": 8192
+            }
+        })
+    };
+    let (raw, model_used) = run_generation(ctx, source, &build).await?;
     let text = extract_text(&raw)?;
     let result: GeneratedPracticeTest = serde_json::from_str(&text).map_err(|_| {
         "Gemini's practice test was incomplete. Try generating it again.".to_string()
@@ -796,12 +1066,12 @@ pub async fn generate_practice_test(
 /// One request to one model.
 async fn generate_once(
     http: &Client,
+    base: &str,
     api_key: &str,
     model: &str,
     body: &Value,
 ) -> Result<Attempt, String> {
-    let url =
-        format!("https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent");
+    let url = format!("{base}/v1beta/models/{model}:generateContent");
     let response = http
         .post(url)
         .header("x-goog-api-key", api_key)
@@ -832,19 +1102,39 @@ async fn generate_once(
 /// primary that stays busy is worth one attempt on the standby.
 ///
 /// Returns the response body and the model that produced it.
-async fn generate_with_retries(
-    app: &AppHandle,
-    api_key: &str,
+/// Why generation ended without an answer: the message, and the status of a
+/// refusal Google will not reconsider (so a missing prepared file can be told
+/// apart from a missing model).
+struct Failure {
+    message: String,
+    status: Option<u16>,
+}
+
+impl From<String> for Failure {
+    fn from(message: String) -> Self {
+        Failure {
+            message,
+            status: None,
+        }
+    }
+}
+
+async fn generate_with_retries_at(
+    ctx: &GenContext<'_>,
     body: &Value,
-    choice: ModelChoice,
-) -> Result<(String, &'static str), String> {
-    let http = client(GENERATE_TIMEOUT)?;
+) -> Result<(String, &'static str), Failure> {
+    let (http, base, api_key, choice) = (ctx.http, ctx.base, ctx.api_key, ctx.choice);
     let primary = choice.primary();
     let fallback = choice.fallback();
     let mut primary_rate_limited = false;
 
     for attempt in 0..MAX_ATTEMPTS {
-        match generate_once(&http, api_key, primary, body).await? {
+        // Every request, including a retry after a pause, belongs to the
+        // context the generation began in.
+        if !ctx.current() {
+            return Err(GenContext::stale());
+        }
+        match generate_once(http, base, api_key, primary, body).await? {
             Attempt::Answered(raw) => return Ok((raw, primary)),
             Attempt::Refused { status, body } => {
                 primary_rate_limited |= status == 429;
@@ -852,16 +1142,19 @@ async fn generate_with_retries(
                     break;
                 }
                 if !is_retryable(status) {
-                    return Err(describe_refusal(
-                        RefusalContext::Generation,
-                        status,
-                        &body,
-                        primary,
-                    ));
+                    return Err(Failure {
+                        message: describe_refusal(
+                            RefusalContext::Generation,
+                            status,
+                            &body,
+                            primary,
+                        ),
+                        status: Some(status),
+                    });
                 }
                 if attempt + 1 < MAX_ATTEMPTS {
                     let pause = backoff_delay(attempt, jitter_millis());
-                    say(app, waiting_message(attempt, pause));
+                    (ctx.say)(waiting_message(attempt, pause));
                     tokio::time::sleep(pause).await;
                 }
             }
@@ -869,25 +1162,26 @@ async fn generate_with_retries(
     }
 
     // A model-specific rate or capacity limit may spare the backup model.
-    say(app, choice.fallback_notice().to_string());
-    match generate_once(&http, api_key, fallback, body).await? {
+    if !ctx.current() {
+        return Err(GenContext::stale());
+    }
+    (ctx.say)(choice.fallback_notice().to_string());
+    match generate_once(http, base, api_key, fallback, body).await? {
         Attempt::Answered(raw) => return Ok((raw, fallback)),
         Attempt::Refused { status, body } if !is_retryable(status) => {
-            return Err(describe_refusal(
-                RefusalContext::Generation,
-                status,
-                &body,
-                fallback,
-            ));
+            return Err(Failure {
+                message: describe_refusal(RefusalContext::Generation, status, &body, fallback),
+                status: Some(status),
+            });
         }
-        Attempt::Refused { status: 429, .. } => return Err(rate_limit_message()),
+        Attempt::Refused { status: 429, .. } => return Err(rate_limit_message().into()),
         Attempt::Refused { .. } => {}
     }
 
     if primary_rate_limited {
-        Err(rate_limit_message())
+        Err(rate_limit_message().into())
     } else {
-        Err(busy_message())
+        Err(busy_message().into())
     }
 }
 
@@ -1016,7 +1310,11 @@ fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &st
         ),
         429 => rate_limited_now_message(context),
         500..=504 => busy_now_message(context),
-        _ => format!("Gemini returned {status}: {}", compact_error(body)),
+        // Fixed wording: Google's own message text is never repeated, since it
+        // can echo an uploaded file's name or address, or other request values.
+        _ => format!(
+            "Google refused the request ({status}). Nothing was saved; try again in a few minutes, or try a different file."
+        ),
     }
 }
 
@@ -1487,3 +1785,7 @@ mod tests {
             .contains("trying the standard Gemini model"));
     }
 }
+
+#[cfg(test)]
+#[path = "gemini_generation_tests.rs"]
+mod generation_tests;

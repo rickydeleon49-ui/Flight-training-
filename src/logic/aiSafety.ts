@@ -65,3 +65,25 @@ export function checkAiSubmission(
       "products, so send study material only — never anything personal or identifying.",
   };
 }
+
+/**
+ * Exactly what leaves this Mac when she confirms, and what Google keeps
+ * (GEN-REL-01). A PDF is uploaded once to Google's temporary file storage so a
+ * study guide and a practice test can both use it; anything else is sent with
+ * the one request. A split part names the pages of the original it holds, so
+ * "only this chapter" is visible before anything is sent.
+ */
+export function geminiSendDisclosure(material: StudyMaterial): string {
+  const name = material.originalFileName ?? material.title;
+  const isPdf = (material.originalFileName ?? material.filePath ?? "").toLowerCase().endsWith(".pdf");
+  const lineage = material.lineage;
+  const pages = lineage ? `, pages ${lineage.sourcePageStart}–${lineage.sourcePageEnd} of “${lineage.sourceTitle}”,` : "";
+  if (!isPdf) {
+    return `Only “${name}” leaves this Mac. It is sent with this request only; it is not stored for reuse. Your copy on this Mac is not changed.`;
+  }
+  return (
+    `Only “${name}”${pages} leaves this Mac. Google keeps a temporary copy for up to 48 hours so a study guide and ` +
+    "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
+    "the file changes or you disconnect Gemini; otherwise Google removes it when it expires. Your copy on this Mac is not changed."
+  );
+}

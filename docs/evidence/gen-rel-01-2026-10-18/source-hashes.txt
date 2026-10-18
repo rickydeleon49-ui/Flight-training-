@@ -1,0 +1,13 @@
+# SHA-256 of every changed or new source/test/doc file in the GEN-REL-01 working tree (uncommitted, on base 45b4e2a). Gated source = these source/test files.
+c9d1f33523f1d83f209f96a6f9971ecd6cdf07a8ecf414b7c06026d778d4c1ac  README.md
+356dd707869c5a4b04eea56a6f3fc26110d2562e6759744d33cf5a4f3252bfe5  src-tauri/src/gemini.rs
+8381b46ddab80e68c73a4dcb6185c0b31c79b8e602f002bded13afd42f598f87  src-tauri/src/lib.rs
+39f623f36630fc7f030b3ab8a61fb3a980d223fb0ba43eaa992c5c60a1a4d02a  src-tauri/src/pdf.rs
+b409a0ba92d105fadb0f6366e35de55d813a4e2e8136fadad696676f1c15e7d9  src/components/ui/Dialog.tsx
+ffd6fbfde3dae09a53ddcb77407c3153b20e5831970b11e5023f4988e582a48b  src/logic/aiSafety.ts
+447d848fce3ec6dcc6d267f0149024df05a8fd2ee282d8b588279c09ccb0bd82  src/pages/StudyLibrary/MaterialDetail.tsx
+edf3280d0eb1aefb24661d4ed786ff39a9678e92fa30d925989a97f4845d39bf  src-tauri/src/fake_gemini.rs
+6c7256ed1cde88842937e321164e654c8037cbc79359e73ce551f9dfe38e4cc3  src-tauri/src/gemini_files.rs
+1a3065711378709e32a947e41fca74f6d4fcc18fe3e7f531bea4fccfee20681a  src-tauri/src/gemini_files_tests.rs
+21173af76661b512c56ed491257b096d99ecae67765a2ca1e16cda323c49dcf8  src-tauri/src/gemini_generation_tests.rs
+3531ce7961f8722626876b376d960630d4e31ef848dbdb06949dd0731c8d53ac  src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts

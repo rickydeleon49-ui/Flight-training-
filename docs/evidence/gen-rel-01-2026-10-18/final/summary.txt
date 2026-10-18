@@ -1,0 +1,15 @@
+01-typecheck exit=0
+02-npm-test exit=0
+03-build exit=0
+04-cargo-test exit=0
+05-clippy exit=0
+06-fmt exit=0
+07-cargo-lock exit=0
+08-schema14-helper exit=1 (editor flycheck0 in target; preserved in failed/, rerun below)
+09-migrations-unchanged exit=0
+10-measurements exit=0
+11-diff-check exit=0
+12-untracked-whitespace exit=0
+done
+08-schema14-helper rerun after removing the regenerable src-tauri/target/flycheck0 exit=0
+13-schema14-helper-after-manifest-rebind exit=0

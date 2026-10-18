@@ -1,0 +1,38 @@
+# Pre-fix: lookup() with the round-2 mapping of 403 to Missing restored temporarily
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-01/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.53s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 3 tests
+test gemini_files::tests::r10_a_permission_refusal_on_the_reuse_check_never_uploads_again ... FAILED
+test gemini::generation_tests::r10_a_permission_refusal_after_a_refused_generation_never_uploads_again ... FAILED
+test gemini_files::tests::r10_a_permission_refusal_while_processing_never_uploads_again ... FAILED
+
+failures:
+
+---- gemini_files::tests::r10_a_permission_refusal_on_the_reuse_check_never_uploads_again stdout ----
+
+thread 'gemini_files::tests::r10_a_permission_refusal_on_the_reuse_check_never_uploads_again' (4782730) panicked at src/gemini_files_tests.rs:805:18:
+a 403 is not a confirmation
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- gemini::generation_tests::r10_a_permission_refusal_after_a_refused_generation_never_uploads_again stdout ----
+
+thread 'gemini::generation_tests::r10_a_permission_refusal_after_a_refused_generation_never_uploads_again' (4782729) panicked at src/gemini_generation_tests.rs:897:36:
+called `Result::unwrap_err()` on an `Ok` value: GeneratedStudyAid { title: "Synthetic airspace", summary: "A synthetic summary.", sections: [StudySection { heading: "Class B", body: "Synthetic body." }], flashcards: [Flashcard { front: "Q", back: "A", source_page: Some(1) }], source_notes: "Synthetic notes.", model: "gemini-3.5-flash" }
+
+---- gemini_files::tests::r10_a_permission_refusal_while_processing_never_uploads_again stdout ----
+
+thread 'gemini_files::tests::r10_a_permission_refusal_while_processing_never_uploads_again' (4782731) panicked at src/gemini_files_tests.rs:824:18:
+a 403 is not a confirmation
+
+
+failures:
+    gemini::generation_tests::r10_a_permission_refusal_after_a_refused_generation_never_uploads_again
+    gemini_files::tests::r10_a_permission_refusal_on_the_reuse_check_never_uploads_again
+    gemini_files::tests::r10_a_permission_refusal_while_processing_never_uploads_again
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 588 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`
+EXIT 101

@@ -1,0 +1,341 @@
+# GEN-REL-01 UI regressions run against unchanged main frontend (base 2e3f7fe; only the new test file added).
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-gen-rel-01
+
+(node:25982) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts (8 tests | 5 failed) 839ms
+     × a whole PDF can be narrowed to a chapter first, which opens the page chooser and sends nothing 202ms
+     × the practice-test confirmation offers the same choice 103ms
+     × says exactly what leaves this Mac and that Google keeps a temporary copy 75ms
+     × a part sends only that part, names its pages, and saves to the part, not the original 73ms
+     × a text file is sent with the request only, and offers no chapter choice 63ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts > choosing what to send (GEN-REL-01) > a whole PDF can be narrowed to a chapter first, which opens the page chooser and sends nothing
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Choose a chapter or pages first"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Send this file to Google?":
+  [36m<h2[39m
+    [33mclass[39m=[32m"dialog__title"[39m
+    [33mid[39m=[32m"_r_k_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"icon-button"[39m
+    [33mtitle[39m=[32m"Close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"muted"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--secondary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Send to Gemini":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--primary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_k_"[39m
+  [33mclass[39m=[32m"dialog dialog--narrow"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_k_"[39m
+      [36m>[39m
+        [0mSend this file to Google?[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"muted"[39m
+    [36m>[39m
+      [0m"documents/handbook.pdf" will be uploaded to Google to generate the study aid. On the free tier Google may use it to improve its products, so send study material only — never anything personal or identifying. It will be read by Gemini Flash.[0m
+    [36m</p>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSend to Gemini[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts:100:36
+     98|     fireEvent.click(await screen.findByRole("button", { name: "Create …
+     99|     const dialog = await waitFor(sendDialog);
+    100|     fireEvent.click(within(dialog).getByRole("button", { name: "Choose…
+       |                                    ^
+    101|     expect(await screen.findByRole("dialog", { name: "Take out a chapt…
+    102|     expect(screen.queryByRole("dialog", { name: "Send this file to Goo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts > choosing what to send (GEN-REL-01) > the practice-test confirmation offers the same choice
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Choose a chapter or pages first"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Send this file to Google?":
+  [36m<h2[39m
+    [33mclass[39m=[32m"dialog__title"[39m
+    [33mid[39m=[32m"_r_1c_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"icon-button"[39m
+    [33mtitle[39m=[32m"Close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"muted"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--secondary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Send to Gemini":
+  [36m<button[39m
+    [33mclass[39m=[32m"button button--primary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_1c_"[39m
+  [33mclass[39m=[32m"dialog dialog--narrow"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_1c_"[39m
+      [36m>[39m
+        [0mSend this file to Google?[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"muted"[39m
+    [36m>[39m
+      [0m"documents/handbook.pdf" will be uploaded to Google to generate the study aid. On the free tier Google may use it to improve its products, so send study material only — never anything personal or identifying. It will be read by Gemini Flash.[0m
+    [36m</p>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSend to Gemini[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts:111:36
+    109|     fireEvent.click(await screen.findByRole("button", { name: "Create …
+    110|     const dialog = await waitFor(sendDialog);
+    111|     fireEvent.click(within(dialog).getByRole("button", { name: "Choose…
+       |                                    ^
+    112|     expect(await screen.findByRole("dialog", { name: "Take out a chapt…
+    113|     expect(generatePracticeTest).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts > choosing what to send (GEN-REL-01) > says exactly what leaves this Mac and that Google keeps a temporary copy
+AssertionError: expected 'Send this file to Google?Close"docume…' to match /Only “handbook\.pdf” leaves this Mac/
+
+- Expected:
+/Only “handbook\.pdf” leaves this Mac/
+
++ Received:
+"Send this file to Google?Close\"documents/handbook.pdf\" will be uploaded to Google to generate the study aid. On the free tier Google may use it to improve its products, so send study material only — never anything personal or identifying. It will be read by Gemini Flash.CancelSend to Gemini"
+
+ ❯ src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts:120:18
+    118|     fireEvent.click(await screen.findByRole("button", { name: "Create …
+    119|     const text = (await waitFor(sendDialog)).textContent ?? "";
+    120|     expect(text).toMatch(/Only “handbook\.pdf” leaves this Mac/);
+       |                  ^
+    121|     expect(text).toMatch(/temporary copy for up to 48 hours/);
+    122|     expect(text).toMatch(/practice test can use it without uploading i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts > choosing what to send (GEN-REL-01) > a part sends only that part, names its pages, and saves to the part, not the original
+AssertionError: expected 'Send this file to Google?Close"docume…' to match /…/ch3\.pdf”, pages 41–60 of “Synthetic Handbook”, leaves this Mac
+
+- Expected:
+/Only “documents\/ch3\.pdf”, pages 41–60 of “Synthetic Handbook”, leaves this Mac/
+
++ Received:
+"Send this file to Google?Close\"documents/ch3.pdf\" will be uploaded to Google to generate the study aid. On the free tier Google may use it to improve its products, so send study material only — never anything personal or identifying. It will be read by Gemini Flash.CancelSend to Gemini"
+
+ ❯ src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts:146:32
+    144|     fireEvent.click(await screen.findByRole("button", { name: "Create …
+    145|     const dialog = await waitFor(sendDialog);
+    146|     expect(dialog.textContent).toMatch(/Only “documents\/ch3\.pdf”, pa…
+       |                                ^
+    147|     fireEvent.click(within(dialog).getByRole("button", { name: "Send t…
+    148|     await waitFor(() => expect(generateStudyAid).toHaveBeenCalledTimes…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts > choosing what to send (GEN-REL-01) > a text file is sent with the request only, and offers no chapter choice
+AssertionError: expected 'Send this file to Google?Close"docume…' to match /sent with this request only/
+
+- Expected:
+/sent with this request only/
+
++ Received:
+"Send this file to Google?Close\"documents/notes.txt\" will be uploaded to Google to generate the study aid. On the free tier Google may use it to improve its products, so send study material only — never anything personal or identifying. It will be read by Gemini Flash.CancelSend to Gemini"
+
+ ❯ src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts:164:32
+    162|     const dialog = await waitFor(sendDialog);
+    163|     expect(within(dialog).queryByRole("button", { name: "Choose a chap…
+    164|     expect(dialog.textContent).toMatch(/sent with this request only/);
+       |                                ^
+    165|     expect(dialog.textContent).not.toMatch(/48 hours/);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+   Start at  11:16:00
+   Duration  1.61s (transform 338ms, setup 0ms, import 456ms, tests 839ms, environment 231ms)
+
+exit=1

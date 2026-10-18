@@ -1,0 +1,7 @@
+src-tauri/src/fake_gemini.rs
+src-tauri/src/gemini_files.rs
+src-tauri/src/gemini_files_tests.rs
+src-tauri/src/gemini_generation_tests.rs
+src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts
+no trailing whitespace in new source/docs
+exit=0

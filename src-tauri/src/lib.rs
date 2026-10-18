@@ -9,7 +9,10 @@ mod card_library;
 mod card_reviews;
 mod debrief;
 mod documents;
+#[cfg(test)]
+mod fake_gemini;
 mod gemini;
+mod gemini_files;
 mod lineage;
 mod navigation;
 mod pdf;
