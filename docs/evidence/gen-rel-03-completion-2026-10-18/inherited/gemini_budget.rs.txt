@@ -1,0 +1,244 @@
+//! One bounded budget per generation (GEN-REL-03).
+//!
+//! Before this, each request had its own 300-second timeout and up to five
+//! requests could be made, so "Creating study aid…" could spin for well over
+//! twenty minutes and still end with "Gemini did not answer in time". Now one
+//! generation has one active budget that every step draws from: uploading the
+//! PDF, waiting for Google to prepare it, every generation attempt, every pause
+//! between attempts and the backup model. No step is given a fresh allowance.
+//!
+//! - At most `MAX_GENERATION_ATTEMPTS` generation requests, the backup model
+//!   included.
+//! - A pause (backoff, or Google's own `Retry-After`) is taken only if it fits
+//!   in what remains; otherwise the generation stops and says why.
+//! - Each request's timeout is what remains, so a request that times out has
+//!   used the whole budget.
+//! - Time is measured on a monotonic clock, so a change to the Mac's clock
+//!   neither extends nor cuts the budget.
+//!
+//! The budget also keeps a short, sanitized trace for the failure message:
+//! the stage reached, the attempts made, the time spent, the last HTTP status
+//! and a category. It never holds a key, a document, a path or a provider
+//! body.
+
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+
+/// The active budget for one generation, upload included.
+pub(crate) const ACTIVE_BUDGET: Duration = Duration::from_secs(300);
+/// How long to wait for a connection to Google before calling it unreachable.
+pub(crate) const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
+/// Generation requests per generation, the backup model included.
+pub(crate) const MAX_GENERATION_ATTEMPTS: u32 = 3;
+
+pub(crate) type Now = Arc<dyn Fn() -> Instant + Send + Sync>;
+pub(crate) type Sleep = Arc<dyn Fn(Duration) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync>;
+
+/// Where a generation had got to, for the failure message.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Stage {
+    Preparing,
+    Uploading,
+    WaitingForFile,
+    Generating,
+    Reading,
+    Pausing,
+}
+
+impl Stage {
+    fn label(self) -> &'static str {
+        match self {
+            Stage::Preparing => "preparing the document",
+            Stage::Uploading => "uploading the PDF",
+            Stage::WaitingForFile => "waiting for Google to prepare the PDF",
+            Stage::Generating => "waiting for Gemini's answer",
+            Stage::Reading => "receiving Gemini's answer",
+            Stage::Pausing => "pausing before trying again",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct Trace {
+    stage: Stage,
+    last_status: Option<u16>,
+    category: Option<&'static str>,
+}
+
+pub(crate) struct Budget {
+    started: Instant,
+    total: Duration,
+    now: Now,
+    sleep: Sleep,
+    attempts: Mutex<u32>,
+    trace: Mutex<Trace>,
+}
+
+impl Budget {
+    /// The real budget: the system's monotonic clock and the runtime's timer.
+    pub(crate) fn new(total: Duration) -> Budget {
+        Budget::with(
+            total,
+            Arc::new(Instant::now),
+            Arc::new(|d| Box::pin(tokio::time::sleep(d))),
+        )
+    }
+
+    /// A budget on an injected clock and timer, for tests.
+    pub(crate) fn with(total: Duration, now: Now, sleep: Sleep) -> Budget {
+        Budget {
+            started: now(),
+            total,
+            now,
+            sleep,
+            attempts: Mutex::new(0),
+            trace: Mutex::new(Trace {
+                stage: Stage::Preparing,
+                last_status: None,
+                category: None,
+            }),
+        }
+    }
+
+    pub(crate) fn total(&self) -> Duration {
+        self.total
+    }
+
+    pub(crate) fn elapsed(&self) -> Duration {
+        (self.now)().saturating_duration_since(self.started)
+    }
+
+    pub(crate) fn remaining(&self) -> Duration {
+        self.total.saturating_sub(self.elapsed())
+    }
+
+    /// The timeout for the next request: what remains, or `None` if nothing does.
+    pub(crate) fn request_timeout(&self) -> Option<Duration> {
+        let remaining = self.remaining();
+        (!remaining.is_zero()).then_some(remaining)
+    }
+
+    /// Pause, but only if the pause and a little room for the next request
+    /// fit in what remains. `false`: not taken, because it would not fit.
+    pub(crate) async fn pause(&self, pause: Duration) -> bool {
+        // A request needs at least a moment of its own after the pause.
+        let needed = pause.saturating_add(Duration::from_millis(250));
+        if needed >= self.remaining() {
+            return false;
+        }
+        self.at(Stage::Pausing);
+        (self.sleep)(pause).await;
+        true
+    }
+
+    /// Count a generation request about to be made; `None` if none may be.
+    pub(crate) fn start_attempt(&self) -> Option<u32> {
+        let mut attempts = self.attempts.lock().unwrap_or_else(|e| e.into_inner());
+        if *attempts >= MAX_GENERATION_ATTEMPTS {
+            return None;
+        }
+        *attempts += 1;
+        Some(*attempts)
+    }
+
+    pub(crate) fn attempts(&self) -> u32 {
+        *self.attempts.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    pub(crate) fn at(&self, stage: Stage) {
+        self.trace.lock().unwrap_or_else(|e| e.into_inner()).stage = stage;
+    }
+
+    pub(crate) fn stage(&self) -> Stage {
+        self.trace.lock().unwrap_or_else(|e| e.into_inner()).stage
+    }
+
+    pub(crate) fn saw_status(&self, status: u16) {
+        self.trace.lock().unwrap_or_else(|e| e.into_inner()).last_status = Some(status);
+    }
+
+    pub(crate) fn categorize(&self, category: &'static str) {
+        self.trace.lock().unwrap_or_else(|e| e.into_inner()).category = Some(category);
+    }
+
+    /// One sanitized line for the failure message: what was happening, not
+    /// what was sent.
+    pub(crate) fn details(&self, reference: Option<&str>) -> String {
+        let trace = self.trace.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        let seconds = self.elapsed().as_secs();
+        let mut parts = vec![
+            format!("stage: {}", trace.stage.label()),
+            format!("generation attempts: {}", self.attempts()),
+            format!("time: {}m {:02}s", seconds / 60, seconds % 60),
+        ];
+        if let Some(category) = trace.category {
+            parts.insert(0, category.to_string());
+        }
+        if let Some(status) = trace.last_status {
+            parts.push(format!("last status: {status}"));
+        }
+        if let Some(reference) = reference {
+            parts.push(format!("reference: {reference}"));
+        }
+        format!("Details: {}.", parts.join("; "))
+    }
+}
+
+/// A budget in words: "5 minutes", "90 seconds".
+pub(crate) fn describe(total: Duration) -> String {
+    let seconds = total.as_secs();
+    if seconds >= 60 && seconds % 60 == 0 {
+        let minutes = seconds / 60;
+        format!("{minutes} minute{}", if minutes == 1 { "" } else { "s" })
+    } else {
+        format!("{seconds} second{}", if seconds == 1 { "" } else { "s" })
+    }
+}
+
+/// Google's `Retry-After`, in whole seconds. An HTTP date, a negative or an
+/// absurd value is ignored, and the usual backoff applies.
+pub(crate) fn retry_after(value: Option<&str>) -> Option<Duration> {
+    let seconds: u64 = value?.trim().parse().ok()?;
+    (seconds <= 24 * 60 * 60).then(|| Duration::from_secs(seconds))
+}
+
+#[cfg(test)]
+pub(crate) mod testing {
+    //! A budget on a fake clock: pauses advance the clock instantly and are
+    //! recorded, so the policy can be tested without waiting.
+    use super::*;
+
+    pub(crate) struct FakeTime {
+        pub base: Instant,
+        pub offset: Mutex<Duration>,
+        pub pauses: Mutex<Vec<Duration>>,
+    }
+
+    impl FakeTime {
+        pub(crate) fn advance(&self, by: Duration) {
+            *self.offset.lock().unwrap() += by;
+        }
+    }
+
+    pub(crate) fn fake_budget(total: Duration) -> (Budget, Arc<FakeTime>) {
+        let time = Arc::new(FakeTime {
+            base: Instant::now(),
+            offset: Mutex::new(Duration::ZERO),
+            pauses: Mutex::new(Vec::new()),
+        });
+        let now_time = time.clone();
+        let sleep_time = time.clone();
+        let budget = Budget::with(
+            total,
+            Arc::new(move || now_time.base + *now_time.offset.lock().unwrap()),
+            Arc::new(move |d| {
+                sleep_time.pauses.lock().unwrap().push(d);
+                sleep_time.advance(d);
+                Box::pin(async {})
+            }),
+        );
+        (budget, time)
+    }
+}

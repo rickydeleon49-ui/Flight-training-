@@ -1,0 +1,81 @@
+[
+  {
+    "name": "01-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "started": "2026-10-18T21:22:20.716905+00:00",
+    "exit": 0
+  },
+  {
+    "name": "02-frontend",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "started": "2026-10-18T21:22:24.884136+00:00",
+    "exit": 0
+  },
+  {
+    "name": "03-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "started": "2026-10-18T21:23:26.131669+00:00",
+    "exit": 0
+  },
+  {
+    "name": "04-native",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "started": "2026-10-18T21:23:31.778973+00:00",
+    "exit": 0
+  },
+  {
+    "name": "05-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "started": "2026-10-18T21:24:31.325737+00:00",
+    "exit": 101
+  },
+  {
+    "name": "06-fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--check"
+    ],
+    "started": "2026-10-18T21:24:54.990000+00:00",
+    "exit": 0
+  },
+  {
+    "name": "07-lock",
+    "command": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "started": "2026-10-18T21:24:55.241130+00:00",
+    "exit": 0
+  }
+]

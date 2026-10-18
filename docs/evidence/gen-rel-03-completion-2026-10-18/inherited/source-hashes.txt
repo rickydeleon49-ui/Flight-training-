@@ -1,0 +1,4 @@
+f6970655384a22b6698c5b7e90425574f4ec1016eb0d79a7f1472185af3ae6df  src-tauri/src/gemini.rs
+9df6e0234b7f7c88ba94311c5ff2417a0c25fa809aa402edf8071c9480a48e29  src-tauri/src/gemini_files.rs
+6f63e185d816c23a5ce6b0be59fea8d9f7e22f152c306888b209c416f68a77ab  src-tauri/src/gemini_budget.rs
+e2c0fb065b518d91198edd93eec80f2bbf31a4993cffbb773dd234a31a99b042  src-tauri/src/lib.rs

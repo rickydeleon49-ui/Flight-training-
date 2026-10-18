@@ -82,6 +82,7 @@ fn rig_with(policy: Policy) -> Rig {
 impl Rig {
     fn guide(&self, key: &str, source: &LoadedSource) -> Result<GeneratedStudyAid, String> {
         let say = |m: String| self.said.lock().unwrap().push(m);
+        let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
             http: &self.http,
             base: &self.fake.base,
@@ -89,12 +90,14 @@ impl Rig {
             choice: ModelChoice::Standard,
             cache: &self.cache,
             epoch: self.cache.epoch(),
+            budget: &budget,
             say: &say,
         };
         tauri::async_runtime::block_on(study_aid_with(&ctx, source))
     }
     fn test(&self, key: &str, source: &LoadedSource) -> Result<GeneratedPracticeTest, String> {
         let say = |m: String| self.said.lock().unwrap().push(m);
+        let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
             http: &self.http,
             base: &self.fake.base,
@@ -102,6 +105,7 @@ impl Rig {
             choice: ModelChoice::Standard,
             cache: &self.cache,
             epoch: self.cache.epoch(),
+            budget: &budget,
             say: &say,
         };
         tauri::async_runtime::block_on(practice_test_with(&ctx, source))
@@ -467,7 +471,7 @@ fn a_refusal_while_the_copy_is_healthy_stands_and_is_not_turned_into_a_reupload(
         .guide(KEY, &source(pdf(2, "model-404"), "documents/m.pdf"))
         .unwrap_err();
     assert!(
-        error.contains("retired the gemini-3.5-flash model"),
+        error.contains("could not find the gemini-3.5-flash model"),
         "a missing model still reads as a missing model: {error}"
     );
     assert_eq!(r.uploads(), 1);
@@ -549,7 +553,7 @@ fn an_unusable_generation_answer_is_refused_and_the_valid_copy_stays_reusable() 
     let src = source(pdf(2, "garbage"), "documents/g.pdf");
     r.fake.behave(|b| b.garbage_answer = true);
     let error = r.guide(KEY, &src).unwrap_err();
-    assert!(error.contains("did not return a study guide"), "{error}");
+    assert!(error.contains("did not return a usable answer"), "{error}");
     r.fake.behave(|b| b.garbage_answer = false);
     r.test(KEY, &src).unwrap();
     assert_eq!(r.uploads(), 1, "the prepared copy was still valid");
@@ -721,6 +725,7 @@ fn r5_redirects_are_never_followed_with_the_key_or_the_pdf() {
         KEY,
         b"%PDF-synthetic-redirect-probe",
         "application/pdf",
+        &Budget::new(gemini_budget::ACTIVE_BUDGET),
     ));
     let leaked = elsewhere.log();
     assert_eq!(leaked.len(), 1, "the default policy follows the redirect");
@@ -762,6 +767,7 @@ fn r1_a_generation_begun_before_disconnect_is_refused_without_any_request() {
     let say = |m: String| r.said.lock().unwrap().push(m);
     let old = r.cache.epoch();
     r.cache.invalidate_all();
+    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let ctx = GenContext {
         http: &r.http,
         base: &r.fake.base,
@@ -769,6 +775,7 @@ fn r1_a_generation_begun_before_disconnect_is_refused_without_any_request() {
         choice: ModelChoice::Standard,
         cache: &r.cache,
         epoch: old,
+        budget: &budget,
         say: &say,
     };
     let outcome = tauri::async_runtime::block_on(study_aid_with(
@@ -811,6 +818,7 @@ fn r8_a_result_is_refused_if_the_context_ends_during_the_final_cleanup() {
             &b,
             r.cache.epoch(),
             None,
+            &Budget::new(gemini_budget::ACTIVE_BUDGET),
             &|_| {},
         ))
         .unwrap();
@@ -943,6 +951,7 @@ impl Rig {
         source: &LoadedSource,
     ) -> Result<JobAnswer<GeneratedStudyAid>, String> {
         let say = |m: String| self.said.lock().unwrap().push(m);
+        let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
             http: &self.http,
             base: &self.fake.base,
@@ -950,6 +959,7 @@ impl Rig {
             choice: ModelChoice::Standard,
             cache: &self.cache,
             epoch: self.cache.epoch(),
+            budget: &budget,
             say: &say,
         };
         tauri::async_runtime::block_on(as_job(
@@ -1099,6 +1109,7 @@ fn r13_every_generation_is_recorded_so_none_can_bypass_the_lock() {
     ] {
         let src = source(pdf(2, "r13-second"), "documents/x.pdf");
         let say = |m: String| r.said.lock().unwrap().push(m);
+        let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
             http: &r.http,
             base: &r.fake.base,
@@ -1106,6 +1117,7 @@ fn r13_every_generation_is_recorded_so_none_can_bypass_the_lock() {
             choice: ModelChoice::Standard,
             cache: &r.cache,
             epoch: r.cache.epoch(),
+            budget: &budget,
             say: &say,
         };
         let refused = tauri::async_runtime::block_on(as_job(
@@ -1141,6 +1153,7 @@ fn r2_an_answer_that_cannot_be_checkpointed_is_handed_over_marked_as_not_kept() 
     let root = JobRoot::new("r2-checkpoint");
     let src = source(pdf(2, "r2-not-kept"), "documents/k.pdf");
     let say = |m: String| r.said.lock().unwrap().push(m);
+    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let ctx = GenContext {
         http: &r.http,
         base: &r.fake.base,
@@ -1148,6 +1161,7 @@ fn r2_an_answer_that_cannot_be_checkpointed_is_handed_over_marked_as_not_kept() 
         choice: ModelChoice::Standard,
         cache: &r.cache,
         epoch: r.cache.epoch(),
+        budget: &budget,
         say: &say,
     };
     let blocked = root.0.join("gemini-jobs.json.writing");

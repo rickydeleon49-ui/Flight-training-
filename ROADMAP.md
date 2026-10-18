@@ -1,3 +1,11 @@
+## GEN-REL-03 completed from Claude's interrupted task; pending independent review — 18 October 2026
+
+**IMPLEMENTED; NOT ACCEPTED OR MERGED.** Codex preserved Claude's four partial source files, reproduced the incomplete test compilation, and finished the shared generation budget and diagnosis package on `codex/gen-rel-03-completion`, base `17c80ee` (#214). [Report](docs/GEN_REL_03_IMPLEMENTATION_REPORT_2026-10-18.md), [independent reviewer assignment](docs/GEN_REL_03_REVIEWER_PROMPT_2026-10-18.md).
+
+One 300-second active provider-work budget covers PDF preparation, shared waits, requests, retry delays and fallback; at most three generation submissions include fallback and missing-file recovery. Transient retries respect Retry-After; quota/auth/payment/model/output failures are actionable and sanitized. Timeouts no longer automatically blame the internet, uncertain remote completion/cost is disclosed, blocked/truncated replies are refused, and GENREL01-R12 expiry checks are corrected. Restart makes no automatic provider calls; Save again uses the validated checkpoint. Synthetic tests only; live-provider and installed-Mac behavior remain UNVERIFIED.
+
+This is the current task, not authority to merge. GEN-REL-04 follows its independent acceptance/integration; GEN-REL-05 remains after 04. Exact friend timeout evidence is recorded separately in PR #213; her installed build and document size remain unknown. Prior tracker history follows unchanged.
+
 ## GEN-REL-02 accepted by Codex review (round 5 GREEN) and integrated by Claude — 18 October 2026
 
 Generations now belong to the app, not the page. An answer is saved only to the material it was made from, while that material, its file bytes and its saved revision are unchanged. A native journal (`gemini-jobs.json`, outside backups) keeps each validated answer as a checkpoint, so **Save again** never calls Gemini. After a reload or restart, a finished answer waits for a deliberate save or discard, an interrupted one is never resent, and answers for deleted documents are shown on every screen until dismissed. A committed backup restore clears the journal, or keeps it quarantined until it can be cleared.

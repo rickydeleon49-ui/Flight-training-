@@ -60,7 +60,16 @@ fn spawn_prepare(
             scope,
         };
         cache
-            .prepare(&http(), &base, key, &source, cache.epoch(), None, &|_| {})
+            .prepare(
+                &http(),
+                &base,
+                key,
+                &source,
+                cache.epoch(),
+                None,
+                &Budget::new(crate::gemini_budget::ACTIVE_BUDGET),
+                &|_| {},
+            )
             .await
             .map(|lease| lease.prepared().clone())
     })
@@ -364,6 +373,7 @@ fn prepare_now<'a>(
         &source,
         cache.epoch(),
         None,
+        &Budget::new(crate::gemini_budget::ACTIVE_BUDGET),
         &|_| {},
     ))
 }
@@ -443,6 +453,7 @@ fn r1_an_operation_begun_before_disconnect_never_uploads_after_it() {
         &source,
         old,
         None,
+        &Budget::new(crate::gemini_budget::ACTIVE_BUDGET),
         &|_| {},
     ));
     assert!(matches!(outcome, Err(m) if m == STALE_CONTEXT));
@@ -844,4 +855,55 @@ fn r11_file_names_follow_the_documented_pattern() {
         assert!(!valid_name(bad), "{bad}");
     }
     assert!(!valid_name(&format!("files/{}", "a".repeat(41))));
+}
+
+#[test]
+fn r12_shared_copy_crossing_expiry_margin_is_not_adopted() {
+    let fake = FakeGemini::start();
+    let now = Arc::new(AtomicI64::new(1_700_000_000));
+    let clock = now.clone();
+    let cache = PreparedSources::new(policy(), Arc::new(move || clock.load(Ordering::SeqCst)));
+    fake.behave(|b| b.expiration_time = Some("2023-11-15T00:00:00Z".into()));
+    let bytes = b"%PDF-synthetic-shared-expiry";
+    let lease = prepare_now(&cache, &fake.base, bytes, "documents/a.pdf").unwrap();
+    let shared = lease.prepared().clone();
+    finish(&cache, lease);
+    now.store(
+        shared.expires_at - policy().reuse_margin_secs,
+        Ordering::SeqCst,
+    );
+    let key = key_of(&cache, &fake.base, bytes, "documents/a.pdf");
+    assert!(matches!(cache.adopt(&key, cache.epoch(), shared), Ok(None)));
+    assert_eq!(cache.stats().reuses, 0);
+}
+
+#[test]
+fn r12_expiry_is_rechecked_after_a_slow_cached_confirmation() {
+    let fake = FakeGemini::start();
+    let now = Arc::new(AtomicI64::new(1_700_000_000));
+    let clock = now.clone();
+    let cache = Arc::new(PreparedSources::new(
+        policy(),
+        Arc::new(move || clock.load(Ordering::SeqCst)),
+    ));
+    fake.behave(|b| b.expiration_time = Some("2023-11-15T00:00:00Z".into()));
+    let bytes = b"%PDF-synthetic-confirm-expiry".to_vec();
+    let lease = prepare_now(&cache, &fake.base, &bytes, "documents/a.pdf").unwrap();
+    let old = lease.prepared().clone();
+    finish(&cache, lease);
+    let gate = Arc::new(Gate::default());
+    fake.behave(|b| b.lookup_gate = Some(gate.clone()));
+    let held = spawn_prepare(&cache, &fake.base, KEY, bytes, "documents/a.pdf");
+    wait_for("cached lookup", || gate.waiting() == 1);
+    now.store(
+        old.expires_at - policy().reuse_margin_secs,
+        Ordering::SeqCst,
+    );
+    // The confirmation returns the old expiration, but the subsequent fresh
+    // upload receives a new lifetime.
+    gate.open();
+    let result = join(held).unwrap();
+    assert_ne!(result.name, old.name);
+    assert_eq!(cache.stats().reuses, 0);
+    assert_eq!(fake.count(|q| q.is_upload_finalize()), 2);
 }

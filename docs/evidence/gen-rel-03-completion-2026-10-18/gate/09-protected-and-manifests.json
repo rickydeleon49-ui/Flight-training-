@@ -1,0 +1,47 @@
+[
+  {
+    "check": "prior tracker bytes preserved",
+    "path": "ROADMAP.md",
+    "pass": true
+  },
+  {
+    "check": "prior tracker bytes preserved",
+    "path": "STATUS.md",
+    "pass": true
+  },
+  {
+    "check": "prior tracker bytes preserved",
+    "path": "docs/PROJECT_HANDOFF.md",
+    "pass": true
+  },
+  {
+    "check": "protected paths unchanged",
+    "paths": [
+      "src",
+      "src-tauri/migrations",
+      "migration-checksums.json",
+      "src/data/migration-checksums.json",
+      "package.json",
+      "package-lock.json",
+      "src-tauri/Cargo.toml",
+      "src-tauri/Cargo.lock",
+      "src-tauri/tauri.conf.json",
+      "src-tauri/capabilities",
+      ".github",
+      "scripts",
+      "CLAUDE.md",
+      "README.md"
+    ],
+    "pass": true
+  },
+  {
+    "check": "schema helper binding/inventory validity and diff hygiene",
+    "bindings": 20,
+    "members": 21,
+    "pass": true
+  },
+  {
+    "check": "full staged diff including evidence passes whitespace hygiene",
+    "pass": true
+  }
+]

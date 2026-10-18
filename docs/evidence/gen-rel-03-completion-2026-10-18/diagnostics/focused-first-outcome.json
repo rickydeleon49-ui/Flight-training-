@@ -1,0 +1,8 @@
+{
+  "outcome": "test failure",
+  "passed": 141,
+  "failed": 4,
+  "ignored": 1,
+  "separateCargoExitCaptured": false,
+  "note": "The original shell printed the final log lines after cargo. No numeric cargo exit receipt is claimed; FAILED and the four failing test names are retained in the raw log."
+}

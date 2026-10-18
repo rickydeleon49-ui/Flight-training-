@@ -12,6 +12,7 @@ mod documents;
 #[cfg(test)]
 mod fake_gemini;
 mod gemini;
+mod gemini_budget;
 mod gemini_files;
 mod gemini_jobs;
 mod lineage;

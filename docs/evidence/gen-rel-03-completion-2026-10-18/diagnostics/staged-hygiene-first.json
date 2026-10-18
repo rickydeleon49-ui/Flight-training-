@@ -1,0 +1,11 @@
+{
+  "outcome": "first staged whitespace check refused raw log formatting",
+  "files": [
+    "gate/01-typecheck.txt",
+    "gate/02-frontend.txt",
+    "gate/03-build.txt",
+    "gate/04-native-before-signature-correction.txt",
+    "gate/04-native.txt"
+  ],
+  "resolution": "Losslessly compressed the raw outputs; no test result, whitespace inside a receipt or production check was changed."
+}
