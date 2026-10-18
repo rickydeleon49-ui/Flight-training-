@@ -1,0 +1,82 @@
+{
+  "retrievedAtUtc": "2026-10-18T02:02:02.584768+00:00",
+  "threshold": 1000,
+  "source": "GitHub REST API /repos/{owner}/{repo}",
+  "repositories": [
+    {
+      "full_name": "open-spaced-repetition/fsrs4anki",
+      "html_url": "https://github.com/open-spaced-repetition/fsrs4anki",
+      "stargazers_count": 4108,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "archived": false,
+      "pushed_at": "2026-08-14T03:34:18Z",
+      "default_branch": "main",
+      "description": "A modern Anki custom scheduling based on Free Spaced Repetition Scheduler algorithm"
+    },
+    {
+      "full_name": "open-spaced-repetition/ts-fsrs",
+      "html_url": "https://github.com/open-spaced-repetition/ts-fsrs",
+      "stargazers_count": 827,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "archived": false,
+      "pushed_at": "2026-10-16T09:48:22Z",
+      "default_branch": "main",
+      "description": "ts-fsrs is a versatile package written in TypeScript that supports ES modules, CommonJS, and UMD. "
+    },
+    {
+      "full_name": "open-spaced-repetition/fsrs-rs",
+      "html_url": "https://github.com/open-spaced-repetition/fsrs-rs",
+      "stargazers_count": 445,
+      "license": {
+        "key": "bsd-3-clause",
+        "name": "BSD 3-Clause \"New\" or \"Revised\" License",
+        "spdx_id": "BSD-3-Clause",
+        "url": "https://api.github.com/licenses/bsd-3-clause",
+        "node_id": "MDc6TGljZW5zZTU="
+      },
+      "archived": false,
+      "pushed_at": "2026-10-09T10:51:42Z",
+      "default_branch": "main",
+      "description": "FSRS for Rust, including Optimizer and Scheduler"
+    }
+  ],
+  "notes": [
+    "Counts are snapshots, not compatibility or quality guarantees.",
+    "Orama API license is NOASSERTION; repository LICENSE.md was checked directly and states Apache-2.0."
+  ],
+  "inspectedSources": [
+    {
+      "repository": "open-spaced-repetition/ts-fsrs",
+      "head": "c8ca282edc3fe1cdfa1c24912437938b63a25cb3",
+      "path": "packages/fsrs/package.json",
+      "blob": "e58da3fb466d88ef2ab4758d1395a3c2679467a0",
+      "packageVersion": "5.4.2"
+    },
+    {
+      "repository": "open-spaced-repetition/fsrs-rs",
+      "head": "0a5737406a0c5c7a5259b144738cbe4a0b649d76",
+      "path": "Cargo.toml",
+      "blob": "cb65767151af6c99e3fa09b2a1acf4d6205cc418",
+      "packageVersion": "6.6.2"
+    },
+    {
+      "repository": "open-spaced-repetition/fsrs4anki",
+      "head": "ff7c85cee735472d1c9cec0b9252d184087f74d8",
+      "path": "README.md",
+      "blob": "f0c3fa105b4146734e7d9131c5f5d69396bc8871"
+    }
+  ],
+  "packageInspectionAtUtc": "2026-10-18T03:20:43.210974+00:00"
+}
