@@ -1,0 +1,512 @@
+//! GEN-REL-02 job journal: checkpoints, restart reconstruction, the shared
+//! lock and the bounds. Synthetic answers only; each test has its own folder.
+
+use std::path::{Path, PathBuf};
+
+use serde_json::json;
+
+use super::*;
+
+struct TempDir(PathBuf);
+
+impl TempDir {
+    fn new(label: &str) -> Self {
+        let dir = std::env::temp_dir().join(format!(
+            "hfd-gemini-jobs-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        Self(dir)
+    }
+
+    fn path(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl Drop for TempDir {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+const SHA: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+fn answer(title: &str) -> Value {
+    json!({"title": title, "summary": "Synthetic.", "sections": [], "flashcards": [], "sourceNotes": "", "model": "gemini-3.5-flash"})
+}
+
+#[test]
+fn a_validated_answer_survives_a_restart_as_a_checkpoint() {
+    let dir = TempDir::new("checkpoint");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, answer("Guide A")).unwrap();
+
+    let reopened = Journal::open(dir.path());
+    let jobs = reopened.list();
+    assert_eq!(jobs.len(), 1);
+    assert_eq!(jobs[0].id, id);
+    assert_eq!(jobs[0].stage, JobStage::Ready);
+    assert_eq!(jobs[0].material_id, "mat-a");
+    assert_eq!(jobs[0].relative_path, "documents/a.pdf");
+    assert_eq!(jobs[0].content_sha256, SHA);
+    assert_eq!(jobs[0].result, Some(answer("Guide A")));
+}
+
+#[test]
+fn a_job_running_when_the_app_closed_is_interrupted_not_resent() {
+    let dir = TempDir::new("interrupted");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::PracticeTest, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    drop(journal);
+
+    let mut reopened = Journal::open(dir.path());
+    let job = reopened.list().into_iter().find(|j| j.id == id).unwrap();
+    assert_eq!(job.stage, JobStage::Interrupted);
+    assert!(job.result.is_none());
+    // A late outcome for it cannot revive it.
+    reopened.ready(&id, answer("Late")).unwrap();
+    assert_eq!(reopened.list()[0].stage, JobStage::Interrupted);
+    // The lock is free: she can deliberately try again.
+    assert!(reopened
+        .begin(JobKind::StudyAid, "mat-b", "documents/b.pdf", SHA, None)
+        .is_ok());
+    // And the interruption is on disk, so a second restart agrees.
+    let again = Journal::open(dir.path());
+    assert!(again
+        .list()
+        .iter()
+        .any(|j| j.id == id && j.stage == JobStage::Interrupted));
+}
+
+#[test]
+fn only_one_job_runs_at_a_time_whatever_page_asked() {
+    let dir = TempDir::new("lock");
+    let mut journal = Journal::open(dir.path());
+    let first = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    assert_eq!(
+        journal.begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None),
+        Err(BUSY.to_string())
+    );
+    journal.failed(&first, "Synthetic failure.").unwrap();
+    assert!(journal
+        .begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None)
+        .is_ok());
+}
+
+#[test]
+fn acknowledging_forgets_a_finished_job_but_never_a_running_one() {
+    let dir = TempDir::new("ack");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    assert_eq!(journal.acknowledge(&id), Ok(false), "still running");
+    journal.ready(&id, answer("Guide")).unwrap();
+    assert_eq!(journal.acknowledge("job-not-a-real-id"), Ok(false));
+    assert_eq!(journal.acknowledge(&id), Ok(true));
+    assert!(Journal::open(dir.path()).list().is_empty());
+}
+
+#[test]
+fn asking_again_replaces_that_materials_older_outcome_and_the_journal_is_bounded() {
+    let dir = TempDir::new("bound");
+    let mut journal = Journal::open(dir.path());
+    let old = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.failed(&old, "Synthetic failure.").unwrap();
+    let new = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&new, answer("Guide")).unwrap();
+    let ids: Vec<String> = journal.list().into_iter().map(|j| j.id).collect();
+    assert_eq!(ids, vec![new.clone()]);
+
+    // Fill well past the bound with failed jobs: the ready answer is kept.
+    for i in 0..(MAX_JOBS + 3) {
+        let id = journal
+            .begin(
+                JobKind::PracticeTest,
+                &format!("mat-{i}"),
+                "documents/x.pdf",
+                SHA,
+                None,
+            )
+            .unwrap();
+        journal.failed(&id, "Synthetic failure.").unwrap();
+    }
+    let jobs = journal.list();
+    assert_eq!(jobs.len(), MAX_JOBS);
+    assert!(
+        jobs.iter().any(|j| j.id == new),
+        "a ready answer is kept last"
+    );
+}
+
+#[test]
+fn an_answer_too_large_to_keep_fails_honestly() {
+    let dir = TempDir::new("large");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    let huge = json!({"title": "x".repeat(MAX_RESULT_BYTES + 1)});
+    journal.ready(&id, huge).unwrap();
+    let job = &journal.list()[0];
+    assert_eq!(job.stage, JobStage::Failed);
+    assert!(job.result.is_none());
+    assert!(job.error.as_deref().unwrap().contains("too large"));
+}
+
+#[test]
+fn an_unreadable_journal_is_set_aside_not_trusted_or_deleted() {
+    for (label, bytes) in [
+        ("garbage", b"{not json".to_vec()),
+        (
+            "schema",
+            br#"{"schema":"something-else/9","jobs":[]}"#.to_vec(),
+        ),
+    ] {
+        let dir = TempDir::new(label);
+        std::fs::write(dir.path().join(JOURNAL_FILE), &bytes).unwrap();
+        let journal = Journal::open(dir.path());
+        assert!(journal.list().is_empty(), "{label}");
+        assert_eq!(
+            std::fs::read(dir.path().join(JOURNAL_UNREADABLE)).unwrap(),
+            bytes,
+            "{label}: kept as it was"
+        );
+    }
+}
+
+#[test]
+fn recorded_identities_are_checked_on_the_way_in_and_out() {
+    let dir = TempDir::new("identity");
+    let mut journal = Journal::open(dir.path());
+    assert!(journal
+        .begin(JobKind::StudyAid, "", "documents/a.pdf", SHA, None)
+        .is_err());
+    assert!(journal
+        .begin(JobKind::StudyAid, "mat\u{0}a", "documents/a.pdf", SHA, None)
+        .is_err());
+    assert!(journal
+        .begin(
+            JobKind::StudyAid,
+            &"m".repeat(201),
+            "documents/a.pdf",
+            SHA,
+            None
+        )
+        .is_err());
+    // A hand-edited record with a bad id is dropped when read.
+    let text = json!({"schema": SCHEMA, "jobs": [{
+        "id": "../../etc", "kind": "study-aid", "materialId": "mat-a",
+        "relativePath": "documents/a.pdf", "contentSha256": SHA, "stage": "ready",
+        "createdAt": 0, "updatedAt": 0
+    }]});
+    std::fs::write(dir.path().join(JOURNAL_FILE), text.to_string()).unwrap();
+    assert!(Journal::open(dir.path()).list().is_empty());
+}
+
+#[test]
+fn the_journal_is_replaced_whole_and_leaves_no_partial_file() {
+    let dir = TempDir::new("atomic");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, answer("Guide")).unwrap();
+    assert!(!dir.path().join(JOURNAL_WRITING).exists());
+    let on_disk: Value =
+        serde_json::from_slice(&std::fs::read(dir.path().join(JOURNAL_FILE)).unwrap()).unwrap();
+    assert_eq!(on_disk["schema"], SCHEMA);
+    assert_eq!(on_disk["jobs"][0]["stage"], "ready");
+}
+
+/* ------------------------------------------------------------------ */
+/* Review round 1 regressions (GENREL02-R1, R2, R3, R6, R8)            */
+/* ------------------------------------------------------------------ */
+
+/// Make the journal unwritable by putting a directory where its temporary
+/// file goes; removing it makes the journal writable again.
+fn block_writes(dir: &TempDir) {
+    std::fs::create_dir_all(dir.path().join(JOURNAL_WRITING)).unwrap();
+}
+
+fn unblock_writes(dir: &TempDir) {
+    std::fs::remove_dir_all(dir.path().join(JOURNAL_WRITING)).unwrap();
+}
+
+#[test]
+fn r1_a_job_that_cannot_be_written_down_never_holds_the_lock() {
+    let dir = TempDir::new("r1-begin");
+    let mut journal = Journal::open(dir.path());
+    block_writes(&dir);
+    assert!(journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .is_err());
+    assert!(journal.list().is_empty(), "nothing exists only in memory");
+    unblock_writes(&dir);
+    assert!(
+        journal
+            .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+            .is_ok(),
+        "no restart needed"
+    );
+}
+
+#[test]
+fn r2_a_checkpoint_that_cannot_be_written_is_reported_and_releases_the_lock() {
+    let dir = TempDir::new("r2-ready");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    block_writes(&dir);
+    assert!(journal.ready(&id, answer("Guide")).is_err());
+    assert!(journal.list().is_empty(), "released, not claimed as kept");
+    unblock_writes(&dir);
+    assert!(journal
+        .begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None)
+        .is_ok());
+    // A restart never presents that job as a finished, saveable answer: the
+    // window was told the answer is held only by itself.
+    let restarted = Journal::open(dir.path());
+    assert!(restarted
+        .list()
+        .iter()
+        .all(|j| !(j.id == id && j.stage == JobStage::Ready)));
+}
+
+#[test]
+fn r3_an_acknowledgement_that_cannot_be_written_can_be_retried() {
+    let dir = TempDir::new("r3-ack");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(
+            JobKind::StudyAid,
+            "mat-a",
+            "documents/a.pdf",
+            SHA,
+            Some("2026-10-18T10:00:00.000Z"),
+        )
+        .unwrap();
+    journal.ready(&id, answer("Guide")).unwrap();
+    block_writes(&dir);
+    assert!(journal.acknowledge(&id).is_err());
+    assert_eq!(journal.list().len(), 1, "kept, so it can be retried");
+    unblock_writes(&dir);
+    assert_eq!(journal.acknowledge(&id), Ok(true));
+    assert!(Journal::open(dir.path()).list().is_empty());
+}
+
+#[test]
+fn r3_the_revision_a_job_was_asked_to_replace_is_kept_with_it() {
+    let dir = TempDir::new("r3-base");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(
+            JobKind::StudyAid,
+            "mat-a",
+            "documents/a.pdf",
+            SHA,
+            Some("2026-10-18T10:00:00.000Z"),
+        )
+        .unwrap();
+    journal.ready(&id, answer("Guide")).unwrap();
+    let job = &Journal::open(dir.path()).list()[0];
+    assert_eq!(
+        job.base_revision.as_deref(),
+        Some("2026-10-18T10:00:00.000Z")
+    );
+}
+
+#[test]
+fn r6_a_waiting_answer_is_never_replaced_by_asking_again() {
+    let dir = TempDir::new("r6");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, answer("Guide")).unwrap();
+    assert_eq!(
+        journal.begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None),
+        Err(WAITING.to_string())
+    );
+    assert_eq!(journal.list()[0].result, Some(answer("Guide")));
+    // A different output for the same material is a different request.
+    assert!(journal
+        .begin(JobKind::PracticeTest, "mat-a", "documents/a.pdf", SHA, None)
+        .is_ok());
+}
+
+#[test]
+fn r8_restoring_a_backup_forgets_every_job_of_the_replaced_library() {
+    let dir = TempDir::new("r8");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, answer("Guide")).unwrap();
+    journal.clear().unwrap();
+    assert!(journal.list().is_empty());
+    assert!(Journal::open(dir.path()).list().is_empty(), "on disk too");
+}
+
+/* ------------------------------------------------------------------ */
+/* Review round 2 regressions (GENREL02-R10, R11)                      */
+/* ------------------------------------------------------------------ */
+
+#[test]
+fn r10_a_full_journal_of_waiting_answers_refuses_a_new_request_and_loses_none() {
+    let dir = TempDir::new("r10");
+    let mut journal = Journal::open(dir.path());
+    for i in 0..MAX_JOBS {
+        let id = journal
+            .begin(
+                JobKind::StudyAid,
+                &format!("mat-{i}"),
+                "documents/x.pdf",
+                SHA,
+                None,
+            )
+            .unwrap();
+        journal.ready(&id, answer(&format!("Guide {i}"))).unwrap();
+    }
+    assert_eq!(
+        journal.begin(JobKind::StudyAid, "mat-new", "documents/n.pdf", SHA, None),
+        Err(FULL.to_string())
+    );
+    let kept = Journal::open(dir.path()).list();
+    assert_eq!(kept.len(), MAX_JOBS);
+    assert!(kept.iter().all(|j| j.stage == JobStage::Ready));
+}
+
+#[test]
+fn r11_clearing_succeeds_only_when_no_old_job_can_be_read_back() {
+    let dir = TempDir::new("r11-clear");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, answer("Guide")).unwrap();
+    // The rewrite fails, but the file can still be removed: cleared.
+    block_writes(&dir);
+    assert!(journal.clear().is_ok());
+    assert!(!dir.path().join(JOURNAL_FILE).exists());
+    unblock_writes(&dir);
+}
+
+/* ------------------------------------------------------------------ */
+/* Review round 3 regressions (GENREL02-R14)                           */
+/* ------------------------------------------------------------------ */
+
+#[test]
+fn r14_a_journal_beside_an_unfinished_restore_offers_nothing_until_cleared() {
+    let dir = TempDir::new("r14-marker");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, answer("Before the restore")).unwrap();
+    std::fs::write(dir.path().join(crate::backup::RESTORE_JOURNAL_FILE), b"{}").unwrap();
+
+    let mut reopened = Journal::open(dir.path());
+    assert!(reopened.list().is_empty(), "the old answer is not offered");
+    assert_eq!(reopened.acknowledge(&id), Ok(false));
+    assert_eq!(
+        reopened.begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None),
+        Err(RESTORING.to_string())
+    );
+    reopened.clear().unwrap();
+    assert!(reopened
+        .begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None)
+        .is_ok());
+    assert!(reopened.list().iter().all(|j| j.id != id));
+}
+
+#[cfg(unix)]
+#[test]
+fn r14_a_clear_that_really_fails_keeps_the_launch_quarantined() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = TempDir::new("r14-fail");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, answer("Before the restore")).unwrap();
+    // Neither a rewrite nor a removal is possible in a read-only folder.
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o555)).unwrap();
+    let cleared = journal.clear();
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert!(cleared.is_err());
+    assert!(
+        std::fs::read_to_string(dir.path().join(JOURNAL_FILE))
+            .unwrap()
+            .contains("Before the restore"),
+        "still on disk"
+    );
+    assert!(journal.list().is_empty(), "but never offered");
+    assert_eq!(
+        journal.begin(JobKind::StudyAid, "mat-b", "documents/b.pdf", SHA, None),
+        Err(RESTORING.to_string()),
+        "and nothing new starts this launch, so a later retry cannot clear new work"
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/* Review round 4 regression (GENREL02-R16)                            */
+/* ------------------------------------------------------------------ */
+
+#[test]
+fn r16_a_journal_too_large_to_read_back_is_never_written() {
+    let dir = TempDir::new("r16");
+    let mut journal = Journal::open(dir.path());
+    let near = MAX_RESULT_BYTES - 64;
+    let mut kept = Vec::new();
+    let mut refused = None;
+    for i in 0..MAX_JOBS {
+        let id = journal
+            .begin(
+                JobKind::StudyAid,
+                &format!("mat-{i}"),
+                "documents/x.pdf",
+                SHA,
+                None,
+            )
+            .unwrap();
+        match journal.ready(&id, json!({"title": "x".repeat(near)})) {
+            Ok(()) => kept.push(id),
+            Err(_) => {
+                refused = Some(id);
+                break;
+            }
+        }
+    }
+    assert!(
+        refused.is_some(),
+        "the file bound is reached before eight near-limit answers"
+    );
+    // Everything already kept reads back intact after a restart.
+    let reopened = Journal::open(dir.path());
+    let ready: Vec<String> = reopened
+        .list()
+        .into_iter()
+        .filter(|j| j.stage == JobStage::Ready)
+        .map(|j| j.id)
+        .collect();
+    assert_eq!(ready, kept);
+    assert!(!dir.path().join(JOURNAL_UNREADABLE).exists());
+}

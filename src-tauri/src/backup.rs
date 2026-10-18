@@ -46,7 +46,7 @@ const V2_ARCHIVE_VERSION: u32 = 2;
 const LEGACY_ARCHIVE_VERSION: u32 = 1;
 const RESTORE_STAGING_DIR: &str = ".restore-staging";
 const RESTORE_PENDING_DIR: &str = ".restore-pending";
-const RESTORE_JOURNAL_FILE: &str = "restore-journal.json";
+pub(crate) const RESTORE_JOURNAL_FILE: &str = "restore-journal.json";
 /// Written into the staged folder to say what kind of restore was asked for.
 ///
 /// An archive can never contain this name — `allowed_archive_path` only lets
@@ -7026,12 +7026,28 @@ where
     }
     let _ = prune(root);
 
-    if cleanup_succeeded {
+    // GEN-REL-02: nothing Gemini produced for the replaced library may be saved
+    // into the restored one. This is part of the committed restore: until it
+    // succeeds the restore journal is kept, so the next launch tries again.
+    let jobs_cleared = forget_gemini_jobs(root);
+    if cleanup_succeeded && jobs_cleared {
         let _ = remove_journal(root);
     }
 
     crate::practice_sessions::bump_readiness_generation_at(root);
     Ok(RestoreApplicationResult::Installed)
+}
+
+/// Forget every Gemini job recorded against the library a restore replaced
+/// (GEN-REL-02). False if an old job could still be read back.
+fn forget_gemini_jobs(root: &Path) -> bool {
+    match crate::gemini_jobs::clear_after_restore(root) {
+        Ok(()) => true,
+        Err(error) => {
+            eprintln!("Could not forget Gemini jobs after restoring: {error}; will try again at the next launch.");
+            false
+        }
+    }
 }
 
 /// Install a restore that was fully validated and staged during the previous run.
@@ -7177,7 +7193,11 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
             }
             if cleanup_succeeded {
                 let _ = prune(root);
-                let _ = remove_journal(root);
+                // A restore interrupted after it committed: finish forgetting
+                // the replaced library's Gemini jobs before the journal goes.
+                if forget_gemini_jobs(root) {
+                    let _ = remove_journal(root);
+                }
                 Ok(StartupRestoreDecision::RestoreCompleted)
             } else {
                 Ok(StartupRestoreDecision::BlockedUnresolved {
@@ -9961,6 +9981,104 @@ mod tests {
 
         std::fs::remove_dir(root.join(DB_FILES[0])).unwrap();
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    /// GEN-REL-02 (GENREL02-R11): a restore that committed, then was cut off
+    /// before its cleanup finished, still forgets the replaced library's
+    /// Gemini jobs on the next launch, before the restore journal goes.
+    #[test]
+    fn a_committed_restore_forgets_gemini_jobs_even_after_an_interruption() {
+        let root = scratch("gemini-jobs-after-restore");
+        write_database(&root.join(DB_FILES[0]), "restored committed db");
+        let job_journal = root.join(crate::gemini_jobs::JOURNAL_FILE);
+        std::fs::write(
+            &job_journal,
+            serde_json::json!({"schema": "hfd-gemini-jobs/1", "jobs": [{
+                "id": "job-aaaaaaaaaaaaaaaaaaaaaaaa", "kind": "study-aid", "materialId": "mat-a",
+                "relativePath": "documents/a.pdf", "contentSha256": "x", "stage": "ready",
+                "createdAt": 0, "updatedAt": 0, "result": {"title": "Before the restore"}
+            }]})
+            .to_string(),
+        )
+        .unwrap();
+        let journal = RestoreJournal {
+            operation_id: "op-gemini-jobs".to_string(),
+            phase: RestorePhase::Committed,
+            rollback_rel_path: "backups/before-restore-gemini-jobs".to_string(),
+            replace_documents: false,
+            original_documents_presence: None,
+            protected_db_files: vec![],
+            protected_documents: false,
+            installed_db_files: vec![],
+            installed_documents: false,
+            original_db_artifacts: vec![],
+            staged_db_artifacts: vec![],
+            original_document_artifacts: vec![],
+            staged_document_artifacts: vec![],
+            failure_reason: None,
+        };
+        write_journal(&root, &journal).unwrap();
+
+        // The job journal cannot be cleared yet: the restore journal stays, so
+        // the next launch tries again.
+        crate::gemini_jobs::FAIL_CLEAR_FOR_TESTS
+            .lock()
+            .unwrap()
+            .insert(root.clone());
+        assert_eq!(
+            handle_startup_restore_in(&root).unwrap(),
+            StartupRestoreDecision::RestoreCompleted
+        );
+        assert!(
+            root.join(RESTORE_JOURNAL_FILE).exists(),
+            "kept for the next launch"
+        );
+        assert!(std::fs::read_to_string(&job_journal)
+            .unwrap()
+            .contains("Before the restore"));
+        // GENREL02-R14: during this launch the old answer is neither offered
+        // nor saveable, and nothing new can start.
+        assert!(crate::gemini_jobs::with(&root, |j| j.list()).is_empty());
+        assert_eq!(
+            crate::gemini_jobs::with(&root, |j| j.acknowledge("job-aaaaaaaaaaaaaaaaaaaaaaaa")),
+            Ok(false)
+        );
+        assert_eq!(
+            crate::gemini_jobs::with(&root, |j| j.begin(
+                crate::gemini_jobs::JobKind::StudyAid,
+                "mat-a",
+                "documents/a.pdf",
+                "x",
+                None
+            )),
+            Err(crate::gemini_jobs::RESTORING.to_string())
+        );
+
+        // Next launch, with the obstruction gone.
+        crate::gemini_jobs::FAIL_CLEAR_FOR_TESTS
+            .lock()
+            .unwrap()
+            .remove(&root);
+        // A fresh process: the per-folder journal is read from disk again.
+        crate::gemini_jobs::forget_open_for_tests(&root);
+        assert_eq!(
+            handle_startup_restore_in(&root).unwrap(),
+            StartupRestoreDecision::RestoreCompleted
+        );
+        assert!(!root.join(RESTORE_JOURNAL_FILE).exists());
+        let left = std::fs::read_to_string(&job_journal).unwrap_or_default();
+        assert!(!left.contains("Before the restore"), "{left}");
+        // Once cleared, the launch is normal again.
+        assert!(crate::gemini_jobs::with(&root, |j| j.begin(
+            crate::gemini_jobs::JobKind::StudyAid,
+            "mat-a",
+            "documents/a.pdf",
+            "x",
+            None
+        ))
+        .is_ok());
+        crate::gemini_jobs::forget_open_for_tests(&root);
+        std::fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]

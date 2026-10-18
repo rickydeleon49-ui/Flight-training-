@@ -96,14 +96,83 @@ export async function setGeminiModel(choice: GeminiModelChoice): Promise<GeminiS
   return invoke<GeminiStatus>("set_gemini_model", { choice });
 }
 
-export async function generateStudyAid(relativePath: string): Promise<GeneratedStudyAid> {
-  if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
-  return invoke<GeneratedStudyAid>("generate_study_aid", { relativePath });
+/**
+ * What a generation adds to its answer (GEN-REL-02): the native job it is
+ * recorded under, and the SHA-256 of exactly the bytes that were sent. Both
+ * are optional so an answer without them is still accepted.
+ */
+export interface GenerationJobIdentity {
+  jobId?: string | null;
+  contentSha256?: string;
+  /** Whether the answer is kept natively as a checkpoint. */
+  checkpointed?: boolean;
 }
 
-export async function generatePracticeTest(relativePath: string): Promise<GeneratedPracticeTest> {
+export type GeminiJobKind = "study-aid" | "practice-test";
+export type GeminiJobStage = "running" | "ready" | "failed" | "interrupted";
+
+/** One recorded generation, as the native journal keeps it. */
+export interface GeminiJobRecord {
+  id: string;
+  kind: GeminiJobKind;
+  materialId: string;
+  relativePath: string;
+  contentSha256: string;
+  /** The saved content's `updatedAt` when she asked, or null if none. */
+  baseRevision?: string | null;
+  stage: GeminiJobStage;
+  createdAt: number;
+  updatedAt: number;
+  result?: GeneratedStudyAid | GeneratedPracticeTest;
+  error?: string;
+}
+
+export async function generateStudyAid(
+  relativePath: string,
+  materialId?: string,
+  baseRevision?: string,
+): Promise<GeneratedStudyAid & GenerationJobIdentity> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
-  return invoke<GeneratedPracticeTest>("generate_practice_test", { relativePath });
+  return invoke<GeneratedStudyAid & GenerationJobIdentity>("generate_study_aid", {
+    relativePath,
+    materialId,
+    baseRevision,
+  });
+}
+
+export async function generatePracticeTest(
+  relativePath: string,
+  materialId?: string,
+  baseRevision?: string,
+): Promise<GeneratedPracticeTest & GenerationJobIdentity> {
+  if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
+  return invoke<GeneratedPracticeTest & GenerationJobIdentity>("generate_practice_test", {
+    relativePath,
+    materialId,
+    baseRevision,
+  });
+}
+
+/** Every recorded generation: what the window rebuilds itself from. */
+export async function listGeminiJobs(): Promise<GeminiJobRecord[]> {
+  if (!isTauri()) return [];
+  return invoke<GeminiJobRecord[]>("gemini_jobs");
+}
+
+/** A finished generation was saved or dismissed: the journal forgets it. */
+export async function acknowledgeGeminiJob(jobId: string): Promise<boolean> {
+  if (!isTauri()) return false;
+  return invoke<boolean>("acknowledge_gemini_job", { jobId });
+}
+
+/** Hear when a recorded generation changes stage. */
+export async function watchGeminiJobs(
+  onChange: (change: { id: string; stage: GeminiJobStage }) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return listen<{ id: string; stage: GeminiJobStage }>("gemini-job", (event) => {
+    onChange(event.payload);
+  });
 }
 
 /**

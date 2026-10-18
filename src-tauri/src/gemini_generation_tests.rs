@@ -907,3 +907,275 @@ fn r10_a_permission_refusal_after_a_refused_generation_never_uploads_again() {
         "it is not described as a missing copy"
     );
 }
+
+/* ------------------------------------------------------------------ */
+/* GEN-REL-02: generations are recorded jobs                           */
+/* ------------------------------------------------------------------ */
+
+struct JobRoot(std::path::PathBuf);
+
+impl JobRoot {
+    fn new(label: &str) -> Self {
+        let dir = std::env::temp_dir().join(format!(
+            "hfd-gen-jobs-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        JobRoot(dir)
+    }
+}
+
+impl Drop for JobRoot {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+impl Rig {
+    fn guide_job(
+        &self,
+        root: &std::path::Path,
+        material: &str,
+        source: &LoadedSource,
+    ) -> Result<JobAnswer<GeneratedStudyAid>, String> {
+        let say = |m: String| self.said.lock().unwrap().push(m);
+        let ctx = GenContext {
+            http: &self.http,
+            base: &self.fake.base,
+            api_key: KEY,
+            choice: ModelChoice::Standard,
+            cache: &self.cache,
+            epoch: self.cache.epoch(),
+            say: &say,
+        };
+        tauri::async_runtime::block_on(as_job(
+            root,
+            JobKind::StudyAid,
+            material,
+            None,
+            source,
+            study_aid_with(&ctx, source),
+            &|_| {},
+        ))
+    }
+}
+
+#[test]
+fn a_finished_generation_is_checkpointed_with_its_source_identity_and_nothing_secret() {
+    let r = rig();
+    let root = JobRoot::new("checkpoint");
+    let src = source(pdf(2, "job-checkpoint"), "documents/j.pdf");
+    let answer = r.guide_job(&root.0, "mat-j", &src).unwrap();
+    let id = answer.job_id.clone().unwrap();
+    assert_eq!(answer.content_sha256, src.content_sha256);
+
+    let jobs = gemini_jobs::with(&root.0, |j| j.list());
+    let job = jobs.iter().find(|j| j.id == id).unwrap();
+    assert_eq!(job.stage, JobStage::Ready);
+    assert_eq!(job.material_id, "mat-j");
+    assert_eq!(job.relative_path, "documents/j.pdf");
+    assert_eq!(job.content_sha256, src.content_sha256);
+    assert_eq!(
+        job.result.as_ref().unwrap()["title"],
+        "Synthetic airspace",
+        "the validated answer is the checkpoint"
+    );
+
+    let on_disk = std::fs::read_to_string(root.0.join(gemini_jobs::JOURNAL_FILE)).unwrap();
+    for forbidden in [
+        KEY,
+        "files/synthetic",
+        "/v1beta/",
+        "upload_id",
+        &r.fake.base,
+    ] {
+        assert!(!on_disk.contains(forbidden), "{forbidden} in the journal");
+    }
+    assert_eq!(r.generations().len(), 1);
+}
+
+#[test]
+fn a_failed_generation_is_recorded_and_frees_the_lock() {
+    let r = rig();
+    let root = JobRoot::new("failed");
+    r.fake.behave(|b| b.start_status = Some(429));
+    let src = source(pdf(2, "job-failed"), "documents/f.pdf");
+    let error = r.guide_job(&root.0, "mat-f", &src).unwrap_err();
+    let jobs = gemini_jobs::with(&root.0, |j| j.list());
+    assert_eq!(jobs[0].stage, JobStage::Failed);
+    assert_eq!(jobs[0].error.as_deref(), Some(error.as_str()));
+    r.fake.behave(|b| b.start_status = None);
+    assert!(
+        r.guide_job(&root.0, "mat-f", &src).is_ok(),
+        "not left running"
+    );
+}
+
+#[test]
+fn while_one_job_runs_another_is_refused_before_anything_is_sent() {
+    let r = rig();
+    let root = JobRoot::new("busy");
+    gemini_jobs::with(&root.0, |j| {
+        j.begin(
+            JobKind::PracticeTest,
+            "mat-other",
+            "documents/o.pdf",
+            "x",
+            None,
+        )
+    })
+    .unwrap();
+    let error = r
+        .guide_job(
+            &root.0,
+            "mat-b",
+            &source(pdf(2, "job-busy"), "documents/b.pdf"),
+        )
+        .unwrap_err();
+    assert_eq!(error, gemini_jobs::BUSY);
+    assert_eq!(r.fake.log().len(), 0, "nothing reached Gemini");
+}
+
+#[test]
+fn work_that_stops_without_an_outcome_does_not_hold_the_lock() {
+    let root = JobRoot::new("dropped");
+    let src = source(b"%PDF-synthetic-dropped".to_vec(), "documents/d.pdf");
+    let never = std::future::pending::<Result<GeneratedStudyAid, String>>();
+    let heard = std::sync::Mutex::new(Vec::new());
+    let changed = |record: &JobRecord| heard.lock().unwrap().push(record.stage);
+    let job = as_job(
+        &root.0,
+        JobKind::StudyAid,
+        "mat-d",
+        None,
+        &src,
+        never,
+        &changed,
+    );
+    // Poll once so the job begins, then drop it, as a cancelled task would.
+    let waker = std::task::Waker::noop();
+    let mut cx = std::task::Context::from_waker(waker);
+    let mut job = Box::pin(job);
+    assert!(std::future::Future::poll(job.as_mut(), &mut cx).is_pending());
+    assert_eq!(
+        gemini_jobs::with(&root.0, |j| j.list())[0].stage,
+        JobStage::Running
+    );
+    drop(job);
+    let jobs = gemini_jobs::with(&root.0, |j| j.list());
+    assert_eq!(jobs[0].stage, JobStage::Failed);
+    assert!(jobs[0].error.as_deref().unwrap().contains("stopped"));
+    // GENREL02-R5: a window following the job hears that it ended.
+    assert_eq!(*heard.lock().unwrap(), vec![JobStage::Failed]);
+}
+
+#[test]
+fn r13_every_generation_is_recorded_so_none_can_bypass_the_lock() {
+    let r = rig();
+    let root = JobRoot::new("r13");
+    let held = source(b"%PDF-synthetic-r13-held".to_vec(), "documents/h.pdf");
+    let never = std::future::pending::<Result<GeneratedStudyAid, String>>();
+    let first = as_job(
+        &root.0,
+        JobKind::StudyAid,
+        "mat-h",
+        None,
+        &held,
+        never,
+        &|_| {},
+    );
+    let waker = std::task::Waker::noop();
+    let mut cx = std::task::Context::from_waker(waker);
+    let mut first = Box::pin(first);
+    assert!(std::future::Future::poll(first.as_mut(), &mut cx).is_pending());
+    // Whichever page or caller asks next, it meets the same lock.
+    for (kind, material) in [
+        (JobKind::StudyAid, "mat-x"),
+        (JobKind::PracticeTest, "mat-h"),
+    ] {
+        let src = source(pdf(2, "r13-second"), "documents/x.pdf");
+        let say = |m: String| r.said.lock().unwrap().push(m);
+        let ctx = GenContext {
+            http: &r.http,
+            base: &r.fake.base,
+            api_key: KEY,
+            choice: ModelChoice::Standard,
+            cache: &r.cache,
+            epoch: r.cache.epoch(),
+            say: &say,
+        };
+        let refused = tauri::async_runtime::block_on(as_job(
+            &root.0,
+            kind,
+            material,
+            None,
+            &src,
+            study_aid_with(&ctx, &src),
+            &|_| {},
+        ));
+        assert_eq!(refused.unwrap_err(), gemini_jobs::BUSY);
+    }
+    assert_eq!(r.fake.log().len(), 0, "nothing reached Gemini");
+    drop(first);
+}
+
+#[test]
+fn the_window_receives_the_answer_job_and_content_identity_in_one_shape() {
+    let r = rig();
+    let root = JobRoot::new("shape");
+    let src = source(pdf(2, "job-shape"), "documents/s.pdf");
+    let value = serde_json::to_value(r.guide_job(&root.0, "mat-s", &src).unwrap()).unwrap();
+    assert_eq!(value["title"], "Synthetic airspace");
+    assert!(value["jobId"].as_str().unwrap().starts_with("job-"));
+    assert_eq!(value["contentSha256"], src.content_sha256.as_str());
+    assert!(value.get("answer").is_none(), "flattened");
+}
+
+#[test]
+fn r2_an_answer_that_cannot_be_checkpointed_is_handed_over_marked_as_not_kept() {
+    let r = rig();
+    let root = JobRoot::new("r2-checkpoint");
+    let src = source(pdf(2, "r2-not-kept"), "documents/k.pdf");
+    let say = |m: String| r.said.lock().unwrap().push(m);
+    let ctx = GenContext {
+        http: &r.http,
+        base: &r.fake.base,
+        api_key: KEY,
+        choice: ModelChoice::Standard,
+        cache: &r.cache,
+        epoch: r.cache.epoch(),
+        say: &say,
+    };
+    let blocked = root.0.join("gemini-jobs.json.writing");
+    let work = async {
+        let answer = study_aid_with(&ctx, &src).await;
+        // The disk fills up after Gemini answered, before the checkpoint.
+        std::fs::create_dir_all(&blocked).unwrap();
+        answer
+    };
+    let answer = tauri::async_runtime::block_on(as_job(
+        &root.0,
+        JobKind::StudyAid,
+        "mat-k",
+        None,
+        &src,
+        work,
+        &|_| {},
+    ))
+    .unwrap();
+    assert!(!answer.checkpointed);
+    assert!(answer.job_id.is_none());
+    std::fs::remove_dir_all(&blocked).unwrap();
+    assert!(
+        gemini_jobs::with(&root.0, |j| j.list())
+            .iter()
+            .all(|j| j.stage != JobStage::Running),
+        "the lock is not held"
+    );
+    let value = serde_json::to_value(&answer).unwrap();
+    assert_eq!(value["checkpointed"], false);
+}

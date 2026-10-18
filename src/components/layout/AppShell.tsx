@@ -6,6 +6,7 @@ import {
   QuickFind,
   quickFindShortcutLabel,
 } from "@/components/quickfind/QuickFind";
+import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
 import { ReminderPopup } from "@/components/reminders/ReminderPopup";
 import { UndoBar } from "@/components/undo/UndoBar";
 import { useAppData } from "@/state/AppDataContext";
@@ -129,6 +130,7 @@ export function AppShell() {
 
       <main className="content">
         <div className="content__inner">
+          <GeminiOrphanNotices />
           <Suspense fallback={<Loading label="Opening this section" />}>
             <Outlet />
           </Suspense>

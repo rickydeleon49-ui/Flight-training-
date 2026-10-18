@@ -1,0 +1,3341 @@
+# Pre-fix: src/state/GeminiJobs.tsx from the round-1 snapshot swapped in temporarily
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-gen-rel-02
+
+(node:49649) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts (22 tests | 11 failed | 11 skipped) 16010ms
+     × R3: an answer already saved before the app closed is recognized, forgotten and never saved twice 1095ms
+     × R3: something saved while Gemini worked is never overwritten 1161ms
+     × R3: a recovered answer whose base was replaced since is not saved over the newer content 1092ms
+     × R3: an acknowledgement that fails is retried later 1155ms
+     × R4: a job that finishes between the snapshot and the listener is still noticed 1044ms
+     × R4: a change event that arrives while the snapshot is pending is not lost 1051ms
+     × R4: a running job is followed on a timer when its event is missed 6076ms
+     × R6: nothing starts while earlier work is still being read back 60ms
+     × R6: if earlier work cannot be read back, she is told and can check again 1031ms
+     × R7: a file changed while the save waited in the queue is caught at the moment of saving 1136ms
+     × R2: an answer that could not be kept natively says Save again works only while the app stays open 1107ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R3: an answer already saved before the app closed is recognized, forgotten and never saved twice
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'job-aaaaaaaaaaaaaaaaaaaaaaaa' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mMaterial A[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mmat-a.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_0_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_0_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mMaterial A[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [36m</div>[39m
+  ...
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:368:45
+    366|     vi.spyOn(geminiService, "listGeminiJobs").mockResolvedValue([recor…
+    367|     await open("/study/mat-a");
+    368|     await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("job-…
+       |                                             ^
+    369|     expect(screen.queryByText(/before the app was closed or reloaded/)…
+    370|     const [after] = await repos.documents.listAiStudySets();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R3: something saved while Gemini worked is never overwritten
+TestingLibraryElementError: Unable to find an element with the text: /Something newer was saved/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_p_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_p_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_q_"[39m
+              [33mclass[39m=[32m"dialog dial...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_p_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_p_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_q_"[39m
+              [33mclass[39m=[32m"dialog dial...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:389:25
+    387|     });
+    388|     await act(async () => answer.resolve({ ...AID, jobId: "job-4444444…
+    389|     expect(await screen.findByText(/Something newer was saved/)).toBeT…
+       |                         ^
+    390|     expect(await studySets()).toEqual([["mat-a", "Newer guide"]]);
+    391|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R3: a recovered answer whose base was replaced since is not saved over the newer content
+TestingLibraryElementError: Unable to find an element with the text: /Something newer was saved/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_1i_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_1i_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_1j_"[39m
+              [33mclass[39m=[32m"dialog d...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_1i_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_1i_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_1j_"[39m
+              [33mclass[39m=[32m"dialog d...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:401:25
+    399|     await open("/study/mat-a");
+    400|     fireEvent.click(await screen.findByRole("button", { name: "Save th…
+    401|     expect(await screen.findByText(/Something newer was saved/)).toBeT…
+       |                         ^
+    402|     expect(await studySets()).toEqual([["mat-a", "Current guide"]]);
+    403|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R3: an acknowledgement that fails is retried later
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mMaterial A[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mmat-a.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_2b_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_2b_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mMaterial A[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [36m</div>[39m
+...
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:418:45
+    416|       for (const handler of jobEvents) handler({ id: "job-555555555555…
+    417|     });
+    418|     await waitFor(() => expect(acknowledge).toHaveBeenCalledTimes(2));
+       |                                             ^
+    419|     expect(acknowledge).toHaveBeenLastCalledWith("job-5555555555555555…
+    420|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R4: a job that finishes between the snapshot and the listener is still noticed
+TestingLibraryElementError: Unable to find an element with the text: /before the app was closed or reloaded/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_34_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_34_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_35_"[39m
+              [33mclass[39m=[32m"dialog d...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_34_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_34_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_35_"[39m
+              [33mclass[39m=[32m"dialog d...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:429:25
+    427|     await open("/study/mat-a");
+    428|     // No change event is ever delivered.
+    429|     expect(await screen.findByText(/before the app was closed or reloa…
+       |                         ^
+    430|     expect(screen.getByRole("button", { name: "Create practice test" }…
+    431|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R4: a change event that arrives while the snapshot is pending is not lost
+TestingLibraryElementError: Unable to find an element with the text: /before the app was closed or reloaded/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_3p_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_3p_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_3q_"[39m
+              [33mclass[39m=[32m"dialog d...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_3p_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_3p_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_3q_"[39m
+              [33mclass[39m=[32m"dialog d...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:445:25
+    443|     });
+    444|     await act(async () => first.resolve([record({ stage: "running" })]…
+    445|     expect(await screen.findByText(/before the app was closed or reloa…
+       |                         ^
+    446|   });
+    447|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R4: a running job is followed on a timer when its event is missed
+AssertionError: expected true to be false // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mMaterial A[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mmat-a.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_4e_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_4e_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mMaterial A[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [36m</div>[39m
+...
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ waitFor.timeout src/pages/StudyLibrary/MaterialDetailJobs.test.ts:458:107
+    456|     list.mockResolvedValue([record({ stage: "failed", error: "Syntheti…
+    457|     await waitFor(
+    458|       () => expect(screen.getByRole("button", { name: "Create practice…
+       |                                                                                                           ^
+    459|       { timeout: 6000 },
+    460|     );
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R6: nothing starts while earlier work is still being read back
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:471:45
+    469|     await open("/study/mat-a");
+    470|     const create = await screen.findByRole("button", { name: "Create s…
+    471|     expect(create.hasAttribute("disabled")).toBe(true);
+       |                                             ^
+    472|     fireEvent.click(create);
+    473|     expect(screen.queryByRole("button", { name: "Send to Gemini" })).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R6: if earlier work cannot be read back, she is told and can check again
+TestingLibraryElementError: Unable to find an element with the text: /could not check for study aids Gemini was already working on/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_5o_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_5o_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_5p_"[39m
+              [33mclass[39m=[32m"dialog d...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_5o_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_5o_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_5p_"[39m
+              [33mclass[39m=[32m"dialog d...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:486:25
+    484|     list.mockResolvedValue([]);
+    485|     await open("/study/mat-a");
+    486|     expect(await screen.findByText(/could not check for study aids Gem…
+       |                         ^
+    487|     expect(screen.getByRole("button", { name: "Create study aid" }).ha…
+    488|     fireEvent.click(screen.getByRole("button", { name: "Check again" }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R7: a file changed while the save waited in the queue is caught at the moment of saving
+TestingLibraryElementError: Unable to find an element with the text: /changed or was removed while Gemini was working/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_6d_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_6d_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_6e_"[39m
+              [33mclass[39m=[32m"dialog d...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_6d_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_6d_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_6e_"[39m
+              [33mclass[39m=[32m"dialog d...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:518:25
+    516|       await queued;
+    517|     });
+    518|     expect(await screen.findByText(/changed or was removed while Gemin…
+       |                         ^
+    519|     expect(await studySets()).toEqual([]);
+    520|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R2: an answer that could not be kept natively says Save again works only while the app stays open
+TestingLibraryElementError: Unable to find an element with the text: /could not be kept on this Mac either/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_76_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_76_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_77_"[39m
+              [33mclass[39m=[32m"dialog d...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mMaterial A[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mmat-a.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m1 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_76_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_76_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mMaterial A[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_77_"[39m
+              [33mclass[39m=[32m"dialog d...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:532:25
+    530|     await open("/study/mat-a");
+    531|     await startStudyAid();
+    532|     expect(await screen.findByText(/could not be kept on this Mac eith…
+       |                         ^
+    533|   });
+    534| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 11 skipped (22)
+   Start at  13:00:39
+   Duration  16.74s (transform 319ms, setup 0ms, import 431ms, tests 16.01s, environment 223ms)
+
+EXIT 1

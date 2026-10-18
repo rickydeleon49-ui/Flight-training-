@@ -1,0 +1,9 @@
+$ npm run typecheck
+
+> her-flight-deck@0.5.5 typecheck
+> tsc --noEmit
+
+src/pages/StudyLibrary/MaterialDetailJobs.test.ts(371,12): error TS18048: 'after' is possibly 'undefined'.
+src/pages/StudyLibrary/MaterialDetailJobs.test.ts(371,34): error TS18048: 'before' is possibly 'undefined'.
+src/pages/StudyLibrary/MaterialDetailJobs.test.ts(442,7): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+EXIT 2

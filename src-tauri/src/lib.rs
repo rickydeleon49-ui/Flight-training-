@@ -13,6 +13,7 @@ mod documents;
 mod fake_gemini;
 mod gemini;
 mod gemini_files;
+mod gemini_jobs;
 mod lineage;
 mod navigation;
 mod pdf;
@@ -229,6 +230,8 @@ pub fn run() {
             gemini::set_gemini_model,
             gemini::generate_study_aid,
             gemini::generate_practice_test,
+            gemini::gemini_jobs,
+            gemini::acknowledge_gemini_job,
             backup::create_backup,
             backup::create_complete_backup,
             backup::inspect_complete_backup,

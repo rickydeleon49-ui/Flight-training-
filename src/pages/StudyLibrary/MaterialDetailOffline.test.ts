@@ -267,7 +267,7 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     expect((await repos.documents.listPracticeTests())[0]?.title).toBe("Saved practice test");
   });
 
-  it("keeps another material's saved content usable while a generation runs elsewhere, and a late result changes nothing", async () => {
+  it("keeps another material's saved content usable while a generation runs elsewhere, and a late result goes only to its own material", async () => {
     geminiStatus("connected");
     await seed();
     await repos.documents.create({
@@ -290,9 +290,15 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     await act(async () => finish({
       title: "Weather guide", summary: "Late summary", sections: [], flashcards: [], sourceNotes: "", model: "gemini-3.5-flash",
     }));
-    // Existing ownership rule: a result that arrives after leaving its material is discarded.
-    const sets = await repos.documents.listAiStudySets();
-    expect(sets.map((set) => [set.sourceMaterialId, set.title])).toEqual([["mat-saved", "Saved VOR guide"]]);
+    // GEN-REL-02: a result that arrives after leaving its material is saved to
+    // that material only; the material on screen is untouched.
+    await waitFor(async () => {
+      const sets = await repos.documents.listAiStudySets();
+      expect(sets.map((set) => [set.sourceMaterialId, set.title]).sort()).toEqual([
+        ["mat-other", "Weather guide"],
+        ["mat-saved", "Saved VOR guide"],
+      ]);
+    });
     expect(screen.getByRole("heading", { name: "Saved VOR guide" })).toBeTruthy();
     // The lock is released once the other request settles.
     await waitFor(() => {
