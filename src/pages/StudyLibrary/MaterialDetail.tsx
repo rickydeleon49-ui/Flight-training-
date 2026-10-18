@@ -661,9 +661,9 @@ function MaterialDetailPage({
           {material.filePath ? (
             <Card>
               <CardBody>
-                <div className={`file-row${fileMissing ? " file-row--missing" : ""}`}>
+                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
                   {fileMissing ? <AlertIcon /> : <DocumentIcon />}
-                  <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="file-row__details">
                     <p className="small truncate">{material.originalFileName}</p>
                     <p className="tiny">
                       {fileMissing
@@ -671,19 +671,21 @@ function MaterialDetailPage({
                         : formatFileSize(material.fileSize)}
                     </p>
                   </div>
-                  {canSplit ? (
-                    <Button onClick={() => setSplitting(true)}>Split automatically</Button>
-                  ) : null}
-                  {canSplit ? (
-                    <Button variant="secondary" onClick={() => setSplittingManually(true)}>
-                      Take out a chapter
-                    </Button>
-                  ) : null}
-                  {!fileMissing && canHandleFiles() ? (
-                    <Button onClick={open}>
-                      <ExternalIcon size={15} /> Open
-                    </Button>
-                  ) : null}
+                  <div className="file-row__actions">
+                    {canSplit ? (
+                      <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                    ) : null}
+                    {canSplit ? (
+                      <Button variant="secondary" onClick={() => setSplittingManually(true)}>
+                        Take out a chapter
+                      </Button>
+                    ) : null}
+                    {!fileMissing && canHandleFiles() ? (
+                      <Button onClick={open}>
+                        <ExternalIcon size={15} /> Open
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
                 {fileMissing ? (
                   <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>

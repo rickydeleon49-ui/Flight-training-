@@ -283,3 +283,4 @@ evidence/p54-05-brief-r1-r2-2026-10-17/baseline/review-tests-on-b30af19.log -tex
 evidence/p54-05-brief-r1-r2-2026-10-17/focused.log -text -diff
 evidence/p54-05-brief-r1-r2-2026-10-17/review-tests-on-fix.log -text -diff
 evidence/p54-05-brief-r1-r2-2026-10-17/typecheck.log -text -diff
+evidence/study-file-row-layout-2026-10-17/build.txt -text -diff
