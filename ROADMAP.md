@@ -1,3 +1,18 @@
+## Owner-approved open-source evaluation queue — 17 October 2026
+
+The owner approved adding the GitHub shortlist to the roadmap. **Evaluate these integrations; no dependency is adopted by this entry.** Preserve the active P54 work and existing Study Hub sequence. Reuse prior measurements instead of reopening accepted research. [Eligibility, licenses and technical limits](docs/STUDY_HUB_OSS_RESEARCH_2026-10-17.md).
+
+| ID | Candidate / approved evaluation outcome |
+| --- | --- |
+| OSS-01 | PDF.js: close supported-Mac reader/page-reference gaps using existing M4 evidence; retain honest source identity and bounded loading. |
+| OSS-02 | MiniSearch: complete the existing comparison with actual native SQLite FTS5 for bounded offline guide/passage retrieval and rebuild behavior. |
+| OSS-03 | jsdiff: prototype a bounded, escaped regeneration-change preview when STUDY-HUB-03 starts; preserve user edits and historical versions. |
+| OSS-04 | Tesseract.js: compare a bounded image-page OCR lane with native Mac OCR; native Tesseract is an alternative, not a second required engine. |
+| OSS-05 | Transformers.js: evaluate local semantic matching only after a measured lexical-retrieval gap; verify model licenses, offline assets and Mac resource limits. |
+| OSS-06 | Orama: conditional local search challenger if existing engines lack a required capability. Fuse remains optional title/topic lookup, without duplicating adequate search. |
+
+Every adoption needs a pinned version, actual repository eligibility, distributed-license review, meaningful compatibility/resource tests and independent source review. FSRS language ports remain below the1,000-star rule; no exception or in-house scheduler adoption is granted here. LlamaIndexTS remains excluded as archived. No merge authorized. Earlier roadmap history follows unchanged.
+
 ## Owner-approved Study Guide hub improvements — 17 October 2026
 
 The owner approved all eight Study Guide recommendations, in the proposed order. The Study Guide becomes the central study hub backed by original documents. **Planning approved; implementation not started by this entry.** Keep the current P54 queue and active calendar-export assignment ahead of this follow-on sequence. Reuse accepted work from overlapping P54 items instead of duplicating it. [Detailed scope and acceptance criteria](docs/STUDY_HUB_ROADMAP_2026-10-17.md).

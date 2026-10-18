@@ -1,6 +1,6 @@
 # Study Guide hub: GitHub open-source shortlist
 
-**Research only; no package adoption.** Requested by the owner after approving STUDY-HUB-01–08. All counts below were verified through GitHub's repository API on 17 October 2026 (local date); exact retrieval time, license metadata and archive flags are preserved in [the metadata snapshot](STUDY_HUB_OSS_REPOSITORIES_2026-10-17.json). The eligibility threshold is **at least 1,000 stars for the actual repository used**. A popular parent project does not qualify its smaller language port automatically.
+**Owner-approved evaluations OSS-01–06; no package adoption.** Requested by the owner after approving STUDY-HUB-01–08. All counts below were verified through GitHub's repository API on 17 October 2026 (local date); exact retrieval time, license metadata and archive flags are preserved in [the metadata snapshot](STUDY_HUB_OSS_REPOSITORIES_2026-10-17.json). The eligibility threshold is **at least 1,000 stars for the actual repository used**. A popular parent project does not qualify its smaller language port automatically.
 
 ## Candidates that meet the star threshold
 

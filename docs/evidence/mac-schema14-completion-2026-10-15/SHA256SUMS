@@ -1,5 +1,5 @@
 09043e7922880c21416c9a511f40052050bd752eb400fb19ea852d3bffb4a2ee  STATUS.md
-57c6c44a0d6188ee8b049219fb7681d2fca3f26a237f2531a8f8d73de36ca9ce  ROADMAP.md
+029fb8dcfd8a2db6b48396ddddb07204fe1ab44ac59bb626832bf29c4bd88a50  ROADMAP.md
 46ec355b6248d3b390079640c782840e3fa2b7873fe21b76aa9212c6388d0f3e  docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md
 275dc8579a2488da62b4961b28ebf58790d385f753e920e40a212dcdaa3003fb  docs/evidence/mac-schema14-completion-2026-10-15/baseline.json
 3f11deadfd50a9d398c1c09a4c68849bdd056a86cb00a385e49c3f337bf9f695  docs/evidence/mac-schema14-completion-2026-10-15/execution-receipts.json
@@ -18,4 +18,4 @@ c5ded6b441ca6ed35ba54686564aeb2788d74e6d29aae6711103dd9e605f9127  docs/MAC_SCHEM
 e2d6a13fa019943968d0291b4c5408d786a6c2817c055e59f482f5a9eb57ea8b  docs/evidence/mac-schema14-verification-preparation-2026-10-11/verification-receipts.json
 6985cae27b7f69719afe7f0b44c6d8d61dd4726b48460767d4cafb53ace81b9e  docs/evidence/mac-schema14-verification-preparation-2026-10-11/source-manifest.json
 f329ca092b1ed4eab95f0de2584cbc7ca458457c9a7f4e262f06d7fdd1c886b1  docs/evidence/mac-schema14-verification-preparation-2026-10-11/SHA256SUMS
-335498ce3e602d43ce3fa601a44cb577df7b024111254be339fcbc0d82377fe5  docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json
+95e0329a7e1d4532b32dace139d64c1c6d460cb1007a52f8bacb48457c7675ed  docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json

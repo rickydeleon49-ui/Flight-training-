@@ -70,3 +70,5 @@ Retrieval practice and spacing inform the study-session and feedback directions:
 ## Open-source candidate research
 
 [GitHub shortlist and eligibility snapshot](STUDY_HUB_OSS_RESEARCH_2026-10-17.md) maps candidates to these outcomes, checks the actual 1,000-star threshold, identifies archived/below-threshold exclusions, and records Mac/resource/license qualifications. Research only; no dependency is adopted.
+
+The owner subsequently approved adding the shortlist as OSS-01–06 evaluation tasks in ROADMAP. Version selection, production integration and exceptions remain subject to the recorded gates.
