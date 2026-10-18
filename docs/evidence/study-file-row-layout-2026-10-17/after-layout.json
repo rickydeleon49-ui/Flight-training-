@@ -1,0 +1,1424 @@
+{
+  "phase": "after",
+  "source": "Production MaterialDetail file-row JSX, real Button/Icons and production CSS; synthetic data; isolated Chromium, no app/profile/database/network.",
+  "passed": 36,
+  "total": 36,
+  "results": [
+    {
+      "width": 320,
+      "scale": 1,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 54,
+        "y": 76,
+        "width": 212,
+        "height": 38.734375,
+        "right": 266,
+        "bottom": 114.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 238,
+        "height": 245.15625,
+        "right": 279,
+        "bottom": 278.15625
+      },
+      "buttons": [
+        {
+          "x": 133.0625,
+          "y": 126.734375,
+          "width": 132.9375,
+          "height": 38.140625,
+          "right": 266,
+          "bottom": 164.875
+        },
+        {
+          "x": 131.953125,
+          "y": 176.875,
+          "width": 134.046875,
+          "height": 38.140625,
+          "right": 266,
+          "bottom": 215.015625
+        },
+        {
+          "x": 190.59375,
+          "y": 227.015625,
+          "width": 75.40625,
+          "height": 38.140625,
+          "right": 266,
+          "bottom": 265.15625
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 1,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 54,
+        "y": 76,
+        "width": 212,
+        "height": 57.328125,
+        "right": 266,
+        "bottom": 133.328125
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 238,
+        "height": 113.328125,
+        "right": 279,
+        "bottom": 146.328125
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 1,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 54,
+        "y": 76,
+        "width": 212,
+        "height": 38.734375,
+        "right": 266,
+        "bottom": 114.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 238,
+        "height": 144.875,
+        "right": 279,
+        "bottom": 177.875
+      },
+      "buttons": [
+        {
+          "x": 190.59375,
+          "y": 126.734375,
+          "width": 75.40625,
+          "height": 38.140625,
+          "right": 266,
+          "bottom": 164.875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 1.5,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 72,
+        "y": 96,
+        "width": 176,
+        "height": 58.109375,
+        "right": 248,
+        "bottom": 154.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 214,
+        "height": 415.203125,
+        "right": 267,
+        "bottom": 456.203125
+      },
+      "buttons": [
+        {
+          "x": 72,
+          "y": 172.109375,
+          "width": 176,
+          "height": 86.4375,
+          "right": 248,
+          "bottom": 258.546875
+        },
+        {
+          "x": 72,
+          "y": 276.546875,
+          "width": 176,
+          "height": 86.4375,
+          "right": 248,
+          "bottom": 362.984375
+        },
+        {
+          "x": 154.734375,
+          "y": 380.984375,
+          "width": 93.265625,
+          "height": 56.21875,
+          "right": 248,
+          "bottom": 437.203125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 1.5,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 72,
+        "y": 96,
+        "width": 176,
+        "height": 113.890625,
+        "right": 248,
+        "bottom": 209.890625
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 214,
+        "height": 187.890625,
+        "right": 267,
+        "bottom": 228.890625
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 1.5,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 72,
+        "y": 96,
+        "width": 176,
+        "height": 58.109375,
+        "right": 248,
+        "bottom": 154.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 214,
+        "height": 206.328125,
+        "right": 267,
+        "bottom": 247.328125
+      },
+      "buttons": [
+        {
+          "x": 154.734375,
+          "y": 172.109375,
+          "width": 93.265625,
+          "height": 56.21875,
+          "right": 248,
+          "bottom": 228.328125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 2,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 90,
+        "y": 116,
+        "width": 140,
+        "height": 77.484375,
+        "right": 230,
+        "bottom": 193.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 190,
+        "height": 585.265625,
+        "right": 255,
+        "bottom": 634.265625
+      },
+      "buttons": [
+        {
+          "x": 90,
+          "y": 217.484375,
+          "width": 140,
+          "height": 154.890625,
+          "right": 230,
+          "bottom": 372.375
+        },
+        {
+          "x": 90,
+          "y": 396.375,
+          "width": 140,
+          "height": 114.59375,
+          "right": 230,
+          "bottom": 510.96875
+        },
+        {
+          "x": 118.890625,
+          "y": 534.96875,
+          "width": 111.109375,
+          "height": 74.296875,
+          "right": 230,
+          "bottom": 609.265625
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 2,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 90,
+        "y": 116,
+        "width": 140,
+        "height": 189.046875,
+        "right": 230,
+        "bottom": 305.046875
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 190,
+        "height": 281.046875,
+        "right": 255,
+        "bottom": 330.046875
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 320,
+      "scale": 2,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 90,
+        "y": 116,
+        "width": 140,
+        "height": 77.484375,
+        "right": 230,
+        "bottom": 193.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 190,
+        "height": 267.78125,
+        "right": 255,
+        "bottom": 316.78125
+      },
+      "buttons": [
+        {
+          "x": 118.890625,
+          "y": 217.484375,
+          "width": 111.109375,
+          "height": 74.296875,
+          "right": 230,
+          "bottom": 291.78125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 1,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 342,
+        "height": 38.734375,
+        "right": 426,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 398,
+        "height": 165.015625,
+        "right": 439,
+        "bottom": 198.015625
+      },
+      "buttons": [
+        {
+          "x": 121.390625,
+          "y": 96.734375,
+          "width": 145.75,
+          "height": 38.140625,
+          "right": 267.140625,
+          "bottom": 134.875
+        },
+        {
+          "x": 279.140625,
+          "y": 96.734375,
+          "width": 146.859375,
+          "height": 38.140625,
+          "right": 426,
+          "bottom": 134.875
+        },
+        {
+          "x": 337.78125,
+          "y": 146.875,
+          "width": 88.21875,
+          "height": 38.140625,
+          "right": 426,
+          "bottom": 185.015625
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 1,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 342,
+        "height": 38.734375,
+        "right": 426,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 398,
+        "height": 64.734375,
+        "right": 439,
+        "bottom": 97.734375
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 1,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 342,
+        "height": 38.734375,
+        "right": 426,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 398,
+        "height": 114.875,
+        "right": 439,
+        "bottom": 147.875
+      },
+      "buttons": [
+        {
+          "x": 337.78125,
+          "y": 96.734375,
+          "width": 88.21875,
+          "height": 38.140625,
+          "right": 426,
+          "bottom": 134.875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 1.5,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 300,
+        "height": 58.109375,
+        "right": 408,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 374,
+        "height": 244.546875,
+        "right": 427,
+        "bottom": 285.546875
+      },
+      "buttons": [
+        {
+          "x": 208.140625,
+          "y": 136.109375,
+          "width": 199.859375,
+          "height": 56.21875,
+          "right": 408,
+          "bottom": 192.328125
+        },
+        {
+          "x": 82.375,
+          "y": 210.328125,
+          "width": 201.546875,
+          "height": 56.21875,
+          "right": 283.921875,
+          "bottom": 266.546875
+        },
+        {
+          "x": 301.921875,
+          "y": 210.328125,
+          "width": 106.078125,
+          "height": 56.21875,
+          "right": 408,
+          "bottom": 266.546875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 1.5,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 300,
+        "height": 86,
+        "right": 408,
+        "bottom": 146
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 374,
+        "height": 124,
+        "right": 427,
+        "bottom": 165
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 1.5,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 300,
+        "height": 58.109375,
+        "right": 408,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 374,
+        "height": 170.328125,
+        "right": 427,
+        "bottom": 211.328125
+      },
+      "buttons": [
+        {
+          "x": 301.921875,
+          "y": 136.109375,
+          "width": 106.078125,
+          "height": 56.21875,
+          "right": 408,
+          "bottom": 192.328125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 2,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 90,
+        "y": 116,
+        "width": 300,
+        "height": 77.484375,
+        "right": 390,
+        "bottom": 193.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 350,
+        "height": 464.375,
+        "right": 415,
+        "bottom": 513.375
+      },
+      "buttons": [
+        {
+          "x": 136.015625,
+          "y": 217.484375,
+          "width": 253.984375,
+          "height": 74.296875,
+          "right": 390,
+          "bottom": 291.78125
+        },
+        {
+          "x": 133.78125,
+          "y": 315.78125,
+          "width": 256.21875,
+          "height": 74.296875,
+          "right": 390,
+          "bottom": 390.078125
+        },
+        {
+          "x": 266.078125,
+          "y": 414.078125,
+          "width": 123.921875,
+          "height": 74.296875,
+          "right": 390,
+          "bottom": 488.375
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 2,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 90,
+        "y": 116,
+        "width": 300,
+        "height": 114.671875,
+        "right": 390,
+        "bottom": 230.671875
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 350,
+        "height": 206.671875,
+        "right": 415,
+        "bottom": 255.671875
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 480,
+      "scale": 2,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 90,
+        "y": 116,
+        "width": 300,
+        "height": 77.484375,
+        "right": 390,
+        "bottom": 193.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 350,
+        "height": 267.78125,
+        "right": 415,
+        "bottom": 316.78125
+      },
+      "buttons": [
+        {
+          "x": 266.078125,
+          "y": 217.484375,
+          "width": 123.921875,
+          "height": 74.296875,
+          "right": 390,
+          "bottom": 291.78125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 1,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 502,
+        "height": 38.734375,
+        "right": 586,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 558,
+        "height": 114.875,
+        "right": 599,
+        "bottom": 147.875
+      },
+      "buttons": [
+        {
+          "x": 164.859375,
+          "y": 96.734375,
+          "width": 151.1875,
+          "height": 38.140625,
+          "right": 316.046875,
+          "bottom": 134.875
+        },
+        {
+          "x": 328.046875,
+          "y": 96.734375,
+          "width": 152.296875,
+          "height": 38.140625,
+          "right": 480.34375,
+          "bottom": 134.875
+        },
+        {
+          "x": 492.34375,
+          "y": 96.734375,
+          "width": 93.65625,
+          "height": 38.140625,
+          "right": 586,
+          "bottom": 134.875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 1,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 502,
+        "height": 38.734375,
+        "right": 586,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 558,
+        "height": 64.734375,
+        "right": 599,
+        "bottom": 97.734375
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 1,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 502,
+        "height": 38.734375,
+        "right": 586,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 558,
+        "height": 114.875,
+        "right": 599,
+        "bottom": 147.875
+      },
+      "buttons": [
+        {
+          "x": 492.34375,
+          "y": 96.734375,
+          "width": 93.65625,
+          "height": 38.140625,
+          "right": 586,
+          "bottom": 134.875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 1.5,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 460,
+        "height": 58.109375,
+        "right": 568,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 534,
+        "height": 244.546875,
+        "right": 587,
+        "bottom": 285.546875
+      },
+      "buttons": [
+        {
+          "x": 123.03125,
+          "y": 136.109375,
+          "width": 212.640625,
+          "height": 56.21875,
+          "right": 335.671875,
+          "bottom": 192.328125
+        },
+        {
+          "x": 353.671875,
+          "y": 136.109375,
+          "width": 214.328125,
+          "height": 56.21875,
+          "right": 568,
+          "bottom": 192.328125
+        },
+        {
+          "x": 449.140625,
+          "y": 210.328125,
+          "width": 118.859375,
+          "height": 56.21875,
+          "right": 568,
+          "bottom": 266.546875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 1.5,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 460,
+        "height": 58.109375,
+        "right": 568,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 534,
+        "height": 96.109375,
+        "right": 587,
+        "bottom": 137.109375
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 1.5,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 460,
+        "height": 58.109375,
+        "right": 568,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 534,
+        "height": 170.328125,
+        "right": 587,
+        "bottom": 211.328125
+      },
+      "buttons": [
+        {
+          "x": 449.140625,
+          "y": 136.109375,
+          "width": 118.859375,
+          "height": 56.21875,
+          "right": 568,
+          "bottom": 192.328125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 2,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 132,
+        "y": 74,
+        "width": 418,
+        "height": 77.484375,
+        "right": 550,
+        "bottom": 151.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 510,
+        "height": 324.078125,
+        "right": 575,
+        "bottom": 373.078125
+      },
+      "buttons": [
+        {
+          "x": 283.234375,
+          "y": 175.484375,
+          "width": 266.765625,
+          "height": 74.296875,
+          "right": 550,
+          "bottom": 249.78125
+        },
+        {
+          "x": 120.296875,
+          "y": 273.78125,
+          "width": 269,
+          "height": 74.296875,
+          "right": 389.296875,
+          "bottom": 348.078125
+        },
+        {
+          "x": 413.296875,
+          "y": 273.78125,
+          "width": 136.703125,
+          "height": 74.296875,
+          "right": 550,
+          "bottom": 348.078125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 2,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 132,
+        "y": 74,
+        "width": 418,
+        "height": 114.671875,
+        "right": 550,
+        "bottom": 188.671875
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 510,
+        "height": 164.671875,
+        "right": 575,
+        "bottom": 213.671875
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 640,
+      "scale": 2,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 132,
+        "y": 74,
+        "width": 418,
+        "height": 77.484375,
+        "right": 550,
+        "bottom": 151.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 510,
+        "height": 225.78125,
+        "right": 575,
+        "bottom": 274.78125
+      },
+      "buttons": [
+        {
+          "x": 413.296875,
+          "y": 175.484375,
+          "width": 136.703125,
+          "height": 74.296875,
+          "right": 550,
+          "bottom": 249.78125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 1,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 822,
+        "height": 38.734375,
+        "right": 906,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 878,
+        "height": 114.875,
+        "right": 919,
+        "bottom": 147.875
+      },
+      "buttons": [
+        {
+          "x": 484.859375,
+          "y": 96.734375,
+          "width": 151.1875,
+          "height": 38.140625,
+          "right": 636.046875,
+          "bottom": 134.875
+        },
+        {
+          "x": 648.046875,
+          "y": 96.734375,
+          "width": 152.296875,
+          "height": 38.140625,
+          "right": 800.34375,
+          "bottom": 134.875
+        },
+        {
+          "x": 812.34375,
+          "y": 96.734375,
+          "width": 93.65625,
+          "height": 38.140625,
+          "right": 906,
+          "bottom": 134.875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 1,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 822,
+        "height": 38.734375,
+        "right": 906,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 878,
+        "height": 64.734375,
+        "right": 919,
+        "bottom": 97.734375
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 1,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 84,
+        "y": 46,
+        "width": 822,
+        "height": 38.734375,
+        "right": 906,
+        "bottom": 84.734375
+      },
+      "row": {
+        "x": 41,
+        "y": 33,
+        "width": 878,
+        "height": 114.875,
+        "right": 919,
+        "bottom": 147.875
+      },
+      "buttons": [
+        {
+          "x": 812.34375,
+          "y": 96.734375,
+          "width": 93.65625,
+          "height": 38.140625,
+          "right": 906,
+          "bottom": 134.875
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 1.5,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 780,
+        "height": 58.109375,
+        "right": 888,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 854,
+        "height": 170.328125,
+        "right": 907,
+        "bottom": 211.328125
+      },
+      "buttons": [
+        {
+          "x": 266.796875,
+          "y": 136.109375,
+          "width": 225.765625,
+          "height": 56.21875,
+          "right": 492.5625,
+          "bottom": 192.328125
+        },
+        {
+          "x": 510.5625,
+          "y": 136.109375,
+          "width": 227.453125,
+          "height": 56.21875,
+          "right": 738.015625,
+          "bottom": 192.328125
+        },
+        {
+          "x": 756.015625,
+          "y": 136.109375,
+          "width": 131.984375,
+          "height": 56.21875,
+          "right": 888,
+          "bottom": 192.328125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 1.5,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 780,
+        "height": 58.109375,
+        "right": 888,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 854,
+        "height": 96.109375,
+        "right": 907,
+        "bottom": 137.109375
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 1.5,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 108,
+        "y": 60,
+        "width": 780,
+        "height": 58.109375,
+        "right": 888,
+        "bottom": 118.109375
+      },
+      "row": {
+        "x": 53,
+        "y": 41,
+        "width": 854,
+        "height": 170.328125,
+        "right": 907,
+        "bottom": 211.328125
+      },
+      "buttons": [
+        {
+          "x": 756.015625,
+          "y": 136.109375,
+          "width": 131.984375,
+          "height": 56.21875,
+          "right": 888,
+          "bottom": 192.328125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 2,
+      "mode": "pdf",
+      "ok": true,
+      "details": {
+        "x": 132,
+        "y": 74,
+        "width": 738,
+        "height": 77.484375,
+        "right": 870,
+        "bottom": 151.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 830,
+        "height": 324.078125,
+        "right": 895,
+        "bottom": 373.078125
+      },
+      "buttons": [
+        {
+          "x": 259.046875,
+          "y": 175.484375,
+          "width": 292.359375,
+          "height": 74.296875,
+          "right": 551.40625,
+          "bottom": 249.78125
+        },
+        {
+          "x": 575.40625,
+          "y": 175.484375,
+          "width": 294.59375,
+          "height": 74.296875,
+          "right": 870,
+          "bottom": 249.78125
+        },
+        {
+          "x": 707.703125,
+          "y": 273.78125,
+          "width": 162.296875,
+          "height": 74.296875,
+          "right": 870,
+          "bottom": 348.078125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 2,
+      "mode": "missing",
+      "ok": true,
+      "details": {
+        "x": 132,
+        "y": 74,
+        "width": 738,
+        "height": 77.484375,
+        "right": 870,
+        "bottom": 151.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 830,
+        "height": 127.484375,
+        "right": 895,
+        "bottom": 176.484375
+      },
+      "buttons": [],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    },
+    {
+      "width": 960,
+      "scale": 2,
+      "mode": "other",
+      "ok": true,
+      "details": {
+        "x": 132,
+        "y": 74,
+        "width": 738,
+        "height": 77.484375,
+        "right": 870,
+        "bottom": 151.484375
+      },
+      "row": {
+        "x": 65,
+        "y": 49,
+        "width": 830,
+        "height": 225.78125,
+        "right": 895,
+        "bottom": 274.78125
+      },
+      "buttons": [
+        {
+          "x": 707.703125,
+          "y": 175.484375,
+          "width": 162.296875,
+          "height": 74.296875,
+          "right": 870,
+          "bottom": 249.78125
+        }
+      ],
+      "overlaps": false,
+      "outside": false,
+      "sizeWithinDetails": true,
+      "documentOverflow": false,
+      "usableDetails": true
+    }
+  ]
+}
