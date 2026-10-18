@@ -130,6 +130,29 @@
   color: var(--status-overdue);
 }
 
+/* Keep file metadata readable when the detail column or text size changes. */
+.file-row--actions { flex-wrap: wrap; }
+.file-row--actions > svg { flex: none; }
+.file-row__details { min-width: 0; flex: 1 1 12rem; }
+.file-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1 1 100%;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+}
+.file-row__actions .button {
+  max-width: 100%;
+  padding-inline: min(1.1rem, 4%);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.file-row__actions .button > svg { flex: none; }
+.file-row__actions:empty { display: none; }
+
 .ai-working,
 .ai-disclaimer {
   display: flex;
