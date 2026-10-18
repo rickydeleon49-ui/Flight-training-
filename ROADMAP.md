@@ -15,6 +15,40 @@ Gemini's ce3c948 submission matches8 source hashes/23 evidence checksums. Codex 
 - Reuses native atomic save with new `ExportKind::Calendar` (`.ics`, 64 KiB cap). Dialog implements BRIEF-R1/R2 session ownership and duplicate-click guards.
 - Verification gates: 70 focused tests, full frontend 3,629 passed / 6 skipped, native 533 passed / 6 ignored, typecheck, build, strict Clippy, fmt, lock sync, and schema helper (26/26) all pass with exit 0. [Report](docs/P54_05_CALENDAR_EXPORT_REPORT_2026-10-17.md), [Reviewer prompt](docs/P54_05_CALENDAR_EXPORT_REVIEWER_PROMPT_2026-10-17.md).
 
+## Owner-approved open-source evaluation queue — 17 October 2026
+
+The owner approved adding the GitHub shortlist to the roadmap. **Evaluate these integrations; no dependency is adopted by this entry.** Preserve the active P54 work and existing Study Hub sequence. Reuse prior measurements instead of reopening accepted research. [Eligibility, licenses and technical limits](docs/STUDY_HUB_OSS_RESEARCH_2026-10-17.md).
+
+| ID | Candidate / approved evaluation outcome |
+| --- | --- |
+| OSS-01 | PDF.js: close supported-Mac reader/page-reference gaps using existing M4 evidence; retain honest source identity and bounded loading. |
+| OSS-02 | MiniSearch: complete the existing comparison with actual native SQLite FTS5 for bounded offline guide/passage retrieval and rebuild behavior. |
+| OSS-03 | jsdiff: prototype a bounded, escaped regeneration-change preview when STUDY-HUB-03 starts; preserve user edits and historical versions. |
+| OSS-04 | Tesseract.js: compare a bounded image-page OCR lane with native Mac OCR; native Tesseract is an alternative, not a second required engine. |
+| OSS-05 | Transformers.js: evaluate local semantic matching only after a measured lexical-retrieval gap; verify model licenses, offline assets and Mac resource limits. |
+| OSS-06 | Orama: conditional local search challenger if existing engines lack a required capability. Fuse remains optional title/topic lookup, without duplicating adequate search. |
+
+Every adoption needs a pinned version, actual repository eligibility, distributed-license review, meaningful compatibility/resource tests and independent source review. FSRS language ports remain below the1,000-star rule; no exception or in-house scheduler adoption is granted here. LlamaIndexTS remains excluded as archived. No merge authorized. Earlier roadmap history follows unchanged.
+
+## Owner-approved Study Guide hub improvements — 17 October 2026
+
+The owner approved all eight Study Guide recommendations, in the proposed order. The Study Guide becomes the central study hub backed by original documents. **Planning approved; implementation not started by this entry.** Keep the current P54 queue and active calendar-export assignment ahead of this follow-on sequence. Reuse accepted work from overlapping P54 items instead of duplicating it. [Detailed scope and acceptance criteria](docs/STUDY_HUB_ROADMAP_2026-10-17.md).
+
+| Order | ID | Approved outcome |
+| --- | --- | --- |
+| 1 | STUDY-HUB-01 | Source links beside explanations, carried into cards and quiz explanations, tied to document revision and page. |
+| 2 | STUDY-HUB-02 | Connected topics linking guides, cards, missed questions, instructor questions and lessons. |
+| 3 | STUDY-HUB-03 | User/instructor corrections, dependency visibility, regeneration previews and source-version handling that preserve edits/history. |
+| 4 | STUDY-HUB-04 | Explainable, manageable next study sessions based on missed questions, due cards and upcoming lessons. |
+| 5 | STUDY-HUB-05 | Useful wrong-answer explanations, source reading and optional explain-in-your-own-words prompts. |
+| 6 | STUDY-HUB-06 | Questions grounded in selected documents, with evidence gaps, conflicting sources and aircraft applicability visible. |
+| 7 | STUDY-HUB-07 | Lesson preparation and deliberately selected follow-up study informed by study activity; reviewed ACS links later. |
+| 8 | STUDY-HUB-08 | Honest document-processing states for readable text, scans, partial extraction, retry and OCR needs. |
+
+[Open-source shortlist](docs/STUDY_HUB_OSS_RESEARCH_2026-10-17.md): actual GitHub counts/licenses checked; reuse PDF.js/MiniSearch evidence, consider jsdiff for regeneration previews, evaluate OCR later, and keep semantic retrieval conditional. No package adopted.
+
+Source references, connected topics and corrections/version handling form the foundation. Existing privacy, offline, backup/restore, independent-review and exact-head CI requirements continue. This approval adopts no dependency, migration, provider integration or OCR engine. Earlier dated entries below retain their historical status.
+
 ## P54-06 evaluation reviewed and corrected; production remains simple-v1 — 17 October 2026
 
 Gemini's e8da4d5 evaluation needed factual corrections on erased history, numeric guarantees, algorithm/package versions and migration assumptions. Corrected documentation preserves reset erasure, requires reference-vector/numeric proof and keeps schema14 verification frozen. [Findings and next model scope](docs/P54_06_EVALUATION_REVIEW_2026-10-17.md). Next is bounded non-production feasibility; no library exception, FSRS engine, migration or retention UI is adopted. No merge authorized; current calendar/Study Hub work remains separate. Earlier history follows unchanged.
