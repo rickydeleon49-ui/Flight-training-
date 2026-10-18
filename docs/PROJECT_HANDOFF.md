@@ -8,8 +8,11 @@ The owner approved the four improvements after a friend reported slow/failed stu
 | 2 | GEN-REL-02 | Recoverable background jobs and validated checkpoints: navigation/restart-safe ownership, source-bound saves, preserved previous content, no repeat provider call for save-only recovery. |
 | 3 | GEN-REL-03 | Bounded retries and clear diagnosis: transient transport/status handling, one shared active-time budget, retained attempt limits, actionable quota/auth/model/output/save errors; no indefinite waiting or false exactly-once claim. |
 | 4 | GEN-REL-04 | Honest job-scoped progress, Cancel and stage-appropriate Retry/Resume; no fake percentages, post-cancel writes or obsolete notices. |
+| 5 | GEN-REL-05 | More source-grounded flashcards after reliability: proposed40-card default with20/40/60 choices, batches up to10, honest source-limited counts and draft recovery; preserve existing cards/history. |
 
 **Next implementer:** complete **GEN-REL-01 only**, using the [full model-neutral assignment](GENERATION_RELIABILITY_FIRST_IMPLEMENTER_PROMPT_2026-10-18.md), then submit source/evidence for independent review and stop. Each next item waits for the previous item's review/integration. Routine implementation defaults are in the plan; do not restart product-decision questionnaires. Her exact error/build/file size is pending and must not be invented.
+
+**Additional owner request:** more flashcards. Current generation asks for10–20; GEN-REL-05 records the larger-set request. The numeric defaults above are proposed, since the owner has not specified a count. It follows01–04 and does not expand Claude's current GEN-REL-01 task.
 
 P54-06/PR210, including its known P54BASE-R1 proof-coverage correction, is paused and preserved; no FSRS comparison or migration. P54-07/08 and Study Hub/OSS follow-on work retain their relative order after reliability. PR164's external tooling remains separate. No implementation is claimed by this planning entry, no app/profile/provider/release action is performed, and agents do not merge. Earlier tracker history follows unchanged.
 

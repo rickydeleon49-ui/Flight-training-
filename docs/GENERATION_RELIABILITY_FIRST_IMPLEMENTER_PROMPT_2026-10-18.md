@@ -2,6 +2,8 @@
 
 The owner approved prioritizing four generation-reliability improvements and asked for them **one at a time**. You are the implementer. Complete the first feature thoroughly, with a reviewable source package and evidence, then stop. Do not spend remaining usage on GEN-REL-02/03/04 or the paused scheduler work.
 
+The owner subsequently requested more flashcards. That is queued as GEN-REL-05 after the reliability series, with proposed40-card default and20/40/60 choices in bounded batches. It is **not part of your active first-feature scope**: do not increase the existing combined response size or implement count selection now. Source preparation should remain reusable by later bounded generation jobs.
+
 ## Start safely and read the authority
 
 Repository: `/Users/rickymac/code/Flight-training-`, remote `rickydeleon49-ui/Flight-training-`. Fetch first. Read `CLAUDE.md`, `PRODUCT_SPEC.md`, the current top of STATUS/ROADMAP/handoff and `docs/GENERATION_RELIABILITY_PLAN_2026-10-18.md`. This instruction authorizes the first bounded implementation; routine choices within its defaults need no repeated owner questionnaire.

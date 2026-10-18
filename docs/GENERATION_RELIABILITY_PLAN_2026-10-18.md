@@ -4,7 +4,9 @@
 
 On18 October2026 the owner approved the four discussed improvements, requested delivery **one at a time before other feature work**, and assigned implementation to Claude. Filenames and assignments remain model-neutral so another implementer can take over. This is approved implementation direction, not a claim that the features exist or have passed review.
 
-Delivery order is **GEN-REL-01 → GEN-REL-02 → GEN-REL-03 → GEN-REL-04**. Each has its own reviewable package and independent acceptance before the next starts. Owner controls integration; no agent merge or auto-merge. The existing P54/Study Hub relative order resumes afterward. Pause P54-06/PR210 corrections and phase B while this priority runs; preserve its known P54BASE-R1 finding, fixtures and receipts. Do not start a competing scheduler or another retrieval engine.
+Delivery order is **GEN-REL-01 → GEN-REL-02 → GEN-REL-03 → GEN-REL-04 → GEN-REL-05**. Each has its own reviewable package and independent acceptance before the next starts. Owner controls integration; no agent merge or auto-merge. The existing P54/Study Hub relative order resumes afterward. Pause P54-06/PR210 corrections and phase B while this priority runs; preserve its known P54BASE-R1 finding, fixtures and receipts. Do not start a competing scheduler or another retrieval engine.
+
+**Additional owner request,18 October2026:** generate more flashcards. Queue **GEN-REL-05 after01–04**, before resuming the earlier feature queue. The owner requested a larger set, not a specific number; proposed implementation defaults are40 cards with20/40/60 choices, delivered in batches of up to10. These numbers are a recommendation, not a quotation of owner-approved counts. This does not enlarge Claude's active GEN-REL-01 assignment.
 
 Current source baseline is main2e3f7fee6f84dd094c23ac0dfd7cd1053d2ccc4d. A friend reports slow/failed generation, but her app version, exact error and source size are still pending. Those details can refine diagnosis; their absence does not block the source-confirmed reliability work. Do not label every failure as her internet or Google's capacity.
 
@@ -69,6 +71,18 @@ Start after GEN-REL-03 review/integration. Show actual stages: preparing source,
 Provide Cancel and stage-appropriate Retry/Resume. Cancellation stops remaining local work, marks the job durably and suppresses obsolete publication; it cannot promise an already submitted remote request was unprocessed/unbilled. Resolve completion-versus-cancel atomically: never show cancelled while a late unowned save replaces content. Preserve useful completed checkpoints and existing study content. A streaming preview is optional, visibly a draft, and cannot bypass final validation.
 
 Tests: accessible keyboard controls and live status, stale/multi-job events, navigation/restart, cancel during each wait/upload/generation/validation/save boundary, completion racing cancellation, no post-cancel writes or new calls, retry only the failed safe stage, and no spinner with no recoverable action. Browser/source UI tests do not prove installed WKWebView behavior.
+
+## GEN-REL-05 — Larger, source-grounded flashcard sets
+
+Start after GEN-REL-01–04 review/integration. The current combined study-aid prompt asks for10–20 flashcards with an8,192-token output cap. Add a clear target-card-count choice for new generation and deliberate regeneration: proposed default40, options20/40/60. Treat the count as a target/maximum, not a promise that a short source supports that many distinct facts. Explain when fewer grounded cards are available; do not pad with duplicates, unsupported facts or artificial paraphrases. Keep practice-test question count unchanged.
+
+Reuse the prepared selected source from01 and checkpointed jobs from02. Generate card batches of up to10 with bounded requests/output; do not simply ask for60 inside the existing guide-plus-cards JSON response and hope it fits. Preserve source material/content/page identity on every batch. Detect exact normalized question/answer duplicates across batches; source citations and de-duplication alone do not establish factual correctness. Retain quality/disclaimer and unsupported-source behavior.
+
+Checkpoint validated batches as drafts. Publish only the deliberately accepted completed set through the existing reviewed version/replacement contract; failures must not replace the previous guide/cards or damage review history. No automatic incremental append into a live set, card reordering or reassignment of existing progress. Appending more cards to an existing set is separate scope if desired later; it needs explicit identity/history design rather than assuming that changing the ordered card list preserves IDs.
+
+Distinguish planned batch calls from retries and declare a finite whole-job request cap before implementation. Keep GEN-REL-03's shared active-time budget and bounded automatic recovery; never reset the job budget just because another batch starts. Any necessary policy refinement must be explicit, reviewed and tested. Budget exhaustion leaves an honest recoverable draft, not a silently extended spinner or a falsely complete set. Show completed/target counts and allow the already-reviewed cancellation/resume behavior; interrupted or repeated batches cannot be committed twice.
+
+Tests: targets20/40/60, invalid counts, short/empty sources, duplicate/repeated responses, source changes between batches, missing/bad page references, malformed/truncated output, token/byte limits, shared budget and retry exhaustion, cancellation/restart/resume, final-save failure and preserved prior content/history. Measure captured source-upload bytes and bounded request counts on synthetic inputs. Live-provider output quality and duration remain unverified until a separate authorized test. This is a follow-on count-generation feature, not permission to start it alongside GEN-REL-01.
 
 ## Shared completion and handoff
 
