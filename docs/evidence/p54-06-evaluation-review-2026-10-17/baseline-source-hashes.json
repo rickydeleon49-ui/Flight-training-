@@ -1,0 +1,11 @@
+{
+  "baseline": "2fc27b90aacd33183a8e5c0f3047008df37383b4",
+  "files": {
+    "src/logic/cardScheduler.ts": "019dab24fa66d1e3065b7580f9062ac9c3205c46f3ea8df65d0de58f318e0004",
+    "src/logic/cardIdentity.ts": "3835c35c9e0857bfb017b2929eb5b1015438cffe7659bd5b2e1f35cd4969e18d",
+    "src/logic/localDay.ts": "3efbaf18db07403430ec6bf751d001181e552e64eed8e53cde7c8be97702c514",
+    "src/data/cardReviewTransaction.ts": "30c17f500187f8b89e9e40388cc8900bfd1da92293bc9aadc343bfdd6bd756da",
+    "src-tauri/src/card_reviews.rs": "0d8b7cb7f383aed5e2a1dba3861a4aefebb8fd74ebbe47d7f56e24e9de036403",
+    "src-tauri/migrations/0012_card_reviews.sql": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e"
+  }
+}

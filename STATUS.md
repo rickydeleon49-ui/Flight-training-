@@ -1,3 +1,7 @@
+## P54-06 evaluation reviewed and corrected; production remains simple-v1 — 17 October 2026
+
+Gemini's e8da4d5 evaluation needed factual corrections on erased history, numeric guarantees, algorithm/package versions and migration assumptions. Corrected documentation preserves reset erasure, requires reference-vector/numeric proof and keeps schema14 verification frozen. [Findings and next model scope](docs/P54_06_EVALUATION_REVIEW_2026-10-17.md). Next is bounded non-production feasibility; no library exception, FSRS engine, migration or retention UI is adopted. No merge authorized; current calendar/Study Hub work remains separate. Earlier history follows unchanged.
+
 ## STUDY-UI-01 file-bar overlap corrected; pending review — 17 October 2026
 
 Owner screenshot confirmed file metadata squeezed by three non-wrapping actions. The detail bar now separates readable file details from a wrapping action row; handlers and the material-form bar are unchanged. Isolated production-JSX/CSS browser probe: before22/36, after36/36; existing lineage suite9/9 and typecheck pass. [Report and evidence](docs/STUDY_FILE_ROW_LAYOUT_FIX_2026-10-17.md). Source/browser checks only; installed rendering unverified. No merge authorized; current roadmap/agent work continues unchanged.
