@@ -1,0 +1,219 @@
+{
+  "retrievedAtUtc": "2026-10-18T02:02:02.584768+00:00",
+  "threshold": 1000,
+  "source": "GitHub REST API /repos/{owner}/{repo}",
+  "repositories": [
+    {
+      "full_name": "mozilla/pdf.js",
+      "html_url": "https://github.com/mozilla/pdf.js",
+      "stargazers_count": 54014,
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0",
+        "url": "https://api.github.com/licenses/apache-2.0",
+        "node_id": "MDc6TGljZW5zZTI="
+      },
+      "archived": false,
+      "pushed_at": "2026-10-17T15:06:55Z",
+      "default_branch": "master",
+      "description": "PDF Reader in JavaScript"
+    },
+    {
+      "full_name": "lucaong/minisearch",
+      "html_url": "https://github.com/lucaong/minisearch",
+      "stargazers_count": 6173,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "archived": false,
+      "pushed_at": "2025-09-16T12:43:59Z",
+      "default_branch": "master",
+      "description": "Tiny and powerful JavaScript full-text search engine for browser and Node"
+    },
+    {
+      "full_name": "oramasearch/orama",
+      "html_url": "https://github.com/oramasearch/orama",
+      "stargazers_count": 10578,
+      "license": {
+        "key": "other",
+        "name": "Other",
+        "spdx_id": "NOASSERTION",
+        "url": null,
+        "node_id": "MDc6TGljZW5zZTA="
+      },
+      "archived": false,
+      "pushed_at": "2026-10-08T10:18:52Z",
+      "default_branch": "main",
+      "description": "\ud83c\udf0c  A complete search engine and RAG pipeline in your browser, server or edge network with support for full-text, vector, and hybrid search in less than 2kb."
+    },
+    {
+      "full_name": "krisk/Fuse",
+      "html_url": "https://github.com/krisk/Fuse",
+      "stargazers_count": 20505,
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0",
+        "url": "https://api.github.com/licenses/apache-2.0",
+        "node_id": "MDc6TGljZW5zZTI="
+      },
+      "archived": false,
+      "pushed_at": "2026-08-09T04:40:41Z",
+      "default_branch": "main",
+      "description": "Lightweight fuzzy-search, in JavaScript"
+    },
+    {
+      "full_name": "naptha/tesseract.js",
+      "html_url": "https://github.com/naptha/tesseract.js",
+      "stargazers_count": 38767,
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0",
+        "url": "https://api.github.com/licenses/apache-2.0",
+        "node_id": "MDc6TGljZW5zZTI="
+      },
+      "archived": false,
+      "pushed_at": "2026-05-17T04:19:12Z",
+      "default_branch": "master",
+      "description": "Pure Javascript OCR for more than 100 Languages \ud83d\udcd6\ud83c\udf89\ud83d\udda5"
+    },
+    {
+      "full_name": "tesseract-ocr/tesseract",
+      "html_url": "https://github.com/tesseract-ocr/tesseract",
+      "stargazers_count": 77046,
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0",
+        "url": "https://api.github.com/licenses/apache-2.0",
+        "node_id": "MDc6TGljZW5zZTI="
+      },
+      "archived": false,
+      "pushed_at": "2026-10-10T06:01:54Z",
+      "default_branch": "main",
+      "description": "Tesseract Open Source OCR Engine (main repository)"
+    },
+    {
+      "full_name": "kpdecker/jsdiff",
+      "html_url": "https://github.com/kpdecker/jsdiff",
+      "stargazers_count": 9214,
+      "license": {
+        "key": "bsd-3-clause",
+        "name": "BSD 3-Clause \"New\" or \"Revised\" License",
+        "spdx_id": "BSD-3-Clause",
+        "url": "https://api.github.com/licenses/bsd-3-clause",
+        "node_id": "MDc6TGljZW5zZTU="
+      },
+      "archived": false,
+      "pushed_at": "2026-10-16T20:34:13Z",
+      "default_branch": "master",
+      "description": "A javascript text differencing implementation."
+    },
+    {
+      "full_name": "huggingface/transformers.js",
+      "html_url": "https://github.com/huggingface/transformers.js",
+      "stargazers_count": 16350,
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0",
+        "url": "https://api.github.com/licenses/apache-2.0",
+        "node_id": "MDc6TGljZW5zZTI="
+      },
+      "archived": false,
+      "pushed_at": "2026-10-15T06:39:00Z",
+      "default_branch": "main",
+      "description": "State-of-the-art Machine Learning for the web. Run \ud83e\udd17 Transformers directly in your browser, with no need for a server!"
+    },
+    {
+      "full_name": "langchain-ai/langchainjs",
+      "html_url": "https://github.com/langchain-ai/langchainjs",
+      "stargazers_count": 18275,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "archived": false,
+      "pushed_at": "2026-10-18T01:48:07Z",
+      "default_branch": "main",
+      "description": "The agent engineering platform"
+    },
+    {
+      "full_name": "run-llama/LlamaIndexTS",
+      "html_url": "https://github.com/run-llama/LlamaIndexTS",
+      "stargazers_count": 3082,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "archived": true,
+      "pushed_at": "2026-03-11T20:07:07Z",
+      "default_branch": "main",
+      "description": "Data framework for your LLM applications. Focus on server side solution"
+    },
+    {
+      "full_name": "open-spaced-repetition/fsrs4anki",
+      "html_url": "https://github.com/open-spaced-repetition/fsrs4anki",
+      "stargazers_count": 4108,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "archived": false,
+      "pushed_at": "2026-08-14T03:34:18Z",
+      "default_branch": "main",
+      "description": "A modern Anki custom scheduling based on Free Spaced Repetition Scheduler algorithm"
+    },
+    {
+      "full_name": "open-spaced-repetition/ts-fsrs",
+      "html_url": "https://github.com/open-spaced-repetition/ts-fsrs",
+      "stargazers_count": 827,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "archived": false,
+      "pushed_at": "2026-10-16T09:48:22Z",
+      "default_branch": "main",
+      "description": "ts-fsrs is a versatile package written in TypeScript that supports ES modules, CommonJS, and UMD. "
+    },
+    {
+      "full_name": "open-spaced-repetition/fsrs-rs",
+      "html_url": "https://github.com/open-spaced-repetition/fsrs-rs",
+      "stargazers_count": 445,
+      "license": {
+        "key": "bsd-3-clause",
+        "name": "BSD 3-Clause \"New\" or \"Revised\" License",
+        "spdx_id": "BSD-3-Clause",
+        "url": "https://api.github.com/licenses/bsd-3-clause",
+        "node_id": "MDc6TGljZW5zZTU="
+      },
+      "archived": false,
+      "pushed_at": "2026-10-09T10:51:42Z",
+      "default_branch": "main",
+      "description": "FSRS for Rust, including Optimizer and Scheduler"
+    }
+  ],
+  "notes": [
+    "Counts are snapshots, not compatibility or quality guarantees.",
+    "Orama API license is NOASSERTION; repository LICENSE.md was checked directly and states Apache-2.0."
+  ]
+}
