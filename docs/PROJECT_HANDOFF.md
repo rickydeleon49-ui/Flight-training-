@@ -1,3 +1,7 @@
+## P54-05 calendar reviewed; boundary corrections pending independent review — 17 October 2026
+
+Gemini's ce3c948 submission matches8 source hashes/23 evidence checksums. Codex reproduced six boundary failures and fixed UID property injection, noncanonical-date output and invalid timestamp/end-range handling in an isolated review branch;11 permanent cases plus the existing focused suites pass81/81. Raw author full-gate receipts remain unchanged; final diff/log treatment and current tracker bindings are corrected. [Review and precise reviewer assignment](P54_05_CALENDAR_INDEPENDENT_REVIEW_2026-10-17.md). No merge authorized. Installed Calendar/save-dialog behavior remains unverified; the separate scheduler evaluation does not authorize production adoption. Earlier history follows unchanged.
+
 ## P54-05 part B (single-lesson calendar export) implemented; pending review — 17 October 2026
 
 **PENDING REVIEW; NO SELF-MERGE.** Gemini implemented part B of the approved P54-05 scope on `gemini/p54-05-calendar-export`, from accepted main `2fc27b90aacd33183a8e5c0f3047008df37383b4`. Every eligible schedule item (scheduled, cancelled, rescheduled) has an "Add to calendar…" dialog:

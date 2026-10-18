@@ -63,7 +63,7 @@ export function daysInMonth(year: number, month: number): number {
 
 export function isValidIsoDate(dateStr: string): boolean {
   if (typeof dateStr !== "string") return false;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
   if (!match) return false;
   const year = parseInt(match[1]!, 10);
   const month = parseInt(match[2]!, 10);
@@ -105,6 +105,9 @@ export function nextCalendarDay(dateStr: string): string {
     month = 1;
     day = 1;
   }
+  if (year > 9999) {
+    throw new CalendarExportError("The lesson end date exceeds the supported calendar range.");
+  }
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
@@ -141,16 +144,13 @@ export function foldLine(line: string): string {
   const physicalLines: string[] = [];
   let currentLine = "";
   let currentOctets = 0;
-  let isFirstLine = true;
 
   for (const cp of codePoints) {
     const cpOctets = encoder.encode(cp).length;
-    const maxOctets = isFirstLine ? 75 : 75;
-    if (currentOctets + cpOctets > maxOctets) {
+    if (currentOctets + cpOctets > 75) {
       physicalLines.push(currentLine);
       currentLine = " " + cp;
       currentOctets = 1 + cpOctets;
-      isFirstLine = false;
     } else {
       currentLine += cp;
       currentOctets += cpOctets;
@@ -161,6 +161,9 @@ export function foldLine(line: string): string {
 }
 
 function formatUtcStamp(date: Date): string {
+  if (!Number.isFinite(date.getTime()) || date.getUTCFullYear() < 1 || date.getUTCFullYear() > 9999) {
+    throw new CalendarExportError("The export timestamp is outside the supported calendar range.");
+  }
   const y = String(date.getUTCFullYear()).padStart(4, "0");
   const m = String(date.getUTCMonth() + 1).padStart(2, "0");
   const d = String(date.getUTCDate()).padStart(2, "0");
@@ -250,7 +253,7 @@ export function exportCalendarEvent(
 
   const now = options.now ?? new Date();
   const dtstamp = `DTSTAMP:${formatUtcStamp(now)}`;
-  const uid = `UID:${event.id}@herflightdeck.invalid`;
+  const uid = `UID:${escapeRfcText(`${event.id}@herflightdeck.invalid`)}`;
   const summary = `SUMMARY:${escapeRfcText(event.title.trim())}`;
 
   // Description contains only:

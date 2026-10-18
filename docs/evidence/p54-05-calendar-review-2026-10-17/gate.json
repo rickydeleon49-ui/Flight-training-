@@ -1,0 +1,89 @@
+[
+  {
+    "stage": "tz-utc",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/logic/calendarExport.test.ts",
+      "src/logic/calendarExport.boundary.test.ts"
+    ],
+    "timezone": "UTC",
+    "exit": 0
+  },
+  {
+    "stage": "tz-los-angeles",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/logic/calendarExport.test.ts",
+      "src/logic/calendarExport.boundary.test.ts"
+    ],
+    "timezone": "America/Los_Angeles",
+    "exit": 0
+  },
+  {
+    "stage": "tz-kiritimati",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/logic/calendarExport.test.ts",
+      "src/logic/calendarExport.boundary.test.ts"
+    ],
+    "timezone": "Pacific/Kiritimati",
+    "exit": 0
+  },
+  {
+    "stage": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "timezone": null,
+    "exit": 0
+  },
+  {
+    "stage": "native-export",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "study_export"
+    ],
+    "timezone": null,
+    "exit": 0
+  },
+  {
+    "stage": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "timezone": null,
+    "exit": 0
+  },
+  {
+    "stage": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--check"
+    ],
+    "timezone": null,
+    "exit": 0
+  }
+]

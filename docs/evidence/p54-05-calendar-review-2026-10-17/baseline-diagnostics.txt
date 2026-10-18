@@ -1,0 +1,93 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-post-v054-roadmap
+
+ ❯ src/logic/calendarExport.review.test.ts (6 tests | 6 failed) 5ms
+     × cannot inject a calendar property through the stored event identifier 3ms
+     × refuses a noncanonical date " 2026-10-24 " rather than emitting malformed DTSTART 0ms
+     × refuses a noncanonical date "2026-10-24\r\n" rather than emitting malformed DTSTART 0ms
+     × refuses an invalid export timestamp instead of emitting NaN 0ms
+     × refuses a generated end beyond the four-digit calendar range, start=null 0ms
+     × refuses a generated end beyond the four-digit calendar range, start="23:30" 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/logic/calendarExport.review.test.ts > Independent calendar boundary diagnostics > cannot inject a calendar property through the stored event identifier
+AssertionError: expected 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRO…' not to contain '\r\nATTENDEE:'
+
+- Expected
++ Received
+
+- 
+- ATTENDEE:
++ BEGIN:VCALENDAR
++ VERSION:2.0
++ PRODID:-//Her Flight Deck//Calendar Export//EN
++ CALSCALE:GREGORIAN
++ BEGIN:VEVENT
++ UID:event-A
++ ATTENDEE:mailto:other@example.com@herflightdeck.invalid
++ DTSTAMP:20261018T031323Z
++ STATUS:CONFIRMED
++ SUMMARY:Crosswind Landings
++ DTSTART:20261024T100000
++ DTEND:20261024T110000
++ DESCRIPTION:Flight Lesson\nPrepared with Her Flight Deck — open the lesso
++  n in the app for your checklist
++ END:VEVENT
++ END:VCALENDAR
++
+
+ ❯ src/logic/calendarExport.review.test.ts:8:19
+      6|  it('cannot inject a calendar property through the stored event identi…
+      7|   const ics=exportCalendarEvent({...valid,id:'event-A\r\nATTENDEE:mail…
+      8|   expect(ics).not.toContain('\r\nATTENDEE:');
+       |                   ^
+      9|  });
+     10|  it.each([' 2026-10-24 ', '2026-10-24\r\n'])('refuses a noncanonical d…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/logic/calendarExport.review.test.ts > Independent calendar boundary diagnostics > refuses a noncanonical date " 2026-10-24 " rather than emitting malformed DTSTART
+ FAIL  src/logic/calendarExport.review.test.ts > Independent calendar boundary diagnostics > refuses a noncanonical date "2026-10-24\r\n" rather than emitting malformed DTSTART
+AssertionError: expected function to throw an error, but it didn't
+ ❯ src/logic/calendarExport.review.test.ts:11:52
+      9|  });
+     10|  it.each([' 2026-10-24 ', '2026-10-24\r\n'])('refuses a noncanonical d…
+     11|   expect(()=>exportCalendarEvent({...valid,date})).toThrow(CalendarExp…
+       |                                                    ^
+     12|  });
+     13|  it('refuses an invalid export timestamp instead of emitting NaN',()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/logic/calendarExport.review.test.ts > Independent calendar boundary diagnostics > refuses an invalid export timestamp instead of emitting NaN
+AssertionError: expected function to throw an error, but it didn't
+ ❯ src/logic/calendarExport.review.test.ts:14:62
+     12|  });
+     13|  it('refuses an invalid export timestamp instead of emitting NaN',()=>{
+     14|   expect(()=>exportCalendarEvent(valid,{now:new Date(NaN)})).toThrow(C…
+       |                                                              ^
+     15|  });
+     16|  it.each([null,'23:30'])('refuses a generated end beyond the four-digi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/logic/calendarExport.review.test.ts > Independent calendar boundary diagnostics > refuses a generated end beyond the four-digit calendar range, start=null
+ FAIL  src/logic/calendarExport.review.test.ts > Independent calendar boundary diagnostics > refuses a generated end beyond the four-digit calendar range, start="23:30"
+AssertionError: expected function to throw an error, but it didn't
+ ❯ src/logic/calendarExport.review.test.ts:17:88
+     15|  });
+     16|  it.each([null,'23:30'])('refuses a generated end beyond the four-digi…
+     17|   expect(()=>exportCalendarEvent({...valid,date:'9999-12-31',startTime…
+       |                                                                                        ^
+     18|  });
+     19| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  20:13:23
+   Duration  188ms (transform 52ms, setup 0ms, import 94ms, tests 5ms, environment 0ms)
+
