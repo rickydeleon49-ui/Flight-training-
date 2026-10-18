@@ -13,6 +13,8 @@ The owner approved all eight Study Guide recommendations, in the proposed order.
 | 7 | STUDY-HUB-07 | Lesson preparation and deliberately selected follow-up study informed by study activity; reviewed ACS links later. |
 | 8 | STUDY-HUB-08 | Honest document-processing states for readable text, scans, partial extraction, retry and OCR needs. |
 
+[Open-source shortlist](docs/STUDY_HUB_OSS_RESEARCH_2026-10-17.md): actual GitHub counts/licenses checked; reuse PDF.js/MiniSearch evidence, consider jsdiff for regeneration previews, evaluate OCR later, and keep semantic retrieval conditional. No package adopted.
+
 Source references, connected topics and corrections/version handling form the foundation. Existing privacy, offline, backup/restore, independent-review and exact-head CI requirements continue. This approval adopts no dependency, migration, provider integration or OCR engine. Earlier dated entries below retain their historical status.
 
 ## P54-05 lesson brief: review corrections BRIEF-R1/R2 applied; pending re-review — 17 October 2026

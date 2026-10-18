@@ -66,3 +66,7 @@ Acceptance: durable, understandable states with bounded retry/cancellation, reco
 ## Rationale sources
 
 Retrieval practice and spacing inform the study-session and feedback directions: [IES practice guide](https://ies.ed.gov/ncee/wwc/PracticeGuide/1). FAA coverage should use the applicable published [Airman Certification Standards](https://www.faa.gov/training_testing/testing/acs), with mappings reviewed before publication. These sources support the direction; they do not validate this app's eventual implementation.
+
+## Open-source candidate research
+
+[GitHub shortlist and eligibility snapshot](STUDY_HUB_OSS_RESEARCH_2026-10-17.md) maps candidates to these outcomes, checks the actual 1,000-star threshold, identifies archived/below-threshold exclusions, and records Mac/resource/license qualifications. Research only; no dependency is adopted.
