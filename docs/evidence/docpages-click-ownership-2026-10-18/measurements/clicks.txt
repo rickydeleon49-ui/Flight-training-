@@ -1,0 +1,40 @@
+enabled the pages panel > adds, lists, opens and removes a bookmark bound to the checked content
+enabled the pages panel > a bookmark held across a file replacement is refused and nothing is saved
+enabled saved places open only on their own content (M4S1-R5) > opening a saved A bookmark must not silently target replacement B
+enabled saved places open only on their own content (M4S1-R5) > an unchanged file opens the bookmark's own page and label
+enabled saved places open only on their own content (M4S1-R5) > a file replaced while the bookmark's inspection is held is refused
+enabled saved places open only on their own content (M4S1-R5) > a deleted file explains itself and nothing is opened or saved
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an open draft retains its original content after a background refresh
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a replacement while the save itself is held is refused as stale
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an unchanged file saves the draft normally
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a draft does not follow the panel to another material
+enabled the pages panel > adds, lists, opens and removes a bookmark bound to the checked content
+enabled the pages panel > a bookmark held across a file replacement is refused and nothing is saved
+enabled saved places open only on their own content (M4S1-R5) > opening a saved A bookmark must not silently target replacement B
+enabled saved places open only on their own content (M4S1-R5) > an unchanged file opens the bookmark's own page and label
+enabled saved places open only on their own content (M4S1-R5) > a file replaced while the bookmark's inspection is held is refused
+enabled saved places open only on their own content (M4S1-R5) > a deleted file explains itself and nothing is opened or saved
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an open draft retains its original content after a background refresh
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a replacement while the save itself is held is refused as stale
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an unchanged file saves the draft normally
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a draft does not follow the panel to another material
+enabled the pages panel > adds, lists, opens and removes a bookmark bound to the checked content
+enabled the pages panel > a bookmark held across a file replacement is refused and nothing is saved
+enabled saved places open only on their own content (M4S1-R5) > opening a saved A bookmark must not silently target replacement B
+enabled saved places open only on their own content (M4S1-R5) > an unchanged file opens the bookmark's own page and label
+enabled saved places open only on their own content (M4S1-R5) > a file replaced while the bookmark's inspection is held is refused
+enabled saved places open only on their own content (M4S1-R5) > a deleted file explains itself and nothing is opened or saved
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an open draft retains its original content after a background refresh
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a replacement while the save itself is held is refused as stale
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an unchanged file saves the draft normally
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a draft does not follow the panel to another material
+enabled the pages panel > adds, lists, opens and removes a bookmark bound to the checked content
+enabled the pages panel > a bookmark held across a file replacement is refused and nothing is saved
+enabled saved places open only on their own content (M4S1-R5) > opening a saved A bookmark must not silently target replacement B
+enabled saved places open only on their own content (M4S1-R5) > an unchanged file opens the bookmark's own page and label
+enabled saved places open only on their own content (M4S1-R5) > a file replaced while the bookmark's inspection is held is refused
+enabled saved places open only on their own content (M4S1-R5) > a deleted file explains itself and nothing is opened or saved
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an open draft retains its original content after a background refresh
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a replacement while the save itself is held is refused as stale
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > an unchanged file saves the draft normally
+enabled a bookmark draft keeps the content it was started on (M4S1-R6) > a draft does not follow the panel to another material

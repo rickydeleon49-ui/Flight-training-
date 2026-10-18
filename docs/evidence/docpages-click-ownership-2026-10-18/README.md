@@ -10,6 +10,8 @@
 2. **Not a disabled button.** All 40 recorded clicks hit an enabled button.
 3. **The check never ran.** A trace of a failing run (`trace-of-a-failure-before-fix.txt`) shows the click, then only the panel's initial `read`, and no `inspect` call at all.
 
+**Diagnosis: a strongly supported inference, not a proof for every historical failure.** The trace shows a click followed only by an initial read and no inspection. The regression below shows deterministically that an action started before passive effects is refused. The trace did not record the handler being entered, the missing lease, `STALE_STATE` or the suppressed notice. The timing samples, button-state observations and longer-wait experiments were taken with temporary instrumentation, and their raw records are kept in `measurements/`.
+
 The navigation hook's action lease (`useMaterialNavigation`'s `active.current`) and the panel's notice owner (`notices.current`) were both set in **passive** `useEffect`s. React can commit the panel's DOM, and make it clickable, before passive effects run. That gap is wider when the machine is busy. A click in it found no lease, so `refreshAfter` refused it as `STALE_STATE`, and the notice-owner check suppressed the error message. The result was a button that did nothing.
 
 ## Fix
@@ -18,6 +20,7 @@ Both ownership markers are set in `useLayoutEffect`, during the commit, before a
 
 ## Evidence
 
+- `measurements/`: raw records from the temporary instrumentation (click-to-text timings, button state at each click, the panel text when a 5 s wait failed).
 - `prefix-regression-failing.log`: the new regression, "an action started before passive effects have run still runs and refreshes" in `useDocumentNavigationLifecycle.test.ts`, fails on origin/main's hook with `refused: This changed somewhere else.…`. It passes with the fix.
 - Navigation suites pass, 102/102.
 - `full-suite-8-runs-after-fix.txt`: no `DocumentPagesPanel` failure in 8 full frontend runs, versus 3 in about the previous 10. Two other intermittent failures appeared there, and both are outside this fix:

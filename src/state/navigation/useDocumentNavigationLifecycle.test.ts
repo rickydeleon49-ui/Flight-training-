@@ -124,23 +124,63 @@ describe("R11: action ownership survives awaited work", () => {
 });
 
 describe("a click on freshly shown controls is never refused as stale", () => {
-  it("an action started before passive effects have run still runs and refreshes", async () => {
-    const probe = rig(() => A);
-    probe.upstream.resolve();
+  it("an action started before passive effects have run still runs and refreshes, and an older initial read cannot overwrite it", async () => {
+    // Reads are answered by hand, in a chosen order, with distinguishable
+    // snapshots: the initial read would report content A, the read after the
+    // action content B.
+    const reads: { hash: string; gate: ReturnType<typeof gate> }[] = [];
+    let inspections = 0;
+    let nextHash = A;
+    const inspection = gate();
+    const repo = {
+      supported: () => true,
+      inspect: async (id: string) => {
+        inspections++;
+        await inspection.promise;
+        nextHash = B;
+        return { ...snapshot(id, B).identity!, changed: true };
+      },
+      operation: async (op: NavigationOperation) => {
+        if (op.kind !== "read") return { deleted: true };
+        const entry = { hash: nextHash, gate: gate() };
+        reads.push(entry);
+        await entry.gate.promise;
+        return snapshot(op.materialId, entry.hash);
+      },
+    } as unknown as NavigationRepository;
     let outcome: Promise<string> | null = null;
     // The probe's own layout effect runs during the commit, before any passive
     // effect: the earliest moment a user's click could reach the new controls.
-    renderHook(() => {
-      const nav = useMaterialNavigation("m1", probe.repo, IDLE);
+    const { result } = renderHook(() => {
+      const nav = useMaterialNavigation("m1", repo, IDLE);
       useLayoutEffect(() => {
         outcome ??= nav.checkPages().then(() => "ran", (error: unknown) => `refused: ${String((error as Error)?.message ?? error)}`);
       });
       return nav;
     });
     expect(outcome).not.toBeNull();
+    // The initial read (content A) is dispatched while the inspection is held;
+    // then the inspection finishes and the action's follow-up read (content B)
+    // is dispatched. Both are pending.
+    await waitFor(() => expect(reads).toHaveLength(1));
+    await act(async () => inspection.resolve());
+    await waitFor(() => expect(reads).toHaveLength(2));
+    expect(inspections).toBe(1);
+    const followUp = reads.find((r) => r.hash === B)!;
+    const initial = reads.find((r) => r.hash === A)!;
+    expect(followUp).toBeTruthy();
+    expect(initial).toBeTruthy();
+    // The newer read answers first; the older initial read answers last.
     await act(async () => {
+      followUp.gate.resolve();
       expect(await outcome).toBe("ran");
     });
-    expect(probe.mutations()).toBe(1);
+    await act(async () => {
+      initial.gate.resolve();
+      await initial.gate.promise;
+    });
+    expect(result.current.state?.identity?.contentSha256).toBe(B);
+    expect(result.current.error).toBeNull();
+    expect(result.current.loading).toBe(false);
   });
 });
