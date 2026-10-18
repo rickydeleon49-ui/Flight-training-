@@ -1,3 +1,20 @@
+## Owner-approved Study Guide hub improvements — 17 October 2026
+
+The owner approved all eight Study Guide recommendations, in the proposed order. The Study Guide becomes the central study hub backed by original documents. **Planning approved; implementation not started by this entry.** Keep the current P54 queue and active calendar-export assignment ahead of this follow-on sequence. Reuse accepted work from overlapping P54 items instead of duplicating it. [Detailed scope and acceptance criteria](docs/STUDY_HUB_ROADMAP_2026-10-17.md).
+
+| Order | ID | Approved outcome |
+| --- | --- | --- |
+| 1 | STUDY-HUB-01 | Source links beside explanations, carried into cards and quiz explanations, tied to document revision and page. |
+| 2 | STUDY-HUB-02 | Connected topics linking guides, cards, missed questions, instructor questions and lessons. |
+| 3 | STUDY-HUB-03 | User/instructor corrections, dependency visibility, regeneration previews and source-version handling that preserve edits/history. |
+| 4 | STUDY-HUB-04 | Explainable, manageable next study sessions based on missed questions, due cards and upcoming lessons. |
+| 5 | STUDY-HUB-05 | Useful wrong-answer explanations, source reading and optional explain-in-your-own-words prompts. |
+| 6 | STUDY-HUB-06 | Questions grounded in selected documents, with evidence gaps, conflicting sources and aircraft applicability visible. |
+| 7 | STUDY-HUB-07 | Lesson preparation and deliberately selected follow-up study informed by study activity; reviewed ACS links later. |
+| 8 | STUDY-HUB-08 | Honest document-processing states for readable text, scans, partial extraction, retry and OCR needs. |
+
+Source references, connected topics and corrections/version handling form the foundation. Existing privacy, offline, backup/restore, independent-review and exact-head CI requirements continue. This approval adopts no dependency, migration, provider integration or OCR engine. Earlier dated entries below retain their historical status.
+
 ## P54-05 lesson brief: review corrections BRIEF-R1/R2 applied; pending re-review — 17 October 2026
 
 **PENDING RE-REVIEW; NO SELF-MERGE.** Claude fixed both findings from Codex's PR204 review in `LessonBriefDialog.tsx`:
