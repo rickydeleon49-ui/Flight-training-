@@ -34,6 +34,7 @@ import { defaultToolkitState } from "@/logic/toolkit";
 import { hidePending } from "@/logic/pendingDeletes";
 import type { DailyPlanState } from "@/logic/dailyPlan";
 import type { Id } from "@/domain/types";
+import { GeminiJobsProvider } from "./GeminiJobs";
 
 /**
  * Everything the application knows about, held in memory.
@@ -410,7 +411,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>
+    <AppDataContext.Provider value={value}>
+      <GeminiJobsProvider
+        data={data}
+        ready={status === "ready"}
+        mutate={mutate}
+        repositories={repositoriesRef.current}
+      >
+        {children}
+      </GeminiJobsProvider>
+    </AppDataContext.Provider>
   );
 }
 

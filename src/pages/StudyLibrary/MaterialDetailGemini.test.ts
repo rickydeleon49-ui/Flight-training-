@@ -193,7 +193,7 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     expect(generatePracticeTestSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("does not save a stale study aid if navigation changes before generation completes", async () => {
+  it("saves a study aid to the material it was made from even after navigating to another one (GEN-REL-02)", async () => {
     const repos = createRepositories(db);
     const material1 = await repos.documents.create({
       id: "mat-old",
@@ -236,9 +236,12 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
       });
     });
 
-    // Verify nothing was saved to either material
-    const studySets = await repos.documents.listAiStudySets();
-    expect(studySets).toHaveLength(0);
+    // The answer belongs to the material it was made from, not to the page.
+    await waitFor(async () =>
+      expect((await repos.documents.listAiStudySets()).map((set) => [set.sourceMaterialId, set.title])).toEqual([
+        ["mat-old", "Old Study Guide"],
+      ]),
+    );
   });
 
   it("does not save a stale study aid if the attachment is replaced before generation completes", async () => {
@@ -388,9 +391,10 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
       });
     });
 
-    // - A's stale result is not saved
-    const studySets = await repos.documents.listAiStudySets();
-    expect(studySets).toHaveLength(0);
+    // - A's result is saved to A, not to B (GEN-REL-02)
+    await waitFor(async () =>
+      expect((await repos.documents.listAiStudySets()).map((set) => set.sourceMaterialId)).toEqual([materialA.id]),
+    );
 
     // - The global lock releases
     await waitFor(() => expect(practiceBtnB.hasAttribute("disabled")).toBe(false));
@@ -496,9 +500,10 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
       });
     });
 
-    // - A's stale result is not saved
-    const tests = await repos.documents.listPracticeTests();
-    expect(tests).toHaveLength(0);
+    // - A's result is saved to A, not to B (GEN-REL-02)
+    await waitFor(async () =>
+      expect((await repos.documents.listPracticeTests()).map((test) => test.sourceMaterialId)).toEqual([materialA.id]),
+    );
 
     // - Global lock releases
     await waitFor(() => expect(studyBtnB.hasAttribute("disabled")).toBe(false));

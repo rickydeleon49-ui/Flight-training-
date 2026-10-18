@@ -1,0 +1,435 @@
+$ npm test
+
+> her-flight-deck@0.5.5 test
+> vitest run
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-gen-rel-02
+
+(node:42585) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42584) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42583) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42581) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42587) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42582) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42586) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42588) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42589) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42593) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42595) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42596) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42597) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42599) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42598) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42602) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42609) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42605) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42615) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42875) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42874) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42878) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts (18 tests | 1 failed) 3944ms
+     × opening a saved A bookmark must not silently target replacement B 1092ms
+(node:42924) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42925) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42927) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42926) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42929) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42928) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42932) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42934) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42933) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42936) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42935) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42938) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42940) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42939) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42943) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42941) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42944) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42945) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42946) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42947) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42953) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42951) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42955) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42957) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42958) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42961) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42959) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42962) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42960) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42966) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42964) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42965) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42967) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42972) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42968) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42975) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42981) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42977) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42980) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42978) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42979) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42990) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42989) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42992) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42991) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42993) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42994) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42997) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42996) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43000) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43002) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43008) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43009) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43010) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43011) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43012) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43021) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43018) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43019) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43026) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts > saved places open only on their own content (M4S1-R5) > opening a saved A bookmark must not silently target replacement B
+TestingLibraryElementError: Unable to find an element with the text: This PDF has 50 pages.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"card"[39m
+[36m>[39m
+  [36m<header[39m
+    [33mclass[39m=[32m"card__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"card__eyebrow"[39m
+      [36m>[39m
+        [0mPages[0m
+      [36m</p>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"card__title"[39m
+      [36m>[39m
+        [0mFind your place[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+  [36m</header>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"card__body"[39m
+  [36m>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"_r_79_"[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<h4[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+        [33mid[39m=[32m"_r_79_"[39m
+      [36m>[39m
+        [0mPages of [0m
+        [0mSynthetic handbook[0m
+      [36m</h4>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--between row--wrap"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mThis file's pages haven't been checked yet. They are checked when you open a page.[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCheck pages[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"row row--wrap"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_7a_"[39m
+          [36m>[39m
+            [0mPDF page[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-describedby[39m=[32m"_r_7a_-hint"[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mid[39m=[32m"_r_7a_"[39m
+            [33minputmode[39m=[32m"numeric"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"field__hint"[39m
+            [33mid[39m=[32m"_r_7a_-hint"[39m
+          [36m>[39m
+            [0mThe page number your PDF reader shows.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mOpen at page[0m
+        [36m</button>[39m
+      [36m</form>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between row--wrap"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"small strong"[39m
+          [36m>[39m
+            [0mBookmarks[0m
+          [36m</h4>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAdd bookmark[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mCheck this file's pages before adding a bookmark.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mNo bookmarks yet.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"card"[39m
+[36m>[39m
+  [36m<header[39m
+    [33mclass[39m=[32m"card__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"card__eyebrow"[39m
+      [36m>[39m
+        [0mPages[0m
+      [36m</p>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"card__title"[39m
+      [36m>[39m
+        [0mFind your place[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+  [36m</header>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"card__body"[39m
+  [36m>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"_r_79_"[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<h4[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+        [33mid[39m=[32m"_r_79_"[39m
+      [36m>[39m
+        [0mPages of [0m
+        [0mSynthetic handbook[0m
+      [36m</h4>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row row--between row--wrap"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mThis file's pages haven't been checked yet. They are checked when you open a page.[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCheck pages[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"row row--wrap"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"field__label"[39m
+            [33mfor[39m=[32m"_r_7a_"[39m
+          [36m>[39m
+            [0mPDF page[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-describedby[39m=[32m"_r_7a_-hint"[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mid[39m=[32m"_r_7a_"[39m
+            [33minputmode[39m=[32m"numeric"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"field__hint"[39m
+            [33mid[39m=[32m"_r_7a_-hint"[39m
+          [36m>[39m
+            [0mThe page number your PDF reader shows.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--primary"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mOpen at page[0m
+        [36m</button>[39m
+      [36m</form>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row row--between row--wrap"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"small strong"[39m
+          [36m>[39m
+            [0mBookmarks[0m
+          [36m</h4>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary button--small"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAdd bookmark[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mCheck this file's pages before adding a bookmark.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mNo bookmarks yet.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ savedBookmark src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts:279:25
+    277|   async function savedBookmark(scope: HTMLElement) {
+    278|     fireEvent.click(within(scope).getByRole("button", { name: "Check p…
+    279|     await within(scope).findByText("This PDF has 50 pages.");
+       |                         ^
+    280|     fireEvent.click(within(scope).getByRole("button", { name: "Add boo…
+    281|     const dialog = await screen.findByRole("dialog", { name: "Add a bo…
+ ❯ src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts:295:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 169 passed | 4 skipped (174)
+      Tests  1 failed | 3658 passed | 6 skipped (3665)
+   Start at  12:37:01
+   Duration  61.02s (transform 6.00s, setup 0ms, import 25.34s, tests 296.17s, environment 34.43s)
+
+EXIT 1

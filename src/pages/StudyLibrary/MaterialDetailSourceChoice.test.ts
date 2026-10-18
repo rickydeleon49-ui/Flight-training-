@@ -135,7 +135,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     await openMaterial("root", "Synthetic Handbook");
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Send to Gemini" }));
-    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledWith("documents/handbook.pdf"));
+    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledWith("documents/handbook.pdf", "root", undefined));
   });
 
   it("a part sends only that part, names its pages, and saves to the part, not the original", async () => {
@@ -146,7 +146,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     expect(dialog.textContent).toMatch(/Only “ch3\.pdf”, pages 41–60 of “Synthetic Handbook”, leaves this Mac/);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
     await waitFor(() => expect(generateStudyAid).toHaveBeenCalledTimes(1));
-    expect(generateStudyAid).toHaveBeenCalledWith("documents/ch3.pdf");
+    expect(generateStudyAid).toHaveBeenCalledWith("documents/ch3.pdf", "ch3", undefined);
     const repos = createRepositories(db);
     await waitFor(async () => expect(await repos.documents.listAiStudySets()).toHaveLength(1));
     const [saved] = await repos.documents.listAiStudySets();

@@ -18,6 +18,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::documents;
 use crate::gemini_files::{self, PreparedSources, Source, GOOGLE_BASE};
+use crate::gemini_jobs::{self, JobKind, JobRecord, JobStage};
 use crate::lineage::calculate_sha256;
 use crate::pdf;
 use crate::secrets;
@@ -803,16 +804,196 @@ async fn generate_on(
     generate_with_retries_at(ctx, &body).await
 }
 
+/// Said to the window whenever a job changes stage.
+const JOB_EVENT: &str = "gemini-job";
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct JobChanged {
+    id: String,
+    stage: JobStage,
+}
+
+/// What a generation command returns: the validated answer, plus the job it is
+/// recorded under so the window can save it, or save it again, without asking
+/// Gemini twice (GEN-REL-02).
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JobAnswer<T: Serialize> {
+    #[serde(flatten)]
+    answer: T,
+    job_id: Option<String>,
+    /// SHA-256 of exactly the bytes that were sent.
+    content_sha256: String,
+    /// Whether the answer is on disk as a checkpoint. False means only this
+    /// window holds it: a restart before it is saved would lose it.
+    checkpointed: bool,
+}
+
+/// If a job's work stops without an outcome (a panic, a dropped future), the
+/// job must not stay `running` and hold the lock until the app restarts, and
+/// a window following it must hear that it ended.
+struct RunningJob<'a> {
+    root: &'a Path,
+    id: Option<String>,
+    changed: &'a (dyn Fn(&JobRecord) + Sync),
+}
+
+impl RunningJob<'_> {
+    /// Record the outcome. `Err` means it could not be written to disk; the
+    /// job has then been released.
+    fn finish(mut self, outcome: Result<Value, &str>) -> Result<Option<JobRecord>, String> {
+        let Some(id) = self.id.take() else {
+            return Ok(None);
+        };
+        let (written, record) = gemini_jobs::with(self.root, |journal| {
+            let written = match outcome {
+                Ok(result) => journal.ready(&id, result),
+                Err(message) => journal.failed(&id, message),
+            };
+            (written, journal.list().into_iter().find(|j| j.id == id))
+        });
+        (self.changed)(&record.clone().unwrap_or_else(|| released(&id)));
+        written.map(|()| record)
+    }
+}
+
+/// What a window following a job hears when the job is gone from the journal.
+fn released(id: &str) -> JobRecord {
+    JobRecord {
+        id: id.to_string(),
+        kind: JobKind::StudyAid,
+        material_id: String::new(),
+        relative_path: String::new(),
+        content_sha256: String::new(),
+        base_revision: None,
+        stage: JobStage::Failed,
+        created_at: 0,
+        updated_at: 0,
+        result: None,
+        error: None,
+    }
+}
+
+impl Drop for RunningJob<'_> {
+    fn drop(&mut self) {
+        if let Some(id) = self.id.take() {
+            let record = gemini_jobs::with(self.root, |journal| {
+                let _ = journal.failed(
+                    &id,
+                    "Creating this study aid stopped before Gemini's answer arrived. Nothing was saved; try again.",
+                );
+                journal.list().into_iter().find(|j| j.id == id)
+            });
+            // Heard by a window that is following this job after a reload.
+            (self.changed)(&record.unwrap_or_else(|| released(&id)));
+        }
+    }
+}
+
+/// Run one generation as a recorded job. `material_id` is the window's own
+/// identity for the material. Every generation is recorded, so the one-at-a-
+/// time rule holds for every caller.
+#[allow(clippy::too_many_arguments)]
+async fn as_job<T, F>(
+    root: &Path,
+    kind: JobKind,
+    material_id: &str,
+    base_revision: Option<&str>,
+    source: &LoadedSource,
+    work: F,
+    changed: &(dyn Fn(&JobRecord) + Sync),
+) -> Result<JobAnswer<T>, String>
+where
+    T: Serialize,
+    F: std::future::Future<Output = Result<T, String>>,
+{
+    let id = Some(gemini_jobs::with(root, |journal| {
+        journal.begin(
+            kind,
+            material_id,
+            &source.scope,
+            &source.content_sha256,
+            base_revision,
+        )
+    })?);
+    let running = RunningJob { root, id, changed };
+    let outcome = work.await;
+    let recorded = match &outcome {
+        Ok(answer) => match serde_json::to_value(answer) {
+            Ok(value) => running.finish(Ok(value)),
+            Err(_) => running.finish(Err("Gemini's answer could not be kept.")),
+        },
+        Err(message) => running.finish(Err(message)),
+    };
+    match (outcome, recorded) {
+        // Too large to keep, or not serializable: the journal says why.
+        (
+            Ok(_),
+            Ok(Some(JobRecord {
+                stage: JobStage::Failed,
+                error: Some(message),
+                ..
+            })),
+        ) => Err(message),
+        (Ok(answer), Ok(record)) => Ok(JobAnswer {
+            answer,
+            checkpointed: record.is_some(),
+            job_id: record.map(|r| r.id),
+            content_sha256: source.content_sha256.clone(),
+        }),
+        // The answer is valid but could not be written down: hand it over,
+        // honestly marked as held only by this window.
+        (Ok(answer), Err(_)) => Ok(JobAnswer {
+            answer,
+            job_id: None,
+            content_sha256: source.content_sha256.clone(),
+            checkpointed: false,
+        }),
+        (Err(message), _) => Err(message),
+    }
+}
+
+fn job_changed(app: &AppHandle) -> impl Fn(&JobRecord) + Sync + '_ {
+    move |record: &JobRecord| {
+        let _ = app.emit(
+            JOB_EVENT,
+            JobChanged {
+                id: record.id.clone(),
+                stage: record.stage,
+            },
+        );
+    }
+}
+
+/// Every recorded job: what the window rebuilds itself from after a reload or
+/// a restart.
+#[tauri::command]
+pub fn gemini_jobs(app: AppHandle) -> Result<Vec<JobRecord>, String> {
+    let root = app_root(&app)?;
+    Ok(gemini_jobs::with(&root, |journal| journal.list()))
+}
+
+/// The window saved or dismissed a finished job.
+#[tauri::command]
+pub fn acknowledge_gemini_job(app: AppHandle, job_id: String) -> Result<bool, String> {
+    let root = app_root(&app)?;
+    gemini_jobs::with(&root, |journal| journal.acknowledge(&job_id))
+}
+
 #[tauri::command]
 pub async fn generate_study_aid(
     app: AppHandle,
     relative_path: String,
-) -> Result<GeneratedStudyAid, String> {
+    material_id: String,
+    base_revision: Option<String>,
+) -> Result<JobAnswer<GeneratedStudyAid>, String> {
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
     let epoch = prepared_sources().epoch();
     let (api_key, source) = prepare_submission(&app, &relative_path).await?;
-    let choice = load_choice(&app_root(&app)?);
+    let root = app_root(&app)?;
+    let choice = load_choice(&root);
     let http = client(GENERATE_TIMEOUT)?;
     let progress = |message: String| say(&app, message);
     let ctx = GenContext {
@@ -824,7 +1005,16 @@ pub async fn generate_study_aid(
         epoch,
         say: &progress,
     };
-    study_aid_with(&ctx, &source).await
+    as_job(
+        &root,
+        JobKind::StudyAid,
+        &material_id,
+        base_revision.as_deref(),
+        &source,
+        study_aid_with(&ctx, &source),
+        &job_changed(&app),
+    )
+    .await
 }
 
 /// The study guide and flashcards, from the selected source.
@@ -980,12 +1170,15 @@ fn sanitize_practice_test(
 pub async fn generate_practice_test(
     app: AppHandle,
     relative_path: String,
-) -> Result<GeneratedPracticeTest, String> {
+    material_id: String,
+    base_revision: Option<String>,
+) -> Result<JobAnswer<GeneratedPracticeTest>, String> {
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
     let epoch = prepared_sources().epoch();
     let (api_key, source) = prepare_submission(&app, &relative_path).await?;
-    let choice = load_choice(&app_root(&app)?);
+    let root = app_root(&app)?;
+    let choice = load_choice(&root);
     let http = client(GENERATE_TIMEOUT)?;
     let progress = |message: String| say(&app, message);
     let ctx = GenContext {
@@ -997,7 +1190,16 @@ pub async fn generate_practice_test(
         epoch,
         say: &progress,
     };
-    practice_test_with(&ctx, &source).await
+    as_job(
+        &root,
+        JobKind::PracticeTest,
+        &material_id,
+        base_revision.as_deref(),
+        &source,
+        practice_test_with(&ctx, &source),
+        &job_changed(&app),
+    )
+    .await
 }
 
 /// A practice test from the selected source; the same prepared PDF a study

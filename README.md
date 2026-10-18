@@ -245,6 +245,20 @@ first**, which opens the existing page chooser and sends nothing; the new part
 is sent only after its own **Send to Gemini**. Text and images are still sent
 inline with the one request.
 
+**Generations outlive the page (GEN-REL-02).** A study aid or practice test
+keeps running while she opens another material or another screen, and its
+answer is saved to the material it was made from, as long as that material
+still exists with the same file and the same contents (checked by SHA-256);
+otherwise it is not saved and she is told. One generation runs at a time across
+the app. A validated answer is recorded as a checkpoint in `gemini-jobs.json` in
+the app data folder, beside the key file, so a failed save offers **Save
+again**, which uses the same answer and does not ask Gemini again. After a reload
+or restart, a finished answer waits for her to save or discard it. A generation
+cut off by the app closing is shown as interrupted and is never resent by
+itself, because nobody knows whether Google finished it. The journal holds no
+key, upload reference or document bytes, keeps at most eight jobs, and is not
+part of a backup.
+
 **Which model reads it.** Settings offers two choices once a key is connected.
 **Standard** sends documents to Gemini Flash (`gemini-3.5-flash`, which Google
 now serves as `gemini-3.6-flash`) and works on a free key. **Most capable** sends
