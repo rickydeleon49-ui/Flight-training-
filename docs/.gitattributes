@@ -305,3 +305,7 @@ evidence/p54-05-calendar-review-2026-10-17/native-export.txt -text -diff
 evidence/p54-05-calendar-review-2026-10-17/tz-kiritimati.txt -text -diff
 evidence/p54-05-calendar-review-2026-10-17/tz-los-angeles.txt -text -diff
 evidence/p54-05-calendar-review-2026-10-17/tz-utc.txt -text -diff
+evidence/p54-06-feasibility-baseline-2026-10-17/receipts/proof-tests.txt -text -diff
+evidence/p54-06-feasibility-baseline-2026-10-17/receipts/existing-pure.txt -text -diff
+evidence/p54-06-feasibility-baseline-2026-10-17/receipts/existing-history.txt -text -diff
+evidence/p54-06-feasibility-baseline-2026-10-17/receipts/helper.txt -text -diff

@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: real production baseline matches every registered literal vector
+ok 1 - real production baseline matches every registered literal vector
+  ---
+  duration_ms: 81.153708
+  type: 'test'
+  ...
+# Subtest: CLI output is identical across two runs and neither fixtures nor source change
+ok 2 - CLI output is identical across two runs and neither fixtures nor source change
+  ---
+  duration_ms: 526.94775
+  type: 'test'
+  ...
+# Subtest: a wrong expected interval fails through the real CLI with no partial PASS
+ok 3 - a wrong expected interval fails through the real CLI with no partial PASS
+  ---
+  duration_ms: 257.451292
+  type: 'test'
+  ...
+# Subtest: an incorrect refusal cannot pass as any generic exception
+ok 4 - an incorrect refusal cannot pass as any generic exception
+  ---
+  duration_ms: 52.264208
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects missing required history
+ok 5 - fixture gate rejects missing required history
+  ---
+  duration_ms: 0.498833
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects missing required timezone
+ok 6 - fixture gate rejects missing required timezone
+  ---
+  duration_ms: 1.044334
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects duplicate ID
+ok 7 - fixture gate rejects duplicate ID
+  ---
+  duration_ms: 0.522542
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects empty review stream
+ok 8 - fixture gate rejects empty review stream
+  ---
+  duration_ms: 0.113
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects unknown fields
+ok 9 - fixture gate rejects unknown fields
+  ---
+  duration_ms: 0.689667
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects ambiguous expectation
+ok 10 - fixture gate rejects ambiguous expectation
+  ---
+  duration_ms: 0.4035
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects unknown expected refusal
+ok 11 - fixture gate rejects unknown expected refusal
+  ---
+  duration_ms: 0.371208
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects unknown zone
+ok 12 - fixture gate rejects unknown zone
+  ---
+  duration_ms: 0.394084
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects fractional counter
+ok 13 - fixture gate rejects fractional counter
+  ---
+  duration_ms: 0.1075
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects invalid expected instant
+ok 14 - fixture gate rejects invalid expected instant
+  ---
+  duration_ms: 0.124125
+  type: 'test'
+  ...
+# Subtest: individual and aggregate review limits are enforced before evaluation
+ok 15 - individual and aggregate review limits are enforced before evaluation
+  ---
+  duration_ms: 11.382375
+  type: 'test'
+  ...
+# Subtest: byte reader accepts the cap and refuses cap+1
+ok 16 - byte reader accepts the cap and refuses cap+1
+  ---
+  duration_ms: 0.930208
+  type: 'test'
+  ...
+# Subtest: CLI rejects malformed JSON and unknown bypass flags with no PASS
+ok 17 - CLI rejects malformed JSON and unknown bypass flags with no PASS
+  ---
+  duration_ms: 415.865959
+  type: 'test'
+  ...
+# Subtest: all nine baseline sources are required; a changed hash refuses
+ok 18 - all nine baseline sources are required; a changed hash refuses
+  ---
+  duration_ms: 51.796458
+  type: 'test'
+  ...
+# Subtest: same-length source corruption is caught in a disposable copy
+ok 19 - same-length source corruption is caught in a disposable copy
+  ---
+  duration_ms: 15.487208
+  type: 'test'
+  ...
+# Subtest: an unavailable baseline commit refuses before loading any module
+ok 20 - an unavailable baseline commit refuses before loading any module
+  ---
+  duration_ms: 4.241209
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1617.750041

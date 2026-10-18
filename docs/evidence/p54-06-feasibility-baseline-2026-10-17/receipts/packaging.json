@@ -1,0 +1,18 @@
+{
+  "baselineSourcePinsVerifiedAgainstGit": 9,
+  "helperSourceBindings": 20,
+  "helperEvidenceMembers": 21,
+  "productionWorkflowMigrationLockVersionChanges": false,
+  "baselineCounts": {
+    "histories": 19,
+    "observations": 78,
+    "localDays": 6
+  },
+  "proofArtifacts": {
+    "docs/evidence/p54-06-feasibility-baseline-2026-10-17/fixtures.json": "c50a2fb8b23f5ca598f0f5bc8fc091b7aaa144bcf77f7746a831817eb27971fe",
+    "docs/evidence/p54-06-feasibility-baseline-2026-10-17/baseline-source-pins.json": "6cda2d5d5e8a4c8674d136470e05d7e32b30b9cbc7a5ffcb2420234c17c0976f",
+    "docs/evidence/p54-06-feasibility-baseline-2026-10-17/proof/baseline.mjs": "fe6a518974c25d21fb94fa17a3f2f57443fa0e5fb393c14fdfc8cd97990a98b1",
+    "docs/evidence/p54-06-feasibility-baseline-2026-10-17/proof/baseline.test.mjs": "62b7b4f2ca598556d4fce120235e587202ada5ef1c53f5b81ab01adf2337b8f2"
+  },
+  "scope": "Source evaluation only; no candidate algorithm or native/installed parity claim"
+}
