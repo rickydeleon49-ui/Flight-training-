@@ -1,3 +1,7 @@
+## P54-06 evaluation reviewed and corrected; production remains simple-v1 — 17 October 2026
+
+Gemini's e8da4d5 evaluation needed factual corrections on erased history, numeric guarantees, algorithm/package versions and migration assumptions. Corrected documentation preserves reset erasure, requires reference-vector/numeric proof and keeps schema14 verification frozen. [Findings and next model scope](P54_06_EVALUATION_REVIEW_2026-10-17.md). Next is bounded non-production feasibility; no library exception, FSRS engine, migration or retention UI is adopted. No merge authorized; current calendar/Study Hub work remains separate. Earlier history follows unchanged.
+
 ## P54-05 lesson brief: review corrections BRIEF-R1/R2 applied; pending re-review — 17 October 2026
 
 **PENDING RE-REVIEW; NO SELF-MERGE.** Claude fixed both findings from Codex's PR204 review in `LessonBriefDialog.tsx`:
