@@ -11,7 +11,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "@/data";
 import { DesktopOnlyError } from "./documents";
 
-export type StudyExportKind = "packet" | "handout" | "brief";
+export type StudyExportKind = "packet" | "handout" | "brief" | "calendar";
 
 export interface SavedStudyExport {
   fileName: string;

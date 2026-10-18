@@ -1,0 +1,145 @@
+{
+  "source": "git index blobs, before commit",
+  "members": 23,
+  "verified": 23,
+  "results": [
+    {
+      "path": "README.md",
+      "expected": "3d11724384e08ee23017a246ab64c873d275e30c138fdede81ee799b528891bc",
+      "indexBlobSha256": "3d11724384e08ee23017a246ab64c873d275e30c138fdede81ee799b528891bc",
+      "ok": true
+    },
+    {
+      "path": "build.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "build.log",
+      "expected": "af0f649735a7d15a3916c545b9d16ef05026ef3661af09e5ecc923c89a3bacd8",
+      "indexBlobSha256": "af0f649735a7d15a3916c545b9d16ef05026ef3661af09e5ecc923c89a3bacd8",
+      "ok": true
+    },
+    {
+      "path": "clippy.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "clippy.log",
+      "expected": "ebd80192a43690c1ac2d9153947a18d9a78db5f1b6a26f1cb604c6d8a3232a14",
+      "indexBlobSha256": "ebd80192a43690c1ac2d9153947a18d9a78db5f1b6a26f1cb604c6d8a3232a14",
+      "ok": true
+    },
+    {
+      "path": "fmt.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "fmt.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "indexBlobSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ok": true
+    },
+    {
+      "path": "focused.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "focused.log",
+      "expected": "23dfccc517541a34622f60d14091ff435e180a4b6076ebfdd0f29b007dfcdcc4",
+      "indexBlobSha256": "23dfccc517541a34622f60d14091ff435e180a4b6076ebfdd0f29b007dfcdcc4",
+      "ok": true
+    },
+    {
+      "path": "frontend.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "frontend.log",
+      "expected": "2b5e54ac3dbe7ec2b75108cb746f869c3217d8af54e32c2181c8661baf08dd48",
+      "indexBlobSha256": "2b5e54ac3dbe7ec2b75108cb746f869c3217d8af54e32c2181c8661baf08dd48",
+      "ok": true
+    },
+    {
+      "path": "helper.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "helper.log",
+      "expected": "65ffc67dc7b9beae22de465b84d4f4f44a519ddf793097b7f999ed379a2cd470",
+      "indexBlobSha256": "65ffc67dc7b9beae22de465b84d4f4f44a519ddf793097b7f999ed379a2cd470",
+      "ok": true
+    },
+    {
+      "path": "lock.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "lock.log",
+      "expected": "0ed654579b652bdfcb64ef88095f25a1e4dd812707c76c3a1651c6472602a339",
+      "indexBlobSha256": "0ed654579b652bdfcb64ef88095f25a1e4dd812707c76c3a1651c6472602a339",
+      "ok": true
+    },
+    {
+      "path": "native-study-export.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "native-study-export.log",
+      "expected": "bd65a66641de602e3dd92343f8f2ad6571e4beb7512f9c30e57fc52b0351b352",
+      "indexBlobSha256": "bd65a66641de602e3dd92343f8f2ad6571e4beb7512f9c30e57fc52b0351b352",
+      "ok": true
+    },
+    {
+      "path": "native.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "native.log",
+      "expected": "4672155ecea151a63f082972da42d446ec34e28b4abd7e49837c3eb68bbe38b2",
+      "indexBlobSha256": "4672155ecea151a63f082972da42d446ec34e28b4abd7e49837c3eb68bbe38b2",
+      "ok": true
+    },
+    {
+      "path": "node-version.txt",
+      "expected": "bd3349ad7cff237bbabeee60b3b6b74b643584c7f3fac51b82ccdc5fa911dc46",
+      "indexBlobSha256": "bd3349ad7cff237bbabeee60b3b6b74b643584c7f3fac51b82ccdc5fa911dc46",
+      "ok": true
+    },
+    {
+      "path": "source-hashes.json",
+      "expected": "ea68b189b373881f983910ada562ebd2f05b432a0a8c5e559fc1987f603da912",
+      "indexBlobSha256": "ea68b189b373881f983910ada562ebd2f05b432a0a8c5e559fc1987f603da912",
+      "ok": true
+    },
+    {
+      "path": "typecheck.exit",
+      "expected": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "indexBlobSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "ok": true
+    },
+    {
+      "path": "typecheck.log",
+      "expected": "27419b619c564b6956699b6f162ec88b10c885c656d79ca3c50813f250f655fa",
+      "indexBlobSha256": "27419b619c564b6956699b6f162ec88b10c885c656d79ca3c50813f250f655fa",
+      "ok": true
+    }
+  ]
+}

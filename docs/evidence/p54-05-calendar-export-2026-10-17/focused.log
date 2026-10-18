@@ -1,0 +1,14 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-p54-05-calendar
+
+ ✓ src/logic/calendarExport.test.ts (20 tests) 11ms
+ ✓ src/logic/lessonBrief.test.ts (12 tests) 15ms
+ ✓ src/pages/Schedule/EventDetailCost.test.ts (4 tests) 226ms
+ ✓ src/pages/Schedule/LessonBriefDialog.test.ts (14 tests) 276ms
+ ✓ src/pages/Schedule/CalendarExportDialog.test.ts (20 tests) 347ms
+
+ Test Files  5 passed (5)
+      Tests  70 passed (70)
+   Start at  18:55:07
+   Duration  981ms (transform 645ms, setup 0ms, import 1.04s, tests 875ms, environment 853ms)
+
