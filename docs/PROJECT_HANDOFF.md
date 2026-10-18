@@ -15,6 +15,10 @@ Gemini's ce3c948 submission matches8 source hashes/23 evidence checksums. Codex 
 - Reuses native atomic save with new `ExportKind::Calendar` (`.ics`, 64 KiB cap). Dialog implements BRIEF-R1/R2 session ownership and duplicate-click guards.
 - Verification gates: 70 focused tests, full frontend 3,629 passed / 6 skipped, native 533 passed / 6 ignored, typecheck, build, strict Clippy, fmt, lock sync, and schema helper (26/26) all pass with exit 0. [Report](P54_05_CALENDAR_EXPORT_REPORT_2026-10-17.md), [Reviewer prompt](P54_05_CALENDAR_EXPORT_REVIEWER_PROMPT_2026-10-17.md).
 
+## STUDY-UI-01 file-bar overlap corrected; pending review — 17 October 2026
+
+Owner screenshot confirmed file metadata squeezed by three non-wrapping actions. The detail bar now separates readable file details from a wrapping action row; handlers and the material-form bar are unchanged. Isolated production-JSX/CSS browser probe: before22/36, after36/36; existing lineage suite9/9 and typecheck pass. [Report and evidence](STUDY_FILE_ROW_LAYOUT_FIX_2026-10-17.md). Source/browser checks only; installed rendering unverified. No merge authorized; current roadmap/agent work continues unchanged.
+
 ## P54-05 lesson brief: review corrections BRIEF-R1/R2 applied; pending re-review — 17 October 2026
 
 **PENDING RE-REVIEW; NO SELF-MERGE.** Claude fixed both findings from Codex's PR204 review in `LessonBriefDialog.tsx`:
