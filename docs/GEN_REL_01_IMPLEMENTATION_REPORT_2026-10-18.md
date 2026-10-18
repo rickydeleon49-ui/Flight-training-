@@ -189,3 +189,14 @@ The only edit to an existing receipt was removing trailing whitespace from `revi
 ## Round 4: GREEN, and integration (18 October 2026)
 
 Codex review round 4 (`review-r3/codex-review-round4-green.md`) accepted the work: R1–R11 fixed, no blocking findings. The one non-blocking finding, R12, is carried into GEN-REL-03: the reuse expiry is not rechecked after a slow confirmation or on shared adoption. Under the owner's GEN-REL instruction, Claude integrates once exact-head CI is green. The trackers gained the acceptance entry, and the current schema-14 manifest was rebound to them. The helper suite was then run again (`review-r3/11-…log`, 26/26, EXIT 0).
+
+## First CI run on PR #212: one frontend timing failure (preserved)
+
+[CI run 39156104650](https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/39156104650) on head d2187be failed `npm test` with 3,647 passed, 1 failed and 6 skipped. The failure was in `src/pages/StudyLibrary/navigation/DocumentPagesPanel.test.ts`, `adds, lists, opens and removes a bookmark bound to the checked content`: `findByText("This PDF has 50 pages.")` ran past its default 1,000 ms wait, and the test took 1,161 ms on the runner. The raw log is kept in `ci/ci-39156104650-failed.log`.
+
+Classification, with evidence: a runner timing failure, not caused by this change.
+- GEN-REL-01 does not change the navigation panel or its "Check pages" flow. Its `MaterialDetail.tsx` changes add only Send-dialog text and an optional dialog button.
+- A controlled comparison against base main 45b4e2a, in a temporary detached worktree with the same `node_modules` and Node 22, ran the test 8 times on each tree with every CPU saturated: 0/8 failures on each. Five verbose timings were 158–160 ms on this branch and 155–159 ms on main.
+- No recent failed CI run shows this test failing.
+
+No retry, timeout increase or suppression was added. Integration still requires normal CI to pass on the exact final head.

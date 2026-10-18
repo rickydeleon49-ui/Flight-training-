@@ -1,4 +1,5 @@
 904f4b2819241a04f49f28007b2ccc2c09bf2be799064d03934106bc1ad4c8b3  baseline-hashes.txt
+83fd9215418ebf04f820552695ff6852d9431b67e1f3fce3b26dbf1f357ecea3  ci/ci-39156104650-failed.log
 0b818005e5f7715e31a905ca248c08a113b35e09dcb493d1a90f1721bab04c1a  failed/08-schema14-helper-with-editor-flycheck-target.log
 0d6036e4566eef1d657e4e88a78b1acad3a5576cc8e21b330be9bd702e6462f9  failed/native-baseline-inline-pdf.txt
 dcd41d8c0061b966a2c6f59478aecfb18e467bbdf22ee866068945a3b93cf911  failed/ui-source-choice-before-fix.log
