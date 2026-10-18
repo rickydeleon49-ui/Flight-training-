@@ -1,4 +1,8 @@
 ff5fbe1a6f18a8e566e8f3dd09828a4dcbeb8c172d5abc246bb19f9b757e9906  docs/evidence/gen-rel-03-completion-2026-10-18/README.md
+cfb4ddd5d6018bc41691c6802f581d5e1343ef7d85b1155e24363c05d54ef484  docs/evidence/gen-rel-03-completion-2026-10-18/acceptance/README.md
+d2d03b913c11f666b618b5cf93960c158cab79a5f27590cc3d4ce9637e578af4  docs/evidence/gen-rel-03-completion-2026-10-18/acceptance/claude-independent-gate-8ea8439.tar.gz
+3788b7dfeaf266096ba9a34f8f9c5617f9a14a717452c85d5dc97e161b120428  docs/evidence/gen-rel-03-completion-2026-10-18/acceptance/claude-independent-gate-summary.json
+8b980af441a7867506b92d664a6001b30da80d4053822aa51e4b33ad23e1f364  docs/evidence/gen-rel-03-completion-2026-10-18/acceptance/codex-review-round1-green.md
 e508bc8e01e442fdb4eb2edbd131b2b655246c4dd6e3473042503a7ea2f35c84  docs/evidence/gen-rel-03-completion-2026-10-18/diagnostics/focused-first-failed.txt
 ee275f8f19bbb19c5545c245f6dda4618d51a456d971797b36f7b0345054a769  docs/evidence/gen-rel-03-completion-2026-10-18/diagnostics/focused-first-outcome.json
 f68a5bbde6bda495d4663b7040119faba2d935ac37cb0dbc3843e13f6e6e2b04  docs/evidence/gen-rel-03-completion-2026-10-18/diagnostics/inventory-refresh-first.txt

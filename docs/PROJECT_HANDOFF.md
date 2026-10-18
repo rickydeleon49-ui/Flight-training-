@@ -1,3 +1,9 @@
+## GEN-REL-03 accepted (Codex review GREEN, Claude's independent gate green) and integrated by Claude — 18 October 2026
+
+Codex completed GEN-REL-03 from Claude's interrupted work (PR #215). That gives one 300-second active budget across the upload, file readiness, generation, retries, the backup model and cleanup, with a 15-second connect limit and at most three generation attempts. `Retry-After` is honored only within the budget. Failures are classified by stage (unreachable, upload, no answer in time, answer cut short, connection dropped, quota, refusal, blocked or truncated output), without blaming the internet unless a connection was never made. A sanitized details line is added to each failure, and GENREL01-R12 is closed.
+
+A fresh read-only Codex review (round 1) was GREEN, with one non-blocking finding: GENREL03-R1, file-check diagnostics, carried into GEN-REL-04. Because Codex also completed the code, Claude reviewed the diff independently (no blocking defect) and reran the full gate on `8ea8439`: npm 3,676 / 6 skipped, cargo 642 / 6 ignored, all other checks green. [Acceptance evidence](docs/evidence/gen-rel-03-completion-2026-10-18/acceptance/README.md). Live-provider and installed-Mac behavior remain UNVERIFIED. **Next:** GEN-REL-04 (honest progress, Cancel and stage-appropriate Retry/Resume).
+
 ## GEN-REL-03 completed from Claude's interrupted task; pending independent review — 18 October 2026
 
 **IMPLEMENTED; NOT ACCEPTED OR MERGED.** Codex preserved Claude's four partial source files, reproduced the incomplete test compilation, and finished the shared generation budget and diagnosis package on `codex/gen-rel-03-completion`, base `17c80ee` (#214). [Report](docs/GEN_REL_03_IMPLEMENTATION_REPORT_2026-10-18.md), [independent reviewer assignment](docs/GEN_REL_03_REVIEWER_PROMPT_2026-10-18.md).
