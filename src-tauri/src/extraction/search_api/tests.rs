@@ -117,6 +117,14 @@ fn resolves_only_current_filtered_documents_and_reports_all_exclusions() {
     f.add("changed", b"fff", &pages, true);
     fs::write(f.root.join("documents/changed.pdf"), b"different").unwrap();
     f.add("excluded", b"ggg", &pages, true);
+    // A note: a material with no document.
+    Connection::open(f.root.join("her-flight-deck.db"))
+        .unwrap()
+        .execute(
+            "INSERT INTO study_materials VALUES('note','note','notes',NULL,'2026-10-19',NULL)",
+            [],
+        )
+        .unwrap();
     let r = f.search(
         &[
             "a",
@@ -128,6 +136,7 @@ fn resolves_only_current_filtered_documents_and_reports_all_exclusions() {
             "gone",
             "changed",
             "deleted",
+            "note",
         ],
         "crosswind",
     );
@@ -145,13 +154,16 @@ fn resolves_only_current_filtered_documents_and_reports_all_exclusions() {
         r.coverage,
         Coverage {
             searched_documents: 2,
-            searched_pages: 2,
+            // Text and blank pages, as in the readiness summary.
+            searched_pages: 4,
             image_pages: 2,
-            other_unsearchable_pages: 4,
+            other_unsearchable_pages: 2,
             not_checked: 2,
             not_prepared: 1,
             could_not_prepare: 1,
-            missing: 2,
+            // Only the file that is gone; the deleted row and the note
+            // aren't missing files.
+            missing: 1,
             ..Coverage::default()
         }
     );
@@ -211,6 +223,26 @@ fn destination_rehashes_same_stamp_replacements_and_rejects_deleted_rows() {
     assert_eq!(
         verify_destination(&f.svc, "a", &sha).unwrap(),
         Destination::Missing
+    );
+}
+
+#[test]
+fn opening_a_result_does_not_wait_for_a_preparation_in_progress() {
+    let f = Fixture::new();
+    let sha = f.add("a", b"before", &[(Outcome::Text, "wind")], true);
+    // A preparation holds the slot for up to its deadline.
+    let held = f.svc.hold_slot_for_test();
+    let (done, answer) = std::sync::mpsc::channel();
+    let svc = f.svc.clone();
+    let checking = sha.clone();
+    std::thread::spawn(move || {
+        let _ = done.send(verify_destination(&svc, "a", &checking));
+    });
+    let result = answer.recv_timeout(Duration::from_secs(5));
+    drop(held);
+    assert_eq!(
+        result.expect("the destination check waited for the preparation"),
+        Ok(Destination::Ok)
     );
 }
 

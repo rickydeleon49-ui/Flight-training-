@@ -240,6 +240,19 @@ impl Service {
         Some(sha)
     }
 
+    /// Hash `path` now and remember it, without waiting for the slot. The
+    /// destination check uses this: opening a search result must not wait
+    /// behind a preparation, which holds the slot for up to its deadline.
+    pub(crate) fn rehash(&self, path: &Path) -> Option<String> {
+        self.remember(path)
+    }
+
+    /// Hold the hashing and extraction slot, as a running preparation does.
+    #[cfg(test)]
+    pub(crate) fn hold_slot_for_test(&self) -> std::sync::MutexGuard<'_, ()> {
+        self.slot.lock().unwrap()
+    }
+
     /// Hash `path` now and remember it for this session.
     pub fn verify(&self, path: &Path) -> Option<String> {
         let _slot = self.slot.lock().unwrap_or_else(|e| e.into_inner());

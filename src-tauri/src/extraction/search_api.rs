@@ -77,8 +77,9 @@ fn resolve(
             })
             .optional()
             .map_err(|_| Stop::Failed)?;
+        // A deleted material, or one with no document (a note), has
+        // nothing to search and isn't a missing file: it isn't counted.
         let Some((title, material_type, original_file_name, added_at, Some(relative))) = row else {
-            coverage.missing += 1;
             continue;
         };
         let Some(path) = managed_file(svc, &relative) else {
@@ -102,10 +103,12 @@ fn resolve(
             Some(Summary::Failed(_)) => coverage.could_not_prepare += 1,
             Some(Summary::Complete(counts)) => {
                 coverage.searched_documents += 1;
-                coverage.searched_pages += counts.text;
+                // Blank pages are searchable (nothing to find), as in the
+                // readiness summary (design §4.4).
+                coverage.searched_pages += counts.text + counts.blank;
                 coverage.image_pages += counts.image_only;
                 coverage.other_unsearchable_pages +=
-                    counts.blank + counts.text_unreadable + counts.unknown + counts.failed;
+                    counts.text_unreadable + counts.unknown + counts.failed;
                 targets.push(Target {
                     material_id: id.clone(),
                     title,
@@ -207,9 +210,11 @@ pub enum Destination {
     Missing,
 }
 
-/// Re-resolve first, then stream the actual bytes through the existing hashing
-/// lane. Never trust a stamp to authorize a destination. The subsequent open
-/// remains a separate operation with the documented check-to-open race.
+/// Re-resolve first, then hash the actual bytes. Never trust a stamp to
+/// authorize a destination. The hash doesn't wait for the preparation slot,
+/// so opening a result never waits behind a document being prepared. The
+/// subsequent open remains a separate operation with the documented
+/// check-to-open race.
 pub fn verify_destination(
     svc: &Service,
     material_id: &str,
@@ -234,7 +239,7 @@ pub fn verify_destination(
     let Some(path) = relative.as_deref().and_then(|r| managed_file(svc, r)) else {
         return Ok(Destination::Missing);
     };
-    let actual = svc.verify(&path);
+    let actual = svc.rehash(&path);
     // A delete/repoint during hashing must not validate the old destination.
     let current: Option<String> = db
         .query_row(
