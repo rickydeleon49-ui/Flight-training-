@@ -43,7 +43,9 @@ describe("shared schema-14 validation contract", () => {
   });
 
   for (const engineName of ENGINES) {
-    it(`${engineName} gives the listed outcome for every case`, async () => {
+    // Every case builds and validates a fresh schema-14 database; on CI
+    // runners sql.js takes about 5.4 s, just over vitest's 5 s default.
+    it(`${engineName} gives the listed outcome for every case`, { timeout: 30_000 }, async () => {
       const reference = await schemaReference();
       const outcomes: string[] = [];
       for (const testCase of VALIDATION.cases) {
