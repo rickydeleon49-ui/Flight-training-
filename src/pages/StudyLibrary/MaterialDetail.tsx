@@ -152,6 +152,8 @@ function MaterialDetailPage() {
   // A link from offline search (OFFLINE-02c §4): open the guide section,
   // card or practice question it names, only while it is unchanged.
   const [linkTarget, setLinkTarget] = useState<MaterialLinkTarget | null>(null);
+  const [linkFailed, setLinkFailed] = useState(false);
+  const [linkRetry, setLinkRetry] = useState(0);
   const linkKey = location.search;
   // The study set's own text: a link is checked again whenever it changes,
   // and not on every unrelated reload.
@@ -165,6 +167,7 @@ function MaterialDetailPage() {
     let live = true;
     // Whatever was resolved before no longer counts until checked again.
     setLinkTarget(null);
+    setLinkFailed(false);
     void resolveMaterialLink(
       new URLSearchParams(linkKey),
       studySet ? { summary: studySet.summary, sections: studySet.sections, flashcards: studySet.flashcards } : null,
@@ -179,13 +182,19 @@ function MaterialDetailPage() {
         setCardIndex(target.index);
         setCardRevealed(false);
       }
+    }).catch(() => {
+      // Consume late failures too; only this page's live request may
+      // publish a sanitized error. Retry repeats the read, never a write.
+      if (!live) return;
+      setLinkTarget({ kind: "problem", message: "Couldn't open this search result. Try again." });
+      setLinkFailed(true);
     });
     return () => {
       live = false;
     };
     // Checked again whenever the loaded study set changes at all: its text,
     // not its timestamp, decides (two saves can share a timestamp).
-  }, [linkKey, materialId, studyText, practiceRepository]);
+  }, [linkKey, materialId, studyText, practiceRepository, linkRetry]);
   useEffect(() => {
     const anchor = linkTarget ? materialLinkAnchor(linkTarget) : null;
     if (!anchor || scrolledFor.current === linkKey) return;
@@ -460,7 +469,14 @@ function MaterialDetailPage() {
                   <p className="tiny muted">The answer stays hidden here. Take the practice test below to answer it.</p>
                 </>
               ) : (
-                <p className="small">{linkTarget.message}</p>
+                <>
+                  <p className="small">{linkTarget.message}</p>
+                  {linkFailed ? (
+                    <Button variant="secondary" onClick={() => setLinkRetry((attempt) => attempt + 1)}>
+                      Retry opening search result
+                    </Button>
+                  ) : null}
+                </>
               )}
             </div>
           </CardBody>

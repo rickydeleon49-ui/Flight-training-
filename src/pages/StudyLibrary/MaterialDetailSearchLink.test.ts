@@ -5,7 +5,7 @@
  * and never shows a practice answer. Synthetic records in real SQLite.
  */
 import { createElement as h } from "react";
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -74,14 +74,58 @@ afterEach(() => {
 });
 
 async function open(search: string) {
-  render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/mat-saved${search}`] }, h(Probe), h(Ready))));
+  const view = render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/mat-saved${search}`] }, h(Probe), h(Ready))));
   await waitFor(() => expect(context.status).toBe("ready"));
   await screen.findByRole("heading", { name: "VOR navigation handout" });
+  return view;
 }
 
 const highlighted = (id: string) => document.getElementById(id)?.classList.contains("search-target") ?? false;
 
 describe("links from offline search", () => {
+  it("reports a failed practice-link read without raw error text and retries only the read", async () => {
+    const select = db.select.bind(db);
+    let blocked = true;
+    let reads = 0;
+    vi.spyOn(db, "select").mockImplementation(async (sql, params) => {
+      if (sql.includes("WHERE source_material_id = ? AND is_active = 1")) {
+        reads++;
+        if (blocked) throw new Error("private database failure details");
+      }
+      return select(sql, params);
+    });
+    const mutate = vi.spyOn(db, "savePracticeSessionAtomically");
+    await open("?question=not-current");
+    expect(await screen.findByText("Couldn't open this search result. Try again.")).toBeTruthy();
+    expect(screen.queryByText(/private database failure details/)).toBeNull();
+    const beforeRetry = reads;
+    blocked = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry opening search result" }));
+    expect(await screen.findByText("That practice question isn't in this material's current practice test any more.")).toBeTruthy();
+    expect(reads).toBe(beforeRetry + 1);
+    expect(mutate).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Retry opening search result" })).toBeNull();
+  });
+
+  it("consumes a practice-link rejection after leaving the material page", async () => {
+    const select = db.select.bind(db);
+    let rejectRead: ((error: Error) => void) | undefined;
+    vi.spyOn(db, "select").mockImplementation(async (sql, params) => {
+      if (sql.includes("WHERE source_material_id = ? AND is_active = 1")) {
+        return new Promise((_, reject) => { rejectRead = reject; });
+      }
+      return select(sql, params);
+    });
+    const view = await open("?question=not-current");
+    await waitFor(() => expect(rejectRead).toBeDefined());
+    view.unmount();
+    await act(async () => {
+      rejectRead!(new Error("late read failure"));
+      await Promise.resolve();
+    });
+    // Vitest also fails this test run if that rejection goes unhandled.
+  });
+
   it("opens a guide section while it is unchanged, and stops when its text changes with the same timestamp", async () => {
     const rev = await itemDigest([section.heading, section.body]);
     await open(`?guide=0&rev=${rev}`);
