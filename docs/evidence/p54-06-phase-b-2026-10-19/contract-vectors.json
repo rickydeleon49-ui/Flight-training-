@@ -1,0 +1,456 @@
+{
+  "schema": "hfd-fsrs6-contract-vectors/1",
+  "note": "Hand-specified candidate contract vectors (refusals, clocks, ranges, caps and app policy). Not produced by any scheduler code. Numbers given as strings are non-finite values JSON cannot hold.",
+  "vectors": [
+    {
+      "id": "refuse-unknown-rating",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "skip",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_RATING"
+      }
+    },
+    {
+      "id": "refuse-time-without-millis",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00Z",
+      "expect": {
+        "refusal": "INVALID_TIME"
+      }
+    },
+    {
+      "id": "refuse-impossible-date",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-02-30T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_TIME"
+      }
+    },
+    {
+      "id": "refuse-simple-v1-state",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "simple-v1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "UNSUPPORTED_SCHEDULER_VERSION"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-0",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": "NaN",
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-1",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": "NaN",
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-2",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": "Infinity",
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-3",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": "-Infinity",
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-4",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 0.5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-5",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 10.5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-6",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 0,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-7",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": -1,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-state-8",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 0.009,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-clock-1ms-behind",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-19T15:00:00.001Z",
+        "dueAt": "2026-10-19T15:00:00.001Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "CLOCK_BEHIND_LAST_REVIEW"
+      }
+    },
+    {
+      "id": "refuse-due-past-year-9999",
+      "config": "product",
+      "prior": null,
+      "rating": "good",
+      "now": "9999-12-30T00:00:00.000Z",
+      "expect": {
+        "refusal": "DUE_OUT_OF_RANGE"
+      }
+    },
+    {
+      "id": "accept-equal-clock-is-same-day",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+        "dueAt": "2026-10-19T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "elapsedDays": 0,
+        "path": "same-day"
+      }
+    },
+    {
+      "id": "elapsed-floor-just-under-1-day",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-18T15:00:00.001Z",
+        "dueAt": "2026-10-18T15:00:00.001Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "elapsedDays": 0,
+        "path": "same-day"
+      }
+    },
+    {
+      "id": "elapsed-floor-exactly-1-day",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-18T15:00:00.000Z",
+        "dueAt": "2026-10-18T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "elapsedDays": 1,
+        "path": "review"
+      }
+    },
+    {
+      "id": "elapsed-floor-1.999-days",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-17T15:00:00.001Z",
+        "dueAt": "2026-10-17T15:00:00.001Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "elapsedDays": 1,
+        "path": "review"
+      }
+    },
+    {
+      "id": "again-returns-in-10-minutes",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "again",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "dueAt": "2026-10-19T15:10:00.000Z",
+        "lapsesDelta": 1
+      }
+    },
+    {
+      "id": "again-on-new-card-is-not-a-lapse",
+      "config": "product",
+      "prior": null,
+      "rating": "again",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "dueAt": "2026-10-19T15:10:00.000Z",
+        "lapsesDelta": 0
+      }
+    },
+    {
+      "id": "product-cap-180-days",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 1,
+        "s": 30000,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-09-19T15:00:00.000Z",
+        "dueAt": "2026-09-19T15:00:00.000Z"
+      },
+      "rating": "easy",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "dueAt": "2027-04-17T15:00:00.000Z"
+      }
+    },
+    {
+      "id": "product-cap-holds-after-ordering",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 1,
+        "s": 30000,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-09-19T15:00:00.000Z",
+        "dueAt": "2026-09-19T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "dueAt": "2027-04-17T15:00:00.000Z"
+      }
+    },
+    {
+      "id": "parity-cap-holds-after-ordering",
+      "config": "oracle-parity",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 1,
+        "s": 30000,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "1944-08-27T15:00:00.000Z",
+        "dueAt": "1944-08-27T15:00:00.000Z"
+      },
+      "rating": "easy",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "intervalDays": 36500
+      }
+    },
+    {
+      "id": "stability-floor-0.01",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 0.01,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+        "dueAt": "2026-10-19T15:00:00.000Z"
+      },
+      "rating": "again",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "s": 0.01
+      }
+    },
+    {
+      "id": "new-card-hard-waits-1-day",
+      "config": "product",
+      "prior": null,
+      "rating": "hard",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "dueAt": "2026-10-20T15:00:00.000Z"
+      }
+    }
+  ]
+}

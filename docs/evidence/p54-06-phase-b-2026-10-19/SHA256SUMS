@@ -1,0 +1,16 @@
+63529c7e1e7f5542b99f65d42833fe41555e46f4462c5ebdfbd286bde64236c5  docs/evidence/p54-06-phase-b-2026-10-19/contract-vectors.json
+f323accb38ee17c792a7685a9c9ac7f5e7c3c7b9544d6e5f8a01e68000f1b84e  docs/evidence/p54-06-phase-b-2026-10-19/oracle/fsrs4anki_scheduler.js
+2ec9e6e61ed82af824583c0f91c6103948ed527b727281bc9f51de46780ee4d7  docs/evidence/p54-06-phase-b-2026-10-19/oracle/LICENSE
+be729e14a346b096d403e4a19ef5992713d3d58c74f75f5545303d31107678eb  docs/evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.md
+d52e73bfd39e2ed553a8047aa950487277582ddd0787c7d790c1be21e39b2afd  docs/evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.sha256
+afbfe3de3a09dc5f91e209dfa80da3897bfe55b8058880bbda77ee005be852bd  docs/evidence/p54-06-phase-b-2026-10-19/proof/generate-reference.mjs
+ed93f284cfc168a76ca10ff836485873ff3edce43d72a0ca4a2c9f6d866d8d30  docs/evidence/p54-06-phase-b-2026-10-19/proof/oracle.mjs
+51a3c843a06a89402e37f7fd9f4ae24848f8f416b5640faf0cc83d3734f681b5  docs/evidence/p54-06-phase-b-2026-10-19/proof/preregistration.test.mjs
+1919e0eeece0d122cb14185342da92ca56d00fd935f5683261c5a63d204803aa  docs/evidence/p54-06-phase-b-2026-10-19/README.md
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  docs/evidence/p54-06-phase-b-2026-10-19/receipts/preregistration-tests.exit
+99b719ec680ce14c163604981c62b1e418825f7c7f1a282fe2e3a2a79f14cff8  docs/evidence/p54-06-phase-b-2026-10-19/receipts/preregistration-tests.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  docs/evidence/p54-06-phase-b-2026-10-19/receipts/reference-check.exit
+287771d504ad986f9375821920181e5139ff1c280d047dce01f7d66644176100  docs/evidence/p54-06-phase-b-2026-10-19/receipts/reference-check.txt
+30f2475f0e3b74641c7a89952a251a2f33a7fbb095de3e436e1a8795f7277ed1  docs/evidence/p54-06-phase-b-2026-10-19/receipts/runtime.txt
+8fd6185c432ddd12be20b164b0c2901bcf429ceb436a3767731a392a1dbf076c  docs/evidence/p54-06-phase-b-2026-10-19/reference-vectors.json
+b5053af276f7670e09d773d3542b7a4b76304492a0e0e6f0c60784162b87dc8f  docs/evidence/p54-06-phase-b-2026-10-19/scenarios.json
