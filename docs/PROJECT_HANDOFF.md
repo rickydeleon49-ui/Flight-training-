@@ -1,3 +1,11 @@
+## App audit and polish: four source/browser corrections pending review — 19 October 2026
+
+A bounded audit of ten app screens at desktop/narrow widths and synthetic material creation reproduced the clipped Gemini confirmation **Cancel** (V057-UI-01), long progress-text overflow, every-second live-status updates and dangling form hint references. Shared layout/accessibility corrections and regression coverage are supplied on `codex/app-polish-audit`, based on accepted main `fdbf290`; no unmerged PR #234 code was copied. [Audit and reviewer handoff](APP_POLISH_AUDIT_2026-10-19.md); [evidence](evidence/app-polish-audit-2026-10-19/README.md).
+
+**V057-UI-01:** source/browser fix supplied, independent review/CI and installed verification pending. The final bundled-font recheck passes twenty routes, five dialog layout cases and two short-window keyboard cases, with no fixture sends on Cancel. The original failing regression and first gate receipts are preserved. Native code, schemas, dependencies and release flags are unchanged. Final gate: **3,778 frontend tests passed / 6 skipped, zero unhandled errors**; typecheck/build/whitespace exit 0.
+
+**Still open:** V057-DB-01 (classify sidecars safely), REL-CI-01 (release timeout), FLAKE-CR-01, saved-search p50 miss, extraction/search release gates and installed/minimum-spec verification. PR #234’s separate approved proposal/search-link correction still needs review. Resume OFFLINE-03a → 03b after accepted planning integration; then homework → exports. Nothing merged, enabled or released by this audit. Entries below remain historical.
+
 ## Current offline-study handoff: OFFLINE-03 defaults approved; search-link recovery pending review — 19 October 2026
 
 PRs #231 (native document search), #232 (search UI) and #233 (saved-content search) are merged; accepted main for this handoff is `fdbf290`. Earlier “ready for PR” entries below are history. Extraction/search remain dormant in release builds.

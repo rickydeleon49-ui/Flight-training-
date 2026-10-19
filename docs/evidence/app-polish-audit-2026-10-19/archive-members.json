@@ -1,0 +1,102 @@
+[
+  {
+    "path": "build.txt",
+    "bytes": 7749,
+    "sha256": "aac049dbd66232c5db565cbe25b8e3cd7fb4335ad5d31be74253c3720c3dee95"
+  },
+  {
+    "path": "final-build.txt",
+    "bytes": 7749,
+    "sha256": "3b35212fd595264dc34cfb910c0017260798192bb4d2cb2870c839abe83c9a81"
+  },
+  {
+    "path": "final-frontend.txt",
+    "bytes": 14853,
+    "sha256": "f355350a0f11bb0c9ed2bc651bd024d119ed948db1982ea39cd1b4df59cd1fe3"
+  },
+  {
+    "path": "final-gate-exits.json",
+    "bytes": 71,
+    "sha256": "ec65c631af0966b9a4184404866d73fb720259b01e00eb90a0dae1ff8a05dc02"
+  },
+  {
+    "path": "final-typecheck.txt",
+    "bytes": 51,
+    "sha256": "f05679482d7566eea51ded8daf0e7626af4e0231d71715cbcdefd2928f5e19f1"
+  },
+  {
+    "path": "final-whitespace.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "font-browser-cache-assertion-failed.txt",
+    "bytes": 3444,
+    "sha256": "68c40932db574d92d840829788264d984eb0ce14883c524b8db88bb71fddf291"
+  },
+  {
+    "path": "font-browser-display-assertion-failed.txt",
+    "bytes": 1048,
+    "sha256": "d217e1afe13c84343dae4170542aabf05b7752ae52bf13447c7e628c165fabdc"
+  },
+  {
+    "path": "font-browser-failed-checks.json",
+    "bytes": 12445,
+    "sha256": "ad8dbe6a13309abdf6c2bee9673090bd31b65ac7dbd2b652e3263177215f80bc"
+  },
+  {
+    "path": "font-browser-final-assertion-failed.txt",
+    "bytes": 609,
+    "sha256": "e50f06a4eb9392ef180b1796989f20a630a879689b38d371f3e771639a055cde"
+  },
+  {
+    "path": "font-browser-recheck.mjs",
+    "bytes": 5855,
+    "sha256": "d16cd0a1f5691c8325a573462d979ddaf7374bcd093f830d80a3a98ba25418b0"
+  },
+  {
+    "path": "font-browser-recheck.txt",
+    "bytes": 112,
+    "sha256": "250da3cf778e6f85cf7a5be3904728199a54d57bd672f4ae9807f164301a22b4"
+  },
+  {
+    "path": "frontend.txt",
+    "bytes": 16030,
+    "sha256": "4c1977e6eeb88c969e70ae8bae5803bec5408aadfc97ddfb0337767da347868b"
+  },
+  {
+    "path": "gate-exits.json",
+    "bytes": 71,
+    "sha256": "dbc3000d0fc62b0126a2daddc64b5d9c8c79267884007c881666b1d0bb39f4c6"
+  },
+  {
+    "path": "regression-before.txt",
+    "bytes": 3377,
+    "sha256": "4f7fdc36c255a07c23267f399cf9446472ce6f5ab29f9a1842fe0b457da41bfc"
+  },
+  {
+    "path": "typecheck.txt",
+    "bytes": 602,
+    "sha256": "da1551496934c9067a7def01c7741d0489abae703612a98febb91328df18a2b9"
+  },
+  {
+    "path": "whitespace.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "fixture/fixture.html",
+    "bytes": 288,
+    "sha256": "2d293e7cc70747ab2a77b353b940c40041c5088f7c392b165e261d366d8e3d83"
+  },
+  {
+    "path": "fixture/fixture.tsx",
+    "bytes": 2073,
+    "sha256": "445acf9cad95756ab3f5c6c43eec681034bfe884d46fc64955e399886ed1c8cb"
+  },
+  {
+    "path": "fixture/vite-audit.config.ts",
+    "bytes": 978,
+    "sha256": "8fc91c9483efe41a436eb37782dd5243a5654fdc0303e0db948dcd0ba05ca80b"
+  }
+]
