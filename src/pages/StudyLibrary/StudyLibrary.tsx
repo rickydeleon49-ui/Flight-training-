@@ -39,6 +39,7 @@ import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { StudyLibraryHistory } from "./StudyLibraryHistory";
 import { StudyLibraryReviewDue } from "./StudyLibraryReviewDue";
 import { useLibraryDueStream } from "./useLibraryReviews";
+import { useOfflineBadges, type OfflineBadge } from "./useOfflineBadges";
 import "./studyLibrary.css";
 
 export type LibraryTab = "library" | "due" | "history";
@@ -127,6 +128,9 @@ export function StudyLibrary() {
     });
     return sortMaterials(matching, sort);
   }, [data.materials, status, topic, type, search, sort]);
+
+  const shownMaterials = useMemo(() => visible.slice(0, visibleLimit), [visible, visibleLimit]);
+  const offlineBadges = useOfflineBadges(shownMaterials);
 
   const nextActionTitles = useMemo(() => {
     const titles = new Map<string, string>();
@@ -301,11 +305,12 @@ export function StudyLibrary() {
             Showing {Math.min(visibleLimit, visible.length).toLocaleString()} of {visible.length.toLocaleString()} materials
           </p>
           <div className="material-grid">
-            {visible.slice(0, visibleLimit).map((material) => (
+            {shownMaterials.map((material) => (
               <MaterialCard
                 key={material.id}
                 material={material}
                 nextActionTitle={nextActionTitles.get(material.id)}
+                offline={offlineBadges.get(material.id)}
                 review={tab === "library" ? reviewIndicator(binderStatus, material.id, materialsWithCards.has(material.id)) : null}
               />
             ))}
@@ -350,10 +355,12 @@ function MaterialCard({
   material,
   nextActionTitle,
   review,
+  offline,
 }: {
   material: StudyMaterial;
   nextActionTitle?: string;
   review?: string | null;
+  offline?: OfflineBadge;
 }) {
   const statusTone =
     material.reviewStatus === "confident"
@@ -390,6 +397,7 @@ function MaterialCard({
         <Badge tone="study">{TOPIC_LABELS[material.topic]}</Badge>
         <Badge tone={statusTone}>{REVIEW_STATUS_LABELS[material.reviewStatus]}</Badge>
         {material.priority === "next_up" ? <Badge tone="berry">Next Up</Badge> : null}
+        {offline ? <Badge tone={offline.tone}>{offline.label}</Badge> : null}
         {review ? <Badge tone={review === "Caught up" ? "complete" : review.startsWith("Cards") ? "neutral" : "due"}>{review}</Badge> : null}
       </span>
 
