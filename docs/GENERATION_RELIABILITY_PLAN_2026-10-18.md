@@ -74,6 +74,8 @@ Tests: accessible keyboard controls and live status, stale/multi-job events, nav
 
 ## GEN-REL-05 — Larger, source-grounded flashcard sets
 
+**Release scope decision, 18 October 2026:** the owner requested “lets get 5 shipped too”. Complete and independently review 05 after 04, and include all five generation improvements in the same next patch release. This supersedes the suggestion to defer 05 to a later release. Build/installed verification and normal release gates still follow; no completed/released feature, numerical-count approval or new budget is inferred from this scope decision.
+
 Start after GEN-REL-01–04 review/integration. The current combined study-aid prompt asks for10–20 flashcards with an8,192-token output cap. Add a clear target-card-count choice for new generation and deliberate regeneration: proposed default40, options20/40/60. Treat the count as a target/maximum, not a promise that a short source supports that many distinct facts. Explain when fewer grounded cards are available; do not pad with duplicates, unsupported facts or artificial paraphrases. Keep practice-test question count unchanged.
 
 Reuse the prepared selected source from01 and checkpointed jobs from02. Generate card batches of up to10 with bounded requests/output; do not simply ask for60 inside the existing guide-plus-cards JSON response and hope it fits. Preserve source material/content/page identity on every batch. Detect exact normalized question/answer duplicates across batches; source citations and de-duplication alone do not establish factual correctness. Retain quality/disclaimer and unsupported-source behavior.
