@@ -10,6 +10,12 @@
 //! (§6.3). Nothing here reaches a provider.
 
 use super::cache::{canonical, MARK_END, MARK_START};
+pub use saved::{
+    item_digest, Categories, SavedCoverage, SavedGroup, SavedPassage, SavedRequest, SavedSection,
+};
+use std::cell::RefCell;
+
+mod saved;
 use rusqlite::{params, Connection, ErrorCode, InterruptHandle, OpenFlags};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -263,6 +269,9 @@ pub struct Response {
     pub more_beyond_cap: bool,
     /// Passages or groups were dropped to fit the byte bound (§6.3).
     pub trimmed: bool,
+    /// Saved study content, when the request asked for it (OFFLINE-02c).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub saved: Option<SavedSection>,
 }
 
 /// Trim a response to the byte bound (§6.3): passages from the last group,
@@ -273,7 +282,22 @@ pub fn fit(response: &mut Response, offset: usize) {
         let bytes = serde_json::to_vec(response)
             .map(|v| v.len())
             .unwrap_or(usize::MAX);
-        if bytes <= MAX_RESPONSE_BYTES || response.groups.is_empty() {
+        if bytes <= MAX_RESPONSE_BYTES {
+            return;
+        }
+        // Saved content is trimmed first, the same way (OFFLINE-02c §3).
+        if let Some(saved) = response.saved.as_mut().filter(|s| !s.groups.is_empty()) {
+            response.trimmed = true;
+            let last = saved.groups.len() - 1;
+            if saved.groups[last].passages.len() > 1 {
+                saved.groups[last].passages.pop();
+            } else {
+                saved.groups.pop();
+            }
+            saved.next_offset = Some(offset + saved.groups.len().min(last));
+            continue;
+        }
+        if response.groups.is_empty() {
             return;
         }
         response.trimmed = true;
@@ -382,10 +406,16 @@ type SetupHook = Arc<Mutex<Option<Box<dyn FnOnce(&mut Searcher) + Send>>>>;
 pub struct Searcher {
     conn: Connection,
     guard: Arc<Guard>,
+    /// Her database, attached read-only for saved content (OFFLINE-02c).
+    database: PathBuf,
+    saved: RefCell<saved::SavedIndex>,
     #[cfg(test)]
     hook: PauseHook,
     #[cfg(test)]
     extra_where: Option<&'static str>,
+    /// Test-only: appended to the first query of a saved-content rebuild.
+    #[cfg(test)]
+    saved_extra_where: Option<&'static str>,
     #[cfg(test)]
     stepped: Arc<AtomicBool>,
     #[cfg(test)]
@@ -410,7 +440,9 @@ impl Searcher {
     fn open(cache_file: &PathBuf, guard: Arc<Guard>) -> Result<Self, Stop> {
         let conn = Connection::open_with_flags(
             cache_file,
-            OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+            OpenFlags::SQLITE_OPEN_READ_ONLY
+                | OpenFlags::SQLITE_OPEN_NO_MUTEX
+                | OpenFlags::SQLITE_OPEN_URI,
         )
         .map_err(|_| Stop::Failed)?;
         conn.execute_batch(
@@ -423,13 +455,21 @@ impl Searcher {
         let _ = conn.busy_timeout(Duration::from_secs(1));
         *guard.interrupt.lock().unwrap_or_else(|e| e.into_inner()) =
             Some(conn.get_interrupt_handle());
+        let database = cache_file
+            .parent()
+            .map(|root| root.join("her-flight-deck.db"))
+            .unwrap_or_default();
         Ok(Self {
             conn,
             guard,
+            database,
+            saved: RefCell::new(saved::SavedIndex::default()),
             #[cfg(test)]
             hook: Arc::new(Mutex::new(None)),
             #[cfg(test)]
             extra_where: None,
+            #[cfg(test)]
+            saved_extra_where: None,
             #[cfg(test)]
             stepped: Arc::new(AtomicBool::new(false)),
             #[cfg(test)]
@@ -602,19 +642,50 @@ impl Searcher {
     /// prune can commit concurrently without changing any row under this request.
     fn resolve_run(&self, control: &Control, resolve: Resolver) -> Result<Response, Stop> {
         control.check()?;
-        let _snapshot = self
+        // ATTACH can't run inside a transaction (OFFLINE-02c §2).
+        self.ensure_attached(&self.database);
+        let snapshot = self
             .conn
             .unchecked_transaction()
             .map_err(|_| Stop::Failed)?;
-        let request = self.statement(control, "resolve", || resolve(control, &self.conn))?;
-        control.check()?;
-        self.run_inner(
-            control,
-            &request.targets,
-            &request.terms,
-            request.offset,
-            request.coverage,
-        )
+        let result = (|| {
+            let request = self.statement(control, "resolve", || resolve(control, &self.conn))?;
+            control.check()?;
+            let mut response = self.run_inner(
+                control,
+                &request.targets,
+                &request.terms,
+                request.offset,
+                request.coverage,
+            )?;
+            if let Some(saved) = &request.saved {
+                response.saved = Some(if request.saved_available {
+                    self.search_saved(
+                        control,
+                        saved,
+                        &match_expression(&request.terms),
+                        request.offset,
+                    )?
+                } else {
+                    SavedSection::unavailable()
+                });
+                fit(&mut response, request.offset);
+            }
+            control.check()?;
+            Ok(response)
+        })();
+        // A saved-content rebuild is published only once its transaction
+        // commits; a rollback takes the temporary index with it (§2).
+        match result.and_then(|r| snapshot.commit().map(|_| r).map_err(|_| Stop::Failed)) {
+            Ok(response) => {
+                self.publish_saved();
+                Ok(response)
+            }
+            Err(stop) => {
+                self.discard_saved();
+                Err(stop)
+            }
+        }
     }
 
     /// One search (§6.2–§6.4), inside the request's snapshot.
@@ -714,6 +785,7 @@ impl Searcher {
             next_offset,
             more_beyond_cap,
             trimmed: false,
+            saved: None,
         };
         fit(&mut response, offset);
         control.check()?;
@@ -763,6 +835,11 @@ pub struct Request {
     pub terms: Vec<Term>,
     pub offset: usize,
     pub coverage: Coverage,
+    /// Saved study content to search too (OFFLINE-02c), if asked for.
+    pub saved: Option<SavedRequest>,
+    /// Whether her database is ready to read; otherwise saved content is
+    /// reported unavailable.
+    pub saved_available: bool,
 }
 
 type Resolver = Box<dyn FnOnce(&Control, &Connection) -> Result<Request, Stop> + Send>;
@@ -1123,6 +1200,8 @@ mod tests {
             terms: parse(query)?,
             offset,
             coverage: Coverage::default(),
+            saved: None,
+            saved_available: false,
         })
     }
 
@@ -1667,6 +1746,8 @@ mod tests {
                 terms: parse("wind")?,
                 offset: 0,
                 coverage: Coverage::default(),
+                saved: None,
+                saved_available: false,
             })
         });
         assert_eq!(second.wait(), Err(Stop::Superseded));

@@ -1,0 +1,717 @@
+//! Saved study content in the same search (OFFLINE-02c). The contract is
+//! docs/OFFLINE_02C_SAVED_CONTENT_SEARCH_ADDENDUM_2026-10-19.md (rev 4);
+//! section numbers below refer to it.
+//!
+//! Her database is attached read-only to the search connection, so every
+//! statement here runs under the same interrupt handle and request control
+//! as document search (§2). The index is a temporary FTS5 table on that
+//! connection, rebuilt inside the request's read transaction when her
+//! database's `data_version` differs from the one it was built at. It is
+//! published only when that transaction commits (§2), never written to the
+//! cache, her database, a migration or a backup.
+
+use super::{clip_label, clip_snippet, Control, Searcher, Stop, LABEL_CHARS, SNIPPET_CHARS};
+use super::{CANDIDATE_LIMIT, MARK_END, MARK_START, MAX_OFFSET, PAGE_GROUPS, PASSAGES_PER_GROUP};
+use crate::extraction::cache::canonical;
+use rusqlite::{params, OptionalExtension};
+use serde::Serialize;
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
+use std::path::Path;
+
+/// §2.1 bounds.
+pub const MAX_SAVED_BYTES: i64 = 32 * 1024 * 1024;
+pub const MAX_JSON_FIELD_BYTES: i64 = 4 * 1024 * 1024;
+pub const MAX_TEXT_FIELD_BYTES: i64 = 1024 * 1024;
+pub const MAX_RECORDS: usize = 200_000;
+
+/// The saved-content categories `contentTypes` may name (§3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Categories {
+    pub guides: bool,
+    pub cards: bool,
+    pub practice: bool,
+    pub notes: bool,
+    pub questions: bool,
+}
+
+impl Categories {
+    pub fn any(&self) -> bool {
+        self.guides || self.cards || self.practice || self.notes || self.questions
+    }
+}
+
+/// What a request asks of saved content.
+#[derive(Debug, Clone)]
+pub struct SavedRequest {
+    pub categories: Categories,
+    /// The materials the filters select; guides, cards, practice and
+    /// linked questions follow these (§3).
+    pub material_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedPassage {
+    /// `summary`, `guide`, `card`, `practice`, `note` or `question`.
+    pub kind: &'static str,
+    /// A section or card index, or a record id.
+    pub record_id: String,
+    /// For guides and cards: the item's content digest (§4).
+    pub rev: Option<String>,
+    pub snippet: String,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedGroup {
+    /// `material`, `notes` or `questions`.
+    pub kind: &'static str,
+    pub material_id: Option<String>,
+    pub title: String,
+    pub passages: Vec<SavedPassage>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedCoverage {
+    pub study_sets: u32,
+    pub practice_versions: u32,
+    pub notes: u32,
+    pub questions: u32,
+    pub too_large_items: u32,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedSection {
+    /// `ok`, `too_large` (§2.1) or `unavailable` (storage not ready).
+    pub state: &'static str,
+    pub groups: Vec<SavedGroup>,
+    pub coverage: SavedCoverage,
+    pub next_offset: Option<usize>,
+    pub more_beyond_cap: bool,
+}
+
+impl SavedSection {
+    pub fn unavailable() -> Self {
+        Self {
+            state: "unavailable",
+            groups: Vec::new(),
+            coverage: SavedCoverage::default(),
+            next_offset: None,
+            more_beyond_cap: false,
+        }
+    }
+}
+
+/// The index state on this connection. `token` is the `data_version` the
+/// published index was built at; `None` means nothing usable.
+#[derive(Debug, Default)]
+pub(crate) struct SavedIndex {
+    token: Option<i64>,
+    too_large: bool,
+    coverage: SavedCoverage,
+    /// A rebuild done in the current transaction, applied after commit.
+    pending: Option<(i64, bool, SavedCoverage)>,
+    attached: bool,
+    /// Searches that rebuilt, for the measurement harness and tests.
+    pub(crate) rebuilds: u64,
+}
+
+/// §4: SHA-256 over a length-prefixed encoding of the item's original
+/// fields (`len:bytes` each, in order), as lowercase hex.
+pub fn item_digest(fields: &[&str]) -> String {
+    let mut h = Sha256::new();
+    for f in fields {
+        h.update(f.len().to_string().as_bytes());
+        h.update(b":");
+        h.update(f.as_bytes());
+    }
+    hex::encode(h.finalize())
+}
+
+/// A `file:` URI for a path, percent-encoding everything outside the
+/// unreserved set and `/`, opened read-only.
+fn read_only_uri(path: &Path) -> String {
+    let mut out = String::from("file:");
+    for b in path.to_string_lossy().as_bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' => {
+                out.push(*b as char)
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out.push_str("?mode=ro");
+    out
+}
+
+struct Row {
+    text: String,
+    kind: &'static str,
+    material_id: Option<String>,
+    record_id: String,
+    rev: Option<String>,
+    title: String,
+}
+
+impl Searcher {
+    /// Attach her database read-only, outside any transaction (ATTACH can't
+    /// run inside one). Missing or unreadable: saved search is unavailable.
+    pub(super) fn ensure_attached(&self, database: &Path) {
+        let mut index = self.saved.borrow_mut();
+        if index.attached || !database.is_file() {
+            return;
+        }
+        if self
+            .conn
+            .execute("ATTACH DATABASE ?1 AS app", [read_only_uri(database)])
+            .is_ok()
+        {
+            index.attached = true;
+            index.token = None;
+        }
+    }
+
+    pub(super) fn saved_attached(&self) -> bool {
+        self.saved.borrow().attached
+    }
+
+    /// Called after the request's transaction commits: publish a rebuild.
+    pub(super) fn publish_saved(&self) {
+        let mut index = self.saved.borrow_mut();
+        if let Some((token, too_large, coverage)) = index.pending.take() {
+            index.token = Some(token);
+            index.too_large = too_large;
+            index.coverage = coverage;
+        }
+    }
+
+    /// Called when the request's transaction rolled back: the temp index
+    /// went with it, so nothing is usable until the next rebuild.
+    pub(super) fn discard_saved(&self) {
+        let mut index = self.saved.borrow_mut();
+        index.pending = None;
+        index.token = None;
+    }
+
+    /// §2 steps 2–5, inside the request's read transaction: rebuild unless
+    /// the published index was built at this snapshot's version.
+    fn refresh_saved(&self, control: &Control) -> Result<(), Stop> {
+        let version: i64 = self.statement(control, "saved-version", || {
+            self.conn
+                .query_row("SELECT 1 FROM app.sqlite_master LIMIT 1", [], |_| Ok(()))
+                .optional()
+                .map_err(|e| self.note(control, e))?;
+            self.conn
+                .query_row("PRAGMA app.data_version", [], |r| r.get(0))
+                .map_err(|e| self.note(control, e))
+        })?;
+        if self.saved.borrow().token == Some(version) {
+            return Ok(());
+        }
+        self.saved.borrow_mut().token = None;
+        self.statement(control, "saved-clear", || {
+            self.conn
+                .execute_batch(
+                    "CREATE VIRTUAL TABLE IF NOT EXISTS temp.record_fts USING fts5(
+                       text, kind UNINDEXED, material_id UNINDEXED, record_id UNINDEXED,
+                       rev UNINDEXED, title UNINDEXED, sort_title UNINDEXED,
+                       tokenize='unicode61 remove_diacritics 2');
+                     DELETE FROM temp.record_fts;",
+                )
+                .map_err(|e| self.note(control, e))
+        })?;
+        let total: i64 = self.statement(control, "saved-preflight", || {
+            self.conn
+                .query_row(
+                    "SELECT
+                       (SELECT coalesce(sum(octet_length(summary) + octet_length(sections_json)
+                                            + octet_length(flashcards_json)), 0)
+                          FROM app.ai_study_sets)
+                     + (SELECT coalesce(sum(octet_length(i.question_text)), 0)
+                          FROM app.practice_test_items i
+                          JOIN app.practice_test_versions v ON v.id = i.version_id AND v.is_active = 1)
+                     + (SELECT coalesce(sum(octet_length(title) + octet_length(body)), 0) FROM app.notes)
+                     + (SELECT coalesce(sum(octet_length(text) + octet_length(answer)), 0) FROM app.questions)",
+                    [],
+                    |r| r.get(0),
+                )
+                .map_err(|e| self.note(control, e))
+        })?;
+        self.saved.borrow_mut().rebuilds += 1;
+        if total > MAX_SAVED_BYTES {
+            self.saved.borrow_mut().pending = Some((version, true, SavedCoverage::default()));
+            return Ok(());
+        }
+        let mut coverage = SavedCoverage::default();
+        let mut records = 0usize;
+        let mut too_large = false;
+        self.statement(control, "saved-rebuild", || {
+            let mut insert = self
+                .conn
+                .prepare(
+                    "INSERT INTO temp.record_fts
+                       (text, kind, material_id, record_id, rev, title, sort_title)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                )
+                .map_err(|e| self.note(control, e))?;
+            let mut put = |row: Row, records: &mut usize| -> Result<bool, Stop> {
+                control.check()?;
+                if *records >= MAX_RECORDS {
+                    return Ok(false);
+                }
+                *records += 1;
+                insert
+                    .execute(params![
+                        canonical(&row.text),
+                        row.kind,
+                        row.material_id,
+                        row.record_id,
+                        row.rev,
+                        row.title,
+                        row.title.to_lowercase()
+                    ])
+                    .map_err(|e| self.note(control, e))?;
+                Ok(true)
+            };
+
+            // Study sets: guide summary and sections, current cards (§1).
+            {
+                // The rebuild's first statement; tests can hold it running.
+                #[cfg(test)]
+                let filter = self.saved_extra_where.unwrap_or("");
+                #[cfg(not(test))]
+                let filter = "";
+                let mut stmt = self
+                    .conn
+                    .prepare(&format!(
+                        "SELECT s.source_material_id, m.title,
+                           CASE WHEN octet_length(s.summary) <= ?1 THEN s.summary END,
+                           CASE WHEN octet_length(s.sections_json) <= ?2 THEN s.sections_json END,
+                           CASE WHEN octet_length(s.flashcards_json) <= ?2 THEN s.flashcards_json END
+                         FROM app.ai_study_sets s
+                         JOIN app.study_materials m ON m.id = s.source_material_id
+                         WHERE 1 = 1 {filter}"
+                    ))
+                    .map_err(|e| self.note(control, e))?;
+                let mut rows = stmt
+                    .query(params![MAX_TEXT_FIELD_BYTES, MAX_JSON_FIELD_BYTES])
+                    .map_err(|e| self.note(control, e))?;
+                while let Some(r) = rows.next().map_err(|e| self.note(control, e))? {
+                    control.check()?;
+                    coverage.study_sets += 1;
+                    let material: String = r.get(0).map_err(|_| Stop::Failed)?;
+                    let title: String = r.get(1).map_err(|_| Stop::Failed)?;
+                    let summary: Option<String> = r.get(2).map_err(|_| Stop::Failed)?;
+                    let sections: Option<String> = r.get(3).map_err(|_| Stop::Failed)?;
+                    let cards: Option<String> = r.get(4).map_err(|_| Stop::Failed)?;
+                    match summary {
+                        Some(s) if !s.trim().is_empty() => {
+                            let rev = item_digest(&[&s]);
+                            if !put(
+                                Row {
+                                    text: s,
+                                    kind: "summary",
+                                    material_id: Some(material.clone()),
+                                    record_id: "summary".into(),
+                                    rev: Some(rev),
+                                    title: title.clone(),
+                                },
+                                &mut records,
+                            )? {
+                                too_large = true;
+                            }
+                        }
+                        Some(_) => {}
+                        None => coverage.too_large_items += 1,
+                    }
+                    for (field, kind, a, b) in [
+                        (sections, "guide", "heading", "body"),
+                        (cards, "card", "front", "back"),
+                    ] {
+                        let Some(json) = field else {
+                            coverage.too_large_items += 1;
+                            continue;
+                        };
+                        let items: Vec<serde_json::Value> =
+                            serde_json::from_str(&json).unwrap_or_default();
+                        for (i, item) in items.iter().enumerate() {
+                            control.check()?;
+                            let first = item.get(a).and_then(|v| v.as_str()).unwrap_or("");
+                            let second = item.get(b).and_then(|v| v.as_str()).unwrap_or("");
+                            if !put(
+                                Row {
+                                    text: format!("{first}\n{second}"),
+                                    kind,
+                                    material_id: Some(material.clone()),
+                                    record_id: i.to_string(),
+                                    rev: Some(item_digest(&[first, second])),
+                                    title: title.clone(),
+                                },
+                                &mut records,
+                            )? {
+                                too_large = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Practice: stems of active versions only (§1).
+            {
+                let mut stmt = self
+                    .conn
+                    .prepare(
+                        "SELECT i.id, v.source_material_id, m.title,
+                           CASE WHEN octet_length(i.question_text) <= ?1 THEN i.question_text END
+                         FROM app.practice_test_items i
+                         JOIN app.practice_test_versions v ON v.id = i.version_id AND v.is_active = 1
+                         JOIN app.study_materials m ON m.id = v.source_material_id",
+                    )
+                    .map_err(|e| self.note(control, e))?;
+                let mut rows = stmt
+                    .query([MAX_TEXT_FIELD_BYTES])
+                    .map_err(|e| self.note(control, e))?;
+                let mut versions = std::collections::HashSet::new();
+                while let Some(r) = rows.next().map_err(|e| self.note(control, e))? {
+                    control.check()?;
+                    let id: String = r.get(0).map_err(|_| Stop::Failed)?;
+                    let material: String = r.get(1).map_err(|_| Stop::Failed)?;
+                    let title: String = r.get(2).map_err(|_| Stop::Failed)?;
+                    let stem: Option<String> = r.get(3).map_err(|_| Stop::Failed)?;
+                    versions.insert(material.clone());
+                    let Some(stem) = stem else {
+                        coverage.too_large_items += 1;
+                        continue;
+                    };
+                    if !put(
+                        Row {
+                            text: stem,
+                            kind: "practice",
+                            material_id: Some(material),
+                            record_id: id,
+                            rev: None,
+                            title,
+                        },
+                        &mut records,
+                    )? {
+                        too_large = true;
+                    }
+                }
+                coverage.practice_versions = versions.len() as u32;
+            }
+
+            // Notes and instructor questions.
+            for (sql_text, kind, linked) in [
+                (
+                    "SELECT id, NULL,
+                       CASE WHEN octet_length(title) <= ?1 THEN title END,
+                       CASE WHEN octet_length(body) <= ?1 THEN body END
+                     FROM app.notes",
+                    "note",
+                    false,
+                ),
+                (
+                    "SELECT id, material_id,
+                       CASE WHEN octet_length(text) <= ?1 THEN text END,
+                       CASE WHEN octet_length(answer) <= ?1 THEN answer END
+                     FROM app.questions",
+                    "question",
+                    true,
+                ),
+            ] {
+                let mut stmt = self.conn.prepare(sql_text).map_err(|e| self.note(control, e))?;
+                let mut rows = stmt
+                    .query([MAX_TEXT_FIELD_BYTES])
+                    .map_err(|e| self.note(control, e))?;
+                while let Some(r) = rows.next().map_err(|e| self.note(control, e))? {
+                    control.check()?;
+                    let id: String = r.get(0).map_err(|_| Stop::Failed)?;
+                    let material: Option<String> = r.get(1).map_err(|_| Stop::Failed)?;
+                    let first: Option<String> = r.get(2).map_err(|_| Stop::Failed)?;
+                    let second: Option<String> = r.get(3).map_err(|_| Stop::Failed)?;
+                    if kind == "note" {
+                        coverage.notes += 1;
+                    } else {
+                        coverage.questions += 1;
+                    }
+                    let (Some(first), Some(second)) = (first, second) else {
+                        coverage.too_large_items += 1;
+                        continue;
+                    };
+                    let title = if linked {
+                        "Instructor questions".to_string()
+                    } else {
+                        "Your notes".to_string()
+                    };
+                    if !put(
+                        Row {
+                            text: format!("{first}\n{second}"),
+                            kind,
+                            material_id: material,
+                            record_id: id,
+                            rev: None,
+                            title,
+                        },
+                        &mut records,
+                    )? {
+                        too_large = true;
+                    }
+                }
+            }
+            Ok(())
+        })?;
+        // Past the record cap nothing partial is used: the section is
+        // reported too large, and the index isn't searched (§2.1).
+        if too_large {
+            self.statement(control, "saved-clear", || {
+                self.conn
+                    .execute("DELETE FROM temp.record_fts", [])
+                    .map_err(|e| self.note(control, e))
+            })?;
+        }
+        self.saved.borrow_mut().pending = Some((version, too_large, coverage));
+        Ok(())
+    }
+
+    /// Search saved content within the request's transaction (§3).
+    pub(super) fn search_saved(
+        &self,
+        control: &Control,
+        request: &SavedRequest,
+        expression: &str,
+        offset: usize,
+    ) -> Result<SavedSection, Stop> {
+        if !self.saved_attached() {
+            return Ok(SavedSection::unavailable());
+        }
+        // A storage error degrades saved content to "unavailable" rather
+        // than failing document search; a deadline or supersede still stops
+        // the whole request. Nothing from a failed rebuild is published.
+        match self.refresh_saved(control) {
+            Ok(()) => {}
+            Err(Stop::Failed) => {
+                let mut index = self.saved.borrow_mut();
+                index.pending = None;
+                index.token = None;
+                return Ok(SavedSection::unavailable());
+            }
+            Err(stop) => return Err(stop),
+        }
+        let (too_large, coverage) = {
+            let index = self.saved.borrow();
+            match &index.pending {
+                Some((_, t, c)) => (*t, c.clone()),
+                None => (index.too_large, index.coverage.clone()),
+            }
+        };
+        if too_large {
+            return Ok(SavedSection {
+                state: "too_large",
+                groups: Vec::new(),
+                coverage,
+                next_offset: None,
+                more_beyond_cap: false,
+            });
+        }
+        let c = request.categories;
+        let mut kinds = Vec::new();
+        if c.guides {
+            kinds.extend(["summary", "guide"]);
+        }
+        if c.cards {
+            kinds.push("card");
+        }
+        if c.practice {
+            kinds.push("practice");
+        }
+        if c.notes {
+            kinds.push("note");
+        }
+        if c.questions {
+            kinds.push("question");
+        }
+        self.statement(control, "saved-scope", || {
+            self.conn
+                .execute_batch(
+                    "CREATE TEMP TABLE IF NOT EXISTS saved_scope (id TEXT PRIMARY KEY);
+                     DELETE FROM temp.saved_scope;
+                     CREATE TEMP TABLE IF NOT EXISTS saved_kinds (kind TEXT PRIMARY KEY);
+                     DELETE FROM temp.saved_kinds;",
+                )
+                .map_err(|e| self.note(control, e))?;
+            let mut scope = self
+                .conn
+                .prepare("INSERT OR IGNORE INTO temp.saved_scope VALUES (?1)")
+                .map_err(|e| self.note(control, e))?;
+            for id in &request.material_ids {
+                control.check()?;
+                scope.execute([id]).map_err(|e| self.note(control, e))?;
+            }
+            let mut kind = self
+                .conn
+                .prepare("INSERT OR IGNORE INTO temp.saved_kinds VALUES (?1)")
+                .map_err(|e| self.note(control, e))?;
+            for k in &kinds {
+                kind.execute([k]).map_err(|e| self.note(control, e))?;
+            }
+            Ok(())
+        })?;
+
+        struct Hit {
+            rowid: i64,
+            rank: f64,
+            kind: String,
+            material_id: Option<String>,
+            record_id: String,
+            rev: Option<String>,
+            title: String,
+        }
+        // The group key orders ties after the title, as §6.4 does for
+        // documents; the cutoff uses the full ordering.
+        let hits: Vec<Hit> = self.statement(control, "saved-candidates", || {
+            let mut stmt = self
+                .conn
+                .prepare(
+                    "SELECT rowid, rank, kind, material_id, record_id, rev, title
+                     FROM temp.record_fts
+                     WHERE record_fts MATCH ?1
+                       AND kind IN (SELECT kind FROM temp.saved_kinds)
+                       AND (kind = 'note'
+                            OR (kind = 'question' AND (material_id IS NULL
+                                 OR material_id IN (SELECT id FROM temp.saved_scope)))
+                            OR (kind IN ('summary', 'guide', 'card', 'practice')
+                                AND material_id IN (SELECT id FROM temp.saved_scope)))
+                     ORDER BY rank, sort_title,
+                              CASE kind WHEN 'note' THEN 'notes' WHEN 'question' THEN 'questions'
+                                        ELSE material_id END,
+                              kind, record_id
+                     LIMIT ?2",
+                )
+                .map_err(|e| self.note(control, e))?;
+            let mut rows = stmt
+                .query(params![expression, (CANDIDATE_LIMIT + 1) as i64])
+                .map_err(|e| self.note(control, e))?;
+            let mut out = Vec::new();
+            while let Some(r) = rows.next().map_err(|e| self.note(control, e))? {
+                out.push(Hit {
+                    rowid: r.get(0).map_err(|_| Stop::Failed)?,
+                    rank: r.get(1).map_err(|_| Stop::Failed)?,
+                    kind: r.get(2).map_err(|_| Stop::Failed)?,
+                    material_id: r.get(3).map_err(|_| Stop::Failed)?,
+                    record_id: r.get(4).map_err(|_| Stop::Failed)?,
+                    rev: r.get(5).map_err(|_| Stop::Failed)?,
+                    title: r.get(6).map_err(|_| Stop::Failed)?,
+                });
+                control.check()?;
+            }
+            Ok(out)
+        })?;
+        let more_beyond_cap = hits.len() > CANDIDATE_LIMIT;
+
+        struct Building<'h> {
+            kind: &'static str,
+            key: String,
+            material_id: Option<String>,
+            title: String,
+            best: f64,
+            hits: Vec<&'h Hit>,
+        }
+        let mut groups: Vec<Building> = Vec::new();
+        let mut at: HashMap<String, usize> = HashMap::new();
+        for h in hits.iter().take(CANDIDATE_LIMIT) {
+            control.check()?;
+            let (kind, key, material_id, title) = match h.kind.as_str() {
+                "note" => ("notes", "notes".to_string(), None, "Your notes".to_string()),
+                "question" => (
+                    "questions",
+                    "questions".to_string(),
+                    None,
+                    "Instructor questions".to_string(),
+                ),
+                _ => (
+                    "material",
+                    h.material_id.clone().unwrap_or_default(),
+                    h.material_id.clone(),
+                    h.title.clone(),
+                ),
+            };
+            let i = *at.entry(key.clone()).or_insert_with(|| {
+                groups.push(Building {
+                    kind,
+                    key,
+                    material_id,
+                    title,
+                    best: h.rank,
+                    hits: Vec::new(),
+                });
+                groups.len() - 1
+            });
+            if groups[i].hits.len() < PASSAGES_PER_GROUP {
+                groups[i].hits.push(h);
+            }
+        }
+        groups.sort_by(|a, b| {
+            a.best
+                .total_cmp(&b.best)
+                .then_with(|| a.title.to_lowercase().cmp(&b.title.to_lowercase()))
+                .then_with(|| a.key.cmp(&b.key))
+        });
+        let end = (offset + PAGE_GROUPS).min(groups.len());
+        let next_offset = (end < groups.len() && end <= MAX_OFFSET).then_some(end);
+        let mut shown = Vec::new();
+        for g in groups.iter().skip(offset).take(end.saturating_sub(offset)) {
+            let mut passages = Vec::new();
+            for h in &g.hits {
+                let snippet = self.statement(control, "saved-snippet", || {
+                    self.conn
+                        .query_row(
+                            "SELECT snippet(record_fts, 0, ?2, ?3, '…', 24)
+                             FROM temp.record_fts WHERE record_fts MATCH ?1 AND rowid = ?4",
+                            params![
+                                expression,
+                                MARK_START.to_string(),
+                                MARK_END.to_string(),
+                                h.rowid
+                            ],
+                            |r| r.get::<_, String>(0),
+                        )
+                        .map(|s| clip_snippet(&s, SNIPPET_CHARS))
+                        .map_err(|e| self.note(control, e))
+                })?;
+                let kind = match h.kind.as_str() {
+                    "summary" => "summary",
+                    "guide" => "guide",
+                    "card" => "card",
+                    "practice" => "practice",
+                    "note" => "note",
+                    _ => "question",
+                };
+                passages.push(SavedPassage {
+                    kind,
+                    record_id: clip_label(&h.record_id, LABEL_CHARS),
+                    rev: h.rev.clone(),
+                    snippet,
+                });
+            }
+            shown.push(SavedGroup {
+                kind: g.kind,
+                material_id: g.material_id.clone(),
+                title: clip_label(&g.title, LABEL_CHARS),
+                passages,
+            });
+        }
+        Ok(SavedSection {
+            state: "ok",
+            groups: shown,
+            coverage,
+            next_offset,
+            more_beyond_cap,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests;
