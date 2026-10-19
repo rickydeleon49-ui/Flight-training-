@@ -1,6 +1,6 @@
 {
   "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
-  "workerSha256": "ff438af2990120811ff5f58ec0f8e32e9716412d1a62cb1413ce40032a1e15ee",
+  "workerSha256": "5fe2b6c6f8651ca24ff56c70d699ae67e2958e7e6980cdce1f36ca2bd35b61cb",
   "memoryCapBytes": 536870912,
   "command": [
     "docs/evidence/offline-01c-2026-10-19/corpus.py",
@@ -28,8 +28,8 @@
       },
       "textBytes": 1766300,
       "countedPeakBytes": 401571949,
-      "peakRssMiB": 533.5,
-      "wallSeconds": 2.4,
+      "peakRssMiB": 533.9,
+      "wallSeconds": 2.46,
       "samples": [
         {
           "page": 2,
@@ -83,7 +83,7 @@
       "pageErrors": {},
       "textBytes": 43301,
       "countedPeakBytes": 67241183,
-      "peakRssMiB": 67.9,
+      "peakRssMiB": 68.3,
       "wallSeconds": 0.12,
       "samples": [
         {
@@ -157,7 +157,7 @@
       "pageErrors": {},
       "textBytes": 99081,
       "countedPeakBytes": 10205961,
-      "peakRssMiB": 22.3,
+      "peakRssMiB": 22.6,
       "wallSeconds": 0.05,
       "samples": [
         {
@@ -194,8 +194,8 @@
       "pageErrors": {},
       "textBytes": 22303,
       "countedPeakBytes": 7265303,
-      "peakRssMiB": 18.1,
-      "wallSeconds": 0.02,
+      "peakRssMiB": 18.4,
+      "wallSeconds": 0.03,
       "samples": [
         {
           "page": 1,

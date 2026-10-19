@@ -1,6 +1,6 @@
 # OFFLINE-01c: real-document fidelity and memory evidence
 
-**Status: implemented; Codex round-1 and round-2 corrections applied; pending re-review. The 512 MiB cap was rejected for release enablement pending pressure testing on dedicated machines (see the decision below).** Claude implemented it; Codex reviews. Base: main `4941b05` (OFFLINE-01a merged). This slice answers the evidence Codex required in its 01a release decision. **Extraction stays dormant:** no import trigger, no UI and no release enablement until a reviewer accepts a cap.
+**Status: implemented; Codex round-1 to round-3 corrections applied; pending re-review. The 512 MiB cap was rejected for release enablement pending pressure testing on dedicated machines (see the decision below).** Claude implemented it; Codex reviews. Base: main `4941b05` (OFFLINE-01a merged). This slice answers the evidence Codex required in its 01a release decision. **Extraction stays dormant:** no import trigger, no UI and no release enablement until a reviewer accepts a cap.
 
 **Slice order:** 01c comes before 01b. The 01a cap rejection was the only blocker, and a readiness UI would have had to stay disabled anyway.
 
@@ -68,6 +68,24 @@ Before this correction that garbage was counted as searchable text. **The cost i
 
 **Follow-up for OFFLINE-02:** span-level filtering, which drops only the text drawn in unmapped fonts and keeps the rest, or a CMap parser that handles these maps. Until then the conservative rule keeps cipher-like garbage out of search, and readiness shows these pages as "Couldn't read some pages".
 
+## Review round 3 correction (Codex RED)
+
+**Finding: inspection and extraction disagreed about the restored font.** Inspection followed PDF graphics state, where `Q` restores the previous font. `lopdf`'s text extractor ignores `q`/`Q` and decodes with the last `Tf`. In `Fmapped Tf q Funmapped Tf Q <0041> Tj`, inspection approved the mapped font while extraction used the unmapped one's fallback.
+
+**Correction:** text is untrustworthy if it is unmapped under **either** model:
+- the PDF's graphics state, which also governs forms;
+- the extractor's page-level, last-`Tf`-wins view.
+
+So the rule now matches what extraction actually does.
+
+**Tests:**
+- `a_mapped_font_decodes_exactly_through_its_map` uses a map where `<0041>` means "Z" and asserts the exact extracted text is "Z", so a correct decode can be told apart from a one-byte fallback.
+- `a_font_restored_by_q_but_not_by_the_extractor_is_unreadable` covers the mismatch.
+- The earlier `q`/`Q` test is updated to the two-model rule, and it now also checks that a font restored inside a form, which the extractor never reads, is judged by graphics state alone.
+- The failing run before the fix: `receipts/r3-extractor-font-before-fix.log`, exit 101.
+
+**The real PHAK is unchanged by this correction:** still 25 `text_unreadable` pages (`receipts/phak-unmapped-pages.txt`).
+
 ## Cap proposal and the reviewer's decision (§6)
 
 - **Proposed cap:** 512 MiB of counted requested bytes, with the per-page content budget of 8 MiB, one worker at a time and a 120 s deadline.
@@ -84,7 +102,7 @@ Before this correction that garbage was counted as searchable text. **The cost i
 
 ## Gate
 
-- Native tests: 771 passed, 0 failed, 10 ignored (the ignored ones include the release-only diagnostics). The first strict clippy run of round 2 is kept: `receipts/clippy-round2-first.log`.
+- Native tests: 773 passed, 0 failed, 10 ignored (the ignored ones include the release-only diagnostics). The first strict clippy run of round 2 is kept: `receipts/clippy-round2-first.log`.
 - fmt, strict clippy and the lockfile check pass.
 - The release build succeeds, and the corpus and synthetic measurements were taken on that same binary.
 - No dependency, lock, migration, frontend or backup-format change in this slice.

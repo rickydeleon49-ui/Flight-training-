@@ -1,6 +1,6 @@
-{"file": "pilot_handbook.pdf", "result": "success", "pages": 524, "outcomes": {"image_only": 1, "text": 497, "text_unreadable": 25, "failed": 1}, "textBytes": 1766300, "countedPeakBytes": 401571949, "peakRssMiB": 533.5, "wallSeconds": 2.4}
+{"file": "pilot_handbook.pdf", "result": "success", "pages": 524, "outcomes": {"image_only": 1, "text": 497, "text_unreadable": 25, "failed": 1}, "textBytes": 1766300, "countedPeakBytes": 401571949, "peakRssMiB": 533.9, "wallSeconds": 2.46}
 {"file": "00_afh_full.pdf", "result": "reported:input_too_large", "pages": null, "outcomes": {}, "textBytes": 0, "countedPeakBytes": null, "peakRssMiB": 139.3, "wallSeconds": 0.02}
-{"file": "02_afh_ch1.pdf", "result": "success", "pages": 16, "outcomes": {"text": 16}, "textBytes": 43301, "countedPeakBytes": 67241183, "peakRssMiB": 67.9, "wallSeconds": 0.12}
+{"file": "02_afh_ch1.pdf", "result": "success", "pages": 16, "outcomes": {"text": 16}, "textBytes": 43301, "countedPeakBytes": 67241183, "peakRssMiB": 68.3, "wallSeconds": 0.12}
 {"file": "05_afh_ch4.pdf", "result": "success", "pages": 19, "outcomes": {"text": 19}, "textBytes": 53730, "countedPeakBytes": 21783263, "peakRssMiB": 29.0, "wallSeconds": 0.05}
-{"file": "20_afh_glossary.pdf", "result": "success", "pages": 19, "outcomes": {"text": 19}, "textBytes": 99081, "countedPeakBytes": 10205961, "peakRssMiB": 22.3, "wallSeconds": 0.05}
-{"file": "21_afh_index.pdf", "result": "success", "pages": 15, "outcomes": {"text": 15}, "textBytes": 22303, "countedPeakBytes": 7265303, "peakRssMiB": 18.1, "wallSeconds": 0.02}
+{"file": "20_afh_glossary.pdf", "result": "success", "pages": 19, "outcomes": {"text": 19}, "textBytes": 99081, "countedPeakBytes": 10205961, "peakRssMiB": 22.6, "wallSeconds": 0.05}
+{"file": "21_afh_index.pdf", "result": "success", "pages": 15, "outcomes": {"text": 15}, "textBytes": 22303, "countedPeakBytes": 7265303, "peakRssMiB": 18.4, "wallSeconds": 0.03}

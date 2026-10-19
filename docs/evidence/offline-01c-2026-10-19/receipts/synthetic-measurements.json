@@ -1,13 +1,13 @@
 {
   "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
-  "workerSha256": "ff438af2990120811ff5f58ec0f8e32e9716412d1a62cb1413ce40032a1e15ee",
+  "workerSha256": "5fe2b6c6f8651ca24ff56c70d699ae67e2958e7e6980cdce1f36ca2bd35b61cb",
   "defaultCapBytes": 536870912,
   "command": [
     "docs/evidence/offline-01c-2026-10-19/measure.py",
     "--worker",
     "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
     "--scratch",
-    "/Users/rickymac/.claude/jobs/fa2fbbcb/tmp/measure-01c-r2-1792420854",
+    "/Users/rickymac/.claude/jobs/fa2fbbcb/tmp/measure-01c-r3-1792421302",
     "--out",
     "docs/evidence/offline-01c-2026-10-19/receipts/synthetic-measurements.json"
   ],
@@ -15,8 +15,8 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.007,
-      "peakRssBytes": 10305536,
+      "wallSeconds": 0.008,
+      "peakRssBytes": 10272768,
       "peakRssMiB": 9.8,
       "frames": {
         "verified": 1,
@@ -36,8 +36,8 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.009,
-      "peakRssBytes": 29589504,
+      "wallSeconds": 0.008,
+      "peakRssBytes": 29556736,
       "peakRssMiB": 28.2,
       "frames": {
         "verified": 1,
@@ -57,7 +57,7 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.014,
+      "wallSeconds": 0.013,
       "peakRssBytes": 31473664,
       "peakRssMiB": 30.0,
       "frames": {
@@ -99,9 +99,9 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 13.098,
-      "peakRssBytes": 201736192,
-      "peakRssMiB": 192.4,
+      "wallSeconds": 12.965,
+      "peakRssBytes": 201981952,
+      "peakRssMiB": 192.6,
       "frames": {
         "verified": 1,
         "start": 1,
@@ -120,8 +120,8 @@
     {
       "exit": -6,
       "breachMarker": true,
-      "wallSeconds": 0.729,
-      "peakRssBytes": 548978688,
+      "wallSeconds": 0.759,
+      "peakRssBytes": 548945920,
       "peakRssMiB": 523.5,
       "frames": {
         "verified": 1
@@ -139,8 +139,8 @@
       "exit": 70,
       "breachMarker": true,
       "wallSeconds": 0.073,
-      "peakRssBytes": 548995072,
-      "peakRssMiB": 523.6,
+      "peakRssBytes": 548929536,
+      "peakRssMiB": 523.5,
       "frames": {
         "verified": 1
       },
@@ -156,8 +156,8 @@
     {
       "exit": 3,
       "breachMarker": false,
-      "wallSeconds": 0.01,
-      "peakRssBytes": 10731520,
+      "wallSeconds": 0.009,
+      "peakRssBytes": 10682368,
       "peakRssMiB": 10.2,
       "frames": {
         "verified": 1,
@@ -175,9 +175,9 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.403,
-      "peakRssBytes": 315179008,
-      "peakRssMiB": 300.6,
+      "wallSeconds": 0.402,
+      "peakRssBytes": 315146240,
+      "peakRssMiB": 300.5,
       "frames": {
         "verified": 1,
         "start": 1,
@@ -196,9 +196,9 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.536,
-      "peakRssBytes": 21250048,
-      "peakRssMiB": 20.3,
+      "wallSeconds": 0.535,
+      "peakRssBytes": 21200896,
+      "peakRssMiB": 20.2,
       "frames": {
         "verified": 1,
         "start": 1,
@@ -217,9 +217,9 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.156,
-      "peakRssBytes": 16171008,
-      "peakRssMiB": 15.4,
+      "wallSeconds": 0.157,
+      "peakRssBytes": 16056320,
+      "peakRssMiB": 15.3,
       "frames": {
         "verified": 1,
         "start": 1,

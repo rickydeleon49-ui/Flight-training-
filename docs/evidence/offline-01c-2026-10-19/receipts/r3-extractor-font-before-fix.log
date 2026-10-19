@@ -1,0 +1,61 @@
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.87s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-b1869e07bc678909)
+
+running 34 tests
+test extraction::inspect::tests::a_page_with_no_contents_at_all_is_blank ... ok
+test extraction::inspect::tests::a_truncated_flate_stream_is_failed ... ok
+test extraction::inspect::tests::a_cid_font_without_tounicode_never_yields_text ... ok
+test extraction::inspect::tests::a_dangling_contents_reference_is_failed_not_blank ... ok
+test extraction::inspect::tests::a_valid_tounicode_map_still_yields_text ... ok
+test extraction::inspect::tests::a_mapped_font_decodes_exactly_through_its_map ... ok
+test extraction::inspect::tests::a_valid_stream_beside_a_missing_one_is_failed ... ok
+test extraction::inspect::tests::a_font_restored_by_q_but_not_by_the_extractor_is_unreadable ... FAILED
+test extraction::inspect::tests::an_exhausted_budget_stops_the_whole_walk ... ok
+test extraction::inspect::tests::diagnose_load ... ignored
+test extraction::inspect::tests::diagnose_pages ... ignored
+test extraction::inspect::tests::diagnose_unmapped ... ignored
+test extraction::inspect::tests::blank_page_needs_complete_inspection ... ok
+test extraction::inspect::tests::a_form_inherits_the_callers_unmapped_font ... ok
+test extraction::inspect::tests::corrupt_and_unsupported_filters_are_failed_not_blank ... ok
+test extraction::inspect::tests::an_exact_boundary_fits_and_one_more_byte_does_not ... ok
+test extraction::inspect::tests::forms_nested_past_the_limit_are_unknown ... ok
+test extraction::inspect::tests::image_on_page_and_text_in_a_form_is_not_image_only ... ok
+test extraction::inspect::tests::forms_count_against_the_same_page_budget ... ok
+test extraction::inspect::tests::forms_within_the_limit_are_followed ... ok
+test extraction::inspect::tests::image_xobject_only_is_image_only ... ok
+test extraction::inspect::tests::inline_image_counts_as_an_image ... ok
+test extraction::inspect::tests::malformed_content_is_failed_not_blank ... ok
+test extraction::inspect::tests::missing_xobject_is_unknown_not_blank ... ok
+test extraction::inspect::tests::a_compressed_blank_page_is_still_blank ... ok
+test extraction::inspect::tests::nested_forms_inherit_and_restore_the_font ... ok
+test extraction::inspect::tests::text_operator_without_a_usable_font_is_unreadable ... ok
+test extraction::inspect::tests::self_referencing_form_is_cut_and_unknown ... ok
+test extraction::inspect::tests::text_page ... ok
+test extraction::inspect::tests::q_and_capital_q_restore_the_selected_font ... FAILED
+test extraction::inspect::tests::unusable_tounicode_entries_are_unmapped ... ok
+test extraction::inspect::tests::malformed_or_unsupported_predictors_are_failed ... ok
+test extraction::inspect::tests::decoder_errors_are_charged_and_still_unreadable ... ok
+test extraction::inspect::tests::an_outsized_page_is_failed_and_stops_at_the_budget ... ok
+
+failures:
+
+---- extraction::inspect::tests::a_font_restored_by_q_but_not_by_the_extractor_is_unreadable stdout ----
+
+thread 'extraction::inspect::tests::a_font_restored_by_q_but_not_by_the_extractor_is_unreadable' (6428415) panicked at src/extraction/inspect.rs:1061:9:
+assertion failed: i.unmapped_text
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- extraction::inspect::tests::q_and_capital_q_restore_the_selected_font stdout ----
+
+thread 'extraction::inspect::tests::q_and_capital_q_restore_the_selected_font' (6428438) panicked at src/extraction/inspect.rs:1153:9:
+the extractor would still use the unmapped font
+
+
+failures:
+    extraction::inspect::tests::a_font_restored_by_q_but_not_by_the_extractor_is_unreadable
+    extraction::inspect::tests::q_and_capital_q_restore_the_selected_font
+
+test result: FAILED. 29 passed; 2 failed; 3 ignored; 0 measured; 722 filtered out; finished in 0.14s
+
+error: test failed, to rerun pass `--lib`

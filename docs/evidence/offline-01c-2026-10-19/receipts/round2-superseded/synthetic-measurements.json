@@ -1,0 +1,239 @@
+{
+  "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
+  "workerSha256": "ff438af2990120811ff5f58ec0f8e32e9716412d1a62cb1413ce40032a1e15ee",
+  "defaultCapBytes": 536870912,
+  "command": [
+    "docs/evidence/offline-01c-2026-10-19/measure.py",
+    "--worker",
+    "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
+    "--scratch",
+    "/Users/rickymac/.claude/jobs/fa2fbbcb/tmp/measure-01c-r2-1792420854",
+    "--out",
+    "docs/evidence/offline-01c-2026-10-19/receipts/synthetic-measurements.json"
+  ],
+  "results": [
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.007,
+      "peakRssBytes": 10305536,
+      "peakRssMiB": 9.8,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:text": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 32638,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 32638
+      },
+      "case": "text-1-page",
+      "fileBytes": 587,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.009,
+      "peakRssBytes": 29589504,
+      "peakRssMiB": 28.2,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:failed": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 16947242,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 16947242
+      },
+      "case": "content-bomb-64MiB-decoded",
+      "fileBytes": 65827,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.014,
+      "peakRssBytes": 31473664,
+      "peakRssMiB": 30.0,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:failed": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 17925647,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 17925647
+      },
+      "case": "content-bomb-1GiB-decoded",
+      "fileBytes": 1044237,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.014,
+      "peakRssBytes": 31473664,
+      "peakRssMiB": 30.0,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:failed": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 17925649,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 17925649
+      },
+      "case": "content-bomb-1GiB-cap-64MiB",
+      "fileBytes": 1044237,
+      "memoryCapBytes": 67108864
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 13.098,
+      "peakRssBytes": 201736192,
+      "peakRssMiB": 192.4,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:failed": 400,
+        "end": 1
+      },
+      "countedPeakBytes": 46200271,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 46200271
+      },
+      "case": "shared-stream-400-pages-2MiB",
+      "fileBytes": 65593,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": -6,
+      "breachMarker": true,
+      "wallSeconds": 0.729,
+      "peakRssBytes": 548978688,
+      "peakRssMiB": 523.5,
+      "frames": {
+        "verified": 1
+      },
+      "countedPeakBytes": null,
+      "lastFrame": {
+        "type": "verified",
+        "sha256": "68e9b9376c5afb2f3a93e9268c8f1d99c5a1963132b496475188c24ab8910e6b"
+      },
+      "case": "object-stream-bomb-1GiB-at-load",
+      "fileBytes": 1044330,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 70,
+      "breachMarker": true,
+      "wallSeconds": 0.073,
+      "peakRssBytes": 548995072,
+      "peakRssMiB": 523.6,
+      "frames": {
+        "verified": 1
+      },
+      "countedPeakBytes": null,
+      "lastFrame": {
+        "type": "verified",
+        "sha256": "c772edc325034dcbe87fe34e01d6320539f4af0f74b939ac653981148857f011"
+      },
+      "case": "xref-stream-bomb-1GiB-at-load",
+      "fileBytes": 1044192,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 3,
+      "breachMarker": false,
+      "wallSeconds": 0.01,
+      "peakRssBytes": 10731520,
+      "peakRssMiB": 10.2,
+      "frames": {
+        "verified": 1,
+        "error": 1
+      },
+      "countedPeakBytes": null,
+      "lastFrame": {
+        "type": "error",
+        "code": "malformed"
+      },
+      "case": "deep-nesting-200000",
+      "fileBytes": 400581,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.403,
+      "peakRssBytes": 315179008,
+      "peakRssMiB": 300.6,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:text": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 305324256,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 305324256
+      },
+      "case": "many-objects-300000",
+      "fileBytes": 22767287,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.536,
+      "peakRssBytes": 21250048,
+      "peakRssMiB": 20.3,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:text": 2000,
+        "end": 1
+      },
+      "countedPeakBytes": 9116986,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 9116986
+      },
+      "case": "churn-2000-distinct-pages",
+      "fileBytes": 697512,
+      "memoryCapBytes": 536870912
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.156,
+      "peakRssBytes": 16171008,
+      "peakRssMiB": 15.4,
+      "frames": {
+        "verified": 1,
+        "start": 1,
+        "page:text": 1000,
+        "end": 1
+      },
+      "countedPeakBytes": 4570779,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 4570779
+      },
+      "case": "text-1000-pages-3KB",
+      "fileBytes": 347471,
+      "memoryCapBytes": 536870912
+    }
+  ]
+}

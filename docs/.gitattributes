@@ -383,3 +383,13 @@ evidence/offline-01c-2026-10-19/receipts/round1-superseded/fmt.log -text -diff
 evidence/offline-01c-2026-10-19/receipts/round1-superseded/helper.log -text -diff
 evidence/offline-01c-2026-10-19/receipts/round1-superseded/release-build.log -text -diff
 evidence/offline-01c-2026-10-19/receipts/round1-superseded/synthetic-measurements.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/r3-extractor-font-before-fix.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/cargo-lock.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/cargo-test.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/clippy.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/corpus-results.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/fmt.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/helper.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/phak-unmapped-pages.txt -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/release-build.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round2-superseded/synthetic-measurements.log -text -diff

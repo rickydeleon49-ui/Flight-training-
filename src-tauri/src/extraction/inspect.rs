@@ -134,6 +134,7 @@ pub fn inspect_page_within(doc: &Document, page_id: ObjectId, budget: usize) -> 
         stack: Vec::new(),
         budget,
         found,
+        extractor_font_unmapped: false,
     };
     walker.walk(&content, &resources, 0, &mut false);
     let mut found = walker.found;
@@ -249,6 +250,11 @@ struct Walker<'d> {
     stack: Vec<ObjectId>,
     budget: Budget,
     found: Inspection,
+    /// The font as `lopdf`'s text extractor sees it at page level: the last
+    /// `Tf`, ignoring `q`/`Q`. Extraction decodes with that font, so text
+    /// shown while it is unmapped is untrustworthy even where the PDF's own
+    /// graphics state has restored a mapped one.
+    extractor_font_unmapped: bool,
 }
 
 impl Walker<'_> {
@@ -279,10 +285,15 @@ impl Walker<'_> {
                         .and_then(|o| o.as_name().ok())
                         .map(|name| is_unmapped_composite(self.doc, name, resources))
                         .unwrap_or(false);
+                    if depth == 0 {
+                        self.extractor_font_unmapped = *font_unmapped;
+                    }
                 }
                 "Tj" | "TJ" | "'" | "\"" => {
                     self.found.shows_text = true;
-                    if *font_unmapped {
+                    // Unmapped under either model: the PDF's graphics state,
+                    // or the extractor's last-Tf-wins view at page level.
+                    if *font_unmapped || (depth == 0 && self.extractor_font_unmapped) {
                         self.found.unmapped_text = true;
                     }
                 }
@@ -620,7 +631,8 @@ pub(crate) mod tests {
             let fonts = doc.get_page_fonts(id).unwrap_or_default();
             let mut described = Vec::new();
             for (name, font) in fonts {
-                if font.get(b"Subtype").and_then(Object::as_name).ok() != Some(b"Type0".as_slice()) {
+                if font.get(b"Subtype").and_then(Object::as_name).ok() != Some(b"Type0".as_slice())
+                {
                     continue;
                 }
                 let encoding = match font.get_font_encoding(&doc) {
@@ -633,10 +645,19 @@ pub(crate) mod tests {
                     Ok(Object::Reference(_)) => "reference",
                     Ok(_) => "other",
                 };
-                described.push(format!("{}={encoding}/ToUnicode {to_unicode}", String::from_utf8_lossy(&name)));
+                described.push(format!(
+                    "{}={encoding}/ToUnicode {to_unicode}",
+                    String::from_utf8_lossy(&name)
+                ));
             }
             let text = doc.extract_text(&[n]).unwrap_or_default();
-            let excerpt: String = text.split_whitespace().collect::<Vec<_>>().join(" ").chars().take(100).collect();
+            let excerpt: String = text
+                .split_whitespace()
+                .collect::<Vec<_>>()
+                .join(" ")
+                .chars()
+                .take(100)
+                .collect();
             println!("page {n}: [{}] text: {excerpt:?}", described.join(", "));
         }
     }
@@ -994,6 +1015,64 @@ pub(crate) mod tests {
         assert_eq!(o, Outcome::Text);
     }
 
+    /// A map where <0041> means "Z": a correct decode is distinguishable
+    /// from a one-byte fallback, which would read the same bytes as "A".
+    const Z_FOR_0041_CMAP: &str = "/CIDInit /ProcSet findresource begin 12 dict begin begincmap\n\
+        /CMapName /SyntheticZ def /CMapType 2 def\n\
+        1 begincodespacerange <0000> <FFFF> endcodespacerange\n\
+        1 beginbfchar <0041> <005A> endbfchar\n\
+        endcmap CMapName currentdict /CMap defineresource pop end end";
+
+    #[test]
+    fn a_mapped_font_decodes_exactly_through_its_map() {
+        let mut b = PdfBuilder::new();
+        let map = b.doc.add_object(Stream::new(
+            dictionary! {},
+            Z_FOR_0041_CMAP.as_bytes().to_vec(),
+        ));
+        let font = composite_font(&mut b, Some(Object::Reference(map)));
+        b.page(
+            "BT /F1 12 Tf <0041> Tj ET",
+            dictionary! { "Font" => dictionary! { "F1" => font } },
+        );
+        let doc = Document::load_mem(&b.bytes()).unwrap();
+        let text = doc.extract_text(&[1]).unwrap();
+        assert_eq!(
+            text.trim(),
+            "Z",
+            "decoded through the map, not as one-byte A"
+        );
+        let i = inspect_page(&doc, first_page(&doc));
+        assert_eq!(outcome(&i, &text), Outcome::Text);
+    }
+
+    #[test]
+    fn a_font_restored_by_q_but_not_by_the_extractor_is_unreadable() {
+        let mut b = PdfBuilder::new();
+        let map = b.doc.add_object(Stream::new(
+            dictionary! {},
+            Z_FOR_0041_CMAP.as_bytes().to_vec(),
+        ));
+        let mapped = composite_font(&mut b, Some(Object::Reference(map)));
+        let unmapped = composite_font(&mut b, None);
+        // The PDF restores the mapped font; lopdf's extractor keeps the last
+        // Tf (the unmapped one) and decodes <0041> with its fallback.
+        b.page(
+            "BT /Fm 12 Tf q /Fu 12 Tf Q <0041> Tj ET",
+            dictionary! { "Font" => dictionary! { "Fm" => mapped, "Fu" => unmapped } },
+        );
+        let doc = Document::load_mem(&b.bytes()).unwrap();
+        let text = doc.extract_text(&[1]).unwrap();
+        assert_ne!(
+            text.trim(),
+            "Z",
+            "the extractor did not use the restored mapped font"
+        );
+        let i = inspect_page(&doc, first_page(&doc));
+        assert!(i.unmapped_text);
+        assert_ne!(outcome(&i, &text), Outcome::Text);
+    }
+
     #[test]
     fn unusable_tounicode_entries_are_unmapped() {
         type MakeEntry = fn(&mut PdfBuilder) -> Object;
@@ -1072,7 +1151,9 @@ pub(crate) mod tests {
             dictionary! { "Font" => fonts },
         );
         assert!(classify(b).0.unmapped_text, "Q restored the unmapped font");
-        // And the other way: an unmapped font inside q/Q does not leak out.
+        // The other way: in the PDF, Q restores the plain font, but lopdf's
+        // extractor ignores q/Q and decodes the later text with the last Tf
+        // (the unmapped one). The page is therefore conservatively withheld.
         let mut b = PdfBuilder::new();
         let fonts = mixed_resources(&mut b);
         b.page(
@@ -1080,8 +1161,27 @@ pub(crate) mod tests {
             dictionary! { "Font" => fonts },
         );
         let (i, o) = classify(b);
-        assert!(!i.unmapped_text, "Q restored the plain font");
-        assert_eq!(o, Outcome::Text);
+        assert!(
+            i.unmapped_text,
+            "the extractor would still use the unmapped font"
+        );
+        assert_eq!(o, Outcome::TextUnreadable);
+        // Inside a form the extractor doesn't look at all, so a font restored
+        // there is judged by graphics state alone.
+        let mut b = PdfBuilder::new();
+        let fonts = mixed_resources(&mut b);
+        let form = b.form(
+            "BT /F1 12 Tf ET q BT /F2 12 Tf ET Q BT (Plain) Tj ET",
+            dictionary! { "Font" => fonts.clone() },
+        );
+        b.page(
+            "BT /F1 12 Tf (Page words) Tj ET /Fm1 Do",
+            dictionary! { "Font" => fonts, "XObject" => dictionary! { "Fm1" => form } },
+        );
+        assert!(
+            !classify(b).0.unmapped_text,
+            "Q restored the plain font inside the form"
+        );
     }
 
     #[test]
