@@ -1,0 +1,207 @@
+{
+  "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
+  "memoryCap": 402653184,
+  "results": [
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "result": "success",
+      "pages": 524,
+      "outcomes": {
+        "image_only": 1,
+        "text": 522,
+        "failed": 1
+      },
+      "pageErrors": {
+        "page_content_limit": 1
+      },
+      "textBytes": 1863210,
+      "countedPeakBytes": 401571949,
+      "peakRssMiB": 533.9,
+      "wallSeconds": 2.38,
+      "samples": [
+        {
+          "page": 2,
+          "excerpt": "Pilot\u2019s Handbook of Aeronautical Knowledge U.S. Department of Transportation FEDERAL AVIATION ADMINISTRATION Flight Standards Service 2016"
+        },
+        {
+          "page": 132,
+          "excerpt": "Low angle of attack High angle of attack Load on upward movingpropeller blade Load on downward movingpropeller blade Load on downward movingpropeller blade Load"
+        },
+        {
+          "page": 262,
+          "excerpt": "as air density decreases (higher density altitude), aircraft performance decreases. A decrease in air density means a high density altitude; an increase in air "
+        },
+        {
+          "page": 392,
+          "excerpt": "Longitude Latitude aattoorr \u00b0\u00b0NN 6600\u00b0\u00b0NN 44NN 3300\u00b0\u00b0NN \u00b0\u00b0SS \u00b0\u00b0SS \u00b0\u00b0SS \u00b0\u00b0SS 115500\u00b0\u00b0WW113355\u00b0\u00b0WW 112200\u00b0\u00b0WW 110055\u00b0\u00b0WW 9900\u00b0\u00b0WW6600\u00b0\u00b0WW 4455\u00b0\u00b0WW 3300\u00b0\u00b0WW 1155\u00b0\u00b0"
+        }
+      ],
+      "file": "pilot_handbook.pdf",
+      "bytes": 56133125,
+      "sha256": "9c07502b29fc1e2372bea1e9c8288250f88560a4d96afc097d7490f8d81a841c",
+      "url": "https://www.faa.gov/sites/faa.gov/files/2022-03/pilot_handbook.pdf"
+    },
+    {
+      "exit": 3,
+      "breachMarker": false,
+      "result": "reported:input_too_large",
+      "pages": null,
+      "outcomes": {},
+      "pageErrors": {},
+      "textBytes": 0,
+      "countedPeakBytes": null,
+      "peakRssMiB": 139.3,
+      "wallSeconds": 0.02,
+      "samples": [],
+      "file": "00_afh_full.pdf",
+      "bytes": 273248888,
+      "sha256": "90dda95dcbe992bd798f1932b02b5a02d620d8344565c0516a6917f29dea1f8d",
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/00_afh_full.pdf"
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "result": "success",
+      "pages": 16,
+      "outcomes": {
+        "text": 16
+      },
+      "pageErrors": {},
+      "textBytes": 43301,
+      "countedPeakBytes": 67241183,
+      "peakRssMiB": 68.2,
+      "wallSeconds": 0.12,
+      "samples": [
+        {
+          "page": 1,
+          "excerpt": "Airplane Flying Handbook (FAA-H-8083-3C) Chapter 1: Introduction to Flight Training Introduction The overall purpose of primary and intermediate flight training"
+        },
+        {
+          "page": 5,
+          "excerpt": "Figure 1-5. Example of some of the required standard or supplemental and optional equipment for an aircraft. Flight Standards Service The FAA\u2019s Flight Standards"
+        },
+        {
+          "page": 9,
+          "excerpt": "There are a number of flying schools in the United States that are not certificated by the FAA. These schools operate under the provisions of 14 CFR part 61. Ma"
+        },
+        {
+          "page": 13,
+          "excerpt": "Taxi operations require constant vigilance by the entire flight crew, not just the pilot taxiing the airplane. During flight training, the instructor should emp"
+        }
+      ],
+      "file": "02_afh_ch1.pdf",
+      "bytes": 25470096,
+      "sha256": "ff3e6c79397509c55c83a08d4cf1a36a7399eb4bab83d4bfdbe9415ab89c351d",
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/02_afh_ch1.pdf"
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "result": "success",
+      "pages": 19,
+      "outcomes": {
+        "text": 19
+      },
+      "pageErrors": {},
+      "textBytes": 53730,
+      "countedPeakBytes": 21783263,
+      "peakRssMiB": 28.9,
+      "wallSeconds": 0.05,
+      "samples": [
+        {
+          "page": 1,
+          "excerpt": "Airplane Flying Handbook (FAA-H- 8083-3C) Chapter 4: Energy Management: Mastering Altitude and Airspeed Control Introduction This chapter is all about managing "
+        },
+        {
+          "page": 5,
+          "excerpt": "Addition al Role for the Elevator On the front side of the power required curve, where the airplane cruises at high speed (1 in Figure 4-4 ) and a low angle of "
+        },
+        {
+          "page": 9,
+          "excerpt": "Thr ee Basic Rules of Energ y Control An \u201cenergy -control\u201d map can help visualize the basic energy control rules. [Figure 4- 8] The energy-control map depicts n"
+        },
+        {
+          "page": 13,
+          "excerpt": "Figure 4- 12. The control skills needed to correct total energy and energy distribution errors identified in Figure 4-11 with an additional column giving cautio"
+        }
+      ],
+      "file": "05_afh_ch4.pdf",
+      "bytes": 4685834,
+      "sha256": "bcf790ff0cc591e2c84de93f03befe7a393501f3c2188ad81377574107a57fa9",
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/05_afh_ch4.pdf"
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "result": "success",
+      "pages": 19,
+      "outcomes": {
+        "text": 19
+      },
+      "pageErrors": {},
+      "textBytes": 99081,
+      "countedPeakBytes": 10205961,
+      "peakRssMiB": 22.6,
+      "wallSeconds": 0.05,
+      "samples": [
+        {
+          "page": 1,
+          "excerpt": "Airplane Flying Handbook (FAA-H-8083-3A) Glossary Numbers and Symbols 14 CFR. (T itle 14 of th e Cod e of Feder al Regulations. Feder al regulations pertaining "
+        },
+        {
+          "page": 5,
+          "excerpt": "Crazing. Small fractures in aircraft windshields and windows caused from being exposed to the ultraviolet rays of the sun and temperature extremes. Critical alt"
+        },
+        {
+          "page": 9,
+          "excerpt": "L Inclinometer. An instrument consisting of a curved glass tube, housing a glass ball, and damped with a fluid similar to kerosene. It may be used to indicate i"
+        },
+        {
+          "page": 13,
+          "excerpt": "Reversing propeller. A propeller system with a pitch change mechanism that includes full reversing capability. When the pilot moves the throttle controls to rev"
+        }
+      ],
+      "file": "20_afh_glossary.pdf",
+      "bytes": 1728744,
+      "sha256": "a7f7946efd5859318c7630c303149aba1cae4e200f4b10cc8219e21da9214b6e",
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/20_afh_glossary.pdf"
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "result": "success",
+      "pages": 15,
+      "outcomes": {
+        "text": 15
+      },
+      "pageErrors": {},
+      "textBytes": 22303,
+      "countedPeakBytes": 7264166,
+      "peakRssMiB": 18.3,
+      "wallSeconds": 0.02,
+      "samples": [
+        {
+          "page": 1,
+          "excerpt": "Airplane Flying Handbook (FAA-H-8083-3C) Index A Abnormal engine instrument indication Absence of propeller: Drag Effect Slipstream Academic material (knowledge"
+        },
+        {
+          "page": 4,
+          "excerpt": "Directional control 2-19, 3-9, 5-11, 5-17, 5-22, 6-1, 6-14, 9-9, 9-18, 9-23, 9-33, 9-34, 9-3 7, 9-3 8, 13-2, 13-15, 13-17, 13-18, 13-23, 13-25, 13-26, 13-27, 13"
+        },
+        {
+          "page": 7,
+          "excerpt": "Climbs 18-20 Combined maneuvers 18-21 Descents 18-20 Maintaining airplane control 18-18 Recognition 18-17 Transition to visual flight 18-22 Turns 18-19 In-fligh"
+        },
+        {
+          "page": 10,
+          "excerpt": "Power-off accuracy approaches 90\u00b0 Power-off approach 180\u00b0 Power-off approach Power required Preflight Preflight assessment of the aircraft Preparation and prefl"
+        }
+      ],
+      "file": "21_afh_index.pdf",
+      "bytes": 626771,
+      "sha256": "06f303f4386e77ed07b335bbcc800c32f31d2186bcdb8a388ddd08c80f470446",
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/21_afh_index.pdf"
+    }
+  ]
+}

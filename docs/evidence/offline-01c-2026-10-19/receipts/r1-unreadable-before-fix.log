@@ -1,0 +1,22 @@
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.71s
+     Running tests/extraction_worker.rs (src-tauri/target/debug/deps/extraction_worker-69f1fa033f1598f4)
+
+running 1 test
+test an_unreadable_page_is_never_decoded_again_without_the_budget ... FAILED
+
+failures:
+
+---- an_unreadable_page_is_never_decoded_again_without_the_budget stdout ----
+
+thread 'an_unreadable_page_is_never_decoded_again_without_the_budget' (6395540) panicked at tests/extraction_worker.rs:512:51:
+called `Result::unwrap()` on an `Err` value: MemoryLimit
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    an_unreadable_page_is_never_decoded_again_without_the_budget
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 4.73s
+
+error: test failed, to rerun pass `--test extraction_worker`

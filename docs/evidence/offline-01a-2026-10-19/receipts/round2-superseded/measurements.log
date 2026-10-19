@@ -1,0 +1,11 @@
+{"case": "text-1-page", "exit": 0, "breachMarker": false, "peakRssMiB": 9.8, "countedPeakBytes": 32634, "wallSeconds": 0.262, "frames": {"start": 1, "page:text": 1, "end": 1}}
+{"case": "content-bomb-64MiB-decoded", "exit": 0, "breachMarker": false, "peakRssMiB": 300.3, "countedPeakBytes": 201420294, "wallSeconds": 0.067, "frames": {"start": 1, "page:text": 1, "end": 1}}
+{"case": "content-bomb-1GiB-decoded", "exit": -6, "breachMarker": true, "peakRssMiB": 524.8, "countedPeakBytes": null, "wallSeconds": 0.07, "frames": {}}
+{"case": "content-bomb-1GiB-cap-64MiB", "exit": -6, "breachMarker": true, "peakRssMiB": 77.8, "countedPeakBytes": null, "wallSeconds": 0.019, "frames": {}}
+{"case": "shared-stream-400-pages-2MiB", "exit": 0, "breachMarker": false, "peakRssMiB": 193.0, "countedPeakBytes": 46200011, "wallSeconds": 12.822, "frames": {"start": 1, "page:failed": 400, "end": 1}}
+{"case": "object-stream-bomb-1GiB-at-load", "exit": -6, "breachMarker": true, "peakRssMiB": 268.6, "countedPeakBytes": null, "wallSeconds": 0.375, "frames": {}}
+{"case": "xref-stream-bomb-1GiB-at-load", "exit": 70, "breachMarker": true, "peakRssMiB": 268.7, "countedPeakBytes": null, "wallSeconds": 0.044, "frames": {}}
+{"case": "deep-nesting-200000", "exit": 3, "breachMarker": false, "peakRssMiB": 10.2, "countedPeakBytes": null, "wallSeconds": 0.009, "frames": {"error": 1}}
+{"case": "many-objects-300000", "exit": 0, "breachMarker": false, "peakRssMiB": 300.5, "countedPeakBytes": 305324252, "wallSeconds": 0.402, "frames": {"start": 1, "page:text": 1, "end": 1}}
+{"case": "churn-2000-distinct-pages", "exit": 0, "breachMarker": false, "peakRssMiB": 20.2, "countedPeakBytes": 9116726, "wallSeconds": 0.529, "frames": {"start": 1, "page:text": 2000, "end": 1}}
+{"case": "text-1000-pages-3KB", "exit": 0, "breachMarker": false, "peakRssMiB": 15.4, "countedPeakBytes": 4570775, "wallSeconds": 0.159, "frames": {"start": 1, "page:text": 1000, "end": 1}}

@@ -1,0 +1,5 @@
+{"case": "text-1-page", "exit": 0, "breachMarker": false, "peakRssMiB": 9.8, "wallSeconds": 0.24, "frames": {"start": 1, "page:text": 1, "end": 1}}
+{"case": "content-bomb-64MiB-decoded", "exit": 0, "breachMarker": false, "peakRssMiB": 204.3, "wallSeconds": 0.09, "frames": {"start": 1, "page:text": 1, "end": 1}}
+{"case": "content-bomb-1GiB-decoded", "exit": -6, "breachMarker": true, "peakRssMiB": 268.8, "wallSeconds": 0.042, "frames": {}}
+{"case": "content-bomb-1GiB-cap-64MiB", "exit": -6, "breachMarker": true, "peakRssMiB": 45.8, "wallSeconds": 0.017, "frames": {}}
+{"case": "shared-stream-400-pages-2MiB", "exit": 0, "breachMarker": false, "peakRssMiB": 191.6, "wallSeconds": 12.677, "frames": {"start": 1, "page:failed": 400, "end": 1}}

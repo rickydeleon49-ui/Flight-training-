@@ -1,0 +1,6 @@
+pilot_handbook.pdf 56133125 9c07502b29fc1e2372bea1e9c8288250f88560a4d96afc097d7490f8d81a841c https://www.faa.gov/sites/faa.gov/files/2022-03/pilot_handbook.pdf
+00_afh_full.pdf 273248888 90dda95dcbe992bd798f1932b02b5a02d620d8344565c0516a6917f29dea1f8d https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/00_afh_full.pdf
+02_afh_ch1.pdf 25470096 ff3e6c79397509c55c83a08d4cf1a36a7399eb4bab83d4bfdbe9415ab89c351d https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/02_afh_ch1.pdf
+05_afh_ch4.pdf 4685834 bcf790ff0cc591e2c84de93f03befe7a393501f3c2188ad81377574107a57fa9 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/05_afh_ch4.pdf
+20_afh_glossary.pdf 1728744 a7f7946efd5859318c7630c303149aba1cae4e200f4b10cc8219e21da9214b6e https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/20_afh_glossary.pdf
+21_afh_index.pdf 626771 06f303f4386e77ed07b335bbcc800c32f31d2186bcdb8a388ddd08c80f470446 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/21_afh_index.pdf

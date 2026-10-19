@@ -251,8 +251,12 @@ fn page_text_over_its_limit_fails_that_page_only() {
     assert!(out.pages[0].text.is_empty());
 }
 
+/// A content-stream bomb is now stopped by the per-page content budget
+/// before it can reach the memory cap: decoding halts at 8 MiB and only that
+/// page fails. (Load-time bombs, which never reach page inspection, are
+/// stopped by the cap; see the object-stream test.)
 #[test]
-fn a_content_stream_bomb_stops_at_the_memory_cap() {
+fn a_content_stream_bomb_fails_its_page_at_the_content_budget() {
     let s = Scratch::new("bomb");
     let mut pdf = Pdf::new();
     let font = pdf.font;
@@ -270,11 +274,14 @@ fn a_content_stream_bomb_stops_at_the_memory_cap() {
         memory_bytes: Some(48 * MIB),
         ..Limits::default()
     };
-    assert_eq!(run(&path, &sha, limits), Err(Failure::MemoryLimit));
+    let out = run(&path, &sha, limits).unwrap();
+    assert_eq!(out.pages.len(), 1);
+    assert_eq!(out.pages[0].outcome, Outcome::Failed);
+    assert_eq!(out.pages[0].error.as_deref(), Some("page_content_limit"));
+    assert!(out.pages[0].text.is_empty());
+    assert!(out.peak_bytes < 48 * MIB as u64, "well inside the cap");
 }
 
-/// A large string stored inside a compressed object stream, referenced by a
-/// cross-reference stream, so `lopdf` decompresses it while *loading*.
 #[test]
 fn an_object_stream_bomb_decoded_at_load_stops_at_the_memory_cap() {
     let s = Scratch::new("objstm");
@@ -444,4 +451,70 @@ fn empty_oversized_and_unknown_requests_are_refused() {
         assert_eq!(out.status.code(), Some(EXIT_BAD_REQUEST));
         assert!(out.stdout.is_empty());
     }
+}
+
+#[test]
+fn one_outsized_page_fails_alone_and_the_document_carries_on() {
+    let s = Scratch::new("outsized");
+    let mut pdf = Pdf::new();
+    pdf.text("Before the drawing");
+    // Decodes to 12 MiB of drawing operations, past the 8 MiB page budget.
+    pdf.page_with(
+        b"0 0 m 10 10 l S ".repeat(12 * MIB / 16),
+        lopdf::Dictionary::new(),
+        true,
+    );
+    pdf.text("After the drawing");
+    let (path, sha) = s.write("outsized.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    let outcomes: Vec<_> = out
+        .pages
+        .iter()
+        .map(|p| (p.outcome, p.error.clone()))
+        .collect();
+    assert_eq!(
+        outcomes,
+        vec![
+            (Outcome::Text, None),
+            (Outcome::Failed, Some("page_content_limit".into())),
+            (Outcome::Text, None),
+        ]
+    );
+}
+
+/// An unreadable page (here a filter chain strict inspection doesn't
+/// accept) is never handed to lopdf's unbudgeted text extraction.
+#[test]
+fn an_unreadable_page_is_never_decoded_again_without_the_budget() {
+    let s = Scratch::new("unreadable");
+    let mut pdf = Pdf::new();
+    pdf.text("Readable");
+    // Double Flate: 12 MiB of drawing, compressed twice.
+    let mut once = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(12 * MIB / 16));
+    once.compress().unwrap();
+    let mut twice = Stream::new(dictionary! {}, once.content.clone());
+    twice.compress().unwrap();
+    twice.dict.set(
+        "Filter",
+        Object::Array(vec![
+            Object::Name(b"FlateDecode".to_vec()),
+            Object::Name(b"FlateDecode".to_vec()),
+        ]),
+    );
+    twice.allows_compression = false;
+    let content_id = pdf.doc.add_object(twice);
+    let page = pdf.doc.add_object(dictionary! {
+        "Type" => "Page", "Parent" => pdf.pages_id, "Contents" => content_id,
+        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+    });
+    pdf.kids.push(page.into());
+    let (path, sha) = s.write("chain.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    assert_eq!(out.pages[1].outcome, Outcome::Failed);
+    assert_eq!(out.pages[1].error.as_deref(), Some("page_content"));
+    assert!(
+        out.peak_bytes < 8 * MIB as u64,
+        "the chained page was never decoded in full (peak {} bytes)",
+        out.peak_bytes
+    );
 }

@@ -1,0 +1,62 @@
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.53s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-b1869e07bc678909)
+
+running 17 tests
+test extraction::inspect::tests::a_page_with_no_contents_at_all_is_blank ... ok
+test extraction::inspect::tests::image_on_page_and_text_in_a_form_is_not_image_only ... ok
+test extraction::inspect::tests::blank_page_needs_complete_inspection ... ok
+test extraction::inspect::tests::a_truncated_flate_stream_is_failed ... FAILED
+test extraction::inspect::tests::forms_within_the_limit_are_followed ... ok
+test extraction::inspect::tests::corrupt_and_unsupported_filters_are_failed_not_blank ... FAILED
+test extraction::inspect::tests::a_dangling_contents_reference_is_failed_not_blank ... FAILED
+test extraction::inspect::tests::a_valid_stream_beside_a_missing_one_is_failed ... FAILED
+test extraction::inspect::tests::inline_image_counts_as_an_image ... ok
+test extraction::inspect::tests::malformed_content_is_failed_not_blank ... ok
+test extraction::inspect::tests::image_xobject_only_is_image_only ... ok
+test extraction::inspect::tests::forms_nested_past_the_limit_are_unknown ... ok
+test extraction::inspect::tests::missing_xobject_is_unknown_not_blank ... ok
+test extraction::inspect::tests::text_operator_without_a_usable_font_is_unreadable ... ok
+test extraction::inspect::tests::self_referencing_form_is_cut_and_unknown ... ok
+test extraction::inspect::tests::text_page ... ok
+test extraction::inspect::tests::a_compressed_blank_page_is_still_blank ... ok
+
+failures:
+
+---- extraction::inspect::tests::a_truncated_flate_stream_is_failed stdout ----
+
+thread 'extraction::inspect::tests::a_truncated_flate_stream_is_failed' (6091372) panicked at src/extraction/inspect.rs:488:9:
+assertion `left == right` failed
+  left: Blank
+ right: Failed
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- extraction::inspect::tests::corrupt_and_unsupported_filters_are_failed_not_blank stdout ----
+
+thread 'extraction::inspect::tests::corrupt_and_unsupported_filters_are_failed_not_blank' (6091375) panicked at src/extraction/inspect.rs:474:13:
+assertion `left == right` failed: FlateDecode
+  left: Blank
+ right: Failed
+
+---- extraction::inspect::tests::a_dangling_contents_reference_is_failed_not_blank stdout ----
+
+thread 'extraction::inspect::tests::a_dangling_contents_reference_is_failed_not_blank' (6091370) panicked at src/extraction/inspect.rs:443:9:
+assertion failed: i.unreadable_page
+
+---- extraction::inspect::tests::a_valid_stream_beside_a_missing_one_is_failed stdout ----
+
+thread 'extraction::inspect::tests::a_valid_stream_beside_a_missing_one_is_failed' (6091373) panicked at src/extraction/inspect.rs:458:9:
+assertion `left == right` failed: partial text from part of a page is not reported as the page's text
+  left: Text
+ right: Failed
+
+
+failures:
+    extraction::inspect::tests::a_dangling_contents_reference_is_failed_not_blank
+    extraction::inspect::tests::a_truncated_flate_stream_is_failed
+    extraction::inspect::tests::a_valid_stream_beside_a_missing_one_is_failed
+    extraction::inspect::tests::corrupt_and_unsupported_filters_are_failed_not_blank
+
+test result: FAILED. 13 passed; 4 failed; 0 ignored; 0 measured; 711 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

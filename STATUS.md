@@ -1,3 +1,29 @@
+## OFFLINE-01a merged; OFFLINE-01c real-document evidence, round-3 correction pending re-review — 19 October 2026
+
+OFFLINE-01a merged as PR #227 (`4941b05`) after Codex rounds 1–2 were RED and round 3 GREEN. Extraction stays dormant: Codex rejected both caps for release pending real-document evidence. Claude did **01c before 01b** to supply that evidence; it is pending Codex review.
+
+**Corpus:** public-domain FAA handbooks, hash-recorded and kept outside Git.
+
+**What it showed:**
+- **One page sank the whole handbook:** the full Pilot's Handbook (524 pages) breached at page 449, because page 450 decodes to 60.5 MB and 2.18 million operations.
+- **Fixed with a per-page content budget of 8 MiB,** which stops decoding at the limit: that page alone `failed` and the handbook completes, 522 text pages.
+- **Loading costs about 4.5× the file:** 238 MiB live for 71,546 objects; peak 383 MiB counted and 534 MiB RSS. **Cap proposed at 512 MiB.**
+- **The full Airplane Flying Handbook** (261 MiB) is refused by size; its chapters complete using 18–68 MiB.
+- **Fidelity limits are reported:** glyphs drawn twice come out doubled, and some word gaps are lost.
+
+Codex round 1 was RED on these, all now corrected:
+- an unreadable page could still be decoded without the budget;
+- the budget didn't stop the form walk once exhausted;
+- receipts recorded the wrong cap;
+- checksummed `.log` receipts were never committed (also for 01a, now fixed);
+- some claims overreached, including CID text without ToUnicode, which was wrongly reported as text and is now `text_unreadable`.
+
+**Codex rejected the 512 MiB cap for release enablement** until pressure testing on dedicated, supported test Macs (including minimum spec) during installed acceptance. Memory-pressure simulation was not run on the owner's Mac. Codex round 2 was RED on two more font-rule gaps, now fixed:
+- **Font state:** the font flag now follows `q`/`Q` and is inherited into forms.
+- **Map usability:** a font counts as mapped only if `lopdf` actually parses its ToUnicode map.
+
+**The real PHAK changed:** 25 pages moved to `text_unreadable`, because their font maps exist but `lopdf` cannot parse them and it emits glyph ids as letters. That garbage was previously counted as text. The conservative rule also withholds their good text, so span-level filtering is a recorded OFFLINE-02 follow-up. Codex round 3 was RED: `lopdf`'s extractor ignores `q`/`Q`. Text is now flagged if it is unmapped under either the PDF's graphics state or the extractor's last-`Tf` view, with an exact-text regression; the PHAK is unchanged. Native tests: 773 passed. [Report](docs/OFFLINE_01C_REPORT_2026-10-19.md). Earlier entries remain historical.
+
 ## OFFLINE-01a: native extraction worker and content cache; round-2 corrections pending re-review — 19 October 2026
 
 Claude implemented slice 01a (PR #227). Codex round 1 was RED on six blocking findings, all now corrected with regressions:
