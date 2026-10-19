@@ -128,6 +128,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
         model: "gemini-3.5-flash",
       });
     });
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
 
     // Verify exactly one study aid was saved
     await waitFor(async () => {
@@ -235,6 +237,9 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
         model: "gemini-3.5-flash",
       });
     });
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+    await act(async () => navigate(`/study/${material1.id}`));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
 
     // The answer belongs to the material it was made from, not to the page.
     await waitFor(async () =>
@@ -285,7 +290,10 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
         model: "gemini-3.5-flash",
       });
     });
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
 
+    expect(await screen.findByText(/changed or was removed while Gemini was working/)).toBeTruthy();
     // Verify nothing was saved
     const studySets = await repos.documents.listAiStudySets();
     expect(studySets).toHaveLength(0);
@@ -391,10 +399,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
       });
     });
 
-    // - A's result is saved to A, not to B (GEN-REL-02)
-    await waitFor(async () =>
-      expect((await repos.documents.listAiStudySets()).map((set) => set.sourceMaterialId)).toEqual([materialA.id]),
-    );
+    // A's answer waits for acceptance; B remains untouched.
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
 
     // - The global lock releases
     await waitFor(() => expect(practiceBtnB.hasAttribute("disabled")).toBe(false));
@@ -429,6 +435,11 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
       expect(tests[0]?.sourceMaterialId).toBe(materialB.id);
       expect(tests[0]?.title).toBe("Test B");
     });
+    await act(async () => navigate(`/study/${materialA.id}`));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+    await waitFor(async () =>
+      expect((await repos.documents.listAiStudySets()).map((set) => set.sourceMaterialId)).toEqual([materialA.id]),
+    );
   });
 
   it("starting practice test on material A blocks study aid on material B across navigation until A resolves", async () => {
@@ -526,6 +537,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
         model: "gemini-3.5-flash",
       });
     });
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
 
     await waitFor(async () => {
       const studySets = await repos.documents.listAiStudySets();
@@ -590,6 +603,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
         model: "gemini-3.5-flash",
       });
     });
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
 
     await waitFor(async () => {
       const studySets = await repos.documents.listAiStudySets();
@@ -649,6 +664,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
         model: "gemini-3.5-flash",
       });
     });
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
 
     await waitFor(async () => {
       const studySets = await repos.documents.listAiStudySets();

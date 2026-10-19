@@ -105,6 +105,7 @@ function MaterialDetailPage() {
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   // Only decides whether a new study aid can be requested; saved ones show regardless.
   const [geminiStatusFailed, setGeminiStatusFailed] = useState(false);
+  const [targetCards, setTargetCards] = useState(40);
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
@@ -361,6 +362,7 @@ function MaterialDetailPage() {
       "study-aid",
       { materialId: material.id, filePath: material.filePath },
       {
+        targetCards,
         preflight: preflight(material.filePath),
         onSaved: () => {
           if (isMountedRef.current) {
@@ -1028,7 +1030,14 @@ function MaterialDetailPage() {
           void createStudyAid();
         }}
         onCancel={() => setConfirmingAi(false)}
-      />
+      >
+        <label className="field">Target cards
+          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value))}>
+            {[20, 40, 60].map((count) => <option key={count} value={count}>{count}</option>)}
+          </select>
+        </label>
+        <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them. Try again resumes any kept draft with the same target.</p>
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={confirmingPracticeTest && !isGeneratingAny}

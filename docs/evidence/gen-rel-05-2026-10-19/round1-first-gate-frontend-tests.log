@@ -1,0 +1,1980 @@
+COMMAND: npm test
+PATH prefix: /opt/homebrew/opt/node@22/bin; CARGO_NET_OFFLINE=true
+
+> her-flight-deck@0.5.5 test
+> vitest run
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-gen-rel-05
+
+(node:12906) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12901) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12902) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12899) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12907) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12900) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12903) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12904) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12905) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12916) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12915) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/MaterialDetailOffline.test.ts (11 tests | 1 failed) 7440ms
+     × keeps another material's saved content usable while a generation runs elsewhere, and a late result goes only to its own material 1581ms
+(node:12917) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12918) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12920) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12921) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12927) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12922) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12941) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12947) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12951) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13230) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13233) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13231) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13234) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13235) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13236) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13240) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13237) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13239) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13241) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/MaterialDetailGemini.test.ts (10 tests | 6 failed) 8806ms
+     × prevents duplicate Gemini study aid calls when activated repeatedly during in-flight generation 1399ms
+     × saves a study aid to the material it was made from even after navigating to another one (GEN-REL-02) 1248ms
+     × starting study aid on material A blocks practice test on material B across navigation until A resolves 1273ms
+     × starting practice test on material A blocks study aid on material B across navigation until A resolves 1414ms
+     × guards both confirmation actions in event handlers even when triggered directly while an operation is pending 1240ms
+     × starting study-aid generation prevents a practice-test request and disables both buttons 1288ms
+(node:13255) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13256) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13259) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13257) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13260) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13261) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13264) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13265) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13263) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13266) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13283) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13285) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13336) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13291) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13293) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13296) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13335) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13339) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13340) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13342) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13346) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13345) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13347) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13350) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13349) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/MaterialDetailGeminiModel.test.ts (3 tests | 1 failed) 1756ms
+     × asks before sending to Gemini 4 Argon, then labels the saved aid with the model that made it 1514ms
+(node:13351) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13352) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13357) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13356) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13355) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13362) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13359) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13361) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13370) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13373) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13372) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13376) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13379) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13380) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13377) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13381) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13384) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13383) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13385) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13389) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13386) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13392) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13396) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13403) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13401) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13402) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13406) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailGemini.test.ts > MaterialDetail Gemini workflow boundaries > prevents duplicate Gemini study aid calls when activated repeatedly during in-flight generation
+AssertionError: expected [] to have a length of 1 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mNavigation Handbook[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mnav.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_0_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_0_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mNavigation Handbook[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [3...
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/pages/StudyLibrary/MaterialDetailGemini.test.ts:135:25
+    133|     await waitFor(async () => {
+    134|       const studySets = await repos.documents.listAiStudySets();
+    135|       expect(studySets).toHaveLength(1);
+       |                         ^
+    136|       expect(studySets[0]?.title).toBe("Nav Study Guide");
+    137|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailGemini.test.ts > MaterialDetail Gemini workflow boundaries > saves a study aid to the material it was made from even after navigating to another one (GEN-REL-02)
+AssertionError: expected [] to deeply equal [ [ 'mat-old', 'Old Study Guide' ] ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mNew Material[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mnew.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_21_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_21_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mNew Material[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [36m</div>[39...
+
+- Expected
++ Received
+
+- [
+-   [
+-     "mat-old",
+-     "Old Study Guide",
+-   ],
+- ]
++ []
+
+ ❯ src/pages/StudyLibrary/MaterialDetailGemini.test.ts:241:105
+    239|     // The answer belongs to the material it was made from, not to the…
+    240|     await waitFor(async () =>
+    241|       expect((await repos.documents.listAiStudySets()).map((set) => [s…
+       |                                                                                                         ^
+    242|         ["mat-old", "Old Study Guide"],
+    243|       ]),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailGemini.test.ts > MaterialDetail Gemini workflow boundaries > starting study aid on material A blocks practice test on material B across navigation until A resolves
+AssertionError: expected [] to deeply equal [ 'mat-lock-a' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mMaterial B[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mb.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_4l_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_4l_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mMaterial B[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [36m</div>[39m
+    ...
+
+- Expected
++ Received
+
+- [
+-   "mat-lock-a",
+- ]
++ []
+
+ ❯ src/pages/StudyLibrary/MaterialDetailGemini.test.ts:396:92
+    394|     // - A's result is saved to A, not to B (GEN-REL-02)
+    395|     await waitFor(async () =>
+    396|       expect((await repos.documents.listAiStudySets()).map((set) => se…
+       |                                                                                            ^
+    397|     );
+    398|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailGemini.test.ts > MaterialDetail Gemini workflow boundaries > starting practice test on material A blocks study aid on material B across navigation until A resolves
+AssertionError: expected [] to have a length of 1 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mMaterial B Reverse[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mrev-b.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_5v_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_5v_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mMaterial B Reverse[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  ...
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/pages/StudyLibrary/MaterialDetailGemini.test.ts:532:25
+    530|     await waitFor(async () => {
+    531|       const studySets = await repos.documents.listAiStudySets();
+    532|       expect(studySets).toHaveLength(1);
+       |                         ^
+    533|       expect(studySets[0]?.sourceMaterialId).toBe(materialB.id);
+    534|       expect(studySets[0]?.title).toBe("Study Guide B");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailGemini.test.ts > MaterialDetail Gemini workflow boundaries > guards both confirmation actions in event handlers even when triggered directly while an operation is pending
+AssertionError: expected [] to have a length of 1 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mGuard Test Material[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mguard.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_6k_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_6k_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mGuard Test Material[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                 ...
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/pages/StudyLibrary/MaterialDetailGemini.test.ts:596:25
+    594|     await waitFor(async () => {
+    595|       const studySets = await repos.documents.listAiStudySets();
+    596|       expect(studySets).toHaveLength(1);
+       |                         ^
+    597|     });
+    598|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailGemini.test.ts > MaterialDetail Gemini workflow boundaries > starting study-aid generation prevents a practice-test request and disables both buttons
+AssertionError: expected [] to have a length of 1 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mNavigation Handbook[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mnav.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_79_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_79_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mNavigation Handbook[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  ...
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/pages/StudyLibrary/MaterialDetailGemini.test.ts:655:25
+    653|     await waitFor(async () => {
+    654|       const studySets = await repos.documents.listAiStudySets();
+    655|       expect(studySets).toHaveLength(1);
+       |                         ^
+    656|     });
+    657|     expect(generatePracticeSpy).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailGeminiModel.test.ts > Gemini model choice on a material > asks before sending to Gemini 4 Argon, then labels the saved aid with the model that made it
+TestingLibraryElementError: Unable to find an element with the text: /AI-generated study aid \(made with Gemini Flash\)/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mSynthetic handbook[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mhandbook.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m2 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_0_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_0_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mSynthetic handbook[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_1_"[39m
+              [33mclass[39...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<header[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-header__title"[39m
+        [36m>[39m
+          [0mSynthetic handbook[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"page-header__subtitle"[39m
+        [36m>[39m
+          [0mStudy Guide · General[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"button button--ghost"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/study"[39m
+        [36m>[39m
+          [0mBack[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mEdit[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--danger"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDelete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</header>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"detail"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail__column"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"file-row file-row--actions"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"18"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__details"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"small truncate"[39m
+                [36m>[39m
+                  [0mhandbook.pdf[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny"[39m
+                [36m>[39m
+                  [0m2 KB[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row__actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"button button--secondary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"15"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"15"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m Open[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"card"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"card__header"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"card__eyebrow"[39m
+              [36m>[39m
+                [0mPages[0m
+              [36m</p>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"card__title"[39m
+              [36m>[39m
+                [0mFind your place[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"card__body"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_0_"[39m
+              [33mclass[39m=[32m"stack stack--3"[39m
+            [36m>[39m
+              [36m<h4[39m
+                [33mclass[39m=[32m"visually-hidden"[39m
+                [33mid[39m=[32m"_r_0_"[39m
+              [36m>[39m
+                [0mPages of [0m
+                [0mSynthetic handbook[0m
+              [36m</h4>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"tiny muted"[39m
+              [36m>[39m
+                [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"stack stack--2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"row row--between row--wrap"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"small strong"[39m
+                  [36m>[39m
+                    [0mBookmarks[0m
+                  [36m</h4>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mNo bookmarks yet.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_1_"[39m
+              [33mclass[39...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/MaterialDetailGeminiModel.test.ts:113:25
+    111|     });
+    112|     await waitFor(() => expect(generate).toHaveBeenCalledTimes(1));
+    113|     expect(await screen.findByText(/AI-generated study aid \(made with…
+       |                         ^
+    114|   });
+    115|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailOffline.test.ts > A4: generation eligibility stays separate from saved content > keeps another material's saved content usable while a generation runs elsewhere, and a late result goes only to its own material
+AssertionError: expected [ [ 'mat-saved', 'Saved VOR guide' ] ] to deeply equal [ …(2) ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mVOR navigation handout[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0mvor.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m4 KB[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_8n_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_8n_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mVOR navigation handout[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+             ...
+
+- Expected
++ Received
+
+  [
+    [
+-     "mat-other",
+-     "Weather guide",
+-   ],
+-   [
+      "mat-saved",
+      "Saved VOR guide",
+    ],
+  ]
+
+ ❯ src/pages/StudyLibrary/MaterialDetailOffline.test.ts:297:75
+    295|     await waitFor(async () => {
+    296|       const sets = await repos.documents.listAiStudySets();
+    297|       expect(sets.map((set) => [set.sourceMaterialId, set.title]).sort…
+       |                                                                           ^
+    298|         ["mat-other", "Weather guide"],
+    299|         ["mat-saved", "Saved VOR guide"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  3 failed | 168 passed | 4 skipped (175)
+      Tests  8 failed | 3691 passed | 6 skipped (3705)
+   Start at  18:43:49
+   Duration  60.51s (transform 6.69s, setup 0ms, import 26.46s, tests 310.15s, environment 35.46s)
+
+
+EXIT: 1

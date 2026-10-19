@@ -1,0 +1,10 @@
+COMMAND: npm run test:cargo-lock
+PATH prefix: /opt/homebrew/opt/node@22/bin; CARGO_NET_OFFLINE=true
+
+> her-flight-deck@0.5.5 test:cargo-lock
+> node scripts/test-cargo-lock-sync.mjs
+
+Checking Cargo toolchain and lockfile synchronization (read-only)...
+Cargo lockfile synchronization verified: her-flight-deck is at 0.5.5 in both Cargo.toml and Cargo.lock
+
+EXIT: 0

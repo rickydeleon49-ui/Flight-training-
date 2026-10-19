@@ -1,0 +1,5 @@
+
+> her-flight-deck@0.5.5 typecheck
+> tsc --noEmit
+
+src/pages/StudyLibrary/MaterialDetailJobs.test.ts(662,51): error TS2554: Expected 1 arguments, but got 2.

@@ -1,0 +1,9 @@
+{
+  "base": "3d50a64976da1c4ab5afca72edaa73f02802d4a6",
+  "node": "v22.23.3",
+  "cargo": "cargo 1.99.0 (5f94df478 2026-08-27) (Homebrew)",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Homebrew)",
+  "sdkroot_for_cargo": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+  "cargo_network": "offline",
+  "scope": "synthetic fixture tests only; no provider or app launch"
+}

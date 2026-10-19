@@ -115,6 +115,9 @@ pub(crate) struct JobRecord {
     /// The validated answer, once `ready`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub result: Option<Value>,
+    /// Partial batches are never a publishable result.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub draft: Option<Value>,
     /// What went wrong, once `failed`; already written for her.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -303,6 +306,19 @@ impl Journal {
         }
         // An older failed or interrupted outcome of the same request is
         // replaced: she asked again.
+        let carried = self
+            .jobs
+            .iter()
+            .find(|j| j.material_id == material_id && j.kind == kind && j.draft.is_some())
+            .cloned();
+        if let Some(old) = &carried {
+            if old.relative_path != relative_path
+                || old.content_sha256 != content_sha256
+                || old.base_revision.as_deref() != base_revision
+            {
+                return Err("The source or saved content changed. Discard the earlier draft before starting again.".to_string());
+            }
+        }
         let mut next: Vec<JobRecord> = self
             .jobs
             .iter()
@@ -320,7 +336,7 @@ impl Journal {
                     matches!(
                         j.stage,
                         JobStage::Failed | JobStage::Interrupted | JobStage::Cancelled
-                    )
+                    ) && j.draft.is_none()
                 })
                 .min_by_key(|(_, j)| j.updated_at)
                 .map(|(i, _)| i)
@@ -343,6 +359,7 @@ impl Journal {
             created_at: at,
             updated_at: at,
             result: None,
+            draft: carried.and_then(|j| j.draft),
             error: None,
         });
         self.commit(next)?;
@@ -363,9 +380,53 @@ impl Journal {
                 .any(|j| j.id == id && j.stage == JobStage::Running)
     }
 
+    /// Conservative whole-job transport bound: admission checks include every
+    /// HTTP dispatch, plus pauses and cancellation probes. Counting all checks
+    /// can stop early but can never permit more than 512 dispatched requests.
+    pub(crate) fn admit_bounded(&mut self, id: &str) -> bool {
+        if !self.admits(id) {
+            return false;
+        }
+        let Some(mut draft) = self
+            .jobs
+            .iter()
+            .find(|j| j.id == id)
+            .and_then(|j| j.draft.clone())
+        else {
+            return true;
+        };
+        let n = draft
+            .get("admissions")
+            .and_then(Value::as_u64)
+            .unwrap_or(512);
+        if n >= 512 {
+            return false;
+        }
+        draft["admissions"] = Value::from(n + 1);
+        self.checkpoint_draft(id, draft).is_ok()
+    }
+
     #[cfg(test)]
     pub(crate) fn is_live(&self, id: &str) -> bool {
         self.live.contains(id)
+    }
+
+    /// Persist partial work without changing admission or making it saveable.
+    pub(crate) fn checkpoint_draft(&mut self, id: &str, draft: Value) -> Result<(), String> {
+        if !self.admits(id) {
+            return Err(crate::gemini_cancel::CANCELLED.to_string());
+        }
+        if serde_json::to_vec(&draft).map_err(|e| e.to_string())?.len() > MAX_RESULT_BYTES {
+            return Err("The draft is too large to keep.".to_string());
+        }
+        let mut next = self.jobs.clone();
+        let job = next
+            .iter_mut()
+            .find(|j| j.id == id)
+            .ok_or("Draft record missing")?;
+        job.draft = Some(draft);
+        job.updated_at = now();
+        self.commit(next)
     }
 
     /// Record the validated answer: the checkpoint a save is made from. An
@@ -384,6 +445,7 @@ impl Journal {
         self.settle(id, |job| {
             job.stage = JobStage::Ready;
             job.result = Some(result);
+            job.draft = None;
         })
     }
 
@@ -411,7 +473,18 @@ impl Journal {
         match self.commit(next) {
             Ok(()) => Ok(()),
             Err(error) => {
-                self.abandon(id);
+                if let Some(job) = self
+                    .jobs
+                    .iter_mut()
+                    .find(|j| j.id == id && j.draft.is_some())
+                {
+                    // The prior on-disk running record still holds the draft.
+                    // Do not erase it while reporting a failed final write.
+                    job.stage = JobStage::Interrupted;
+                    job.error = Some(error.clone());
+                } else {
+                    self.abandon(id);
+                }
                 Err(error)
             }
         }

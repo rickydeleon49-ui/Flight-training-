@@ -1,0 +1,5 @@
+COMMAND: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+PATH prefix: /opt/homebrew/opt/node@22/bin; CARGO_NET_OFFLINE=true
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+
+EXIT: 0

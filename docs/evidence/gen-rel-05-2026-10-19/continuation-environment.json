@@ -1,0 +1,12 @@
+{
+  "timestamp_utc": "2026-10-19T01:37:49.937906+00:00",
+  "base": "3d50a64976da1c4ab5afca72edaa73f02802d4a6",
+  "node": "v22.23.3",
+  "cargo_sdkroot": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+  "cargo_network": "offline; loopback tests permitted",
+  "provider_calls": "none; public documentation read only",
+  "app_launch": "none",
+  "profile": "synthetic fixtures only",
+  "flycheck0_at_final_helper": "absent",
+  "remaining_restriction": "process enumeration denied, as recorded by schema helper stderr"
+}

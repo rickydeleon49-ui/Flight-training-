@@ -378,6 +378,7 @@ pub(crate) struct Reporter {
     kind: JobKind,
     job_id: Mutex<Option<String>>,
     attempts: AtomicU32,
+    limit: AtomicU32,
     send: Box<dyn Fn(GeminiProgress) + Send + Sync>,
 }
 
@@ -392,6 +393,7 @@ impl Reporter {
             kind,
             job_id: Mutex::new(None),
             attempts: AtomicU32::new(0),
+            limit: AtomicU32::new(MAX_GENERATION_ATTEMPTS),
             send,
         })
     }
@@ -410,7 +412,7 @@ impl Reporter {
             stage: stage.map(Stage::key),
             message,
             attempt: self.attempts.load(Ordering::SeqCst),
-            max_attempts: MAX_GENERATION_ATTEMPTS,
+            max_attempts: self.limit.load(Ordering::SeqCst),
         });
     }
 
@@ -1040,6 +1042,7 @@ fn released(id: &str) -> JobRecord {
         created_at: 0,
         updated_at: 0,
         result: None,
+        draft: None,
         error: None,
     }
 }
@@ -1148,7 +1151,7 @@ where
             // is recorded under.
             let (root, id) = (root.to_path_buf(), id.to_string());
             budget.attach_admission(Arc::new(move || {
-                gemini_jobs::with(&root, |journal| journal.admits(&id))
+                gemini_jobs::with(&root, |journal| journal.admit_bounded(&id))
             }));
         }
         if let Some(registration) = &registration {
@@ -1328,7 +1331,9 @@ pub async fn generate_study_aid(
     material_id: String,
     base_revision: Option<String>,
     request_id: Option<String>,
+    target_cards: Option<u32>,
 ) -> Result<JobAnswer<GeneratedStudyAid>, String> {
+    let target = batches::target(target_cards)?;
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
     let epoch = prepared_sources().epoch();
@@ -1340,6 +1345,7 @@ pub async fn generate_study_aid(
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     // Progress names this job and reports the stages actually reached.
     let reporter = reporter_for(&app, &material_id, JobKind::StudyAid);
+    reporter.limit.store(9, Ordering::SeqCst);
     reporter.follow(&budget);
     let progress = |message: String| reporter.say(message);
     let started = |job_id: &str| reporter.started(job_id);
@@ -1360,7 +1366,7 @@ pub async fn generate_study_aid(
         base_revision.as_deref(),
         &source,
         async {
-            study_aid_with(&ctx, &source)
+            batches::generate(&ctx, &source, &root, &material_id, target)
                 .await
                 .map_err(|m| format!("{m}\n{}", budget.details(None)))
         },
@@ -1376,6 +1382,7 @@ pub async fn generate_study_aid(
 }
 
 /// The study guide and flashcards, from the selected source.
+#[cfg(test)]
 async fn study_aid_with(
     ctx: &GenContext<'_>,
     source: &LoadedSource,
@@ -1391,8 +1398,18 @@ async fn study_aid_with(
          This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, \
          flight-school, and instructor guidance.";
 
+    study_aid_request(ctx, source, prompt, 8192, false).await
+}
+
+async fn study_aid_request(
+    ctx: &GenContext<'_>,
+    source: &LoadedSource,
+    prompt: &str,
+    output_tokens: u32,
+    guide_only: bool,
+) -> Result<GeneratedStudyAid, String> {
     let build = |part: Value| {
-        json!({
+        let mut request = json!({
             "contents": [{"role": "user", "parts": [
                 {"text": prompt},
                 part
@@ -1431,16 +1448,34 @@ async fn study_aid_with(
                         "sourceNotes": {"type": "STRING"}
                     }
                 },
-                "maxOutputTokens": 8192
+                "maxOutputTokens": output_tokens
             }
-        })
+        });
+        if guide_only {
+            let schema = &mut request["generationConfig"]["responseSchema"];
+            schema["required"] = json!(["title", "summary", "sections", "sourceNotes"]);
+            schema["properties"]
+                .as_object_mut()
+                .unwrap()
+                .remove("flashcards");
+        }
+        request
     };
     let (raw, model_used) = run_generation(ctx, source, &build).await?;
 
     ctx.budget.at(Stage::Validating);
     ctx.budget.categorize("invalid or incomplete output");
     let text = extract_text(&raw)?;
-    let mut result: GeneratedStudyAid = serde_json::from_str(&text)
+    let mut value: Value = serde_json::from_str(&text)
+        .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
+    // Guide cards are outside this unit's contract. Ignore even malformed cards
+    // before deserializing; only separately validated card units enter the set.
+    if guide_only {
+        if let Some(object) = value.as_object_mut() {
+            object.insert("flashcards".to_string(), json!([]));
+        }
+    }
+    let mut result: GeneratedStudyAid = serde_json::from_value(value)
         .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
     result.model = model_used.to_string();
     Ok(result)
@@ -1681,7 +1716,7 @@ async fn generate_once(
         .timeout(timeout)
         .send()
         .await;
-    let response = match sent {
+    let mut response = match sent {
         Ok(response) => response,
         // Checked first: a connect timeout is also a timeout, but nothing
         // reached Google, so it is safe to try again.
@@ -1699,11 +1734,23 @@ async fn generate_once(
             .and_then(|v| v.to_str().ok()),
     );
     ctx.budget.at(Stage::Reading);
-    let raw = match response.text().await {
-        Ok(raw) => raw,
-        Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
-        Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
-    };
+    const MAX_ANSWER_BYTES: usize = 1024 * 1024;
+    let mut bytes = Vec::new();
+    loop {
+        match response.chunk().await {
+            Ok(Some(chunk)) => {
+                if bytes.len().saturating_add(chunk.len()) > MAX_ANSWER_BYTES {
+                    return Err("Gemini's answer exceeded the 1 MiB response limit. The earlier draft is kept.".to_string().into());
+                }
+                bytes.extend_from_slice(&chunk);
+            }
+            Ok(None) => break,
+            Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
+            Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
+        }
+    }
+    let raw = String::from_utf8(bytes)
+        .map_err(|_| Failure::from("Gemini's answer was not readable text.".to_string()))?;
 
     if (200..300).contains(&status) {
         Ok(Attempt::Answered(raw))
@@ -1827,7 +1874,7 @@ async fn generate_with_retries_at(
             Attempt::Lost(lost) => setback = Some(Setback::Lost(lost)),
         }
 
-        if ctx.budget.attempts() >= MAX_GENERATION_ATTEMPTS {
+        if attempt >= MAX_GENERATION_ATTEMPTS {
             break;
         }
         let pause = retry_after.unwrap_or_else(|| backoff_delay(retry, jitter_millis()));
@@ -2548,3 +2595,6 @@ mod recovery_tests;
 #[cfg(test)]
 #[path = "gemini_cancel_flow_tests.rs"]
 mod cancel_flow_tests;
+
+#[path = "gemini_batches.rs"]
+mod batches;

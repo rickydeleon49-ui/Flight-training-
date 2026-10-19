@@ -1,0 +1,51 @@
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-05/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.28s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 12 tests
+
+thread 'gemini::batches::tests::cancellable_drop_restart_resume_preserves_ledger_and_unique_batches' (5472227) panicked at src/gemini_batches.rs:312:64:
+called `Result::unwrap()` on an `Err` value: Os { code: 17, kind: AlreadyExists, message: "File exists" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'gemini::batches::tests::sixty_cards_with_two_recoveries_has_exactly_nine_submissions' (5472235) panicked at src/gemini_batches.rs:312:64:
+called `Result::unwrap()` on an `Err` value: Os { code: 17, kind: AlreadyExists, message: "File exists" }
+test gemini::batches::tests::sixty_cards_with_two_recoveries_has_exactly_nine_submissions ... FAILED
+test gemini::batches::tests::cancellable_drop_restart_resume_preserves_ledger_and_unique_batches ... FAILED
+test gemini::batches::tests::targets_default_and_invalid_counts ... ok
+
+thread 'gemini::batches::tests::resumed_allowance_cannot_exceed_persisted_remaining_time' (5472233) panicked at src/gemini_batches.rs:395:19:
+called `Result::unwrap()` on an `Err` value: "The selected source is no longer available. The draft was not published."
+test gemini::batches::tests::resumed_allowance_cannot_exceed_persisted_remaining_time ... FAILED
+
+thread 'gemini::batches::tests::one_active_budget_covers_later_batches_and_failed_final_journal_write_keeps_draft' (5472232) panicked at src/gemini_batches.rs:729:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+test gemini::batches::tests::one_active_budget_covers_later_batches_and_failed_final_journal_write_keeps_draft ... FAILED
+
+thread 'gemini::batches::tests::guide_cards_are_discarded_without_extra_requests' (5472230) panicked at src/gemini_batches.rs:383:36:
+called `Result::unwrap()` on an `Err` value: "Gemini's batch was incomplete or too large. The earlier draft is kept."
+test gemini::batches::tests::guide_cards_are_discarded_without_extra_requests ... FAILED
+test gemini::batches::tests::source_change_between_batches_and_resume_are_refused ... ok
+MEASURE target=20 upload_bytes=427 source_bytes=427 generation_requests=3 all_http=7 admission_checks=7
+test gemini::batches::tests::empty_source_and_transport_admission_cap_dispatch_nothing ... ok
+test gemini::batches::tests::durable_request_cap_retry_exhaustion_and_shared_deadline ... ok
+MEASURE target=40 upload_bytes=427 source_bytes=427 generation_requests=5 all_http=11 admission_checks=11
+test gemini::batches::tests::short_empty_duplicate_and_repeated_batches_never_pad_or_commit_twice ... ok
+MEASURE target=60 upload_bytes=427 source_bytes=427 generation_requests=7 all_http=15 admission_checks=15
+test gemini::batches::tests::targets_use_ten_card_batches_single_upload_and_bounded_tokens ... ok
+test gemini::batches::tests::missing_bad_pages_malformed_truncated_and_oversized_batches_keep_draft ... ok
+
+failures:
+
+failures:
+    gemini::batches::tests::cancellable_drop_restart_resume_preserves_ledger_and_unique_batches
+    gemini::batches::tests::guide_cards_are_discarded_without_extra_requests
+    gemini::batches::tests::one_active_budget_covers_later_batches_and_failed_final_journal_write_keeps_draft
+    gemini::batches::tests::resumed_allowance_cannot_exceed_persisted_remaining_time
+    gemini::batches::tests::sixty_cards_with_two_recoveries_has_exactly_nine_submissions
+
+test result: FAILED. 7 passed; 5 failed; 0 ignored; 0 measured; 676 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `--lib`

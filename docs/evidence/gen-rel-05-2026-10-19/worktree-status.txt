@@ -1,0 +1,5 @@
+ M src-tauri/src/gemini_files.rs
+ M src-tauri/src/gemini_files_tests.rs
+?? docs/GEN_REL_05_IMPLEMENTATION_REPORT_2026-10-19.md
+?? docs/GEN_REL_05_REVIEWER_PROMPT_2026-10-19.md
+?? docs/evidence/gen-rel-05-2026-10-19/

@@ -110,6 +110,8 @@ describe("Gemini model choice on a material", () => {
       fireEvent.click(screen.getByRole("button", { name: "Send to Gemini" }));
     });
     await waitFor(() => expect(generate).toHaveBeenCalledTimes(1));
+    expect(await createRepositories(db).documents.listAiStudySets()).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
     expect(await screen.findByText(/AI-generated study aid \(made with Gemini Flash\)/)).toBeTruthy();
   });
 

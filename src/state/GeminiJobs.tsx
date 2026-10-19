@@ -71,6 +71,7 @@ export type GeminiJobPhase =
 type Answer = GeneratedStudyAid | GeneratedPracticeTest;
 
 export interface GeminiJob {
+  draft?: { target: number; cards: unknown[] };
   /** This window's own identity for the job. */
   key: string;
   /** The native journal's identity, once known. */
@@ -119,6 +120,7 @@ export interface GeminiJobTarget {
 }
 
 export interface StartOptions {
+  targetCards?: number;
   /** Checks made after the lock is taken; a message means "do not send". */
   preflight?: () => Promise<string | null>;
   /** Called once the answer is saved, for the page that is still showing it. */
@@ -510,12 +512,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         update(key, { invoked: true });
         let answer: Awaited<ReturnType<typeof generate>>;
         try {
-          answer = await generate(
-            target.filePath,
-            target.materialId,
-            baseRevision ?? undefined,
-            current()?.requestId,
-          );
+          answer = kind === "study-aid"
+            ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40)
+            : await generatePracticeTest(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId);
         } catch (error) {
           // Cancelled only if the native side says so: the journal decided.
           const message = geminiErrorMessage(error);
@@ -534,6 +533,10 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
                 record.kind === kind &&
                 (record.stage === "failed" || record.stage === "cancelled")
               ) {
+                if (record.draft) {
+                  update(key, { jobId: record.id, draft: record.draft });
+                  continue;
+                }
                 forgottenRef.current.add(record.id);
                 pendingAcksRef.current.add(record.id);
               }
@@ -546,9 +549,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           return;
         }
         const { jobId = null, contentSha256 = null, checkpointed = false, ...rest } = answer;
-        // The answer arrived before her cancel could stop it. It is kept, but
-        // never saved by itself: she decides.
-        if (current()?.cancelAttempted) {
+        // Study aids always wait for acceptance. An answer that beat a cancel
+        // also waits, including practice tests.
+        if (kind === "study-aid" || current()?.cancelAttempted) {
           update(key, {
             jobId,
             contentSha256,
@@ -663,6 +666,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             answer: record.stage === "ready" ? (record.result ?? null) : null,
             error: record.stage === "failed" || record.stage === "cancelled" ? (record.error ?? null) : null,
             checkpointed: record.stage === "ready",
+            draft: record.draft,
           };
         });
         const known = new Set(next.map((job) => job.jobId).filter(Boolean));
@@ -702,6 +706,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               contentSha256: record.contentSha256 || null,
               baseRevision: record.baseRevision ?? null,
               checkpointed: record.stage === "ready",
+              draft: record.draft,
             },
           ];
         }

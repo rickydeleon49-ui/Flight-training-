@@ -1,0 +1,7 @@
+COMMAND: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+PATH prefix: /opt/homebrew/opt/node@22/bin; CARGO_NET_OFFLINE=true
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+    Checking her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-05/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.31s
+
+EXIT: 0
