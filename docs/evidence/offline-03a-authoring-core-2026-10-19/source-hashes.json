@@ -1,0 +1,45 @@
+{
+  "base": "fc3ef344d0a7823cea5089a5bc453b19f59ed3c0",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 201696,
+      "sha256": "b56d61dc54c5ff4c196646ecba6f59b8db0a40887e5dc7f9602bdbbd8bfa7641"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 317424,
+      "sha256": "0822f4e05f1048a2537b255476a83f92f7b7615319d7d78f7e2ea3f6c0021e7d"
+    },
+    {
+      "path": "docs/OFFLINE_03A_AUTHORING_CORE_REPORT_2026-10-19.md",
+      "bytes": 8260,
+      "sha256": "1a43840e790b6a55219cb330057fd3c4a39b068e80782c20c05d6fdf0df439f0"
+    },
+    {
+      "path": "docs/OFFLINE_03A_AUTHORING_CORE_REVIEWER_PROMPT_2026-10-19.md",
+      "bytes": 3137,
+      "sha256": "574c4fc3922dbaeac6aaff249c5a6cc72aa7b5882a5e36ea51c0aa0b69ba5590"
+    },
+    {
+      "path": "docs/PR234_235_REVIEW_AND_INTEGRATION_2026-10-19.md",
+      "bytes": 3423,
+      "sha256": "edd0d9be444ea87e8eeeff827b049ba60aac9a97850db17a82e7d3f319099aff"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 226064,
+      "sha256": "940efad37e7683130bec4092fca271149288a5a715a5408f1a426d643e3ccc54"
+    },
+    {
+      "path": "src/logic/studyAuthoring.test.ts",
+      "bytes": 17388,
+      "sha256": "78a30bc36d2e0f41b90ce40e6e6a988d93b37742c807255c429faff8a78bb7fa"
+    },
+    {
+      "path": "src/logic/studyAuthoring.ts",
+      "bytes": 15625,
+      "sha256": "7dc7ceac65dc6609f3eff8e733ba7019badead47a4b0adc5304390fd8834b776"
+    }
+  ]
+}

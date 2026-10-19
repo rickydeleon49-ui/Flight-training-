@@ -2,7 +2,7 @@
 
 ## Scope
 
-The owner requested review/merge of PRs #234 and #235, followed by continued implementation. Work starts from accepted PR #234 (`4ff7c9d`) in `/Users/rickymac/code/Flight-training-offline-03a`, branch `codex/offline-03a-authoring-core`. The five OFFLINE-03 defaults remain approved.
+The owner requested review/merge of PRs #234 and #235, followed by continued implementation. Work started from accepted PR #234 (`4ff7c9d`), then integrated accepted PR #235 (`fc3ef34`) before the final full frontend gate, in `/Users/rickymac/code/Flight-training-offline-03a`, branch `codex/offline-03a-authoring-core`. The five OFFLINE-03 defaults remain approved.
 
 03a spans two persistence engines, migration/restore validation, three card-fingerprint implementations and the editing screens. This first coherent implementation isolates the authoring rules and edit preparation before that coupled storage/UI work. **It does not implement the finished manual editor, migration 0016 or database history.** It is not imported by the app, does not alter current saves, and requires review before integration.
 
@@ -30,7 +30,7 @@ Near matching is approximate: different wording, terms outside the retained 64, 
 
 The focused authoring suite has **55 passing cases**: legacy IDs/collisions, malformed input and text/count boundaries, Unicode/field framing, retirement bounds, near/exact/new classifications, deterministic strongest match, stale/invalid choices, asynchronous input mutation, origin labels, privacy default, complete edit plans, source pages and refusal without state loss.
 
-These are tests for newly introduced behavior, not a claimed pre-existing regression reproduction. No new dependency, lockfile, migration, native code or release flag changed. Final full frontend/type/build/hygiene receipts and source hashes accompany this report. Native tests/benchmarks can be reused for unchanged native code; no installed acceptance is claimed.
+These are tests for newly introduced behavior, not a claimed pre-existing regression reproduction. No new dependency, lockfile, migration, native code or release flag changed. **Final sequential gate on accepted main plus the core: 3,835 frontend tests passed / 6 skipped, zero unhandled errors; typecheck, frontend build and whitespace all exit 0.** Complete output, exits and hashes are in `docs/evidence/offline-03a-authoring-core-2026-10-19/`. Native tests/benchmarks can be reused for unchanged native code; no installed acceptance is claimed.
 
 ## Still needed to complete 03a
 
