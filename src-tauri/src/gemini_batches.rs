@@ -802,7 +802,23 @@ mod tests {
             gemini_jobs::with(r.root.path(), |j| j.cancel(&id)).unwrap();
             registration.token.cancel();
             assert!(worker.join().unwrap().is_err());
+            // The abandoned request is still held at the gate. Give it its own
+            // answer and wait until it has taken it, so it cannot take one of
+            // the answers queued for the resume below.
+            r.fake
+                .behave(|b| b.generate_answers = vec![envelope(aid(90, 10))]);
             gate.open();
+            for _ in 0..2000 {
+                let mut taken = false;
+                r.fake.behave(|b| taken = b.generate_answers.is_empty());
+                if taken {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            let mut taken = false;
+            r.fake.behave(|b| taken = b.generate_answers.is_empty());
+            assert!(taken, "the abandoned request was never answered");
         });
         gemini_jobs::with(r.root.path(), |j| j.failed(&id, "cancelled")).unwrap();
         let reopened = gemini_jobs::Journal::open(r.root.path());
