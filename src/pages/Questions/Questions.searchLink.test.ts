@@ -16,6 +16,13 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 import { QUESTION_PAGE_SIZE, Questions } from "./Questions";
 
+/**
+ * Seeding 146 questions and rendering past the first page takes well under a
+ * second alone, but much longer when the whole suite runs files in parallel
+ * on a slow runner. Longer waits for these tests only; no assertion relaxed.
+ */
+const SLOW_RUNNER = { timeout: 10_000 };
+
 let db: TestDatabase;
 let repos: Repositories;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
@@ -50,32 +57,32 @@ describe("opening a question from offline search", () => {
     // Her remembered filter would hide it (answered, filter "to ask").
     sessionStorage.setItem("her-flight-deck.view.questions.filter", JSON.stringify("to_ask"));
     open("questions", `/questions?question=${target.id}`);
-    const text = await screen.findByText("The linked crosswind question");
+    const text = await screen.findByText("The linked crosswind question", {}, SLOW_RUNNER);
     const row = document.getElementById(`question-${target.id}`);
     expect(row?.contains(text)).toBe(true);
     expect(row?.classList.contains("search-target")).toBe(true);
-    await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
+    await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled(), SLOW_RUNNER);
   });
 
-  it("says so when the question is gone", async () => {
+  it("says so when the question is gone", { timeout: 20_000 }, async () => {
     open("questions", "/questions?question=missing-id");
-    expect(await screen.findByText("That item isn't here any more.")).toBeTruthy();
+    expect(await screen.findByText("That item isn't here any more.", {}, SLOW_RUNNER)).toBeTruthy();
   });
 });
 
 describe("opening a note from offline search", () => {
-  it("clears a note search that would hide it, and highlights it", async () => {
+  it("clears a note search that would hide it, and highlights it", { timeout: 20_000 }, async () => {
     const target = await repos.notes.create({ title: "Checkride", body: "Bring the crosswind chart" });
     await repos.notes.create({ title: "Other", body: "Something else entirely" });
     // Her remembered note search would hide it.
     sessionStorage.setItem("her-flight-deck.view.notes.search", JSON.stringify("something else"));
     open("notes", `/notes?note=${target.id}`);
-    await waitFor(() => expect(document.getElementById(`note-${target.id}`)).toBeTruthy());
+    await waitFor(() => expect(document.getElementById(`note-${target.id}`)).toBeTruthy(), SLOW_RUNNER);
     expect(document.getElementById(`note-${target.id}`)?.classList.contains("search-target")).toBe(true);
   });
 
-  it("says so when the note is gone", async () => {
+  it("says so when the note is gone", { timeout: 20_000 }, async () => {
     open("notes", "/notes?note=missing-id");
-    expect(await screen.findByText("That item isn't here any more.")).toBeTruthy();
+    expect(await screen.findByText("That item isn't here any more.", {}, SLOW_RUNNER)).toBeTruthy();
   });
 });

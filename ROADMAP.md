@@ -8,7 +8,14 @@ OFFLINE-02b merged as PR #232 (`bfb8b04`). The same PR's CI fix gave the schema-
 - **Tests:** 827 native, 3,775 frontend.
 - **Owner decision:** dormant behind the same switch as document search.
 
-**Next:** with the owner's go-ahead, one push for exact-head CI, then merge.
+**Follow-up FLAKE-CR-01 (pre-existing):** the card-review tests in `CardReviewPanel.test.ts` and the Review-due flow are load-sensitive.
+- **On CI:** #233's first run failed one of them (C1-R2: "Recent reviews" was present after a held page resolved).
+- **Locally:** the same family fails on a clean `main` when the full suite runs twice at once (2–3 failures per round).
+- **Not changed by 02c.** It needs its own investigation, including whether C1-R2 shows a real race.
+
+02c's own direct-link tests were given longer waits for slow runners.
+
+**Next:** exact-head CI on #233, then merge.
 
 ## OFFLINE-02b search UI implemented and reviewed; dormant — 19 October 2026
 
