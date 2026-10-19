@@ -56,3 +56,87 @@ export async function offlineContentReadiness(materialIds: string[]): Promise<Ma
 export async function prepareOfflineContent(materialId: string): Promise<MaterialReadiness> {
   return invoke<MaterialReadiness>("prepare_offline_content", { materialId });
 }
+
+/* ------------------------------------------------------------------ */
+/* Search inside prepared documents (OFFLINE-02b)                      */
+/* ------------------------------------------------------------------ */
+
+/** Mirrors `extraction::search::Passage`. The snippet carries U+E000/U+E001 match markers. */
+export interface SearchPassage {
+  contentSha256: string;
+  pageIndex: number;
+  snippet: string;
+}
+
+/** Mirrors `extraction::search::Group`: one material and its best passages. */
+export interface SearchGroup {
+  materialId: string;
+  title: string;
+  materialType: string;
+  originalFileName: string | null;
+  addedAt: string;
+  passages: SearchPassage[];
+}
+
+/** Mirrors `extraction::search::Coverage`, over the filtered materials. */
+export interface SearchCoverage {
+  searchedDocuments: number;
+  searchedPages: number;
+  imagePages: number;
+  otherUnsearchablePages: number;
+  notPrepared: number;
+  notChecked: number;
+  preparing: number;
+  couldNotPrepare: number;
+  missing: number;
+  notPdf: number;
+}
+
+export interface SearchResponse {
+  groups: SearchGroup[];
+  coverage: SearchCoverage;
+  nextOffset: number | null;
+  moreBeyondCap: boolean;
+  trimmed: boolean;
+}
+
+export type DestinationCheck = "ok" | "changed" | "missing";
+
+/** A failed search's code, as the native command reports it. */
+export class OfflineSearchError extends Error {
+  constructor(readonly code: string) {
+    super(code);
+    this.name = "OfflineSearchError";
+  }
+}
+
+function codeOf(error: unknown): string {
+  return typeof error === "string" ? error : "search_failed";
+}
+
+/** Search the text of the given materials' prepared PDFs. */
+export async function searchOfflineContent(
+  query: string,
+  materialIds: string[],
+  offset: number,
+): Promise<SearchResponse> {
+  try {
+    return await invoke<SearchResponse>("search_offline_content", {
+      query,
+      materialIds,
+      contentTypes: ["documentPages"],
+      offset,
+    });
+  } catch (error) {
+    throw new OfflineSearchError(codeOf(error));
+  }
+}
+
+/** Re-check, by hashing, that a result's file is still the one searched. */
+export async function verifyOfflineDestination(materialId: string, contentSha256: string): Promise<DestinationCheck> {
+  try {
+    return await invoke<DestinationCheck>("verify_offline_destination", { materialId, contentSha256 });
+  } catch (error) {
+    throw new OfflineSearchError(codeOf(error));
+  }
+}

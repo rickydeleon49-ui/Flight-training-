@@ -34,6 +34,7 @@ import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic
 import { useAppData } from "@/state/AppDataContext";
 import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
+import { DocumentSearchPanel } from "./DocumentSearchPanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { StudyLibraryHistory } from "./StudyLibraryHistory";
@@ -105,13 +106,23 @@ export function StudyLibrary() {
   // Reserved up front so an imported file can be stored under the material's id.
   const [draftId, setDraftId] = useState(newId);
 
+  // The filters other than the search words: searching inside documents
+  // looks in every material they select (OFFLINE-02b).
+  const filtered = useMemo(
+    () =>
+      data.materials.filter((material) => {
+        if (status === "next_up" && material.priority !== "next_up") return false;
+        if (status !== "all" && status !== "next_up" && material.reviewStatus !== status) return false;
+        if (topic && material.topic !== topic) return false;
+        if (type && material.materialType !== type) return false;
+        return true;
+      }),
+    [data.materials, status, topic, type],
+  );
+
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const matching = data.materials.filter((material) => {
-      if (status === "next_up" && material.priority !== "next_up") return false;
-      if (status !== "all" && status !== "next_up" && material.reviewStatus !== status) return false;
-      if (topic && material.topic !== topic) return false;
-      if (type && material.materialType !== type) return false;
+    const matching = filtered.filter((material) => {
       if (query) {
         const haystack = [
           material.title,
@@ -127,7 +138,7 @@ export function StudyLibrary() {
       return true;
     });
     return sortMaterials(matching, sort);
-  }, [data.materials, status, topic, type, search, sort]);
+  }, [filtered, search, sort]);
 
   const shownMaterials = useMemo(() => visible.slice(0, visibleLimit), [visible, visibleLimit]);
   const offlineBadges = useOfflineBadges(shownMaterials);
@@ -265,6 +276,8 @@ export function StudyLibrary() {
           ))}
         </div>
       ) : null}
+
+      {hasAny ? <DocumentSearchPanel query={search} materials={filtered} /> : null}
 
       {!hasAny ? (
         <Card>
