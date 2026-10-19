@@ -77,7 +77,7 @@ The generator, the harness and then the manifest were committed before any timin
 
 **About the miss.** It is reported as missed, not retuned. Only the worst-case query misses: its 27,062 matches are ranked and capped at 2,000 candidates.
 
-**Run 1 is preserved.** Its harness compared linked instructor questions under their material, while the frozen identities group all questions together. That made queries 0 and 5 look inexact even though their counts matched. Only that comparison was fixed. No search code, target, query, corpus or schedule changed. Run 1's timings were within 1% of run 2's.
+**Run 1 is preserved.** Its harness compared linked instructor questions under their material, while the frozen identities group all questions together. That made queries 0 and 5 look inexact even though their counts matched. Only that comparison was fixed. No search code, target, query, corpus or schedule changed. Run 1's timings were within 3.5% of run 2's (largest relative difference over every p50 and p95 of at least 1 ms).
 
 **Rebuild timing.** A rebuild after an edit (about 0.7–0.8 s) costs more than the cold build (about 0.45 s), because the old temporary index is cleared first. Dropping and recreating it instead could close that gap. It is noted as a follow-up, not changed here.
 
