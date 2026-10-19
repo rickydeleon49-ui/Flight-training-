@@ -20,7 +20,11 @@ import {
   listGeminiJobs,
   watchGeminiJobs,
   watchGeminiProgress,
+  cancelGeminiJob,
+  GEMINI_CANCELLED_MESSAGE,
   type GeminiJobKind,
+  type GeminiProgressEvent,
+  type GeminiWorkStage,
   type GeminiJobRecord,
   type GeneratedPracticeTest,
   type GeneratedStudyAid,
@@ -61,7 +65,8 @@ export type GeminiJobPhase =
   | "recovered"
   | "interrupted"
   | "discarding"
-  | "discard-failed";
+  | "discard-failed"
+  | "cancelled";
 
 type Answer = GeneratedStudyAid | GeneratedPracticeTest;
 
@@ -83,6 +88,29 @@ export interface GeminiJob {
   baseRevision: string | null;
   /** False when the answer could not be written down natively. */
   checkpointed: boolean;
+  /** The stage actually reached, from the job's own progress (GEN-REL-04). */
+  stage?: GeminiWorkStage | null;
+  /** The generation attempt in progress, and how many may be made. */
+  attempt?: number;
+  maxAttempts?: number;
+  /** When this window started it (ms since the epoch), for an honest elapsed time. */
+  startedAt?: number;
+  /** A cancel is on its way to (or held by) the native side. */
+  cancelRequested?: boolean;
+  /** She pressed Cancel at some point: an answer that still arrives is never saved by itself. */
+  cancelAttempted?: boolean;
+  /** Why her cancel did not go through, if it did not; Cancel works again. */
+  cancelError?: string | null;
+  /** This window's own id for the request, which cancel goes by (GEN-REL-04). */
+  requestId?: string;
+  /** Whether the generation request has been sent to the native side. */
+  invoked?: boolean;
+  /**
+   * Started by this window, whose own request decides its outcome. Recovery
+   * after a reload follows only jobs it found, never these, even once they
+   * have their native id.
+   */
+  local?: boolean;
 }
 
 export interface GeminiJobTarget {
@@ -111,6 +139,8 @@ interface GeminiJobsValue {
   start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<void>;
   saveAgain(key: string): Promise<void>;
   dismiss(key: string): Promise<void>;
+  /** Ask to cancel a running generation (GEN-REL-04). */
+  cancel(key: string): Promise<void>;
 }
 
 const GeminiJobsContext = createContext<GeminiJobsValue | null>(null);
@@ -125,6 +155,27 @@ export const DISCARD_FAILED_MESSAGE =
   "That could not be recorded just now, so it might come back after the app restarts. Try again.";
 const SAVE_FAILED_NOT_KEPT_MESSAGE =
   "Gemini finished, but saving the answer did not work, and it could not be kept on this Mac either. Anything already saved is unchanged. Save again uses the same answer while the app stays open.";
+
+/** Said when her cancel could not be recorded. */
+export const CANCEL_FAILED_MESSAGE =
+  "Cancelling did not go through, so Gemini is still working on it. Try Cancel again.";
+
+function newRequestId(): string {
+  const random =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  return `req-${random}`;
+}
+
+/** Said when she cancelled before anything was sent. */
+export const CANCELLED_BEFORE_SENDING = "Cancelled before anything was sent to Google. Nothing was saved.";
+
+/** Whether a progress event is about this job: by id once known, otherwise by its material and output. */
+function belongsTo(job: GeminiJob, event: GeminiProgressEvent): boolean {
+  if (job.jobId && event.jobId) return job.jobId === event.jobId;
+  return job.materialId === event.materialId && job.kind === event.kind;
+}
 
 /** While a job found running after a reload is followed, check this often. */
 export const FOLLOW_INTERVAL_MS = 3000;
@@ -324,9 +375,50 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     [forget, mutate, update],
   );
 
+  // The lock lives in a ref so it can be taken before any await; releasing it
+  // also renders, so controls that depend on it (Try again) appear at once.
+  const [lockTick, setLockTick] = useState(0);
   const release = useCallback((key: string) => {
-    if (activeRef.current === key) activeRef.current = null;
+    if (activeRef.current === key) {
+      activeRef.current = null;
+      setLockTick((n) => n + 1);
+    }
   }, []);
+
+  /**
+   * Ask to cancel. The native journal decides, by the window's own request
+   * id, so this works before the job's id is known and before the job has even
+   * begun. Before the request is sent at all, the flag alone stops it.
+   */
+  const cancel = useCallback(
+    async (key: string) => {
+      const job = jobsRef.current.find((candidate) => candidate.key === key);
+      if (!job || job.phase !== "running" || job.cancelRequested) return;
+      update(key, { cancelRequested: true, cancelAttempted: true, cancelError: null });
+      // Only this window's own request, not yet sent, is stopped by the flag
+      // alone. A job recovered after a reload is cancelled by its job id.
+      if (job.local && !job.invoked) return;
+      const notAccepted = () => {
+        // Not recorded and not held: say so, and let her try again while it
+        // still runs.
+        const now = jobsRef.current.find((candidate) => candidate.key === key);
+        if (now?.phase === "running") update(key, { cancelRequested: false, cancelError: CANCEL_FAILED_MESSAGE });
+      };
+      let outcome: Awaited<ReturnType<typeof cancelGeminiJob>>;
+      try {
+        outcome = await cancelGeminiJob({ requestId: job.requestId, jobId: job.jobId ?? undefined });
+      } catch {
+        notAccepted();
+        return;
+      }
+      // Recorded, or held until its job begins: the request's own result
+      // will say how it ended. Already finished (ready, failed…): likewise.
+      // Anything else means the cancel did not take.
+      const settled = outcome.stage !== null && outcome.stage !== "running";
+      if (!outcome.cancelled && !outcome.pending && !settled) notAccepted();
+    },
+    [update],
+  );
 
   const start = useCallback(
     async (kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions) => {
@@ -371,9 +463,19 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           contentSha256: null,
           baseRevision,
           checkpointed: false,
+          stage: "preparing",
+          attempt: 0,
+          startedAt: Date.now(),
+          cancelRequested: false,
+          cancelAttempted: false,
+          cancelError: null,
+          requestId: newRequestId(),
+          invoked: false,
+          local: true,
         },
       ]);
       if (options?.onSaved) onSavedRef.current.set(key, options.onSaved);
+      const current = () => jobsRef.current.find((job) => job.key === key);
 
       let stopWatching = () => {};
       try {
@@ -383,22 +485,55 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           return;
         }
         try {
-          stopWatching = await watchGeminiProgress((message) => {
-            if (activeRef.current === key) update(key, { progress: message });
+          stopWatching = await watchGeminiProgress((event) => {
+            const job = current();
+            if (!job || job.phase !== "running" || !belongsTo(job, event)) return;
+            update(key, {
+              jobId: event.jobId ?? job.jobId,
+              stage: event.stage ?? job.stage,
+              progress: event.message ?? job.progress,
+              attempt: event.attempt,
+              maxAttempts: event.maxAttempts,
+            });
           });
         } catch {
           // Progress is a courtesy; generation goes ahead without it.
         }
         const generate = kind === "study-aid" ? generateStudyAid : generatePracticeTest;
+        // Cancelled before anything was sent: nothing is sent. Checked here,
+        // with no await before the request, so a cancel during any earlier step
+        // (the checks, setting up progress) is never missed.
+        if (current()?.cancelRequested) {
+          update(key, { phase: "cancelled", error: CANCELLED_BEFORE_SENDING, stage: null });
+          return;
+        }
+        update(key, { invoked: true });
         let answer: Awaited<ReturnType<typeof generate>>;
         try {
-          answer = await generate(target.filePath, target.materialId, baseRevision ?? undefined);
+          answer = await generate(
+            target.filePath,
+            target.materialId,
+            baseRevision ?? undefined,
+            current()?.requestId,
+          );
         } catch (error) {
-          update(key, { phase: "failed", error: geminiErrorMessage(error), progress: null });
-          // The window shows the failure itself; the journal need not keep it.
+          // Cancelled only if the native side says so: the journal decided.
+          const message = geminiErrorMessage(error);
+          const cancelled = message === GEMINI_CANCELLED_MESSAGE;
+          update(key, {
+            phase: cancelled ? "cancelled" : "failed",
+            error: geminiErrorMessage(error),
+            progress: null,
+            stage: null,
+          });
+          // The window shows the outcome itself; the journal need not keep it.
           try {
             for (const record of await listGeminiJobs()) {
-              if (record.materialId === target.materialId && record.kind === kind && record.stage === "failed") {
+              if (
+                record.materialId === target.materialId &&
+                record.kind === kind &&
+                (record.stage === "failed" || record.stage === "cancelled")
+              ) {
                 forgottenRef.current.add(record.id);
                 pendingAcksRef.current.add(record.id);
               }
@@ -411,12 +546,27 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           return;
         }
         const { jobId = null, contentSha256 = null, checkpointed = false, ...rest } = answer;
+        // The answer arrived before her cancel could stop it. It is kept, but
+        // never saved by itself: she decides.
+        if (current()?.cancelAttempted) {
+          update(key, {
+            jobId,
+            contentSha256,
+            checkpointed: Boolean(checkpointed && jobId),
+            answer: rest as Answer,
+            progress: null,
+            stage: null,
+            phase: "recovered",
+          });
+          return;
+        }
         update(key, {
           jobId,
           contentSha256,
           checkpointed: Boolean(checkpointed && jobId),
           answer: rest as Answer,
           progress: null,
+          stage: null,
         });
         await persist(key);
       } finally {
@@ -489,7 +639,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         }
         // Merge against the state as it is now.
         let next = jobsRef.current.map((job): GeminiJob => {
-          if (job.phase !== "running" || job.jobId === null) return job;
+          if (job.phase !== "running" || job.jobId === null || job.local) return job;
           const record = records.find((candidate) => candidate.id === job.jobId);
           if (record?.stage === "running") return job;
           if (activeRef.current === job.key) activeRef.current = null;
@@ -502,9 +652,16 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           }
           return {
             ...job,
-            phase: record.stage === "ready" ? "recovered" : record.stage === "interrupted" ? "interrupted" : "failed",
+            phase:
+              record.stage === "ready"
+                ? "recovered"
+                : record.stage === "interrupted"
+                  ? "interrupted"
+                  : record.stage === "cancelled"
+                    ? "cancelled"
+                    : "failed",
             answer: record.stage === "ready" ? (record.result ?? null) : null,
-            error: record.stage === "failed" ? (record.error ?? null) : null,
+            error: record.stage === "failed" || record.stage === "cancelled" ? (record.error ?? null) : null,
             checkpointed: record.stage === "ready",
           };
         });
@@ -536,9 +693,11 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
                     ? "recovered"
                     : record.stage === "interrupted"
                       ? "interrupted"
-                      : "failed",
+                      : record.stage === "cancelled"
+                        ? "cancelled"
+                        : "failed",
               progress: null,
-              error: record.stage === "failed" ? (record.error ?? null) : null,
+              error: record.stage === "failed" || record.stage === "cancelled" ? (record.error ?? null) : null,
               answer: record.stage === "ready" ? (record.result ?? null) : null,
               contentSha256: record.contentSha256 || null,
               baseRevision: record.baseRevision ?? null,
@@ -547,7 +706,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           ];
         }
         commit(next);
-        const running = next.find((job) => job.phase === "running" && job.jobId !== null);
+        const running = next.find((job) => job.phase === "running" && job.jobId !== null && !job.local);
         if (running && activeRef.current === null) activeRef.current = running.key;
         syncPendingCount();
         void flushAcks();
@@ -607,7 +766,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
   // A job found running after a reload is also checked on a timer, in case
   // its one change event is missed.
-  const followingRunning = jobs.some((job) => job.phase === "running" && job.jobId !== null);
+  const followingRunning = jobs.some((job) => job.phase === "running" && job.jobId !== null && !job.local);
   useEffect(() => {
     if (!followingRunning) return;
     const timer = window.setInterval(() => void follow(), FOLLOW_INTERVAL_MS);
@@ -634,8 +793,11 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       start,
       saveAgain,
       dismiss,
+      cancel,
     }),
-    [jobs, recovery, retryRecovery, start, saveAgain, dismiss],
+    // lockTick: the lock is a ref, so its release must change the value for
+    // pages reading `locked()` to render again.
+    [jobs, recovery, retryRecovery, start, saveAgain, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;

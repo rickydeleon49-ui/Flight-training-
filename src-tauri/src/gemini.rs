@@ -5,8 +5,8 @@
 //! credential manager any more — and never returned to JavaScript.
 
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
@@ -18,8 +18,9 @@ use tauri::{AppHandle, Emitter};
 
 use crate::documents;
 use crate::gemini_budget::{self, Budget, Stage, MAX_GENERATION_ATTEMPTS};
+use crate::gemini_cancel;
 use crate::gemini_files::{self, PreparedSources, Source, GOOGLE_BASE};
-use crate::gemini_jobs::{self, JobKind, JobRecord, JobStage};
+use crate::gemini_jobs::{self, CancelOutcome, JobKind, JobRecord, JobStage};
 use crate::lineage::calculate_sha256;
 use crate::pdf;
 use crate::secrets;
@@ -351,19 +352,97 @@ pub(crate) fn describe_size(bytes: u64) -> String {
 /// Without it, four retries and a standby attempt are a silent half-minute
 /// under "Gemini is reviewing this document" — which reads as a hang. The
 /// sentence is written here, beside the logic that knows what is happening.
+///
+/// GEN-REL-04: every event names the job it belongs to (its material and
+/// output, and its journal id once it has one), so a window shows it only
+/// beside that job. A stage is the stage actually reached; nothing here is a
+/// percentage, since no measure of Gemini's own progress exists.
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct GeminiProgress {
-    message: String,
+pub(crate) struct GeminiProgress {
+    job_id: Option<String>,
+    material_id: String,
+    kind: JobKind,
+    stage: Option<&'static str>,
+    message: Option<String>,
+    attempt: u32,
+    max_attempts: u32,
 }
 
 /// The event the Study Library listens for.
 const PROGRESS_EVENT: &str = "gemini-progress";
 
-fn say(app: &AppHandle, message: String) {
-    // Progress is a courtesy. A window that will not take it changes nothing
-    // about whether the study aid arrives.
-    let _ = app.emit(PROGRESS_EVENT, GeminiProgress { message });
+/// Reports one generation's progress, scoped to its job.
+pub(crate) struct Reporter {
+    material_id: String,
+    kind: JobKind,
+    job_id: Mutex<Option<String>>,
+    attempts: AtomicU32,
+    send: Box<dyn Fn(GeminiProgress) + Send + Sync>,
+}
+
+impl Reporter {
+    pub(crate) fn new(
+        material_id: &str,
+        kind: JobKind,
+        send: Box<dyn Fn(GeminiProgress) + Send + Sync>,
+    ) -> Arc<Reporter> {
+        Arc::new(Reporter {
+            material_id: material_id.to_string(),
+            kind,
+            job_id: Mutex::new(None),
+            attempts: AtomicU32::new(0),
+            send,
+        })
+    }
+
+    fn emit(&self, stage: Option<Stage>, message: Option<String>) {
+        // Progress is a courtesy. A window that will not take it changes
+        // nothing about whether the study aid arrives.
+        (self.send)(GeminiProgress {
+            job_id: self
+                .job_id
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .clone(),
+            material_id: self.material_id.clone(),
+            kind: self.kind,
+            stage: stage.map(Stage::key),
+            message,
+            attempt: self.attempts.load(Ordering::SeqCst),
+            max_attempts: MAX_GENERATION_ATTEMPTS,
+        });
+    }
+
+    /// The job has begun: from now on every event carries its id.
+    fn started(&self, job_id: &str) {
+        *self.job_id.lock().unwrap_or_else(|e| e.into_inner()) = Some(job_id.to_string());
+        self.emit(Some(Stage::Preparing), None);
+    }
+
+    pub(crate) fn say(&self, message: String) {
+        self.emit(None, Some(message));
+    }
+
+    /// Follow `budget`'s stages.
+    pub(crate) fn follow(self: &Arc<Self>, budget: &Budget) {
+        let reporter = self.clone();
+        budget.observe(Arc::new(move |stage, attempts| {
+            reporter.attempts.store(attempts, Ordering::SeqCst);
+            reporter.emit(Some(stage), None);
+        }));
+    }
+}
+
+fn reporter_for(app: &AppHandle, material_id: &str, kind: JobKind) -> Arc<Reporter> {
+    let app = app.clone();
+    Reporter::new(
+        material_id,
+        kind,
+        Box::new(move |progress| {
+            let _ = app.emit(PROGRESS_EVENT, progress);
+        }),
+    )
 }
 
 /// What one generation request came to.
@@ -833,7 +912,9 @@ async fn run_generation_inner(
                 Ok(file) if file.state == gemini_files::FileState::Active => Err(failure.message),
                 Err(gemini_files::LookupFailure::Other(message)) => Err(message),
                 _ => {
-                    ctx.cache.finish(lease, ctx.http, ctx.api_key).await;
+                    ctx.cache
+                        .finish_admitted(lease, ctx.http, ctx.api_key, ctx.budget)
+                        .await;
                     (ctx.say)("The prepared copy of this PDF was no longer available at Google, so it is being prepared once more.".to_string());
                     let again = ctx
                         .cache
@@ -851,7 +932,9 @@ async fn run_generation_inner(
                     let outcome = generate_on(ctx, source, &again, build)
                         .await
                         .map_err(|f| f.message);
-                    ctx.cache.finish(again, ctx.http, ctx.api_key).await;
+                    ctx.cache
+                        .finish_admitted(again, ctx.http, ctx.api_key, ctx.budget)
+                        .await;
                     // Checked after the cleanup await, not before it.
                     return if ctx.current() {
                         outcome
@@ -863,7 +946,9 @@ async fn run_generation_inner(
         }
         other => other.map_err(|f| f.message),
     };
-    ctx.cache.finish(lease, ctx.http, ctx.api_key).await;
+    ctx.cache
+        .finish_admitted(lease, ctx.http, ctx.api_key, ctx.budget)
+        .await;
     // Checked after the cleanup await, not before it.
     if ctx.current() {
         outcome
@@ -950,6 +1035,7 @@ fn released(id: &str) -> JobRecord {
         relative_path: String::new(),
         content_sha256: String::new(),
         base_revision: None,
+        request_id: None,
         stage: JobStage::Failed,
         created_at: 0,
         updated_at: 0,
@@ -974,9 +1060,28 @@ impl Drop for RunningJob<'_> {
     }
 }
 
+/// Said when a job's record disappeared before it could settle.
+const RECORD_LOST: &str =
+    "This study aid's record was lost before it could be kept, so nothing was saved. Try again.";
+
+/// What a command adds to a recorded job (GEN-REL-04): who to tell once it
+/// has begun, and whether she can cancel it.
+#[derive(Clone, Copy, Default)]
+struct JobHooks<'a> {
+    started: Option<&'a (dyn Fn(&str) + Sync)>,
+    cancellable: bool,
+    /// The window's own id for this request, which it can cancel by before it
+    /// has learned the job's id.
+    request_id: Option<&'a str>,
+    /// The generation's budget, which then checks the cancel token before
+    /// every request and pause.
+    budget: Option<&'a Budget>,
+}
+
 /// Run one generation as a recorded job. `material_id` is the window's own
 /// identity for the material. Every generation is recorded, so the one-at-a-
-/// time rule holds for every caller.
+/// time rule holds for every caller. Tests use it without command hooks.
+#[cfg(test)]
 #[allow(clippy::too_many_arguments)]
 async fn as_job<T, F>(
     root: &Path,
@@ -991,17 +1096,87 @@ where
     T: Serialize,
     F: std::future::Future<Output = Result<T, String>>,
 {
+    as_job_with(
+        root,
+        kind,
+        material_id,
+        base_revision,
+        source,
+        work,
+        changed,
+        JobHooks::default(),
+    )
+    .await
+}
+
+/// `as_job`, with the command's hooks. A cancellable job's work is dropped as
+/// soon as the journal records it cancelled, and a job the journal records as
+/// cancelled never hands over an answer, even one that had just arrived.
+#[allow(clippy::too_many_arguments)]
+async fn as_job_with<T, F>(
+    root: &Path,
+    kind: JobKind,
+    material_id: &str,
+    base_revision: Option<&str>,
+    source: &LoadedSource,
+    work: F,
+    changed: &(dyn Fn(&JobRecord) + Sync),
+    hooks: JobHooks<'_>,
+) -> Result<JobAnswer<T>, String>
+where
+    T: Serialize,
+    F: std::future::Future<Output = Result<T, String>>,
+{
     let id = Some(gemini_jobs::with(root, |journal| {
-        journal.begin(
+        journal.begin_request(
             kind,
             material_id,
             &source.scope,
             &source.content_sha256,
             base_revision,
+            hooks.request_id,
         )
     })?);
+    // The token exists before anyone can learn the job's id. A cancel that
+    // reached the journal in between (it lists the job as soon as it begins)
+    // found no token to wake, so the journal is read again once the token is
+    // registered: any later cancel finds the token.
+    let registration = id.as_deref().map(|id| {
+        let registration = hooks.cancellable.then(|| gemini_cancel::register(id));
+        if let Some(budget) = hooks.budget {
+            // Every later request asks the journal, under the lock the cancel
+            // is recorded under.
+            let (root, id) = (root.to_path_buf(), id.to_string());
+            budget.attach_admission(Arc::new(move || {
+                gemini_jobs::with(&root, |journal| journal.admits(&id))
+            }));
+        }
+        if let Some(registration) = &registration {
+            let cancelled = gemini_jobs::with(root, |journal| {
+                journal
+                    .list()
+                    .iter()
+                    .any(|j| j.id == id && j.stage == JobStage::Cancelled)
+            });
+            if cancelled {
+                registration.token.cancel();
+            }
+        }
+        if let Some(started) = hooks.started {
+            started(id);
+        }
+        registration
+    });
     let running = RunningJob { root, id, changed };
-    let outcome = work.await;
+    let outcome = match registration.flatten() {
+        Some(registration) => {
+            match gemini_cancel::Cancellable::new(work, registration.token.clone()).await {
+                Ok(outcome) => outcome,
+                Err(gemini_cancel::Cancelled) => Err(gemini_cancel::CANCELLED.to_string()),
+            }
+        }
+        None => work.await,
+    };
     let recorded = match &outcome {
         Ok(answer) => match serde_json::to_value(answer) {
             Ok(value) => running.finish(Ok(value)),
@@ -1010,6 +1185,15 @@ where
         Err(message) => running.finish(Err(message)),
     };
     match (outcome, recorded) {
+        // Cancelled, whichever came first: the journal decided, and nothing
+        // is handed over.
+        (
+            _,
+            Ok(Some(JobRecord {
+                stage: JobStage::Cancelled,
+                ..
+            })),
+        ) => Err(gemini_cancel::CANCELLED.to_string()),
         // Too large to keep, or not serializable: the journal says why.
         (
             Ok(_),
@@ -1019,12 +1203,15 @@ where
                 ..
             })),
         ) => Err(message),
-        (Ok(answer), Ok(record)) => Ok(JobAnswer {
+        (Ok(answer), Ok(Some(record))) => Ok(JobAnswer {
             answer,
-            checkpointed: record.is_some(),
-            job_id: record.map(|r| r.id),
+            checkpointed: true,
+            job_id: Some(record.id),
             content_sha256: source.content_sha256.clone(),
         }),
+        // The record vanished before the job could settle: nothing confirms
+        // the answer is wanted, so it is not handed over (GENREL04-R6).
+        (Ok(_), Ok(None)) => Err(RECORD_LOST.to_string()),
         // The answer is valid but could not be written down: hand it over,
         // honestly marked as held only by this window.
         (Ok(answer), Err(_)) => Ok(JobAnswer {
@@ -1057,6 +1244,76 @@ pub fn gemini_jobs(app: AppHandle) -> Result<Vec<JobRecord>, String> {
     Ok(gemini_jobs::with(&root, |journal| journal.list()))
 }
 
+/// She asked to cancel a running job (GEN-REL-04). The journal decides first:
+/// only a job still running is recorded as cancelled, and only then is its
+/// work woken to stop. A job that already finished keeps its outcome, and the
+/// window is told so.
+pub(crate) fn cancel_job(
+    root: &Path,
+    job_id: &str,
+    changed: &(dyn Fn(&JobRecord) + Sync),
+) -> Result<CancelOutcome, String> {
+    // Decided in the journal, under the lock every request's admission asks
+    // under: once this commits, no further request is admitted. Waking the
+    // work afterwards only makes it stop sooner.
+    let (outcome, record) = gemini_jobs::with(root, |journal| {
+        let outcome = journal.cancel(job_id);
+        (outcome, journal.list().into_iter().find(|j| j.id == job_id))
+    });
+    let outcome = outcome?;
+    if outcome.cancelled {
+        gemini_cancel::wake(job_id);
+        if let Some(record) = record {
+            changed(&record);
+        }
+    }
+    Ok(outcome)
+}
+
+/// Cancel by the window's request id: works before the window knows the
+/// job's id, and before the job has even begun (it is then refused before
+/// anything is sent).
+pub(crate) fn cancel_request(
+    root: &Path,
+    request_id: &str,
+    changed: &(dyn Fn(&JobRecord) + Sync),
+) -> Result<CancelOutcome, String> {
+    // One journal decision, under the lock admission asks under.
+    let (outcome, record) = gemini_jobs::with(root, |journal| {
+        let outcome = journal.cancel_request(request_id);
+        let record = outcome
+            .as_ref()
+            .ok()
+            .and_then(|(_, id)| id.clone())
+            .and_then(|id| journal.list().into_iter().find(|j| j.id == id));
+        (outcome, record)
+    });
+    let (outcome, job_id) = outcome?;
+    if outcome.cancelled {
+        if let Some(job_id) = job_id {
+            gemini_cancel::wake(&job_id);
+        }
+        if let Some(record) = record {
+            changed(&record);
+        }
+    }
+    Ok(outcome)
+}
+
+#[tauri::command]
+pub fn cancel_gemini_job(
+    app: AppHandle,
+    job_id: Option<String>,
+    request_id: Option<String>,
+) -> Result<CancelOutcome, String> {
+    let root = app_root(&app)?;
+    match (request_id, job_id) {
+        (Some(request_id), _) => cancel_request(&root, &request_id, &job_changed(&app)),
+        (None, Some(job_id)) => cancel_job(&root, &job_id, &job_changed(&app)),
+        (None, None) => Err("There was nothing to cancel.".to_string()),
+    }
+}
+
 /// The window saved or dismissed a finished job.
 #[tauri::command]
 pub fn acknowledge_gemini_job(app: AppHandle, job_id: String) -> Result<bool, String> {
@@ -1070,6 +1327,7 @@ pub async fn generate_study_aid(
     relative_path: String,
     material_id: String,
     base_revision: Option<String>,
+    request_id: Option<String>,
 ) -> Result<JobAnswer<GeneratedStudyAid>, String> {
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
@@ -1080,7 +1338,11 @@ pub async fn generate_study_aid(
     let http = generation_client()?;
     // One budget for everything this generation does (GEN-REL-03).
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
-    let progress = |message: String| say(&app, message);
+    // Progress names this job and reports the stages actually reached.
+    let reporter = reporter_for(&app, &material_id, JobKind::StudyAid);
+    reporter.follow(&budget);
+    let progress = |message: String| reporter.say(message);
+    let started = |job_id: &str| reporter.started(job_id);
     let ctx = GenContext {
         http: &http,
         base: GOOGLE_BASE,
@@ -1091,7 +1353,7 @@ pub async fn generate_study_aid(
         budget: &budget,
         say: &progress,
     };
-    as_job(
+    as_job_with(
         &root,
         JobKind::StudyAid,
         &material_id,
@@ -1103,6 +1365,12 @@ pub async fn generate_study_aid(
                 .map_err(|m| format!("{m}\n{}", budget.details(None)))
         },
         &job_changed(&app),
+        JobHooks {
+            started: Some(&started),
+            cancellable: true,
+            request_id: request_id.as_deref(),
+            budget: Some(&budget),
+        },
     )
     .await
 }
@@ -1275,6 +1543,7 @@ pub async fn generate_practice_test(
     relative_path: String,
     material_id: String,
     base_revision: Option<String>,
+    request_id: Option<String>,
 ) -> Result<JobAnswer<GeneratedPracticeTest>, String> {
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
@@ -1285,7 +1554,11 @@ pub async fn generate_practice_test(
     let http = generation_client()?;
     // One budget for everything this generation does (GEN-REL-03).
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
-    let progress = |message: String| say(&app, message);
+    // Progress names this job and reports the stages actually reached.
+    let reporter = reporter_for(&app, &material_id, JobKind::PracticeTest);
+    reporter.follow(&budget);
+    let progress = |message: String| reporter.say(message);
+    let started = |job_id: &str| reporter.started(job_id);
     let ctx = GenContext {
         http: &http,
         base: GOOGLE_BASE,
@@ -1296,7 +1569,7 @@ pub async fn generate_practice_test(
         budget: &budget,
         say: &progress,
     };
-    as_job(
+    as_job_with(
         &root,
         JobKind::PracticeTest,
         &material_id,
@@ -1308,6 +1581,12 @@ pub async fn generate_practice_test(
                 .map_err(|m| format!("{m}\n{}", budget.details(None)))
         },
         &job_changed(&app),
+        JobHooks {
+            started: Some(&started),
+            cancellable: true,
+            request_id: request_id.as_deref(),
+            budget: Some(&budget),
+        },
     )
     .await
 }
@@ -1388,6 +1667,11 @@ async fn generate_once(
         return Err(gemini_files::out_of_time(ctx.budget, "asking Gemini").into());
     };
     ctx.budget.at(Stage::Generating);
+    // Immediately before the request: a cancel recorded by now prevents it,
+    // however far one poll of the work has run (GENREL04-R5).
+    if !ctx.budget.admit() {
+        return Err(gemini_cancel::CANCELLED.to_string().into());
+    }
     let url = format!("{}/v1beta/models/{model}:generateContent", ctx.base);
     let sent = ctx
         .http
@@ -1550,6 +1834,9 @@ async fn generate_with_retries_at(
         retry += 1;
         (ctx.say)(waiting_message(setback, ctx.budget.attempts() + 1, pause));
         if !ctx.budget.pause(pause).await {
+            if ctx.budget.cancelled() {
+                return Err(gemini_cancel::CANCELLED.to_string().into());
+            }
             ctx.budget.categorize("time limit reached");
             return Err(match retry_after {
                 Some(asked) => retry_after_message(asked, ctx.budget),
@@ -2257,3 +2544,7 @@ mod generation_tests;
 #[cfg(test)]
 #[path = "gemini_recovery_tests.rs"]
 mod recovery_tests;
+
+#[cfg(test)]
+#[path = "gemini_cancel_flow_tests.rs"]
+mod cancel_flow_tests;

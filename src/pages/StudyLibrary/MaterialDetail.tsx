@@ -63,7 +63,7 @@ import { ExportStudyDialog } from "./ExportStudyDialog";
 import { GuideBody } from "./GuideBody";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
-import { GeminiJobNotice, GeminiRecoveryNotice } from "./GeminiJobNotice";
+import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
 import { useGeminiJobs, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
@@ -122,8 +122,6 @@ function MaterialDetailPage() {
   const working = (phase: GeminiJobPhase | undefined) => phase === "running" || phase === "saving";
   const generating = working(studyJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
-  const generationProgress = studyJob?.progress ?? null;
-  const practiceGenerationProgress = practiceJob?.progress ?? null;
   const generationError = studyJob?.phase === "failed" ? studyJob.error : null;
   const practiceGenerationError = practiceJob?.phase === "failed" ? practiceJob.error : null;
   // An answer waiting to be saved or discarded is never overwritten by asking again.
@@ -259,6 +257,13 @@ function MaterialDetailPage() {
               ? { text: "Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available.", settings: true }
               : null;
   const isGeneratingAny = geminiJobs.busy || geminiJobs.locked();
+  // Stage-appropriate recovery (GEN-REL-04): trying again goes through the
+  // usual Send confirmation. A PDF already prepared with Google is reused, so
+  // only the generation is repeated.
+  const retryStudy =
+    canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingAi(true) : undefined;
+  const retryPractice =
+    canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingPracticeTest(true) : undefined;
 
   const relatedActions = actionsFor(data.actions, "material", material.id);
   const questions = data.questions.filter((question) => question.materialId === material.id);
@@ -507,16 +512,13 @@ function MaterialDetailPage() {
                   <GenerationNoticeView notice={generationNotice} onSplit={() => setSplitting(true)} />
                 ) : null}
                 {generating ? (
-                  <div className="ai-working" role="status">
-                    <span className="ai-working__dot" aria-hidden="true" />
-                    <div>
-                      <p className="small strong">Gemini is reviewing this document</p>
-                      <p className="tiny dim">
-                        {generationProgress ??
-                          "Large illustrated PDFs can take a little longer, and if Google\u2019s servers are busy this waits and tries again on its own."}
-                      </p>
-                    </div>
-                  </div>
+                  studyJob ? (
+                    <GeminiProgressView
+                      job={studyJob}
+                      title="Gemini is reviewing this document"
+                      onCancel={() => void geminiJobs.cancel(studyJob.key)}
+                    />
+                  ) : null
                 ) : null}
                 {studySet ? (
                   <div className="stack stack--5">
@@ -617,11 +619,20 @@ function MaterialDetailPage() {
                 ) : null}
 
                 {generationError ? (
-                  <p className="field__error" role="alert" style={{ marginTop: "var(--space-3)" }}>
-                    {generationError}
-                  </p>
+                  <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
+                      {generationError}
+                    </p>
+                    {retryStudy ? (
+                      <div className="row row--wrap">
+                        <Button size="small" onClick={retryStudy}>
+                          Try again
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
-                {studyJob ? <GeminiJobNotice job={studyJob} jobs={geminiJobs} /> : null}
+                {studyJob ? <GeminiJobNotice job={studyJob} jobs={geminiJobs} onRetry={retryStudy} /> : null}
                 {canOfferGemini && geminiJobs.recovery === "failed" ? (
                   <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
                 ) : null}
@@ -664,16 +675,13 @@ function MaterialDetailPage() {
                   <GenerationNoticeView notice={generationNotice} onSplit={() => setSplitting(true)} />
                 ) : null}
                 {generatingPractice ? (
-                  <div className="ai-working" role="status">
-                    <span className="ai-working__dot" aria-hidden="true" />
-                    <div>
-                      <p className="small strong">Gemini is writing practice questions</p>
-                      <p className="tiny dim">
-                        {practiceGenerationProgress ??
-                          "Large illustrated PDFs can take a little longer, and if Google’s servers are busy this waits and tries again on its own."}
-                      </p>
-                    </div>
-                  </div>
+                  practiceJob ? (
+                    <GeminiProgressView
+                      job={practiceJob}
+                      title="Gemini is writing practice questions"
+                      onCancel={() => void geminiJobs.cancel(practiceJob.key)}
+                    />
+                  ) : null
                 ) : null}
                 {practiceMetadata.phase === "failed" ? (
                   <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
@@ -753,11 +761,20 @@ function MaterialDetailPage() {
                 ) : null}
 
                 {practiceGenerationError ? (
-                  <p className="field__error" role="alert" style={{ marginTop: "var(--space-3)" }}>
-                    {practiceGenerationError}
-                  </p>
+                  <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
+                      {practiceGenerationError}
+                    </p>
+                    {retryPractice ? (
+                      <div className="row row--wrap">
+                        <Button size="small" onClick={retryPractice}>
+                          Try again
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
-                {practiceJob ? <GeminiJobNotice job={practiceJob} jobs={geminiJobs} /> : null}
+                {practiceJob ? <GeminiJobNotice job={practiceJob} jobs={geminiJobs} onRetry={retryPractice} /> : null}
               </CardBody>
             </Card>
           ) : null}

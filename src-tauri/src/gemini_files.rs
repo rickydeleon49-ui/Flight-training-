@@ -379,6 +379,9 @@ pub(crate) async fn upload(
     budget: &Budget,
 ) -> Result<RemoteFile, String> {
     budget.at(Stage::Uploading);
+    if !budget.admit() {
+        return Err(crate::gemini_cancel::CANCELLED.to_string());
+    }
     let timeout = budget
         .request_timeout()
         .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
@@ -416,6 +419,10 @@ pub(crate) async fn upload(
     let timeout = budget
         .request_timeout()
         .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
+    // Checked again before the PDF itself is sent.
+    if !budget.admit() {
+        return Err(crate::gemini_cancel::CANCELLED.to_string());
+    }
     let finished = http
         .post(session)
         .header("x-goog-api-key", api_key)
@@ -454,6 +461,13 @@ pub(crate) async fn lookup(
     if !valid_name(name) {
         return Err(LookupFailure::Missing);
     }
+    // GENREL03-R1: a file check is its own stage in the failure details.
+    budget.at(Stage::CheckingFile);
+    if !budget.admit() {
+        return Err(LookupFailure::Other(
+            crate::gemini_cancel::CANCELLED.to_string(),
+        ));
+    }
     let timeout = budget
         .request_timeout()
         .ok_or_else(|| LookupFailure::Other(out_of_time(budget, "checking the uploaded PDF")))?;
@@ -465,6 +479,7 @@ pub(crate) async fn lookup(
         .await
         .map_err(|e| LookupFailure::Other(transport(e, "checking the uploaded PDF", budget)))?;
     let status = response.status().as_u16();
+    budget.saw_status(status);
     // Only 404 shows the copy is gone. A 403 is an access refusal for this key
     // or project, not proof of a missing file, so it never leads to an upload.
     if status == 404 {
@@ -810,6 +825,7 @@ impl PreparedSources {
 
     /// Release a lease and delete, best effort, any copy of this key's that
     /// was only waiting for its last lease.
+    #[cfg(test)]
     pub(crate) async fn finish(&self, lease: Lease<'_>, http: &Client, api_key: &str) {
         drop(lease);
         let credential = credential_of(api_key);
@@ -822,6 +838,61 @@ impl PreparedSources {
             mine
         };
         self.retire(http, api_key, mine).await;
+    }
+
+    /// `retire`, for cleanup a generation causes (GENREL04-R10, R11). Each
+    /// DELETE is admitted on its own, immediately before it is sent: once the
+    /// generation is cancelled, nothing more is sent, and that copy and every
+    /// one after it wait for a later cleanup instead (they expire at Google in
+    /// any case). Copies made with another key are left to expire, as in
+    /// `retire`.
+    pub(crate) async fn retire_admitted(
+        &self,
+        http: &Client,
+        api_key: &str,
+        retired: Vec<Retired>,
+        budget: &Budget,
+    ) -> usize {
+        let credential = credential_of(api_key);
+        let mut removed = 0;
+        let mut pending = retired
+            .into_iter()
+            .filter(|r| r.credential == credential)
+            .collect::<std::collections::VecDeque<_>>();
+        while let Some(r) = pending.pop_front() {
+            if !budget.admit() {
+                let mut inner = self.lock();
+                inner.orphaned.push(r);
+                inner.orphaned.extend(pending);
+                break;
+            }
+            if delete(http, &r.base, api_key, &r.name, self.policy.delete_timeout).await {
+                removed += 1;
+            }
+        }
+        removed
+    }
+
+    /// `finish`, for a generation: the lease is released at once, and each
+    /// waiting copy's DELETE is admitted on its own.
+    pub(crate) async fn finish_admitted(
+        &self,
+        lease: Lease<'_>,
+        http: &Client,
+        api_key: &str,
+        budget: &Budget,
+    ) {
+        drop(lease);
+        let credential = credential_of(api_key);
+        let mine = {
+            let mut inner = self.lock();
+            let (mine, others) = std::mem::take(&mut inner.orphaned)
+                .into_iter()
+                .partition(|r: &Retired| r.credential == credential);
+            inner.orphaned = others;
+            mine
+        };
+        self.retire_admitted(http, api_key, mine, budget).await;
     }
 
     /// A leased prepared reference for exactly this source, reusing a valid
@@ -846,7 +917,7 @@ impl PreparedSources {
         let mut avoid = avoid.map(str::to_string);
         for _ in 0..2 {
             let (claim, retired) = self.claim(&key, epoch, avoid.as_deref());
-            self.retire(http, api_key, retired).await;
+            self.retire_admitted(http, api_key, retired, budget).await;
             match claim {
                 Claim::Stale => return Err(STALE_CONTEXT.to_string()),
                 Claim::Cached(lease) => {
@@ -1159,7 +1230,7 @@ impl PreparedSources {
             Err(message) => Err(message.clone()),
         });
         drop(guard);
-        self.retire(http, api_key, retired).await;
+        self.retire_admitted(http, api_key, retired, budget).await;
         // The context may have ended during that cleanup.
         match outcome {
             Ok(lease) if lease.is_current() => Ok(lease),
@@ -1184,8 +1255,16 @@ impl PreparedSources {
         {
             Ok(file) => file,
             Err(failure) => {
-                // Our own upload, never usable: retire it now.
-                delete(http, base, api_key, &file.name, self.policy.delete_timeout).await;
+                // Our own upload, never usable: retire it now, unless this
+                // generation was cancelled, when nothing more is sent (it is
+                // queued for later cleanup, and expires at Google anyway).
+                let ours = Retired {
+                    credential: credential_of(api_key),
+                    base: base.to_string(),
+                    name: file.name.clone(),
+                };
+                self.retire_admitted(http, api_key, vec![ours], budget)
+                    .await;
                 return Err(failure.message());
             }
         };
@@ -1229,6 +1308,9 @@ impl PreparedSources {
             }
             // The wait is paid for out of the same budget as everything else.
             if !budget.pause(pause).await {
+                if budget.cancelled() {
+                    return Err(NotReady::Other(crate::gemini_cancel::CANCELLED.to_string()));
+                }
                 budget.categorize("time limit reached");
                 return Err(NotReady::Other(format!(
                     "Google was still preparing this PDF when the {} Her Flight Deck allows for one study aid ran out, so no study aid was made. Choosing a chapter or fewer pages first usually helps.",

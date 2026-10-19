@@ -13,6 +13,7 @@ mod documents;
 mod fake_gemini;
 mod gemini;
 mod gemini_budget;
+mod gemini_cancel;
 mod gemini_files;
 mod gemini_jobs;
 mod lineage;
@@ -233,6 +234,7 @@ pub fn run() {
             gemini::generate_practice_test,
             gemini::gemini_jobs,
             gemini::acknowledge_gemini_job,
+            gemini::cancel_gemini_job,
             backup::create_backup,
             backup::create_complete_backup,
             backup::inspect_complete_backup,

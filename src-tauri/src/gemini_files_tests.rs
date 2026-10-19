@@ -907,3 +907,94 @@ fn r12_expiry_is_rechecked_after_a_slow_cached_confirmation() {
     assert_eq!(cache.stats().reuses, 0);
     assert_eq!(fake.count(|q| q.is_upload_finalize()), 2);
 }
+
+/* ------------------------------------------------------------------ */
+/* GENREL04-R11: every generation-owned DELETE is admitted on its own  */
+/* ------------------------------------------------------------------ */
+
+fn retired_pair(fake: &FakeGemini) -> Vec<Retired> {
+    ["files/synthetic-91", "files/synthetic-92"]
+        .into_iter()
+        .map(|name| Retired {
+            credential: credential_of(KEY),
+            base: fake.base.clone(),
+            name: name.to_string(),
+        })
+        .collect()
+}
+
+/// Run `cleanup` with two copies to delete. The first DELETE is held; while
+/// it is held the generation is cancelled through admission alone (no token,
+/// no wake). Only that first DELETE may ever reach Google.
+fn assert_one_delete_then_stop(
+    label: &str,
+    cleanup: impl FnOnce(&PreparedSources, &Client, &Budget, Vec<Retired>) + Send,
+) {
+    let fake = FakeGemini::start();
+    let gate = Arc::new(Gate::default());
+    fake.behave(|b| b.delete_gate = Some(gate.clone()));
+    let cache = cache();
+    let budget = crate::gemini_budget::Budget::new(Duration::from_secs(60));
+    let cancelled = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let admitted = cancelled.clone();
+    budget.attach_admission(Arc::new(move || !admitted.load(Ordering::SeqCst)));
+    let http = http();
+    let retired = retired_pair(&fake);
+    std::thread::scope(|scope| {
+        let running = scope.spawn(|| cleanup(&cache, &http, &budget, retired));
+        wait_for(&format!("{label}: the first DELETE to be held"), || {
+            gate.waiting() == 1
+        });
+        cancelled.store(true, Ordering::SeqCst);
+        gate.open();
+        running.join().unwrap();
+    });
+    std::thread::sleep(Duration::from_millis(50));
+    assert_eq!(
+        fake.count(|r| r.is_delete()),
+        1,
+        "{label}: no DELETE after the cancel"
+    );
+    let waiting: Vec<String> = cache
+        .lock()
+        .orphaned
+        .iter()
+        .map(|r| r.name.clone())
+        .collect();
+    assert_eq!(
+        waiting,
+        vec!["files/synthetic-92".to_string()],
+        "{label}: queued for later"
+    );
+}
+
+#[test]
+fn r11_retiring_admits_each_delete_and_stops_at_a_cancel() {
+    assert_one_delete_then_stop("retire_admitted", |cache, http, budget, retired| {
+        tauri::async_runtime::block_on(cache.retire_admitted(http, KEY, retired, budget));
+    });
+}
+
+#[test]
+fn r11_finishing_admits_each_delete_and_stops_at_a_cancel() {
+    assert_one_delete_then_stop("finish_admitted", |cache, http, budget, retired| {
+        let lease = Lease {
+            cache,
+            id: Retired {
+                credential: credential_of(KEY),
+                base: "unused".to_string(),
+                name: "files/synthetic-held".to_string(),
+            },
+            epoch: cache.epoch(),
+            prepared: Prepared {
+                name: "files/synthetic-held".to_string(),
+                uri: "unused".to_string(),
+                mime: "application/pdf".to_string(),
+                expires_at: i64::MAX,
+                reused: false,
+            },
+        };
+        cache.lock().orphaned.extend(retired);
+        tauri::async_runtime::block_on(cache.finish_admitted(lease, http, KEY, budget));
+    });
+}

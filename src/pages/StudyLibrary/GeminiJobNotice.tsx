@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
+
 import { AlertIcon, Button } from "@/components/ui";
+import type { GeminiWorkStage } from "@/services/gemini";
 import type { GeminiJob, useGeminiJobs } from "@/state/GeminiJobs";
 
 /**
@@ -9,9 +12,12 @@ import type { GeminiJob, useGeminiJobs } from "@/state/GeminiJobs";
 export function GeminiJobNotice({
   job,
   jobs,
+  onRetry,
 }: {
   job: GeminiJob;
   jobs: ReturnType<typeof useGeminiJobs>;
+  /** Start again, through the usual confirmation. Absent when that is not possible now. */
+  onRetry?: () => void;
 }) {
   const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
   const busy = jobs.busy;
@@ -22,9 +28,10 @@ export function GeminiJobNotice({
         <div className="ai-disclaimer" role="status">
           <AlertIcon size={16} />
           <p className="tiny">
-            Gemini finished a new {what} for this document before the app was closed or reloaded.
-            It has not been saved yet. Saving it replaces what is saved now; completed practice history
-            is kept.
+            {job.cancelAttempted
+              ? `Gemini finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
+              : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
+            Saving it replaces what is saved now; completed practice history is kept.
           </p>
         </div>
         <div className="row row--wrap">
@@ -80,11 +87,12 @@ export function GeminiJobNotice({
     );
   }
 
-  if (job.phase === "superseded" || job.phase === "interrupted") {
+  if (job.phase === "superseded" || job.phase === "interrupted" || job.phase === "cancelled") {
     const message =
-      job.phase === "superseded"
+      job.phase === "superseded" || job.phase === "cancelled"
         ? job.error
         : `Creating a new ${what} was interrupted when the app closed. Google may or may not have finished it, so nothing was saved and nothing was sent again. You can try again whenever you like.`;
+    const retry = job.phase !== "superseded" && onRetry && !busy;
     return (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <div className="ai-disclaimer" role="status">
@@ -92,6 +100,11 @@ export function GeminiJobNotice({
           <p className="tiny">{message}</p>
         </div>
         <div className="row row--wrap">
+          {retry ? (
+            <Button size="small" onClick={onRetry}>
+              Try again
+            </Button>
+          ) : null}
           <Button size="small" variant="secondary" onClick={() => void jobs.dismiss(job.key)}>
             Dismiss
           </Button>
@@ -118,6 +131,76 @@ export function GeminiRecoveryNotice({ onRetry }: { onRetry: () => void }) {
         <Button size="small" variant="secondary" onClick={onRetry}>
           Check again
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Her words for each stage a generation actually reaches. */
+export const STAGE_WORDS: Record<GeminiWorkStage, string> = {
+  preparing: "Getting the document ready",
+  uploading: "Sending the PDF to Google",
+  "waiting-for-file": "Google is preparing the PDF",
+  "checking-file": "Checking the copy already with Google",
+  generating: "Waiting for Gemini's answer",
+  reading: "Receiving Gemini's answer",
+  validating: "Checking the answer",
+  pausing: "Waiting before trying again",
+};
+
+function elapsedWords(ms: number): string {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(seconds / 60);
+  return minutes > 0 ? `${minutes} min ${seconds % 60} s so far` : `${seconds} s so far`;
+}
+
+/**
+ * A running generation (GEN-REL-04): the stage it has actually reached, the
+ * attempt once there has been a retry, how long it has been going, and a way
+ * to cancel. There is no percentage, because nothing measures Gemini's own
+ * progress.
+ */
+export function GeminiProgressView({
+  job,
+  title,
+  onCancel,
+}: {
+  job: GeminiJob;
+  title: string;
+  onCancel: () => void;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const stage =
+    job.phase === "saving" ? "Saving" : job.stage ? STAGE_WORDS[job.stage] : "Getting the document ready";
+  const attempt =
+    job.attempt && job.attempt > 1 && job.maxAttempts ? ` · attempt ${job.attempt} of ${job.maxAttempts}` : "";
+  const elapsed = job.startedAt ? ` · ${elapsedWords(now - job.startedAt)}` : "";
+  return (
+    <div className="ai-working">
+      <span className="ai-working__dot" aria-hidden="true" />
+      <div className="stack stack--2">
+        <p className="small strong">{title}</p>
+        <p className="tiny" role="status" aria-live="polite">
+          {job.cancelRequested ? "Cancelling…" : `${stage}${attempt}`}
+          <span className="dim">{elapsed}</span>
+        </p>
+        {job.progress && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
+        {job.cancelError ? (
+          <p className="field__error" role="alert">
+            {job.cancelError}
+          </p>
+        ) : null}
+        {job.phase === "running" ? (
+          <div className="row row--wrap">
+            <Button size="small" variant="secondary" disabled={Boolean(job.cancelRequested)} onClick={onCancel}>
+              {job.cancelRequested ? "Cancelling…" : "Cancel"}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
