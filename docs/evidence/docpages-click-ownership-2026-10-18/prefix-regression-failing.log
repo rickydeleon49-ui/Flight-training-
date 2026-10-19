@@ -1,0 +1,46 @@
+# Pre-fix: useDocumentNavigation.ts at 17c80ee (lease taken in useEffect)
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-docpages-timing
+
+ ❯ src/state/navigation/useDocumentNavigationLifecycle.test.ts (25 tests | 1 failed | 24 skipped) 1025ms
+     × an action started before passive effects have run still runs and refreshes, and an older initial read cannot overwrite it 1025ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/state/navigation/useDocumentNavigationLifecycle.test.ts > a click on freshly shown controls is never refused as stale > an action started before passive effects have run still runs and refreshes, and an older initial read cannot overwrite it
+AssertionError: expected [ { …(2) } ] to have a length of 2 but got 1
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/state/navigation/useDocumentNavigationLifecycle.test.ts:167:39
+    165|     await waitFor(() => expect(reads).toHaveLength(1));
+    166|     await act(async () => inspection.resolve());
+    167|     await waitFor(() => expect(reads).toHaveLength(2));
+       |                                       ^
+    168|     expect(inspections).toBe(1);
+    169|     const followUp = reads.find((r) => r.hash === B)!;
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../Flight-training-gen-rel-03/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../Flight-training-gen-rel-03/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../Flight-training-gen-rel-03/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 24 skipped (25)
+   Start at  16:45:59
+   Duration  1.51s (transform 125ms, setup 0ms, import 184ms, tests 1.03s, environment 222ms)
+
+EXIT 1

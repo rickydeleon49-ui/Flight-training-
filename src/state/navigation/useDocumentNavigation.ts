@@ -12,7 +12,7 @@
  * only while it is still the latest and the hook is mounted. A change of
  * material or repository, or unmounting, retires reads still in flight.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import type { NavigationBookmark, NavigationReadingState, NavigationState } from "@/domain/types";
 import type { NavigationRepository } from "@/data/repositories/navigationRepository";
@@ -78,7 +78,11 @@ export function useMaterialNavigation(materialId: string, repo: NavigationReposi
 
   // Each committed context/lifetime owns a distinct lease. A completed action
   // must not borrow a new lease merely because the hook is mounted again.
-  useEffect(() => {
+  // Taken in a layout effect, during the commit, so the lease exists before
+  // the new controls can receive a click: a passive effect can run after the
+  // page is already clickable, and a click in that gap was refused as stale
+  // without a word (it reads as a button that does nothing).
+  useLayoutEffect(() => {
     const lease = { scope };
     active.current = lease;
     return () => {

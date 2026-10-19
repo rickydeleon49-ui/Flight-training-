@@ -1,0 +1,2 @@
+=== saved places open only on their own content (M4S1-R5) > a file replaced while the bookmark's inspection is held is refused
+PagesFind your placePages of Synthetic handbookThis file's pages haven't been checked yet. They are checked when you open a page.Check pagesPDF pageThe page number your PDF reader shows.Open at pageBookmarksAdd bookmarkCheck this file's pages before adding a bookmark.No bookmarks yet.
