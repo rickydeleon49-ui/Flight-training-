@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "src-tauri/Cargo.toml",
+    "extraction::",
+    "--",
+    "--nocapture"
+  ],
+  "exit": 101,
+  "at": "2026-10-19T17:28:01.660368+00:00"
+}

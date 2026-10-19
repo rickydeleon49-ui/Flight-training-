@@ -5,6 +5,8 @@
 pub mod alloc;
 pub mod cache;
 pub mod inspect;
+pub mod search;
+pub mod search_api;
 pub mod service;
 pub mod supervisor;
 pub mod worker;

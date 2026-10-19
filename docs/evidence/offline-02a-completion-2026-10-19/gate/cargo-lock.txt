@@ -1,0 +1,6 @@
+
+> her-flight-deck@0.5.7 test:cargo-lock
+> node scripts/test-cargo-lock-sync.mjs
+
+Checking Cargo toolchain and lockfile synchronization (read-only)...
+Cargo lockfile synchronization verified: her-flight-deck is at 0.5.7 in both Cargo.toml and Cargo.lock

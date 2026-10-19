@@ -1,0 +1,17 @@
+{
+  "base": "123b4fcecaed3820ec8ecff5c78772a98570d62b",
+  "freezeCommit": "1f927b596bdc52e1419f950d01d390dece0b93f1",
+  "paths": {
+    "src-tauri/Cargo.toml": "97b39eba91126248933c9d8026f77d4a763b17c084c60e1dcecde9794ea2ec9f",
+    "src-tauri/src/lib.rs": "ac69381d7e21a0715fd5c818ea8a5f88f7ce8b0740f19078402f0df9cf828e7e",
+    "src-tauri/src/extraction/mod.rs": "911061b0c75598d00318fedafbe2de4666e384dc50711fcfd24129d629ec5696",
+    "src-tauri/src/extraction/cache.rs": "6addb7a3baf8fdd1c33278200e8487918edea99ace26e2667956985178c5bab8",
+    "src-tauri/src/extraction/search.rs": "b9f81b50b85a9f4092f8cc5fed20e1cb94e12f7a874c7f2b973d80b5452bbf9a",
+    "src-tauri/src/extraction/search_api.rs": "3e915360689c868fe2c1af723e3415f84ffbcbe1e17d608c5bdd1780e9227f5c",
+    "src-tauri/src/extraction/search_api/tests.rs": "a87f0d698a0ffab9d0a6b6f6ff051a568705f5c844fe21b9e9b8cd7cce1cae85",
+    "src-tauri/src/extraction/service.rs": "76a76240f3e6693a5b0712917e75b38fb16ecf7fc77d009a863819b61ad19529",
+    "src-tauri/examples/offline_search_measure.rs": "de07a4eabb1bcd0687d53d8e94d789917c53748112211fa852eacdee09d6984b",
+    "src-tauri/tests/extraction_service.rs": "eb928ef2e1fb907e315ddb62e6c0e50d0a1ea2afc260032df1d9f036fcc1af0d"
+  },
+  "measuredHarnessSha256": "c206d1f41fd8055c97fdf5323eeff6ccdb476c2c906ad092d248a3f10c5e67d2"
+}

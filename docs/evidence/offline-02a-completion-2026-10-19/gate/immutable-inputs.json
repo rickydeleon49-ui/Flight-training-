@@ -1,0 +1,21 @@
+{
+  "src-tauri/migrations/0001_initial_schema.sql": "5fdd18155dd3276d1ba774d65995b0d6280bbc9be7f3703d8033801e0068e718",
+  "src-tauri/migrations/0002_profile_details.sql": "be29f442d881071e82a54fc75b92aab015f68d2b86b49c56999c8635c1ea184b",
+  "src-tauri/migrations/0003_personal_note.sql": "9d6915cd98fb8232b3fca5e720f4ac09f0380d0881bd88823f44232676a7f48f",
+  "src-tauri/migrations/0004_app_metadata.sql": "3ec0833f36eea7612dc3ce5aa576623676e6b9918ddb7421c346064afd8bdbe5",
+  "src-tauri/migrations/0005_flight_log.sql": "1f724ad96211107e5ba7c6fe412627e448d249697fe7245e7f3d44060ad0d24b",
+  "src-tauri/migrations/0006_pilot_toolkit.sql": "c96b3ef93b741fec1f1d65e63fc6d9783cb3f832504dc1ac99e4bcedeb0ea6e1",
+  "src-tauri/migrations/0007_ai_study.sql": "e0a7563e943345e17bcf7935f33c6d2dda5508e5fb6aad2bbc2c7e22f3e83358",
+  "src-tauri/migrations/0008_notes.sql": "33bb7a716eb201dadd848ddf8ea3fe3345280b58abb0580c77d48dcbf9a45761",
+  "src-tauri/migrations/0009_practice_tests.sql": "e5ed311ae6f454a8bb22f85573d93dd4d04654055b1267debf782604af525bec",
+  "src-tauri/migrations/0010_debrief_links.sql": "508dbfaa1e0c1ec4e8ef87a448adf7965aff6f6aabeecb48e36cac6a5b5ca971",
+  "src-tauri/migrations/0011_practice_sessions.sql": "133bfd14d761ff27f226985e70b9d1c917c48d2120f39ff33ffaed013e9373de",
+  "src-tauri/migrations/0012_card_reviews.sql": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e",
+  "src-tauri/migrations/0013_split_source_lineage.sql": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106",
+  "src-tauri/migrations/0014_skills_evidence.sql": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
+  "src-tauri/migrations/0015_document_navigation.sql": "960c28858d52d4296ecf78b58f7a76a7c28d6552b24716a18cd7b04f2828c98f",
+  "src/data/migration-checksums.json": "933d3c4e88392e442514c367416dd985cb0db4a60be2165bc7f1f255ca073c7c",
+  "src-tauri/Cargo.lock": "1502315574059db5d339cc722126e209afc1d9f93ec5ca0aa5e799856a545fdc",
+  "package-lock.json": "5086e547325806f58590187c565990f45de3af3c701a17e66c9a5403dd4519fb",
+  "src-tauri/tauri.conf.json": "0e588a9652dcd2a582e9229030e20f56e7aa44bfb937870a303fdef54dc154c5"
+}

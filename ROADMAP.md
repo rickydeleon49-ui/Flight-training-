@@ -1,3 +1,19 @@
+## OFFLINE-02a native implementation complete; acceptance budgets open — 19 October 2026
+
+Codex completed Claude's quota-interrupted cache/search work in the existing `Flight-training-offline-01` worktree on `codex/offline-02a-completion`. [Report](docs/OFFLINE_02A_COMPLETION_REPORT_2026-10-19.md), [independent reviewer handoff](docs/OFFLINE_02A_REVIEWER_HANDOFF_2026-10-19.md), [measured budgets](docs/evidence/offline-02a-completion-2026-10-19/BUDGETS.md). Design rev6 was merged in PR #230 (`123b4fc`); older pending-design entries below are historical. **No 02a acceptance or merge is claimed.**
+
+Functional gate: 3,728 frontend passes; 809 distinct native passes across the full and final service receipts; 26 schema-helper passes; strict lint/type/build/format/lock/immutability checks pass. All 90 independent hit sets and 90 capped prefixes match. Worst warm p95: 15.37 ms at 10k, 38.44 ms at 30k; concurrent 10k: 13.36 ms. Both failed and corrected measurement runs are preserved.
+
+Complete these before accepting 02a or starting 02b:
+
+| Task | Required result | Current evidence |
+| --- | --- | --- |
+| **OFFLINE-02A-REVIEW** | Independent review of Codex's completion and relevant interactions, one consolidated correction report if needed | Pending; source/evidence manifests and reviewer handoff supplied |
+| **OFFLINE-02A-COLD** | 10k reopen + first query ≤300 ms; verify the prescribed background-before-search fallback when 30k validation exceeds 1 s. Keep full first-open checks, deadlines and file-identity invalidation | 570.97 ms at 10k; 2,042.01 ms cold validation at 30k. Validation is background work; thresholds remain visibly missed |
+| **OFFLINE-02A-STORAGE** | Added index ≤1.0× canonical text, or a separately approved representation/contract amendment. Preserve exact snippet/canonical/delete/recovery behavior; never change the denominator or silently relax the budget | 1.693×–2.663× across the frozen corpora; full canonical external content plus inverted index exceeds the target |
+
+Then resume the approved order: **02b search UI/navigation → 02c saved study content → homework → exports**. Native extraction/search and readiness UI remain dormant in releases; neither workflow flag was enabled. Minimum-spec pressure and installed acceptance remain unverified. NFKC is settled; prefix/fuzzy matching and topic aliases were not added. Primary checkout/profile/installers were not touched.
+
 ## OFFLINE-01b merged; OFFLINE-02 search design (revision 6) pending re-review — 19 October 2026
 
 OFFLINE-01b merged as PR #229 (`b65ae4a`) after Codex round 1 was RED and round 2 GREEN. Offline study stays dormant in releases.

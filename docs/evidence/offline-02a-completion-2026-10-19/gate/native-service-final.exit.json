@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "src-tauri/Cargo.toml",
+    "--test",
+    "extraction_service"
+  ],
+  "exit": 0,
+  "passed": 13
+}

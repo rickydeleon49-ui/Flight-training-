@@ -163,6 +163,7 @@ struct Queue {
 /// which restarts the app) starts with nothing verified.
 pub struct Service {
     root: PathBuf,
+    search: std::sync::OnceLock<super::search::Host>,
     worker: PathBuf,
     verified: Mutex<HashMap<PathBuf, (Stamp, String)>>,
     preparing: Mutex<HashSet<String>>,
@@ -176,6 +177,7 @@ impl Service {
     pub fn new(root: PathBuf, worker: PathBuf) -> Self {
         Self {
             root,
+            search: std::sync::OnceLock::new(),
             worker,
             verified: Mutex::new(HashMap::new()),
             preparing: Mutex::new(HashSet::new()),
@@ -183,6 +185,22 @@ impl Service {
             queue: Mutex::new(Queue::default()),
             idle: std::sync::Condvar::new(),
         }
+    }
+
+    pub(crate) fn root(&self) -> &Path {
+        &self.root
+    }
+
+    pub(crate) fn search_host(&self) -> &super::search::Host {
+        self.search
+            .get_or_init(|| super::search::Host::start(self.root.join(super::cache::CACHE_FILE)))
+    }
+
+    pub(crate) fn preparing_hash(&self, sha: &str) -> bool {
+        self.preparing
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .contains(sha)
     }
 
     /// Resolve a material's stored relative path inside `documents/`.
@@ -209,7 +227,7 @@ impl Service {
 
     /// The verified hash for `path`, if it was hashed this session and its
     /// stamp hasn't changed since.
-    fn current(&self, path: &Path) -> Option<String> {
+    pub(crate) fn current(&self, path: &Path) -> Option<String> {
         let now = stamp(path)?;
         let map = self.verified.lock().unwrap_or_else(|e| e.into_inner());
         map.get(path)
@@ -217,7 +235,7 @@ impl Service {
             .map(|(_, sha)| sha.clone())
     }
 
-    fn is_queued_prepare(&self, relative: &str) -> bool {
+    pub(crate) fn is_queued_prepare(&self, relative: &str) -> bool {
         self.queue
             .lock()
             .unwrap_or_else(|e| e.into_inner())
@@ -225,7 +243,7 @@ impl Service {
             .contains(&Task::Prepare(relative.to_string()))
     }
 
-    fn is_pdf(path: &Path) -> bool {
+    pub(crate) fn is_pdf(path: &Path) -> bool {
         path.extension()
             .map(|e| e.eq_ignore_ascii_case("pdf"))
             .unwrap_or(false)
@@ -425,7 +443,7 @@ pub struct MaterialReadiness {
 
 static SERVICE: std::sync::OnceLock<Arc<Service>> = std::sync::OnceLock::new();
 
-fn service(app: &tauri::AppHandle) -> Result<Arc<Service>, String> {
+pub(crate) fn service(app: &tauri::AppHandle) -> Result<Arc<Service>, String> {
     if let Some(s) = SERVICE.get() {
         return Ok(s.clone());
     }
@@ -657,6 +675,8 @@ mod tests {
             ("worker", include_str!("worker.rs")),
             ("supervisor", include_str!("supervisor.rs")),
             ("cache", include_str!("cache.rs")),
+            ("search", include_str!("search.rs")),
+            ("search_api", include_str!("search_api.rs")),
         ] {
             for banned in ["crate::gemini", "crate::secrets", "reqwest", "gemini_files"] {
                 assert!(!source.contains(banned), "{name}.rs must not use {banned}");
@@ -667,5 +687,32 @@ mod tests {
         for banned in ["crate::gemini", "crate::secrets", "reqwest", "gemini_files"] {
             assert!(!code.contains(banned), "service.rs must not use {banned}");
         }
+    }
+    #[test]
+    fn search_does_not_wait_for_the_hashing_and_extraction_slot() {
+        let root = std::env::temp_dir().join(format!("hfd-search-slot-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let db = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        db.execute_batch("CREATE TABLE study_materials(id TEXT PRIMARY KEY,title TEXT,material_type TEXT,original_file_name TEXT,created_at TEXT,file_path TEXT);").unwrap();
+        crate::practice_sessions::mark_root_ready(&root);
+        let svc = Arc::new(Service::new(root.clone(), PathBuf::new()));
+        // A real preparation holds this lock while the worker runs. Search
+        // must complete while it is held, not merely after it is released.
+        let held = svc.slot.lock().unwrap();
+        let ticket = super::super::search_api::submit_search(
+            svc.clone(),
+            "wind".into(),
+            vec![],
+            vec!["documentPages".into()],
+            0,
+            std::time::Instant::now(),
+        )
+        .unwrap();
+        assert!(ticket.wait().unwrap().groups.is_empty());
+        drop(held);
+        crate::practice_sessions::unmark_root_ready(&root);
+        drop(svc);
+        drop(db);
+        let _ = std::fs::remove_dir_all(root);
     }
 }

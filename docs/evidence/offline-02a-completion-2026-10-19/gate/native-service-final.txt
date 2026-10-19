@@ -1,0 +1,21 @@
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.54s
+     Running tests/extraction_service.rs (src-tauri/target/debug/deps/extraction_service-5a1ea5e4d7c834fc)
+
+running 13 tests
+test moved_missing_and_non_pdf_files_are_reported_plainly ... ok
+test a_file_replaced_after_the_worker_read_it_never_shows_the_old_result ... ok
+test queued_work_is_deduplicated_serialized_and_completes ... ok
+test a_database_only_restore_resolves_by_the_bytes_on_disk ... ok
+test a_late_worker_publishes_for_its_bytes_only ... ok
+test a_file_the_worker_cannot_read_is_could_not_process ... ok
+test a_failure_after_identity_is_cached_for_those_bytes ... ok
+test a_new_session_checks_first_then_reuses_the_cache ... ok
+test prepared_real_pdf_is_searchable_and_its_destination_is_revalidated ... ok
+test failures_before_identity_is_verified_are_never_cached ... ok
+test rollback_to_older_bytes_and_forward_again_never_shows_stale_readiness ... ok
+test same_stamp_different_bytes_is_caught_across_sessions_and_at_action_time ... ok
+test a_transient_identity_failure_is_not_cached_against_the_original_bytes ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.36s
+

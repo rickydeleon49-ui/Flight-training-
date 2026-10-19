@@ -418,3 +418,75 @@ fn a_failure_after_identity_is_cached_for_those_bytes() {
         }
     );
 }
+
+/// OFFLINE-02a composition: genuine PDF bytes → real extraction child →
+/// published FTS passages → authoritative row/stamp resolution → bounded
+/// native command → freshly hashed destination. No Tauri UI is launched.
+#[test]
+fn prepared_real_pdf_is_searchable_and_its_destination_is_revalidated() {
+    use her_flight_deck_lib::extraction::search_api::{
+        initialize_storage, submit_search, verify_destination, Destination,
+    };
+    let root = Root::new("search-composition");
+    let db = rusqlite::Connection::open(root.0.join("her-flight-deck.db")).unwrap();
+    let mut migrations: Vec<_> =
+        std::fs::read_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("migrations"))
+            .unwrap()
+            .map(|p| p.unwrap().path())
+            .filter(|p| p.extension().is_some_and(|e| e == "sql"))
+            .collect();
+    migrations.sort();
+    db.execute_batch("CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY)")
+        .unwrap();
+    for (i, path) in migrations.iter().enumerate() {
+        db.execute_batch(&std::fs::read_to_string(path).unwrap())
+            .unwrap();
+        db.execute("INSERT INTO schema_migrations VALUES (?1)", [i + 1])
+            .unwrap();
+    }
+    for (id, words) in [
+        ("text", Some("Crosswind landing technique")),
+        ("image", None),
+    ] {
+        let name = format!("{id}.pdf");
+        std::fs::write(root.doc(&name), pdf(words)).unwrap();
+        db.execute("INSERT INTO study_materials(id,title,file_path,original_file_name,created_at,updated_at) VALUES (?1,?1,?2,?2,'2026-10-19','2026-10-19')",rusqlite::params![id,name]).unwrap();
+    }
+    initialize_storage(&root.0).unwrap();
+    let svc = Arc::new(root.session());
+    for name in ["text.pdf", "image.pdf"] {
+        svc.prepare(name, no_cancel());
+    }
+    let before = std::fs::read(root.0.join("her-flight-deck.db")).unwrap();
+    let response = submit_search(
+        svc.clone(),
+        "crosswind".into(),
+        vec!["text".into(), "image".into()],
+        vec!["documentPages".into()],
+        0,
+        std::time::Instant::now(),
+    )
+    .unwrap()
+    .wait()
+    .unwrap();
+    assert_eq!(response.groups.len(), 1);
+    assert_eq!(response.groups[0].material_id, "text");
+    assert_eq!(response.groups[0].passages[0].page_index, 1);
+    assert_eq!(response.coverage.searched_pages, 1);
+    assert_eq!(response.coverage.image_pages, 1);
+    let sha = &response.groups[0].passages[0].content_sha256;
+    assert_eq!(
+        verify_destination(&svc, "text", sha).unwrap(),
+        Destination::Ok
+    );
+    assert_eq!(
+        std::fs::read(root.0.join("her-flight-deck.db")).unwrap(),
+        before,
+        "search and destination checks never write the authoritative DB"
+    );
+    std::fs::write(root.doc("text.pdf"), pdf(Some("Different replacement"))).unwrap();
+    assert_eq!(
+        verify_destination(&svc, "text", sha).unwrap(),
+        Destination::Changed
+    );
+}

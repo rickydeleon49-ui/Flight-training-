@@ -1,0 +1,2 @@
+    Checking her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.67s
