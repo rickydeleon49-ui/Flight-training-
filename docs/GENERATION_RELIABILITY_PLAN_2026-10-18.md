@@ -1,6 +1,14 @@
 # Generation reliability: owner-prioritized delivery plan
 
-## Approval, priority and ownership
+## Current integration and release scope
+
+GEN-REL-01–05 are integrated on main `e07f77e`: 04 in PR #217 (merge `3d50a64`), and 05 plus carried GENREL04-R12 in PR #219 (merge `e07f77e`). Codex implemented 05; Claude round 1 was RED with blocking R1 and round 2 GREEN, closing R1–R4. See [04 report](GEN_REL_04_IMPLEMENTATION_REPORT_2026-10-18.md), [05 report](GEN_REL_05_IMPLEMENTATION_REPORT_2026-10-19.md) and [05 reviews](evidence/gen-rel-05-2026-10-19/). The original assignments and acceptance requirements below are historical planning context.
+
+The owner's 18 October “lets get 5 shipped too” decision includes all five improvements in the same next patch release, superseding the suggestion to defer 05. Next is an owner-run build and installed verification of the combined candidate, then normal release gates before publication. No release has been built or published; live-provider and installed-app behavior remain **UNVERIFIED**. This scope decision specifies no numerical card count and does not lift recovery bounds.
+
+After that release, resume preserved P54-06 feasibility and PR #210's coverage correction, then P54-07 weather, P54-08 FAA references and the approved Study Hub/open-source evaluation sequence. Reuse accepted search/navigation evidence and retain unresolved production-search/adoption gates; no scheduler adoption or migration is implied. This docs consolidation grants no new integration or publication authority.
+
+## Original approval, priority and ownership
 
 On18 October2026 the owner approved the four discussed improvements, requested delivery **one at a time before other feature work**, and assigned implementation to Claude. Filenames and assignments remain model-neutral so another implementer can take over. This is approved implementation direction, not a claim that the features exist or have passed review.
 
@@ -8,9 +16,13 @@ Delivery order is **GEN-REL-01 → GEN-REL-02 → GEN-REL-03 → GEN-REL-04 → 
 
 **Additional owner request,18 October2026:** generate more flashcards. Queue **GEN-REL-05 after01–04**, before resuming the earlier feature queue. The owner requested a larger set, not a specific number; proposed implementation defaults are40 cards with20/40/60 choices, delivered in batches of up to10. These numbers are a recommendation, not a quotation of owner-approved counts. This does not enlarge Claude's active GEN-REL-01 assignment.
 
-Current source baseline is main2e3f7fee6f84dd094c23ac0dfd7cd1053d2ccc4d. A friend reports slow/failed generation, but her app version, exact error and source size are still pending. Those details can refine diagnosis; their absence does not block the source-confirmed reliability work. Do not label every failure as her internet or Google's capacity.
+The original planning baseline was main `2e3f7fee6f84dd094c23ac0dfd7cd1053d2ccc4d`. The behavior below predates GEN-REL-01–05; it does not describe current source's PDF reuse, job ownership or shared recovery budget.
 
-## Confirmed source behavior
+**Confirmed user screenshot, 18 October 2026:** the study-aid panel shows “Gemini did not answer in time. Check the internet connection and try again.” This matches the transport timeout-message branch, but does not measure elapsed time or identify her installed build. Her app version, document size/pages, selected model and transport stage remain unknown. It does not prove faulty internet, a bad key, exhausted quota or a provider-only cause. A 300-second request timeout in source does not establish her installed behavior; GEN-REL-03 adds a shared active-work budget.
+
+Retain this evidence in acceptance: preserve recoverable work and prior study content, distinguish timeout stages with bounded sanitized diagnostics, and exercise delayed uploads, response headers/body and dropped connections using synthetic transport. Source integration does not close live-provider or installed-app acceptance or prove her build includes the changes.
+
+## Confirmed behavior at the original planning baseline
 
 `src-tauri/src/gemini.rs` sends the complete selected file inline for both study-aid and practice-test requests. Requests use a300-second timeout, up to four primary HTTP attempts and one fallback; that is not one overall job deadline. Connection/timeout/body-read errors escape through `?`, outside the HTTP retry path. JSON is parsed after the whole response arrives. `MaterialDetail.tsx` persists results only after generation and rejects callbacks whose original page/material/file context is obsolete. These guards protect data and must not simply be removed to make background generation appear to work.
 
@@ -73,6 +85,8 @@ Provide Cancel and stage-appropriate Retry/Resume. Cancellation stops remaining 
 Tests: accessible keyboard controls and live status, stale/multi-job events, navigation/restart, cancel during each wait/upload/generation/validation/save boundary, completion racing cancellation, no post-cancel writes or new calls, retry only the failed safe stage, and no spinner with no recoverable action. Browser/source UI tests do not prove installed WKWebView behavior.
 
 ## GEN-REL-05 — Larger, source-grounded flashcard sets
+
+**Release scope decision, 18 October 2026:** include 05 with 01–04 in the same next patch release. The separate 04/05 review and integration steps are now complete; owner-run build/installed verification and normal release gates remain. The following requirements record the reviewed planning scope, not a release claim or owner approval of numerical counts.
 
 Start after GEN-REL-01–04 review/integration. The current combined study-aid prompt asks for10–20 flashcards with an8,192-token output cap. Add a clear target-card-count choice for new generation and deliberate regeneration: proposed default40, options20/40/60. Treat the count as a target/maximum, not a promise that a short source supports that many distinct facts. Explain when fewer grounded cards are available; do not pad with duplicates, unsupported facts or artificial paraphrases. Keep practice-test question count unchanged.
 
