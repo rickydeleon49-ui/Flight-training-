@@ -28,7 +28,7 @@ vi.mock("@/state/navigation/useDocumentNavigation", () => ({
 }));
 
 import { OfflineSearchError } from "@/services/offlineContent";
-import { DocumentSearchPanel, SETUP_RETRY_MS, TYPING_PAUSE_MS } from "./DocumentSearchPanel";
+import { appendGroups, DocumentSearchPanel, SETUP_RETRY_MS, TYPING_PAUSE_MS } from "./DocumentSearchPanel";
 
 const coverage = (over: Partial<SearchCoverage> = {}): SearchCoverage => ({
   searchedDocuments: 2,
@@ -191,5 +191,87 @@ describe("Searching inside documents", () => {
     expect(document.activeElement).toBe(next);
     fireEvent.keyDown(next!, { key: "Home" });
     expect(document.activeElement).toBe(first);
+  });
+
+  it("clears results for other words or filters, even if the new search fails", async () => {
+    service.search.mockResolvedValueOnce(response()).mockRejectedValue(new OfflineSearchError("timeout"));
+    const { rerender } = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await typed();
+    expect(await screen.findByText("Pilot's Handbook")).toBeTruthy();
+    rerender(h(DocumentSearchPanel, { query: "crosswind", materials: materials.slice(1) }));
+    expect(screen.queryByText("Pilot's Handbook")).toBeNull();
+    await typed();
+    expect(await screen.findByText(/took too long/)).toBeTruthy();
+    expect(screen.queryByText("Pilot's Handbook")).toBeNull();
+  });
+
+  it("opens only the newest click, and nothing after leaving", async () => {
+    const two = response({
+      groups: [
+        { ...response().groups[0]!, passages: [
+          { contentSha256: sha, pageIndex: 1, snippet: "a" },
+          { contentSha256: sha, pageIndex: 2, snippet: "b" },
+        ] },
+      ],
+    });
+    service.search.mockResolvedValue(two);
+    let answerFirst!: (v: "ok") => void;
+    service.verify.mockImplementationOnce(() => new Promise((resolve) => (answerFirst = resolve))).mockResolvedValueOnce("ok");
+    nav.request.mockResolvedValue({ kind: "saved", epoch: 1, materialId: "m1", destination: {}, readingState: {} });
+    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await typed();
+    const [first, second] = await screen.findAllByRole("button", { name: /open the document/ });
+    fireEvent.click(first!);
+    fireEvent.click(second!);
+    await waitFor(() => expect(nav.request).toHaveBeenCalledTimes(1));
+    expect(nav.request).toHaveBeenLastCalledWith({ materialId: "m1", reference: 2, provenance: "physical_index" });
+    // The older click's check finishes last: it opens nothing.
+    await act(async () => answerFirst("ok"));
+    expect(nav.request).toHaveBeenCalledTimes(1);
+    // A check that finishes after leaving the page opens nothing either.
+    let answerLate!: (v: "ok") => void;
+    service.verify.mockImplementationOnce(() => new Promise((resolve) => (answerLate = resolve)));
+    fireEvent.click(first!);
+    view.unmount();
+    await act(async () => answerLate("ok"));
+    expect(nav.request).toHaveBeenCalledTimes(1);
+  });
+
+  it("says the file couldn't be checked, not that it is missing, when checking fails", async () => {
+    service.search.mockResolvedValue(response());
+    service.verify.mockRejectedValue(new OfflineSearchError("storage_unavailable"));
+    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await typed();
+    fireEvent.click(await screen.findByRole("button", { name: /open the document/ }));
+    expect(await screen.findByText(/Couldn't check this document's file just now/)).toBeTruthy();
+    expect(screen.queryByText(/isn't on this Mac/)).toBeNull();
+  });
+
+  it("describes each result button with its passage", async () => {
+    service.search.mockResolvedValue(response());
+    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await typed();
+    const button = await screen.findByRole("button", { name: /open the document/ });
+    const described = document.getElementById(button.getAttribute("aria-describedby") ?? "");
+    expect(described?.textContent).toBe("the crosswind <script>x</script> component");
+  });
+});
+
+describe("appendGroups", () => {
+  it("merges a group the previous page trimmed instead of repeating it", () => {
+    const g = (id: string, pages: number[]) => ({
+      materialId: id,
+      title: id,
+      materialType: "handbook",
+      originalFileName: null,
+      addedAt: "",
+      passages: pages.map((p) => ({ contentSha256: sha, pageIndex: p, snippet: String(p) })),
+    });
+    const merged = appendGroups([g("a", [1]), g("b", [4])], [g("b", [4, 5, 6]), g("c", [2])]);
+    expect(merged.map((x) => [x.materialId, x.passages.map((p) => p.pageIndex)])).toEqual([
+      ["a", [1]],
+      ["b", [4, 5, 6]],
+      ["c", [2]],
+    ]);
   });
 });

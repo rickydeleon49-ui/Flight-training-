@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import { MATERIAL_TYPE_LABELS, type MaterialType, type StudyMaterial } from "@/domain/types";
@@ -25,6 +25,28 @@ interface Results {
   coverage: SearchResponse["coverage"];
   nextOffset: number | null;
   moreBeyondCap: boolean;
+}
+
+/**
+ * Add a further page of groups. The native side may end a page on a group it
+ * trimmed to fit, and start the next page with that same group: its passages
+ * are merged by page, never shown twice.
+ */
+export function appendGroups(shown: SearchGroup[], more: SearchGroup[]): SearchGroup[] {
+  const out = shown.map((g) => ({ ...g, passages: [...g.passages] }));
+  const at = new Map(out.map((g, i) => [g.materialId, i]));
+  for (const group of more) {
+    const i = at.get(group.materialId);
+    if (i === undefined) {
+      at.set(group.materialId, out.length);
+      out.push({ ...group, passages: [...group.passages] });
+      continue;
+    }
+    const existing = out[i]!;
+    const pages = new Set(existing.passages.map((p) => p.pageIndex));
+    existing.passages.push(...group.passages.filter((p) => !pages.has(p.pageIndex)));
+  }
+  return out;
 }
 
 type Phase =
@@ -55,6 +77,9 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
   const [notes, setNotes] = useState<Record<string, { text: string; error: boolean }>>({});
   // Only the newest request's answer is used.
   const generation = useRef(0);
+  // Only the newest "open" click may open anything, and only while mounted.
+  const opening = useRef(0);
+  const baseId = useId();
   const { controller } = useNavigationController();
   const byId = new Map(materials.map((m) => [m.id, m]));
 
@@ -65,7 +90,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         if (generation.current !== mine) return;
         setResults((previous) => ({
           query: text,
-          groups: offset > 0 && previous?.query === text ? [...previous.groups, ...response.groups] : response.groups,
+          groups: offset > 0 && previous?.query === text ? appendGroups(previous.groups, response.groups) : response.groups,
           coverage: response.coverage,
           nextOffset: response.nextOffset,
           moreBeyondCap: response.moreBeyondCap,
@@ -91,7 +116,10 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
   // Search after a pause in typing, and again whenever the filters change.
   useEffect(() => {
     const mine = ++generation.current;
+    opening.current += 1;
     setNotes({});
+    // Results for other words or other filters are never left on screen.
+    setResults(null);
     if (!trimmed) {
       setResults(null);
       setPhase({ kind: "idle" });
@@ -106,6 +134,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
   useEffect(
     () => () => {
       generation.current += 1;
+      opening.current += 1;
     },
     [],
   );
@@ -121,9 +150,22 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
 
   const open = async (materialId: string, sha: string, page: number) => {
     const key = `${materialId}:${page}`;
+    const mine = ++opening.current;
+    const current = () => opening.current === mine;
     setNotes((n) => ({ ...n, [key]: { text: "Checking the file…", error: false } }));
+    let check: Awaited<ReturnType<typeof verifyOfflineDestination>>;
     try {
-      const check = await verifyOfflineDestination(materialId, sha);
+      check = await verifyOfflineDestination(materialId, sha);
+    } catch {
+      if (current()) {
+        setNotes((n) => ({ ...n, [key]: { text: "Couldn't check this document's file just now. Try again in a moment.", error: true } }));
+      }
+      return;
+    }
+    // A newer click, new results or leaving the page retires this one: it
+    // never opens anything afterwards.
+    if (!current()) return;
+    try {
       if (check !== "ok") {
         setNotes((n) => ({ ...n, [key]: { text: destinationProblem(check), error: true } }));
         return;
@@ -133,7 +175,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         return;
       }
       const status = await controller.request({ materialId, reference: page, provenance: "physical_index" });
-      if (!status) return;
+      if (!status || !current()) return;
       const text =
         status.kind === "saved"
           ? `Opened in your PDF reader. Go to PDF page ${page} there; your reader may not jump to it by itself.`
@@ -146,10 +188,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         setNotes((n) => ({ ...n, [key]: { text, error: status.kind === "failed" || status.kind === "refused" || status.kind === "opened_unsaved" } }));
       }
     } catch (error) {
-      setNotes((n) => ({
-        ...n,
-        [key]: { text: error instanceof OfflineSearchError ? destinationProblem("missing") : navigationMessage(error), error: true },
-      }));
+      if (current()) setNotes((n) => ({ ...n, [key]: { text: navigationMessage(error), error: true } }));
     }
   };
 
@@ -200,6 +239,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
                       const key = `${group.materialId}:${passage.pageIndex}`;
                       const note = notes[key];
                       const place = pagePlace(passage.pageIndex, material?.lineage);
+                      const snippetId = `${baseId}-${group.materialId}-${passage.pageIndex}`;
                       return (
                         <div key={key} className="stack stack--1">
                           <button
@@ -208,11 +248,12 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
                             data-search-result=""
                             style={{ textAlign: "left", justifyContent: "flex-start", whiteSpace: "normal" }}
                             aria-label={`${group.title}, ${place}: open the document`}
+                            aria-describedby={snippetId}
                             onClick={() => void open(group.materialId, passage.contentSha256, passage.pageIndex)}
                           >
                             <span className="stack stack--1">
                               <span className="tiny">{place}</span>
-                              <span className="small wrap-anywhere">
+                              <span className="small wrap-anywhere" id={snippetId}>
                                 {snippetPieces(passage.snippet).map((piece, i) =>
                                   piece.mark ? <mark key={i}>{piece.text}</mark> : <span key={i}>{piece.text}</span>,
                                 )}
