@@ -1,4 +1,22 @@
+## GEN-REL-05 + GENREL04-R12 accepted (Claude round 2 GREEN) and integrated — 19 October 2026
+
+Codex implemented larger source-grounded flashcard sets (20/40/60 targets, default 40), bounded batches, recoverable drafts and deliberate final acceptance, preserving prior content/history and the shared limits. The carried GENREL04-R12 cleanup correction is closed. Claude round 1 was **RED**, with blocking GENREL05-R1; round 2 was **GREEN**, closing R1–R4. Integrated in **PR #219, merge `e07f77e`**. [Report](docs/GEN_REL_05_IMPLEMENTATION_REPORT_2026-10-19.md) and [review evidence](docs/evidence/gen-rel-05-2026-10-19/). Live-provider and installed-app behavior remain **UNVERIFIED**.
+
+## Next patch release includes GEN-REL-01–05 — owner decision 18 October 2026
+
+The owner's “lets get 5 shipped too” decision includes all five improvements in the same next patch release, superseding a 01–04-only candidate. All five are now integrated; **next is an owner-run build and installed verification of the combined patch-release candidate, followed by normal release gates before publication**. No release has been built or published. The count defaults were implementation proposals, not owner-specified counts; release scope does not authorize lifting recovery bounds.
+
+After that release, resume the preserved P54-06 feasibility queue, including PR #210's coverage correction (no scheduler adoption or migration implied), then P54-07 weather and P54-08 FAA references, followed by the approved Study Hub and related open-source evaluation sequence. Reuse accepted search/navigation evidence and retain unresolved production-search/adoption gates. This docs update grants no new merge, dependency, profile/provider-access or publication authority.
+
+## User-reported generation timeout: confirmed message — 18 October 2026
+
+The owner's screenshot shows **“Gemini did not answer in time. Check the internet connection and try again.”** It confirms the timeout-message path, not a cause or a measured five-minute wait. The friend's installed version, document size/pages, selected model and transport stage remain unknown; it proves no bad key, exhausted quota or faulty internet. The source's 300-second request timeout does not establish her build's behavior; GEN-REL-03 now also bounds active work across stages/retries.
+
+[The plan](docs/GENERATION_RELIABILITY_PLAN_2026-10-18.md) retains delayed upload/headers/body and dropped-connection synthetic acceptance requirements, preserved validated results and prior study content, and sanitized stage diagnostics. GEN-REL-01–05 source integration does not establish what her installed build contains or close live-provider/installed acceptance. Earlier tracker entries remain historical.
+
 ## GEN-REL-04 accepted by Codex review (round 6 GREEN) and integrated by Claude — 18 October 2026
+
+Integrated in **PR #217, merge `3d50a64`**; reviews are under [`docs/evidence/gen-rel-04-2026-10-18/`](docs/evidence/gen-rel-04-2026-10-18/).
 
 **Generation progress is now honest and job-scoped**, and it can be cancelled.
 
@@ -9,9 +27,9 @@
 - **An answer that beat the cancel** is offered to save or discard, never saved by itself.
 - **Recovery.** After a failure, cancel or interruption, **Try again** goes through the Send confirmation and reuses a PDF already prepared with Google. **Save again** remains checkpoint-only. GENREL03-R1 (file-check diagnostics) is closed.
 
-Codex review took six rounds: R1–R4, R5–R6, R7–R8, R9–R10, R11, then GREEN, all corrected with regression tests whose pre-fix failures are kept. Non-blocking GENREL04-R12 (keep queued cleanup entries if a cancel drops the cleanup future) is carried into GEN-REL-05. [Report](docs/GEN_REL_04_IMPLEMENTATION_REPORT_2026-10-18.md) and [round-6 review](docs/evidence/gen-rel-04-2026-10-18/review-r6/codex-review-round6-green.md). Live-provider and installed-Mac behavior remain UNVERIFIED.
+Codex review took six rounds: R1–R4, R5–R6, R7–R8, R9–R10, R11, then GREEN, all corrected with regression tests whose pre-fix failures are kept. Non-blocking GENREL04-R12 (keep queued cleanup entries if a cancel drops the cleanup future) was carried into GEN-REL-05 and is now closed in PR #219. [Report](docs/GEN_REL_04_IMPLEMENTATION_REPORT_2026-10-18.md) and [round-6 review](docs/evidence/gen-rel-04-2026-10-18/review-r6/codex-review-round6-green.md). Live-provider and installed-Mac behavior remain UNVERIFIED.
 
-The `DocumentPagesPanel` click-ownership fix (PR #216, Codex GREEN) was merged first, under the owner's broader instruction ("you can merge anything you feel is ready"). **Next:** GEN-REL-05 (larger, source-grounded flashcard sets).
+The `DocumentPagesPanel` click-ownership fix (PR #216, Codex GREEN) was merged first, under the owner's broader instruction ("you can merge anything you feel is ready"). GEN-REL-05 has since integrated in PR #219; the combined release gate above is next.
 
 ## GEN-REL-03 accepted (Codex review GREEN, Claude's independent gate green) and integrated by Claude — 18 October 2026
 
