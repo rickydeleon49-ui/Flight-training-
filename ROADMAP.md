@@ -1,4 +1,4 @@
-## OFFLINE-01b merged; OFFLINE-02 search design (revision 5) pending re-review — 19 October 2026
+## OFFLINE-01b merged; OFFLINE-02 search design (revision 6) pending re-review — 19 October 2026
 
 OFFLINE-01b merged as PR #229 (`b65ae4a`) after Codex round 1 was RED and round 2 GREEN. Offline study stays dormant in releases.
 

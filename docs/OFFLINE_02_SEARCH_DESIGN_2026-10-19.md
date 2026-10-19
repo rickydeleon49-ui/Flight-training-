@@ -1,6 +1,6 @@
 # OFFLINE-02: search a subject — design and pre-registration — 19 October 2026
 
-**Status: proposal for review, revision 5.** Codex rounds 1–4 were RED; §10 lists how each finding was answered. Nothing here is implemented.
+**Status: proposal for review, revision 6.** Codex rounds 1–5 were RED; §10 lists how each finding was answered. Nothing here is implemented.
 
 The roadmap requires the query rules, limits, fallbacks and measurement targets to be written down before the search engine is built in ([roadmap](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md), OFFLINE-02 "Acceptance and engine decision"). This document does that.
 
@@ -232,8 +232,11 @@ When the deadline has passed or the request was superseded, the thread stops and
 - **Retiring a timer:** a request's timer is cancelled when the request ends. A test drives a timer that fires exactly at the end of a request and asserts the next request completes normally.
 - **Startup-race tests.** Two test-only pause points sit in the startup sequence. Both tests use an expensive statement: a worst-case common word over a large fixture.
   - **Point A** is after `active` is recorded and **before** the `cancelled` re-check. The test pauses there, fires the deadline, and resumes. It asserts that the search answers `timeout` and that **no SQLite step ran**: the statement was never started.
-  - **Point B** is **after** the re-check and before the first SQLite step. The test pauses there, then fires the deadline and **waits for the watchdog to acknowledge** its first interrupt, the no-op one. Only then does it resume SQLite. It asserts that the statement was interrupted by a **later** tick (the watchdog's tick count is above 1 when the interrupt lands), and that the search answers `timeout` within 2 s + 100 ms.
-
+  - **Point B** is **after** the re-check and before the first SQLite step. The test pauses there, fires the deadline, and **waits for the watchdog to acknowledge** its first interrupt, which is the no-op one. Then it lets SQLite start.
+    - **The in-statement gate:** the test's candidate statement is the production statement plus `AND hfd_test_gate()`. That is a test-only SQL function, registered on the search connection only in test builds. On its first call, inside the running statement, the gate signals "running" and then **blocks** until the watchdog acknowledges a **later** interrupt (tick 2 or above), which is issued while the statement is provably active. Then the gate returns, and SQLite sees the pending interrupt at its next instruction.
+    - **Asserts:** the statement fails with `SQLITE_INTERRUPT` (`ErrorCode::OperationInterrupted`); the search answers `timeout` within 2 s + 100 ms; the tick that interrupted was 2 or above.
+    - **Why it's timing-independent:** both waits are handshakes, not sleeps.
+    - **The SQL function** needs `rusqlite`'s `functions` feature. It is enabled **only** in `[dev-dependencies]`. That adds no crate and no `Cargo.lock` package: the feature is `functions = []` in `rusqlite` 0.32.1. The release build's feature set is unchanged, which a test asserts with `cargo tree -e features`.
   A one-shot watchdog fails the point-B test. Both tests then run the next request and assert a correct result.
 
 **Bounded work, in two phases:**
@@ -451,3 +454,9 @@ Each case asserts **expected hits and expected exclusions**, by material id and 
 | # | Finding | Answer |
 | --- | --- | --- |
 | 1 | The startup-race test didn't deterministically exercise the race | Two tests. Point A, before the re-check: cancellation means no SQLite step runs. Point B, after the re-check: the test waits for the first, no-op interrupt to be acknowledged, then resumes, and requires a later tick to interrupt, which a one-shot watchdog fails. Both assert a correct next request (§6.2) |
+
+## 14. Codex round 5 correction
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | Point B still depended on SQLite running long enough for a later tick | An in-statement handshake: a test-only SQL function blocks inside the running statement until a later watchdog interrupt is acknowledged, then releases. The test asserts `SQLITE_INTERRUPT`, a bounded `timeout`, a tick of 2 or above, and the next request's success. The `functions` feature is enabled for dev only and adds no crate (§6.2) |
