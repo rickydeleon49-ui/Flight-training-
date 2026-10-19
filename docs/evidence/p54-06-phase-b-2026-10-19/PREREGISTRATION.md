@@ -33,7 +33,8 @@ Package versions (ts-fsrs 5.4.2, fsrs-rs 6.6.2) are separate from the algorithm 
    - `reps` or `lapses` is not a non-negative safe integer;
    - `lastReviewedAt` or `dueAt` is missing or is not a canonical instant (the same rule as `nowIso`).
 5. `CLOCK_BEHIND_LAST_REVIEW`: `now` is earlier than the prior's `lastReviewedAt`.
-6. `DUE_OUT_OF_RANGE`: the resulting due time would be after `9999-12-31T23:59:59.999Z`.
+6. `COUNTER_OUT_OF_RANGE`: the new `reps`, or the new `lapses` on a review-path Again, would exceed `Number.MAX_SAFE_INTEGER`.
+7. `DUE_OUT_OF_RANGE`: the resulting due time would be after `9999-12-31T23:59:59.999Z`.
 
 The first failing check decides the code. For example, an invalid rating together with an invalid prior gives `INVALID_RATING`. Elapsed time is computed only after the prior's timestamps pass check 4.
 
@@ -48,7 +49,7 @@ The first failing check decides the code. For example, an invalid rating togethe
 
 **Deviation C1, stability floor:** after rounding, `s` is raised to at least 0.01. The oracle can produce `s = 0` (scenario `bound-tiny-s-same-day`, Again), which would divide by zero on the next review.
 
-**Deviation C3, stability ceiling:** after rounding, `s` is lowered to at most 1,000,000, the same bound check 4 accepts. Every accepted output is therefore a valid prior for the next review. The oracle has no ceiling: from `{d: 1, s: 1,000,000}` after 36,500 days, its Hard, Good and Easy give 1,016,881.89, 1,028,070.98 and 1,052,574.13 (scenario `bound-stability-ceiling`). Intervals are unaffected in practice, because both caps (180 and 36,500 days) bind long before this.
+**Deviation C3, stability ceiling:** after rounding, `s` is lowered to at most 1,000,000, the same bound check 4 accepts. Together with check 6, every accepted output is a valid prior for the next review: its `d`, `s`, counters and timestamps all pass check 4. (A later review may still be refused, for example when `reps` is already at the safe maximum, but never because the earlier output was malformed.) The oracle has no ceiling: from `{d: 1, s: 1,000,000}` after 36,500 days, its Hard, Good and Easy give 1,016,881.89, 1,028,070.98 and 1,052,574.13 (scenario `bound-stability-ceiling`). Intervals are unaffected in practice, because both caps (180 and 36,500 days) bind long before this.
 
 **Intervals:**
 - **Again:** due in 10 minutes, as in simple-v1. `lapses` increases only on the review path. The oracle leaves Again to Anki's learning steps, so it has no interval to compare.
@@ -74,10 +75,11 @@ The first failing check decides the code. For example, an invalid rating togethe
   - bounded states (difficulty 1 and 10, stability from 0.01 to 1,000,000);
   - rounding-adjacent values (5.555/1.005, 9.995/2.345, 1.005/0.125, stability 2.5);
   - one oracle limitation (a review with zero elapsed days throws).
-- **Contract vectors** (`contract-vectors.json`, 37). These are written by hand, not by any scheduler code. They cover:
+- **Contract vectors** (`contract-vectors.json`, 42). These are written by hand, not by any scheduler code. They cover:
   - every refusal, including NaN and ±Infinity;
   - every prior field: invalid, missing or non-canonical timestamps, negative `reps`, fractional `lapses`, and stability just above the ceiling;
-  - refusal precedence (rating before time before version before state);
+  - refusal precedence (rating before time before version before state, and counters before due time);
+  - `reps` and `lapses` at and just below `Number.MAX_SAFE_INTEGER`, including the refused successor;
   - stability at the ceiling, where the successor state must be accepted on the next review;
   - the clock 1 ms behind;
   - a due time past year 9999;
@@ -95,7 +97,7 @@ The first failing check decides the code. For example, an invalid rating togethe
 | `d`, `s` at every oracle step | **Exact equality** after the oracle's rounding. Both run as IEEE-754 doubles in the same engine with the same formulas, so any difference is a candidate defect. The only exceptions are deviation C1 (the candidate gives 0.01 where the oracle gives 0) and deviation C3 (the candidate gives 1,000,000 where the oracle exceeds it); both oracle values are recorded. |
 | Oracle intervals that weren't fuzzed (candidate interval below 2.5 days) | Exact equality. |
 | Oracle intervals that were fuzzed | Consistency only: the oracle value must lie in `[c − ⌈0.05c⌉ − 2, c + ⌈0.05c⌉ + 2]` around the candidate's unfuzzed value `c`. This bounds the oracle's fuzz window (±5% ±1 day) plus one ordering bump. It is **not** an equality proof. Cap cases follow deviation C2. |
-| Contract vectors | Exact: the refusal code, elapsed days, path, due time, interval, `s` or lapse change as listed. `successorAccepted` means the returned state, reviewed again one day later with Good, must not be refused. |
+| Contract vectors | Exact: the refusal code, elapsed days, path, due time, interval, `s` or lapse change as listed. `successorAccepted` means the returned state, reviewed again one day later with Good, must not be refused; `successorRefusal` names the code that review must give instead. `reps` is the exact returned count. |
 
 Cross-language equality is out of scope: only a TypeScript candidate is planned, and native parity is unverified. Rounding cannot prove cross-language equality.
 

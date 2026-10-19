@@ -7,8 +7,8 @@ This folder freezes the FSRS-6 comparison contract **before** any candidate code
 - `proof/oracle.mjs`: runs the oracle in an isolated `vm` context after checking its Git blob ID and SHA-256.
 - `scenarios.json`: the preregistered inputs (30 scenarios, 66 steps).
 - `reference-vectors.json`: the oracle's outputs for those inputs. `proof/generate-reference.mjs --check` regenerates them and refuses any difference.
-- `contract-vectors.json`: 37 hand-specified vectors for refusals (including every prior field and their order), clocks, ranges, the caps, the stability ceiling and app policy.
-- `proof/preregistration.test.mjs`: 9 tests covering:
+- `contract-vectors.json`: 42 hand-specified vectors for refusals (including every prior field, the counter bounds and their order), clocks, ranges, the caps, the stability ceiling and app policy.
+- `proof/preregistration.test.mjs`: 10 tests covering:
   - the digests;
   - refusal of a tampered oracle or changed scenarios;
   - reproducibility;
@@ -16,7 +16,8 @@ This folder freezes the FSRS-6 comparison contract **before** any candidate code
   - fuzz;
   - the contract-vector shape;
   - hand arithmetic for every date, floor and overflow expectation;
-  - one-field changes for each prior-field refusal.
+  - one-field changes for each prior-field refusal;
+  - the counter vectors sitting exactly at and one below the safe-integer maximum.
 - `receipts/`: the raw test and check output, the upstream oracle provenance (`oracle-provenance.json`), and the runtime (Node 22.23.3, arm64, Apple M5).
 - `SHA256SUMS`: every file here except itself. Verify it from the repository root with `shasum -a 256 -c docs/evidence/p54-06-phase-b-2026-10-19/SHA256SUMS`.
 

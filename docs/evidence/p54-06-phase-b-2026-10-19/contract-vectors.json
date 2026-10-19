@@ -649,6 +649,98 @@
         "s": 1000000,
         "successorAccepted": true
       }
+    },
+    {
+      "id": "refuse-reps-at-safe-maximum",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 9007199254740991,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "COUNTER_OUT_OF_RANGE"
+      }
+    },
+    {
+      "id": "accept-reps-just-below-safe-maximum",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 9007199254740990,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "reps": 9007199254740991,
+        "successorRefusal": "COUNTER_OUT_OF_RANGE"
+      }
+    },
+    {
+      "id": "refuse-lapses-at-safe-maximum-on-again",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 9007199254740991,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "again",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "COUNTER_OUT_OF_RANGE"
+      }
+    },
+    {
+      "id": "accept-lapses-at-safe-maximum-on-good",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 9007199254740991,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "lapsesDelta": 0,
+        "successorAccepted": true
+      }
+    },
+    {
+      "id": "precedence-counter-before-due",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 9007199254740991,
+        "lapses": 0,
+        "lastReviewedAt": "9999-12-30T00:00:00.000Z",
+        "dueAt": "9999-12-30T00:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "9999-12-31T00:00:00.000Z",
+      "expect": {
+        "refusal": "COUNTER_OUT_OF_RANGE"
+      }
     }
   ]
 }

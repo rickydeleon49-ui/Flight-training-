@@ -69,10 +69,10 @@ test("oracle fuzz is real: one stability, three seeds, different Easy intervals"
 
 test("contract vectors are hand-specified, unique and use only preregistered expectations", () => {
   const { vectors: list } = contract();
-  assert.equal(list.length, 37);
+  assert.equal(list.length, 42);
   assert.equal(new Set(list.map((v) => v.id)).size, list.length);
-  const refusals = new Set(["INVALID_RATING", "INVALID_TIME", "UNSUPPORTED_SCHEDULER_VERSION", "INVALID_STATE", "CLOCK_BEHIND_LAST_REVIEW", "DUE_OUT_OF_RANGE"]);
-  const shapes = new Set(["refusal", "elapsedDays", "path", "dueAt", "lapsesDelta", "intervalDays", "s", "successorAccepted"]);
+  const refusals = new Set(["INVALID_RATING", "INVALID_TIME", "UNSUPPORTED_SCHEDULER_VERSION", "INVALID_STATE", "CLOCK_BEHIND_LAST_REVIEW", "COUNTER_OUT_OF_RANGE", "DUE_OUT_OF_RANGE"]);
+  const shapes = new Set(["refusal", "elapsedDays", "path", "dueAt", "lapsesDelta", "intervalDays", "s", "successorAccepted", "successorRefusal", "reps"]);
   for (const v of list) {
     assert(["product", "oracle-parity"].includes(v.config), v.id);
     assert(Object.keys(v.expect).length > 0 && Object.keys(v.expect).every((k) => shapes.has(k)), v.id);
@@ -114,4 +114,15 @@ test("prior-field refusals each change exactly one field of a valid prior", () =
     const changed = Object.keys({ ...valid, ...v.prior }).filter((k) => JSON.stringify(valid[k]) !== JSON.stringify(v.prior[k]));
     assert.equal(changed.length, 1, `${v.id} changes ${changed}`);
   }
+});
+
+test("counter vectors sit exactly at and one below the safe-integer maximum", () => {
+  const M = Number.MAX_SAFE_INTEGER;
+  assert.equal(at("refuse-reps-at-safe-maximum").prior.reps, M);
+  const below = at("accept-reps-just-below-safe-maximum");
+  assert.equal(below.prior.reps, M - 1);
+  assert.equal(below.expect.reps, below.prior.reps + 1);
+  assert(Number.isSafeInteger(below.expect.reps));
+  assert.equal(at("refuse-lapses-at-safe-maximum-on-again").prior.lapses, M);
+  assert.equal(at("accept-lapses-at-safe-maximum-on-good").prior.lapses, M);
 });

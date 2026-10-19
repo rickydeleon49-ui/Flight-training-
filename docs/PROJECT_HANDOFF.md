@@ -6,14 +6,14 @@ Claude froze the phase-B contract before writing any candidate code. It is pendi
 - **How the oracle runs:** in an isolated `vm` context, after checking its blob ID and SHA-256.
 - **Vectors:**
   - 30 oracle scenarios over 66 steps (initial ratings, same-day, on-time chains, lapses, lateness, bounded and rounding-adjacent states, the stability ceiling);
-  - 37 hand-specified contract vectors (refusals for every prior field and their order, clocks, overflow, the 180-day product cap, the stability ceiling, Again policy).
+  - 42 hand-specified contract vectors (refusals for every prior field, counter overflow and their order, clocks, overflow, the 180-day product cap, the stability ceiling, Again policy).
 - **Tolerances:** difficulty and stability must be exactly equal. Intervals are checked in a range only, because the oracle fuzzes them.
 - **Recorded oracle quirks,** which become candidate deviations C1–C3:
   - stability can round to 0;
   - ordering pushes intervals past the cap;
   - stability can grow past the accepted ceiling;
   - a zero-day review throws.
-- **Checks:** the preregistration tests pass 9/9, and the reference check reproduces all vectors. Codex round 1 was RED on two contract gaps (successor states above the stability bound; no prior-timestamp validation); both are closed.
+- **Checks:** the preregistration tests pass 10/10, and the reference check reproduces all vectors. Codex rounds 1 and 2 were RED on contract gaps (successor states above the stability bound; no prior-timestamp validation; counter overflow at the safe-integer maximum); all are closed.
 
 No candidate, production, dependency, migration or version change. Part 2 (the candidate, measurements against simple-v1 and transition simulations) follows only after this is accepted. [Preregistration](evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.md). Earlier entries remain historical.
 
