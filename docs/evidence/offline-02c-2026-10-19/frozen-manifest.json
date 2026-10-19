@@ -1,0 +1,58 @@
+{
+ "seed": 20261019,
+ "generatorSha256": "735b96e74470b7337af9a84b717745493c5985fb3a090aaba8ca382530ae51af",
+ "framesSha256": "f5043d059c24090895b889e3b6087983c134303bccd11c1fe708f8f7fb656bb2",
+ "corpusSha256": "70caf6fca5fc2444dc0ef4f69cf0124faa9ed29a24adb149a917f79067891581",
+ "expectedSha256": "04b8de8b853cd9220df0e65ba5f6740d2705f6b09078e105cfa6d006eab79eba",
+ "canonicalOctets": 16334696,
+ "records": 28600,
+ "queries": [
+  "aircraft",
+  "abreast",
+  "\"density altitude\"",
+  "wind shear final approach runway landing pilot airspeed",
+  "zzqxv",
+  "the"
+ ],
+ "rareWord": "abreast",
+ "worstWord": "the",
+ "expectedCounts": {
+  "0": 13725,
+  "1": 3,
+  "2": 4,
+  "3": 2,
+  "4": 0,
+  "5": 27062
+ },
+ "slot": {
+  "note": "n0000",
+  "token": "zzeditslot",
+  "marker": "editmarker<n>",
+  "checkedMarkers": 400
+ },
+ "schedule": {
+  "freshProcesses": 3,
+  "perQuery": [
+   {
+    "mode": "rebuild",
+    "warmups": 3,
+    "samples": 15
+   },
+   {
+    "mode": "cached",
+    "warmups": 3,
+    "samples": 15
+   }
+  ],
+  "order": "query types in list order; rebuild then cached"
+ },
+ "percentiles": "nearest-rank",
+ "targets": {
+  "coldRebuildMs": 1000,
+  "cachedP50Ms": 20,
+  "cachedP95Ms": 50,
+  "rebuildP95Ms": 1200,
+  "rssBytes": 268435456,
+  "responseBytes": 65536
+ }
+}
