@@ -1,0 +1,67 @@
+[
+  {
+    "path": "build.txt",
+    "bytes": 7749,
+    "sha256": "aac049dbd66232c5db565cbe25b8e3cd7fb4335ad5d31be74253c3720c3dee95"
+  },
+  {
+    "path": "final-build.txt",
+    "bytes": 7749,
+    "sha256": "3b35212fd595264dc34cfb910c0017260798192bb4d2cb2870c839abe83c9a81"
+  },
+  {
+    "path": "final-frontend.txt",
+    "bytes": 14853,
+    "sha256": "f355350a0f11bb0c9ed2bc651bd024d119ed948db1982ea39cd1b4df59cd1fe3"
+  },
+  {
+    "path": "final-gate-exits.json",
+    "bytes": 71,
+    "sha256": "ec65c631af0966b9a4184404866d73fb720259b01e00eb90a0dae1ff8a05dc02"
+  },
+  {
+    "path": "final-typecheck.txt",
+    "bytes": 51,
+    "sha256": "f05679482d7566eea51ded8daf0e7626af4e0231d71715cbcdefd2928f5e19f1"
+  },
+  {
+    "path": "final-whitespace.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "frontend.txt",
+    "bytes": 16030,
+    "sha256": "4c1977e6eeb88c969e70ae8bae5803bec5408aadfc97ddfb0337767da347868b"
+  },
+  {
+    "path": "gate-exits.json",
+    "bytes": 71,
+    "sha256": "dbc3000d0fc62b0126a2daddc64b5d9c8c79267884007c881666b1d0bb39f4c6"
+  },
+  {
+    "path": "regression-before.txt",
+    "bytes": 3377,
+    "sha256": "4f7fdc36c255a07c23267f399cf9446472ce6f5ab29f9a1842fe0b457da41bfc"
+  },
+  {
+    "path": "typecheck.txt",
+    "bytes": 602,
+    "sha256": "da1551496934c9067a7def01c7741d0489abae703612a98febb91328df18a2b9"
+  },
+  {
+    "path": "whitespace.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "fixture/fixture.html",
+    "bytes": 288,
+    "sha256": "2d293e7cc70747ab2a77b353b940c40041c5088f7c392b165e261d366d8e3d83"
+  },
+  {
+    "path": "fixture/fixture.tsx",
+    "bytes": 1989,
+    "sha256": "bfce9711889eb8fc0b6103e9727b14336e4546ed042f3a62cee6ebb6f1a58b19"
+  }
+]

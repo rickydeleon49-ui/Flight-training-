@@ -1,0 +1,366 @@
+{
+  "narrowRoutes": [
+    {
+      "route": "Flight Deck",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Today's Flight Plan",
+      "width": 390
+    },
+    {
+      "route": "Flight Path",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Flight Path",
+      "width": 390
+    },
+    {
+      "route": "Study Library",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Study Library",
+      "width": 390
+    },
+    {
+      "route": "Schedule",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Schedule",
+      "width": 390
+    },
+    {
+      "route": "Flight Log",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Flight Log & Journal",
+      "width": 390
+    },
+    {
+      "route": "Questions",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Questions",
+      "width": 390
+    },
+    {
+      "route": "Notes",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Notes",
+      "width": 390
+    },
+    {
+      "route": "Finances",
+      "overflowingControls": [],
+      "scrollWidth": 390,
+      "title": "Finances",
+      "width": 390
+    },
+    {
+      "route": "Pilot Toolkit",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Pilot Toolkit",
+      "width": 390
+    },
+    {
+      "route": "Settings",
+      "overflowingControls": [],
+      "scrollWidth": 380,
+      "title": "Settings",
+      "width": 390
+    }
+  ],
+  "desktopRoutes": [
+    {
+      "route": "Flight Deck",
+      "overflowingControls": [],
+      "scrollWidth": 1270,
+      "title": "Today's Flight Plan",
+      "width": 1280
+    },
+    {
+      "route": "Flight Path",
+      "overflowingControls": [],
+      "scrollWidth": 1270,
+      "title": "Flight Path",
+      "width": 1280
+    },
+    {
+      "route": "Study Library",
+      "overflowingControls": [],
+      "scrollWidth": 1270,
+      "title": "Study Library",
+      "width": 1280
+    },
+    {
+      "route": "Schedule",
+      "overflowingControls": [],
+      "scrollWidth": 1280,
+      "title": "Schedule",
+      "width": 1280
+    },
+    {
+      "route": "Flight Log",
+      "overflowingControls": [],
+      "scrollWidth": 1280,
+      "title": "Flight Log & Journal",
+      "width": 1280
+    },
+    {
+      "route": "Questions",
+      "overflowingControls": [],
+      "scrollWidth": 1280,
+      "title": "Questions",
+      "width": 1280
+    },
+    {
+      "route": "Notes",
+      "overflowingControls": [],
+      "scrollWidth": 1280,
+      "title": "Notes",
+      "width": 1280
+    },
+    {
+      "route": "Finances",
+      "overflowingControls": [],
+      "scrollWidth": 1280,
+      "title": "Finances",
+      "width": 1280
+    },
+    {
+      "route": "Pilot Toolkit",
+      "overflowingControls": [],
+      "scrollWidth": 1270,
+      "title": "Pilot Toolkit",
+      "width": 1280
+    },
+    {
+      "route": "Settings",
+      "overflowingControls": [],
+      "scrollWidth": 1270,
+      "title": "Settings",
+      "width": 1280
+    }
+  ],
+  "confirmationCases": [
+    {
+      "width": 390,
+      "height": 844,
+      "large": false,
+      "fallback": false,
+      "buttons": [
+        {
+          "bottom": 310.5234375,
+          "inside": true,
+          "text": "Close",
+          "top": 278.5234375
+        },
+        {
+          "bottom": 473.171875,
+          "inside": true,
+          "text": "Cancel",
+          "top": 435.0234375
+        },
+        {
+          "bottom": 523.3203125,
+          "inside": true,
+          "text": "Choose a chapter or pages first",
+          "top": 485.171875
+        },
+        {
+          "bottom": 573.46875,
+          "inside": true,
+          "text": "Send to Gemini",
+          "top": 535.3203125
+        }
+      ],
+      "dialogBottom": 590.46875,
+      "dialogTop": 253.5234375
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "large": true,
+      "fallback": false,
+      "buttons": [
+        {
+          "bottom": 212.25,
+          "inside": true,
+          "text": "Close",
+          "top": 164.25
+        },
+        {
+          "bottom": 513.09375,
+          "inside": true,
+          "text": "Cancel",
+          "top": 456.875
+        },
+        {
+          "bottom": 617.53125,
+          "inside": true,
+          "text": "Choose a chapter or pages first",
+          "top": 531.09375
+        },
+        {
+          "bottom": 691.75,
+          "inside": true,
+          "text": "Send to Gemini",
+          "top": 635.53125
+        }
+      ],
+      "dialogBottom": 716.75,
+      "dialogTop": 127.25
+    },
+    {
+      "width": 390,
+      "height": 480,
+      "large": true,
+      "fallback": false,
+      "buttons": [
+        {
+          "bottom": 133,
+          "inside": true,
+          "text": "Close",
+          "top": 85
+        },
+        {
+          "bottom": 353.21875,
+          "inside": true,
+          "text": "Cancel",
+          "top": 297
+        },
+        {
+          "bottom": 457.65625,
+          "inside": true,
+          "text": "Choose a chapter or pages first",
+          "top": 371.21875
+        },
+        {
+          "bottom": 531.875,
+          "inside": true,
+          "text": "Send to Gemini",
+          "top": 475.65625
+        }
+      ],
+      "dialogBottom": 432,
+      "dialogTop": 48
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "large": true,
+      "fallback": true,
+      "buttons": [
+        {
+          "bottom": 212.25,
+          "inside": true,
+          "text": "Close",
+          "top": 164.25
+        },
+        {
+          "bottom": 513.09375,
+          "inside": true,
+          "text": "Cancel",
+          "top": 456.875
+        },
+        {
+          "bottom": 617.53125,
+          "inside": true,
+          "text": "Choose a chapter or pages first",
+          "top": 531.09375
+        },
+        {
+          "bottom": 691.75,
+          "inside": true,
+          "text": "Send to Gemini",
+          "top": 635.53125
+        }
+      ],
+      "dialogBottom": 716.75,
+      "dialogTop": 127.25
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "large": false,
+      "fallback": false,
+      "buttons": [
+        {
+          "bottom": 375.2265625,
+          "inside": true,
+          "text": "Close",
+          "top": 343.2265625
+        },
+        {
+          "bottom": 514.625,
+          "inside": true,
+          "text": "Cancel",
+          "top": 476.4765625
+        },
+        {
+          "bottom": 514.625,
+          "inside": true,
+          "text": "Choose a chapter or pages first",
+          "top": 476.4765625
+        },
+        {
+          "bottom": 564.7734375,
+          "inside": true,
+          "text": "Send to Gemini",
+          "top": 526.625
+        }
+      ],
+      "dialogBottom": 581.7734375,
+      "dialogTop": 318.2265625
+    }
+  ],
+  "dialogBefore": {
+    "buttons": [
+      {
+        "inside": true,
+        "left": 309,
+        "right": 341,
+        "text": "Close"
+      },
+      {
+        "inside": false,
+        "left": -125.8125,
+        "right": -46.1328125,
+        "text": "Cancel"
+      },
+      {
+        "inside": false,
+        "left": -34.1328125,
+        "right": 197.7421875,
+        "text": "Choose a chapter or pages first"
+      },
+      {
+        "inside": true,
+        "left": 209.7421875,
+        "right": 341,
+        "text": "Send to Gemini"
+      }
+    ],
+    "dialogWidth": 342,
+    "width": 390
+  },
+  "progressBefore": {
+    "width": 390,
+    "scrollWidth": 1300
+  },
+  "progressAfter": {
+    "liveText": "Waiting for Gemini's answer",
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "fieldAfter": {
+    "describedBy": "_r_0_-error",
+    "references": [
+      {
+        "exists": true,
+        "id": "_r_0_-error"
+      }
+    ]
+  }
+}

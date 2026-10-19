@@ -1,3 +1,11 @@
+## App audit and polish: four source/browser corrections pending review — 19 October 2026
+
+A bounded audit of ten app screens at desktop/narrow widths and synthetic material creation reproduced the clipped Gemini confirmation **Cancel** (V057-UI-01), long progress-text overflow, every-second live-status updates and dangling form hint references. Shared layout/accessibility corrections and regression coverage are supplied on `codex/app-polish-audit`, based on accepted main `fdbf290`; no unmerged PR #234 code was copied. [Audit and reviewer handoff](docs/APP_POLISH_AUDIT_2026-10-19.md); [evidence](docs/evidence/app-polish-audit-2026-10-19/README.md).
+
+**V057-UI-01:** source/browser fix supplied, independent review/CI and installed verification pending. Five dialog layout cases and two short-window keyboard cases pass, with no fixture sends on Cancel. The original failing regression and first gate receipts are preserved. Native code, schemas, dependencies and release flags are unchanged. Final gate: **3,778 frontend tests passed / 6 skipped, zero unhandled errors**; typecheck/build/whitespace exit 0.
+
+**Still open:** V057-DB-01 (classify sidecars safely), REL-CI-01 (release timeout), FLAKE-CR-01, saved-search p50 miss, extraction/search release gates and installed/minimum-spec verification. PR #234’s separate approved proposal/search-link correction still needs review. Resume OFFLINE-03a → 03b after accepted planning integration; then homework → exports. Nothing merged, enabled or released by this audit. Entries below remain historical.
+
 ## OFFLINE-02b merged; OFFLINE-02c saved-content search ready for PR, dormant — 19 October 2026
 
 OFFLINE-02b merged as PR #232 (`bfb8b04`). The same PR's CI fix gave the schema-14 parity test room on runners, which also clears `main`'s red run.

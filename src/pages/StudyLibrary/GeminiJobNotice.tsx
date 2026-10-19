@@ -205,15 +205,17 @@ export function GeminiProgressView({
     job.phase === "saving" ? "Saving" : job.stage ? STAGE_WORDS[job.stage] : "Getting the document ready";
   const attempt =
     job.attempt && job.attempt > 1 && job.maxAttempts ? ` · ${job.kind === "study-aid" ? "request" : "attempt"} ${job.attempt} of ${job.maxAttempts}` : "";
-  const elapsed = job.startedAt ? ` · ${elapsedWords(now - job.startedAt)}` : "";
+  const elapsed = job.startedAt !== undefined ? elapsedWords(now - job.startedAt) : "";
   return (
     <div className="ai-working">
       <span className="ai-working__dot" aria-hidden="true" />
       <div className="stack stack--2">
         <p className="small strong">{title}</p>
-        <p className="tiny" role="status" aria-live="polite">
-          {job.cancelRequested ? "Cancelling…" : `${stage}${attempt}`}
-          <span className="dim">{elapsed}</span>
+        <p className="tiny">
+          <span role="status" aria-live="polite">
+            {job.cancelRequested ? "Cancelling…" : `${stage}${attempt}`}
+          </span>
+          {elapsed ? <><span aria-hidden="true"> · </span><span className="dim">{elapsed}</span></> : null}
         </p>
         {job.progress && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
         {job.cancelError ? (

@@ -1,0 +1,66 @@
+{
+  "base": "fdbf290",
+  "branch": "codex/app-polish-audit",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 197990,
+      "sha256": "7e39c25441e2d0779b40212b50a6cd8c41c86fe98f1efa3b6b60ff634101a698"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 313718,
+      "sha256": "a82342597757fac9e9a7cba371c186d94fb905b514c13d763a7e17aae1e82c37"
+    },
+    {
+      "path": "docs/APP_POLISH_AUDIT_2026-10-19.md",
+      "bytes": 6051,
+      "sha256": "6253a0da0c5c3c63b2d0f77120a829873a0561a62c568adb704b60de9807ab3e"
+    },
+    {
+      "path": "docs/APP_POLISH_REVIEWER_PROMPT_2026-10-19.md",
+      "bytes": 3366,
+      "sha256": "88bd71a15b999a5d1d314e6148abd3a8cb5db2e72898585db9ec716690fcf6bd"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 222383,
+      "sha256": "2656fc920c6971ac5930c2da762cff9b3eb476370e152a80eec7fc30a6c69aa3"
+    },
+    {
+      "path": "src/components/ui/Form.test.ts",
+      "bytes": 1194,
+      "sha256": "aa872ed521683d4cb8dc74e31adc5e42ef9871344e4dd7c222280931e399d30f"
+    },
+    {
+      "path": "src/components/ui/Form.tsx",
+      "bytes": 4001,
+      "sha256": "57ac90b426b7eb57c191e1f8d771bef50cac0bb839f02bcd3a957abdab43dcf6"
+    },
+    {
+      "path": "src/components/ui/ui.css",
+      "bytes": 14053,
+      "sha256": "07030a3fe9204a0dc129852ebb2b0b7798610f15ed10e124ee6754c9bf5c06de"
+    },
+    {
+      "path": "src/pages/StudyLibrary/GeminiJobNotice.tsx",
+      "bytes": 8868,
+      "sha256": "9306120cc8fda68155f6944779ef4f8d7a4df899c60bf21078a31873a5792dae"
+    },
+    {
+      "path": "src/pages/StudyLibrary/GeminiProgress.test.ts",
+      "bytes": 2259,
+      "sha256": "653f7b17187dd0d986871878230c73503aaa32b87f2f4f2db6318e0f1c33584a"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialDetailCancel.test.ts",
+      "bytes": 19468,
+      "sha256": "af478ad38b3a05a9b25fc0d329480de1fcf252eb78f57912f6bcd1ff4a3c7563"
+    },
+    {
+      "path": "src/pages/StudyLibrary/studyLibrary.css",
+      "bytes": 13436,
+      "sha256": "42e0a4fea9b67890c05717da2dd8c6f342ddcb6194cb105b0cb780c36b5fe253"
+    }
+  ]
+}
