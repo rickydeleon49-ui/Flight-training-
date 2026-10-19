@@ -518,3 +518,36 @@ fn an_unreadable_page_is_never_decoded_again_without_the_budget() {
         out.peak_bytes
     );
 }
+
+/// The shipped binary without the opt-in (a release build compiled without
+/// `HFD_OFFLINE_EXTRACTION=1`) refuses worker mode before reading a request,
+/// even a valid one. Run with `cargo test --release`.
+#[cfg(not(debug_assertions))]
+#[test]
+fn a_release_build_without_the_opt_in_refuses_a_valid_request() {
+    if her_flight_deck_lib::extraction::worker::extraction_enabled() {
+        return;
+    }
+    let s = Scratch::new("disabled");
+    let (file, sha) = sample(&s);
+    let mut child = Command::new(WORKER)
+        .arg(WORKER_FLAG)
+        .env_clear()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let request = format!(
+        r#"{{"path":{:?},"sha256":"{sha}"}}"#,
+        file.to_str().unwrap()
+    );
+    // The worker may already have exited; a broken pipe is fine.
+    let _ = child.stdin.take().unwrap().write_all(request.as_bytes());
+    let out = child.wait_with_output().unwrap();
+    assert_eq!(
+        out.status.code(),
+        Some(her_flight_deck_lib::extraction::worker::EXIT_DISABLED)
+    );
+    assert!(out.stdout.is_empty(), "no frames, not even `verified`");
+}

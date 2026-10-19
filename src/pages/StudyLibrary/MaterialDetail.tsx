@@ -61,6 +61,7 @@ import { SplitPdfDialog } from "./SplitPdfDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
 import { ExportStudyDialog } from "./ExportStudyDialog";
 import { GuideBody } from "./GuideBody";
+import { OfflineStudyPanel } from "./OfflineStudyPanel";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
 import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
@@ -473,6 +474,8 @@ function MaterialDetailPage() {
               onRestore={() => void restoreFile()}
             />
           ) : null}
+
+          {material.filePath ? <OfflineStudyPanel material={material} /> : null}
 
           {material.filePath || studySet ? (
             <Card>

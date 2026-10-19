@@ -497,6 +497,8 @@ pub async fn offline_content_readiness(
     .map_err(|_| "task_failed".to_string())?
 }
 
+pub use super::worker::extraction_enabled;
+
 /// Start preparing one material for offline study. Returns at once with
 /// `preparing` (or the current state if nothing needs doing).
 #[tauri::command]
@@ -504,6 +506,9 @@ pub async fn prepare_offline_content(
     app: tauri::AppHandle,
     material_id: String,
 ) -> Result<MaterialReadiness, String> {
+    if !extraction_enabled() {
+        return Err("offline_extraction_disabled".into());
+    }
     let svc = service(&app)?;
     tauri::async_runtime::spawn_blocking(move || {
         let rows = material_paths(&svc.root, std::slice::from_ref(&material_id))?;
@@ -526,6 +531,19 @@ pub async fn prepare_offline_content(
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn debug_builds_may_extract_and_release_builds_need_the_opt_in() {
+        if cfg!(debug_assertions) {
+            assert!(extraction_enabled());
+        } else {
+            assert_eq!(
+                extraction_enabled(),
+                option_env!("HFD_OFFLINE_EXTRACTION") == Some("1")
+            );
+        }
+    }
+
     use super::*;
 
     #[test]

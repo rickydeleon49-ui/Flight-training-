@@ -28,11 +28,31 @@ pub const EXIT_REPORTED: i32 = 3;
 pub const EXIT_BAD_ARGS: i32 = 64;
 pub const EXIT_BAD_REQUEST: i32 = 65;
 pub const EXIT_MEMORY: i32 = 70;
+/// This build may not extract (see `extraction_enabled`).
+pub const EXIT_DISABLED: i32 = 69;
+
+/// Whether this build may run extraction at all. Release builds are opted in
+/// only by compiling with `HFD_OFFLINE_EXTRACTION=1`, which happens once a
+/// reviewer has accepted the worker's memory cap (OFFLINE-01c §6). Debug
+/// builds may, for development and tests. Both the app's commands and worker
+/// mode itself check this.
+pub fn extraction_enabled() -> bool {
+    cfg!(debug_assertions) || option_env!("HFD_OFFLINE_EXTRACTION") == Some("1")
+}
 
 /// Decide, before Tauri starts, whether this process is a worker.
 /// `None` means start the app. Any use of the flag other than exactly
 /// `[exe, flag]` exits without starting anything.
 pub fn dispatch<I: IntoIterator<Item = std::ffi::OsString>>(args: I) -> Option<i32> {
+    dispatch_with(args, extraction_enabled())
+}
+
+/// `dispatch` with the build's gate passed in, so a test can show that a
+/// build without the opt-in refuses before reading any request.
+pub fn dispatch_with<I: IntoIterator<Item = std::ffi::OsString>>(
+    args: I,
+    enabled: bool,
+) -> Option<i32> {
     let args: Vec<std::ffi::OsString> = args.into_iter().collect();
     let flagged = args.iter().skip(1).any(|a| a == WORKER_FLAG);
     if !flagged {
@@ -42,6 +62,9 @@ pub fn dispatch<I: IntoIterator<Item = std::ffi::OsString>>(args: I) -> Option<i
     }
     if args.len() != 2 || args[1] != WORKER_FLAG {
         return Some(EXIT_BAD_ARGS);
+    }
+    if !enabled {
+        return Some(EXIT_DISABLED);
     }
     Some(run())
 }
@@ -344,6 +367,22 @@ mod tests {
 
     fn args(list: &[&str]) -> Vec<OsString> {
         list.iter().map(OsString::from).collect()
+    }
+
+    #[test]
+    fn a_build_without_the_opt_in_refuses_worker_mode_before_reading_anything() {
+        // Returning at all proves stdin was never read: `run()` would block.
+        assert_eq!(
+            dispatch_with(args(&["app", WORKER_FLAG]), false),
+            Some(EXIT_DISABLED)
+        );
+        // Malformed uses are still refused as such.
+        assert_eq!(
+            dispatch_with(args(&["app", WORKER_FLAG, "x"]), false),
+            Some(EXIT_BAD_ARGS)
+        );
+        // And the app still starts.
+        assert_eq!(dispatch_with(args(&["app"]), false), None);
     }
 
     #[test]

@@ -1,0 +1,44 @@
+warning: output filename collision at /Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/deps/libher_flight_deck_lib.a
+  |
+  = note: the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)` has the same output filename as the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/deps/libher_flight_deck_lib.dylib
+  |
+  = note: the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)` has the same output filename as the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/deps/libher_flight_deck_lib.dylib.dSYM
+  |
+  = note: the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)` has the same output filename as the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/deps/libher_flight_deck_lib.rlib
+  |
+  = note: the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)` has the same output filename as the lib target `her_flight_deck_lib` in package `her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `release` profile [optimized] target(s) in 1m 00s
+     Running tests/extraction_worker.rs (src-tauri/target/release/deps/extraction_worker-4e1e8a542005064f)
+
+running 1 test
+test a_release_build_without_the_opt_in_refuses_a_valid_request ... FAILED
+
+failures:
+
+---- a_release_build_without_the_opt_in_refuses_a_valid_request stdout ----
+
+thread 'a_release_build_without_the_opt_in_refuses_a_valid_request' (6477175) panicked at tests/extraction_worker.rs:548:5:
+assertion `left == right` failed
+  left: Some(0)
+ right: Some(69)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    a_release_build_without_the_opt_in_refuses_a_valid_request
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.21s
+
+error: test failed, to rerun pass `--test extraction_worker`
