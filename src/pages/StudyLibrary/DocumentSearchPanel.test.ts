@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { createElement as h } from "react";
+import { createElement as h, type ReactElement } from "react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,7 +9,7 @@ import { makeMaterial } from "@/testing/factories";
 
 const service = vi.hoisted(() => ({
   enabled: true,
-  search: vi.fn<(q: string, ids: string[], offset: number) => Promise<SearchResponse>>(),
+  search: vi.fn<(q: string, ids: string[], offset: number, types?: readonly string[]) => Promise<SearchResponse>>(),
   verify: vi.fn<(id: string, sha: string) => Promise<"ok" | "changed" | "missing">>(),
 }));
 const nav = vi.hoisted(() => {
@@ -32,10 +33,17 @@ vi.mock("@/services/offlineContent", async (original) => {
   return {
     ...real,
     offlineStudyEnabled: () => service.enabled,
-    searchOfflineContent: (q: string, ids: string[], offset: number) => service.search(q, ids, offset),
+    searchOfflineContent: (q: string, ids: string[], offset: number, types?: readonly string[]) =>
+      service.search(q, ids, offset, types),
     verifyOfflineDestination: (id: string, sha: string) => service.verify(id, sha),
   };
 });
+const appData = vi.hoisted(() => ({
+  data: { aiStudySets: [] as unknown[], notes: [] as unknown[], questions: [] as unknown[] },
+}));
+vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => ({ data: appData.data }),
+}));
 vi.mock("@/state/navigation/useDocumentNavigation", () => ({
   useNavigationController: () => ({
     repo: null,
@@ -46,7 +54,9 @@ vi.mock("@/state/navigation/useDocumentNavigation", () => ({
 }));
 
 import { OfflineSearchError } from "@/services/offlineContent";
-import { appendGroups, DocumentSearchPanel, SETUP_RETRY_MS, TYPING_PAUSE_MS } from "./DocumentSearchPanel";
+import { itemDigest } from "@/logic/savedSearch";
+import type { SavedSection } from "@/services/offlineContent";
+import { appendGroups, appendSavedGroups, DocumentSearchPanel, SETUP_RETRY_MS, TYPING_PAUSE_MS } from "./DocumentSearchPanel";
 
 const coverage = (over: Partial<SearchCoverage> = {}): SearchCoverage => ({
   searchedDocuments: 2,
@@ -86,7 +96,18 @@ const materials = [
   makeMaterial({ id: "m3", title: "Weather", filePath: "m3.pdf" }),
 ];
 
+/** Where the panel navigated to, if anywhere. */
+function Location() {
+  const location = useLocation();
+  return h("output", { "data-testid": "location" }, `${location.pathname}${location.search}`);
+}
+
+function inRouter(element: ReactElement) {
+  return h(MemoryRouter, { initialEntries: ["/study"] }, h(Routes, null, h(Route, { path: "*", element: h("div", null, element, h(Location)) })));
+}
+
 beforeEach(() => {
+  appData.data = { aiStudySets: [], notes: [], questions: [] };
   vi.useFakeTimers({ shouldAdvanceTime: true });
   service.enabled = true;
   service.search.mockReset();
@@ -109,23 +130,30 @@ async function typed() {
 describe("Searching inside documents", () => {
   it("renders nothing and asks nothing when this build hasn't opted in, or with no words", async () => {
     service.enabled = false;
-    const first = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    const first = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
-    expect(first.container.innerHTML).toBe("");
+    expect(first.container.querySelector(".card")).toBeNull();
     first.unmount();
     service.enabled = true;
-    const second = render(h(DocumentSearchPanel, { query: "   ", materials }));
+    const second = render(inRouter(h(DocumentSearchPanel, { query: "   ", materials })));
     await typed();
-    expect(second.container.innerHTML).toBe("");
+    expect(second.container.querySelector(".card")).toBeNull();
     expect(service.search).not.toHaveBeenCalled();
   });
 
   it("searches the filtered documents after a pause and shows grouped, highlighted text", async () => {
     service.search.mockResolvedValue(response());
-    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     expect(service.search).toHaveBeenCalledTimes(1);
-    expect(service.search).toHaveBeenCalledWith("crosswind", ["m1", "m3"], 0);
+    expect(service.search).toHaveBeenCalledWith("crosswind", ["m1", "m2", "m3"], 0, [
+      "documentPages",
+      "guides",
+      "cards",
+      "practice",
+      "notes",
+      "questions",
+    ]);
     expect(await screen.findByText("Pilot's Handbook")).toBeTruthy();
     expect(screen.getByText("PDF page 58")).toBeTruthy();
     const mark = screen.getByText("crosswind");
@@ -138,7 +166,7 @@ describe("Searching inside documents", () => {
 
   it("says no match apart from not prepared", async () => {
     service.search.mockResolvedValue(response({ groups: [] }));
-    render(h(DocumentSearchPanel, { query: "zzqxv", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "zzqxv", materials })));
     await typed();
     expect(await screen.findByText("No matches in 2 documents (30 pages). 1 document isn't prepared for offline search yet.")).toBeTruthy();
   });
@@ -148,9 +176,9 @@ describe("Searching inside documents", () => {
     service.search
       .mockImplementationOnce(() => new Promise((resolve) => (answerOld = resolve)))
       .mockResolvedValue(response({ groups: [] }));
-    const { rerender } = render(h(DocumentSearchPanel, { query: "cross", materials }));
+    const { rerender } = render(inRouter(h(DocumentSearchPanel, { query: "cross", materials })));
     await typed();
-    rerender(h(DocumentSearchPanel, { query: "crosswind landing", materials }));
+    rerender(inRouter(h(DocumentSearchPanel, { query: "crosswind landing", materials })));
     await typed();
     await screen.findByText(/No matches/);
     await act(async () => answerOld(response()));
@@ -161,7 +189,7 @@ describe("Searching inside documents", () => {
     service.search
       .mockRejectedValueOnce(new OfflineSearchError("index_preparing"))
       .mockResolvedValue(response());
-    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     expect(await screen.findByText("Getting offline search ready…")).toBeTruthy();
     await act(async () => {
@@ -173,7 +201,7 @@ describe("Searching inside documents", () => {
 
   it("explains problems plainly and never shows a code", async () => {
     service.search.mockRejectedValue(new OfflineSearchError("timeout"));
-    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     expect(await screen.findByText("That search took too long. Try more specific words.")).toBeTruthy();
     expect(screen.queryByText(/timeout/)).toBeNull();
@@ -183,7 +211,7 @@ describe("Searching inside documents", () => {
     service.search.mockResolvedValue(response());
     service.verify.mockResolvedValueOnce("changed").mockResolvedValue("ok");
     nav.request.mockResolvedValue({ kind: "saved", epoch: 1, materialId: "m1", destination: {}, readingState: {} });
-    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     const result = await screen.findByRole("button", { name: /Pilot's Handbook, PDF page 58/ });
     fireEvent.click(result);
@@ -200,11 +228,11 @@ describe("Searching inside documents", () => {
     service.search
       .mockResolvedValueOnce(response({ nextOffset: 20 }))
       .mockResolvedValue(response({ groups: [{ ...second, materialId: "m3", title: "Weather" }] }));
-    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     fireEvent.click(await screen.findByRole("button", { name: "Show more matches" }));
     expect(await screen.findByText("Weather")).toBeTruthy();
-    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m3"], 20);
+    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 20, ["documentPages"]);
     const [first, next] = screen.getAllByRole("button", { name: /open the document/ });
     first!.focus();
     fireEvent.keyDown(first!, { key: "ArrowDown" });
@@ -215,10 +243,10 @@ describe("Searching inside documents", () => {
 
   it("clears results for other words or filters, even if the new search fails", async () => {
     service.search.mockResolvedValueOnce(response()).mockRejectedValue(new OfflineSearchError("timeout"));
-    const { rerender } = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    const { rerender } = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     expect(await screen.findByText("Pilot's Handbook")).toBeTruthy();
-    rerender(h(DocumentSearchPanel, { query: "crosswind", materials: materials.slice(1) }));
+    rerender(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials: materials.slice(1) })));
     expect(screen.queryByText("Pilot's Handbook")).toBeNull();
     await typed();
     expect(await screen.findByText(/took too long/)).toBeTruthy();
@@ -238,7 +266,7 @@ describe("Searching inside documents", () => {
     let answerFirst!: (v: "ok") => void;
     service.verify.mockImplementationOnce(() => new Promise((resolve) => (answerFirst = resolve))).mockResolvedValueOnce("ok");
     nav.request.mockResolvedValue({ kind: "saved", epoch: 1, materialId: "m1", destination: {}, readingState: {} });
-    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     const [first, second] = await screen.findAllByRole("button", { name: /open the document/ });
     fireEvent.click(first!);
@@ -260,7 +288,7 @@ describe("Searching inside documents", () => {
   it("says the file couldn't be checked, not that it is missing, when checking fails", async () => {
     service.search.mockResolvedValue(response());
     service.verify.mockRejectedValue(new OfflineSearchError("storage_unavailable"));
-    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     fireEvent.click(await screen.findByRole("button", { name: /open the document/ }));
     expect(await screen.findByText(/Couldn't check this document's file just now/)).toBeTruthy();
@@ -269,7 +297,7 @@ describe("Searching inside documents", () => {
 
   it("describes each result button with its passage", async () => {
     service.search.mockResolvedValue(response());
-    render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await typed();
     const button = await screen.findByRole("button", { name: /open the document/ });
     const described = document.getElementById(button.getAttribute("aria-describedby") ?? "");
@@ -306,7 +334,7 @@ describe("an open already handed to the navigation controller", () => {
 
   it("is retired by a newer click before that click's file check finishes", async () => {
     service.search.mockResolvedValue(two());
-    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await holdFirstOpen(view);
     service.verify.mockImplementationOnce(() => new Promise(() => {}));
     fireEvent.click(view.getAllByRole("button", { name: /open the document/ })[1]!);
@@ -315,15 +343,15 @@ describe("an open already handed to the navigation controller", () => {
 
   it("is retired when the search changes", async () => {
     service.search.mockResolvedValue(two());
-    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await holdFirstOpen(view);
-    view.rerender(h(DocumentSearchPanel, { query: "landing", materials }));
+    view.rerender(inRouter(h(DocumentSearchPanel, { query: "landing", materials })));
     expect(nav.abort).toHaveBeenCalledTimes(1);
   });
 
   it("is retired when she leaves the page", async () => {
     service.search.mockResolvedValue(two());
-    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await holdFirstOpen(view);
     view.unmount();
     expect(nav.abort).toHaveBeenCalledTimes(1);
@@ -331,7 +359,7 @@ describe("an open already handed to the navigation controller", () => {
 
   it("leaves someone else's request alone", async () => {
     service.search.mockResolvedValue(two());
-    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
     await holdFirstOpen(view);
     // Another part of the app has since started its own request.
     nav.status = { kind: "working", epoch: 8 };
@@ -356,5 +384,151 @@ describe("appendGroups", () => {
       ["b", [4, 5, 6]],
       ["c", [2]],
     ]);
+  });
+});
+
+describe("saved study content", () => {
+  const saved = (over: Partial<SavedSection> = {}): SavedSection => ({
+    state: "ok",
+    groups: [],
+    coverage: { studySets: 1, practiceVersions: 0, notes: 2, questions: 0, tooLargeItems: 0 },
+    nextOffset: null,
+    moreBeyondCap: false,
+    ...over,
+  });
+
+  it("shows a separate section, labelled as study aids, with what was searched", async () => {
+    service.search.mockResolvedValue(
+      response({
+        saved: saved({
+          groups: [
+            { kind: "notes", materialId: null, title: "Your notes", passages: [{ kind: "note", recordId: "n1", rev: null, snippet: "\u{E000}crosswind\u{E001} chart" }] },
+          ],
+        }),
+      }),
+    );
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    expect(await screen.findByText("In your saved study content")).toBeTruthy();
+    expect(screen.getByText("Searched your saved study content (1 study guide, 2 notes).")).toBeTruthy();
+    expect(screen.getByText(/study aids\. Check them against FAA guidance and your instructor/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Your notes, Note: open it" })).toBeTruthy();
+  });
+
+  it("opens a note that still exists, and explains one that doesn't", async () => {
+    appData.data = { aiStudySets: [], notes: [{ id: "n1" }], questions: [] };
+    service.search.mockResolvedValue(
+      response({
+        saved: saved({
+          groups: [
+            {
+              kind: "notes",
+              materialId: null,
+              title: "Your notes",
+              passages: [
+                { kind: "note", recordId: "gone", rev: null, snippet: "a" },
+                { kind: "note", recordId: "n1", rev: null, snippet: "b" },
+              ],
+            },
+          ],
+        }),
+      }),
+    );
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    const [gone, kept] = await screen.findAllByRole("button", { name: "Your notes, Note: open it" });
+    fireEvent.click(gone!);
+    expect(await screen.findByText("That item isn't here any more.")).toBeTruthy();
+    expect(screen.getByTestId("location").textContent).toBe("/study");
+    fireEvent.click(kept!);
+    await waitFor(() => expect(screen.getByTestId("location").textContent).toBe("/notes?note=n1"));
+  });
+
+  it("opens a guide section only while its text is unchanged", async () => {
+    const section = { heading: "Crosswind landings", body: "Use the wing-low method." };
+    appData.data = {
+      aiStudySets: [
+        { sourceMaterialId: "m1", summary: "", sections: [section, { heading: "Regenerated", body: "Different text" }], flashcards: [] },
+      ],
+      notes: [],
+      questions: [],
+    };
+    const rev = await itemDigest([section.heading, section.body]);
+    const stale = await itemDigest(["Old heading", "Old body"]);
+    service.search.mockResolvedValue(
+      response({
+        saved: saved({
+          groups: [
+            {
+              kind: "material",
+              materialId: "m1",
+              title: "Pilot's Handbook",
+              passages: [
+                // Section 1 was regenerated after the search: same index, other text.
+                { kind: "guide", recordId: "1", rev: stale, snippet: "old" },
+                { kind: "summary", recordId: "summary", rev: "x", snippet: "summary" },
+                { kind: "guide", recordId: "0", rev, snippet: "new" },
+              ],
+            },
+          ],
+        }),
+      }),
+    );
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    const buttons = await screen.findAllByRole("button", { name: /Pilot's Handbook, (Study guide|Guide summary): open it/ });
+    fireEvent.click(buttons[0]!);
+    expect(await screen.findByText("This study guide has changed since you searched. Search again to find it.")).toBeTruthy();
+    expect(screen.getByTestId("location").textContent).toBe("/study");
+    fireEvent.click(buttons[2]!);
+    await waitFor(() => expect(screen.getByTestId("location").textContent).toBe(`/study/m1?guide=0&rev=${rev}`));
+  });
+
+  it("pages saved content on its own and says when it is too large", async () => {
+    const note = (id: string) => ({ kind: "note" as const, recordId: id, rev: null, snippet: id });
+    service.search
+      .mockResolvedValueOnce(response({ saved: saved({ groups: [{ kind: "notes", materialId: null, title: "Your notes", passages: [note("n1")] }], nextOffset: 20 }) }))
+      .mockResolvedValueOnce(response({ groups: [], saved: saved({ groups: [{ kind: "notes", materialId: null, title: "Your notes", passages: [note("n1"), note("n2")] }] }) }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    fireEvent.click(await view.findByRole("button", { name: "Show more saved matches" }));
+    await waitFor(() => expect(view.getAllByRole("button", { name: "Your notes, Note: open it" })).toHaveLength(2));
+    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 20, ["guides", "cards", "practice", "notes", "questions"]);
+    // The documents section is unchanged by saved paging.
+    expect(view.getByText("Pilot's Handbook")).toBeTruthy();
+    view.unmount();
+
+    service.search.mockResolvedValue(response({ saved: saved({ state: "too_large" }) }));
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    expect(await screen.findByText("Your saved study content is too large to search offline in one go.")).toBeTruthy();
+  });
+
+  it("pages a section trimmed to nothing at offset 0 without losing the other section", async () => {
+    const note = { kind: "note" as const, recordId: "n1", rev: null, snippet: "n1" };
+    // The byte bound trimmed every saved group: none shown, next page at 0.
+    service.search
+      .mockResolvedValueOnce(response({ saved: saved({ groups: [], nextOffset: 0 }) }))
+      .mockResolvedValueOnce(response({ groups: [], coverage: coverage({ searchedDocuments: 0 }), saved: saved({ groups: [{ kind: "notes", materialId: null, title: "Your notes", passages: [note] }] }) }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    // Not "no matches": there is another page.
+    expect(await view.findByText("Searched your saved study content (1 study guide, 2 notes).")).toBeTruthy();
+    fireEvent.click(view.getByRole("button", { name: "Show more saved matches" }));
+    await waitFor(() => expect(view.getAllByRole("button", { name: "Your notes, Note: open it" })).toHaveLength(1));
+    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 0, ["guides", "cards", "practice", "notes", "questions"]);
+    // The documents section and its coverage are kept.
+    expect(view.getByText("Pilot's Handbook")).toBeTruthy();
+    expect(view.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet.")).toBeTruthy();
+  });
+
+  it("merges saved groups and items when a page repeats a trimmed group", () => {
+    const g = (ids: string[]) => ({
+      kind: "notes" as const,
+      materialId: null,
+      title: "Your notes",
+      passages: ids.map((id) => ({ kind: "note" as const, recordId: id, rev: null, snippet: id })),
+    });
+    expect(appendSavedGroups([g(["a"])], [g(["a", "b"])])[0]!.passages.map((p) => p.recordId)).toEqual(["a", "b"]);
   });
 });

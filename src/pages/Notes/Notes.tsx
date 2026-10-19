@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 
+import { useSearchFocus } from "@/state/useSearchFocus";
+
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   Badge,
@@ -59,6 +61,17 @@ export function Notes() {
     [data.notes, search],
   );
   const pinnedCount = data.notes.filter((note) => note.pinned).length;
+
+  // A link from offline search opens one note, even if the list's own
+  // search would hide it.
+  const { focusId, missing } = useSearchFocus(
+    "note",
+    (id) => data.notes.some((note) => note.id === id),
+    (id) => {
+      if (!visible.some((note) => note.id === id)) setSearch("");
+    },
+    visible,
+  );
 
   const save = async () => {
     if (saving.current) return;
@@ -162,6 +175,11 @@ export function Notes() {
               </div>
             ) : null}
 
+            {missing ? (
+              <p className="small muted" role="status">
+                That item isn't here any more.
+              </p>
+            ) : null}
             {visible.length === 0 ? (
               <EmptyState
                 icon={<NoteIcon size={26} />}
@@ -188,6 +206,7 @@ export function Notes() {
                   <NoteRow
                     key={note.id}
                     note={note}
+                    focused={note.id === focusId}
                     today={today}
                     onEdit={() => setEditing(note)}
                     onDelete={() => setConfirmingDelete(note)}
@@ -222,11 +241,14 @@ export function Notes() {
 
 function NoteRow({
   note,
+  focused = false,
   today,
   onEdit,
   onDelete,
 }: {
   note: Note;
+  /** Opened from an offline-search link. */
+  focused?: boolean;
   today: string;
   onEdit: () => void;
   onDelete: () => void;
@@ -237,7 +259,10 @@ function NoteRow({
   const dateLine = noteDateLine(note, today);
 
   return (
-    <article className={`note-row${note.pinned ? " note-row--pinned" : ""}`}>
+    <article
+      id={`note-${note.id}`}
+      className={`note-row${note.pinned ? " note-row--pinned" : ""}${focused ? " search-target" : ""}`}
+    >
       <div className="note-row__main">
         <div className="note-row__heading">
           <h3 className="note-row__title wrap-anywhere">{heading}</h3>

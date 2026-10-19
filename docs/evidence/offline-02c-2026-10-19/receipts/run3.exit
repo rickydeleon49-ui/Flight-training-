@@ -1,0 +1,4 @@
+build 0
+process 1 exit 0
+process 2 exit 0
+process 3 exit 0

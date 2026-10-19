@@ -6,7 +6,10 @@
 pub use crate::practice_sessions::run_legacy_conversion_at as initialize_storage;
 
 use super::cache::{Cache, Summary};
-use super::search::{self, Control, Coverage, Initialization, Request, Stop, Target, Ticket};
+use super::search::{
+    self, Categories, Control, Coverage, Initialization, Request, SavedRequest, Stop, Target,
+    Ticket,
+};
 use super::service::{self, Service};
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde::Serialize;
@@ -152,7 +155,21 @@ pub fn submit_search(
     if offset > search::MAX_OFFSET {
         return Err(Stop::OffsetTooDeep.code().into());
     }
-    if content_types != ["documentPages"] {
+    // OFFLINE-02c §3: documents and the saved-content categories.
+    let mut documents = false;
+    let mut categories = Categories::default();
+    for kind in &content_types {
+        match kind.as_str() {
+            "documentPages" => documents = true,
+            "guides" => categories.guides = true,
+            "cards" => categories.cards = true,
+            "practice" => categories.practice = true,
+            "notes" => categories.notes = true,
+            "questions" => categories.questions = true,
+            _ => return Err("unsupported_content_type".into()),
+        }
+    }
+    if !documents && !categories.any() {
         return Err("unsupported_content_type".into());
     }
     let terms = search::parse(&query).map_err(|s| s.code().to_string())?;
@@ -167,12 +184,22 @@ pub fn submit_search(
     }
     let owned = svc.clone();
     Ok(host.submit(entered, move |control, cache| {
-        let (targets, coverage) = resolve(&owned, &material_ids, control, cache)?;
+        let (targets, coverage) = if documents {
+            resolve(&owned, &material_ids, control, cache)?
+        } else {
+            (Vec::new(), Coverage::default())
+        };
+        let saved_available = crate::practice_sessions::is_root_ready(owned.root());
         Ok(Request {
             targets,
             terms,
             offset,
             coverage,
+            saved: categories.any().then_some(SavedRequest {
+                categories,
+                material_ids,
+            }),
+            saved_available,
         })
     }))
 }

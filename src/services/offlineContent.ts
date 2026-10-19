@@ -92,13 +92,56 @@ export interface SearchCoverage {
   notPdf: number;
 }
 
+/** Mirrors `extraction::search::saved::SavedPassage`. */
+export interface SavedPassage {
+  kind: "summary" | "guide" | "card" | "practice" | "note" | "question";
+  /** A section or card index, or a record id. */
+  recordId: string;
+  /** Guides and cards: the digest of the item's own text. */
+  rev: string | null;
+  snippet: string;
+}
+
+/** Mirrors `SavedGroup`: one material, or her notes, or instructor questions. */
+export interface SavedGroup {
+  kind: "material" | "notes" | "questions";
+  materialId: string | null;
+  title: string;
+  passages: SavedPassage[];
+}
+
+/** Mirrors `SavedCoverage`. */
+export interface SavedCoverage {
+  studySets: number;
+  practiceVersions: number;
+  notes: number;
+  questions: number;
+  tooLargeItems: number;
+}
+
+/** Mirrors `SavedSection`. */
+export interface SavedSection {
+  state: "ok" | "too_large" | "unavailable";
+  groups: SavedGroup[];
+  coverage: SavedCoverage;
+  nextOffset: number | null;
+  moreBeyondCap: boolean;
+}
+
 export interface SearchResponse {
   groups: SearchGroup[];
   coverage: SearchCoverage;
   nextOffset: number | null;
   moreBeyondCap: boolean;
   trimmed: boolean;
+  /** Present when saved content was asked for. */
+  saved?: SavedSection;
 }
+
+/** Everything one search covers (documents and saved study content). */
+export const ALL_CONTENT_TYPES = ["documentPages", "guides", "cards", "practice", "notes", "questions"] as const;
+export const SAVED_CONTENT_TYPES = ["guides", "cards", "practice", "notes", "questions"] as const;
+export type ContentType = (typeof ALL_CONTENT_TYPES)[number];
 
 export type DestinationCheck = "ok" | "changed" | "missing";
 
@@ -114,17 +157,18 @@ function codeOf(error: unknown): string {
   return typeof error === "string" ? error : "search_failed";
 }
 
-/** Search the text of the given materials' prepared PDFs. */
+/** Search prepared PDFs and saved study content, as `contentTypes` asks. */
 export async function searchOfflineContent(
   query: string,
   materialIds: string[],
   offset: number,
+  contentTypes: readonly ContentType[] = ALL_CONTENT_TYPES,
 ): Promise<SearchResponse> {
   try {
     return await invoke<SearchResponse>("search_offline_content", {
       query,
       materialIds,
-      contentTypes: ["documentPages"],
+      contentTypes: [...contentTypes],
       offset,
     });
   } catch (error) {

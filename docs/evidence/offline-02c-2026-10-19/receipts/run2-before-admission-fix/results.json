@@ -1,0 +1,139 @@
+{
+ "run": 2,
+ "processes": 3,
+ "correctness": "all six queries exact and capped-prefix in all three processes",
+ "errors": [],
+ "verdicts": {
+  "coldRebuild": {
+   "targetMs": 1000,
+   "worstMs": 456.9,
+   "pass": true
+  },
+  "cachedP50": {
+   "targetMs": 20,
+   "worstMs": 28.28,
+   "pass": false,
+   "missedBy": [
+    "the"
+   ]
+  },
+  "cachedP95": {
+   "targetMs": 50,
+   "worstMs": 28.95,
+   "pass": true
+  },
+  "rebuildP95": {
+   "targetMs": 1200,
+   "worstMs": 818.21,
+   "pass": true
+  },
+  "rss": {
+   "targetBytes": 268435456,
+   "worstBytes": 73728000,
+   "pass": true
+  },
+  "responseBytes": {
+   "targetBytes": 65536,
+   "worstBytes": 18803,
+   "pass": true
+  }
+ },
+ "perQuery": [
+  {
+   "query": 0,
+   "text": "aircraft",
+   "mode": "cached",
+   "samples": 45,
+   "p50Ms": 16.39,
+   "p95Ms": 16.81
+  },
+  {
+   "query": 0,
+   "text": "aircraft",
+   "mode": "rebuild",
+   "samples": 45,
+   "p50Ms": 711.15,
+   "p95Ms": 808.29
+  },
+  {
+   "query": 1,
+   "text": "abreast",
+   "mode": "cached",
+   "samples": 45,
+   "p50Ms": 0.14,
+   "p95Ms": 0.22
+  },
+  {
+   "query": 1,
+   "text": "abreast",
+   "mode": "rebuild",
+   "samples": 45,
+   "p50Ms": 703.17,
+   "p95Ms": 788.18
+  },
+  {
+   "query": 2,
+   "text": "\"density altitude\"",
+   "mode": "cached",
+   "samples": 45,
+   "p50Ms": 0.8,
+   "p95Ms": 0.82
+  },
+  {
+   "query": 2,
+   "text": "\"density altitude\"",
+   "mode": "rebuild",
+   "samples": 45,
+   "p50Ms": 711.07,
+   "p95Ms": 783.44
+  },
+  {
+   "query": 3,
+   "text": "wind shear final approach runway landing pilot airspeed",
+   "mode": "cached",
+   "samples": 45,
+   "p50Ms": 0.94,
+   "p95Ms": 1.0
+  },
+  {
+   "query": 3,
+   "text": "wind shear final approach runway landing pilot airspeed",
+   "mode": "rebuild",
+   "samples": 45,
+   "p50Ms": 718.98,
+   "p95Ms": 791.04
+  },
+  {
+   "query": 4,
+   "text": "zzqxv",
+   "mode": "cached",
+   "samples": 45,
+   "p50Ms": 0.11,
+   "p95Ms": 0.18
+  },
+  {
+   "query": 4,
+   "text": "zzqxv",
+   "mode": "rebuild",
+   "samples": 45,
+   "p50Ms": 702.71,
+   "p95Ms": 783.87
+  },
+  {
+   "query": 5,
+   "text": "the",
+   "mode": "cached",
+   "samples": 45,
+   "p50Ms": 28.28,
+   "p95Ms": 28.95
+  },
+  {
+   "query": 5,
+   "text": "the",
+   "mode": "rebuild",
+   "samples": 45,
+   "p50Ms": 741.67,
+   "p95Ms": 818.21
+  }
+ ]
+}

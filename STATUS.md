@@ -1,3 +1,22 @@
+## OFFLINE-02b merged; OFFLINE-02c saved-content search ready for PR, dormant — 19 October 2026
+
+OFFLINE-02b merged as PR #232 (`bfb8b04`). The same PR's CI fix gave the schema-14 parity test room on runners, which also clears `main`'s red run.
+
+**OFFLINE-02c** ([report](docs/OFFLINE_02C_REPORT_2026-10-19.md)) searches guides, current cards, practice stems (never answers), notes and instructor questions in their own section. Each result opens the actual item, digest-checked for guides and cards.
+- **Review:** Codex reviewed the addendum (rev 4 GREEN after 3 RED), the native code (GREEN after 1 RED), the UI (GREEN after 1 RED) and the measurement (RED once: sample admission, the post-edit check and percentile labels, all fixed in run 3), all locally.
+- **Measurement:** release build, frozen before timing, run 3; runs 1–2 are preserved. Every correctness check and all 324 post-edit reference checks are exact, and every target passes **except** the cached p50 for the worst-case query "the" (28.2 ms in the worst process against 20 ms; p95 28.8 ms).
+- **Tests:** 827 native, 3,775 frontend.
+- **Owner decision:** dormant behind the same switch as document search.
+
+**Follow-up FLAKE-CR-01 (pre-existing):** the card-review tests in `CardReviewPanel.test.ts` and the Review-due flow are load-sensitive.
+- **On CI:** #233's first run failed one of them (C1-R2: "Recent reviews" was present after a held page resolved).
+- **Locally:** the same family fails on a clean `main` when the full suite runs twice at once (2–3 failures per round).
+- **Not changed by 02c.** It needs its own investigation, including whether C1-R2 shows a real race.
+
+02c's own direct-link tests were given longer waits for slow runners.
+
+**Next:** exact-head CI on #233, then merge.
+
 ## OFFLINE-02b search UI implemented and reviewed; dormant — 19 October 2026
 
 With the build opt-in, the Study Library search box also searches the text of prepared PDFs among the materials the other filters select.
