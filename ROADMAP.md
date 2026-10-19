@@ -1,3 +1,22 @@
+## Owner priority update: offline study → homework → exports — 18 October 2026 Pacific
+
+The owner approved the expanded scope and explicitly selected **offline study → homework → exports as the next priority after the current release and any task already underway**. This supersedes the older unstarted scheduler → weather → FAA next-task order; preserve active assignments and all existing P54/Study Hub work. Remaining scheduler, weather and FAA work stays queued behind this tranche. Read the [precise delivery/acceptance plan](docs/OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) before implementation. Current release/task state must be checked live; this planning entry does not reopen or certify a release.
+
+| Order | ID | Outcome |
+| --- | --- | --- |
+| 1 | OFFLINE-01 | Managed content inventory, durable per-page text/readiness and rebuildable derived cache; close actual P54-02 production extraction/resource gaps. |
+| 2 | OFFLINE-02 | Search a subject across readable PDF passages, guides, cards, practice-question stems, notes and linked study records; grouped hits, source revision/page links, honest coverage and no provider calls. |
+| 3 | OFFLINE-03 | Manual summaries/cards/questions and source-linked notes/highlights, correct user/instructor provenance, preserved edits and histories. |
+| 4 | HOMEWORK-01 | Study Library Homework view for self/instructor-assigned multi-activity work; optional dates/instructor/lesson, linked reading/cards/tests/reflections, completion history, daily-plan/prep reuse. |
+| 5 | EXPORT-01 | Discoverable Export / Print and selected multi-material handouts; reuse native saves and existing one-material v1 packet contract. |
+| 6 | EXPORT-02 | Bounded UTF-8 flashcard CSV, explicit spreadsheet/import policy, improved offline print/Save as PDF and separate optional answer keys. |
+
+**OFFLINE-02-OCR** remains an explicit gated scan-coverage subtask. Search must include PDFs; scanned pages require text recognition and partial/unprocessed pages must be visible. Ship text-PDF search honestly first, then a bounded approved OCR lane; pending OCR need not block homework/exports for readable content. Existing titles/metadata search and saved offline study are foundations, not proof of complete PDF search.
+
+[Refreshed OSS research](docs/OFFLINE_STUDY_OPEN_SOURCE_RESEARCH_2026-10-18.md) and [API/license snapshot](docs/research/OFFLINE_STUDY_OSS_SNAPSHOT_2026-10-18.json) reuse OSS-01/02/04: evaluate native SQLite FTS5 against the existing MiniSearch alternative, retain PDF.js Mac compatibility gates, and compare native OCR with one Tesseract option. **OSS-07** is conditional PapaParse versus a small tested CSV writer for EXPORT-02; **OSS-08** is conditional direct-PDF renderer evaluation (PDFKit versus pdf-lib) only if accepted HTML/native printing is inadequate. Neither is adopted. All seven refreshed actual repositories exceed 1,000 stars; source/licensing/resource/compatibility gates remain.
+
+**Next implementer:** after the release/current assignment, start OFFLINE-01 only using the plan's entry point. Reuse P54-02 evidence; do not duplicate accepted proofs, change a dependency/migration without the applicable review, start a scheduler migration, or claim that saved content means new AI generation works offline. Detailed source/installed acceptance and one-review-slice stopping rules are in the plan. Earlier entries retain historical status.
+
 ## v0.5.7 published; P54-06 phase A P54BASE-R1 correction pending review — 19 October 2026
 
 **v0.5.7 is published** (macOS, 06:40 UTC, marked Latest) from tag `v0.5.7` at main `e8f6808`. That commit combines GEN-REL-01–05, the #221 managed-source fix and the #222 version bump. The published asset is the exact locally built ad-hoc DMG that was installed and tested, as with v0.5.5. Its SHA-256 is `57a3c913071b4763bdb5d311e300273b66035e58c13840129cfae4ee84d36c30`. The tag-triggered release workflow hit its 20-minute Check timeout without a Rust cache and built nothing; publication did not depend on it.
