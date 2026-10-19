@@ -1,3 +1,18 @@
+## OFFLINE-02a independently reviewed and corrected; ready for PR — 19 October 2026
+
+Claude reviewed `codex/offline-02a-completion` independently.
+
+**Review result:**
+- **Checks:** 813 native tests, fmt and strict Clippy pass. No dependency, lockfile, migration or frontend changes. `rusqlite`'s `functions` feature is dev-only. Search stays off in releases.
+- **Budgets:** the owner-approved 750 ms and 3× budgets are recorded, and the original misses are preserved.
+- **Accepted** subject to three corrections, now committed (`f8995ec`):
+  1. **The destination check no longer waits for a preparation in progress.** It hashed through the slot that a preparation holds for up to 120 s; it now hashes without the slot.
+  2. **Coverage counts blank pages as searchable,** as in the readiness summary.
+  3. **Deleted materials and notes without a document** are no longer counted as missing files.
+- **Tests and review:** both regressions fail on the previous source. 814 native tests pass, and fmt, strict Clippy and cargo-lock pass. Codex reviewed the corrections locally: **GREEN**.
+
+**Next:** one push for exact-head CI, then merge, then OFFLINE-02b. To save Actions minutes, the review loop stays local until then.
+
 ## OFFLINE-02a corrected and paused by owner — 19 October 2026
 
 **Owner requested finishing current work, then pausing. No further roadmap task or merge now.** [Latest self-review and pause report](OFFLINE_02A_SELF_REVIEW_AND_PAUSE_2026-10-19.md); [resume/reviewer prompt](OFFLINE_02A_FINAL_REVIEW_RESUME_2026-10-19.md); [budget owner decision](OFFLINE_02A_BUDGET_OWNER_DECISION_2026-10-19.md). Codex authored these corrections, so independent acceptance remains pending.
