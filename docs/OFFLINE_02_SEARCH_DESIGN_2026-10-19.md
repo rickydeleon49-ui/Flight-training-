@@ -1,6 +1,6 @@
 # OFFLINE-02: search a subject — design and pre-registration — 19 October 2026
 
-**Status: proposal for review, revision 3.** Codex rounds 1 and 2 were RED; §10 lists how each finding was answered. Nothing here is implemented.
+**Status: proposal for review, revision 4.** Codex rounds 1–3 were RED; §10 lists how each finding was answered. Nothing here is implemented.
 
 The roadmap requires the query rules, limits, fallbacks and measurement targets to be written down before the search engine is built in ([roadmap](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md), OFFLINE-02 "Acceptance and engine decision"). This document does that.
 
@@ -225,9 +225,20 @@ When the deadline has passed or the request was superseded, the thread stops and
 
 **2. SQL interruption.** This covers the time inside one statement, notably the candidate sort, which runs before the first row is returned.
 - **What the search thread records:** while a statement runs, it records `active = Some(request id)` in a mutex. It clears that record, under the same mutex, as soon as the statement finishes or is reset.
-- **What the watchdog does:** when a request's deadline fires, the watchdog takes the mutex and calls `InterruptHandle::interrupt()` **only if** `active` still holds that request's id.
+- **What the watchdog does:** when a request's deadline fires, it sets that request's `cancelled` flag, which stays set. It then **keeps** interrupting: every 10 ms it takes the mutex and calls `InterruptHandle::interrupt()` if `active` still holds that request's id. It stops once `active` no longer holds that id.
+- **Why it keeps interrupting:** an interrupt that lands after `active` is recorded but before SQLite's first step is a no-op. The next 10 ms tick catches the statement once it has started.
+- **The search thread's side:** after recording `active` and before the first step, it checks `cancelled` again and doesn't start a cancelled statement. Together with the repeated interrupt, a statement started after the deadline is stopped within one tick plus SQLite's interrupt latency.
 - **Why a late timer can't hit the next request:** clearing `active` and starting the next request's statements both happen after that mutex is released. So a late timer can't interrupt a different request.
 - **Retiring a timer:** a request's timer is cancelled when the request ends. A test drives a timer that fires exactly at the end of a request and asserts the next request completes normally.
+- **Startup-race test:** a test-only pause sits between recording `active` and the first SQLite step. The test:
+  1. pauses there;
+  2. fires the deadline;
+  3. resumes into an expensive candidate statement, a worst-case common word over a large fixture.
+
+  It asserts:
+  - the request answers `timeout` within 2 s + 100 ms;
+  - the statement was interrupted, not run to completion;
+  - the next request runs to a correct result.
 
 **Bounded work, in two phases:**
 1. **Candidates**, with the cutoff ordered by the full §6.4 key:
@@ -432,3 +443,9 @@ Each case asserts **expected hits and expected exclusions**, by material id and 
 | 2 | The exact-set gate contradicts `LIMIT 2000` | An exhaustive untimed query must equal the reference set. The capped production query must equal the first 2,000 of the exhaustive order. Timing uses only the capped command (§7) |
 | 3 | The cutoff precedes the tie-breaking | The cutoff is ordered by the full key: rank, title, id, page, with the duplicate-hash sort key defined. Expansion happens after the cut. There are tie-across-cutoff and duplicate-at-cutoff tests (§6.2, §6.4) |
 | 4 | Workload choices still open | Fixed 500-page documents, one duplicate pair per size, three prescribed filters, a fixed query schedule, a concurrency protocol synchronized on worker frames with discard and retry rules. All are frozen in a manifest, and every case is reported (§7) |
+
+## 12. Codex round 3 correction
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | A one-shot watchdog can fire between recording `active` and SQLite's first step, where the interrupt is a no-op | Cancellation is persistent. The watchdog re-interrupts every 10 ms while that request's statement is active, and the search thread re-checks `cancelled` before the first step. A deterministic startup-race test pauses at that point, fires the deadline, resumes an expensive statement, and asserts prompt `timeout` and a correct next request (§6.2) |
