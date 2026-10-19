@@ -1,18 +1,19 @@
 ## OFFLINE-01 inventory and gap-closure proposal; pending review — 19 October 2026
 
-Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed.
+Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed. Revision 2 answers Codex round 1, which was RED on four contract gaps: an overclaimed memory bound, decompression coverage, the restore contract, and scan diagnosis.
 
 **Inventory findings:**
-- Today's search covers material metadata and notes only. Guide, card, practice-question and PDF text are never searched.
+- Today's search is the Study Library filter (title, notes, topic, type, tags) and QuickFind (material title, notes, tags and file name, plus notes, events, goals, instructor questions and other records). **Neither searches document, guide, card or practice-question text.**
 - Reading never waits on Gemini.
-- The backup allowlist already excludes a separate cache file. Restore doesn't clear one, so the cache needs a fingerprint.
+- Backups exclude any other file in the app folder, but restore doesn't remove such files.
 - Existing features (Check pages, splitting, the page-length check, flashcard batches) parse whole PDFs with `lopdf` inside the main app process. This is an existing exposure, now recorded.
 
 **Proposal:**
-- A worker mode in the shipped binary that reuses the P54-02 bounds and lifecycle.
-- A derived `content-cache.db` holding readiness and per-page text. It needs no migration and doesn't choose the search engine.
-- Memory option (c), deadline plus watchdog explicitly not called a cap, ships first. Option (a), a bounded decompression pre-scan, needs owner approval for direct `flate2`/`weezl` dependencies; both are already locked.
-- Slices: 01a native, 01b UI, 01c fidelity and release measurements, then installed acceptance.
+- A fail-closed worker mode in the shipped binary that reuses the P54-02 bounds and finalization rule, one worker at a time.
+- **Owner-approved** direct `flate2`/`weezl` dependencies (already locked) for a raw-byte, bounded decompression pre-scan covering content, object and cross-reference streams. A measured memory budget and the stated residual risk must be accepted at review.
+- A content-addressed derived `content-cache.db`. It stays correct across restores, needs no migration and doesn't choose the search engine.
+- Per-page outcomes that never call an unknown failure a scan.
+- Slices: 01a native, 01b UI, 01c fidelity and release measurements, then installed acceptance. Each stops for authorized integration.
 
 [Proposal](docs/OFFLINE_01_INVENTORY_AND_PROPOSAL_2026-10-19.md). Earlier entries remain historical.
 
