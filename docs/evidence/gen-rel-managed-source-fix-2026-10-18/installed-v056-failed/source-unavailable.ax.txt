@@ -1,0 +1,114 @@
+Window: "Her Flight Deck", App: Her Flight Deck.
+0 standard window Her Flight Deck, Secondary Actions: Raise
+	1 scroll area
+		2 HTML content Description: Her Flight Deck, URL: tauri://localhost#/study/250b63c7-a1d7-4015-a310-efa72af539b0
+			3 container
+				4 text Her Flight Deck Training companion
+				5 button Search ⌘K
+				6 container Main
+					7 link Flight Deck, Value: tauri://localhost#/
+					8 link Flight Path, Value: tauri://localhost#/flight-path
+					9 link Study Library, Value: tauri://localhost#/study
+					10 link Schedule, Value: tauri://localhost#/schedule
+					11 link Flight Log, Value: tauri://localhost#/journal
+					12 link Questions, Value: tauri://localhost#/questions
+					13 link Notes, Value: tauri://localhost#/notes
+					14 link Finances, Value: tauri://localhost#/finances
+					15 link Pilot Toolkit, Value: tauri://localhost#/toolkit
+				16 link Settings, Value: tauri://localhost#/settings
+				17 text Your instructor and official aviation guidance stay authoritative. This is here to keep your training organized.
+			18 container
+				19 heading GEN-REL Synthetic Study Source, Value: 1
+					20 text GEN-REL Synthetic Study Source
+				21 text Study Guide · General
+				22 link Back, Value: tauri://localhost#/study
+				23 button Edit
+				24 button Delete
+				25 text GEN-REL Synthetic Study Source.pdf 6 KB
+				26 button Split automatically
+				27 button Take out a chapter
+				28 button Open
+				29 text PAGES
+				30 heading Find your place, Value: 2
+					31 text Find your place
+				32 container Pages of GEN-REL Synthetic Study Source
+					33 heading Pages of GEN-REL Synthetic Study Source, Value: 4
+						34 text Pages of GEN-REL Synthetic Study Source
+					35 text This file's pages haven't been checked yet. They are checked when you open a page.
+					36 button Check pages
+					37 container
+						38 text PDF page
+						39 text field (settable) PDF page
+						40 text The page number your PDF reader shows.
+						41 button Open at page
+					42 heading Bookmarks, Value: 4
+						43 text Bookmarks
+					44 button (disabled) Add bookmark
+					45 text Check this file's pages before adding a bookmark.
+					46 text No bookmarks yet.
+				47 text GUIDE AND FLASHCARDS
+				48 heading Gemini study assistant, Value: 2
+					49 text Gemini study assistant
+				50 button Create study aid
+				51 text Gemini will read only this file and create a source-based study guide plus 10–20 flashcards. The result will be saved locally with your other data. The selected source is no longer available. The draft was not published.
+Details: stage: preparing the document; generation attempts: 0; time: 0m 00s.
+				52 button Try again
+				53 text 0 / 40 cards kept as a draft. Nothing has replaced your saved content. The selected source is no longer available. The draft was not published. Details: stage: preparing the document; generation attempts: 0; time: 0m 00s.
+				54 button Try again
+				55 button Discard draft
+				56 text OPTIONAL, FROM THIS DOCUMENT
+				57 heading Practice test, Value: 2
+					58 text Practice test
+				59 button Create practice test
+				60 text Gemini will read only this file and create a multiple-choice practice test with explanations. The result will be saved locally with your other data.
+				61 heading Personal notes, Value: 2
+					62 text Personal notes
+				63 text entry area (settable) Personal notes, Value: [text entry area: Personal notes], Placeholder: What matters in this material, and what you want to remember.
+					64 text What matters in this material, and what you want to remember.
+				65 heading Next actions, Value: 2
+					66 text Next actions
+				67 button Add
+				68 text What should you do with this material? “Review pages 4–8 before Saturday” is more useful than “study”.
+				69 heading Questions from this material, Value: 2
+					70 text Questions from this material
+				71 text field (settable) New question, Placeholder: Something to ask your instructor
+				72 button (disabled) Add
+				73 heading Review status, Value: 2
+					74 text Review status
+				75 pop up button (collapsed) Review status, Value: Needs Review, Secondary Actions: Expand
+				76 button Mark as reviewed today
+				77 text Not reviewed yet.
+				78 heading Details, Value: 2
+					79 text Details
+				80 description list
+					81 text Type
+					82 text Study Guide
+					83 text Topic
+					84 text General
+					85 text Priority
+					86 text Later
+					87 text Status
+					88 text Needs Review
+					89 text Added
+					90 text Sunday, October 18
+				91 menu Secondary Actions: Cancel
+				92 menu Secondary Actions: Cancel
+				93 menu Secondary Actions: Cancel
+				94 menu Secondary Actions: Cancel
+				95 menu Secondary Actions: Cancel
+				96 menu Secondary Actions: Cancel
+				97 menu Secondary Actions: Cancel
+				98 menu Secondary Actions: Cancel
+				99 menu Secondary Actions: Cancel
+		100 scroll bar (settable, float) 0
+	101 close button
+	102 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	103 minimize button
+	104 text Her Flight Deck
+105 menu bar
+	106 Her Flight Deck
+	107 File
+	108 Edit
+	109 View
+	110 Window
+	111 Help

@@ -1,0 +1,31 @@
+Window: "Her Flight Deck", App: Her Flight Deck.
+0 standard window Her Flight Deck, Secondary Actions: Raise
+	1 scroll area
+		2 HTML content Description: Her Flight Deck, URL: tauri://localhost#/study/250b63c7-a1d7-4015-a310-efa72af539b0
+			3 container Send this file to Google?
+				4 heading Send this file to Google?, Value: 2
+					5 text Send this file to Google?
+				6 button Close
+				7 text "GEN-REL Synthetic Study Source.pdf" will be uploaded to Google to generate the study aid. On the free tier Google may use it to improve its products, so send study material only — never anything personal or identifying. Only “GEN-REL Synthetic Study Source.pdf” leaves this Mac. Google keeps a temporary copy for up to 48 hours so a study guide and a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when the file changes or you disconnect Gemini; otherwise G
+				8 container
+					9 text Target cards
+					10 pop up button (collapsed) Target cards, Value: 40, Secondary Actions: Expand
+						11 menu Secondary Actions: Cancel
+				12 text A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them. Try again resumes any kept draft with the same target.
+				13 button Cancel
+				14 button Choose a chapter or pages first
+				15 button Send to Gemini
+		16 scroll bar (settable, float) 0
+	17 close button
+	18 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	19 minimize button
+	20 text Her Flight Deck
+21 menu bar
+	22 Her Flight Deck
+	23 File
+	24 Edit
+	25 View
+	26 Window
+	27 Help
+
+The focused UI element is 10 pop up button (collapsed) Target cards, Value: 40, Secondary Actions: Expand

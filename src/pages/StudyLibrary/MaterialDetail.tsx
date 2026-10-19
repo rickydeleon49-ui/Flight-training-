@@ -615,8 +615,9 @@ function MaterialDetailPage() {
                   </div>
                 ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
                   <p className="small muted">
-                    Gemini will read only this file and create a source-based study guide plus
-                    10–20 flashcards. The result will be saved locally with your other data.
+                    Gemini will read only this file and create a source-based study guide.
+                    Choose a target of 20, 40 or 60 flashcards; a shorter source may yield fewer.
+                    The finished draft waits for you to save it locally.
                   </p>
                 ) : null}
 

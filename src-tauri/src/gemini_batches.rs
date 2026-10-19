@@ -135,7 +135,11 @@ fn validate(aid: &GeneratedStudyAid, pages: Option<u32>, max_cards: usize) -> Re
 }
 
 fn unchanged(root: &Path, source: &LoadedSource) -> Result<(), String> {
-    let bytes = std::fs::read(root.join(&source.scope)).map_err(|_| {
+    // LoadedSource keeps the SQLite file_path, relative to documents/ just
+    // like ImportedDocument and stored_document_path. The journal's root is
+    // the app-data directory, not the documents directory.
+    let safe = documents::safe_relative_path(&source.scope)?;
+    let bytes = std::fs::read(root.join(documents::DOCUMENTS_DIR).join(safe)).map_err(|_| {
         "The selected source is no longer available. The draft was not published.".to_string()
     })?;
     if calculate_sha256(&bytes) != source.content_sha256 {
@@ -327,10 +331,16 @@ mod tests {
             let source = LoadedSource::new(
                 super::super::generation_tests::pdf(2, "batch-source"),
                 "application/pdf",
-                "documents/source.pdf",
+                "source.pdf",
             );
             std::fs::create_dir(root.path().join("documents")).unwrap();
-            std::fs::write(root.path().join(&source.scope), &source.bytes).unwrap();
+            std::fs::write(
+                root.path()
+                    .join(documents::DOCUMENTS_DIR)
+                    .join(&source.scope),
+                &source.bytes,
+            )
+            .unwrap();
             Self {
                 root,
                 source,
@@ -492,6 +502,97 @@ mod tests {
     }
 
     #[test]
+    fn source_checks_use_managed_nested_paths_and_ignore_app_root_decoys() {
+        let r = Rig::new();
+        let source = LoadedSource::new(
+            r.source.bytes.clone(),
+            "application/pdf",
+            "chapters/ch1.pdf",
+        );
+        let managed = r
+            .root
+            .path()
+            .join(documents::DOCUMENTS_DIR)
+            .join(&source.scope);
+        std::fs::create_dir_all(managed.parent().unwrap()).unwrap();
+        std::fs::write(&managed, &source.bytes).unwrap();
+        let decoy = r.root.path().join(&source.scope);
+        std::fs::create_dir_all(decoy.parent().unwrap()).unwrap();
+        std::fs::write(&decoy, b"wrong file outside documents").unwrap();
+        assert!(unchanged(r.root.path(), &source).is_ok());
+
+        std::fs::write(&decoy, &source.bytes).unwrap();
+        std::fs::write(&managed, b"changed managed file").unwrap();
+        assert!(unchanged(r.root.path(), &source)
+            .unwrap_err()
+            .contains("changed"));
+        std::fs::remove_file(&managed).unwrap();
+        assert!(unchanged(r.root.path(), &source)
+            .unwrap_err()
+            .contains("no longer available"));
+    }
+
+    #[test]
+    fn source_checks_reject_unsafe_stored_paths() {
+        let r = Rig::new();
+        let absolute = r.root.path().join("absolute.pdf");
+        std::fs::write(&absolute, &r.source.bytes).unwrap();
+        // Both absolute and traversal paths could otherwise reach these bytes.
+        for scope in [
+            absolute.to_str().unwrap(),
+            "../absolute.pdf",
+            "",
+            "C:\\source.pdf",
+            "a/../source.pdf",
+        ] {
+            let source = LoadedSource::new(r.source.bytes.clone(), "application/pdf", scope);
+            assert_eq!(
+                unchanged(r.root.path(), &source).unwrap_err(),
+                "Invalid document path."
+            );
+        }
+    }
+
+    #[test]
+    fn removing_managed_source_while_response_is_held_keeps_draft_unpublished() {
+        let r = Rig::new();
+        let id = r.begin();
+        let gate = Arc::new(Gate::default());
+        r.fake.behave(|b| {
+            b.generate_gate = Some(gate.clone());
+            b.generate_answers = vec![envelope(aid(0, 0))];
+        });
+        std::thread::scope(|scope| {
+            let worker = scope.spawn(|| r.run(20));
+            for _ in 0..2000 {
+                if gate.waiting() > 0 {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            assert!(gate.waiting() > 0);
+            std::fs::remove_file(
+                r.root
+                    .path()
+                    .join(documents::DOCUMENTS_DIR)
+                    .join(&r.source.scope),
+            )
+            .unwrap();
+            gate.open();
+            assert!(worker
+                .join()
+                .unwrap()
+                .unwrap_err()
+                .contains("no longer available"));
+        });
+        let draft = read(r.root.path(), &id).unwrap();
+        assert!(draft.guide.is_none());
+        assert!(draft.cards.is_empty());
+        assert!(!draft.complete);
+        assert_eq!(r.count(), 1);
+    }
+
+    #[test]
     fn targets_use_ten_card_batches_single_upload_and_bounded_tokens() {
         for n in [20, 40, 60] {
             let r = Rig::new();
@@ -633,7 +734,14 @@ mod tests {
                 }
                 std::thread::sleep(Duration::from_millis(1));
             }
-            std::fs::write(r.root.path().join(&r.source.scope), b"changed").unwrap();
+            std::fs::write(
+                r.root
+                    .path()
+                    .join(documents::DOCUMENTS_DIR)
+                    .join(&r.source.scope),
+                b"changed",
+            )
+            .unwrap();
             gate.open();
             assert!(worker.join().unwrap().unwrap_err().contains("changed"));
         });
@@ -694,7 +802,23 @@ mod tests {
             gemini_jobs::with(r.root.path(), |j| j.cancel(&id)).unwrap();
             registration.token.cancel();
             assert!(worker.join().unwrap().is_err());
+            // The abandoned request is still held at the gate. Give it its own
+            // answer and wait until it has taken it, so it cannot take one of
+            // the answers queued for the resume below.
+            r.fake
+                .behave(|b| b.generate_answers = vec![envelope(aid(90, 10))]);
             gate.open();
+            for _ in 0..2000 {
+                let mut taken = false;
+                r.fake.behave(|b| taken = b.generate_answers.is_empty());
+                if taken {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            let mut taken = false;
+            r.fake.behave(|b| taken = b.generate_answers.is_empty());
+            assert!(taken, "the abandoned request was never answered");
         });
         gemini_jobs::with(r.root.path(), |j| j.failed(&id, "cancelled")).unwrap();
         let reopened = gemini_jobs::Journal::open(r.root.path());
@@ -728,8 +852,15 @@ mod tests {
     #[test]
     fn empty_source_and_transport_admission_cap_dispatch_nothing() {
         let mut r = Rig::new();
-        r.source = LoadedSource::new(vec![], "text/plain", "documents/empty.txt");
-        std::fs::write(r.root.path().join(&r.source.scope), []).unwrap();
+        r.source = LoadedSource::new(vec![], "text/plain", "empty.txt");
+        std::fs::write(
+            r.root
+                .path()
+                .join(documents::DOCUMENTS_DIR)
+                .join(&r.source.scope),
+            [],
+        )
+        .unwrap();
         r.begin();
         assert!(r.run(20).unwrap_err().contains("empty"));
         assert_eq!(r.count(), 0);

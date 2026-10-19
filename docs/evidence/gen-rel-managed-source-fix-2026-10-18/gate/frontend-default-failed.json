@@ -1,0 +1,11 @@
+{
+  "name": "frontend",
+  "command": [
+    "npm",
+    "test"
+  ],
+  "exitCode": 1,
+  "started": "2026-10-19T04:02:18.640473+00:00",
+  "finished": "2026-10-19T04:03:18.678662+00:00",
+  "node22Shim": "Task recovery node22-bin/node exports installed simdjson 4.6.11 and simdutf 9.2.1_1 library directories before exec. No global changes."
+}

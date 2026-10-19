@@ -1,0 +1,13 @@
+{
+  "command": [
+    "bash",
+    "scripts/release.sh",
+    "0.5.6"
+  ],
+  "started": "2026-10-19T02:12:54.276652+00:00",
+  "sourceBase": "e28842feb72bfda36238452b23ec2bd6ccc28591",
+  "requestedVersion": "0.5.6",
+  "localTagOnly": true,
+  "exit": 0,
+  "finished": "2026-10-19T02:14:40.510043+00:00"
+}

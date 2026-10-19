@@ -1,0 +1,24 @@
+{
+  "version": "0.5.6",
+  "source": "bb68b9af62d5573626f2f162eea68002fe5085f2",
+  "bundleId": "com.herflightdeck.app",
+  "rawExecutableSha256": "5b038157d5bc5f260a2bd77074acd3e2e95a22c1717349b87517a1dd3eec873f",
+  "sealedExecutableSha256": "cb4ad8332747ef89f8a984194086cfb8bb6f2bb84f9ec260524b1e7f22bc3b71",
+  "installedApp": "/Users/rickymac/Applications/Her Flight Deck Verification v0.5.6 bb68b9a/Her Flight Deck.app",
+  "installedExecutable": "/Users/rickymac/Applications/Her Flight Deck Verification v0.5.6 bb68b9a/Her Flight Deck.app/Contents/MacOS/her-flight-deck",
+  "candidateDirectory": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a",
+  "dmg": {
+    "path": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her.Flight.Deck_0.5.6_aarch64_LOCAL_ADHOC.dmg",
+    "bytes": 5846617,
+    "sha256": "36c18ed8b60caa06a9e9ebe573d5a4aaf5ac510907df1ee3bec8e4cd20042020"
+  },
+  "zip": {
+    "path": "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her.Flight.Deck_0.5.6_aarch64_LOCAL_ADHOC.app.zip",
+    "bytes": 5486328,
+    "sha256": "6645396f3d5afeafcb1bc64b3db5375bf143d2c1f8aa241e0a14dbe6a3ff6399"
+  },
+  "signing": "ad-hoc only, not Developer ID signed or notarized",
+  "readOnlyImageVerified": true,
+  "imageDetached": true,
+  "timestamp": "2026-10-19T02:20:22.554392+00:00"
+}

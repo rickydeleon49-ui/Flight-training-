@@ -1,0 +1,36 @@
+{
+  "source": "bb68b9af62d5573626f2f162eea68002fe5085f2",
+  "base": "18960602f0c396e53a62e31619759dcba9f5b8f9",
+  "files": [
+    {
+      "path": "package.json",
+      "bytes": 1347,
+      "sha256": "adaf4fd92c7bf5c21809e0ee4280b81f8f78b455266b6ecddc5c3d492aeddea2"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 113946,
+      "sha256": "0e84d5d6e83f97d21ebdc2028c104b12d07f43c35161d45304335ff76bee8e43"
+    },
+    {
+      "path": "src-tauri/tauri.conf.json",
+      "bytes": 1465,
+      "sha256": "e5d1bcbb0e54eefd5e66b41d2e0627abe0b3be66da580f4eb4a0e4532e1d8bb5"
+    },
+    {
+      "path": "src-tauri/Cargo.toml",
+      "bytes": 1176,
+      "sha256": "a84e2bca31c727bc63e06d4bdf020bdc0c64f84e1f92f003030ef45c6038ff2a"
+    },
+    {
+      "path": "src-tauri/Cargo.lock",
+      "bytes": 157885,
+      "sha256": "1ef995a8dc872225a96e1892dfaef88a0f0a1b47c81bb17cd8da1439221b575e"
+    },
+    {
+      "path": "scripts/release-policy.json",
+      "bytes": 912,
+      "sha256": "3ea3e7999c52fffff1d92de0f10a9d8b6a894aae736387d4536352adcf03b3cb"
+    }
+  ]
+}

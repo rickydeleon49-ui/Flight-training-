@@ -1,0 +1,18 @@
+[
+  {
+    "name": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": -6,
+    "started": "2026-10-19T04:01:49.047954+00:00",
+    "finished": "2026-10-19T04:01:49.053996+00:00",
+    "scopedEnvironment": {
+      "SDKROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+      "CARGO_BUILD_JOBS": "4",
+      "DYLD_LIBRARY_PATH": "/opt/homebrew/Cellar/simdjson/4.6.11/lib:/opt/homebrew/Cellar/simdutf/9.2.1_1/lib"
+    }
+  }
+]

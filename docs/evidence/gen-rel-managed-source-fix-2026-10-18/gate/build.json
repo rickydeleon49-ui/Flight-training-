@@ -1,0 +1,12 @@
+{
+  "name": "build",
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "started": "2026-10-19T04:07:54.302553+00:00",
+  "finished": "2026-10-19T04:07:59.544787+00:00",
+  "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+}

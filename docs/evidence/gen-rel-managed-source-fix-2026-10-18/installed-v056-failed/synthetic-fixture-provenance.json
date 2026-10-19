@@ -1,0 +1,11 @@
+{
+  "source": "/Users/rickymac/.codex/task-recovery/v055-release-20261016/synthetic-after-0.5.5-tests",
+  "copied": [
+    "SQLite read-only backup of her-flight-deck.db",
+    "documents/"
+  ],
+  "lastRunVersion": "0.5.5",
+  "model": "standard",
+  "credentialsCopied": false,
+  "basis": "Accepted v0.5.5 installed-run record identifies this library as synthetic."
+}

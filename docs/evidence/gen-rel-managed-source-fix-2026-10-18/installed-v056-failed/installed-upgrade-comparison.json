@@ -1,0 +1,84 @@
+{
+  "baselineSchema": 14,
+  "currentSchema": 15,
+  "integrity": "ok",
+  "oldLedgerRowsPreserved": true,
+  "newMigration": {
+    "version": 15,
+    "description": "document_navigation",
+    "success": 1,
+    "checksumMatchesShippedSql": true
+  },
+  "unchangedExistingTables": [
+    "ai_study_sets",
+    "card_items",
+    "card_review_events",
+    "card_review_generations",
+    "card_review_operations",
+    "card_review_state",
+    "card_versions",
+    "debrief_operations",
+    "event_materials",
+    "event_prep_items",
+    "fund_goals",
+    "goal_checklist_items",
+    "goals",
+    "journal_entries",
+    "journal_materials",
+    "material_split_lineage",
+    "material_tags",
+    "milestones",
+    "next_actions",
+    "notes",
+    "pilot_toolkit",
+    "practice_attempts",
+    "practice_responses",
+    "practice_session_operations",
+    "practice_test_items",
+    "practice_test_versions",
+    "practice_tests",
+    "questions",
+    "schedule_events",
+    "settings",
+    "skill_catalog_entries",
+    "skill_catalog_revisions",
+    "skill_evidence_operations",
+    "skill_observation_revisions",
+    "skill_observations",
+    "skill_self_assessments",
+    "split_operation_log",
+    "study_materials",
+    "tags",
+    "transactions"
+  ],
+  "changedExistingTables": [
+    "_sqlx_migrations",
+    "app_metadata"
+  ],
+  "newTables": [
+    "material_bookmarks",
+    "material_content_identities",
+    "material_operation_claims",
+    "material_reading_state"
+  ],
+  "details": {
+    "_sqlx_migrations": {
+      "beforeOnly": [],
+      "afterOnly": [
+        "[15,\"document_navigation\",\"2026-10-19 02:20:39\",1,{\"blobHex\":\"4b54389da8ce6c4375b4af5634b4017c7d7f36538b9df1f64f6274122a66465a8bd1d4f1612ec2c96af03b462b3e5545\"},631084]"
+      ]
+    },
+    "app_metadata": {
+      "beforeOnly": [
+        "[\"daily_plan_session\",\"{\\\"version\\\":1,\\\"date\\\":\\\"2026-10-16\\\",\\\"timeBudget\\\":20,\\\"suggestedIds\\\":[\\\"material:e26cc9b3-8f95-41dc-a801-1224d06630f5\\\",\\\"material:9b0683fa-b77c-407c-b930-fffe8e992c87\\\",\\\"material:ca90be52-ea48-41a2-aaa4-0e4fea59a956\\\"],\\\"decisions\\\":{},\\\"updatedAt\\\":\\\"2026-10-16T17:44:21.906Z\\\",\\\"targetCapacity\\\":3}\"]"
+      ],
+      "afterOnly": [
+        "[\"daily_plan_session\",\"{\\\"version\\\":1,\\\"date\\\":\\\"2026-10-18\\\",\\\"timeBudget\\\":20,\\\"suggestedIds\\\":[\\\"material:e26cc9b3-8f95-41dc-a801-1224d06630f5\\\",\\\"material:9b0683fa-b77c-407c-b930-fffe8e992c87\\\",\\\"material:ca90be52-ea48-41a2-aaa4-0e4fea59a956\\\"],\\\"decisions\\\":{},\\\"updatedAt\\\":\\\"2026-10-19T02:20:39.486Z\\\",\\\"targetCapacity\\\":3}\"]"
+      ]
+    }
+  },
+  "safetyCopies": [
+    "2026-10-19-022039-before-0.5.6"
+  ],
+  "lastRunVersion": "0.5.6"
+}

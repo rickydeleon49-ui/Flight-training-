@@ -1,0 +1,26 @@
+{
+  "scope": "synthetic administrator-account test only",
+  "phase": "original-returned",
+  "originalProfileMetadataVerifiedByHandoff": true,
+  "managedFile": {
+    "relativePath": "250b63c7-a1d7-4015-a310-efa72af539b0-GEN-REL Synthetic Study Source.pdf",
+    "under": "documents/",
+    "exists": true,
+    "bytes": 5992,
+    "sha256": "348a7b69e70a33d95c6db2a9b7784b5a8cb8a8848d84a5cc15e5021599e186f1"
+  },
+  "incorrectAppRootLocationExists": false,
+  "generationSubmissions": 0,
+  "transportAdmissions": 0,
+  "liveUploadVerified": false,
+  "liveGenerationVerified": false,
+  "notRun": [
+    "navigation during generation",
+    "cancel during live generation",
+    "40-card deliberate acceptance",
+    "practice-test generation",
+    "backup/restore on combined candidate"
+  ],
+  "noReleasePublished": true,
+  "credentialContentsOrHashesRecorded": false
+}

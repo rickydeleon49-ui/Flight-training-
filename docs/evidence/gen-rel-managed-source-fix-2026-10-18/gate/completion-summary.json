@@ -1,0 +1,133 @@
+[
+  {
+    "name": "typecheck-final",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:06:41.668569+00:00",
+    "finished": "2026-10-19T04:06:46.742841+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "preflight-isolated",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/logic/macReadinessPreflight.test.ts"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:06:46.743182+00:00",
+    "finished": "2026-10-19T04:06:48.083126+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "frontend",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:06:48.083401+00:00",
+    "finished": "2026-10-19T04:07:54.302236+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:07:54.302553+00:00",
+    "finished": "2026-10-19T04:07:59.544787+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "rust",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:07:59.545122+00:00",
+    "finished": "2026-10-19T04:08:52.437666+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:08:52.438040+00:00",
+    "finished": "2026-10-19T04:08:58.165511+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--check"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:08:58.165837+00:00",
+    "finished": "2026-10-19T04:08:58.435148+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "cargo-lock",
+    "command": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:08:58.435538+00:00",
+    "finished": "2026-10-19T04:09:01.469406+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "policy",
+    "command": [
+      "node",
+      "--input-type=module",
+      "-e",
+      "import assert from 'node:assert/strict'; import {validateReleaseVersion} from './scripts/check-release-version.mjs'; assert.equal(validateReleaseVersion('0.5.6').retired,true); assert.equal(validateReleaseVersion('0.5.7').valid,true); console.log('Failed v0.5.6 refused; v0.5.7 eligible');"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:09:01.469774+00:00",
+    "finished": "2026-10-19T04:09:01.492634+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "hygiene",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:09:01.492939+00:00",
+    "finished": "2026-10-19T04:09:01.507044+00:00",
+    "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+  }
+]

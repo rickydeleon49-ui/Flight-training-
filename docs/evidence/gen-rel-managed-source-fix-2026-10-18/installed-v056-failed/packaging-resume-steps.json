@@ -1,0 +1,77 @@
+[
+  {
+    "step": "resume-attach",
+    "command": [
+      "hdiutil",
+      "attach",
+      "-readonly",
+      "-nobrowse",
+      "-mountpoint",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her.Flight.Deck_0.5.6_aarch64_LOCAL_ADHOC.dmg"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "resume-read-only",
+    "command": [
+      "diskutil",
+      "info",
+      "-plist",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "resume-mounted-verify",
+    "command": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "resume-install",
+    "command": [
+      "ditto",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt/Her Flight Deck.app",
+      "/Users/rickymac/Applications/Her Flight Deck Verification v0.5.6 bb68b9a/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "resume-detach",
+    "command": [
+      "hdiutil",
+      "detach",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "installed-verify",
+    "command": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "/Users/rickymac/Applications/Her Flight Deck Verification v0.5.6 bb68b9a/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "gatekeeper",
+    "command": [
+      "spctl",
+      "--assess",
+      "--type",
+      "execute",
+      "--verbose=4",
+      "/Users/rickymac/Applications/Her Flight Deck Verification v0.5.6 bb68b9a/Her Flight Deck.app"
+    ],
+    "exit": 3
+  }
+]
