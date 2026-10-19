@@ -56,6 +56,9 @@ it.each([
   const item = { kind, itemId: kind === "summary" ? "summary" : "item", fields };
   expect(assignItemIds([item])[0]!.fields).toEqual(fields);
   code(() => assignItemIds([{ ...item, fields: over }]), "invalid_content");
+  // Surrounding whitespace is not counted, matching card review and import.
+  const padded = fields.map((field) => ` ${field}\n`);
+  expect(assignItemIds([{ ...item, fields: padded }])[0]!.fields).toEqual(padded);
 });
 
 it("accepts exactly the section/card counts and refuses an extra item", () => {
@@ -256,8 +259,26 @@ it("refuses an edit requiring retirement 2,001 without losing the current state"
   const before = JSON.stringify(current);
   await expect(prepareStudyEdit(current, { kind: "delete", itemId: "card-a" })).rejects.toMatchObject({ code: "retirement_limit" });
   expect(JSON.stringify(current)).toBe(before);
-  const provenanceOnly = await prepareStudyEdit(current, { kind: "edit", itemId: "card-a", fields: card().fields, origin: "user" });
-  expect(provenanceOnly.next.retired).toHaveLength(2000);
+  const unchanged = await prepareStudyEdit(current, { kind: "edit", itemId: "card-a", fields: card().fields, origin: "user" });
+  expect(unchanged.next.retired).toHaveLength(2000);
+});
+
+it("treats an unchanged save as no change, so generated wording is not relabelled as hers", async () => {
+  const edit = await prepareStudyEdit({ items: [card()], retired: [] }, { kind: "edit", itemId: "card-a", fields: card().fields, origin: "user" });
+  expect(edit.next).toBe(edit.previous);
+  expect(itemOriginLabel(edit.next.items[0]!, "gemini")).toBe("Gemini");
+});
+
+it("keeps an edited instructor correction private unless she deliberately replaces it", async () => {
+  const instructor = { ...card("fix"), origin: "instructor" as const, replaces: "card-a" };
+  const current = { items: [instructor], retired: [] };
+  await expect(prepareStudyEdit(current, { kind: "edit", itemId: "fix", fields: ["Which wing?", "Upwind."], origin: "user" })).rejects.toMatchObject({ code: "invalid_content" });
+  const reworded = await prepareStudyEdit(current, { kind: "edit", itemId: "fix", fields: ["Which wing?", "Upwind."], origin: "instructor" });
+  expect(reworded.next.items[0]).toMatchObject({ itemId: "fix", origin: "instructor", replaces: "card-a" });
+  expect(selectExportItems(reworded.next.items)).toEqual([]);
+  const replaced = await prepareStudyEdit(current, { kind: "correct", itemId: "fix", fields: ["Which wing?", "Upwind."], origin: "user" }, () => "mine");
+  expect(replaced.next.items[0]).toMatchObject({ itemId: "mine", origin: "user", replaces: "fix" });
+  expect(current.items[0]).toEqual(instructor);
 });
 
 it("refuses stale targets and correction-ID collisions without changing input", async () => {

@@ -18,7 +18,7 @@ The owner requested review/merge of PRs #234 and #235, followed by continued imp
 
 ## Implementation details that the next storage change must preserve
 
-The view-model field order is `[summary]`, `[heading, body]`, `[front, back]`. Field bounds reuse the existing study-packet constants and source-page range. Draft fields are bounded by raw Unicode scalar count, including whitespace; no text is silently clipped. Empty summary is allowed; section fields and card sides must be nonblank. Existing invalid legacy content needs an explicit repair/refusal UI, not a mapper that silently drops it.
+The view-model field order is `[summary]`, `[heading, body]`, `[front, back]`. Field bounds reuse the existing study-packet constants and source-page range. Draft fields are bounded by trimmed Unicode scalar count, the same measure as card review (`isValidCardText`, native `is_valid_card_text`) and import; no text is silently clipped. Empty summary is allowed; section fields and card sides must be nonblank. Existing invalid legacy content needs an explicit repair/refusal UI, not a mapper that silently drops it.
 
 Retirement digest framing is `SHA256(UTF8(JSON.stringify(normalizedFields)))`. Normalization is per field before framing. It is a new retirement digest, **not** a change to card review hashes or saved-search digests. Independent Node crypto checks a fixed framed example. Native parity vectors are required before a native writer persists it.
 
@@ -31,6 +31,16 @@ Near matching is approximate: different wording, terms outside the retained 64, 
 The focused authoring suite has **55 passing cases**: legacy IDs/collisions, malformed input and text/count boundaries, Unicode/field framing, retirement bounds, near/exact/new classifications, deterministic strongest match, stale/invalid choices, asynchronous input mutation, origin labels, privacy default, complete edit plans, source pages and refusal without state loss.
 
 These are tests for newly introduced behavior, not a claimed pre-existing regression reproduction. No new dependency, lockfile, migration, native code or release flag changed. **Final sequential gate on accepted main plus the core: 3,835 frontend tests passed / 6 skipped, zero unhandled errors; typecheck, frontend build and whitespace all exit 0.** Complete output, exits and hashes are in `docs/evidence/offline-03a-authoring-core-2026-10-19/`. Native tests/benchmarks can be reused for unchanged native code; no installed acceptance is claimed.
+
+## Independent review corrections (Claude, round 1)
+
+Claude reviewed `750c90c` locally (55/55) and returned RED with one blocking and three minor findings; all four are corrected on `claude/offline-03a-core-fixes`:
+1. **Instructor privacy:** an ordinary edit of an instructor correction must keep `origin: "instructor"`; an attempt to relabel it as hers is refused, so it cannot become exportable by default. Replacing it with her own item remains possible only through a deliberate correction.
+2. **No relabel without change:** an edit whose fields are unchanged returns `next === previous`, so generated wording is never marked User-created and nothing should be saved.
+3. **Ordinary rewrites are retired:** recorded as proposal revision 5 (§2.2), including the capacity consequence.
+4. **Length measure:** fields are bounded by trimmed code points, matching card review and import, so a set the app accepts is not refused for editing.
+
+Focused suite: **57 passing cases**. Non-blocking notes for the integration work: a 500-candidate preview against a full 2,000-entry ledger took about 1.3 s in Node on an Apple Silicon Mac, so measure it or move it off the main thread before wiring the UI; and the core does not detect regenerated candidates that duplicate an **active** item, which the Keep-my-items merge must handle.
 
 ## Still needed to complete 03a
 

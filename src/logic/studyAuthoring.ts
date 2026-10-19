@@ -4,7 +4,7 @@
  * Persistence/UI must integrate it with the approved atomic history contract.
  */
 import { newId } from "@/lib/id";
-import { sha256Hex } from "./cardIdentity";
+import { sha256Hex, trimmedCodePoints } from "./cardIdentity";
 import { LIMITS } from "./studyPacket/limits";
 
 export const MAX_RETIRED_ITEMS = 2000;
@@ -67,7 +67,8 @@ function validItem(item: StudyItem): void {
   const caps = item.kind === "summary" ? [LIMITS.summary] : item.kind === "section" ? [LIMITS.heading, LIMITS.body] : [LIMITS.front, LIMITS.back];
   if (item.fields.length !== caps.length) invalid();
   item.fields.forEach((field, i) => {
-    if (typeof field !== "string" || loneSurrogate.test(field) || Array.from(field).length > caps[i]!) invalid();
+    // Same measure as card review and import: surrounding whitespace is not counted.
+    if (typeof field !== "string" || loneSurrogate.test(field) || trimmedCodePoints(field) > caps[i]!) invalid();
     if (item.kind !== "summary" && !field.trim()) invalid();
   });
 }
@@ -236,6 +237,7 @@ function stateCopy(state: AuthoringState): AuthoringState {
  * A complete local edit plan, retaining both logical states. Atomic storage
  * must still check the current revision and persist the FULL prior set's
  * metadata/text with this change. This plan itself never writes history.
+ * An edit that changes nothing returns `next === previous`; save nothing then.
  */
 export async function prepareStudyEdit(current: AuthoringState, edit: StudyEdit, makeId: () => string = newId): Promise<PreparedStudyEdit> {
   const previous = stateCopy(current);
@@ -256,6 +258,12 @@ export async function prepareStudyEdit(current: AuthoringState, edit: StudyEdit,
     } else {
       if (edit.origin !== "user" && edit.origin !== "instructor") invalid();
       const replacing = action === "correct";
+      const unchanged = JSON.stringify(original.fields) === JSON.stringify(edit.fields);
+      // Rewording her instructor's correction must not make it exportable by default;
+      // only a deliberate correction can replace it with her own item.
+      if (!replacing && original.origin === "instructor" && edit.origin !== "instructor") invalid();
+      // Saving generated wording unchanged does not make it hers.
+      if (!replacing && unchanged) return Object.freeze({ previous, next: previous, reason: action });
       const nextId = replacing && original.kind !== "summary" ? makeId() : original.itemId;
       if (replacing && original.kind !== "summary" && nextId === original.itemId) invalid();
       items[at] = cloneItem({ ...original, fields: [...edit.fields], origin: edit.origin,
@@ -263,7 +271,7 @@ export async function prepareStudyEdit(current: AuthoringState, edit: StudyEdit,
       validateItems(items);
       // An ordinary rewrite also retires the prior wording; regeneration
       // must not quietly bring it back next to her edited version.
-      if (JSON.stringify(original.fields) !== JSON.stringify(items[at]!.fields) || replacing) retirement = await retireItem(original, "corrected");
+      if (!unchanged || replacing) retirement = await retireItem(original, "corrected");
     }
   } else invalid();
   validateItems(items);
