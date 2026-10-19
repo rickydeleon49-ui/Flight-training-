@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -153,9 +153,18 @@ function MaterialDetailPage() {
   // card or practice question it names, only while it is unchanged.
   const [linkTarget, setLinkTarget] = useState<MaterialLinkTarget | null>(null);
   const linkKey = location.search;
+  // The study set's own text: a link is checked again whenever it changes,
+  // and not on every unrelated reload.
+  const studyText = useMemo(
+    () => (studySet ? JSON.stringify([studySet.summary, studySet.sections, studySet.flashcards]) : ""),
+    [studySet],
+  );
+  const scrolledFor = useRef<string | null>(null);
   const practiceRepository = repositories?.practiceSessions;
   useEffect(() => {
     let live = true;
+    // Whatever was resolved before no longer counts until checked again.
+    setLinkTarget(null);
     void resolveMaterialLink(
       new URLSearchParams(linkKey),
       studySet ? { summary: studySet.summary, sections: studySet.sections, flashcards: studySet.flashcards } : null,
@@ -174,12 +183,15 @@ function MaterialDetailPage() {
     return () => {
       live = false;
     };
-    // Resolved once per link and study-set revision.
-  }, [linkKey, materialId, studySet?.updatedAt, practiceRepository]);
+    // Checked again whenever the loaded study set changes at all: its text,
+    // not its timestamp, decides (two saves can share a timestamp).
+  }, [linkKey, materialId, studyText, practiceRepository]);
   useEffect(() => {
     const anchor = linkTarget ? materialLinkAnchor(linkTarget) : null;
-    if (anchor) document.getElementById(anchor)?.scrollIntoView?.({ block: "center" });
-  }, [linkTarget]);
+    if (!anchor || scrolledFor.current === linkKey) return;
+    scrolledFor.current = linkKey;
+    document.getElementById(anchor)?.scrollIntoView?.({ block: "center" });
+  }, [linkTarget, linkKey]);
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );

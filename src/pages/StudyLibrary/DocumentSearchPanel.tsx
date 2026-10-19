@@ -141,28 +141,32 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
       mine: number,
       types: readonly ContentType[] = ALL_CONTENT_TYPES,
       attempt = 0,
+      /** "Show more" for one section: the other section is kept as it is. */
+      paging = false,
     ): Promise<void> => {
       try {
         const response = await searchOfflineContent(text, materialIds, offset, types);
         if (generation.current !== mine) return;
         const documents = types.includes("documentPages");
         setResults((previous) => {
-          const paging = offset > 0 && previous?.query === text ? previous : null;
+          // Paging is a request for one section, at whatever offset the
+          // native side gave (0 included, after trimming); never inferred.
+          const kept = paging && previous?.query === text ? previous : null;
           const saved = response.saved ?? null;
           return {
             query: text,
             groups: !documents
-              ? (paging?.groups ?? [])
-              : paging
-                ? appendGroups(paging.groups, response.groups)
+              ? (kept?.groups ?? [])
+              : kept
+                ? appendGroups(kept.groups, response.groups)
                 : response.groups,
-            coverage: documents ? response.coverage : (paging?.coverage ?? response.coverage),
-            nextOffset: documents ? response.nextOffset : (paging?.nextOffset ?? null),
-            moreBeyondCap: documents ? response.moreBeyondCap : (paging?.moreBeyondCap ?? false),
+            coverage: documents ? response.coverage : (kept?.coverage ?? response.coverage),
+            nextOffset: documents ? response.nextOffset : (kept?.nextOffset ?? null),
+            moreBeyondCap: documents ? response.moreBeyondCap : (kept?.moreBeyondCap ?? false),
             saved: !saved
-              ? (paging?.saved ?? null)
-              : paging?.saved
-                ? { ...saved, groups: appendSavedGroups(paging.saved.groups, saved.groups) }
+              ? (kept?.saved ?? null)
+              : kept?.saved
+                ? { ...saved, groups: appendSavedGroups(kept.saved.groups, saved.groups) }
                 : saved,
           };
         });
@@ -173,7 +177,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         if (code === "index_preparing" && attempt < SETUP_RETRIES) {
           setPhase({ kind: "preparing" });
           window.setTimeout(() => {
-            if (generation.current === mine) void run(text, materialIds, offset, mine, types, attempt + 1);
+            if (generation.current === mine) void run(text, materialIds, offset, mine, types, attempt + 1, paging);
           }, SETUP_RETRY_MS);
           return;
         }
@@ -217,7 +221,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
     if (!results || next === null || next === undefined) return;
     const mine = ++generation.current;
     setPhase({ kind: "searching" });
-    void run(results.query, ids, next, mine, section === "documents" ? DOCUMENTS : SAVED_CONTENT_TYPES);
+    void run(results.query, ids, next, mine, section === "documents" ? DOCUMENTS : SAVED_CONTENT_TYPES, 0, true);
   };
 
   // A saved item opens on its own page, after checking it is still the item
@@ -301,9 +305,10 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
     buttons[Math.max(0, Math.min(buttons.length - 1, target))]?.focus();
   };
 
-  const found = results?.groups.length ?? 0;
+  // A page trimmed to nothing still has matches on the next page.
+  const found = (results?.groups.length ?? 0) || (results?.nextOffset != null ? 1 : 0);
   const saved = results?.saved ?? null;
-  const savedFound = saved?.groups.length ?? 0;
+  const savedFound = (saved?.groups.length ?? 0) || (saved?.nextOffset != null ? 1 : 0);
 
   return (
     <>
@@ -322,7 +327,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
                     ? coverageSentence(results.coverage, found)
                     : ""}
           </p>
-          {results && found > 0 ? (
+          {results && results.groups.length > 0 ? (
             <div className="stack stack--3" role="list" aria-label="Matches in your documents" onKeyDown={onKeyDown}>
               {results.groups.map((group) => {
                 const material = byId.get(group.materialId);
@@ -395,7 +400,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
             <p className="small muted" role="status">
               {savedCoverageSentence(saved.state, saved.coverage, savedFound)}
             </p>
-            {savedFound > 0 ? (
+            {saved.groups.length > 0 ? (
               <>
                 <p className="tiny muted">
                   Guides, cards and practice questions are study aids. Check them against FAA guidance and your instructor.

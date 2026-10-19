@@ -504,6 +504,24 @@ describe("saved study content", () => {
     expect(await screen.findByText("Your saved study content is too large to search offline in one go.")).toBeTruthy();
   });
 
+  it("pages a section trimmed to nothing at offset 0 without losing the other section", async () => {
+    const note = { kind: "note" as const, recordId: "n1", rev: null, snippet: "n1" };
+    // The byte bound trimmed every saved group: none shown, next page at 0.
+    service.search
+      .mockResolvedValueOnce(response({ saved: saved({ groups: [], nextOffset: 0 }) }))
+      .mockResolvedValueOnce(response({ groups: [], coverage: coverage({ searchedDocuments: 0 }), saved: saved({ groups: [{ kind: "notes", materialId: null, title: "Your notes", passages: [note] }] }) }));
+    const view = render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    // Not "no matches": there is another page.
+    expect(await view.findByText("Searched your saved study content (1 study guide, 2 notes).")).toBeTruthy();
+    fireEvent.click(view.getByRole("button", { name: "Show more saved matches" }));
+    await waitFor(() => expect(view.getAllByRole("button", { name: "Your notes, Note: open it" })).toHaveLength(1));
+    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 0, ["guides", "cards", "practice", "notes", "questions"]);
+    // The documents section and its coverage are kept.
+    expect(view.getByText("Pilot's Handbook")).toBeTruthy();
+    expect(view.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet.")).toBeTruthy();
+  });
+
   it("merges saved groups and items when a page repeats a trimmed group", () => {
     const g = (ids: string[]) => ({
       kind: "notes" as const,
