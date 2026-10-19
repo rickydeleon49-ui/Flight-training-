@@ -1,6 +1,6 @@
 # OFFLINE-02: search a subject — design and pre-registration — 19 October 2026
 
-**Status: proposal for review. Nothing here is implemented.**
+**Status: proposal for review, revision 2.** Codex round 1 was RED, with nine findings; §10 lists how each was answered. Nothing here is implemented.
 
 The roadmap requires the query rules, limits, fallbacks and measurement targets to be written down before the search engine is built in ([roadmap](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md), OFFLINE-02 "Acceptance and engine decision"). This document does that.
 
@@ -12,181 +12,369 @@ The roadmap requires the query rules, limits, fallbacks and measurement targets 
 
 So, following that evaluation's recommendation and the roadmap's restriction:
 - **The index is native-only and disposable.** It lives in the offline content cache (`content-cache.db`, OFFLINE-01a). It never goes into her authoritative database, a migration, or a backup.
-- **Losing it loses nothing.** It can always be rebuilt from extracted page text and her records.
+- **Losing it loses nothing.** It can be rebuilt from extracted text and her records.
 - **Browser mode keeps today's search.** The Study Library filter and QuickFind still search title, notes, tags, topic and type, and the page says that document text isn't searched there.
-- **No new dependency.** FTS5 ships in the SQLite the app already bundles.
+- **No new dependency or feature flag.** FTS5 ships in the SQLite the app already bundles. Interrupting a query uses `rusqlite`'s default `InterruptHandle`, not the `hooks` feature.
 
 ## 2. Slices
 
 | Slice | Delivers | Ships dormant? |
 | --- | --- | --- |
-| **02a** | Native FTS5 index over prepared PDF pages, a bounded search command, and the measurements in §6 | Yes: it depends on extraction, which stays off in releases until the memory cap is accepted |
-| **02b** | Search UI on the Study Library page: grouped results, snippets, coverage line, keyboard navigation, page destinations | Yes, same flag as 01b |
-| **02c** | Saved study content in the same search: guide sections, card fronts and backs, practice-question **stems**, personal notes, instructor questions. Homework joins when HW-01 ships | The study-record part could ship on its own, since it doesn't need extraction. Decide at 02c |
+| **02a** | The native index (§5), the bounded search command (§6), destination validation (§4) and the measurements in §7 | Yes: it depends on extraction, which stays off in releases until the memory cap is accepted |
+| **02b** | The Study Library search UI: filters, grouped results, snippets, coverage line, keyboard navigation, destinations with fallback | Yes, same flag as 01b |
+| **02c** | Saved study content in the same search: guide sections, card fronts and backs, practice-question **stems**, personal notes, instructor questions. Homework joins when HW-01 ships | The study-record part doesn't need extraction; decide at 02c whether it ships before the cap |
 | **02-OCR** | Scanned pages (separate, gated subtask in the roadmap) | — |
 
-The rest of this document fixes the contract for all three slices, so 02a's index and command don't have to change later.
+This document fixes the contract for all three slices, so 02a's index and command don't change later.
 
 ## 3. Query semantics
 
 **What she types is never passed to FTS5 as query syntax.** The app parses it into a fixed shape and builds the `MATCH` expression itself.
 
-**Parsing:**
-- **Words:** text outside double quotes is split on whitespace. Every word must match, so the words are joined with AND.
-- **Phrases:** text inside a pair of double quotes (`"density altitude"`) must appear as consecutive words. An unmatched quote is treated as ordinary text, not a syntax error.
-- **Literal operators:** every word and phrase is emitted as an FTS5 string literal (`"…"`, with inner quotes doubled). So `AND`, `OR`, `NOT`, `NEAR`, `*`, `^`, `:`, `-`, `+` and parentheses are just text. Characters the tokenizer treats as separators simply separate words, so `V-speeds` means the words `v` and `speeds` next to each other.
-- **No prefix or fuzzy matching in 02a/02b.** `cross` does not find `crosswind`. Prefix-as-you-type and typo tolerance are owner choices (§8). Adding them later doesn't change the index.
-- **Empty query:** a query with no indexable word (only punctuation, for example) returns "Type a word to search", not every document.
+**Parsing**, in order:
+1. **NFKC.** The query is NFKC-normalized (§3.1), exactly as indexed text is.
+2. **Phrases and words.** A pair of double quotes encloses a **phrase**, which must appear as consecutive words. Everything else is split on whitespace into **words**. An unmatched quote is treated as ordinary text, not a syntax error.
+3. **AND.** Every word and phrase must match.
+4. **Literal operators.** Each word and phrase is emitted as an FTS5 string literal (`"…"`, with inner `"` doubled). So `AND`, `OR`, `NOT`, `NEAR`, `*`, `^`, `:`, `-`, `+` and parentheses are just text. Characters the tokenizer treats as separators split words, so `V-speeds` means `v` followed by `speeds`.
+5. **Empty query.** A query with no indexable word, for example only punctuation, returns "Type a word to search", never every document.
 
-**Folding** uses the tokenizer `unicode61 remove_diacritics 2`:
-- **Case:** `METAR` = `metar`.
-- **Accents:** `cafe` = `café`; `remove_diacritics 2` also folds the combining-mark cases that mode 1 misses.
-- **Known limits** (asserted by tests, so they're visible, not hidden):
-  - `ß` is not folded to `ss`;
-  - ligature glyphs like `ﬁ` are not folded to `fi`;
-  - CJK text with no spaces is indexed as one long token, so it matches only whole runs.
-  The ligature limit matters for PDFs: OFFLINE-01c showed some FAA text arrives with ligatures. **Proposal:** apply Unicode NFKC to page text at index time, and to the query. That folds `ﬁ` and full-width forms without touching the stored text. **No new dependency:** `unicode-normalization` 0.1.25 is already a direct dependency of the app (`cargo tree -i unicode-normalization`).
-- **Probe, 19 October 2026,** run on macOS's `sqlite3` 3.54 with the same tokenizer, before 02a asserts it on the bundled 3.46:
-  - `cafe` matches `café`;
-  - `strasse` doesn't match `Straße`;
-  - `final` doesn't match `ﬁnal`;
-  - `"V-speeds"` matches;
-  - `"AND"` matches literally;
-  - `日本語` doesn't match inside `日本語のテキスト`.
+**No prefix or fuzzy matching in 02a/02b.** `cross` does not find `crosswind`. Prefix-as-you-type and typo tolerance are owner choices (§9). Adding prefix later is an index option (`prefix=`) plus a rebuild; it doesn't change the stored text.
 
-**Limits** (refused with a plain message, never truncated silently):
+### 3.1 Folding and normalization (settled)
+
+**Canonical text.** The index and the snippets both use one canonical form of each passage. It is computed natively when a passage is indexed:
+1. **Unicode NFKC**, using `unicode-normalization` 0.1.25, which is already a direct dependency of the app (`cargo tree -i unicode-normalization`).
+2. **Control characters** (C0 and C1, other than space) replaced by a space.
+3. **Private-use code points U+E000 and U+E001** removed. They are the snippet markers (§6.3).
+
+**Where it's stored.** The canonical text is stored in `search_passage.text` (§5), and that is the FTS external content. So the index, a rebuild, a delete and `snippet()` all see the same text. Her original extracted text stays unchanged in `page_text`, which is OFFLINE-01's table.
+
+**Tokenizer:** `unicode61 remove_diacritics 2`. Case and accents fold (`METAR` = `metar`, `cafe` = `café`).
+
+**Known limits.** Each is asserted by a test, so it is visible, not hidden:
+- `ß` doesn't fold to `ss`;
+- CJK text with no spaces is one token per run, so it matches only whole runs.
+
+**NFKC fixes ligatures.** `ﬁnal` → `final`, and `①` → `1`. Full-width letters → ASCII.
+
+**Probe, 19 October 2026,** run on macOS's `sqlite3` 3.54 with the same tokenizer, before 02a asserts the same cases on the bundled 3.46:
+- `cafe` matches `café`;
+- `strasse` doesn't match `Straße`;
+- `final` doesn't match `ﬁnal` without NFKC;
+- `"V-speeds"` matches;
+- `"AND"` matches literally;
+- `日本語` doesn't match inside `日本語のテキスト`.
+
+**Tests where NFKC changes token boundaries:** `ﬁ`, `㎏` → `kg`, `½` → `1⁄2`, and full-width digits. Each asserts the hit **and** that the snippet shows the canonical text with correctly placed marks.
+
+### 3.2 Query limits
+
+These are refused with a plain message, never truncated silently. Lengths are counted in Unicode scalar values after NFKC.
 
 | Limit | Value |
 | --- | --- |
 | Query length | 200 characters |
 | Words plus phrases | 8 |
 | One word or phrase | 64 characters |
-| Results per page | 20 groups (materials), at most 3 passages each |
-| Deepest page of results | offset 200 groups; past that, "Narrow your search" |
-| Snippet | at most 240 characters of plain text around the match |
-| One response | at most 64 KiB serialized (asserted) |
 
-**Ranking and order:**
-- passages rank by FTS5 `bm25`;
-- a material ranks by its best passage;
-- ties break by material title, then material id, then page number, so the order is stable for the same index and query.
+## 4. What is searched, and destinations
 
-**Snippets:**
-- built with FTS5 `snippet()`, using U+E000 and U+E001 as match markers;
-- page text is stored with any U+E000/U+E001 removed, so a marker can only come from `snippet()`;
-- the UI renders a snippet as **text nodes**, splitting on the markers to add `<mark>` elements. It never uses `innerHTML`.
+### 4.1 Eligible passages (02a)
 
-## 4. What is searched, and coverage
+**Which pages:** a PDF page becomes a passage only if its extraction is `complete` for the current `EXTRACTOR_VERSION` and its outcome is `text`. Pages that are `text_unreadable`, `unknown`, `failed`, `image_only` or `blank` are not passages; they are counted in coverage.
 
-**What counts as a destination** (02a): a PDF page is searchable only if all of these hold:
-- the material's file was **verified this session**, so its SHA-256 is the one in the service's verified map;
-- that hash's extraction is `complete` for the current `EXTRACTOR_VERSION`;
-- the page's outcome is `text`.
+**Which materials, at query time:**
+1. **Resolve the materials.** The command takes the material ids the UI's filters selected (§6.1). It resolves them against the authoritative database, as `material_paths` does today, so a deleted material simply has no row.
+2. **Check each file's current identity.** For each resolved file, call the service's `current(path)`. That returns a hash only if the file was hashed this session **and its stamp (size, modification time, inode) still matches**.
+3. **Exclude the rest.** A material with no current hash is excluded and counted as "not checked" or "missing". An old map entry for a replaced file therefore never qualifies.
+4. **Restrict the search.** The search covers only passages whose `content_sha256` is in that per-query set of current hashes. Several materials with the same bytes each get the hit.
 
-Pages that are `text_unreadable`, `unknown`, `failed`, `image_only` or `blank` are not indexed. They show up in coverage instead.
+### 4.2 Opening a hit
 
-**Stale hashes are never offered.** The index is keyed by content hash, not material. At query time the command searches only the hashes currently verified for her materials. So a replaced file's old text can still be in the cache, but it can't be a result. Several materials with the same bytes, such as a duplicate import, each get the hit.
+A result carries `{ materialId, contentSha256, pageIndex }`.
 
-**Coverage line.** Every search response carries category counts. This keeps "no match" separate from "some documents haven't been prepared":
-- **searched:** how many documents, and how many pages (`searchable` or `partial`);
-- **not prepared yet:** includes "not checked this session";
+**Re-checking before opening.** The UI calls `verify_offline_destination(materialId, contentSha256)` first. It **re-hashes** the file, using the bounded hashing from 01a. That also closes the gap where a file is replaced in place with the same stamp. It answers in one of three ways:
+- **ok:** the destination is opened;
+- **changed:** "This document changed since you searched. Search again to see its current pages.";
+- **missing:** the existing missing-file wording.
+
+**Opening the page** reuses the existing navigation controller, the one behind `SourcePageBadge`, including its native **Open** fallback and guidance when the embedded reader can't show the Mac's file. Search adds no new open path.
+
+**Remaining limit (documented):** a replacement after the destination check, but before the reader opens the file, is the same window every existing source-page link has. It isn't widened here.
+
+**Tests:** the file is replaced (with a different stamp, and with the same stamp) between search and open, and the material is deleted between search and open.
+
+### 4.3 Coverage
+
+Every response carries category counts, computed over the **filtered** material set. This keeps "no match" separate from "some documents haven't been prepared":
+- **searched:** how many documents and pages;
+- **not prepared yet;**
+- **not checked this session;**
 - **could not prepare;**
 - **file missing;**
-- **unsearchable pages** in partly searchable documents, split into images versus other.
+- **unsearchable pages** in searched documents, split into images versus other.
 
 Example: "No matches in 12 documents (3,041 pages). 4 documents aren't prepared for offline search yet."
 
-**Revisions and splits.** Each material is its own source with its own title, so a split part and its original are separate results. The result shows the material title and the page number **in that file**. When a split part's page maps to an original page, the existing lineage gives "p. 3 (p. 103 of the original)", reusing `SplitLineageDetails`' mapping. Results never merge text across materials into one answer.
+### 4.4 Revisions, types and splits
 
-**Practice answers (02c):** only question **stems** are indexed. Options, correct answers and explanations are not, so a snippet can never reveal an answer during an attempt.
+Each material is its own source and revision. A result shows:
+- the material **title** and **type** label;
+- the original file name;
+- when its current file was imported;
+- the page number **in that file**.
+
+When the material is a split part, the existing lineage adds the original page, for example "p. 3 (p. 103 of the original)", using the `SplitLineageDetails` mapping. Results never merge text across materials into one answer, and contradictory sources stay separate groups.
+
+### 4.5 Saved study content (02c) and hidden answers
+
+| Category | Indexed | Never indexed |
+| --- | --- | --- |
+| Guide sections | Section heading and body | — |
+| Cards | Front and back | — |
+| Practice questions | **Stem only** | Options, correct answer, explanation |
+| Notes, instructor questions | Title and body | — |
+
+So no snippet can reveal a practice answer during an attempt.
+
+Card backs are the card's own content, not hidden answers under the practice-attempt contract. The roadmap includes them explicitly.
+
+**02c tests:**
+- for each category, expected hits and **exclusions**;
+- with an active attempt, the attempt's options, answer and explanation text is unfindable.
+
+**Imported text is data.** Page or record text that contains HTML, Markdown, or instruction-like text ("ignore previous instructions…") is indexed and shown only as plain text. Search involves no AI and executes nothing. Fixtures assert that the text renders literally.
 
 ## 5. The index (02a)
 
-**Schema.** These go in `content-cache.db` beside the OFFLINE-01a tables. Cache schema 1 becomes 2, and an older cache is rebuilt, which is fine because it is derived data:
+**Where:** `content-cache.db`. The cache schema goes from 1 to 2, and an older cache is disposed and recreated, which is allowed because it is derived data. The cache switches to `journal_mode=WAL`, so a search reads while preparation writes.
 
 ```sql
-CREATE VIRTUAL TABLE page_fts USING fts5(
-  text,
-  content='page_text', content_rowid='rowid',
+CREATE TABLE search_passage (
+  id INTEGER PRIMARY KEY,               -- stable rowid: survives VACUUM
+  content_sha256 TEXT NOT NULL,
+  extractor_version INTEGER NOT NULL,
+  page_index INTEGER NOT NULL,
+  text TEXT NOT NULL,                   -- canonical text (§3.1)
+  UNIQUE (content_sha256, extractor_version, page_index)
+);
+CREATE VIRTUAL TABLE passage_fts USING fts5(
+  text, content='search_passage', content_rowid='id',
   tokenize='unicode61 remove_diacritics 2'
 );
+CREATE TRIGGER search_passage_ai AFTER INSERT ON search_passage BEGIN
+  INSERT INTO passage_fts(rowid, text) VALUES (new.id, new.text);
+END;
+CREATE TRIGGER search_passage_ad AFTER DELETE ON search_passage BEGIN
+  INSERT INTO passage_fts(passage_fts, rowid, text) VALUES ('delete', old.id, old.text);
+END;
+CREATE TRIGGER search_passage_au BEFORE UPDATE ON search_passage BEGIN
+  SELECT RAISE(ABORT, 'search_passage rows are immutable');
+END;
 ```
 
-- **External content:** the FTS index refers to `page_text` rows, so the text isn't stored twice.
-- **Kept in step with `page_text`:** rows are inserted in the same transaction that publishes an extraction, and removed when `prune` deletes a hash.
-- **Recovery:**
-  - a crash mid-publish leaves the cache's `state` not `complete`, so the cache is disposed and rebuilt (existing 01a behavior);
-  - `INSERT INTO page_fts(page_fts) VALUES('integrity-check')` runs when the cache is opened after an unclean shutdown.
-- **Indexed text:** only pages whose outcome is `text`. Rows for other outcomes are written to `page_text`, but not to the FTS table.
+**Why this shape:**
+- **Stable identity:** `id` is an `INTEGER PRIMARY KEY`, an alias for the rowid, which `VACUUM` never renumbers. The composite identity stays `UNIQUE`.
+- **Only eligible text:** `search_passage` contains only eligible passages. So the FTS `'rebuild'` command, which re-reads the whole content table, can never index excluded pages. `page_text` is not the content table.
+- **Deletes always see the indexed text:** the delete trigger passes the **old** row's canonical text to FTS. Rows are immutable, so that text is exactly what was indexed. This holds for every path that removes rows.
 
-**The command:** `search_offline_content(query, offset)`.
-- It is gated like `prepare_offline_content`.
-- It returns `{ groups, coverage, nextOffset }`.
-- It runs on the executor thread's read connection, not the main thread, and is bounded by the §3 limits.
+**Write paths.** Each is one transaction, in this order:
 
-## 6. Measurement plan and targets (pre-registered)
+| Path | Inside one transaction |
+| --- | --- |
+| `publish` (also replacement) | `clear` deletes the hash's `search_passage` rows (the trigger removes their FTS entries), then its `page_text` and `extraction` rows. Then it inserts `extraction`, then `page_text`, then `search_passage` for `text` pages |
+| `publish_failure` | The same `clear`, then the failed `extraction` row |
+| `prune` | For each evicted hash, the same `clear` |
 
-This reuses P54-02's structure. **What changes from P54-02:**
-- the build is a **release** build, not debug;
-- the corpus is page text, not synthetic material records;
-- hardware is recorded: Apple M5, 32 GiB; the minimum-spec Mac is still pending, as for the 01c cap.
+**Tests for each path:** after the transaction, the FTS integrity check passes. Searching the old text finds nothing, and searching the new text finds exactly the expected pages.
+
+**Crashes:** every write is one SQLite transaction. A crash or kill rolls it back to the last committed state, so a reader never sees half a publish. The `state` row isn't involved; it marks only whether the schema was created completely. A test kills the process mid-publish and asserts the previous committed index is intact.
+
+**Validation and repair:**
+- **When the cache is first opened in a process,** the existing `trustworthy()` checks run: schema, `state`, and `PRAGMA quick_check`. Then `INSERT INTO passage_fts(passage_fts, rank) VALUES('integrity-check', 1)` runs, which also compares the index with its external content.
+- **If only the FTS check fails,** `'rebuild'` runs in one transaction, followed by the check again.
+- **If it still fails, or `quick_check` fails,** the whole cache is disposed and recreated. Documents then show "not prepared" and can be prepared again.
+- **Cost:** the check's cost at 30,000 passages is measured (§7). If it exceeds 1 s, it moves off the first search's path to a background check before search is enabled.
+
+## 6. The search command (02a)
+
+### 6.1 Request
+
+`search_offline_content` takes:
+- `query`;
+- `materialIds`: the UI's filtered set. Topic and tag, material, type and revision filters all reduce to this list. At most 5,000 ids;
+- `contentTypes`: in 02a only `documentPages`; 02c adds the rest;
+- `offset`.
+
+It is gated like `prepare_offline_content`.
+
+### 6.2 Isolation, admission and deadline
+
+**Its own thread and connection.** Search runs on a dedicated search thread with its own **read-only** connection to the cache. It never runs on the extraction executor, so a search never waits behind hashing or extraction, and WAL lets it read during a publish.
+
+**Admission:** one search runs at a time, and at most one waits. A newer request replaces the waiting one, which gets `superseded`, and interrupts the running one. Typing therefore never builds a queue.
+
+**Deadline:** 2 s per search. A timer calls the connection's `InterruptHandle`, and the search answers `timeout`: "That search took too long. Try more specific words."
+
+**Bounded work, in two phases:**
+1. **Candidates:**
+   ```sql
+   SELECT rowid, bm25(passage_fts)
+   FROM passage_fts
+   WHERE passage_fts MATCH ?
+     AND rowid IN (SELECT id FROM search_passage
+                   WHERE content_sha256 IN temp.current_sha)
+   ORDER BY rank
+   LIMIT 2000
+   ```
+   `temp.current_sha` is a per-query temp table of the §4.1 hashes. The 2,000 cap bounds the sorter.
+2. **Results:** group the candidates by material, then build snippets **only** for the passages on the requested page.
+
+If more groups exist beyond the 2,000 candidates, `nextOffset` stops there and the UI says "Showing the best matches. Narrow your search to see more."
+
+**Memory:** the search connection sets `PRAGMA cache_size = -16384` (16 MiB) and `temp_store = FILE`. A process-wide SQLite heap limit is **not** used, because it would also constrain her database's connection. The §7 RSS target, including a worst-case common-word query, is the check.
+
+### 6.3 Response bounds, enforced
+
+| Item | Rule |
+| --- | --- |
+| Groups per page | 20 materials, at most 3 passages each |
+| Deepest offset | 200 groups |
+| Snippet | `snippet(passage_fts, 0, U+E000, U+E001, '…', 24)`, then clipped natively to 240 Unicode scalar values. Clipping never splits a marker pair: a mark cut by the clip is closed, and a stray marker is removed |
+| Title, file name, type label | Clipped to 120 scalar values |
+| Whole response | Serialized to JSON natively. If it exceeds **65,536 UTF-8 bytes**, passages are removed from the last group, then whole last groups, until it fits; `nextOffset` points at the first dropped group and `trimmed: true` is set. The bytes actually returned are asserted in tests |
+
+**Markers can't be forged:** canonical text contains no U+E000 or U+E001 (§3.1), so every marker comes from `snippet()`.
+
+**Rendering:** the UI renders a snippet as **text nodes**, splitting on the markers to add `<mark>` elements. It never uses `innerHTML`.
+
+**Fixtures:**
+- control characters;
+- a 10,000-character token;
+- 4-byte UTF-8 text;
+- a 1,000-character title;
+- a page made only of marker characters;
+- 60 maximal passages, to force trimming.
+
+### 6.4 Ranking and order
+
+- passages rank by `bm25`;
+- a material ranks by its best passage;
+- ties break by material title, then material id, then page index.
+
+So the order is stable for the same index, query and filters.
+
+## 7. Measurement plan and targets (pre-registered, frozen)
+
+**Frozen before any timing.** The following are committed and hashed before the first measurement:
+- **the generator:** `docs/evidence/offline-02a-…/generate.py`, with seed `20261019`;
+- **the corpora's SHA-256:** for the real FAA set, the hashes recorded in OFFLINE-01c;
+- **the exact queries;**
+- **the expected-hit files.**
+
+Anything changed after that is reported as a change, with the reason.
+
+**Expected hits:**
+- **How they're produced:** an independent reference, a Python word-boundary scan over the same canonical text using the same folding rules (tested against FTS on fixtures first), gives the expected `(sha, page)` set for every query and corpus.
+- **The check:** FTS must return exactly that set; the comparison uses the candidate set before the display cap.
+- **A mismatch fails the run.**
 
 **Corpora:**
-- **Real:** the hash-recorded FAA set from OFFLINE-01c: the PHAK, with 497 text pages and 1.77 MB of text, and the AFH chapters.
-- **Scaled:** seeded synthetic page text drawn from the real PHAK's vocabulary, with page-length distribution matched to the PHAK. Sizes: **1,000, 10,000 and 30,000 pages**. 30,000 is about 60 handbook-sized documents, well beyond a student's library.
-- **Fixtures:** the §7 regression list.
+- **Real:** the PHAK (497 text pages, 1.77 MB of text) and the AFH chapters, from OFFLINE-01c's hash-recorded set.
+- **Scaled:** generated pages that draw words from the PHAK's canonical vocabulary, with frequencies and page lengths sampled from it. Sizes: **1,000, 10,000 and 30,000 pages**. 30,000 is about 60 handbook-sized documents.
 
-**Method:**
-- 3 fresh processes per size, and 15 samples per query;
-- queries: one common word, one rare word, a two-word phrase, an eight-term query, and a no-match;
-- p95 is computed over all samples of a query type;
-- whole-process peak RSS comes from `/usr/bin/time -l`.
+**Queries** (identical for every corpus):
+
+| Type | Query |
+| --- | --- |
+| Common word | `aircraft` |
+| Rare word | `isogonic`. If the reference scan finds it on no PHAK page, or on more than 3, it is replaced by the alphabetically first word on 1–3 PHAK pages, and the choice is recorded at freeze time |
+| Phrase | `"density altitude"` |
+| Eight terms | `wind shear final approach runway landing pilot airspeed` |
+| No match | `zzqxv` |
+| Worst case | the most frequent indexed word in the corpus, recorded when the corpus is frozen |
+
+**Timing:**
+- **Query time** runs from the command's entry to its serialized response bytes. It excludes IPC and painting, which belong to installed acceptance.
+- **Index time** covers `search_passage` inserts plus commit.
+- **Reopen** means a fresh process, then open plus validation, then the first query.
+
+**Samples:**
+- 3 fresh processes per corpus size;
+- per query type, 3 discarded warm-up queries, then 15 timed;
+- each query type therefore has 45 samples per size;
+- p50 and p95 by the nearest-rank method.
+
+**Storage:**
+- `content-cache.db` size after `VACUUM`, minus the same database built without `search_passage` and `passage_fts`;
+- reported against the canonical text bytes.
+
+**Memory:** whole-process peak RSS from `/usr/bin/time -l`. The concurrent case is a search measured while a PHAK preparation runs in the worker.
+
+**Hardware:** a release build, Apple M5 with 32 GiB, macOS and toolchain versions recorded. The minimum-spec Mac is still pending, as for the 01c cap.
 
 | Target (release build, Apple M5) | Value |
 | --- | --- |
-| Index one prepared PHAK (497 pages) | ≤ 1 s |
-| Cold rebuild of the whole index at 10,000 pages | ≤ 5 s |
-| Warm query p95 at 10,000 pages, every query type | ≤ 50 ms |
-| Warm query p95 at 30,000 pages, every query type | ≤ 150 ms |
-| Reopen the cache and run the first query, 10,000 pages | ≤ 300 ms |
-| Largest serialized response, any query | ≤ 64 KiB (also a hard limit) |
-| Derived index storage, beyond `page_text` | ≤ 1.0 × indexed text bytes |
-| Whole-process peak RSS, search harness at 30,000 pages | ≤ 256 MiB |
+| Index one prepared PHAK (497 passages) | ≤ 1 s |
+| Cold `'rebuild'` at 10,000 passages | ≤ 5 s |
+| Open + validation (integrity check) at 30,000 passages | ≤ 1 s, otherwise background (§5) |
+| Warm query p50, every type, 10,000 passages | ≤ 20 ms |
+| Warm query p95, every type, 10,000 passages | ≤ 50 ms |
+| Warm query p95, every type, 30,000 passages | ≤ 150 ms |
+| Worst-case query p95 at 30,000 passages | ≤ 2 s (the deadline); otherwise the deadline answer is measured and reported |
+| Warm query p95 at 10,000 during a PHAK preparation | ≤ 100 ms |
+| Reopen and first query, 10,000 passages | ≤ 300 ms |
+| Largest response | ≤ 65,536 bytes (a hard limit, §6.3) |
+| Derived index storage | ≤ 1.0 × canonical text bytes |
+| Whole-process peak RSS, search harness at 30,000 passages | ≤ 256 MiB |
 
-**These targets gate 02a only.** If one is missed, it is reported as missed, not retuned after the fact. Production budgets, painted latency in the app and minimum-spec Mac numbers belong to installed acceptance, and the owner sets them.
+**These targets gate 02a only.** A missed target is reported as missed, with its number, never retuned. Production budgets, painted latency in the app and minimum-spec numbers belong to installed acceptance, and the owner sets them.
 
-## 7. Regression corpus
+## 8. Regression corpus
 
 Each case asserts **expected hits and expected exclusions**, by material id and page, not merely a nonempty result.
 
 | Case | Source | Asserts |
 | --- | --- | --- |
-| Text PDF | Real PHAK | Known phrases on known pages, for example "density altitude" |
+| Text PDF | Real PHAK | Reference-scan hit sets for the §7 queries |
 | Image-only and mixed PDFs | Generated | Image pages never hit; coverage counts them |
 | Unreadable font pages | Real PHAK's 25 `text_unreadable` pages | Their garbage text is never a hit |
 | Multi-column, rotated | Generated | Words from each column are found; rotation doesn't drop text |
-| Ligatures, Unicode, symbols | Generated | `ﬁ` and NFKC folding (if adopted), accents, `ß` limit, `°`, `±` |
+| Ligatures, Unicode, symbols | Generated | The NFKC cases in §3.1, accents, `ß` and CJK limits, `°`, `±` |
 | Same topic in several sources | Generated | One group per material, stable order |
-| Replaced file, same material | Generated | Old text gone, new text found |
+| Replaced file, same material | Generated | Old text gone, new text found, both stamp cases (§4.2) |
 | Duplicate bytes, two materials | Generated | Both materials hit |
-| Superseded revision, split parts | Generated with lineage | Page numbers of the part, plus the original page |
+| Superseded revision, split parts | Generated with lineage | Part page and original page shown |
 | Corrupt file, huge compressed page | 01a/01c fixtures | Not indexed; coverage says why |
-| Deleted material | Generated | Never a hit |
-| Interrupted rebuild, killed mid-publish | Fault injection | Cache disposed and rebuilt; no partial index served |
-| Restore from backup | Synthetic restore | Cache disposed; nothing verified; coverage says "not prepared" |
+| Deleted material | Generated | Never a hit, including between search and open |
+| Publish, replacement, failure, prune | Unit | FTS integrity passes; exact hits after each (§5) |
+| Killed mid-publish | Fault injection | Previous committed index intact |
+| Corrupt FTS index | Fault injection | Rebuilt, then searches correctly; a corrupt database is disposed |
+| Restore from backup | Synthetic restore | Nothing verified; coverage says "not checked" |
 | Query syntax | Unit | Operators as text, unmatched quote, empty query, every limit |
-| Snippet safety | Unit | `<script>` in page text renders as text; markers can't be forged |
+| Response bounds | Unit | The §6.3 fixtures; returned bytes ≤ 65,536 |
+| Snippet safety | Unit and UI | HTML and instruction-like text render literally; markers can't be forged |
+| Supersede and deadline | Unit | A newer search interrupts the older one; a slow search answers `timeout` |
+| Hidden answers (02c) | Unit | Practice options, answers and explanations are never hits |
 | No provider | Installed lane, network denied, no key | Restart, search, open a destination; no provider request |
 
-## 8. Owner questions (not blocking 02a)
+## 9. Owner questions (not blocking 02a)
 
-1. **Prefix-as-you-type** (`cross` → `crosswind`) and **typo tolerance:** wanted? Prefix is cheap with FTS5 (`prefix='2 3'` index option). Typo tolerance is not, and would need a vocabulary table.
-2. **NFKC folding:** this needs no new crate. Recommended, so ligatures in FAA text become searchable. It only affects the derived index and the query; her stored text is untouched.
-3. **Topic suggestions:** the roadmap allows "related" suggestions that are clearly marked as not containing the query, with inspectable synonyms. Is a small fixed aviation alias list wanted (for example `VFR` ↔ `visual flight rules`), or literal matches only for now?
+1. **Prefix-as-you-type** (`cross` → `crosswind`) and **typo tolerance:** wanted? Prefix is cheap (`prefix='2 3'` plus a rebuild). Typo tolerance is not, and would need a vocabulary table.
+2. **Topic suggestions:** the roadmap allows "related" suggestions that are clearly marked as not containing the query, with inspectable synonyms. Is a small fixed aviation alias list wanted (for example `VFR` ↔ `visual flight rules`), or literal matches only for now?
 
-## 9. Out of scope here
+**NFKC is no longer a question.** It is settled in §3.1 because it needs no new dependency and touches only derived text; the owner can still veto it.
 
-- OCR (02-OCR);
-- span-level filtering of unmapped-font text (the recorded OFFLINE-01c follow-up). Until it lands, those 25 PHAK pages stay unsearchable, and coverage says so;
-- moving the app's existing in-process `lopdf` parsing into the worker;
-- the release memory cap, which is still rejected pending dedicated-Mac pressure testing.
+## 10. Codex round 1 corrections
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | FTS row identity unstable (`page_text`'s implicit rowid) | `search_passage.id INTEGER PRIMARY KEY` is the external-content rowid; the composite key is `UNIQUE` (§5) |
+| 2 | External-content consistency underspecified; `rebuild` would index excluded pages | The content table holds only eligible passages; triggers delete with the old indexed text on every path; per-path transaction order and tests (§5) |
+| 3 | Crash recovery described wrongly | Transactional rollback stated accurately; validation runs at first open per process with `integrity-check` rank 1; rebuild, then disposal; kill-mid-publish test (§5) |
+| 4 | Limits don't bound work; executor contention | A dedicated search thread and read-only WAL connection; one running plus one waiting, newest supersedes; 2 s interrupt deadline; 2,000-candidate cap; snippets only for shown passages; memory pragmas; worst-case and concurrent measurements (§6.2, §7) |
+| 5 | Stale destinations | Authoritative material resolution plus `current()` stamp check per query; re-hash on open; same-stamp and between-search-and-open tests; the remaining window documented (§4.1, §4.2) |
+| 6 | NFKC versus snippet text | One canonical text, stored as the external content, used by index, rebuild, delete and snippet; originals kept in `page_text`; boundary-changing tests (§3.1) |
+| 7 | 240-character and 64 KiB bounds unenforced | Scalar-value clipping that is marker-safe; metadata clipping; serialized-byte accounting with a trim-and-paginate policy; fixtures (§6.3) |
+| 8 | Measurement choices left open; p50 missing | Seed, generator, hashes, queries and reference expected hits frozen first; timing boundaries, warm-up, nearest-rank p50/p95, storage method; misses reported (§7) |
+| 9 | Filters, type/revision display, Open fallback, hidden-answer and injection tests missing | `materialIds` from the UI's topic/tag/material/type/revision filters plus `contentTypes`; revision display; reuse of the existing navigation controller and Open fallback; 02c exclusion and active-attempt tests; literal-rendering fixtures (§4.4, §4.5, §6.1, §8) |
