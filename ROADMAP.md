@@ -1,3 +1,22 @@
+## OFFLINE-01 inventory and gap-closure proposal; pending review — 19 October 2026
+
+Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed. Revision 5 answers Codex rounds 1–4, all RED on contract gaps: memory bounds, decompression coverage, restore and stale readiness, scan diagnosis, and fail-closed worker dispatch.
+
+**Inventory findings:**
+- Today's search is the Study Library filter (title, notes, topic, type, tags) and QuickFind (material title, notes, tags and file name, plus notes, events, goals, instructor questions and other records). **Neither searches document, guide, card or practice-question text.**
+- Reading never waits on Gemini.
+- Backups exclude any other file in the app folder, but restore doesn't remove such files.
+- Existing features (Check pages, splitting, the page-length check, flashcard batches) parse whole PDFs with `lopdf` inside the main app process. This is an existing exposure, now recorded.
+
+**Proposal:**
+- A worker mode in the shipped binary that is fail-closed on any use of its flag, reuses the P54-02 bounds and finalization rule, and runs one worker at a time.
+- A **capped allocator in the worker**, which bounds the requested bytes of every Rust heap allocation, including `lopdf`'s own decompression. It is not a footprint or RSS bound. A breach is signalled once, without allocating, on a best-effort basis: an undelivered signal reports a generic worker failure, never success. Both aborting and fallible paths are covered, and `realloc` accounting is exact. The measured cap, the footprint overhead, the app-mode cost and the residual risks must be accepted at review. The owner approved direct `flate2`/`weezl` dependencies, but they aren't needed, so 01a changes no dependency.
+- A content-addressed derived `content-cache.db` that stays correct across restores, with readiness verified by a fresh hash in each session. It needs no migration and doesn't choose the search engine.
+- Per-page outcomes from bounded recursive inspection. They never label an unknown cause, and say "image pages", never "scanned".
+- Slices: 01a native, 01b UI, 01c fidelity and release measurements, then installed acceptance. Each stops for authorized integration.
+
+[Proposal](docs/OFFLINE_01_INVENTORY_AND_PROPOSAL_2026-10-19.md). Earlier entries remain historical.
+
 ## Next task: OFFLINE-01; P54-06 phase B part 2 queued — 19 October 2026
 
 **Integrated:**
