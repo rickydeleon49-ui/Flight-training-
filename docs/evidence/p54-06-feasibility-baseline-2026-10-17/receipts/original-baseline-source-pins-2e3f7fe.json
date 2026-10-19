@@ -1,0 +1,51 @@
+{
+  "schema": "hfd-scheduler-baseline-source-pins/1",
+  "baseCommit": "2e3f7fee6f84dd094c23ac0dfd7cd1053d2ccc4d",
+  "files": [
+    {
+      "path": "src/logic/cardScheduler.ts",
+      "bytes": 4215,
+      "sha256": "019dab24fa66d1e3065b7580f9062ac9c3205c46f3ea8df65d0de58f318e0004"
+    },
+    {
+      "path": "src/logic/localDay.ts",
+      "bytes": 2089,
+      "sha256": "3efbaf18db07403430ec6bf751d001181e552e64eed8e53cde7c8be97702c514"
+    },
+    {
+      "path": "src/logic/cardIdentity.ts",
+      "bytes": 5958,
+      "sha256": "3835c35c9e0857bfb017b2929eb5b1015438cffe7659bd5b2e1f35cd4969e18d"
+    },
+    {
+      "path": "src/data/cardReviewTransaction.ts",
+      "bytes": 17966,
+      "sha256": "30c17f500187f8b89e9e40388cc8900bfd1da92293bc9aadc343bfdd6bd756da"
+    },
+    {
+      "path": "src-tauri/src/card_reviews.rs",
+      "bytes": 38347,
+      "sha256": "0d8b7cb7f383aed5e2a1dba3861a4aefebb8fd74ebbe47d7f56e24e9de036403"
+    },
+    {
+      "path": "src-tauri/src/card_reviews_tests.rs",
+      "bytes": 42850,
+      "sha256": "3a7b915dd89c2a18f02567bc690c2b8da1d4f17beaf9315b0fde7da62c88fc0e"
+    },
+    {
+      "path": "src-tauri/migrations/0012_card_reviews.sql",
+      "bytes": 4377,
+      "sha256": "55883212a10b1f5b54289de5b7035a9492e3c96eadf41704529ef1264d664e5e"
+    },
+    {
+      "path": "src/data/cardReviewContract.test.ts",
+      "bytes": 40637,
+      "sha256": "e297add9803c2255f06c0f813aff6a10837d8cc27539b355561bf3e79fb9afbb"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 113946,
+      "sha256": "9b844ed46faea0ed4e3b84ca87c131a264f91ce11deaf4cc88223014b77721d9"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "purpose": "Expected failure: real CLI must refuse a deliberately wrong literal due instant",
+  "case": "new-good",
+  "originalDueAt": "2026-10-07T15:00:00.000Z",
+  "mutatedDueAt": "2026-10-08T15:00:00.000Z",
+  "exit": 1,
+  "stdout": "",
+  "stderr": "{\"status\":\"FAIL\",\"message\":\"new-good: baseline mismatch\\n+ actual - expected\\n\\n  {\\n+   dueAt: '2026-10-07T15:00:00.000Z',\\n-   dueAt: '2026-10-08T15:00:00.000Z',\\n    lapses: 0,\\n    lastReviewedAt: '2026-10-06T15:00:00.000Z',\\n    reps: 1,\\n    schedulerVersion: 'simple-v1',\\n    step: 0\\n\"}\n"
+}

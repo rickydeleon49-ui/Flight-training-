@@ -1,0 +1,184 @@
+TAP version 13
+# Subtest: real production baseline matches every registered literal vector
+ok 1 - real production baseline matches every registered literal vector
+  ---
+  duration_ms: 81.683333
+  type: 'test'
+  ...
+# Subtest: CLI output is identical across two runs and neither fixtures nor source change
+ok 2 - CLI output is identical across two runs and neither fixtures nor source change
+  ---
+  duration_ms: 531.462792
+  type: 'test'
+  ...
+# Subtest: a wrong expected interval fails through the real CLI with no partial PASS
+ok 3 - a wrong expected interval fails through the real CLI with no partial PASS
+  ---
+  duration_ms: 257.761584
+  type: 'test'
+  ...
+# Subtest: an incorrect refusal cannot pass as any generic exception
+ok 4 - an incorrect refusal cannot pass as any generic exception
+  ---
+  duration_ms: 51.546
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects missing required history
+ok 5 - fixture gate rejects missing required history
+  ---
+  duration_ms: 1.370125
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects missing required timezone
+ok 6 - fixture gate rejects missing required timezone
+  ---
+  duration_ms: 0.403166
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects duplicate ID
+ok 7 - fixture gate rejects duplicate ID
+  ---
+  duration_ms: 0.472583
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects empty review stream
+ok 8 - fixture gate rejects empty review stream
+  ---
+  duration_ms: 0.102
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects unknown fields
+ok 9 - fixture gate rejects unknown fields
+  ---
+  duration_ms: 0.683042
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects ambiguous expectation
+ok 10 - fixture gate rejects ambiguous expectation
+  ---
+  duration_ms: 0.4005
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects unknown expected refusal
+ok 11 - fixture gate rejects unknown expected refusal
+  ---
+  duration_ms: 0.381042
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects unknown zone
+ok 12 - fixture gate rejects unknown zone
+  ---
+  duration_ms: 0.407375
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects fractional counter
+ok 13 - fixture gate rejects fractional counter
+  ---
+  duration_ms: 0.1025
+  type: 'test'
+  ...
+# Subtest: fixture gate rejects invalid expected instant
+ok 14 - fixture gate rejects invalid expected instant
+  ---
+  duration_ms: 0.121958
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: retaining IDs cannot hide deleted review transitions
+ok 15 - P54BASE-R1: retaining IDs cannot hide deleted review transitions
+  ---
+  duration_ms: 228.554167
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: retaining IDs and counts cannot replace DST and travel zones with UTC
+ok 16 - P54BASE-R1: retaining IDs and counts cannot replace DST and travel zones with UTC
+  ---
+  duration_ms: 226.372292
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: changing a required rating refuses even with expectations untouched
+ok 17 - P54BASE-R1: changing a required rating refuses even with expectations untouched
+  ---
+  duration_ms: 0.846458
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: changing a required review time refuses even with expectations untouched
+ok 18 - P54BASE-R1: changing a required review time refuses even with expectations untouched
+  ---
+  duration_ms: 0.400708
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: changing a required prior state refuses even with expectations untouched
+ok 19 - P54BASE-R1: changing a required prior state refuses even with expectations untouched
+  ---
+  duration_ms: 0.450875
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: changing a required history class refuses even with expectations untouched
+ok 20 - P54BASE-R1: changing a required history class refuses even with expectations untouched
+  ---
+  duration_ms: 0.401958
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: changing a required local-day time refuses even with expectations untouched
+ok 21 - P54BASE-R1: changing a required local-day time refuses even with expectations untouched
+  ---
+  duration_ms: 0.500833
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: an equivalent reserialization and a distinct extra vector still pass
+ok 22 - P54BASE-R1: an equivalent reserialization and a distinct extra vector still pass
+  ---
+  duration_ms: 50.025625
+  type: 'test'
+  ...
+# Subtest: P54BASE-R1: the contract is bound to its reviewed digest, never to the caller
+ok 23 - P54BASE-R1: the contract is bound to its reviewed digest, never to the caller
+  ---
+  duration_ms: 0.52975
+  type: 'test'
+  ...
+# Subtest: individual and aggregate review limits are enforced before evaluation
+ok 24 - individual and aggregate review limits are enforced before evaluation
+  ---
+  duration_ms: 10.722084
+  type: 'test'
+  ...
+# Subtest: byte reader accepts the cap and refuses cap+1
+ok 25 - byte reader accepts the cap and refuses cap+1
+  ---
+  duration_ms: 0.726708
+  type: 'test'
+  ...
+# Subtest: CLI rejects malformed JSON and unknown bypass flags with no PASS
+ok 26 - CLI rejects malformed JSON and unknown bypass flags with no PASS
+  ---
+  duration_ms: 407.727083
+  type: 'test'
+  ...
+# Subtest: all nine baseline sources are required; a changed hash refuses
+ok 27 - all nine baseline sources are required; a changed hash refuses
+  ---
+  duration_ms: 51.580959
+  type: 'test'
+  ...
+# Subtest: same-length source corruption is caught in a disposable copy
+ok 28 - same-length source corruption is caught in a disposable copy
+  ---
+  duration_ms: 15.548834
+  type: 'test'
+  ...
+# Subtest: an unavailable baseline commit refuses before loading any module
+ok 29 - an unavailable baseline commit refuses before loading any module
+  ---
+  duration_ms: 4.286625
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2128.234625
