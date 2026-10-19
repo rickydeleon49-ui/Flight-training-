@@ -1,4 +1,10 @@
-## OFFLINE-01c merged; OFFLINE-01b readiness UI, round-1 corrections pending re-review — 19 October 2026
+## OFFLINE-01b merged; OFFLINE-02 search design pending review — 19 October 2026
+
+OFFLINE-01b merged as PR #229 (`b65ae4a`) after Codex round 1 was RED and round 2 GREEN. Offline study stays dormant in releases.
+
+**Owner decision (19 October 2026): OFFLINE-02 uses SQLite FTS5.** The index lives in the native, disposable offline content cache, never in her database, a migration or a backup; browser mode keeps today's metadata search. The [design and pre-registration](docs/OFFLINE_02_SEARCH_DESIGN_2026-10-19.md) fixes the query rules (words and phrases only, operators as literal text, case/accent folding, NFKC with the existing `unicode-normalization` crate), limits, coverage, the slices (02a index, 02b UI, 02c study records) and release-build targets, before any engine code. Three owner questions are listed there (prefix search, NFKC, topic aliases); none blocks 02a.
+
+## OFFLINE-01c merged; OFFLINE-01b readiness UI, round-1 corrections — 19 October 2026
 
 OFFLINE-01c merged as PR #228 (`a3324a1`) after Codex rounds 1–3 were RED and round 4 GREEN. The release cap stays rejected pending pressure testing on dedicated minimum-spec Macs.
 
