@@ -1,3 +1,9 @@
+## OFFLINE-03a authoring rules implemented; persistence/editor still pending — 19 October 2026
+
+The first bounded OFFLINE-03a implementation is on `codex/offline-03a-authoring-core`. It prepares immutable add/edit/correct/delete plans with prior logical content retained, stable IDs/source pages, retirement overflow refusal, exact/near-match review, truthful origin labels and private-by-default instructor export selection. **55 focused cases pass.** This is an in-process core, not a raw parser, persisted history or finished manual-editing feature. No production screen imports it and no migration/release flag changed. [Report](OFFLINE_03A_AUTHORING_CORE_REPORT_2026-10-19.md); [reviewer assignment](OFFLINE_03A_AUTHORING_CORE_REVIEWER_PROMPT_2026-10-19.md).
+
+**Next:** review the core, then the remaining coupled 03a migration/browser-native persistence, canonical-origin/backup parity and editor/history/regeneration/export integration. Preserve the owner’s five approved defaults. Complete and review 03a before 03b manual practice questions; 03c remains deferred. Then homework → exports. Do not mark OFFLINE-03a complete or expose a partial writer. Existing release/installed/pressure gates remain open; earlier entries below are history.
+
 ## Current offline-study handoff: OFFLINE-03 defaults approved; search-link recovery pending review — 19 October 2026
 
 PRs #231 (native document search), #232 (search UI) and #233 (saved-content search) are merged; accepted main for this handoff is `fdbf290`. Earlier “ready for PR” entries below are history. Extraction/search remain dormant in release builds.
