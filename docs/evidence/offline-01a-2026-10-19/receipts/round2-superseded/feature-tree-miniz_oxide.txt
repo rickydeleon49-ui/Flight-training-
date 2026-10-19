@@ -1,0 +1,4 @@
+error: specification `miniz_oxide` is ambiguous
+help: re-run this command with one of the following specifications
+  miniz_oxide@0.8.9
+  miniz_oxide@0.9.1

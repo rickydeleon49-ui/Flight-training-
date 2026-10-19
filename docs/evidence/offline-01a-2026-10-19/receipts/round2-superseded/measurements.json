@@ -1,0 +1,195 @@
+{
+  "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
+  "results": [
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.262,
+      "peakRssBytes": 10240000,
+      "peakRssMiB": 9.8,
+      "frames": {
+        "start": 1,
+        "page:text": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 32634,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 32634
+      },
+      "case": "text-1-page",
+      "fileBytes": 587,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.067,
+      "peakRssBytes": 314916864,
+      "peakRssMiB": 300.3,
+      "frames": {
+        "start": 1,
+        "page:text": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 201420294,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 201420294
+      },
+      "case": "content-bomb-64MiB-decoded",
+      "fileBytes": 65827,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": -6,
+      "breachMarker": true,
+      "wallSeconds": 0.07,
+      "peakRssBytes": 550273024,
+      "peakRssMiB": 524.8,
+      "frames": {},
+      "countedPeakBytes": null,
+      "lastFrame": null,
+      "case": "content-bomb-1GiB-decoded",
+      "fileBytes": 1044237,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": -6,
+      "breachMarker": true,
+      "wallSeconds": 0.019,
+      "peakRssBytes": 81625088,
+      "peakRssMiB": 77.8,
+      "frames": {},
+      "countedPeakBytes": null,
+      "lastFrame": null,
+      "case": "content-bomb-1GiB-cap-64MiB",
+      "fileBytes": 1044237,
+      "memoryCapBytes": 67108864
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 12.822,
+      "peakRssBytes": 202375168,
+      "peakRssMiB": 193.0,
+      "frames": {
+        "start": 1,
+        "page:failed": 400,
+        "end": 1
+      },
+      "countedPeakBytes": 46200011,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 46200011
+      },
+      "case": "shared-stream-400-pages-2MiB",
+      "fileBytes": 65593,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": -6,
+      "breachMarker": true,
+      "wallSeconds": 0.375,
+      "peakRssBytes": 281657344,
+      "peakRssMiB": 268.6,
+      "frames": {},
+      "countedPeakBytes": null,
+      "lastFrame": null,
+      "case": "object-stream-bomb-1GiB-at-load",
+      "fileBytes": 1044330,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": 70,
+      "breachMarker": true,
+      "wallSeconds": 0.044,
+      "peakRssBytes": 281706496,
+      "peakRssMiB": 268.7,
+      "frames": {},
+      "countedPeakBytes": null,
+      "lastFrame": null,
+      "case": "xref-stream-bomb-1GiB-at-load",
+      "fileBytes": 1044192,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": 3,
+      "breachMarker": false,
+      "wallSeconds": 0.009,
+      "peakRssBytes": 10682368,
+      "peakRssMiB": 10.2,
+      "frames": {
+        "error": 1
+      },
+      "countedPeakBytes": null,
+      "lastFrame": {
+        "type": "error",
+        "code": "malformed"
+      },
+      "case": "deep-nesting-200000",
+      "fileBytes": 400581,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.402,
+      "peakRssBytes": 315097088,
+      "peakRssMiB": 300.5,
+      "frames": {
+        "start": 1,
+        "page:text": 1,
+        "end": 1
+      },
+      "countedPeakBytes": 305324252,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 305324252
+      },
+      "case": "many-objects-300000",
+      "fileBytes": 22767287,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.529,
+      "peakRssBytes": 21233664,
+      "peakRssMiB": 20.2,
+      "frames": {
+        "start": 1,
+        "page:text": 2000,
+        "end": 1
+      },
+      "countedPeakBytes": 9116726,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 9116726
+      },
+      "case": "churn-2000-distinct-pages",
+      "fileBytes": 697512,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.159,
+      "peakRssBytes": 16105472,
+      "peakRssMiB": 15.4,
+      "frames": {
+        "start": 1,
+        "page:text": 1000,
+        "end": 1
+      },
+      "countedPeakBytes": 4570775,
+      "lastFrame": {
+        "type": "end",
+        "peakBytes": 4570775
+      },
+      "case": "text-1000-pages-3KB",
+      "fileBytes": 347471,
+      "memoryCapBytes": 402653184
+    }
+  ]
+}
