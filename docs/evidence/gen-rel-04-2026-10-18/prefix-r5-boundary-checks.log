@@ -1,0 +1,33 @@
+# Pre-fix: no cancel check at the generation/upload request boundaries
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-04/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.11s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 2 tests
+test gemini::cancel_flow_tests::r5_a_cancel_recorded_as_gemini_is_about_to_be_asked_prevents_the_request ... FAILED
+test gemini::cancel_flow_tests::r5_a_cancel_recorded_as_the_upload_begins_prevents_the_upload ... FAILED
+
+failures:
+
+---- gemini::cancel_flow_tests::r5_a_cancel_recorded_as_gemini_is_about_to_be_asked_prevents_the_request stdout ----
+
+thread 'gemini::cancel_flow_tests::r5_a_cancel_recorded_as_gemini_is_about_to_be_asked_prevents_the_request' (5305787) panicked at src/gemini_cancel_flow_tests.rs:564:79:
+called `Result::unwrap_err()` on an `Ok` value: GeneratedStudyAid { title: "Synthetic airspace", summary: "A synthetic summary.", sections: [StudySection { heading: "Class B", body: "Synthetic body." }], flashcards: [Flashcard { front: "Q", back: "A", source_page: Some(1) }], source_notes: "Synthetic notes.", model: "gemini-3.5-flash" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- gemini::cancel_flow_tests::r5_a_cancel_recorded_as_the_upload_begins_prevents_the_upload stdout ----
+
+thread 'gemini::cancel_flow_tests::r5_a_cancel_recorded_as_the_upload_begins_prevents_the_upload' (5305788) panicked at src/gemini_cancel_flow_tests.rs:580:5:
+assertion `left == right` failed: nothing was uploaded
+  left: 1
+ right: 0
+
+
+failures:
+    gemini::cancel_flow_tests::r5_a_cancel_recorded_as_gemini_is_about_to_be_asked_prevents_the_request
+    gemini::cancel_flow_tests::r5_a_cancel_recorded_as_the_upload_begins_prevents_the_upload
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 667 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `--lib`
+EXIT 101

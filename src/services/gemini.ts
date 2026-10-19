@@ -109,7 +109,49 @@ export interface GenerationJobIdentity {
 }
 
 export type GeminiJobKind = "study-aid" | "practice-test";
-export type GeminiJobStage = "running" | "ready" | "failed" | "interrupted";
+export type GeminiJobStage = "running" | "ready" | "failed" | "interrupted" | "cancelled";
+
+/**
+ * Where a generation has actually got to (GEN-REL-04). Never a percentage:
+ * nothing measures Gemini's own progress.
+ */
+export type GeminiWorkStage =
+  | "preparing"
+  | "uploading"
+  | "waiting-for-file"
+  | "checking-file"
+  | "generating"
+  | "reading"
+  | "validating"
+  | "pausing";
+
+/** One progress event, scoped to its job. */
+export interface GeminiProgressEvent {
+  /** The native job's id, once it has begun. */
+  jobId: string | null;
+  materialId: string;
+  kind: GeminiJobKind;
+  stage: GeminiWorkStage | null;
+  message: string | null;
+  attempt: number;
+  maxAttempts: number;
+}
+
+/** What asking to cancel came to. */
+export interface GeminiCancelOutcome {
+  /** True if the job was still running and is now recorded as cancelled. */
+  cancelled: boolean;
+  stage: GeminiJobStage | null;
+  /** True if its job had not begun yet: it will be refused before anything is sent. */
+  pending?: boolean;
+}
+
+/**
+ * The native cancel message, word for word (src-tauri/src/gemini_cancel.rs).
+ * A generation that ends with it was cancelled; the journal decided.
+ */
+export const GEMINI_CANCELLED_MESSAGE =
+  "Creating this was cancelled, and nothing was saved. If the request had already reached Google, Google may still have processed it.";
 
 /** One recorded generation, as the native journal keeps it. */
 export interface GeminiJobRecord {
@@ -131,12 +173,14 @@ export async function generateStudyAid(
   relativePath: string,
   materialId?: string,
   baseRevision?: string,
+  requestId?: string,
 ): Promise<GeneratedStudyAid & GenerationJobIdentity> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
   return invoke<GeneratedStudyAid & GenerationJobIdentity>("generate_study_aid", {
     relativePath,
     materialId,
     baseRevision,
+    requestId,
   });
 }
 
@@ -144,12 +188,14 @@ export async function generatePracticeTest(
   relativePath: string,
   materialId?: string,
   baseRevision?: string,
+  requestId?: string,
 ): Promise<GeneratedPracticeTest & GenerationJobIdentity> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
   return invoke<GeneratedPracticeTest & GenerationJobIdentity>("generate_practice_test", {
     relativePath,
     materialId,
     baseRevision,
+    requestId,
   });
 }
 
@@ -183,11 +229,26 @@ export async function watchGeminiJobs(
  * this only carries it. Returns a function that stops listening.
  */
 export async function watchGeminiProgress(
-  onMessage: (message: string) => void,
+  onProgress: (event: GeminiProgressEvent) => void,
 ): Promise<UnlistenFn> {
   if (!isTauri()) return () => {};
-  return listen<{ message: string }>("gemini-progress", (event) => {
-    onMessage(event.payload.message);
+  return listen<GeminiProgressEvent>("gemini-progress", (event) => {
+    onProgress(event.payload);
+  });
+}
+
+/**
+ * Ask to cancel a running generation. The native journal decides: a job that
+ * already finished keeps its answer, and the outcome says so.
+ */
+export async function cancelGeminiJob(target: {
+  requestId?: string;
+  jobId?: string;
+}): Promise<GeminiCancelOutcome> {
+  if (!isTauri()) return { cancelled: false, stage: null };
+  return invoke<GeminiCancelOutcome>("cancel_gemini_job", {
+    requestId: target.requestId,
+    jobId: target.jobId,
   });
 }
 

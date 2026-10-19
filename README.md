@@ -259,6 +259,22 @@ itself, because nobody knows whether Google finished it. The journal holds no
 key, upload reference or document bytes, keeps at most eight jobs, and is not
 part of a backup.
 
+**Bounded, honest and cancellable (GEN-REL-03, GEN-REL-04).** One generation
+has one five-minute budget for everything it does: uploading, waiting for
+Google to prepare the PDF, at most three generation attempts (the backup model
+included), the pauses between them and cleanup. Failures say which stage they
+reached (could not connect, upload, no answer in time, answer cut short,
+connection dropped, quota, refusal, blocked or truncated output). Only a
+connection that was never made points at the internet connection. While it
+runs, the study aid shows the stage actually reached, the attempt once there
+has been a retry, and how long it has been going, never a percentage. **Cancel**
+stops it: the job is recorded as cancelled, nothing more is sent and nothing
+is saved, and the message does not promise that Google had not already
+processed a request it received. If the answer arrived before the cancel did,
+it is offered to save or discard rather than saved by itself. After a failure,
+cancel or interruption, **Try again** goes through the usual Send confirmation,
+and a PDF already prepared with Google is reused.
+
 **Which model reads it.** Settings offers two choices once a key is connected.
 **Standard** sends documents to Gemini Flash (`gemini-3.5-flash`, which Google
 now serves as `gemini-3.6-flash`) and works on a free key. **Most capable** sends

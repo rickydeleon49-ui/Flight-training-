@@ -43,6 +43,8 @@ pub(crate) enum Stage {
     Preparing,
     Uploading,
     WaitingForFile,
+    /// Asking Google whether an uploaded copy is ready or still usable.
+    CheckingFile,
     Generating,
     Reading,
     Validating,
@@ -50,11 +52,26 @@ pub(crate) enum Stage {
 }
 
 impl Stage {
+    /// A stable name for the window, which words it for her.
+    pub(crate) fn key(self) -> &'static str {
+        match self {
+            Stage::Preparing => "preparing",
+            Stage::Uploading => "uploading",
+            Stage::WaitingForFile => "waiting-for-file",
+            Stage::CheckingFile => "checking-file",
+            Stage::Generating => "generating",
+            Stage::Reading => "reading",
+            Stage::Validating => "validating",
+            Stage::Pausing => "pausing",
+        }
+    }
+
     fn label(self) -> &'static str {
         match self {
             Stage::Preparing => "preparing the document",
             Stage::Uploading => "uploading the PDF",
             Stage::WaitingForFile => "waiting for Google to prepare the PDF",
+            Stage::CheckingFile => "checking the uploaded PDF",
             Stage::Generating => "waiting for Gemini's answer",
             Stage::Reading => "receiving Gemini's answer",
             Stage::Validating => "checking Gemini's answer",
@@ -77,7 +94,19 @@ pub(crate) struct Budget {
     sleep: Sleep,
     attempts: Mutex<u32>,
     trace: Mutex<Trace>,
+    /// Told each time the stage changes, with the attempts made so far
+    /// (GEN-REL-04's progress). Called outside every lock.
+    observer: Mutex<Option<Observer>>,
+    /// Whether this job may still send a request (GEN-REL-04): the journal's
+    /// answer, asked immediately before every request, pause and cleanup, so
+    /// a cancel recorded before the next submission prevents it, however far
+    /// one poll of the work runs.
+    admission: Mutex<Option<Admission>>,
 }
+
+pub(crate) type Admission = Arc<dyn Fn() -> bool + Send + Sync>;
+
+pub(crate) type Observer = Arc<dyn Fn(Stage, u32) + Send + Sync>;
 
 impl Budget {
     /// The real budget: the system's monotonic clock and the runtime's timer.
@@ -102,7 +131,19 @@ impl Budget {
                 last_status: None,
                 category: None,
             }),
+            observer: Mutex::new(None),
+            admission: Mutex::new(None),
         }
+    }
+
+    /// Follow this budget's stage changes.
+    pub(crate) fn observe(&self, observer: Observer) {
+        *self.observer.lock().unwrap_or_else(|e| e.into_inner()) = Some(observer);
+    }
+
+    /// Ask `admission` before every later request, pause and cleanup.
+    pub(crate) fn attach_admission(&self, admission: Admission) {
+        *self.admission.lock().unwrap_or_else(|e| e.into_inner()) = Some(admission);
     }
 
     pub(crate) fn total(&self) -> Duration {
@@ -136,12 +177,30 @@ impl Budget {
         }
     }
 
+    /// May the next request be sent? Asked immediately before each request.
+    pub(crate) fn admit(&self) -> bool {
+        let admission = self
+            .admission
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
+        match admission {
+            Some(admission) => admission(),
+            None => true,
+        }
+    }
+
+    /// Whether this generation has been cancelled (no longer admitted).
+    pub(crate) fn cancelled(&self) -> bool {
+        !self.admit()
+    }
+
     /// Pause, but only if the pause and a little room for the next request
     /// fit in what remains. `false`: not taken, because it would not fit.
     pub(crate) async fn pause(&self, pause: Duration) -> bool {
         // A request needs at least a moment of its own after the pause.
         let needed = pause.saturating_add(Duration::from_millis(250));
-        if needed >= self.remaining() {
+        if self.cancelled() || needed >= self.remaining() {
             return false;
         }
         self.at(Stage::Pausing);
@@ -164,7 +223,22 @@ impl Budget {
     }
 
     pub(crate) fn at(&self, stage: Stage) {
-        self.trace.lock().unwrap_or_else(|e| e.into_inner()).stage = stage;
+        let changed = {
+            let mut trace = self.trace.lock().unwrap_or_else(|e| e.into_inner());
+            let changed = trace.stage != stage;
+            trace.stage = stage;
+            changed
+        };
+        if changed {
+            let observer = self
+                .observer
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .clone();
+            if let Some(observer) = observer {
+                observer(stage, self.attempts());
+            }
+        }
     }
 
     pub(crate) fn stage(&self) -> Stage {

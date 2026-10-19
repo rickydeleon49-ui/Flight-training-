@@ -1,0 +1,24 @@
+# Pre-fix: as_job_with announcing the job (started) before registering its cancel token, without the recheck
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-04/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.69s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 1 test
+test gemini::cancel_flow_tests::r1_a_cancel_the_moment_the_job_is_announced_stops_it_before_any_work ... FAILED
+
+failures:
+
+---- gemini::cancel_flow_tests::r1_a_cancel_the_moment_the_job_is_announced_stops_it_before_any_work stdout ----
+
+thread 'gemini::cancel_flow_tests::r1_a_cancel_the_moment_the_job_is_announced_stops_it_before_any_work' (5283004) panicked at src/gemini_cancel_flow_tests.rs:418:5:
+the work was never polled
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    gemini::cancel_flow_tests::r1_a_cancel_the_moment_the_job_is_announced_stops_it_before_any_work
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 665 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`
+EXIT 101

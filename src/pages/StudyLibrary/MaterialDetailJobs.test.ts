@@ -158,7 +158,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
     await open("/study/mat-a");
     await startStudyAid();
-    await waitFor(() => expect(generate).toHaveBeenCalledWith("documents/mat-a.pdf", "mat-a", undefined));
+    await waitFor(() => expect(generate).toHaveBeenCalledWith("documents/mat-a.pdf", "mat-a", undefined, expect.stringMatching(/^req-/)));
 
     await act(async () => navigate("/study/mat-b"));
     await screen.findByRole("heading", { name: "Material B" });

@@ -69,7 +69,26 @@ pub(crate) enum JobStage {
     Ready,
     Failed,
     Interrupted,
+    /// She cancelled it while it ran (GEN-REL-04). Never resent.
+    Cancelled,
 }
+
+/// What asking to cancel a job came to.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CancelOutcome {
+    /// True if the job was still running and is now recorded as cancelled.
+    pub cancelled: bool,
+    /// The job's stage now, if it is known.
+    pub stage: Option<JobStage>,
+    /// True if no job for this request had begun yet: the cancel is held, and
+    /// the job will be refused before anything is sent.
+    #[serde(default)]
+    pub pending: bool,
+}
+
+/// Cancels held for requests whose job has not begun yet.
+const MAX_PENDING_CANCELS: usize = 32;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -86,6 +105,10 @@ pub(crate) struct JobRecord {
     /// none. A save is refused if something else has been saved since.
     #[serde(default)]
     pub base_revision: Option<String>,
+    /// The window's own id for the request (GEN-REL-04), so it can cancel the
+    /// job before it has learned the job's id.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
     pub stage: JobStage,
     pub created_at: i64,
     pub updated_at: i64,
@@ -147,6 +170,13 @@ pub(crate) struct Journal {
     /// cleared. It lasts the whole launch if clearing fails, so the next
     /// launch's retry can never clear answers made in the meantime.
     quarantined: bool,
+    /// Requests cancelled before their job began (GEN-REL-04). Checked under
+    /// the same lock as `begin`, so a cancel can never slip between them.
+    pending_cancels: Vec<String>,
+    /// Jobs whose command is still running, cancelled or not (GENREL04-R6).
+    /// Until the command has settled, its record (and so its cancel decision)
+    /// cannot be acknowledged, replaced or evicted, and nothing new begins.
+    live: std::collections::HashSet<String>,
 }
 
 impl Journal {
@@ -173,6 +203,8 @@ impl Journal {
             // A restore marker beside the journal means a restore committed
             // and has not finished tidying up: its old jobs are not trusted.
             quarantined: root.join(crate::backup::RESTORE_JOURNAL_FILE).exists(),
+            pending_cancels: Vec::new(),
+            live: std::collections::HashSet::new(),
         }
     }
 
@@ -188,6 +220,7 @@ impl Journal {
     /// the lock is released. The disk then still says `running`, which the
     /// next start reports, honestly, as interrupted.
     fn abandon(&mut self, id: &str) {
+        self.live.remove(id);
         self.jobs.retain(|j| j.id != id);
         let _ = write(&self.root, &self.jobs);
     }
@@ -200,6 +233,7 @@ impl Journal {
     }
 
     /// Start a job. Only one runs at a time, whatever page asked.
+    #[cfg(test)]
     pub(crate) fn begin(
         &mut self,
         kind: JobKind,
@@ -208,8 +242,40 @@ impl Journal {
         content_sha256: &str,
         base_revision: Option<&str>,
     ) -> Result<String, String> {
+        self.begin_request(
+            kind,
+            material_id,
+            relative_path,
+            content_sha256,
+            base_revision,
+            None,
+        )
+    }
+
+    /// `begin`, for a request the window can cancel by its own id. A request
+    /// already cancelled is refused here, before anything is sent.
+    pub(crate) fn begin_request(
+        &mut self,
+        kind: JobKind,
+        material_id: &str,
+        relative_path: &str,
+        content_sha256: &str,
+        base_revision: Option<&str>,
+        request_id: Option<&str>,
+    ) -> Result<String, String> {
         if self.quarantined {
             return Err(RESTORING.to_string());
+        }
+        if let Some(request) = request_id {
+            if !valid_identity(request) {
+                return Err(
+                    "That study material could not be identified, so nothing was sent.".to_string(),
+                );
+            }
+            if let Some(at) = self.pending_cancels.iter().position(|r| r == request) {
+                self.pending_cancels.remove(at);
+                return Err(crate::gemini_cancel::CANCELLED.to_string());
+            }
         }
         if !valid_identity(material_id) || !valid_identity(relative_path) {
             return Err(
@@ -221,7 +287,9 @@ impl Journal {
                 "That study material could not be identified, so nothing was sent.".to_string(),
             );
         }
-        if self.jobs.iter().any(|j| j.stage == JobStage::Running) {
+        // One at a time, until the previous command has fully settled: a
+        // cancelled job's command may still be finishing.
+        if !self.live.is_empty() || self.jobs.iter().any(|j| j.stage == JobStage::Running) {
             return Err(BUSY.to_string());
         }
         // A finished answer is never thrown away by asking again: she saves or
@@ -248,7 +316,12 @@ impl Journal {
             let Some(victim) = next
                 .iter()
                 .enumerate()
-                .filter(|(_, j)| matches!(j.stage, JobStage::Failed | JobStage::Interrupted))
+                .filter(|(_, j)| {
+                    matches!(
+                        j.stage,
+                        JobStage::Failed | JobStage::Interrupted | JobStage::Cancelled
+                    )
+                })
                 .min_by_key(|(_, j)| j.updated_at)
                 .map(|(i, _)| i)
             else {
@@ -265,6 +338,7 @@ impl Journal {
             relative_path: relative_path.to_string(),
             content_sha256: content_sha256.to_string(),
             base_revision: base_revision.map(str::to_string),
+            request_id: request_id.map(str::to_string),
             stage: JobStage::Running,
             created_at: at,
             updated_at: at,
@@ -272,7 +346,26 @@ impl Journal {
             error: None,
         });
         self.commit(next)?;
+        self.live.insert(id.clone());
         Ok(id)
+    }
+
+    /// May this job send its next request (GENREL04-R8/R9)? Only while it is
+    /// still running. Asked under the journal lock, the same lock under which
+    /// a cancel is recorded, so a cancel that is recorded first always wins:
+    /// no request is admitted after it, whether or not its work has been
+    /// woken yet.
+    pub(crate) fn admits(&self, id: &str) -> bool {
+        !self.quarantined
+            && self
+                .jobs
+                .iter()
+                .any(|j| j.id == id && j.stage == JobStage::Running)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn is_live(&self, id: &str) -> bool {
+        self.live.contains(id)
     }
 
     /// Record the validated answer: the checkpoint a save is made from. An
@@ -302,7 +395,10 @@ impl Journal {
     }
 
     /// Move a running job to its outcome, on disk first.
+    /// The owning command is done with this job: whatever its outcome, it is
+    /// no longer live.
     fn settle(&mut self, id: &str, change: impl FnOnce(&mut JobRecord)) -> Result<(), String> {
+        self.live.remove(id);
         let mut next = self.jobs.clone();
         let Some(job) = next
             .iter_mut()
@@ -321,10 +417,91 @@ impl Journal {
         }
     }
 
+    /// She asked to cancel this job. It is cancelled only if it is still
+    /// running: a job that already finished keeps its outcome. Recorded on
+    /// disk first; only then may its work be stopped.
+    pub(crate) fn cancel(&mut self, id: &str) -> Result<CancelOutcome, String> {
+        if !valid_job_id(id) || self.quarantined {
+            return Ok(CancelOutcome {
+                cancelled: false,
+                stage: None,
+                pending: false,
+            });
+        }
+        let stage = self.jobs.iter().find(|j| j.id == id).map(|j| j.stage);
+        if stage != Some(JobStage::Running) {
+            return Ok(CancelOutcome {
+                cancelled: false,
+                stage,
+                pending: false,
+            });
+        }
+        let mut next = self.jobs.clone();
+        if let Some(job) = next.iter_mut().find(|j| j.id == id) {
+            job.stage = JobStage::Cancelled;
+            job.error = Some(crate::gemini_cancel::CANCELLED.to_string());
+            job.updated_at = now();
+        }
+        self.commit(next)?;
+        Ok(CancelOutcome {
+            cancelled: true,
+            stage: Some(JobStage::Cancelled),
+            pending: false,
+        })
+    }
+
+    /// Cancel by the window's request id. If that request's job has not begun
+    /// yet, the cancel is held, and `begin_request` will refuse it. Returns the
+    /// outcome and, when known, the job's id.
+    pub(crate) fn cancel_request(
+        &mut self,
+        request_id: &str,
+    ) -> Result<(CancelOutcome, Option<String>), String> {
+        if !valid_identity(request_id) || self.quarantined {
+            return Ok((
+                CancelOutcome {
+                    cancelled: false,
+                    stage: None,
+                    pending: false,
+                },
+                None,
+            ));
+        }
+        let job = self
+            .jobs
+            .iter()
+            .find(|j| j.request_id.as_deref() == Some(request_id))
+            .map(|j| j.id.clone());
+        match job {
+            Some(id) => {
+                let outcome = self.cancel(&id)?;
+                Ok((outcome, Some(id)))
+            }
+            None => {
+                if !self.pending_cancels.iter().any(|r| r == request_id) {
+                    if self.pending_cancels.len() >= MAX_PENDING_CANCELS {
+                        self.pending_cancels.remove(0);
+                    }
+                    self.pending_cancels.push(request_id.to_string());
+                }
+                Ok((
+                    CancelOutcome {
+                        cancelled: false,
+                        stage: None,
+                        pending: true,
+                    },
+                    None,
+                ))
+            }
+        }
+    }
+
     /// The window saved or dismissed this job: forget it. A failed write keeps
     /// it, so the window can try again.
     pub(crate) fn acknowledge(&mut self, id: &str) -> Result<bool, String> {
-        if !valid_job_id(id) || self.quarantined {
+        // A job whose command is still finishing keeps its record, so its
+        // cancel decision cannot be erased.
+        if !valid_job_id(id) || self.quarantined || self.live.contains(id) {
             return Ok(false);
         }
         let next: Vec<JobRecord> = self

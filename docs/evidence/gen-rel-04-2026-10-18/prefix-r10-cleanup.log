@@ -1,0 +1,26 @@
+# Pre-fix mechanism: generation cleanup deletes unconditionally (no admission)
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-04/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.20s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 1 test
+test gemini::cancel_flow_tests::r10_a_cancel_at_a_fresh_uploads_readiness_check_sends_no_check_delete_or_generation ... FAILED
+
+failures:
+
+---- gemini::cancel_flow_tests::r10_a_cancel_at_a_fresh_uploads_readiness_check_sends_no_check_delete_or_generation stdout ----
+
+thread 'gemini::cancel_flow_tests::r10_a_cancel_at_a_fresh_uploads_readiness_check_sends_no_check_delete_or_generation' (5347196) panicked at src/gemini_cancel_flow_tests.rs:718:5:
+assertion `left == right` failed: no cleanup request after the cancel
+  left: 1
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    gemini::cancel_flow_tests::r10_a_cancel_at_a_fresh_uploads_readiness_check_sends_no_check_delete_or_generation
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 670 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `--lib`
+EXIT 101

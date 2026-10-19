@@ -1,3 +1,18 @@
+## GEN-REL-04 accepted by Codex review (round 6 GREEN) and integrated by Claude — 18 October 2026
+
+**Generation progress is now honest and job-scoped**, and it can be cancelled.
+
+- **Progress.** Each event names its job and the stage actually reached (preparing, uploading, Google preparing the PDF, checking the uploaded copy, waiting for Gemini, receiving, checking, pausing, saving), plus the attempt and the elapsed time. It is shown in a polite live status, never as a percentage.
+- **Cancel** is a real, keyboard-reachable button. The journal decides, under its lock, whether a job is cancelled or completes, and every request (generation, upload, file check, each cleanup DELETE) asks the journal for admission under that same lock. Once a cancel is recorded, nothing more is sent, and nothing is saved.
+- **Cancel by request id.** A cancel goes by the window's own request id, so it works without progress events and before the job has even begun.
+- **A cancelled job never comes back on its own.** It survives a restart as cancelled and is never resent. Its record cannot be removed while its command is still finishing.
+- **An answer that beat the cancel** is offered to save or discard, never saved by itself.
+- **Recovery.** After a failure, cancel or interruption, **Try again** goes through the Send confirmation and reuses a PDF already prepared with Google. **Save again** remains checkpoint-only. GENREL03-R1 (file-check diagnostics) is closed.
+
+Codex review took six rounds: R1–R4, R5–R6, R7–R8, R9–R10, R11, then GREEN, all corrected with regression tests whose pre-fix failures are kept. Non-blocking GENREL04-R12 (keep queued cleanup entries if a cancel drops the cleanup future) is carried into GEN-REL-05. [Report](docs/GEN_REL_04_IMPLEMENTATION_REPORT_2026-10-18.md) and [round-6 review](docs/evidence/gen-rel-04-2026-10-18/review-r6/codex-review-round6-green.md). Live-provider and installed-Mac behavior remain UNVERIFIED.
+
+The `DocumentPagesPanel` click-ownership fix (PR #216, Codex GREEN) was merged first, under the owner's broader instruction ("you can merge anything you feel is ready"). **Next:** GEN-REL-05 (larger, source-grounded flashcard sets).
+
 ## GEN-REL-03 accepted (Codex review GREEN, Claude's independent gate green) and integrated by Claude — 18 October 2026
 
 Codex completed GEN-REL-03 from Claude's interrupted work (PR #215). That gives one 300-second active budget across the upload, file readiness, generation, retries, the backup model and cleanup, with a 15-second connect limit and at most three generation attempts. `Retry-After` is honored only within the budget. Failures are classified by stage (unreachable, upload, no answer in time, answer cut short, connection dropped, quota, refusal, blocked or truncated output), without blaming the internet unless a connection was never made. A sanitized details line is added to each failure, and GENREL01-R12 is closed.

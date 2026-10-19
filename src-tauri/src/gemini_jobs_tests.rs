@@ -510,3 +510,114 @@ fn r16_a_journal_too_large_to_read_back_is_never_written() {
     assert_eq!(ready, kept);
     assert!(!dir.path().join(JOURNAL_UNREADABLE).exists());
 }
+
+/* ------------------------------------------------------------------ */
+/* GEN-REL-04: cancellation                                            */
+/* ------------------------------------------------------------------ */
+
+#[test]
+fn a_cancelled_job_stays_cancelled_after_a_restart_and_is_never_resent() {
+    let dir = TempDir::new("cancelled");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    assert!(journal.cancel(&id).unwrap().cancelled);
+    // Its late answer cannot revive it.
+    journal.ready(&id, answer("Late")).unwrap();
+    let reopened = Journal::open(dir.path());
+    let job = reopened.list().into_iter().find(|j| j.id == id).unwrap();
+    assert_eq!(job.stage, JobStage::Cancelled);
+    assert!(job.result.is_none());
+    // Cancelling again, or a job that does not exist, changes nothing.
+    let mut reopened = reopened;
+    assert_eq!(
+        reopened.cancel(&id).unwrap(),
+        CancelOutcome {
+            cancelled: false,
+            stage: Some(JobStage::Cancelled),
+            pending: false
+        }
+    );
+    assert_eq!(
+        reopened.cancel("job-000000000000000000000000").unwrap(),
+        CancelOutcome {
+            cancelled: false,
+            stage: None,
+            pending: false
+        }
+    );
+    // She can dismiss it.
+    assert_eq!(reopened.acknowledge(&id), Ok(true));
+}
+
+#[test]
+fn a_cancel_that_cannot_be_written_changes_nothing() {
+    let dir = TempDir::new("cancel-unwritable");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    block_writes(&dir);
+    assert!(journal.cancel(&id).is_err());
+    assert_eq!(
+        journal.list()[0].stage,
+        JobStage::Running,
+        "not cancelled in memory only"
+    );
+    unblock_writes(&dir);
+}
+
+#[test]
+fn cancelled_jobs_make_room_like_failed_ones() {
+    let dir = TempDir::new("cancel-evict");
+    let mut journal = Journal::open(dir.path());
+    for i in 0..MAX_JOBS {
+        let id = journal
+            .begin(
+                JobKind::StudyAid,
+                &format!("mat-{i}"),
+                "documents/x.pdf",
+                SHA,
+                None,
+            )
+            .unwrap();
+        journal.cancel(&id).unwrap();
+        // Its command then settles, as every command does.
+        journal.failed(&id, "settled after the cancel").unwrap();
+    }
+    assert!(journal
+        .begin(JobKind::StudyAid, "mat-new", "documents/n.pdf", SHA, None)
+        .is_ok());
+    assert_eq!(journal.list().len(), MAX_JOBS);
+}
+
+/* ------------------------------------------------------------------ */
+/* Review round 2 regressions (GENREL04-R6)                            */
+/* ------------------------------------------------------------------ */
+
+#[test]
+fn r6_a_cancelled_job_keeps_its_record_until_its_command_settles() {
+    let dir = TempDir::new("r6-live");
+    let mut journal = Journal::open(dir.path());
+    let id = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    assert!(journal.cancel(&id).unwrap().cancelled);
+    assert!(journal.is_live(&id));
+    // Not dismissed, replaced or pushed out while its command is finishing.
+    assert_eq!(journal.acknowledge(&id), Ok(false));
+    assert_eq!(
+        journal.begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None),
+        Err(BUSY.to_string())
+    );
+    assert!(journal
+        .list()
+        .iter()
+        .any(|j| j.id == id && j.stage == JobStage::Cancelled));
+    // The command settles (its late answer is refused); now it may go.
+    journal.ready(&id, answer("Late")).unwrap();
+    assert!(!journal.is_live(&id));
+    assert_eq!(journal.list()[0].stage, JobStage::Cancelled);
+    assert_eq!(journal.acknowledge(&id), Ok(true));
+}

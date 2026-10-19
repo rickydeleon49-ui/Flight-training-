@@ -1,0 +1,2 @@
+$ git diff --stat 49ac022 -- src-tauri/migrations src/data/migration-checksums.json src-tauri/Cargo.toml src-tauri/Cargo.lock package.json package-lock.json src-tauri/tauri.conf.json
+EXIT 0
