@@ -4,28 +4,28 @@
   "files": [
     {
       "path": "ROADMAP.md",
-      "bytes": 197990,
-      "sha256": "7e39c25441e2d0779b40212b50a6cd8c41c86fe98f1efa3b6b60ff634101a698"
+      "bytes": 198038,
+      "sha256": "aec45e74c98e7d193da8d1cb2c7d925786332740292efe69a87691e97a1204b3"
     },
     {
       "path": "STATUS.md",
-      "bytes": 313718,
-      "sha256": "a82342597757fac9e9a7cba371c186d94fb905b514c13d763a7e17aae1e82c37"
+      "bytes": 313766,
+      "sha256": "5fdde4e81bf997bf63505243067a2ce90edf00e983fced7d1e093e8a81b35df1"
     },
     {
       "path": "docs/APP_POLISH_AUDIT_2026-10-19.md",
-      "bytes": 6051,
-      "sha256": "6253a0da0c5c3c63b2d0f77120a829873a0561a62c568adb704b60de9807ab3e"
+      "bytes": 6798,
+      "sha256": "0c17b3931aeead55bd51ac9c7209c8081343775f73ed4aa27463ae9321cda2ee"
     },
     {
       "path": "docs/APP_POLISH_REVIEWER_PROMPT_2026-10-19.md",
-      "bytes": 3366,
-      "sha256": "88bd71a15b999a5d1d314e6148abd3a8cb5db2e72898585db9ec716690fcf6bd"
+      "bytes": 4046,
+      "sha256": "5edabf386585f397c6575eee7a0d1cd59c54c422e3ea0498bf1a09d4821dbd6a"
     },
     {
       "path": "docs/PROJECT_HANDOFF.md",
-      "bytes": 222383,
-      "sha256": "2656fc920c6971ac5930c2da762cff9b3eb476370e152a80eec7fc30a6c69aa3"
+      "bytes": 222431,
+      "sha256": "ce749d64ad1990578ea6881e89beb50a865eb06a6abd4fcc08cf570e5cabd18f"
     },
     {
       "path": "src/components/ui/Form.test.ts",

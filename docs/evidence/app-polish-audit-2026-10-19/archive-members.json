@@ -30,6 +30,36 @@
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   {
+    "path": "font-browser-cache-assertion-failed.txt",
+    "bytes": 3444,
+    "sha256": "68c40932db574d92d840829788264d984eb0ce14883c524b8db88bb71fddf291"
+  },
+  {
+    "path": "font-browser-display-assertion-failed.txt",
+    "bytes": 1048,
+    "sha256": "d217e1afe13c84343dae4170542aabf05b7752ae52bf13447c7e628c165fabdc"
+  },
+  {
+    "path": "font-browser-failed-checks.json",
+    "bytes": 12445,
+    "sha256": "ad8dbe6a13309abdf6c2bee9673090bd31b65ac7dbd2b652e3263177215f80bc"
+  },
+  {
+    "path": "font-browser-final-assertion-failed.txt",
+    "bytes": 609,
+    "sha256": "e50f06a4eb9392ef180b1796989f20a630a879689b38d371f3e771639a055cde"
+  },
+  {
+    "path": "font-browser-recheck.mjs",
+    "bytes": 5855,
+    "sha256": "d16cd0a1f5691c8325a573462d979ddaf7374bcd093f830d80a3a98ba25418b0"
+  },
+  {
+    "path": "font-browser-recheck.txt",
+    "bytes": 112,
+    "sha256": "250da3cf778e6f85cf7a5be3904728199a54d57bd672f4ae9807f164301a22b4"
+  },
+  {
     "path": "frontend.txt",
     "bytes": 16030,
     "sha256": "4c1977e6eeb88c969e70ae8bae5803bec5408aadfc97ddfb0337767da347868b"
@@ -61,7 +91,12 @@
   },
   {
     "path": "fixture/fixture.tsx",
-    "bytes": 1989,
-    "sha256": "bfce9711889eb8fc0b6103e9727b14336e4546ed042f3a62cee6ebb6f1a58b19"
+    "bytes": 2073,
+    "sha256": "445acf9cad95756ab3f5c6c43eec681034bfe884d46fc64955e399886ed1c8cb"
+  },
+  {
+    "path": "fixture/vite-audit.config.ts",
+    "bytes": 978,
+    "sha256": "8fc91c9483efe41a436eb37782dd5243a5654fdc0303e0db948dcd0ba05ca80b"
   }
 ]
