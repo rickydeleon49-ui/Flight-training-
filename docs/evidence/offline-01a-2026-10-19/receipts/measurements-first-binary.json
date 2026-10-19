@@ -1,0 +1,83 @@
+{
+  "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
+  "results": [
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.254,
+      "peakRssBytes": 10207232,
+      "peakRssMiB": 9.7,
+      "frames": {
+        "start": 1,
+        "page:text": 1,
+        "end": 1
+      },
+      "lastFrame": {
+        "type": "end"
+      },
+      "case": "text-1-page",
+      "fileBytes": 587,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 0.092,
+      "peakRssBytes": 214138880,
+      "peakRssMiB": 204.2,
+      "frames": {
+        "start": 1,
+        "page:text": 1,
+        "end": 1
+      },
+      "lastFrame": {
+        "type": "end"
+      },
+      "case": "content-bomb-64MiB-decoded",
+      "fileBytes": 65827,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": -6,
+      "breachMarker": true,
+      "wallSeconds": 0.041,
+      "peakRssBytes": 281739264,
+      "peakRssMiB": 268.7,
+      "frames": {},
+      "lastFrame": null,
+      "case": "content-bomb-1GiB-decoded",
+      "fileBytes": 1044237,
+      "memoryCapBytes": 402653184
+    },
+    {
+      "exit": -6,
+      "breachMarker": true,
+      "wallSeconds": 0.015,
+      "peakRssBytes": 47955968,
+      "peakRssMiB": 45.7,
+      "frames": {},
+      "lastFrame": null,
+      "case": "content-bomb-1GiB-cap-64MiB",
+      "fileBytes": 1044237,
+      "memoryCapBytes": 67108864
+    },
+    {
+      "exit": 0,
+      "breachMarker": false,
+      "wallSeconds": 12.794,
+      "peakRssBytes": 200802304,
+      "peakRssMiB": 191.5,
+      "frames": {
+        "start": 1,
+        "page:failed": 400,
+        "end": 1
+      },
+      "lastFrame": {
+        "type": "end"
+      },
+      "case": "shared-stream-400-pages-2MiB",
+      "fileBytes": 65593,
+      "memoryCapBytes": 402653184
+    }
+  ]
+}

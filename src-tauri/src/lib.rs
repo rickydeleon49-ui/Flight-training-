@@ -9,6 +9,12 @@ mod card_library;
 mod card_reviews;
 mod debrief;
 mod documents;
+pub mod extraction;
+
+/// Counts requested allocation bytes; capped only in the extraction worker.
+#[global_allocator]
+static GLOBAL: extraction::alloc::Global = extraction::alloc::Global;
+
 #[cfg(test)]
 mod fake_gemini;
 mod gemini;
@@ -186,6 +192,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            extraction::service::offline_content_readiness,
+            extraction::service::prepare_offline_content,
             documents::import_document,
             documents::document_path,
             documents::document_exists,

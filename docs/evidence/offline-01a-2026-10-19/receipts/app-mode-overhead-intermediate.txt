@@ -1,0 +1,4 @@
+threads=1 pairs/thread=2000000 system=0.0185s app_mode=0.0171s (-7.9%) counting=0.0180s (-2.9%)
+threads=4 pairs/thread=2000000 system=0.0172s app_mode=0.0200s (+16.0%) counting=1.3879s (+7962.7%)
+threads=8 pairs/thread=2000000 system=0.0247s app_mode=0.0299s (+21.2%) counting=7.8046s (+31517.4%)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 721 filtered out; finished in 46.35s

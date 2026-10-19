@@ -1,0 +1,5 @@
+threads=1 pairs/thread=2000000 system=0.036s counted=0.026s overhead=-25.9%
+threads=4 pairs/thread=2000000 system=0.019s counted=1.385s overhead=7009.3%
+threads=8 pairs/thread=2000000 system=0.027s counted=3.231s overhead=11888.2%
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 719 filtered out; finished in 4.73s
+Apple M5 34359738368 10 

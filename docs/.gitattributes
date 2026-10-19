@@ -316,3 +316,15 @@ evidence/p54-06-feasibility-baseline-2026-10-17/receipts/r1-existing-pure.txt -t
 evidence/p54-06-feasibility-baseline-2026-10-17/receipts/r1-existing-history.txt -text -diff
 evidence/p54-06-feasibility-baseline-2026-10-17/receipts/r1-helper.txt -text -diff
 evidence/p54-06-phase-b-2026-10-19/receipts/preregistration-tests.txt -text -diff
+evidence/offline-01a-2026-10-19/receipts/cargo-test.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/clippy.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/clippy-first.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/fmt.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/release-build.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/prepare-rehash-before-fix.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/measurements.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/measurements-first-binary.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/helper.log -text -diff
+evidence/offline-01a-2026-10-19/receipts/app-mode-overhead.txt -text -diff
+evidence/offline-01a-2026-10-19/receipts/app-mode-overhead-counting-always.txt -text -diff
+evidence/offline-01a-2026-10-19/receipts/app-mode-overhead-intermediate.txt -text -diff

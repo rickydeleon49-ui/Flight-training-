@@ -1,3 +1,29 @@
+## OFFLINE-01a: native extraction worker and content cache; pending review — 19 October 2026
+
+The OFFLINE-01 proposal is accepted and merged (PR #226, Codex GREEN after five rounds). Claude implemented slice 01a; it is pending Codex review.
+
+**What was built:**
+- The shipped binary runs as a fail-closed extraction worker, one at a time, under a capped counting allocator. App mode stops counting.
+- A supervisor enforces the bounds, the deadline and cancellation, and classifies only after exit plus end of file.
+- Per-page outcomes come from strict, recursive inspection.
+- A content-addressed `content-cache.db`, with readiness verified per session.
+- Two commands, not yet used by the UI.
+- No dependency, lock, migration, frontend or backup change.
+
+**Native tests:** 735 passed (was 686). They include, through the real binary:
+- content- and object-stream decompression bombs stopped at the cap;
+- breaches on aborting, fallible and startup paths;
+- a stack overflow reported as a plain failure;
+- rollback, database-only restore, a late worker and same-stamp rewrites.
+
+**Defect found by the tests:** `prepare` didn't re-hash first. It is fixed, and the failing receipt is kept.
+
+**Measurement gate failed, design changed:** a shared counter was 60–320× slower on 4–8 threads. App mode now stops counting, measured at +9–13% on that worst-case loop.
+
+**Release measurements** (observations, not bounds): peak RSS stayed under the 384 MiB cap. A 1 GiB bomb stopped at 269 MiB; a 64 MiB decode used 204 MiB.
+
+The reviewer must accept the cap, the overhead and the residual risks before extraction is enabled in a release. Next: 01b (UI), then 01c (real documents). [Report](OFFLINE_01A_REPORT_2026-10-19.md). Earlier entries remain historical.
+
 ## OFFLINE-01 inventory and gap-closure proposal; pending review — 19 October 2026
 
 Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed. Revision 5 answers Codex rounds 1–4, all RED on contract gaps: memory bounds, decompression coverage, restore and stale readiness, scan diagnosis, and fail-closed worker dispatch.
