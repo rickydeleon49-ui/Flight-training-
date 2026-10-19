@@ -488,3 +488,73 @@ fn a_tick_interrupts_a_rebuild_query_that_is_already_running() {
     );
     assert_eq!(hits(&f.search(&host, "alpha", ALL, &[]).unwrap()).len(), 1);
 }
+
+#[test]
+fn digests_match_the_shared_vectors_used_by_the_ui() {
+    // Computed outside both implementations; src/logic/savedSearch.test.ts
+    // checks the same values.
+    for (fields, hex) in [
+        (
+            vec!["a", "b"],
+            "facdde7abf1eac5b301273ab2e282f79bab0100f058833a7b8bdf9f80741e149",
+        ),
+        (
+            vec!["é"],
+            "2f23c71856587c2a6ffdb64f0e11e9940b35da318947308f6a02ee01898e6107",
+        ),
+        (
+            vec!["a\u{0}b", "c"],
+            "0f45d85bef43c532705b8e59087cb895ab148782c674d20610e5975f46a84334",
+        ),
+        (
+            vec!["a", "b\u{0}c"],
+            "948d2b0c65c70f1736d40043f14736a059763420fe3c8c71c8ea646bbf05c964",
+        ),
+        (
+            vec!["Crosswind landings", "Use the wing-low method."],
+            "247767ba8b30e060aed68c6d6ffde318a8ff2015ea49bac365d799aa044f9011",
+        ),
+        (
+            vec!["✈️ fly", "日本語"],
+            "4549eb77598f1c0f00e7ffe55a5490e1e78be88ebba40113d2ede078c768291a",
+        ),
+    ] {
+        assert_eq!(item_digest(&fields), hex, "{fields:?}");
+    }
+}
+
+#[test]
+fn a_huge_title_is_never_read_or_repeated_per_passage() {
+    let f = Fixture::new();
+    let cards: Vec<String> = (0..500)
+        .map(|i| format!(r#"{{"front":"tiny {i}","back":"crosswind"}}"#))
+        .collect();
+    let db = f.db();
+    for (id, title) in [("huge", "T".repeat(3_000_000)), ("long", "L".repeat(1000))] {
+        db.execute("INSERT INTO study_materials VALUES (?1, ?2)", [id, &title])
+            .unwrap();
+        db.execute(
+            "INSERT INTO ai_study_sets (source_material_id, flashcards_json) VALUES (?1, ?2)",
+            [id, &format!("[{}]", cards.join(","))],
+        )
+        .unwrap();
+    }
+    let host = f.host();
+    let r = f
+        .search(&host, "crosswind", ALL, &["huge", "long"])
+        .unwrap();
+    let groups = &r.saved.as_ref().unwrap().groups;
+    let title_of = |id: &str| {
+        groups
+            .iter()
+            .find(|g| g.material_id.as_deref() == Some(id))
+            .unwrap()
+            .title
+            .clone()
+    };
+    // Over the byte cap: never read, shown as untitled.
+    assert_eq!(title_of("huge"), "Untitled material");
+    // Under it: clipped once, for the group.
+    assert_eq!(title_of("long").chars().count(), LABEL_CHARS);
+    assert!(serde_json::to_vec(&r).unwrap().len() <= super::super::MAX_RESPONSE_BYTES);
+}
