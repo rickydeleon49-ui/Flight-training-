@@ -1,0 +1,13 @@
+{
+  "source": "fea61bec53266c5048f1df30f715ef7ad4992734 plus the two new regression tests; before production correction",
+  "command": "npm test -- src/pages/StudyLibrary/MaterialDetailSearchLink.test.ts",
+  "exit": 1,
+  "passed": 4,
+  "failed": 1,
+  "unhandledRejections": 2,
+  "details": [
+    "The sanitized error/retry test fails because no error is displayed.",
+    "The late-unmount case body finishes, but its rejection is unhandled and makes the run fail."
+  ],
+  "receiptKind": "summary of captured tool output; not claimed as a full raw output log"
+}

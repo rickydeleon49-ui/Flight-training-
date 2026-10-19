@@ -1,3 +1,13 @@
+## Current offline-study handoff: OFFLINE-03 defaults approved; search-link recovery pending review — 19 October 2026
+
+PRs #231 (native document search), #232 (search UI) and #233 (saved-content search) are merged; accepted main for this handoff is `fdbf290`. Earlier “ready for PR” entries below are history. Extraction/search remain dormant in release builds.
+
+Claude’s OFFLINE-03 proposal revision 3 received a saved **GREEN** review before usage ran out. The owner subsequently explicitly approved **all five recommendations**: additive migration 0016, Keep my items, enabled manual editing after acceptance, deferred passage quotes, and packet v1 with provenance-loss disclosure. Revision 4 records those decisions and defines atomic refusal at retirement entry 2,001, with no eviction or draft loss. No OFFLINE-03 feature or migration is implemented yet. [Proposal](docs/OFFLINE_03_INVENTORY_AND_PROPOSAL_2026-10-19.md); [completion report](docs/OFFLINE_03_COMPLETION_HANDOFF_2026-10-19.md); [next implementation assignment](docs/OFFLINE_03_IMPLEMENTATION_PROMPT_2026-10-19.md).
+
+**OFFLINE-02C-LINK-READ:** Codex reproduced an unhandled database rejection while resolving a practice-question search link, including after unmount. A bounded correction adds sanitized status and read-only Retry; two regressions and the five focused suites pass (51/51). The correction and revision-4 additions require independent review; no self-acceptance or merge. Full frontend gate: **3,777 passed / 6 skipped, zero unhandled errors**; typecheck and build pass. Receipts are in `docs/evidence/offline-03-handoff-completion-2026-10-19/`.
+
+**Still open:** saved-content worst-case cached p50 28.2 ms versus 20 ms; FLAKE-CR-01; minimum-spec/pressure and installed search acceptance. Reuse valid native/search measurements for unchanged code. Next: review/integrate this completion package with exact-head CI, then 03a → 03b, followed by the approved homework → exports priority. 03c remains deferred. No provider/profile/installer/release work in this package.
+
 ## OFFLINE-02b merged; OFFLINE-02c saved-content search ready for PR, dormant — 19 October 2026
 
 OFFLINE-02b merged as PR #232 (`bfb8b04`). The same PR's CI fix gave the schema-14 parity test room on runners, which also clears `main`'s red run.

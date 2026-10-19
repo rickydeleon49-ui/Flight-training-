@@ -1,0 +1,22 @@
+[
+  {
+    "path": "typecheck.txt",
+    "bytes": 51,
+    "sha256": "f05679482d7566eea51ded8daf0e7626af4e0231d71715cbcdefd2928f5e19f1"
+  },
+  {
+    "path": "frontend.txt",
+    "bytes": 14862,
+    "sha256": "34df5460d11341d33630f5ddff5bbe5a36516276554ae0b5c5a3773e774810b2"
+  },
+  {
+    "path": "build.txt",
+    "bytes": 7839,
+    "sha256": "2cbd096fc5ae5157188e27901c4ada93b886cf11ddcdaada60d214f6fd91d7ca"
+  },
+  {
+    "path": "whitespace.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]
