@@ -11,7 +11,8 @@
 
 use super::cache::{canonical, MARK_END, MARK_START};
 pub use saved::{
-    item_digest, Categories, SavedCoverage, SavedGroup, SavedPassage, SavedRequest, SavedSection,
+    audit_saved, item_digest, Categories, SavedCoverage, SavedGroup, SavedPassage, SavedRequest,
+    SavedSection,
 };
 use std::cell::RefCell;
 
@@ -350,6 +351,8 @@ struct Guard {
     interrupt: Mutex<Option<InterruptHandle>>,
     /// Interrupts issued, for tests.
     interrupts: AtomicU64,
+    /// Saved-content rebuilds, for the measurement harness (OFFLINE-02c §6).
+    saved_rebuilds: AtomicU64,
     shutdown: AtomicBool,
 }
 
@@ -793,6 +796,16 @@ impl Searcher {
     }
 }
 
+/// A control with no practical deadline, for untimed audit tooling.
+fn untimed_control() -> Control {
+    Control {
+        id: 0,
+        until: Instant::now() + Duration::from_secs(3600),
+        cancelled: AtomicBool::new(false),
+        superseded: AtomicBool::new(false),
+    }
+}
+
 /// Untimed audit tooling only: exercise the production candidate SQL with
 /// either its cap or no cap, before measuring bounded commands. No IPC exposes
 /// this function. The exhaustive path is required by the frozen measurement plan.
@@ -938,6 +951,7 @@ impl Host {
             current: Mutex::new(None),
             interrupt: Mutex::new(None),
             interrupts: AtomicU64::new(0),
+            saved_rebuilds: AtomicU64::new(0),
             shutdown: AtomicBool::new(false),
         });
         let slot: Arc<(Mutex<Slot>, Condvar)> = Arc::default();
@@ -1119,6 +1133,11 @@ impl Host {
 
     pub fn interrupts(&self) -> u64 {
         self.guard.interrupts.load(Ordering::SeqCst)
+    }
+
+    /// How many saved-content rebuilds this host's searches have done.
+    pub fn saved_rebuilds(&self) -> u64 {
+        self.guard.saved_rebuilds.load(Ordering::SeqCst)
     }
 }
 
@@ -1412,6 +1431,7 @@ mod tests {
             current: Mutex::new(None),
             interrupt: Mutex::new(None),
             interrupts: AtomicU64::new(0),
+            saved_rebuilds: AtomicU64::new(0),
             shutdown: AtomicBool::new(false),
         });
         let searcher = Searcher::open(&root.join(CACHE_FILE), guard).unwrap();

@@ -120,8 +120,6 @@ pub(crate) struct SavedIndex {
     /// A rebuild done in the current transaction, applied after commit.
     pending: Option<(i64, bool, SavedCoverage)>,
     attached: bool,
-    /// Searches that rebuilt, for the measurement harness and tests.
-    pub(crate) rebuilds: u64,
 }
 
 /// §4: SHA-256 over a length-prefixed encoding of the item's original
@@ -150,6 +148,17 @@ fn read_only_uri(path: &Path) -> String {
     }
     out.push_str("?mode=ro");
     out
+}
+
+/// One matching saved item, before grouping.
+struct Hit {
+    rowid: i64,
+    rank: f64,
+    kind: String,
+    material_id: Option<String>,
+    record_id: String,
+    rev: Option<String>,
+    title: String,
 }
 
 struct Row {
@@ -247,7 +256,11 @@ impl Searcher {
                 )
                 .map_err(|e| self.note(control, e))
         })?;
-        self.saved.borrow_mut().rebuilds += 1;
+        // Counted for the measurement harness (§6), which must prove each
+        // rebuild-inclusive sample really rebuilt.
+        self.guard
+            .saved_rebuilds
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         if total > MAX_SAVED_BYTES {
             self.saved.borrow_mut().pending = Some((version, true, SavedCoverage::default()));
             return Ok(());
@@ -501,46 +514,8 @@ impl Searcher {
         Ok(())
     }
 
-    /// Search saved content within the request's transaction (§3).
-    pub(super) fn search_saved(
-        &self,
-        control: &Control,
-        request: &SavedRequest,
-        expression: &str,
-        offset: usize,
-    ) -> Result<SavedSection, Stop> {
-        if !self.saved_attached() {
-            return Ok(SavedSection::unavailable());
-        }
-        // A storage error degrades saved content to "unavailable" rather
-        // than failing document search; a deadline or supersede still stops
-        // the whole request. Nothing from a failed rebuild is published.
-        match self.refresh_saved(control) {
-            Ok(()) => {}
-            Err(Stop::Failed) => {
-                let mut index = self.saved.borrow_mut();
-                index.pending = None;
-                index.token = None;
-                return Ok(SavedSection::unavailable());
-            }
-            Err(stop) => return Err(stop),
-        }
-        let (too_large, coverage) = {
-            let index = self.saved.borrow();
-            match &index.pending {
-                Some((_, t, c)) => (*t, c.clone()),
-                None => (index.too_large, index.coverage.clone()),
-            }
-        };
-        if too_large {
-            return Ok(SavedSection {
-                state: "too_large",
-                groups: Vec::new(),
-                coverage,
-                next_offset: None,
-                more_beyond_cap: false,
-            });
-        }
+    /// The request's material scope and categories, as temp tables.
+    fn load_saved_scope(&self, control: &Control, request: &SavedRequest) -> Result<(), Stop> {
         let c = request.categories;
         let mut kinds = Vec::new();
         if c.guides {
@@ -583,20 +558,20 @@ impl Searcher {
                 kind.execute([k]).map_err(|e| self.note(control, e))?;
             }
             Ok(())
-        })?;
+        })
+    }
 
-        struct Hit {
-            rowid: i64,
-            rank: f64,
-            kind: String,
-            material_id: Option<String>,
-            record_id: String,
-            rev: Option<String>,
-            title: String,
-        }
+    /// Matching items in the full §3 order; `limit` is the cutoff (none for
+    /// the untimed exhaustive check).
+    fn saved_hits(
+        &self,
+        control: &Control,
+        expression: &str,
+        limit: Option<usize>,
+    ) -> Result<Vec<Hit>, Stop> {
         // The group key orders ties after the title, as §6.4 does for
         // documents; the cutoff uses the full ordering.
-        let hits: Vec<Hit> = self.statement(control, "saved-candidates", || {
+        self.statement(control, "saved-candidates", || {
             let mut stmt = self
                 .conn
                 .prepare(
@@ -622,7 +597,7 @@ impl Searcher {
                 )
                 .map_err(|e| self.note(control, e))?;
             let mut rows = stmt
-                .query(params![expression, (CANDIDATE_LIMIT + 1) as i64])
+                .query(params![expression, limit.map(|l| l as i64).unwrap_or(-1)])
                 .map_err(|e| self.note(control, e))?;
             let mut out = Vec::new();
             while let Some(r) = rows.next().map_err(|e| self.note(control, e))? {
@@ -638,7 +613,51 @@ impl Searcher {
                 control.check()?;
             }
             Ok(out)
-        })?;
+        })
+    }
+
+    /// Search saved content within the request's transaction (§3).
+    pub(super) fn search_saved(
+        &self,
+        control: &Control,
+        request: &SavedRequest,
+        expression: &str,
+        offset: usize,
+    ) -> Result<SavedSection, Stop> {
+        if !self.saved_attached() {
+            return Ok(SavedSection::unavailable());
+        }
+        // A storage error degrades saved content to "unavailable" rather
+        // than failing document search; a deadline or supersede still stops
+        // the whole request. Nothing from a failed rebuild is published.
+        match self.refresh_saved(control) {
+            Ok(()) => {}
+            Err(Stop::Failed) => {
+                let mut index = self.saved.borrow_mut();
+                index.pending = None;
+                index.token = None;
+                return Ok(SavedSection::unavailable());
+            }
+            Err(stop) => return Err(stop),
+        }
+        let (too_large, coverage) = {
+            let index = self.saved.borrow();
+            match &index.pending {
+                Some((_, t, c)) => (*t, c.clone()),
+                None => (index.too_large, index.coverage.clone()),
+            }
+        };
+        if too_large {
+            return Ok(SavedSection {
+                state: "too_large",
+                groups: Vec::new(),
+                coverage,
+                next_offset: None,
+                more_beyond_cap: false,
+            });
+        }
+        self.load_saved_scope(control, request)?;
+        let hits = self.saved_hits(control, expression, Some(CANDIDATE_LIMIT + 1))?;
         let more_beyond_cap = hits.len() > CANDIDATE_LIMIT;
 
         struct Building<'h> {
@@ -741,6 +760,37 @@ impl Searcher {
             more_beyond_cap,
         })
     }
+}
+
+/// Untimed measurement tooling only (§6), like `audit_order` for documents:
+/// every matching saved item, in the production order, with or without the
+/// cutoff. No command exposes it. Items are (kind, group material or "", id).
+pub fn audit_saved(
+    cache_file: std::path::PathBuf,
+    request: &SavedRequest,
+    query: &str,
+    capped: bool,
+) -> Result<Vec<(String, String, String)>, Stop> {
+    let host = super::Host::start(cache_file.clone());
+    let searcher = Searcher::open(&cache_file, host.guard.clone())?;
+    let control = super::untimed_control();
+    searcher.ensure_attached(&searcher.database);
+    let snapshot = searcher
+        .conn
+        .unchecked_transaction()
+        .map_err(|_| Stop::Failed)?;
+    searcher.refresh_saved(&control)?;
+    searcher.load_saved_scope(&control, request)?;
+    let hits = searcher.saved_hits(
+        &control,
+        &super::match_expression(&super::parse(query)?),
+        capped.then_some(CANDIDATE_LIMIT),
+    )?;
+    snapshot.commit().map_err(|_| Stop::Failed)?;
+    Ok(hits
+        .into_iter()
+        .map(|h| (h.kind, h.material_id.unwrap_or_default(), h.record_id))
+        .collect())
 }
 
 #[cfg(test)]
