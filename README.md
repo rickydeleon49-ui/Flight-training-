@@ -275,6 +275,17 @@ it is offered to save or discard rather than saved by itself. After a failure,
 cancel or interruption, **Try again** goes through the usual Send confirmation,
 and a PDF already prepared with Google is reused.
 
+**Larger flashcard sets (GEN-REL-05).** The **Send this file to Google?** message
+lets her choose a target of 20, 40 or 60 flashcards; 40 is the default. The
+target is a maximum: a shorter source may produce fewer cards. Gemini is asked to
+avoid padding and repeats, and identical cards are removed. Gemini writes the
+study guide first, then the cards in batches of up to ten. Each checked batch is
+kept as a draft. The whole job shares one five-minute limit, which keeps counting
+while the app is closed, and at most nine generation requests. **Try again** can
+finish a kept draft while time and requests remain; after that, she discards the
+draft and starts again. A finished set waits for her to save it; until she does,
+her current study guide, cards and review history stay as they were.
+
 **Which model reads it.** Settings offers two choices once a key is connected.
 **Standard** sends documents to Gemini Flash (`gemini-3.5-flash`, which Google
 now serves as `gemini-3.6-flash`) and works on a free key. **Most capable** sends
