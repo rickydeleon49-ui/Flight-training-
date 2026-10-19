@@ -1,3 +1,13 @@
+## Next task: OFFLINE-01; P54-06 phase B part 2 queued — 19 October 2026
+
+**Integrated:**
+- **#223**, P54-06 phase A with the P54BASE-R1 correction: Codex review GREEN, merged as `e42e2b3`.
+- **#224**, phase B part 1, the frozen FSRS-6 preregistration: Codex rounds 1 and 2 were RED on contract gaps, all closed; round 3 GREEN; merged as `f10a520`.
+
+The "pending review" wording in their entries below is historical.
+
+**Owner decision, 19 October 2026:** start **OFFLINE-01** next. P54-06 phase B part 2 (the in-house candidate, measurements and transition simulations) waits in the scheduler queue behind the offline → homework → exports tranche. Its preregistration (`docs/evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.md`) stays frozen and binding for when it resumes. Claude implements and Codex reviews. Earlier entries remain historical.
+
 ## Owner priority update: offline study → homework → exports — 18 October 2026 Pacific
 
 The owner approved the expanded scope and explicitly selected **offline study → homework → exports as the next priority after the current release and any task already underway**. This supersedes the older unstarted scheduler → weather → FAA next-task order; preserve active assignments and all existing P54/Study Hub work. Remaining scheduler, weather and FAA work stays queued behind this tranche. Read the [precise delivery/acceptance plan](docs/OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) before implementation. Current release/task state must be checked live; this planning entry does not reopen or certify a release.
