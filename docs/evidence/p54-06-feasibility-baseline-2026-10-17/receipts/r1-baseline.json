@@ -1,0 +1,1153 @@
+{
+  "schema": "hfd-scheduler-feasibility-baseline/1",
+  "status": "PASS",
+  "scope": "Synthetic simple-v1 baseline only; no FSRS comparison or persistence proof",
+  "baseCommit": "e8f68080186331803f8f2578086e3f8258c8eff1",
+  "fixtureSha256": "c50a2fb8b23f5ca598f0f5bc8fc091b7aaa144bcf77f7746a831817eb27971fe",
+  "schedulerVersion": "simple-v1",
+  "historyCount": 19,
+  "reviewCount": 78,
+  "localDayCount": 6,
+  "cases": [
+    {
+      "id": "new-again",
+      "historyClass": "new",
+      "observations": [
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-06T15:10:00.000Z"
+          },
+          "intervalMs": 600000
+        }
+      ]
+    },
+    {
+      "id": "new-hard",
+      "historyClass": "new",
+      "observations": [
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        }
+      ]
+    },
+    {
+      "id": "new-good",
+      "historyClass": "new",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        }
+      ]
+    },
+    {
+      "id": "new-easy",
+      "historyClass": "new",
+      "observations": [
+        {
+          "rating": "easy",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 1,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-09T15:00:00.000Z"
+          },
+          "intervalMs": 259200000
+        }
+      ]
+    },
+    {
+      "id": "repeated-hard",
+      "historyClass": "retained",
+      "observations": [
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-07T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 2,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-07T15:00:00.000Z",
+            "dueAt": "2026-10-08T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-08T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 3,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-08T15:00:00.000Z",
+            "dueAt": "2026-10-09T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-09T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 4,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+            "dueAt": "2026-10-10T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-10T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 5,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-10T15:00:00.000Z",
+            "dueAt": "2026-10-11T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-11T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 6,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-11T15:00:00.000Z",
+            "dueAt": "2026-10-12T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-12T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 7,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-12T15:00:00.000Z",
+            "dueAt": "2026-10-13T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-13T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 8,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-13T15:00:00.000Z",
+            "dueAt": "2026-10-14T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-14T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 9,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-14T15:00:00.000Z",
+            "dueAt": "2026-10-15T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-15T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 10,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-15T15:00:00.000Z",
+            "dueAt": "2026-10-16T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-16T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 11,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-16T15:00:00.000Z",
+            "dueAt": "2026-10-17T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-17T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 12,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-17T15:00:00.000Z",
+            "dueAt": "2026-10-18T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-18T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 13,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-18T15:00:00.000Z",
+            "dueAt": "2026-10-19T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-19T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 14,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+            "dueAt": "2026-10-20T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-20T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 15,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-20T15:00:00.000Z",
+            "dueAt": "2026-10-21T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-21T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 16,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-21T15:00:00.000Z",
+            "dueAt": "2026-10-22T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-22T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 17,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-22T15:00:00.000Z",
+            "dueAt": "2026-10-23T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-23T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 18,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-23T15:00:00.000Z",
+            "dueAt": "2026-10-24T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-24T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 19,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-24T15:00:00.000Z",
+            "dueAt": "2026-10-25T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-25T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 20,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-25T15:00:00.000Z",
+            "dueAt": "2026-10-26T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        }
+      ]
+    },
+    {
+      "id": "repeated-again",
+      "historyClass": "retained",
+      "observations": [
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-06T15:10:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:10:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 2,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:10:00.000Z",
+            "dueAt": "2026-10-06T15:20:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:20:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 3,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:20:00.000Z",
+            "dueAt": "2026-10-06T15:30:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:30:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 4,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:30:00.000Z",
+            "dueAt": "2026-10-06T15:40:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:40:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 5,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:40:00.000Z",
+            "dueAt": "2026-10-06T15:50:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:50:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 6,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:50:00.000Z",
+            "dueAt": "2026-10-06T16:00:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 7,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T16:00:00.000Z",
+            "dueAt": "2026-10-06T16:10:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:10:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 8,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T16:10:00.000Z",
+            "dueAt": "2026-10-06T16:20:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:20:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 9,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T16:20:00.000Z",
+            "dueAt": "2026-10-06T16:30:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:30:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 10,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T16:30:00.000Z",
+            "dueAt": "2026-10-06T16:40:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:40:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 11,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T16:40:00.000Z",
+            "dueAt": "2026-10-06T16:50:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:50:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 12,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T16:50:00.000Z",
+            "dueAt": "2026-10-06T17:00:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 13,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T17:00:00.000Z",
+            "dueAt": "2026-10-06T17:10:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:10:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 14,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T17:10:00.000Z",
+            "dueAt": "2026-10-06T17:20:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:20:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 15,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T17:20:00.000Z",
+            "dueAt": "2026-10-06T17:30:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:30:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 16,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T17:30:00.000Z",
+            "dueAt": "2026-10-06T17:40:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:40:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 17,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T17:40:00.000Z",
+            "dueAt": "2026-10-06T17:50:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:50:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 18,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T17:50:00.000Z",
+            "dueAt": "2026-10-06T18:00:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T18:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 19,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T18:00:00.000Z",
+            "dueAt": "2026-10-06T18:10:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T18:10:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 20,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T18:10:00.000Z",
+            "dueAt": "2026-10-06T18:20:00.000Z"
+          },
+          "intervalMs": 600000
+        }
+      ]
+    },
+    {
+      "id": "ladder-cap",
+      "historyClass": "retained",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-07T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 1,
+            "reps": 2,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-07T15:00:00.000Z",
+            "dueAt": "2026-10-10T15:00:00.000Z"
+          },
+          "intervalMs": 259200000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-10T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 2,
+            "reps": 3,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-10T15:00:00.000Z",
+            "dueAt": "2026-10-17T15:00:00.000Z"
+          },
+          "intervalMs": 604800000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-17T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 3,
+            "reps": 4,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-17T15:00:00.000Z",
+            "dueAt": "2026-11-02T15:00:00.000Z"
+          },
+          "intervalMs": 1382400000
+        },
+        {
+          "rating": "good",
+          "at": "2026-11-02T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 4,
+            "reps": 5,
+            "lapses": 0,
+            "lastReviewedAt": "2026-11-02T15:00:00.000Z",
+            "dueAt": "2026-12-07T15:00:00.000Z"
+          },
+          "intervalMs": 3024000000
+        },
+        {
+          "rating": "good",
+          "at": "2026-12-07T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 5,
+            "reps": 6,
+            "lapses": 0,
+            "lastReviewedAt": "2026-12-07T15:00:00.000Z",
+            "dueAt": "2027-02-20T15:00:00.000Z"
+          },
+          "intervalMs": 6480000000
+        },
+        {
+          "rating": "good",
+          "at": "2027-02-20T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 6,
+            "reps": 7,
+            "lapses": 0,
+            "lastReviewedAt": "2027-02-20T15:00:00.000Z",
+            "dueAt": "2027-07-20T15:00:00.000Z"
+          },
+          "intervalMs": 12960000000
+        },
+        {
+          "rating": "good",
+          "at": "2027-07-20T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 7,
+            "reps": 8,
+            "lapses": 0,
+            "lastReviewedAt": "2027-07-20T15:00:00.000Z",
+            "dueAt": "2028-01-16T15:00:00.000Z"
+          },
+          "intervalMs": 15552000000
+        },
+        {
+          "rating": "easy",
+          "at": "2028-01-16T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 7,
+            "reps": 9,
+            "lapses": 0,
+            "lastReviewedAt": "2028-01-16T15:00:00.000Z",
+            "dueAt": "2028-07-14T15:00:00.000Z"
+          },
+          "intervalMs": 15552000000
+        },
+        {
+          "rating": "easy",
+          "at": "2028-07-14T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 7,
+            "reps": 10,
+            "lapses": 0,
+            "lastReviewedAt": "2028-07-14T15:00:00.000Z",
+            "dueAt": "2029-01-10T15:00:00.000Z"
+          },
+          "intervalMs": 15552000000
+        },
+        {
+          "rating": "easy",
+          "at": "2029-01-10T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 7,
+            "reps": 11,
+            "lapses": 0,
+            "lastReviewedAt": "2029-01-10T15:00:00.000Z",
+            "dueAt": "2029-07-09T15:00:00.000Z"
+          },
+          "intervalMs": 15552000000
+        }
+      ]
+    },
+    {
+      "id": "lapse-and-relearn",
+      "historyClass": "retained",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-07T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 1,
+            "reps": 2,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-07T15:00:00.000Z",
+            "dueAt": "2026-10-10T15:00:00.000Z"
+          },
+          "intervalMs": 259200000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-10T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 3,
+            "lapses": 1,
+            "lastReviewedAt": "2026-10-10T15:00:00.000Z",
+            "dueAt": "2026-10-10T15:10:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-10T15:10:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 4,
+            "lapses": 1,
+            "lastReviewedAt": "2026-10-10T15:10:00.000Z",
+            "dueAt": "2026-10-10T15:20:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-10T15:20:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 5,
+            "lapses": 1,
+            "lastReviewedAt": "2026-10-10T15:20:00.000Z",
+            "dueAt": "2026-10-11T15:20:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-11T15:20:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 1,
+            "reps": 6,
+            "lapses": 1,
+            "lastReviewedAt": "2026-10-11T15:20:00.000Z",
+            "dueAt": "2026-10-14T15:20:00.000Z"
+          },
+          "intervalMs": 259200000
+        }
+      ]
+    },
+    {
+      "id": "twenty-days-overdue",
+      "historyClass": "retained",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-07T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 1,
+            "reps": 2,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-07T15:00:00.000Z",
+            "dueAt": "2026-10-10T15:00:00.000Z"
+          },
+          "intervalMs": 259200000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-30T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 2,
+            "reps": 3,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-30T15:00:00.000Z",
+            "dueAt": "2026-11-06T15:00:00.000Z"
+          },
+          "intervalMs": 604800000
+        }
+      ]
+    },
+    {
+      "id": "same-day-and-equal-time",
+      "historyClass": "retained",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 2,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        },
+        {
+          "rating": "easy",
+          "at": "2026-10-06T15:01:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 2,
+            "reps": 3,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:01:00.000Z",
+            "dueAt": "2026-10-13T15:01:00.000Z"
+          },
+          "intervalMs": 604800000
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:02:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": -1,
+            "reps": 4,
+            "lapses": 1,
+            "lastReviewedAt": "2026-10-06T15:02:00.000Z",
+            "dueAt": "2026-10-06T15:12:00.000Z"
+          },
+          "intervalMs": 600000
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:12:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 5,
+            "lapses": 1,
+            "lastReviewedAt": "2026-10-06T15:12:00.000Z",
+            "dueAt": "2026-10-07T15:12:00.000Z"
+          },
+          "intervalMs": 86400000
+        }
+      ]
+    },
+    {
+      "id": "new-after-reset",
+      "historyClass": "missing-after-reset",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-07T15:00:00.000Z"
+          },
+          "intervalMs": 86400000
+        }
+      ]
+    },
+    {
+      "id": "state-without-retained-events",
+      "historyClass": "missing",
+      "observations": [
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 3,
+            "reps": 41,
+            "lapses": 2,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2026-10-22T15:00:00.000Z"
+          },
+          "intervalMs": 1382400000
+        }
+      ]
+    },
+    {
+      "id": "very-old-capped-card",
+      "historyClass": "retained",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 7,
+            "reps": 81,
+            "lapses": 5,
+            "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+            "dueAt": "2027-04-04T15:00:00.000Z"
+          },
+          "intervalMs": 15552000000
+        }
+      ]
+    },
+    {
+      "id": "spring-elapsed-day",
+      "historyClass": "new",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-03-08T09:30:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-03-08T09:30:00.000Z",
+            "dueAt": "2026-03-09T09:30:00.000Z"
+          },
+          "intervalMs": 86400000
+        }
+      ]
+    },
+    {
+      "id": "fall-elapsed-day",
+      "historyClass": "new",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-11-01T08:30:00.000Z",
+          "state": {
+            "schedulerVersion": "simple-v1",
+            "step": 0,
+            "reps": 1,
+            "lapses": 0,
+            "lastReviewedAt": "2026-11-01T08:30:00.000Z",
+            "dueAt": "2026-11-02T08:30:00.000Z"
+          },
+          "intervalMs": 86400000
+        }
+      ]
+    },
+    {
+      "id": "clock-backward",
+      "historyClass": "refusal",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T14:59:59.999Z",
+          "refusal": "CLOCK_BEHIND_LAST_REVIEW"
+        }
+      ]
+    },
+    {
+      "id": "noncanonical-time",
+      "historyClass": "refusal",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00Z",
+          "refusal": "INVALID_TIME"
+        }
+      ]
+    },
+    {
+      "id": "foreign-version",
+      "historyClass": "refusal",
+      "observations": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z",
+          "refusal": "UNSUPPORTED_SCHEDULER_VERSION"
+        }
+      ]
+    },
+    {
+      "id": "unknown-rating",
+      "historyClass": "refusal",
+      "observations": [
+        {
+          "rating": "perfect",
+          "at": "2026-10-06T15:00:00.000Z",
+          "refusal": "INVALID_RATING"
+        }
+      ]
+    }
+  ],
+  "localDays": [
+    {
+      "id": "spring-23-hour-day",
+      "at": "2026-03-08T08:00:00.000Z",
+      "zone": "America/Los_Angeles",
+      "localDate": "2026-03-08",
+      "nextMidnightUtc": "2026-03-09T07:00:00.000Z"
+    },
+    {
+      "id": "fall-25-hour-day",
+      "at": "2026-11-01T07:00:00.000Z",
+      "zone": "America/Los_Angeles",
+      "localDate": "2026-11-01",
+      "nextMidnightUtc": "2026-11-02T08:00:00.000Z"
+    },
+    {
+      "id": "travel-utc",
+      "at": "2026-10-06T15:00:00.000Z",
+      "zone": "UTC",
+      "localDate": "2026-10-06",
+      "nextMidnightUtc": "2026-10-07T00:00:00.000Z"
+    },
+    {
+      "id": "travel-los-angeles",
+      "at": "2026-10-06T15:00:00.000Z",
+      "zone": "America/Los_Angeles",
+      "localDate": "2026-10-06",
+      "nextMidnightUtc": "2026-10-07T07:00:00.000Z"
+    },
+    {
+      "id": "travel-kiritimati",
+      "at": "2026-10-06T15:00:00.000Z",
+      "zone": "Pacific/Kiritimati",
+      "localDate": "2026-10-07",
+      "nextMidnightUtc": "2026-10-07T10:00:00.000Z"
+    },
+    {
+      "id": "leap-day",
+      "at": "2028-02-28T15:00:00.000Z",
+      "zone": "UTC",
+      "localDate": "2028-02-28",
+      "nextMidnightUtc": "2028-02-29T00:00:00.000Z"
+    }
+  ]
+}

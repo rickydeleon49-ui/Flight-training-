@@ -1,3 +1,30 @@
+## v0.5.7 published; P54-06 phase A P54BASE-R1 correction pending review — 19 October 2026
+
+**v0.5.7 is published** (macOS, 06:40 UTC, marked Latest) from tag `v0.5.7` at main `e8f6808`. That commit combines GEN-REL-01–05, the #221 managed-source fix and the #222 version bump. The published asset is the exact locally built ad-hoc DMG that was installed and tested, as with v0.5.5. Its SHA-256 is `57a3c913071b4763bdb5d311e300273b66035e58c13840129cfae4ee84d36c30`. The tag-triggered release workflow hit its 20-minute Check timeout without a Rust cache and built nothing; publication did not depend on it.
+
+**Installed test of that DMG.** It ran on the synthetic profile via the v057 handoff script, against live Gemini Standard (`gemini-3.5-flash`) with the test key, which was never read. The owner's profile was returned with identical recorded metadata. Results:
+- **Passed:**
+  - a 40-card generation from the real 3-page PDF;
+  - navigation during generation;
+  - deliberate save and discard;
+  - cancelling mid-run, which kept a 30/60 draft;
+  - Try again finishing 60/60 distinct cards;
+  - a practice test;
+  - backup without the key, and restore with a `before-restore` copy.
+- **Minor findings:** the practice-test Send dialog clips its Cancel button, and backup and restore leave SQLite `-shm`/`-wal` sidecar files behind.
+- **Unverified:** Gatekeeper and notarization, a standard account, macOS 12.x, VoiceOver and Windows.
+
+The local evidence is under `Flight-training-backups/local-candidates/2026-10-19-v0.5.7-e8f6808/`.
+
+**P54-06 resumes with the P54BASE-R1 correction to PR #210's phase-A baseline**, implemented by Claude and pending Codex review:
+- The runner now refuses any `--fixtures` corpus whose required vectors keep their IDs but change their inputs. The inputs are frozen in `required-inputs.json`, which is bound by a digest.
+- The sources are repinned to `e8f6808`. Only the app version string in the lockfile changed.
+- The frozen author diagnostic gives 1 pass / 2 fail before the fix and 3 pass after it.
+- The proof gives 19/78/6; its tests pass 29/29.
+- No production, dependency, migration or version change. Phase B is not started.
+
+[Report](P54_06_FEASIBILITY_BASELINE_REPORT_2026-10-17.md#p54base-r1-correction--claude-19-october-2026). P54-07 weather and P54-08 FAA references follow. Earlier entries remain historical.
+
 ## Combined release installed blocker: managed-source path correction — 18 October 2026
 
 The private v0.5.6 combined candidate built and launched, but the first 40-card synthetic study-aid attempt failed **before upload (0 admissions/submissions)**: batch checks looked for documents-relative file paths at the app-data root. This is a confirmed product regression, not a diagnosis of the friend's connection. v0.5.6 remains private and is retired; the bounded source/test/copy correction and next-candidate v0.5.7 metadata are **pending independent review**, not accepted or published. [Report](GEN_REL_INSTALLED_SOURCE_FIX_REPORT_2026-10-18.md), [reviewer assignment](GEN_REL_INSTALLED_SOURCE_FIX_REVIEWER_PROMPT_2026-10-18.md). Original profile returned intact; synthetic key/evidence remain isolated. Corrected installed/live and backup/restore outcomes must be recorded before release. P54-06 → P54-07 → P54-08 remains after release; no feature loop restarted. Earlier entries remain historical.

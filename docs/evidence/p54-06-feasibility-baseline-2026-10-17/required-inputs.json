@@ -1,0 +1,511 @@
+{
+  "schema": "hfd-scheduler-required-inputs/1",
+  "note": "Frozen semantic inputs for the required baseline corpus (P54BASE-R1). Expectations are checked separately against the production modules.",
+  "cases": [
+    {
+      "id": "new-again",
+      "historyClass": "new",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "new-hard",
+      "historyClass": "new",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "new-good",
+      "historyClass": "new",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "new-easy",
+      "historyClass": "new",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "easy",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "repeated-hard",
+      "historyClass": "retained",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-07T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-08T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-09T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-10T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-11T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-12T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-13T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-14T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-15T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-16T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-17T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-18T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-19T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-20T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-21T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-22T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-23T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-24T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-25T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "repeated-again",
+      "historyClass": "retained",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:00:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:10:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:20:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:30:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:40:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:50:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:00:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:10:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:20:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:30:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:40:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T16:50:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:00:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:10:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:20:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:30:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:40:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T17:50:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T18:00:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T18:10:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "ladder-cap",
+      "historyClass": "retained",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-07T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-10T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-17T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-11-02T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-12-07T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2027-02-20T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2027-07-20T15:00:00.000Z"
+        },
+        {
+          "rating": "easy",
+          "at": "2028-01-16T15:00:00.000Z"
+        },
+        {
+          "rating": "easy",
+          "at": "2028-07-14T15:00:00.000Z"
+        },
+        {
+          "rating": "easy",
+          "at": "2029-01-10T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "lapse-and-relearn",
+      "historyClass": "retained",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-07T15:00:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-10T15:00:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-10T15:10:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-10T15:20:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-11T15:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "twenty-days-overdue",
+      "historyClass": "retained",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-07T15:00:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-30T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "same-day-and-equal-time",
+      "historyClass": "retained",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        },
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z"
+        },
+        {
+          "rating": "easy",
+          "at": "2026-10-06T15:01:00.000Z"
+        },
+        {
+          "rating": "again",
+          "at": "2026-10-06T15:02:00.000Z"
+        },
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:12:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "new-after-reset",
+      "historyClass": "missing-after-reset",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "state-without-retained-events",
+      "historyClass": "missing",
+      "prior": {
+        "schedulerVersion": "simple-v1",
+        "step": 3,
+        "reps": 40,
+        "lapses": 2,
+        "lastReviewedAt": "2026-01-01T15:00:00.000Z",
+        "dueAt": "2026-01-17T15:00:00.000Z"
+      },
+      "reviews": [
+        {
+          "rating": "hard",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "very-old-capped-card",
+      "historyClass": "retained",
+      "prior": {
+        "schedulerVersion": "simple-v1",
+        "step": 7,
+        "reps": 80,
+        "lapses": 5,
+        "lastReviewedAt": "2000-01-01T15:00:00.000Z",
+        "dueAt": "2000-06-29T15:00:00.000Z"
+      },
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "spring-elapsed-day",
+      "historyClass": "new",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-03-08T09:30:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "fall-elapsed-day",
+      "historyClass": "new",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-11-01T08:30:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "clock-backward",
+      "historyClass": "refusal",
+      "prior": {
+        "schedulerVersion": "simple-v1",
+        "step": 0,
+        "reps": 1,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+        "dueAt": "2026-10-07T15:00:00.000Z"
+      },
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T14:59:59.999Z"
+        }
+      ]
+    },
+    {
+      "id": "noncanonical-time",
+      "historyClass": "refusal",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "foreign-version",
+      "historyClass": "refusal",
+      "prior": {
+        "schedulerVersion": "not-adopted",
+        "step": 0,
+        "reps": 1,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-06T15:00:00.000Z",
+        "dueAt": "2026-10-07T15:00:00.000Z"
+      },
+      "reviews": [
+        {
+          "rating": "good",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "unknown-rating",
+      "historyClass": "refusal",
+      "prior": null,
+      "reviews": [
+        {
+          "rating": "perfect",
+          "at": "2026-10-06T15:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "localDays": [
+    {
+      "id": "spring-23-hour-day",
+      "at": "2026-03-08T08:00:00.000Z",
+      "zone": "America/Los_Angeles"
+    },
+    {
+      "id": "fall-25-hour-day",
+      "at": "2026-11-01T07:00:00.000Z",
+      "zone": "America/Los_Angeles"
+    },
+    {
+      "id": "travel-utc",
+      "at": "2026-10-06T15:00:00.000Z",
+      "zone": "UTC"
+    },
+    {
+      "id": "travel-los-angeles",
+      "at": "2026-10-06T15:00:00.000Z",
+      "zone": "America/Los_Angeles"
+    },
+    {
+      "id": "travel-kiritimati",
+      "at": "2026-10-06T15:00:00.000Z",
+      "zone": "Pacific/Kiritimati"
+    },
+    {
+      "id": "leap-day",
+      "at": "2028-02-28T15:00:00.000Z",
+      "zone": "UTC"
+    }
+  ]
+}

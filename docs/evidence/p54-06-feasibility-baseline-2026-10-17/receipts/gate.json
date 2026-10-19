@@ -1,0 +1,64 @@
+[
+  {
+    "name": "baseline",
+    "command": [
+      "node",
+      "docs/evidence/p54-06-feasibility-baseline-2026-10-17/proof/baseline.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "name": "proof-tests",
+    "command": [
+      "node",
+      "--test",
+      "docs/evidence/p54-06-feasibility-baseline-2026-10-17/proof/baseline.test.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "name": "existing-pure",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/logic/cardScheduler.test.ts",
+      "src/logic/localDay.test.ts"
+    ],
+    "exit": 0
+  },
+  {
+    "name": "existing-history",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/data/cardReviewContract.test.ts",
+      "-t",
+      "reset|erased|generation|same-ID replay|clock rollback"
+    ],
+    "exit": 0
+  },
+  {
+    "name": "helper",
+    "command": [
+      "node",
+      "--test",
+      "scripts/mac-schema14-profile-snapshot.test.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "name": "timezone-repeatability",
+    "command": "baseline CLI under UTC, America/Los_Angeles, Pacific/Kiritimati",
+    "exit": 0,
+    "identicalOutputs": 3
+  },
+  {
+    "name": "deliberate-wrong-due",
+    "command": "baseline CLI --fixtures <disposable one-field mutant>",
+    "expectedExit": 1,
+    "actualExit": 1,
+    "expectedFailureConfirmed": true
+  }
+]

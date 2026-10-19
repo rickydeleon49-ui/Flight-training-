@@ -1,0 +1,231 @@
+TAP version 13
+# (node:62368) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: distributed helper
+    # Subtest: exports nothing, has one operator entry, one fixed lane and no test or environment route
+    ok 1 - exports nothing, has one operator entry, one fixed lane and no test or environment route
+      ---
+      duration_ms: 0.834792
+      type: 'test'
+      ...
+    # Subtest: the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes
+    ok 2 - the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes
+      ---
+      duration_ms: 799.264917
+      type: 'test'
+      ...
+    1..2
+ok 1 - distributed helper
+  ---
+  duration_ms: 800.563125
+  type: 'suite'
+  ...
+# Subtest: full self-check reporting
+    # Subtest: reports lost special keys as named failures, completes all checks and exits nonzero
+    ok 1 - reports lost special keys as named failures, completes all checks and exits nonzero
+      ---
+      duration_ms: 664.941125
+      type: 'test'
+      ...
+    # Subtest: runs the historical schema13 self-check with only its intentional schema-ceiling alarm
+    ok 2 - runs the historical schema13 self-check with only its intentional schema-ceiling alarm
+      ---
+      duration_ms: 507.804041
+      type: 'test'
+      ...
+    1..2
+ok 2 - full self-check reporting
+  ---
+  duration_ms: 1172.829792
+  type: 'suite'
+  ...
+# Subtest: proof source walker
+    # Subtest: sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files
+    ok 1 - sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files
+      ---
+      duration_ms: 25.414375
+      type: 'test'
+      ...
+    # Subtest: recognizes Cargo's Apple Silicon target folder only in its exact tagged shape
+    ok 2 - recognizes Cargo's Apple Silicon target folder only in its exact tagged shape
+      ---
+      duration_ms: 16.18225
+      type: 'test'
+      ...
+    # Subtest: recognizes only the two exact build-output paths, and this checkout's real ones when present
+    ok 3 - recognizes only the two exact build-output paths, and this checkout's real ones when present
+      ---
+      duration_ms: 0.174042
+      type: 'test'
+      ...
+    1..3
+ok 3 - proof source walker
+  ---
+  duration_ms: 41.967917
+  type: 'suite'
+  ...
+# Subtest: post-merge replay dependency lock (QA-02)
+    # Subtest: accepts an identical lock and a version-only bump of both root fields
+    ok 1 - accepts an identical lock and a version-only bump of both root fields
+      ---
+      duration_ms: 3.913167
+      type: 'test'
+      ...
+    # Subtest: refuses any other difference, including dependency, integrity, resolution and inconsistent root versions
+    ok 2 - refuses any other difference, including dependency, integrity, resolution and inconsistent root versions
+      ---
+      duration_ms: 13.687542
+      type: 'test'
+      ...
+    1..2
+ok 4 - post-merge replay dependency lock (QA-02)
+  ---
+  duration_ms: 17.65875
+  type: 'suite'
+  ...
+# Subtest: operator CLI refusals
+    # Subtest: snapshot outside the approved lane refuses and writes nothing
+    ok 1 - snapshot outside the approved lane refuses and writes nothing
+      ---
+      duration_ms: 78.3435
+      type: 'test'
+      ...
+    # Subtest: no flag retargets the lane or relaxes a rule
+    ok 2 - no flag retargets the lane or relaxes a rule
+      ---
+      duration_ms: 192.473542
+      type: 'test'
+      ...
+    # Subtest: the account guard refuses any uid other than the approved standard account
+    ok 3 - the account guard refuses any uid other than the approved standard account
+      ---
+      duration_ms: 0.209
+      type: 'test'
+      ...
+    1..3
+ok 5 - operator CLI refusals
+  ---
+  duration_ms: 271.085792
+  type: 'suite'
+  ...
+# Subtest: operator CLI compare
+    # Subtest: writes a fresh receipt for a genuine upgrade, then never clobbers it or an input
+    ok 1 - writes a fresh receipt for a genuine upgrade, then never clobbers it or an input
+      ---
+      duration_ms: 275.131416
+      type: 'test'
+      ...
+    # Subtest: refuses the original PR \#142 installed receipts instead of reinterpreting them, leaving them byte-identical
+    ok 2 - refuses the original PR \#142 installed receipts instead of reinterpreting them, leaving them byte-identical
+      ---
+      duration_ms: 49.157625
+      type: 'test'
+      ...
+    # Subtest: refuses oversized and symlinked receipts before reading them
+    ok 3 - refuses oversized and symlinked receipts before reading them
+      ---
+      duration_ms: 173.572375
+      type: 'test'
+      ...
+    1..3
+ok 6 - operator CLI compare
+  ---
+  duration_ms: 497.9345
+  type: 'suite'
+  ...
+# Subtest: the disposable copy's scratch lane
+    # Subtest: refuses roots outside task-owned scratch, outside the temporary directory, or not named for the app
+    ok 1 - refuses roots outside task-owned scratch, outside the temporary directory, or not named for the app
+      ---
+      duration_ms: 0.421209
+      type: 'test'
+      ...
+    # Subtest: is never selected outside a takeSnapshot call
+    ok 2 - is never selected outside a takeSnapshot call
+      ---
+      duration_ms: 41.576209
+      type: 'test'
+      ...
+    # Subtest: clones are independent single-linked files, so the hard-link guard is never tripped by fixture copies
+    ok 3 - clones are independent single-linked files, so the hard-link guard is never tripped by fixture copies
+      ---
+      duration_ms: 51.12025
+      type: 'test'
+      ...
+    1..3
+ok 7 - the disposable copy's scratch lane
+  ---
+  duration_ms: 93.19575
+  type: 'suite'
+  ...
+# Subtest: special metadata keys on real SQLite
+    # Subtest: capture __proto__, constructor, toString and Unicode keys as own digests in a prototype-free map
+    ok 1 - capture __proto__, constructor, toString and Unicode keys as own digests in a prototype-free map
+      ---
+      duration_ms: 0.2665
+      type: 'test'
+      ...
+    # Subtest: retained special keys pass upgrade and restore; changed, removed or added ones fail restore by name
+    ok 2 - retained special keys pass upgrade and restore; changed, removed or added ones fail restore by name
+      ---
+      duration_ms: 86.607208
+      type: 'test'
+      ...
+    # Subtest: sets aside exactly the three receipt keys, only for restore
+    ok 3 - sets aside exactly the three receipt keys, only for restore
+      ---
+      duration_ms: 128.236708
+      type: 'test'
+      ...
+    1..3
+ok 8 - special metadata keys on real SQLite
+  ---
+  duration_ms: 215.268625
+  type: 'suite'
+  ...
+# Subtest: inventory and runtime-root boundaries
+    # Subtest: inventories sqlite-like user objects that a LIKE wildcard would hide, and compare names them
+    ok 1 - inventories sqlite-like user objects that a LIKE wildcard would hide, and compare names them
+      ---
+      duration_ms: 69.686875
+      type: 'test'
+      ...
+    # Subtest: refuses a symlinked backups/ root before listing it and writes no receipt
+    ok 2 - refuses a symlinked backups/ root before listing it and writes no receipt
+      ---
+      duration_ms: 43.091
+      type: 'test'
+      ...
+    # Subtest: refuses a symlinked .restore-staging/ root before listing it and writes no receipt
+    ok 3 - refuses a symlinked .restore-staging/ root before listing it and writes no receipt
+      ---
+      duration_ms: 41.802334
+      type: 'test'
+      ...
+    # Subtest: refuses a symlinked .restore-pending/ root before listing it and writes no receipt
+    ok 4 - refuses a symlinked .restore-pending/ root before listing it and writes no receipt
+      ---
+      duration_ms: 40.129708
+      type: 'test'
+      ...
+    # Subtest: still records a real (non-symlinked) backups/ root as runtime disclosure
+    ok 5 - still records a real (non-symlinked) backups/ root as runtime disclosure
+      ---
+      duration_ms: 40.783334
+      type: 'test'
+      ...
+    1..5
+ok 9 - inventory and runtime-root boundaries
+  ---
+  duration_ms: 235.641
+  type: 'suite'
+  ...
+1..9
+# tests 26
+# suites 9
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3460.134458

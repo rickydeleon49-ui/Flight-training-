@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-p54-06
+
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  23:44:50
+   Duration  119ms (transform 36ms, setup 0ms, import 48ms, tests 13ms, environment 0ms)
+

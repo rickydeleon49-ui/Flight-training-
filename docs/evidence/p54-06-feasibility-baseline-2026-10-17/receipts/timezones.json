@@ -1,0 +1,20 @@
+[
+  {
+    "TZ": "UTC",
+    "exit": 0,
+    "sha256": "2ef8498bc568c2af0eddca7cf697c56b855aeb4b68690a51ae93f8688c955312",
+    "identicalToBaseline": true
+  },
+  {
+    "TZ": "America/Los_Angeles",
+    "exit": 0,
+    "sha256": "2ef8498bc568c2af0eddca7cf697c56b855aeb4b68690a51ae93f8688c955312",
+    "identicalToBaseline": true
+  },
+  {
+    "TZ": "Pacific/Kiritimati",
+    "exit": 0,
+    "sha256": "2ef8498bc568c2af0eddca7cf697c56b855aeb4b68690a51ae93f8688c955312",
+    "identicalToBaseline": true
+  }
+]
