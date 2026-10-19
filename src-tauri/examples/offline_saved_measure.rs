@@ -92,6 +92,20 @@ fn main() {
     let mut slot = "zzeditslot".to_string();
     let mut marker = 0u64;
     let mut errors: Vec<String> = Vec::new();
+    // The edited note's frozen membership in each query's expected set; the
+    // post-edit reference check must keep it (§6).
+    let manifest_path = PathBuf::from(&args[2]);
+    let checker = manifest_path.with_file_name("check_note.py");
+    let note_expected: Vec<bool> = (0..queries.len())
+        .map(|qi| {
+            expected[qi.to_string()]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|x| x[0] == "note" && x[2] == "n0000")
+        })
+        .collect();
+    let mut post_edit_checks = 0u64;
     let mut max_bytes = 0usize;
 
     // A fresh process: fresh cache beside the corpus, nothing verified.
@@ -191,6 +205,37 @@ fn main() {
                     )
                     .unwrap();
                     slot = next;
+                    // Outside timing: rerun the independent reference scan on
+                    // the committed note and require unchanged membership.
+                    let (title, body): (String, String) = edit
+                        .query_row(
+                            "SELECT title, body FROM notes WHERE id = 'n0000'",
+                            [],
+                            |r| Ok((r.get(0)?, r.get(1)?)),
+                        )
+                        .unwrap();
+                    let mut child = std::process::Command::new("python3")
+                        .arg("-I")
+                        .arg(&checker)
+                        .arg(&manifest_path)
+                        .stdin(std::process::Stdio::piped())
+                        .stdout(std::process::Stdio::piped())
+                        .spawn()
+                        .unwrap();
+                    use std::io::Write;
+                    child
+                        .stdin
+                        .take()
+                        .unwrap()
+                        .write_all(json!({"title": title, "body": body}).to_string().as_bytes())
+                        .unwrap();
+                    let out = child.wait_with_output().unwrap();
+                    let membership: Vec<bool> =
+                        serde_json::from_slice(&out.stdout).unwrap_or_default();
+                    post_edit_checks += 1;
+                    if !out.status.success() || membership != note_expected {
+                        errors.push(format!("post-edit reference q{qi} s{i}: {membership:?}"));
+                    }
                 }
                 let before = host.saved_rebuilds();
                 let t = Instant::now();
@@ -221,7 +266,11 @@ fn main() {
                         errors.push(format!("fresh q{qi} s{i}"));
                     }
                 }
-                if i >= 3 && r.is_ok() {
+                // Admission (§6): a rebuild sample counts only if it rebuilt
+                // exactly once, a cached sample only if it didn't rebuild.
+                let admitted = r.is_ok()
+                    && ((mode == "rebuild" && rebuilt == 1) || (mode == "cached" && rebuilt == 0));
+                if i >= 3 && admitted {
                     timed.push(ms);
                 }
             }
@@ -238,6 +287,7 @@ fn main() {
         "correctness": correctness,
         "results": results,
         "maxResponseBytes": max_bytes,
+        "postEditReferenceChecks": post_edit_checks,
         "errors": errors,
     });
     std::fs::write(out, serde_json::to_vec_pretty(&report).unwrap()).unwrap();
