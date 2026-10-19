@@ -1,6 +1,6 @@
 # OFFLINE-02: search a subject — design and pre-registration — 19 October 2026
 
-**Status: proposal for review, revision 2.** Codex round 1 was RED, with nine findings; §10 lists how each was answered. Nothing here is implemented.
+**Status: proposal for review, revision 3.** Codex rounds 1 and 2 were RED; §10 lists how each finding was answered. Nothing here is implemented.
 
 The roadmap requires the query rules, limits, fallbacks and measurement targets to be written down before the search engine is built in ([roadmap](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md), OFFLINE-02 "Acceptance and engine decision"). This document does that.
 
@@ -214,20 +214,36 @@ It is gated like `prepare_offline_content`.
 
 **Admission:** one search runs at a time, and at most one waits. A newer request replaces the waiting one, which gets `superseded`, and interrupts the running one. Typing therefore never builds a queue.
 
-**Deadline:** 2 s per search. A timer calls the connection's `InterruptHandle`, and the search answers `timeout`: "That search took too long. Try more specific words."
+**Deadline:** 2 s per search. It answers `timeout`: "That search took too long. Try more specific words." It is enforced in two layers, because SQLite interruption is **cooperative**: `sqlite3_interrupt` only stops a statement that is running, and it does nothing between statements.
+
+**1. Request-scoped state.** Each request carries a `Deadline { id, until, cancelled: AtomicBool }`. The search thread checks it:
+- before each phase: material resolution, stamp checks, the candidate query, grouping, snippets and serialization;
+- once per candidate row stepped;
+- once per snippet built.
+
+When the deadline has passed or the request was superseded, the thread stops and answers `timeout` or `superseded`.
+
+**2. SQL interruption.** This covers the time inside one statement, notably the candidate sort, which runs before the first row is returned.
+- **What the search thread records:** while a statement runs, it records `active = Some(request id)` in a mutex. It clears that record, under the same mutex, as soon as the statement finishes or is reset.
+- **What the watchdog does:** when a request's deadline fires, the watchdog takes the mutex and calls `InterruptHandle::interrupt()` **only if** `active` still holds that request's id.
+- **Why a late timer can't hit the next request:** clearing `active` and starting the next request's statements both happen after that mutex is released. So a late timer can't interrupt a different request.
+- **Retiring a timer:** a request's timer is cancelled when the request ends. A test drives a timer that fires exactly at the end of a request and asserts the next request completes normally.
 
 **Bounded work, in two phases:**
-1. **Candidates:**
+1. **Candidates**, with the cutoff ordered by the full §6.4 key:
    ```sql
-   SELECT rowid, bm25(passage_fts)
-   FROM passage_fts
+   SELECT f.rowid, f.rank, p.content_sha256, p.page_index
+   FROM passage_fts AS f
+   JOIN search_passage AS p ON p.id = f.rowid
+   JOIN temp.current_sha AS c ON c.sha = p.content_sha256
    WHERE passage_fts MATCH ?
-     AND rowid IN (SELECT id FROM search_passage
-                   WHERE content_sha256 IN temp.current_sha)
-   ORDER BY rank
+   ORDER BY f.rank, c.sort_title, c.sort_id, p.page_index
    LIMIT 2000
    ```
-   `temp.current_sha` is a per-query temp table of the §4.1 hashes. The 2,000 cap bounds the sorter.
+   - `temp.current_sha(sha PRIMARY KEY, sort_title, sort_id)` is built per query from the §4.1 hashes.
+   - When several materials share a hash, the sort columns are the smallest `(title, id)` among them.
+   - The `LIMIT` is applied **after** the complete ordering, so which passages survive the cut is decided by the same rule that orders them. A tie across the cutoff is resolved by title, then id, then page.
+   - The 2,000 cap bounds the sorter. It counts **passages**: a passage whose hash belongs to several materials is expanded to each of them **after** the cut, so it never displaces other passages.
 2. **Results:** group the candidates by material, then build snippets **only** for the passages on the requested page.
 
 If more groups exist beyond the 2,000 candidates, `nextOffset` stops there and the UI says "Showing the best matches. Narrow your search to see more."
@@ -262,7 +278,11 @@ If more groups exist beyond the 2,000 candidates, `nextOffset` stops there and t
 - a material ranks by its best passage;
 - ties break by material title, then material id, then page index.
 
-So the order is stable for the same index, query and filters.
+This same key orders the candidate cutoff (§6.2), so the order is stable, including at the cut, for the same index, query and filters.
+
+**Tests:**
+- 2,500 passages with identical scores across materials whose titles sort in the opposite order to their hashes. The test asserts which materials survive the cut and their order.
+- A duplicate-hash material at the cut.
 
 ## 7. Measurement plan and targets (pre-registered, frozen)
 
@@ -276,12 +296,17 @@ Anything changed after that is reported as a change, with the reason.
 
 **Expected hits:**
 - **How they're produced:** an independent reference, a Python word-boundary scan over the same canonical text using the same folding rules (tested against FTS on fixtures first), gives the expected `(sha, page)` set for every query and corpus.
-- **The check:** FTS must return exactly that set; the comparison uses the candidate set before the display cap.
-- **A mismatch fails the run.**
+- **Two checks, both untimed.** A mismatch in either fails the run:
+  1. **Exhaustive:** the candidate query **without** `LIMIT` must return exactly the reference set.
+  2. **Capped:** the production query, with its `LIMIT 2000`, must return exactly the first 2,000 rows of the exhaustive result in the §6.4 order, or all of them if there are fewer.
+- **Timed runs use only the production, capped command.**
 
 **Corpora:**
 - **Real:** the PHAK (497 text pages, 1.77 MB of text) and the AFH chapters, from OFFLINE-01c's hash-recorded set.
-- **Scaled:** generated pages that draw words from the PHAK's canonical vocabulary, with frequencies and page lengths sampled from it. Sizes: **1,000, 10,000 and 30,000 pages**. 30,000 is about 60 handbook-sized documents.
+- **Scaled:** generated pages that draw words from the PHAK's canonical vocabulary, with frequencies and page lengths sampled from it. Sizes: **1,000, 10,000 and 30,000 pages**.
+  - **Allocation:** every generated document has exactly 500 pages. So the sizes are 2, 20 and 60 distinct documents. Each document is one material, titled `Generated handbook NN` with zero-padded numbers.
+  - **Duplicates:** document 01 is also imported a second time as a separate material, `Generated handbook 01 (copy)`, with the same bytes and hash. So each size has one duplicate-hash pair, which is 3, 21 and 61 materials.
+  - **The real PHAK** is measured on its own (one material), and it is not mixed into the scaled corpora.
 
 **Queries** (identical for every corpus):
 
@@ -294,6 +319,13 @@ Anything changed after that is reported as a change, with the reason.
 | No match | `zzqxv` |
 | Worst case | the most frequent indexed word in the corpus, recorded when the corpus is frozen |
 
+**Filters** (each query type is measured under all three):
+- **All:** every material in the corpus.
+- **One:** the material `Generated handbook 01`, or the PHAK.
+- **Quarter:** every fourth material when sorted by id, starting with the first.
+
+**Query order:** fixed for every process. For each filter in the order All, One, Quarter, and each query type in the table's order, run that pair's warm-up queries and then its timed queries before moving on. The schedule is written to the frozen manifest.
+
 **Timing:**
 - **Query time** runs from the command's entry to its serialized response bytes. It excludes IPC and painting, which belong to installed acceptance.
 - **Index time** covers `search_passage` inserts plus commit.
@@ -301,15 +333,28 @@ Anything changed after that is reported as a change, with the reason.
 
 **Samples:**
 - 3 fresh processes per corpus size;
-- per query type, 3 discarded warm-up queries, then 15 timed;
-- each query type therefore has 45 samples per size;
+- per query type and filter, 3 discarded warm-up queries, then 15 timed;
+- each query type and filter therefore has 45 samples per size;
 - p50 and p95 by the nearest-rank method.
 
 **Storage:**
 - `content-cache.db` size after `VACUUM`, minus the same database built without `search_passage` and `passage_fts`;
 - reported against the canonical text bytes.
 
-**Memory:** whole-process peak RSS from `/usr/bin/time -l`. The concurrent case is a search measured while a PHAK preparation runs in the worker.
+**Memory:** whole-process peak RSS from `/usr/bin/time -l`.
+
+**The concurrent case:** 10,000 passages, filter All, the common-word query.
+- **Start:** the harness starts a PHAK preparation, waits for the worker's first `page` frame, and only then begins sampling.
+- **A sample counts only if** it both starts and ends before the worker's `end` frame **and** before the publish transaction begins.
+- **Interrupted runs:** if preparation finishes first, that run's samples are discarded and the run is repeated, up to 5 times. The number of discarded runs is reported. If all 5 fail to fit 15 samples, the case is reported as not measured, never as passing.
+
+**Frozen manifest.** Before implementation measurements, these are committed and hashed:
+- the corpus manifest: every material's id, title, hash and page count;
+- the filter sets;
+- the query schedule;
+- the concurrency protocol.
+
+**Every prescribed case is reported**, including any that missed its target or couldn't be measured.
 
 **Hardware:** a release build, Apple M5 with 32 GiB, macOS and toolchain versions recorded. The minimum-spec Mac is still pending, as for the 01c cap.
 
@@ -378,3 +423,12 @@ Each case asserts **expected hits and expected exclusions**, by material id and 
 | 7 | 240-character and 64 KiB bounds unenforced | Scalar-value clipping that is marker-safe; metadata clipping; serialized-byte accounting with a trim-and-paginate policy; fixtures (§6.3) |
 | 8 | Measurement choices left open; p50 missing | Seed, generator, hashes, queries and reference expected hits frozen first; timing boundaries, warm-up, nearest-rank p50/p95, storage method; misses reported (§7) |
 | 9 | Filters, type/revision display, Open fallback, hidden-answer and injection tests missing | `materialIds` from the UI's topic/tag/material/type/revision filters plus `contentTypes`; revision display; reuse of the existing navigation controller and Open fallback; 02c exclusion and active-attempt tests; literal-rendering fixtures (§4.4, §4.5, §6.1, §8) |
+
+## 11. Codex round 2 corrections
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | The timer doesn't enforce the deadline: SQL interruption is cooperative, non-SQL phases continue, and a late timer could hit the next request | A request-scoped deadline is checked between phases, per candidate row and per snippet. The watchdog interrupts only while that request's statement is active, coordinated by a mutex. Timers are retired at request end, with a boundary test (§6.2) |
+| 2 | The exact-set gate contradicts `LIMIT 2000` | An exhaustive untimed query must equal the reference set. The capped production query must equal the first 2,000 of the exhaustive order. Timing uses only the capped command (§7) |
+| 3 | The cutoff precedes the tie-breaking | The cutoff is ordered by the full key: rank, title, id, page, with the duplicate-hash sort key defined. Expansion happens after the cut. There are tie-across-cutoff and duplicate-at-cutoff tests (§6.2, §6.4) |
+| 4 | Workload choices still open | Fixed 500-page documents, one duplicate pair per size, three prescribed filters, a fixed query schedule, a concurrency protocol synchronized on worker frames with discard and retry rules. All are frozen in a manifest, and every case is reported (§7) |
