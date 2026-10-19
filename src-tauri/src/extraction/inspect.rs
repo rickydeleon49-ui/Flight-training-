@@ -13,6 +13,13 @@ use serde::{Deserialize, Serialize};
 /// Forms nested deeper than this make an inspection incomplete.
 pub const MAX_FORM_DEPTH: usize = 8;
 
+/// A page's decoded content, including every form it invokes, may not
+/// exceed this. Decoding stops at the limit, so an outsized page (a real
+/// handbook page decodes to 60 MB and 2 million operations) never costs
+/// more than this before it is refused. Such a page is `failed` with
+/// `page_content_limit`; the rest of the document carries on.
+pub const MAX_PAGE_CONTENT_BYTES: usize = 8 * 1024 * 1024;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Outcome {
@@ -38,10 +45,34 @@ pub struct Inspection {
     pub complete: bool,
     /// The page's own content stream could not be read or parsed.
     pub unreadable_page: bool,
+    /// The page's decoded content passed `MAX_PAGE_CONTENT_BYTES`.
+    pub content_too_large: bool,
+}
+
+/// Why strict decoding gave up.
+enum Refused {
+    Unreadable,
+    TooLarge,
+}
+
+/// Decoded bytes still allowed for the current page.
+struct Budget(usize);
+
+impl Budget {
+    fn take(&mut self, n: usize) -> Result<(), Refused> {
+        self.0 = self.0.checked_sub(n).ok_or(Refused::TooLarge)?;
+        Ok(())
+    }
 }
 
 /// Inspect one page. Never panics; every failure only clears `complete`.
 pub fn inspect_page(doc: &Document, page_id: ObjectId) -> Inspection {
+    inspect_page_within(doc, page_id, MAX_PAGE_CONTENT_BYTES)
+}
+
+/// `inspect_page` with an explicit content budget, for tests.
+pub fn inspect_page_within(doc: &Document, page_id: ObjectId, budget: usize) -> Inspection {
+    let mut budget = Budget(budget);
     let mut found = Inspection {
         complete: true,
         ..Inspection::default()
@@ -52,15 +83,30 @@ pub fn inspect_page(doc: &Document, page_id: ObjectId) -> Inspection {
         found.unreadable_page = true;
         return found;
     };
-    let content =
-        strict_page_content(doc, page_id).and_then(|bytes| Content::decode_strict(&bytes).ok());
+    let content = match strict_page_content(doc, page_id, &mut budget) {
+        Ok(bytes) => Content::decode_strict(&bytes).ok(),
+        Err(Refused::TooLarge) => {
+            found.complete = false;
+            found.content_too_large = true;
+            return found;
+        }
+        Err(Refused::Unreadable) => None,
+    };
     let Some(content) = content else {
         found.complete = false;
         found.unreadable_page = true;
         return found;
     };
     let mut stack = Vec::new();
-    walk(doc, &content, &resources, 0, &mut stack, &mut found);
+    walk(
+        doc,
+        &content,
+        &resources,
+        0,
+        &mut stack,
+        &mut budget,
+        &mut found,
+    );
     found
 }
 
@@ -70,15 +116,22 @@ pub fn inspect_page(doc: &Document, page_id: ObjectId) -> Inspection {
 /// blank page from an unreadable one. Only unfiltered streams and a single
 /// FlateDecode with no predictor are accepted; the zlib stream must reach its
 /// verified end. Anything else is treated as unreadable, never as empty.
-pub fn strict_stream_bytes(stream: &lopdf::Stream) -> Option<Vec<u8>> {
+///
+/// Decoding counts against `budget` and stops as soon as it would pass it.
+fn strict_stream_bytes(stream: &lopdf::Stream, budget: &mut Budget) -> Result<Vec<u8>, Refused> {
     let filter = match stream.dict.get(b"Filter") {
-        Err(_) => return Some(stream.content.clone()),
+        Err(_) => {
+            budget.take(stream.content.len())?;
+            return Ok(stream.content.clone());
+        }
         Ok(Object::Name(name)) => name.as_slice(),
-        Ok(Object::Array(list)) if list.len() == 1 => list[0].as_name().ok()?,
-        Ok(_) => return None,
+        Ok(Object::Array(list)) if list.len() == 1 => {
+            list[0].as_name().map_err(|_| Refused::Unreadable)?
+        }
+        Ok(_) => return Err(Refused::Unreadable),
     };
     if filter != b"FlateDecode" {
-        return None;
+        return Err(Refused::Unreadable);
     }
     if let Ok(params) = stream.dict.get(b"DecodeParms") {
         let predictor = match params {
@@ -86,44 +139,61 @@ pub fn strict_stream_bytes(stream: &lopdf::Stream) -> Option<Vec<u8>> {
             Object::Dictionary(d) => match d.get(b"Predictor") {
                 Err(_) => 1,
                 Ok(Object::Integer(n)) => *n,
-                Ok(_) => return None,
+                Ok(_) => return Err(Refused::Unreadable),
             },
             Object::Null => 1,
-            _ => return None,
+            _ => return Err(Refused::Unreadable),
         };
         if predictor != 1 {
-            return None;
+            return Err(Refused::Unreadable);
         }
     }
-    let mut out = Vec::new();
     use std::io::Read;
+    let mut out = Vec::new();
+    // Saturating: an unlimited budget (usize::MAX) must not wrap to 0.
+    let limit = (budget.0 as u64).saturating_add(1);
     flate2::read::ZlibDecoder::new(stream.content.as_slice())
+        .take(limit)
         .read_to_end(&mut out)
-        .ok()?;
-    Some(out)
+        .map_err(|_| Refused::Unreadable)?;
+    budget.take(out.len())?;
+    // Stopping at the limit leaves the zlib stream unfinished, so only a
+    // stream that fit is known to be complete; the reader errors on a
+    // truncated or corrupt one.
+    Ok(out)
 }
 
 /// Every entry of the page's `/Contents`, resolved and strictly decoded.
 /// A page with no `/Contents` is legitimately empty; a dangling reference,
 /// a non-stream entry or any undecodable stream makes the page unreadable.
-fn strict_page_content(doc: &Document, page_id: ObjectId) -> Option<Vec<u8>> {
-    let page = doc.get_dictionary(page_id).ok()?;
+fn strict_page_content(
+    doc: &Document,
+    page_id: ObjectId,
+    budget: &mut Budget,
+) -> Result<Vec<u8>, Refused> {
+    let page = doc
+        .get_dictionary(page_id)
+        .map_err(|_| Refused::Unreadable)?;
     let entries: Vec<ObjectId> = match page.get(b"Contents") {
-        Err(_) => return Some(Vec::new()),
+        Err(_) => return Ok(Vec::new()),
         Ok(Object::Reference(id)) => vec![*id],
         Ok(Object::Array(list)) => list
             .iter()
             .map(|o| o.as_reference().ok())
-            .collect::<Option<Vec<_>>>()?,
-        Ok(_) => return None,
+            .collect::<Option<Vec<_>>>()
+            .ok_or(Refused::Unreadable)?,
+        Ok(_) => return Err(Refused::Unreadable),
     };
     let mut content = Vec::new();
     for id in entries {
-        let stream = doc.get_object(id).ok()?.as_stream().ok()?;
-        content.extend_from_slice(&strict_stream_bytes(stream)?);
+        let stream = doc
+            .get_object(id)
+            .and_then(Object::as_stream)
+            .map_err(|_| Refused::Unreadable)?;
+        content.extend_from_slice(&strict_stream_bytes(stream, budget)?);
         content.push(b'\n');
     }
-    Some(content)
+    Ok(content)
 }
 
 /// The page's resource dictionaries, nearest first (own, then inherited).
@@ -145,6 +215,7 @@ fn walk(
     resources: &[Dictionary],
     depth: usize,
     stack: &mut Vec<ObjectId>,
+    budget: &mut Budget,
     found: &mut Inspection,
 ) {
     for op in &content.operations {
@@ -154,7 +225,7 @@ fn walk(
             "Do" => {
                 let name = op.operands.first().and_then(|o| o.as_name().ok());
                 match name {
-                    Some(name) => invoke(doc, name, resources, depth, stack, found),
+                    Some(name) => invoke(doc, name, resources, depth, stack, budget, found),
                     None => found.complete = false,
                 }
             }
@@ -172,6 +243,7 @@ fn invoke(
     resources: &[Dictionary],
     depth: usize,
     stack: &mut Vec<ObjectId>,
+    budget: &mut Budget,
     found: &mut Inspection,
 ) {
     let target = resources.iter().find_map(|r| {
@@ -201,8 +273,15 @@ fn invoke(
                 found.complete = false;
                 return;
             }
-            let content =
-                strict_stream_bytes(stream).and_then(|bytes| Content::decode_strict(&bytes).ok());
+            let content = match strict_stream_bytes(stream, budget) {
+                Ok(bytes) => Content::decode_strict(&bytes).ok(),
+                Err(Refused::TooLarge) => {
+                    found.complete = false;
+                    found.content_too_large = true;
+                    return;
+                }
+                Err(Refused::Unreadable) => None,
+            };
             let Some(content) = content else {
                 found.complete = false;
                 return;
@@ -225,7 +304,7 @@ fn invoke(
                 None => resources.to_vec(),
             };
             stack.push(id);
-            walk(doc, &content, &scoped, depth + 1, stack, found);
+            walk(doc, &content, &scoped, depth + 1, stack, budget, found);
             stack.pop();
         }
         _ => found.complete = false,
@@ -236,7 +315,7 @@ fn invoke(
 /// whose own content couldn't be read is `failed` even if some text came
 /// out, since that text may be only part of the page.
 pub fn outcome(inspection: &Inspection, text: &str) -> Outcome {
-    if inspection.unreadable_page {
+    if inspection.unreadable_page || inspection.content_too_large {
         Outcome::Failed
     } else if !text.trim().is_empty() {
         Outcome::Text
@@ -348,6 +427,80 @@ pub(crate) mod tests {
         let text = doc.extract_text(&[1]).unwrap_or_default();
         let o = outcome(&inspection, &text);
         (inspection, o)
+    }
+
+    /// Diagnostic for real documents (01c): decoded content size and
+    /// operation count per page. Run with
+    /// `HFD_DIAG_PDF=/path HFD_DIAG_PAGES=440-460 cargo test --release --lib
+    /// extraction::inspect::tests::diagnose_pages -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn diagnose_pages() {
+        let path = std::env::var("HFD_DIAG_PDF").expect("HFD_DIAG_PDF");
+        let range = std::env::var("HFD_DIAG_PAGES").unwrap_or_else(|_| "1-10".into());
+        let (lo, hi) = range.split_once('-').unwrap();
+        let (lo, hi): (u32, u32) = (lo.parse().unwrap(), hi.parse().unwrap());
+        let doc = Document::load_mem(&std::fs::read(path).unwrap()).unwrap();
+        for (n, id) in doc.get_pages() {
+            if n < lo || n > hi {
+                continue;
+            }
+            let raw = strict_page_content(&doc, id, &mut Budget(usize::MAX)).ok();
+            let bytes = raw.as_ref().map(|b| b.len()).unwrap_or(0);
+            let ops = raw
+                .and_then(|b| Content::decode_strict(&b).ok())
+                .map(|c| c.operations.len())
+                .unwrap_or(0);
+            println!("page {n}: decoded content {bytes} bytes, {ops} operations");
+        }
+    }
+
+    /// Diagnostic for real documents (01c): resident memory after reading
+    /// the file and after `lopdf` loads it. Same environment variables as
+    /// `diagnose_pages`.
+    #[test]
+    #[ignore]
+    fn diagnose_load() {
+        let rss = || {
+            let out = std::process::Command::new("ps")
+                .args(["-o", "rss=", "-p", &std::process::id().to_string()])
+                .output()
+                .unwrap();
+            String::from_utf8_lossy(&out.stdout)
+                .trim()
+                .parse::<u64>()
+                .unwrap()
+                / 1024
+        };
+        let path = std::env::var("HFD_DIAG_PDF").expect("HFD_DIAG_PDF");
+        println!("start: {} MiB", rss());
+        let bytes = std::fs::read(path).unwrap();
+        println!(
+            "file read ({} MiB): {} MiB RSS, {} MiB counted live",
+            bytes.len() >> 20,
+            rss(),
+            crate::extraction::alloc::COUNTER.live() >> 20
+        );
+        let doc = Document::load_mem(&bytes).unwrap();
+        println!(
+            "loaded ({} objects): {} MiB RSS, {} MiB counted live",
+            doc.objects.len(),
+            rss(),
+            crate::extraction::alloc::COUNTER.live() >> 20
+        );
+        drop(bytes);
+        println!(
+            "file bytes dropped: {} MiB RSS, {} MiB counted live",
+            rss(),
+            crate::extraction::alloc::COUNTER.live() >> 20
+        );
+        let streams: usize = doc
+            .objects
+            .values()
+            .filter_map(|o| o.as_stream().ok())
+            .map(|s| s.content.len())
+            .sum();
+        println!("stream bytes held by the document: {} MiB", streams >> 20);
     }
 
     #[test]
@@ -571,6 +724,46 @@ pub(crate) mod tests {
             Outcome::Blank,
             "an explicit Predictor 1 is fine"
         );
+    }
+
+    #[test]
+    fn an_outsized_page_is_failed_and_stops_at_the_budget() {
+        for compress in [false, true] {
+            let mut b = PdfBuilder::new();
+            let mut s = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(4096));
+            if compress {
+                s.compress().unwrap();
+            } else {
+                s.allows_compression = false;
+            }
+            let id = b.doc.add_object(s);
+            page_with_contents(&mut b, Object::Reference(id));
+            let doc = Document::load_mem(&b.bytes()).unwrap();
+            let page = first_page(&doc);
+            let small = inspect_page_within(&doc, page, 1024);
+            assert!(small.content_too_large, "compress={compress}");
+            assert_eq!(outcome(&small, ""), Outcome::Failed);
+            let roomy = inspect_page_within(&doc, page, 1 << 20);
+            assert!(!roomy.content_too_large && roomy.complete);
+            assert_eq!(outcome(&roomy, ""), Outcome::Blank);
+        }
+    }
+
+    #[test]
+    fn forms_count_against_the_same_page_budget() {
+        let mut b = PdfBuilder::new();
+        let big = "0 0 m 10 10 l S ".repeat(200);
+        let form = b.form(&big, dictionary! {});
+        b.page(
+            "/Fm1 Do /Fm1 Do",
+            dictionary! { "XObject" => dictionary! { "Fm1" => form } },
+        );
+        let doc = Document::load_mem(&b.bytes()).unwrap();
+        let page = first_page(&doc);
+        // One copy of the form fits; the second invocation does not.
+        let i = inspect_page_within(&doc, page, big.len() + 64);
+        assert!(i.content_too_large);
+        assert_eq!(outcome(&i, ""), Outcome::Failed);
     }
 
     #[test]

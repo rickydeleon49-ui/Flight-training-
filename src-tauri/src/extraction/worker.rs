@@ -16,7 +16,9 @@ pub const WORKER_FLAG: &str = "--hfd-extract-worker";
 pub const MAX_INPUT_BYTES: u64 = 128 * 1024 * 1024;
 pub const MAX_PAGE_TEXT_BYTES: usize = 64 * 1024;
 pub const MAX_TOTAL_TEXT_BYTES: usize = 16 * 1024 * 1024;
-pub const MAX_MEMORY_BYTES: usize = 384 * 1024 * 1024;
+/// Raised from 384 MiB by OFFLINE-01c: loading the 53 MB Pilot's Handbook
+/// alone holds 238 MiB, and it peaked at 383 MiB counted. See the 01c report.
+pub const MAX_MEMORY_BYTES: usize = 512 * 1024 * 1024;
 pub const MAX_REQUEST_BYTES: u64 = 4 * 1024;
 /// The extraction thread's fixed stack; overflow aborts the worker.
 pub const WORKER_STACK_BYTES: usize = 8 * 1024 * 1024;
@@ -261,8 +263,14 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
     let mut total = 0usize;
     for (number, page_id) in pages {
         let inspection = inspect_page(&doc, page_id);
-        let chunks = doc.extract_text_chunks(&[number]);
-        let text: String = chunks.into_iter().filter_map(Result::ok).collect();
+        // An outsized page is never handed to text extraction, which would
+        // decode and parse all of it again.
+        let text: String = if inspection.content_too_large {
+            String::new()
+        } else {
+            let chunks = doc.extract_text_chunks(&[number]);
+            chunks.into_iter().filter_map(Result::ok).collect()
+        };
         let mut result = outcome(&inspection, &text);
         let mut error = None;
         let mut text = if result == Outcome::Text {
@@ -276,7 +284,11 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
             text = String::new();
         }
         if result == Outcome::Failed && error.is_none() {
-            error = Some("page_content");
+            error = Some(if inspection.content_too_large {
+                "page_content_limit"
+            } else {
+                "page_content"
+            });
         }
         total += text.len();
         if total > total_max {

@@ -348,3 +348,17 @@ evidence/offline-01a-2026-10-19/receipts/round2-superseded/fmt.log -text -diff
 evidence/offline-01a-2026-10-19/receipts/round2-superseded/helper.log -text -diff
 evidence/offline-01a-2026-10-19/receipts/round2-superseded/cargo-lock.log -text -diff
 evidence/offline-01a-2026-10-19/receipts/round2-superseded/feature-tree-miniz_oxide.txt -text -diff
+evidence/offline-01c-2026-10-19/receipts/corpus-results.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/corpus-results-before-budget.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/corpus-results-budget-cap384.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/synthetic-measurements.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/fmt.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/clippy.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/cargo-test.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/cargo-lock.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/release-build.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/helper.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/phak-load.txt -text -diff
+evidence/offline-01c-2026-10-19/receipts/afh-load.txt -text -diff
+evidence/offline-01c-2026-10-19/receipts/phak-pages-222-230.txt -text -diff
+evidence/offline-01c-2026-10-19/receipts/phak-pages-440-460.txt -text -diff

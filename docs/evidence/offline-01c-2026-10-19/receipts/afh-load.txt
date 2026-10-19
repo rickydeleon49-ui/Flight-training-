@@ -1,0 +1,9 @@
+== 02_afh_ch1
+file read (24 MiB): 33 MiB RSS, 24 MiB counted live
+loaded (902 objects): 66 MiB RSS, 56 MiB counted live
+== 05_afh_ch4
+file read (4 MiB): 14 MiB RSS, 4 MiB counted live
+loaded (1302 objects): 27 MiB RSS, 16 MiB counted live
+== 20_afh_glossary
+file read (1 MiB): 11 MiB RSS, 1 MiB counted live
+loaded (1299 objects): 19 MiB RSS, 9 MiB counted live
