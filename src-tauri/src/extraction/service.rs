@@ -299,7 +299,7 @@ impl Service {
                     .lock()
                     .unwrap_or_else(|e| e.into_inner())
                     .insert(sha.clone());
-                let result = supervisor::run(Job {
+                let finished = supervisor::run_detailed(Job {
                     worker: &self.worker,
                     file: &path,
                     sha256: &sha,
@@ -308,14 +308,17 @@ impl Service {
                     cancel,
                     extra,
                 });
+                let result = &finished.result;
                 if let Ok(mut cache) = Cache::open(&self.root) {
-                    match &result {
+                    match result {
                         // Content-addressed: correct for these bytes even if
                         // the file has changed since.
                         Ok(extraction) if extraction.sha256 == sha => {
                             let _ = cache.publish(extraction);
                         }
-                        Err(failure) if cacheable(failure) => {
+                        // Only a failure after the worker confirmed it read
+                        // these exact bytes can be stored against them.
+                        Err(failure) if finished.identity_verified && cacheable(failure) => {
                             let _ = cache.publish_failure(&sha, &failure.code());
                         }
                         _ => {}
@@ -603,6 +606,29 @@ mod tests {
         assert!(!cacheable(&Failure::Timeout));
         assert!(!cacheable(&Failure::Cancelled));
         assert!(!cacheable(&Failure::WorkerFailed("exit")));
+    }
+
+    #[test]
+    fn the_queue_admits_exactly_its_bound_while_the_executor_is_busy() {
+        let root = std::env::temp_dir().join(format!("hfd-queue-{}", std::process::id()));
+        let svc = Arc::new(Service::new(root, PathBuf::from("unused")));
+        // Hold the work lock so the executor blocks on its first task.
+        let guard = svc.slot.lock().unwrap();
+        let accepted = (0..MAX_QUEUED + 500)
+            .filter(|i| svc.enqueue_verify(PathBuf::from(format!("/nonexistent/{i}"))))
+            .count();
+        assert_eq!(
+            accepted, MAX_QUEUED,
+            "the running task counts toward the bound"
+        );
+        assert!(
+            svc.enqueue_verify(PathBuf::from("/nonexistent/0")),
+            "a duplicate of queued work is accepted"
+        );
+        assert!(!svc.is_queued_prepare("x"));
+        drop(guard);
+        svc.wait_idle();
+        assert!(svc.queue.lock().unwrap().queued.is_empty());
     }
 
     #[test]

@@ -1,6 +1,6 @@
 # OFFLINE-01a: native extraction worker and content cache
 
-**Status: implemented; round-1 review corrections applied; pending re-review.** Claude implemented it; Codex reviews. Base: main `8d3ebfc`. This follows the accepted [proposal](OFFLINE_01_INVENTORY_AND_PROPOSAL_2026-10-19.md) (revision 5). Evidence is in [`evidence/offline-01a-2026-10-19/`](evidence/offline-01a-2026-10-19/).
+**Status: implemented; round-1 and round-2 review corrections applied; pending re-review. Extraction stays dormant: the release cap was rejected pending 01c evidence.** Claude implemented it; Codex reviews. Base: main `8d3ebfc`. This follows the accepted [proposal](OFFLINE_01_INVENTORY_AND_PROPOSAL_2026-10-19.md) (revision 5). Evidence is in [`evidence/offline-01a-2026-10-19/`](evidence/offline-01a-2026-10-19/).
 
 **One owner-approved dependency change:** `flate2`, at the same locked 1.1.10, is now a direct dependency for strict content decoding (round 1, finding 1). `Cargo.lock` gains one line in the app's own dependency list; no package is added or changed. There is no change to migrations, the frontend or the backup format. The two new commands are registered but not yet called by the UI (that is 01b). Nothing calls a provider.
 
@@ -15,7 +15,7 @@
 | Cache | `cache.rs` | `content-cache.db`, keyed by content SHA-256 and extractor version. Each publish is atomic. A missing, foreign-schema, incomplete or corrupt cache is deleted and rebuilt. Only deterministic whole-file failures are stored. Pruning is bounded. The file is outside the backup archive by design. |
 | Service and commands | `service.rs` | Readiness is never stored. It comes from the file's hash, which counts as verified only once hashed **in this session**, by streaming so large files stay out of memory. Preparation **re-hashes before deciding**, runs one worker at a time, and publishes only under the hash the worker read. Two commands: `offline_content_readiness(materialIds)` and `prepare_offline_content(materialId)`. |
 
-## Tests: 753 native passed, 0 failed, 7 ignored (was 686)
+## Tests: 758 native passed, 0 failed, 7 ignored (was 686)
 
 - **Unit tests, 28 new:**
   - **Allocator:** accounting, cap and sticky breach, `realloc` rules, failed system allocations, overflow, a cap below live bytes, concurrency, and app mode stopping counting without underflow. A worker that has a cap cannot stop counting.
@@ -52,7 +52,7 @@
 
 ## Measurements (release build, Apple M5; observations, not bounds)
 
-Worker binary SHA-256: `e6b8a93ef19b82305648c7ff0c0519889cb9156fc6be0503560430298b5f2f43` (`receipts/release-worker.sha256`). Default cap: 384 MiB of counted requested bytes. Raw results: `receipts/measurements.json`; harness: `measure.py`. Round-1 results for the earlier binary are kept in `receipts/round1-superseded/`.
+Worker binary SHA-256: `e8318eb1d90f8b18192af05fe8d9b890cb346f4753cf0bb356ac6525083251b9` (`receipts/release-worker.sha256`), rebuilt after the round-2 corrections. Default cap: 384 MiB of counted requested bytes. Raw results: `receipts/measurements.json`; harness: `measure.py`. Results for earlier binaries are kept in `receipts/round1-superseded/` and `receipts/round2-superseded/`; the numbers are unchanged. In every breach case the flushed `verified` frame arrived before the abort, so a breach after identity is correctly attributed to those bytes.
 
 | Case | Result | Peak RSS | Counted peak | Wall time |
 | --- | --- | ---: | ---: | ---: |
@@ -107,6 +107,23 @@ Codex round 1 accepted this app-mode cost for the microbenchmark. Representative
 
 **Revised contract: no sampled RSS watchdog.** Proposal §4.2 kept "the sampled RSS watchdog as a backstop". P54-02 showed such a watchdog overshoots by 66–270 MiB, so it bounds nothing, and sampling another process's RSS portably adds platform code. The worker's protections are therefore the counted cap, the deadline, one worker at a time and the measured RSS behaviour above. **This revision needs the reviewer's explicit acceptance.**
 
+## Review round 2 corrections (Codex RED, findings 1–3)
+
+| Finding | Correction | Evidence |
+| --- | --- | --- |
+| 1. Failures before identity could poison the cache | The worker sends a `verified` frame, flushed at once, as soon as the bytes it read match the requested hash. The supervisor accepts it only first and only with the right hash, and requires it before `start`. `run_detailed` returns whether identity was verified, and the service caches a failure **only** after verification. `input_too_large`, and any breach before identity, are never stored. | `failures_before_identity_is_verified_are_never_cached` (oversized input, then a breach before identity, then the same bytes prepare normally); `a_failure_after_identity_is_cached_for_those_bytes`; adversarial sequences for a missing, repeated or wrong-hash `verified` frame. |
+| 2. `classify()` precedence | Both reader results are checked first. Then the marker, then stop reasons, then the protocol, then the exit. | `an_unconfirmed_stdout_outranks_the_marker_and_stop_reasons`: stdout errors and reader panics combined with the marker, cancellation and timeout. |
+| 3. Malformed predictors accepted | `Predictor` may be absent or exactly the integer 1. A name, a real number or an unsupported predictor makes the page `failed`. | `malformed_or_unsupported_predictors_are_failed`, which also confirms an explicit `Predictor 1` is still `blank`. |
+| Coverage | Deterministic queue saturation: with the executor held, exactly 1,024 tasks are admitted, including the running one, and a duplicate is accepted without being queued again. | `the_queue_admits_exactly_its_bound_while_the_executor_is_busy`. |
+
+**Test-fixture hygiene:** the temporary folders in the cache unit tests and the integration tests were named only by process ID and time, so parallel tests could collide. In one run a cache test failed with `cache_create` for that reason. All three helpers now add an atomic counter. The `miniz_oxide` feature-tree receipt is now pinned to `miniz_oxide@0.9.1`; the earlier receipt was ambiguous because two versions are locked.
+
+## Release decision recorded (Codex round 2, proposal §6)
+
+- **Cap: rejected for release enablement,** both the 384 MiB and the 256 MiB alternatives, under the revised no-watchdog contract. The measured RSS (up to about 1.37× the cap) is an observation, not a bound. The 256 MiB figure was extrapolated, and real-document and supported-Mac pressure evidence is outstanding.
+- **App-mode cost: accepted** for the microbenchmark. Representative installed-operation timing remains unverified.
+- **Consequence:** extraction stays dormant. It is not triggered by import and not enabled in any release until 01c supplies real-document measurements and memory-pressure evidence, and a reviewer accepts a cap. Merging this slice does not change that.
+
 ## Limits and what is not done
 
 - **The cap bounds requested allocation bytes, not footprint or RSS.** The residual risks are as stated in proposal §4.2. **The reviewer must accept the cap (384 MiB), the observed overhead and these risks before extraction is enabled in a release.**
@@ -123,7 +140,7 @@ Codex round 1 accepted this app-mode cost for the microbenchmark. Representative
 ## Gate
 
 - Strict clippy and fmt pass.
-- Native tests: 753 passed, 0 failed, 7 ignored. fmt, strict clippy and the lockfile check pass.
+- Native tests: 758 passed, 0 failed, 7 ignored. fmt, strict clippy (first round-2 run kept: `clippy-round2-first.log`) and the lockfile check pass.
 - The release build succeeds.
 - The schema-14 helper and tracker bindings are recorded in `receipts/`.
 - No frontend source changed. CI runs the full matrix at the exact head.

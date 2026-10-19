@@ -288,9 +288,13 @@ mod tests {
     use super::*;
 
     fn temp() -> PathBuf {
+        // A counter as well as the time: parallel tests can read the same
+        // clock value, and must never share a folder.
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let p = std::env::temp_dir().join(format!(
-            "hfd-cache-{}-{}",
+            "hfd-cache-{}-{}-{}",
             std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

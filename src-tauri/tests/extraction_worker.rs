@@ -21,9 +21,12 @@ const MIB: usize = 1024 * 1024;
 struct Scratch(PathBuf);
 impl Scratch {
     fn new(tag: &str) -> Self {
+        // Parallel tests can read the same clock value; never share a folder.
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let p = std::env::temp_dir().join(format!(
-            "hfd-extract-{tag}-{}-{}",
+            "hfd-extract-{tag}-{}-{}-{}",
             std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

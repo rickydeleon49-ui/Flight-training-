@@ -1,4 +1,4 @@
-## OFFLINE-01a: native extraction worker and content cache; round-1 corrections pending re-review — 19 October 2026
+## OFFLINE-01a: native extraction worker and content cache; round-2 corrections pending re-review — 19 October 2026
 
 Claude implemented slice 01a (PR #227). Codex round 1 was RED on six blocking findings, all now corrected with regressions:
 - `blank` hiding unreadable content: content is now resolved and decoded strictly with `flate2`, the owner-approved direct dependency at the same locked version (one line in `Cargo.lock`).
@@ -8,11 +8,11 @@ Claude implemented slice 01a (PR #227). Codex round 1 was RED on six blocking fi
 - Unconfirmed end of file on the pipes.
 - Incomplete memory evidence.
 
-**Native tests:** 753 passed (was 686).
+Codex round 2 was RED on three more, now corrected: failures before identity was verified could still be cached; reader errors had to outrank the marker; and a malformed `/Predictor` was accepted. **Native tests:** 758 passed (was 686).
 
 **Release measurements** (observations): every content-stream, load-time object-stream and cross-reference-stream bomb is stopped by the 384 MiB counted cap. **Peak RSS can exceed that cap: up to 525 MiB, about 1.37×.** Ordinary 1,000–2,000-page documents used 15–20 MiB.
 
-**The sampled RSS watchdog is not implemented.** That contract revision, plus the cap and the residual risks, needs the reviewer's explicit acceptance before extraction is enabled in a release. Next: 01b (UI), then 01c (real documents). [Report](OFFLINE_01A_REPORT_2026-10-19.md). Earlier entries remain historical.
+**The sampled RSS watchdog is not implemented.** Codex **rejected both caps for release enablement** (384 and 256 MiB) pending real-document and memory-pressure evidence. Extraction therefore stays dormant: it is not triggered by import and not enabled in any release. Next: 01b (UI), then 01c (real documents). [Report](OFFLINE_01A_REPORT_2026-10-19.md). Earlier entries remain historical.
 ## OFFLINE-01 inventory and gap-closure proposal; pending review — 19 October 2026
 
 Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed. Revision 5 answers Codex rounds 1–4, all RED on contract gaps: memory bounds, decompression coverage, restore and stale readiness, scan diagnosis, and fail-closed worker dispatch.

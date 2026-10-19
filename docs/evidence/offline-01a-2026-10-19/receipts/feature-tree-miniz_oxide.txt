@@ -1,4 +1,99 @@
-error: specification `miniz_oxide` is ambiguous
-help: re-run this command with one of the following specifications
-  miniz_oxide@0.8.9
-  miniz_oxide@0.9.1
+miniz_oxide v0.9.1
+├── miniz_oxide feature "default"
+│   └── flate2 v1.1.10
+│       └── zip v2.4.2
+│           ├── zip feature "_deflate-any"
+│           │   ├── zip feature "deflate-flate2"
+│           │   │   └── zip feature "deflate"
+│           │   │       └── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+│           │   │           └── her-flight-deck feature "default" (command-line)
+│           │   └── zip feature "deflate-zopfli"
+│           │       └── zip feature "deflate" (*)
+│           ├── zip feature "deflate" (*)
+│           ├── zip feature "deflate-flate2" (*)
+│           ├── zip feature "deflate-zopfli" (*)
+│           ├── zip feature "flate2"
+│           │   └── zip feature "deflate" (*)
+│           └── zip feature "zopfli"
+│               └── zip feature "deflate-zopfli" (*)
+│       ├── flate2 feature "any_impl"
+│       │   ├── flate2 feature "miniz_oxide"
+│       │   │   └── flate2 feature "rust_backend"
+│       │   │       ├── flate2 feature "default"
+│       │   │       │   ├── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   ├── lopdf v0.42.0
+│       │   │       │   │   └── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   ├── png v0.17.16
+│       │   │       │   │   └── png feature "default"
+│       │   │       │   │       ├── ico v0.5.0
+│       │   │       │   │       │   └── ico feature "default"
+│       │   │       │   │       │       └── tauri-codegen v2.6.3
+│       │   │       │   │       │           └── tauri-macros v2.6.3 (proc-macro)
+│       │   │       │   │       │               ├── tauri-macros feature "compression"
+│       │   │       │   │       │               │   └── tauri feature "compression"
+│       │   │       │   │       │               │       └── tauri feature "default"
+│       │   │       │   │       │               │           └── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   │       │               └── tauri-macros feature "default"
+│       │   │       │   │       │                   └── tauri v2.11.5
+│       │   │       │   │       │                       ├── tauri-plugin-dialog v2.7.3
+│       │   │       │   │       │                       │   ├── tauri-plugin-dialog feature "default"
+│       │   │       │   │       │                       │   │   └── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   │       │                       │   └── tauri-plugin-dialog feature "gtk3"
+│       │   │       │   │       │                       │       └── tauri-plugin-dialog feature "default" (*)
+│       │   │       │   │       │                       ├── tauri-plugin-fs v2.5.2
+│       │   │       │   │       │                       │   └── tauri-plugin-fs feature "default"
+│       │   │       │   │       │                       │       ├── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   │       │                       │       └── tauri-plugin-dialog v2.7.3 (*)
+│       │   │       │   │       │                       ├── tauri-plugin-opener v2.5.5
+│       │   │       │   │       │                       │   └── tauri-plugin-opener feature "default"
+│       │   │       │   │       │                       │       └── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   │       │                       └── tauri-plugin-sql v2.4.1
+│       │   │       │   │       │                           ├── tauri-plugin-sql feature "default"
+│       │   │       │   │       │                           │   └── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   │       │                           └── tauri-plugin-sql feature "sqlite"
+│       │   │       │   │       │                               └── her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri) (*)
+│       │   │       │   │       │                       ├── tauri feature "common-controls-v6"
+│       │   │       │   │       │                       │   └── tauri feature "default" (*)
+│       │   │       │   │       │                       ├── tauri feature "compression" (*)
+│       │   │       │   │       │                       ├── tauri feature "dbus"
+│       │   │       │   │       │                       │   └── tauri feature "default" (*)
+│       │   │       │   │       │                       ├── tauri feature "default" (*)
+│       │   │       │   │       │                       ├── tauri feature "dynamic-acl"
+│       │   │       │   │       │                       │   └── tauri feature "default" (*)
+│       │   │       │   │       │                       ├── tauri feature "tauri-runtime-wry"
+│       │   │       │   │       │                       │   └── tauri feature "wry"
+│       │   │       │   │       │                       │       └── tauri feature "default" (*)
+│       │   │       │   │       │                       ├── tauri feature "webkit2gtk"
+│       │   │       │   │       │                       │   └── tauri feature "wry" (*)
+│       │   │       │   │       │                       ├── tauri feature "webview2-com"
+│       │   │       │   │       │                       │   └── tauri feature "wry" (*)
+│       │   │       │   │       │                       ├── tauri feature "wry" (*)
+│       │   │       │   │       │                       └── tauri feature "x11"
+│       │   │       │   │       │                           └── tauri feature "default" (*)
+│       │   │       │   │       │           ├── tauri-codegen feature "brotli"
+│       │   │       │   │       │           │   └── tauri-codegen feature "compression"
+│       │   │       │   │       │           │       └── tauri-macros feature "compression" (*)
+│       │   │       │   │       │           └── tauri-codegen feature "compression" (*)
+│       │   │       │   │       └── tauri-codegen v2.6.3 (*)
+│       │   │       │   └── png v0.18.1
+│       │   │       │       └── png feature "default"
+│       │   │       │           └── muda v0.19.3
+│       │   │       │               ├── muda feature "common-controls-v6"
+│       │   │       │               │   └── tauri feature "common-controls-v6" (*)
+│       │   │       │               ├── muda feature "gtk"
+│       │   │       │               │   └── tauri v2.11.5 (*)
+│       │   │       │               └── muda feature "serde"
+│       │   │       │                   └── tauri v2.11.5 (*)
+│       │   │       └── zip feature "deflate" (*)
+│       │   └── flate2 feature "rust_backend" (*)
+│       ├── flate2 feature "default" (*)
+│       ├── flate2 feature "miniz_oxide" (*)
+│       ├── flate2 feature "runtime_detection"
+│       │   └── flate2 feature "default" (*)
+│       └── flate2 feature "rust_backend" (*)
+├── miniz_oxide feature "simd"
+│   └── flate2 v1.1.10 (*)
+├── miniz_oxide feature "simd-adler32"
+│   └── miniz_oxide feature "simd" (*)
+└── miniz_oxide feature "with-alloc"
+    └── miniz_oxide feature "default" (*)

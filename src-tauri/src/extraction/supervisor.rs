@@ -76,6 +76,9 @@ pub struct Job<'a> {
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase", deny_unknown_fields)]
 enum Wire {
+    Verified {
+        sha256: String,
+    },
     Start {
         sha256: String,
         pages: u32,
@@ -99,6 +102,8 @@ enum Wire {
 /// Frames read from stdout, validated in order.
 #[derive(Default, Debug)]
 pub struct Protocol {
+    /// The worker confirmed the bytes it read have the requested hash.
+    verified: bool,
     sha256: Option<String>,
     expected: u32,
     pages: Vec<PageResult>,
@@ -117,8 +122,15 @@ impl Protocol {
             return;
         }
         match frame {
+            Wire::Verified { sha256 } => {
+                if self.verified || self.sha256.is_some() || sha256 != want_sha {
+                    self.broken = Some("bad_verified");
+                } else {
+                    self.verified = true;
+                }
+            }
             Wire::Start { sha256, pages } => {
-                if self.sha256.is_some() || sha256 != want_sha || pages == 0 {
+                if !self.verified || self.sha256.is_some() || sha256 != want_sha || pages == 0 {
                     self.broken = Some("bad_start");
                 } else {
                     self.sha256 = Some(sha256);
@@ -243,15 +255,17 @@ pub enum Ending {
     Unknown,
 }
 
-/// Decide a run's result. Order matters: an unconfirmed pipe is a failure
-/// before anything else; then the breach marker; then our own stop reason;
-/// then the protocol; then the exit status.
+/// Decide a run's result. Order matters: **both** pipes must have been read
+/// to a confirmed end first (otherwise nothing else is trustworthy); then
+/// the breach marker; then our own stop reason; then the protocol; then the
+/// exit status.
 pub fn classify(
     ending: Ending,
     stopped: Option<Failure>,
     frames: Result<Protocol, &'static str>,
     stderr: Result<Vec<u8>, &'static str>,
 ) -> Result<Extraction, Failure> {
+    let protocol = frames.map_err(Failure::WorkerFailed)?;
     let stderr = stderr.map_err(Failure::WorkerFailed)?;
     if stderr.starts_with(BREACH_MARKER) {
         return Err(Failure::MemoryLimit);
@@ -259,7 +273,6 @@ pub fn classify(
     if let Some(stop) = stopped {
         return Err(stop);
     }
-    let protocol = frames.map_err(Failure::WorkerFailed)?;
     let Ending::Exited { success, code } = ending else {
         return Err(Failure::WorkerFailed("wait"));
     };
@@ -283,7 +296,29 @@ pub fn classify(
     }
 }
 
+/// A finished run: its result, and whether the worker confirmed that the
+/// bytes it read had the requested hash. Only a failure after that
+/// confirmation can be attributed to those bytes.
+pub struct Finished {
+    pub result: Result<Extraction, Failure>,
+    pub identity_verified: bool,
+}
+
 pub fn run(job: Job<'_>) -> Result<Extraction, Failure> {
+    run_detailed(job).result
+}
+
+pub fn run_detailed(job: Job<'_>) -> Finished {
+    match run_inner(job) {
+        Ok(finished) => finished,
+        Err(failure) => Finished {
+            result: Err(failure),
+            identity_verified: false,
+        },
+    }
+}
+
+fn run_inner(job: Job<'_>) -> Result<Finished, Failure> {
     let want_sha = job.sha256.to_ascii_lowercase();
     let mut request = serde_json::json!({
         "path": job.file.to_string_lossy(),
@@ -347,7 +382,11 @@ pub fn run(job: Job<'_>) -> Result<Extraction, Failure> {
     // A panicking reader is a failure, never an empty result.
     let frames = out_reader.join().unwrap_or(Err("reader_panic"));
     let stderr = err_reader.join().unwrap_or(Err("reader_panic"));
-    classify(ending, stopped, frames, stderr)
+    let identity_verified = matches!(&frames, Ok(p) if p.verified);
+    Ok(Finished {
+        result: classify(ending, stopped, frames, stderr),
+        identity_verified,
+    })
 }
 
 #[cfg(test)]
@@ -363,8 +402,14 @@ mod tests {
         read_frames(Cursor::new(text.into_bytes()), SHA)
     }
 
+    fn verified() -> String {
+        format!(r#"{{"type":"verified","sha256":"{SHA}"}}"#)
+    }
     fn start() -> String {
-        format!(r#"{{"type":"start","sha256":"{SHA}","pages":2}}"#)
+        format!(
+            r#"{{"type":"verified","sha256":"{SHA}"}}
+{{"type":"start","sha256":"{SHA}","pages":2}}"#
+        )
     }
     const P1: &str = r#"{"type":"page","index":1,"outcome":"text","text":"metar"}"#;
     const P2: &str = r#"{"type":"page","index":2,"outcome":"blank","text":""}"#;
@@ -408,6 +453,22 @@ mod tests {
         ] {
             assert!(result(&lines).is_err(), "{name} must not succeed");
         }
+        let bare_start = format!(r#"{{"type":"start","sha256":"{SHA}","pages":2}}"#);
+        let v = verified();
+        let wrong_verified = r#"{"type":"verified","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}"#;
+        for (name, lines) in [
+            (
+                "start without verified",
+                vec![bare_start.as_str(), P1, P2, END],
+            ),
+            ("verified twice", vec![&v, &s, P1, P2, END]),
+            (
+                "verified with the wrong hash",
+                vec![wrong_verified, &bare_start, P1, P2, END],
+            ),
+        ] {
+            assert!(result(&lines).is_err(), "{name} must not succeed");
+        }
     }
 
     #[test]
@@ -445,6 +506,29 @@ mod tests {
             classify(OK, None, frames(&[&start(), P1, P2, END]), Ok(marker)),
             Err(Failure::MemoryLimit)
         );
+    }
+
+    #[test]
+    fn an_unconfirmed_stdout_outranks_the_marker_and_stop_reasons() {
+        let marker = BREACH_MARKER.to_vec();
+        let aborted = Ending::Exited {
+            success: false,
+            code: None,
+        };
+        for (stopped, stderr) in [
+            (None, Ok(marker.clone())),
+            (Some(Failure::Cancelled), Ok(Vec::new())),
+            (Some(Failure::Timeout), Ok(marker.clone())),
+        ] {
+            assert_eq!(
+                classify(aborted, stopped.clone(), Err("stdout_read"), stderr.clone()),
+                Err(Failure::WorkerFailed("stdout_read"))
+            );
+            assert_eq!(
+                classify(aborted, stopped, Err("reader_panic"), stderr),
+                Err(Failure::WorkerFailed("reader_panic"))
+            );
+        }
     }
 
     #[test]

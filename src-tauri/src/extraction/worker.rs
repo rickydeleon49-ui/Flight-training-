@@ -82,6 +82,12 @@ pub enum TestHook {
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum Frame {
+    /// The bytes read match the requested hash. Sent before anything else,
+    /// and flushed at once, so a failure after it can be attributed to
+    /// those bytes.
+    Verified {
+        sha256: String,
+    },
     Start {
         sha256: String,
         pages: u32,
@@ -223,6 +229,13 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
     if hex::encode(Sha256::digest(&bytes)) != sha {
         return Err(Stop::Reported("identity_mismatch"));
     }
+    emit(
+        out,
+        &Frame::Verified {
+            sha256: sha.clone(),
+        },
+    )?;
+    out.flush().map_err(|_| Stop::Exit(EXIT_REPORTED))?;
     if cfg!(debug_assertions) {
         if let Some(TestHook::SleepAfterRead(ms)) = request.test {
             std::thread::sleep(std::time::Duration::from_millis(ms));

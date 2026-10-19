@@ -16,9 +16,12 @@ const WORKER: &str = env!("CARGO_BIN_EXE_her-flight-deck");
 struct Root(PathBuf);
 impl Root {
     fn new(tag: &str) -> Self {
+        // Parallel tests can read the same clock value; never share a folder.
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let p = std::env::temp_dir().join(format!(
-            "hfd-service-{tag}-{}-{}",
+            "hfd-service-{tag}-{}-{}-{}",
             std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -359,4 +362,59 @@ fn queued_work_is_deduplicated_serialized_and_completes() {
     );
     svc.wait_idle();
     assert_eq!(svc.readiness("q.pdf"), Readiness::Searchable { pages: 1 });
+}
+
+#[test]
+fn failures_before_identity_is_verified_are_never_cached() {
+    let root = Root::new("preidentity");
+    std::fs::write(root.doc("pre.pdf"), pdf(Some("Pre-identity"))).unwrap();
+    let s = root.session();
+    // Oversized: refused before the hash is checked.
+    let r = s.prepare_with(
+        "pre.pdf",
+        no_cancel(),
+        Some(serde_json::json!({ "limits": { "inputBytes": 16 } })),
+    );
+    assert_eq!(
+        r,
+        Readiness::NotPrepared,
+        "input_too_large before identity is not stored"
+    );
+    // A memory breach before identity (a cap below startup use).
+    let r = s.prepare_with(
+        "pre.pdf",
+        no_cancel(),
+        Some(serde_json::json!({ "limits": { "memoryBytes": 1024 } })),
+    );
+    assert_eq!(
+        r,
+        Readiness::NotPrepared,
+        "a breach before identity is not stored"
+    );
+    // The same bytes still prepare normally.
+    assert_eq!(
+        s.prepare("pre.pdf", no_cancel()),
+        Readiness::Searchable { pages: 1 }
+    );
+}
+
+#[test]
+fn a_failure_after_identity_is_cached_for_those_bytes() {
+    let root = Root::new("postidentity");
+    std::fs::write(root.doc("bad.pdf"), b"%PDF-1.5 not really a document").unwrap();
+    let s = root.session();
+    assert_eq!(
+        s.prepare("bad.pdf", no_cancel()),
+        Readiness::CouldNotProcess {
+            code: "malformed".into()
+        }
+    );
+    let again = root.session();
+    verify(&again, &root, "bad.pdf");
+    assert_eq!(
+        again.readiness("bad.pdf"),
+        Readiness::CouldNotProcess {
+            code: "malformed".into()
+        }
+    );
 }

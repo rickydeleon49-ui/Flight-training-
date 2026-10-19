@@ -82,7 +82,12 @@ pub fn strict_stream_bytes(stream: &lopdf::Stream) -> Option<Vec<u8>> {
     }
     if let Ok(params) = stream.dict.get(b"DecodeParms") {
         let predictor = match params {
-            Object::Dictionary(d) => d.get(b"Predictor").and_then(Object::as_i64).unwrap_or(1),
+            // Absent means 1; a present value must be exactly the integer 1.
+            Object::Dictionary(d) => match d.get(b"Predictor") {
+                Err(_) => 1,
+                Ok(Object::Integer(n)) => *n,
+                Ok(_) => return None,
+            },
             Object::Null => 1,
             _ => return None,
         };
@@ -538,6 +543,34 @@ pub(crate) mod tests {
             let (_, o) = classify(b);
             assert_eq!(o, Outcome::Failed, "{filter}");
         }
+    }
+
+    #[test]
+    fn malformed_or_unsupported_predictors_are_failed() {
+        for params in [
+            dictionary! { "Predictor" => "Bogus" },
+            dictionary! { "Predictor" => 1.5 },
+            dictionary! { "Predictor" => 12, "Columns" => 4 },
+        ] {
+            let mut b = PdfBuilder::new();
+            let mut s = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(50));
+            s.compress().unwrap();
+            s.dict.set("DecodeParms", params.clone());
+            let id = b.doc.add_object(s);
+            page_with_contents(&mut b, Object::Reference(id));
+            assert_eq!(classify(b).1, Outcome::Failed, "{params:?}");
+        }
+        let mut b = PdfBuilder::new();
+        let mut s = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(50));
+        s.compress().unwrap();
+        s.dict.set("DecodeParms", dictionary! { "Predictor" => 1 });
+        let id = b.doc.add_object(s);
+        page_with_contents(&mut b, Object::Reference(id));
+        assert_eq!(
+            classify(b).1,
+            Outcome::Blank,
+            "an explicit Predictor 1 is fine"
+        );
     }
 
     #[test]

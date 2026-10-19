@@ -5,9 +5,10 @@
       "exit": 0,
       "breachMarker": false,
       "wallSeconds": 0.262,
-      "peakRssBytes": 10240000,
+      "peakRssBytes": 10256384,
       "peakRssMiB": 9.8,
       "frames": {
+        "verified": 1,
         "start": 1,
         "page:text": 1,
         "end": 1
@@ -24,10 +25,11 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.067,
-      "peakRssBytes": 314916864,
+      "wallSeconds": 0.098,
+      "peakRssBytes": 314900480,
       "peakRssMiB": 300.3,
       "frames": {
+        "verified": 1,
         "start": 1,
         "page:text": 1,
         "end": 1
@@ -44,12 +46,17 @@
     {
       "exit": -6,
       "breachMarker": true,
-      "wallSeconds": 0.07,
-      "peakRssBytes": 550273024,
+      "wallSeconds": 0.068,
+      "peakRssBytes": 550322176,
       "peakRssMiB": 524.8,
-      "frames": {},
+      "frames": {
+        "verified": 1
+      },
       "countedPeakBytes": null,
-      "lastFrame": null,
+      "lastFrame": {
+        "type": "verified",
+        "sha256": "2692220501d0d5b4e38c286a818acd992b471d31eb79c504d8257e9ed18ec05f"
+      },
       "case": "content-bomb-1GiB-decoded",
       "fileBytes": 1044237,
       "memoryCapBytes": 402653184
@@ -57,12 +64,17 @@
     {
       "exit": -6,
       "breachMarker": true,
-      "wallSeconds": 0.019,
-      "peakRssBytes": 81625088,
-      "peakRssMiB": 77.8,
-      "frames": {},
+      "wallSeconds": 0.02,
+      "peakRssBytes": 81657856,
+      "peakRssMiB": 77.9,
+      "frames": {
+        "verified": 1
+      },
       "countedPeakBytes": null,
-      "lastFrame": null,
+      "lastFrame": {
+        "type": "verified",
+        "sha256": "2692220501d0d5b4e38c286a818acd992b471d31eb79c504d8257e9ed18ec05f"
+      },
       "case": "content-bomb-1GiB-cap-64MiB",
       "fileBytes": 1044237,
       "memoryCapBytes": 67108864
@@ -70,10 +82,11 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 12.822,
-      "peakRssBytes": 202375168,
-      "peakRssMiB": 193.0,
+      "wallSeconds": 12.74,
+      "peakRssBytes": 201703424,
+      "peakRssMiB": 192.4,
       "frames": {
+        "verified": 1,
         "start": 1,
         "page:failed": 400,
         "end": 1
@@ -90,12 +103,17 @@
     {
       "exit": -6,
       "breachMarker": true,
-      "wallSeconds": 0.375,
-      "peakRssBytes": 281657344,
-      "peakRssMiB": 268.6,
-      "frames": {},
+      "wallSeconds": 0.384,
+      "peakRssBytes": 281837568,
+      "peakRssMiB": 268.8,
+      "frames": {
+        "verified": 1
+      },
       "countedPeakBytes": null,
-      "lastFrame": null,
+      "lastFrame": {
+        "type": "verified",
+        "sha256": "68e9b9376c5afb2f3a93e9268c8f1d99c5a1963132b496475188c24ab8910e6b"
+      },
       "case": "object-stream-bomb-1GiB-at-load",
       "fileBytes": 1044330,
       "memoryCapBytes": 402653184
@@ -103,12 +121,17 @@
     {
       "exit": 70,
       "breachMarker": true,
-      "wallSeconds": 0.044,
-      "peakRssBytes": 281706496,
+      "wallSeconds": 0.043,
+      "peakRssBytes": 281772032,
       "peakRssMiB": 268.7,
-      "frames": {},
+      "frames": {
+        "verified": 1
+      },
       "countedPeakBytes": null,
-      "lastFrame": null,
+      "lastFrame": {
+        "type": "verified",
+        "sha256": "c772edc325034dcbe87fe34e01d6320539f4af0f74b939ac653981148857f011"
+      },
       "case": "xref-stream-bomb-1GiB-at-load",
       "fileBytes": 1044192,
       "memoryCapBytes": 402653184
@@ -117,9 +140,10 @@
       "exit": 3,
       "breachMarker": false,
       "wallSeconds": 0.009,
-      "peakRssBytes": 10682368,
+      "peakRssBytes": 10715136,
       "peakRssMiB": 10.2,
       "frames": {
+        "verified": 1,
         "error": 1
       },
       "countedPeakBytes": null,
@@ -134,10 +158,11 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.402,
+      "wallSeconds": 0.404,
       "peakRssBytes": 315097088,
       "peakRssMiB": 300.5,
       "frames": {
+        "verified": 1,
         "start": 1,
         "page:text": 1,
         "end": 1
@@ -154,10 +179,11 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.529,
-      "peakRssBytes": 21233664,
+      "wallSeconds": 0.525,
+      "peakRssBytes": 21200896,
       "peakRssMiB": 20.2,
       "frames": {
+        "verified": 1,
         "start": 1,
         "page:text": 2000,
         "end": 1
@@ -174,10 +200,11 @@
     {
       "exit": 0,
       "breachMarker": false,
-      "wallSeconds": 0.159,
-      "peakRssBytes": 16105472,
-      "peakRssMiB": 15.4,
+      "wallSeconds": 0.16,
+      "peakRssBytes": 16072704,
+      "peakRssMiB": 15.3,
       "frames": {
+        "verified": 1,
         "start": 1,
         "page:text": 1000,
         "end": 1
