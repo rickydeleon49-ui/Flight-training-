@@ -14,7 +14,7 @@ use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use rusqlite::{backup::Backup, Connection, OpenFlags};
+use rusqlite::{backup::Backup, Connection, OpenFlags, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tauri::AppHandle;
@@ -553,12 +553,22 @@ fn check_constraints(sql: &str) -> Vec<String> {
 }
 
 fn get_reference_schema_connection() -> Result<Connection, String> {
+    get_reference_schema_connection_through(crate::CURRENT_SCHEMA_VERSION)
+}
+
+/// The reference schema as of one migration, for a contract a later
+/// migration extended (0016 added `material_bookmarks.quote`), so a
+/// database restored from an older backup is checked against its own version.
+fn get_reference_schema_connection_through(version: i64) -> Result<Connection, String> {
     let ref_conn = Connection::open_in_memory()
         .map_err(|e| format!("Could not open in-memory reference DB: {e}"))?;
     ref_conn
         .pragma_update(None, "foreign_keys", "ON")
         .map_err(|e| format!("Could not enable foreign keys on reference DB: {e}"))?;
-    for m in crate::migrations() {
+    for m in crate::migrations()
+        .into_iter()
+        .filter(|m| m.version <= version)
+    {
         ref_conn
             .execute_batch(m.sql)
             .map_err(|e| format!("Could not apply migrations to reference DB: {e}"))?;
@@ -606,28 +616,7 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
         }
     }
 
-    let migration_table = ["_sqlx_migrations", "schema_migrations"]
-        .into_iter()
-        .find(|table| {
-            connection
-                .query_row(
-                    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
-                    [table],
-                    |row| row.get::<_, i64>(0),
-                )
-                .unwrap_or(0)
-                == 1
-        })
-        .ok_or_else(|| {
-            "That backup does not contain Her Flight Deck migration history.".to_string()
-        })?;
-    let newest_migration: i64 = connection
-        .query_row(
-            &format!("SELECT COALESCE(MAX(version), 0) FROM {migration_table}"),
-            [],
-            |row| row.get(0),
-        )
-        .map_err(|e| format!("Could not inspect the database version: {e}"))?;
+    let newest_migration = newest_migration_version(connection)?;
     if newest_migration > crate::CURRENT_SCHEMA_VERSION {
         return Err(
             "That backup was created by a newer database format. Update the app first.".to_string(),
@@ -648,7 +637,108 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 15 {
         verify_schema_15_navigation_semantics(connection)?;
     }
+    if newest_migration >= 16 {
+        verify_schema_16_manual_study_semantics(connection)?;
+    }
     Ok(())
+}
+
+/// The newest migration a database records, from either migration table.
+fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
+    let migration_table = ["_sqlx_migrations", "schema_migrations"]
+        .into_iter()
+        .find(|table| {
+            connection
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+                    [table],
+                    |row| row.get::<_, i64>(0),
+                )
+                .unwrap_or(0)
+                == 1
+        })
+        .ok_or_else(|| {
+            "That backup does not contain Her Flight Deck migration history.".to_string()
+        })?;
+    connection
+        .query_row(
+            &format!("SELECT COALESCE(MAX(version), 0) FROM {migration_table}"),
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("Could not inspect the database version: {e}"))
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 16: study material she makes herself                         */
+/* (TS twin: `validateManualStudyState`)                               */
+/* ------------------------------------------------------------------ */
+
+pub(crate) const MANUAL_STUDY_TABLES: [&str; 5] = [
+    "study_set_history",
+    "card_version_origins",
+    "card_item_origins",
+    "practice_item_origins",
+    "ai_study_sets",
+];
+
+/// The OFFLINE-03 contract: the history and origin tables, and the two new
+/// study-set columns, exactly as migration 0016 defines them; rows that point
+/// at real materials, cards and questions; and well-formed stored provenance.
+/// Card origins are checked against their snapshot hashes in schema 12.
+pub(crate) fn verify_schema_16_manual_study_semantics(
+    connection: &Connection,
+) -> Result<(), String> {
+    let count = |sql: &str, params: &[&dyn rusqlite::ToSql]| -> Result<i64, String> {
+        connection
+            .query_row(sql, params, |r| r.get(0))
+            .map_err(|e| format!("Could not check study set history: {e}"))
+    };
+    let reference = get_reference_schema_connection_through(16)?;
+    for table in MANUAL_STUDY_TABLES {
+        if count(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )? != 1
+        {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+        if m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)? {
+            return Err(format!(
+                "Table {table} keys do not match the registered migration contract."
+            ));
+        }
+        if count(
+            &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+            &[],
+        )? != 0
+        {
+            return Err(format!("Table {table} has rows that point at nothing."));
+        }
+    }
+    if m3_index_shape(connection, "study_set_history", "idx_study_set_history")?
+        != m3_index_shape(&reference, "study_set_history", "idx_study_set_history")?
+    {
+        return Err("The database is missing required index: idx_study_set_history".to_string());
+    }
+    crate::study_sets::verify_stored_sets(connection)
 }
 
 /* ------------------------------------------------------------------ */
@@ -681,7 +771,10 @@ pub(crate) fn verify_schema_15_navigation_semantics(connection: &Connection) -> 
             .query_row(sql, params, |r| r.get(0))
             .map_err(|e| format!("Could not check document navigation: {e}"))
     };
-    let reference = get_reference_schema_connection()?;
+    let version = newest_migration_version(connection)
+        .unwrap_or(crate::CURRENT_SCHEMA_VERSION)
+        .max(15);
+    let reference = get_reference_schema_connection_through(version)?;
     for table in NAVIGATION_TABLES {
         if count(
             "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
@@ -3095,6 +3188,20 @@ pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result
             .map_err(|e| format!("Could not read card versions: {e}"))?;
         rows
     };
+    // Schema 16 keeps who wrote each card beside its snapshot; a card's
+    // origin is part of its hash, so it is read back for the recomputation.
+    let has_origins = card_count(
+        connection,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'card_item_origins'",
+        &[],
+    )? == 1;
+    let item_sql = if has_origins {
+        "SELECT i.id, i.ordinal, i.front, i.back, i.source_page, o.origin FROM card_items i
+         LEFT JOIN card_item_origins o ON o.item_id = i.id
+         WHERE i.version_id = ?1 ORDER BY i.ordinal ASC"
+    } else {
+        "SELECT id, ordinal, front, back, source_page, NULL FROM card_items WHERE version_id = ?1 ORDER BY ordinal ASC"
+    };
     for (version_id, material_id, content_hash, card_count_value, created_at, first_reviewed_at) in
         versions
     {
@@ -3109,7 +3216,7 @@ pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result
             ));
         }
         let mut statement = connection
-            .prepare("SELECT id, ordinal, front, back, source_page FROM card_items WHERE version_id = ?1 ORDER BY ordinal ASC")
+            .prepare(item_sql)
             .map_err(|e| format!("Could not read cards: {e}"))?;
         let items = statement
             .query_map([&version_id], |r| {
@@ -3119,6 +3226,7 @@ pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result
                     r.get::<_, String>(2)?,
                     r.get::<_, String>(3)?,
                     r.get::<_, Option<i64>>(4)?,
+                    r.get::<_, Option<String>>(5)?,
                 ))
             })
             .map_err(|e| format!("Could not read cards: {e}"))?
@@ -3128,7 +3236,7 @@ pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result
             return Err(format!("{owner} card_count does not match its cards."));
         }
         let mut cards = Vec::with_capacity(items.len());
-        for (expected, (item_id, ordinal, front, back, source_page)) in
+        for (expected, (item_id, ordinal, front, back, source_page, origin)) in
             items.into_iter().enumerate()
         {
             if ordinal != expected as i64 {
@@ -3149,10 +3257,27 @@ pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result
                 front,
                 back,
                 source_page,
+                origin,
             });
         }
         if sha256_hex(&canonical_cards_json(&cards)) != content_hash {
             return Err(format!("{owner} content hash does not match its cards."));
+        }
+        if has_origins {
+            let expected = crate::card_reviews::version_origin(
+                &crate::card_reviews::card_version(&material_id, &cards).items,
+            );
+            let stored: Option<String> = connection
+                .query_row(
+                    "SELECT origin FROM card_version_origins WHERE version_id = ?1",
+                    [&version_id],
+                    |r| r.get(0),
+                )
+                .optional()
+                .map_err(|e| format!("Could not read card origins: {e}"))?;
+            if stored.as_deref() != expected {
+                return Err(format!("{owner} origin does not match its cards."));
+            }
         }
     }
 

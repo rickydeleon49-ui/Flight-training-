@@ -154,7 +154,13 @@ pub struct CanonicalCard {
     pub front: String,
     pub back: String,
     pub source_page: Option<i64>,
+    /// `user` or `instructor` for a card she made or edited (OFFLINE-03);
+    /// `None` for generated or imported cards, which hash exactly as before.
+    pub origin: Option<String>,
 }
+
+/// The only card origins (`CardOrigin` in `cardIdentity.ts`).
+pub const CARD_ORIGINS: [&str; 2] = ["user", "instructor"];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardItem {
@@ -225,20 +231,36 @@ pub fn parse_saved_cards(flashcards_json: Option<&str>) -> SavedCards {
             },
             _ => return SavedCards::Malformed,
         };
+        let origin = match map.get("origin") {
+            None => None,
+            Some(Value::String(value)) if CARD_ORIGINS.contains(&value.as_str()) => {
+                Some(value.clone())
+            }
+            Some(_) => return SavedCards::Malformed,
+        };
         out.push(CanonicalCard {
             front: front.clone(),
             back: back.clone(),
             source_page,
+            origin,
         });
     }
     SavedCards::Ok(out)
 }
 
-/// The canonical JSON of ordered cards (sorted keys; only front, back, sourcePage).
+/// The canonical JSON of ordered cards (sorted keys; front, back, sourcePage,
+/// and `origin` only when a card has one, so legacy hashes are unchanged).
 pub fn canonical_cards_json(cards: &[CanonicalCard]) -> String {
     let values: Vec<Value> = cards
         .iter()
-        .map(|card| json!({ "front": card.front, "back": card.back, "sourcePage": card.source_page }))
+        .map(|card| {
+            let mut value =
+                json!({ "front": card.front, "back": card.back, "sourcePage": card.source_page });
+            if let Some(origin) = &card.origin {
+                value["origin"] = json!(origin);
+            }
+            value
+        })
         .collect();
     canonical_json(&Value::Array(values))
 }
@@ -676,6 +698,17 @@ fn read_state(tx: &Transaction, item_id: &str) -> Check<Option<StateRow>> {
     .map_err(storage)
 }
 
+/// A snapshot's own origin: `manual` when she wrote every card, `mixed` when
+/// she wrote some, none when all are generated or imported (`versionOrigin`).
+pub fn version_origin(items: &[CardItem]) -> Option<&'static str> {
+    let mine = items.iter().filter(|item| item.card.origin.is_some()).count();
+    match mine {
+        0 => None,
+        n if n == items.len() => Some("manual"),
+        _ => Some("mixed"),
+    }
+}
+
 /// Write the snapshot if absent, verify a stored one against the derived
 /// text, and make it the material's only active version.
 fn materialize(
@@ -699,8 +732,9 @@ fn materialize(
         }
         let mut statement = tx
             .prepare(
-                "SELECT id, ordinal, front, back, source_page FROM card_items
-                 WHERE version_id = ?1 ORDER BY ordinal",
+                "SELECT i.id, i.ordinal, i.front, i.back, i.source_page, o.origin FROM card_items i
+                 LEFT JOIN card_item_origins o ON o.item_id = i.id
+                 WHERE i.version_id = ?1 ORDER BY i.ordinal",
             )
             .map_err(storage)?;
         let rows: Vec<CardItem> = statement
@@ -712,6 +746,7 @@ fn materialize(
                         front: r.get(2)?,
                         back: r.get(3)?,
                         source_page: r.get(4)?,
+                        origin: r.get(5)?,
                     },
                 })
             })
@@ -722,9 +757,13 @@ fn materialize(
             return Err(CardReviewErrorCode::InvalidState);
         }
     } else {
-        if provider != "gemini" && provider != "import" {
-            return Err(CardReviewErrorCode::InvalidState);
-        }
+        // The legacy CHECK allows only these two; a set she made herself
+        // records 'import' as its placeholder, and its true origin below.
+        let provider = match provider {
+            "gemini" | "import" => provider,
+            "manual" => "import",
+            _ => return Err(CardReviewErrorCode::InvalidState),
+        };
         tx.execute(
             "INSERT INTO card_versions (id, source_material_id, content_hash, card_count, provider, created_at, first_reviewed_at, is_active)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, 0)",
@@ -755,6 +794,20 @@ fn materialize(
                     item.card.source_page
                 ])
                 .map_err(storage)?;
+            if let Some(origin) = &item.card.origin {
+                tx.execute(
+                    "INSERT INTO card_item_origins (item_id, origin) VALUES (?1, ?2)",
+                    params![item.item_id, origin],
+                )
+                .map_err(storage)?;
+            }
+        }
+        if let Some(origin) = version_origin(&version.items) {
+            tx.execute(
+                "INSERT INTO card_version_origins (version_id, origin) VALUES (?1, ?2)",
+                params![version.version_id, origin],
+            )
+            .map_err(storage)?;
         }
     }
     tx.execute(

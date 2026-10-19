@@ -35,13 +35,14 @@ mod skill_evidence;
 mod storage;
 mod study_export;
 mod study_packet;
+mod study_sets;
 
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 15;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 16;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -139,6 +140,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0015_document_navigation.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 16,
+            description: "manual_study",
+            sql: include_str!("../migrations/0016_manual_study.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -219,6 +226,7 @@ pub fn run() {
             practice_sessions::erase_practice_history_atomically,
             practice_sessions::save_practice_test_atomically,
             practice_sessions::remove_practice_test_atomically,
+            study_sets::save_study_set_atomically,
             practice_sessions::run_practice_legacy_conversion,
             card_reviews::save_card_review_atomically,
             card_library::get_library_review_due,

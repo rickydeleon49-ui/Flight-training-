@@ -162,3 +162,40 @@ export class CardReviewError extends Error {
     this.code = code;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Study sets she makes or edits (OFFLINE-03a)                         */
+/* ------------------------------------------------------------------ */
+
+export type StudySetErrorCode =
+  | "INVALID_ARGUMENT"
+  | "STALE_CONTENT"
+  | "RETIREMENT_LIMIT"
+  | "NOT_FOUND"
+  | "STORAGE_ERROR"
+  | "IPC_TRANSPORT_ERROR";
+
+/** Word for word the native `StudySetErrorCode::message`. */
+export const STUDY_SET_ERROR_MESSAGES: Readonly<Record<StudySetErrorCode, string>> = Object.freeze({
+  INVALID_ARGUMENT: "This study set couldn't be saved because part of it isn't valid. Nothing has been saved.",
+  STALE_CONTENT: "This study set changed after you opened it. Nothing has been saved; look at it again first.",
+  RETIREMENT_LIMIT:
+    "This study set has reached its deletion and correction history limit. Your changes haven't been saved.",
+  NOT_FOUND: "That study material no longer exists. Nothing has been saved.",
+  STORAGE_ERROR: "A storage problem stopped this study set from saving. Nothing has been saved.",
+  IPC_TRANSPORT_ERROR: "The app couldn't confirm whether this study set was saved. Try again; a retry is safe.",
+});
+
+export function isStudySetErrorCode(value: unknown): value is StudySetErrorCode {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(STUDY_SET_ERROR_MESSAGES, value);
+}
+
+/** A study-set save refusal. Its message is always the allowlisted one. */
+export class StudySetSaveError extends Error {
+  readonly code: StudySetErrorCode;
+  constructor(code: StudySetErrorCode, options?: { cause?: unknown }) {
+    super(STUDY_SET_ERROR_MESSAGES[code], options);
+    this.name = "StudySetSaveError";
+    this.code = code;
+  }
+}

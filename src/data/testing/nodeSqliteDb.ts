@@ -25,6 +25,7 @@ import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from 
 import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { executeStructuredImport } from "../structuredImportTransaction";
+import { executeStudySetSave } from "../studySetTransaction";
 import { executeCardReviewAction } from "../cardReviewTransaction";
 import { readLibraryRecentReviews, readLibraryReviewDue } from "../cardLibraryReader";
 import { executeSkillEvidenceAction } from "../skillEvidenceTransaction";
@@ -176,6 +177,11 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
       sourceMaterialId: string,
     ): Promise<void> {
       return owner.exclusive(() => executeRemovePracticeTest(exec, run, query, sourceMaterialId));
+    },
+    saveStudySetAtomically(
+      operation: import("../studySetTransaction").StudySetSaveOperation,
+    ): Promise<import("../studySetTransaction").StudySetSaveResult> {
+      return owner.exclusive(() => executeStudySetSave(exec, run, query, operation));
     },
     erasePracticeHistoryAtomically(
       action: import("@/domain/types").EraseHistoryAction,

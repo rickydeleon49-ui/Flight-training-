@@ -6,11 +6,11 @@
  * Shows source material, origin, stored model when applicable, and locally
  * formatted creation date without modifying shared date helpers or persistence.
  */
-import type { StudyAidProvider } from "@/domain/types";
+import type { StudySetProvider } from "@/domain/types";
 import { formatLongDate, localDayOf } from "@/lib/dates";
 
 export interface StudyContentProvenanceInput {
-  provider?: StudyAidProvider | null;
+  provider?: StudySetProvider | null;
   model?: string | null;
   generatedAt?: string | null;
 }
@@ -51,11 +51,13 @@ export function formatStudyContentProvenance(
   }
 
   const isImported = content.provider === "import";
-  const originLabel = isImported ? "Imported study packet" : "Gemini";
+  // A set she wrote herself never borrows Gemini's or an import's wording.
+  const isManual = content.provider === "manual";
+  const originLabel = isManual ? "Written by you" : isImported ? "Imported study packet" : "Gemini";
 
-  // Stored model: only applicable for non-imported content.
+  // Stored model: only applicable for generated content.
   let modelLabel: string | null = null;
-  if (!isImported) {
+  if (!isImported && !isManual) {
     const trimmedModel = typeof content.model === "string" ? content.model.trim() : "";
     modelLabel = trimmedModel || "Model unavailable";
   }
@@ -65,9 +67,9 @@ export function formatStudyContentProvenance(
   let dateText: string;
   if (localDay) {
     const formattedDate = formatLongDate(localDay);
-    dateText = isImported ? `Imported ${formattedDate}` : `Generated ${formattedDate}`;
+    dateText = isManual ? `Created ${formattedDate}` : isImported ? `Imported ${formattedDate}` : `Generated ${formattedDate}`;
   } else {
-    dateText = isImported ? "Imported date unavailable" : "Generated date unavailable";
+    dateText = isManual ? "Created date unavailable" : isImported ? "Imported date unavailable" : "Generated date unavailable";
   }
 
   const parts = [

@@ -26,7 +26,7 @@ import type {
   CardReviewAction,
   CardReviewResult,
 } from "@/domain/types";
-import { canonicalJson, cardVersion, parseSavedCards, sha256Hex, type CardVersion } from "@/logic/cardIdentity";
+import { canonicalJson, cardVersion, parseSavedCards, sha256Hex, versionOrigin, type CardVersion } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, scheduleCard, SchedulerRefusal, type CardSchedule } from "@/logic/cardScheduler";
 
 import type { SqlValue } from "./db";
@@ -184,18 +184,24 @@ async function materialize(
   if (stored) {
     if (stored.source_material_id !== materialId || stored.content_hash !== version.contentHash) refuse("INVALID_STATE");
     const items = await query(
-      "SELECT id, ordinal, front, back, source_page FROM card_items WHERE version_id = ? ORDER BY ordinal",
+      `SELECT i.id, i.ordinal, i.front, i.back, i.source_page, o.origin FROM card_items i
+       LEFT JOIN card_item_origins o ON o.item_id = i.id
+       WHERE i.version_id = ? ORDER BY i.ordinal`,
       [version.versionId],
     );
     if (items.length !== version.items.length) refuse("INVALID_STATE");
     items.forEach((row, index) => {
       const item = version.items[index]!;
       const sourcePage = row.source_page === null ? null : int(row.source_page);
-      if (row.id !== item.itemId || int(row.ordinal) !== item.ordinal || row.front !== item.front || row.back !== item.back || sourcePage !== item.sourcePage) {
+      const origin = row.origin === null || row.origin === undefined ? undefined : row.origin;
+      if (row.id !== item.itemId || int(row.ordinal) !== item.ordinal || row.front !== item.front || row.back !== item.back || sourcePage !== item.sourcePage || origin !== item.origin) {
         refuse("INVALID_STATE");
       }
     });
   } else {
+    // The legacy CHECK allows only these two; a set she made herself records
+    // 'import' as its placeholder, and its true origin in the side tables.
+    if (provider === "manual") provider = "import";
     if (provider !== "gemini" && provider !== "import") refuse("INVALID_STATE");
     await run(
       `INSERT INTO card_versions (id, source_material_id, content_hash, card_count, provider, created_at, first_reviewed_at, is_active)
@@ -207,7 +213,10 @@ async function materialize(
         "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES (?, ?, ?, ?, ?, ?)",
         [item.itemId, version.versionId, item.ordinal, item.front, item.back, item.sourcePage],
       );
+      if (item.origin) await run("INSERT INTO card_item_origins (item_id, origin) VALUES (?, ?)", [item.itemId, item.origin]);
     }
+    const origin = versionOrigin(version.items);
+    if (origin) await run("INSERT INTO card_version_origins (version_id, origin) VALUES (?, ?)", [version.versionId, origin]);
   }
   await run("UPDATE card_versions SET is_active = 0 WHERE source_material_id = ? AND id != ? AND is_active = 1", [
     materialId,

@@ -1,0 +1,30 @@
+{
+  "note": "OFFLINE-03a card fingerprints, computed independently with Python hashlib (not by either app implementation). A card without origin hashes exactly as before; origin enters the canonical JSON only when present.",
+  "materialId": "mat-vector",
+  "vectors": [
+    {
+      "name": "legacy",
+      "cards": [
+        { "front": "Synthetic A?", "back": "B", "sourcePage": 1 },
+        { "front": "Synthetic B?", "back": "C", "sourcePage": null }
+      ],
+      "canonical": "[{\"back\":\"B\",\"front\":\"Synthetic A?\",\"sourcePage\":1},{\"back\":\"C\",\"front\":\"Synthetic B?\",\"sourcePage\":null}]",
+      "contentHash": "9c1fd0290bb6c83ec17c91705e1a20cceae4d1606789f0a529538b9a696ae9bf",
+      "versionId": "483b86a2d25ce651b3edb3b268a2776e1b27be66cddca22f4a019c142acfada6",
+      "firstItemId": "55a6a5a1bd4961cad3cc8afb33de41138d2741592eec3b6f9bf8bf58ec9758a7",
+      "versionOrigin": null
+    },
+    {
+      "name": "origin",
+      "cards": [
+        { "front": "Synthetic A?", "back": "B", "sourcePage": 1 },
+        { "front": "Synthetic B?", "back": "C, corrected", "sourcePage": null, "origin": "instructor" }
+      ],
+      "canonical": "[{\"back\":\"B\",\"front\":\"Synthetic A?\",\"sourcePage\":1},{\"back\":\"C, corrected\",\"front\":\"Synthetic B?\",\"origin\":\"instructor\",\"sourcePage\":null}]",
+      "contentHash": "888e2db1275266938e2dbd44fa3cb619096d7875bcbaf9ca463b6764e13e0173",
+      "versionId": "97864b3fb13a5390658e59ff31cfb0f47ab808d3a4b875427d58a0c07ebb065a",
+      "firstItemId": "aa8ab92afa85a270ed138e5afd0c1ac2740e087c34e6eecc26e637203f4da3d8",
+      "versionOrigin": "mixed"
+    }
+  ]
+}

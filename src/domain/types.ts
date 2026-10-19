@@ -363,15 +363,41 @@ export interface StoredDocumentFingerprint {
   sha256: string | null;
 }
 
-export interface StudyGuideSection {
+/** Who wrote an item she made or edited herself (OFFLINE-03). */
+export type StudyItemOrigin = "user" | "instructor";
+
+/**
+ * Identity carried by a section or card once she has edited its set: a
+ * stable id, who wrote it, and the item a correction replaces. Generated and
+ * imported items have no origin; legacy items have no id until first edited.
+ */
+export interface StudyItemIdentity {
+  itemId?: string;
+  origin?: StudyItemOrigin;
+  replaces?: string;
+}
+
+export interface StudyGuideSection extends StudyItemIdentity {
   heading: string;
   body: string;
 }
 
-export interface StudyFlashcard {
+export interface StudyFlashcard extends StudyItemIdentity {
   front: string;
   back: string;
   sourcePage: number | null;
+}
+
+/**
+ * Something she deleted, corrected or rewrote, kept as a fingerprint so a
+ * regenerated set can't quietly bring it back. The text itself is in history.
+ */
+export interface RetiredStudyItem {
+  kind: "summary" | "section" | "card";
+  itemId: string;
+  reason: "deleted" | "corrected";
+  textKey: string;
+  terms: string[];
 }
 
 /**
@@ -381,15 +407,22 @@ export interface StudyFlashcard {
  */
 export type StudyAidProvider = "gemini" | "import";
 
-/** AI output or an imported packet, saved locally and tied to its material. */
+/** A study set's base origin: generated, imported, or written entirely by her. */
+export type StudySetProvider = StudyAidProvider | "manual";
+
+/** AI output, an imported packet or her own set, saved locally and tied to its material. */
 export interface AiStudySet {
   sourceMaterialId: Id;
   title: string;
   summary: string;
+  /** Who wrote the summary, when she wrote or corrected it. */
+  summaryOrigin?: StudyItemOrigin | null;
   sections: StudyGuideSection[];
   flashcards: StudyFlashcard[];
   sourceNotes: string;
-  provider: StudyAidProvider;
+  provider: StudySetProvider;
+  /** What she deleted, corrected or rewrote (OFFLINE-03). */
+  retired?: RetiredStudyItem[];
   /** The Gemini model name; "" for imported content. */
   model: string;
   generatedAt: IsoDateTime;
@@ -682,6 +715,8 @@ export interface CardReviewSnapshotItem {
   front: string;
   back: string;
   sourcePage: number | null;
+  /** Who wrote this card when she wrote or corrected it (OFFLINE-03). */
+  origin?: StudyItemOrigin;
 }
 
 /** One authoritative read of a material's card reviews. Reads never write. */

@@ -244,15 +244,13 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
       sourceNotes: "",
       model: "gemini-3.5-flash",
     });
-    const execute = db.execute.bind(db);
     let failures = 1;
-    db.execute = (async (sql: string, params?: unknown[]) => {
+    db.beforeStatement = (sql: string) => {
       if (failures > 0 && sql.includes("INSERT INTO ai_study_sets")) {
         failures -= 1;
         throw new Error("synthetic disk full");
       }
-      return execute(sql, params as never);
-    }) as typeof db.execute;
+    };
     const generate = vi
       .spyOn(geminiService, "generateStudyAid")
       .mockResolvedValue({ ...AID, title: "New guide", jobId: "job-333333333333333333333333" });
@@ -544,11 +542,9 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
   it("R2: an answer that could not be kept natively says Save again works only while the app stays open", async () => {
     await material("mat-a", "Material A");
-    const execute = db.execute.bind(db);
-    db.execute = (async (sql: string, params?: unknown[]) => {
+    db.beforeStatement = (sql: string) => {
       if (sql.includes("INSERT INTO ai_study_sets")) throw new Error("synthetic disk full");
-      return execute(sql, params as never);
-    }) as typeof db.execute;
+    };
     vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...AID, jobId: null, checkpointed: false });
     await open("/study/mat-a");
     await startStudyAid();
@@ -699,12 +695,10 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     await startStudyAid();
     const accept = await screen.findByRole("button", { name: "Save the new study guide and cards" });
     expect(await repos.documents.listAiStudySets()).toEqual(before);
-    const execute = db.execute.bind(db);
     let failures = 1;
-    db.execute = (async (sql: string, params?: unknown[]) => {
+    db.beforeStatement = (sql: string) => {
       if (failures && sql.includes("INSERT INTO ai_study_sets")) { failures--; throw new Error("synthetic final-save failure"); }
-      return execute(sql, params as never);
-    }) as typeof db.execute;
+    };
     fireEvent.click(accept);
     await screen.findByRole("button", { name: "Save again" });
     expect(await repos.documents.listAiStudySets()).toEqual(before);

@@ -43,16 +43,19 @@ fn cards_a() -> Vec<CanonicalCard> {
             front: "Synthetic card one: which letter follows A?".into(),
             back: "B".into(),
             source_page: Some(1),
+            origin: None,
         },
         CanonicalCard {
             front: "Synthetic card two: which letter follows B?".into(),
             back: "C".into(),
             source_page: Some(2),
+            origin: None,
         },
         CanonicalCard {
             front: "Synthetic card three: which letter follows C?".into(),
             back: "D".into(),
             source_page: None,
+            origin: None,
         },
     ]
 }
@@ -1180,4 +1183,148 @@ fn every_native_message_is_the_typescript_allowlisted_message() {
             "missing TypeScript entry: {entry}"
         );
     }
+}
+
+/* ------------------------------------------------------------------ */
+/* OFFLINE-03a: who wrote each card                                    */
+/* ------------------------------------------------------------------ */
+
+fn vector_cards(vector: &Value) -> Vec<CanonicalCard> {
+    let SavedCards::Ok(cards) = parse_saved_cards(Some(&vector["cards"].to_string())) else {
+        panic!("vector cards must validate");
+    };
+    cards
+}
+
+#[test]
+fn origin_vectors_keep_legacy_hashes_and_match_independent_values() {
+    let fixture: Value =
+        serde_json::from_str(include_str!("../../src/testing/cardOriginVectors.json")).unwrap();
+    let material = fixture["materialId"].as_str().unwrap();
+    for vector in fixture["vectors"].as_array().unwrap() {
+        let cards = vector_cards(vector);
+        assert_eq!(
+            canonical_cards_json(&cards),
+            vector["canonical"].as_str().unwrap()
+        );
+        let version = card_version(material, &cards);
+        assert_eq!(version.content_hash, vector["contentHash"].as_str().unwrap());
+        assert_eq!(version.version_id, vector["versionId"].as_str().unwrap());
+        assert_eq!(
+            version.items[0].item_id,
+            vector["firstItemId"].as_str().unwrap()
+        );
+        assert_eq!(
+            version_origin(&version.items),
+            vector["versionOrigin"].as_str()
+        );
+    }
+}
+
+#[test]
+fn an_unknown_card_origin_makes_the_set_malformed() {
+    for origin in [json!("gemini"), json!(null), json!(1), json!("")] {
+        let cards = json!([{"front": "F", "back": "B", "sourcePage": null, "origin": origin}]);
+        assert_eq!(
+            parse_saved_cards(Some(&cards.to_string())),
+            SavedCards::Malformed
+        );
+    }
+}
+
+fn mine(mut cards: Vec<CanonicalCard>, ordinal: usize, origin: &str) -> Vec<CanonicalCard> {
+    cards[ordinal].origin = Some(origin.to_string());
+    cards
+}
+
+fn origin_cards_json(cards: &[CanonicalCard]) -> String {
+    serde_json::to_string(
+        &cards
+            .iter()
+            .map(|c| {
+                let mut value = json!({"front": c.front, "back": c.back, "sourcePage": c.source_page});
+                if let Some(origin) = &c.origin {
+                    value["origin"] = json!(origin);
+                }
+                value
+            })
+            .collect::<Vec<_>>(),
+    )
+    .unwrap()
+}
+
+#[test]
+fn a_snapshot_records_card_origins_beside_the_legacy_provider() {
+    let dir = TempDir::new("origins");
+    let conn = setup(dir.path());
+    let cards = mine(cards_a(), 1, "instructor");
+    seed(&conn, M, &origin_cards_json(&cards));
+    conn.execute("UPDATE ai_study_sets SET provider = 'manual'", [])
+        .unwrap();
+    save_card_review_at(dir.path(), &rate(&conn, M, &cards, 1, "good")).unwrap();
+    let version = card_version(M, &cards);
+    let provider: String = conn
+        .query_row("SELECT provider FROM card_versions", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(provider, "import");
+    let origin: String = conn
+        .query_row(
+            "SELECT origin FROM card_item_origins WHERE item_id = ?1",
+            [&version.items[1].item_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(origin, "instructor");
+    let rows: i64 = conn
+        .query_row("SELECT COUNT(*) FROM card_item_origins", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(rows, 1);
+    let version_origin: String = conn
+        .query_row("SELECT origin FROM card_version_origins", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(version_origin, "mixed");
+    crate::backup::verify_application_connection(&conn).unwrap();
+
+    // A second action verifies the stored snapshot, origins included.
+    save_card_review_at(dir.path(), &rate(&conn, M, &cards, 0, "good")).unwrap();
+
+    // Restore refuses a snapshot whose side-table origin no longer matches its hash.
+    conn.execute("UPDATE card_item_origins SET origin = 'user'", [])
+        .unwrap();
+    let error = crate::backup::verify_application_connection(&conn).unwrap_err();
+    assert!(error.contains("content hash"), "{error}");
+    conn.execute("DELETE FROM card_item_origins", []).unwrap();
+    let error = crate::backup::verify_application_connection(&conn).unwrap_err();
+    assert!(error.contains("content hash"), "{error}");
+}
+
+#[test]
+fn a_tampered_version_origin_is_refused() {
+    let dir = TempDir::new("version-origin");
+    let conn = setup(dir.path());
+    let cards = mine(cards_a(), 0, "user");
+    seed(&conn, M, &origin_cards_json(&cards));
+    save_card_review_at(dir.path(), &rate(&conn, M, &cards, 0, "good")).unwrap();
+    crate::backup::verify_application_connection(&conn).unwrap();
+    conn.execute("UPDATE card_version_origins SET origin = 'manual'", [])
+        .unwrap();
+    let error = crate::backup::verify_application_connection(&conn).unwrap_err();
+    assert!(error.contains("origin does not match"), "{error}");
+}
+
+#[test]
+fn legacy_cards_still_snapshot_without_origin_rows() {
+    let dir = TempDir::new("legacy-origins");
+    let conn = setup(dir.path());
+    seed(&conn, M, &cards_json(&cards_a()));
+    save_card_review_at(dir.path(), &rate(&conn, M, &cards_a(), 0, "good")).unwrap();
+    let rows: i64 = conn
+        .query_row(
+            "SELECT (SELECT COUNT(*) FROM card_item_origins) + (SELECT COUNT(*) FROM card_version_origins)",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(rows, 0);
+    crate::backup::verify_application_connection(&conn).unwrap();
 }
