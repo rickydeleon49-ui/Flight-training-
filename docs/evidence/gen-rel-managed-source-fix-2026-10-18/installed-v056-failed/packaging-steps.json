@@ -1,0 +1,142 @@
+[
+  {
+    "step": "raw-verify",
+    "command": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "/Users/rickymac/code/Flight-training-gen-rel-05/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app"
+    ],
+    "exit": 1
+  },
+  {
+    "step": "copy-app",
+    "command": [
+      "ditto",
+      "/Users/rickymac/code/Flight-training-gen-rel-05/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Her Flight Deck.app",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "seal",
+    "command": [
+      "codesign",
+      "--force",
+      "--sign",
+      "-",
+      "--timestamp=none",
+      "--identifier",
+      "com.herflightdeck.app",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "sealed-verify",
+    "command": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "signature-details",
+    "command": [
+      "codesign",
+      "-dv",
+      "--verbose=4",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "zip",
+    "command": [
+      "ditto",
+      "-c",
+      "-k",
+      "--sequesterRsrc",
+      "--keepParent",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her Flight Deck.app",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her.Flight.Deck_0.5.6_aarch64_LOCAL_ADHOC.app.zip"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "stage",
+    "command": [
+      "ditto",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her Flight Deck.app",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/stage/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "dmg-create",
+    "command": [
+      "hdiutil",
+      "create",
+      "-srcfolder",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/stage",
+      "-size",
+      "64m",
+      "-fs",
+      "HFS+",
+      "-volname",
+      "Her Flight Deck 0.5.6 Test",
+      "-format",
+      "UDZO",
+      "-o",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her.Flight.Deck_0.5.6_aarch64_LOCAL_ADHOC.dmg"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "attach",
+    "command": [
+      "hdiutil",
+      "attach",
+      "-readonly",
+      "-nobrowse",
+      "-mountpoint",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt",
+      "/Users/rickymac/code/Flight-training-backups/local-candidates/2026-10-18-v0.5.6-bb68b9a/Her.Flight.Deck_0.5.6_aarch64_LOCAL_ADHOC.dmg"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "mounted-verify",
+    "command": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt/Her Flight Deck.app"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "read-only",
+    "command": [
+      "diskutil",
+      "info",
+      "-plist",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt"
+    ],
+    "exit": 0
+  },
+  {
+    "step": "detach",
+    "command": [
+      "hdiutil",
+      "detach",
+      "/Users/rickymac/.codex/task-recovery/v056-combined-candidate-20261018/packaging/mnt"
+    ],
+    "exit": 0
+  }
+]

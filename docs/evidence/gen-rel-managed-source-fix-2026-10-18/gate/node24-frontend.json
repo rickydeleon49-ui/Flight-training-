@@ -1,0 +1,11 @@
+{
+  "name": "frontend",
+  "command": [
+    "npm",
+    "test"
+  ],
+  "exitCode": 1,
+  "started": "2026-10-19T04:05:22.814443+00:00",
+  "finished": "2026-10-19T04:06:09.308268+00:00",
+  "node": "bundled v24.19.0 (standalone, sanitized children work); npm 10.9.9; rust 1.99.0; SDK 26.5"
+}

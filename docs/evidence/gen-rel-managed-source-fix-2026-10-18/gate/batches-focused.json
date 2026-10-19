@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "src-tauri/Cargo.toml",
+    "gemini::batches::tests::",
+    "--",
+    "--nocapture"
+  ],
+  "exitCode": 0,
+  "started": "2026-10-19T02:31:30.258291+00:00",
+  "finished": "2026-10-19T02:31:35.142101+00:00"
+}

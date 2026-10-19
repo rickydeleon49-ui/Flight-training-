@@ -1,0 +1,4 @@
+{
+  "outcome": "tooling assertion, not a writable mount",
+  "reason": "The checker expected ReadOnlyMedia/Volume keys. This macOS reports WritableMedia=false, WritableVolume=false and Writable=false; initial raw plist proves readonly. Finally detached the image. Continue from the same immutable DMG, without rebuilding it."
+}

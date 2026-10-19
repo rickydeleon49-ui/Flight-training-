@@ -1,0 +1,38 @@
+[
+  {
+    "name": "typecheck-final",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:05:17.993937+00:00",
+    "finished": "2026-10-19T04:05:21.523850+00:00",
+    "node": "bundled v24.19.0 (standalone, sanitized children work); npm 10.9.9; rust 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "preflight-isolated",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/logic/macReadinessPreflight.test.ts"
+    ],
+    "exitCode": 0,
+    "started": "2026-10-19T04:05:21.524149+00:00",
+    "finished": "2026-10-19T04:05:22.814170+00:00",
+    "node": "bundled v24.19.0 (standalone, sanitized children work); npm 10.9.9; rust 1.99.0; SDK 26.5"
+  },
+  {
+    "name": "frontend",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exitCode": 1,
+    "started": "2026-10-19T04:05:22.814443+00:00",
+    "finished": "2026-10-19T04:06:09.308268+00:00",
+    "node": "bundled v24.19.0 (standalone, sanitized children work); npm 10.9.9; rust 1.99.0; SDK 26.5"
+  }
+]

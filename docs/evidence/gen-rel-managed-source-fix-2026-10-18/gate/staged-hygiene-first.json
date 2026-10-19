@@ -1,0 +1,10 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "exitCode": 2,
+  "cause": "raw captured command output contains trailing whitespace; raw bytes preserved in gzip, no checker exception"
+}

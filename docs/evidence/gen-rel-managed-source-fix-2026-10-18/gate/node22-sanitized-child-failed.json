@@ -1,0 +1,12 @@
+{
+  "name": "preflight-isolated",
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "src/logic/macReadinessPreflight.test.ts"
+  ],
+  "exitCode": 1,
+  "started": "2026-10-19T04:03:47.594527+00:00",
+  "finished": "2026-10-19T04:03:48.919319+00:00"
+}

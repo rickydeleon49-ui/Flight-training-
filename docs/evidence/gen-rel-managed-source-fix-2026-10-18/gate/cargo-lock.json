@@ -1,0 +1,12 @@
+{
+  "name": "cargo-lock",
+  "command": [
+    "npm",
+    "run",
+    "test:cargo-lock"
+  ],
+  "exitCode": 0,
+  "started": "2026-10-19T04:08:58.435538+00:00",
+  "finished": "2026-10-19T04:09:01.469406+00:00",
+  "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "typecheck",
+  "command": [
+    "npm",
+    "run",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "started": "2026-10-19T04:02:14.609933+00:00",
+  "finished": "2026-10-19T04:02:18.640038+00:00",
+  "node22Shim": "Task recovery node22-bin/node exports installed simdjson 4.6.11 and simdutf 9.2.1_1 library directories before exec. No global changes."
+}

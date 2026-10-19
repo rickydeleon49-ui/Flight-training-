@@ -1,0 +1,13 @@
+{
+  "name": "policy",
+  "command": [
+    "node",
+    "--input-type=module",
+    "-e",
+    "import assert from 'node:assert/strict'; import {validateReleaseVersion} from './scripts/check-release-version.mjs'; assert.equal(validateReleaseVersion('0.5.6').retired,true); assert.equal(validateReleaseVersion('0.5.7').valid,true); console.log('Failed v0.5.6 refused; v0.5.7 eligible');"
+  ],
+  "exitCode": 0,
+  "started": "2026-10-19T04:09:01.469774+00:00",
+  "finished": "2026-10-19T04:09:01.492634+00:00",
+  "toolchain": "official standalone Node 22.23.3; rustup 1.99.0; SDK 26.5"
+}

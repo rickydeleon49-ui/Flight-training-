@@ -1,0 +1,20 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "tauri",
+    "--",
+    "build",
+    "--target",
+    "aarch64-apple-darwin",
+    "--bundles",
+    "app",
+    "--no-sign",
+    "--ci"
+  ],
+  "source": "bb68b9af62d5573626f2f162eea68002fe5085f2",
+  "started": "2026-10-19T02:15:39.218223+00:00",
+  "cache": "Only generated dependency/build-script cache directories copied from accepted open-folder checkout; no old binaries or bundles copied.",
+  "exit": 0,
+  "finished": "2026-10-19T02:17:58.412990+00:00"
+}
