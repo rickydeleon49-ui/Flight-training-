@@ -1,3 +1,21 @@
+## Next task: OFFLINE-01; P54-06 phase B part 2 queued — 19 October 2026
+
+**Integrated:**
+- **#223**, P54-06 phase A with the P54BASE-R1 correction: Codex review GREEN, merged as `e42e2b3`.
+- **#224**, phase B part 1, the frozen FSRS-6 preregistration: Codex rounds 1 and 2 were RED on contract gaps, all closed; round 3 GREEN; merged as `f10a520`.
+
+The "pending review" wording in their entries below is historical.
+
+**Owner decision, 19 October 2026:** start **OFFLINE-01** next. P54-06 phase B part 2 (the in-house candidate, measurements and transition simulations) waits in the scheduler queue behind the offline → homework → exports tranche. Its preregistration (`docs/evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.md`) stays frozen and binding for when it resumes. Claude implements and Codex reviews. Earlier entries remain historical.
+
+## Three v0.5.7 maintenance follow-ups tracked — 19 October 2026
+
+[Actionable scope](V057_MAINTENANCE_FOLLOWUPS_2026-10-19.md): **V057-UI-01** clipped Gemini-dialog Cancel; **V057-DB-01** classify backup/restore sidecars before any safe owned-temp cleanup; **REL-CI-01** cold/warm release Check budget and cache completion. GitHub confirms the 20-minute timeout occurred after Rust tests passed, during the lockfile check. These are planning/investigation items, not implemented fixes. Sidecars are not automatically cosmetic or disposable. Preserve offline study → homework → exports/current assignments; escalate only confirmed data risk. No application, database/profile or workflow was changed by this update.
+
+## Offline study, homework and exports prioritized by owner — 18 October 2026 Pacific
+
+Planning approved, not implemented: after the current release and any already-assigned task, prioritize **offline study → homework → exports**. This replaces the older unstarted scheduler/weather/FAA next-task order; those items and accepted evidence remain queued. [Detailed plan](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md), [focused OSS research](OFFLINE_STUDY_OPEN_SOURCE_RESEARCH_2026-10-18.md). Start OFFLINE-01 first; PDF passage search must cover saved study content with honest per-page/scan states and zero provider calls. Homework reuses actions/lessons/history; exports extend the existing one-material JSON/print route. Seven actual upstream repos rechecked above 1,000 stars; no dependency adopted. No app, schema, profile, installer or release changed by this planning task. Earlier entries remain historical; inspect live release/assignment status before starting.
+
 ## P54-06 phase B part 1: FSRS-6 comparison preregistered; pending review — 19 October 2026
 
 Claude froze the phase-B contract before writing any candidate code. It is pending Codex review.

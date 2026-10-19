@@ -1,5 +1,9 @@
 # Study Guide hub: owner-approved roadmap
 
+## 18 October priority and scope extension
+
+The owner approved [offline study, homework and export improvements](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) and explicitly prioritized that sequence after the current release and any task already underway. This supersedes the older unstarted P54 queue precedence below, not the eight approved Study Hub outcomes or their relative order. Reuse source links, connected records, corrections, study sessions, lesson preparation and processing-state work where this tranche needs them. Keep remaining P54-06/07/08 and OSS evaluations queued; do not cancel active assignments or implement a second search/export system. The original 17 October approval and queue wording below remain historical. New scope is planning, not package/schema/installed acceptance.
+
 ## Approval and delivery order
 
 On 17 October 2026, the owner approved all eight proposed improvements: “i love all those ideas lets add them to the roadmap”. This approves the product directions and their order, not an unreviewed dependency, data migration, provider integration or implementation.
