@@ -2,8 +2,8 @@
 
 **Status: proposal for independent review. No code, dependency, migration or behavior change.** This is the first OFFLINE-01 deliverable, as the [plan's entry point](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md#implementer-entry-point-and-stopping-rule) requires. Claude implements and Codex reviews. Base: main `e27c390`.
 
-**Revision 3** answers Codex rounds 1 and 2 (both RED). Earlier text is in Git history. The changes:
-- the memory strategy is now a capped allocator in the worker (§4.2);
+**Revision 4** answers Codex rounds 1–3 (all RED). Earlier text is in Git history. The changes:
+- the memory strategy is now a capped allocator in the worker, with exact accounting, breach signalling and its limits stated (§4.2);
 - verified readiness requires a fresh hash in the current session (§4.3);
 - image detection inspects content recursively, and nothing is called a scan (§4.4);
 - the worker is fail-closed on any use of its flag (§4.1);
@@ -99,24 +99,58 @@ Installed acceptance includes a packaged, translocated launch (§5, item 4).
 ### 4.2 Memory: a capped allocator in the worker
 
 **The strategy:** the shipped binary installs a counting global allocator that wraps the system allocator.
-- **In app mode** it imposes no limit; its only cost is an atomic counter.
-- **In worker mode** it receives a compiled-in cap before the worker reads any input, for example 384 MiB, with the final value set by measurement in 01a. Any allocation that would exceed the cap returns null. Rust then calls the allocation-error handler, the worker **aborts**, and the supervisor records **Could not process** with a `memory_limit` code.
 
-**What this bounds:** every heap allocation the worker makes, whatever makes it:
+**Accounting** (in both modes):
+- The counter starts at process start, so allocations made before the worker reads its arguments are included.
+- It tracks the **requested** bytes of `alloc`, `alloc_zeroed` and `realloc` (as the size difference) minus `dealloc`.
+- Each allocation first **reserves** its bytes with a compare-and-swap loop, so concurrent reservations can never jointly pass the cap.
+- If the system allocator then fails, the reservation is released.
+
+**Cap check** (worker mode only):
+- When worker mode starts, before any input is read, the cap is set (for example 384 MiB, with the final value set by measurement in 01a). If the counter already exceeds it, the worker exits.
+- A reservation that would pass the cap returns null.
+
+**Signalling a breach without allocating:**
+- Before returning null, the allocator sets a static `CAP_BREACHED` flag.
+- It writes a fixed, static marker to the worker's standard error with a raw file-descriptor write, which allocates nothing.
+
+**Both failure paths are covered:**
+- **Infallible allocations** call Rust's allocation-error handler, and the worker aborts.
+- **Fallible allocations** (for example `try_reserve`, which locked `lopdf 0.42.0` uses in `filters/png.rs`) return an error to their caller. The worker checks `CAP_BREACHED` before emitting any success frame or its terminal event, and stops with no success if it is set.
+
+**How the supervisor classifies the outcome:**
+- **`memory_limit`** only when the static marker is present.
+- **An undifferentiated `worker_failed`** for any other abnormal exit, including a stack overflow or another abort.
+- A breach never publishes a success.
+
+**What the cap bounds:** the **requested allocation bytes** of every Rust heap allocation the worker makes, whatever makes it:
 - reading the file;
 - `lopdf` parsing, including object and cross-reference streams decompressed while loading;
-- content-stream decompression, including repeated decoding of the same stream;
+- content-stream decompression, including repeated decoding;
 - text decoding and result frames.
 
-It does not depend on predicting how `lopdf` will parse a file, so parser disagreement, incremental updates, indirect lengths and malformed files cannot bypass it. The deadline still bounds CPU time, and the sampled RSS watchdog stays as a backstop.
+It does not depend on predicting how `lopdf` parses a file. The deadline bounds CPU time, and the sampled RSS watchdog stays as a backstop.
 
-**What it does not bound,** stated plainly:
-- **The worker's stack:** the worker runs extraction on one thread with an explicit, fixed stack size, so a stack overflow aborts the worker.
-- **Fixed overheads:** the binary's code and read-only pages, which are shared and fixed.
-- **Kernel-side buffers**, and memory any C library would map directly. `lopdf`, `flate2` (with the pure-Rust `miniz_oxide` and `zlib-rs` backends) and `weezl` are pure Rust and allocate through the global allocator, but 01a verifies that from the locked dependency tree.
-- **System effects:** a worker using memory up to its cap can still pressure the system. Running one worker at a time limits that.
+**What it does not bound, stated plainly.** The cap is **not** a bound on heap footprint or RSS:
+- **Allocator overhead:** the system allocator's metadata, size-class rounding, fragmentation and freed pages it retains all sit outside the count. Repeated allocation and freeing can grow the footprint beyond the counted bytes.
+- **The worker's stack:** the worker runs extraction on one thread with an explicit, fixed stack size, so overflow aborts the worker. That is reported as `worker_failed`.
+- **Fixed overheads:** the binary's code and read-only pages.
+- **Kernel-side buffers.**
+- **Memory mapped outside the allocator:** none was found in the inspected extraction paths. The resolved feature tree confirms `miniz_oxide` as the active Flate backend; 01a records `cargo tree -e features` as evidence.
+- **System pressure:** a worker near its cap still uses real memory. Running one worker at a time limits that.
 
-01a measures peak RSS for decompression bombs (in content, object and cross-reference streams), deep object graphs, shared streams referenced by many pages, and large real files, and proposes the cap. **Shipping requires the reviewer to accept that cap and these residual risks explicitly.**
+01a measures, in release builds, how peak RSS relates to counted bytes for:
+- decompression bombs in content, object and cross-reference streams;
+- deep object graphs;
+- shared streams referenced by many pages;
+- repeated allocate/free churn;
+- large real files.
+
+It then proposes the cap and states the observed footprint overhead. Those are **observations, not a bound**. **Shipping requires the reviewer to accept the cap, the measured overhead and these residual risks explicitly.**
+
+**App-mode cost:** the app has no cap, but every Rust allocation and deallocation still passes through the counter: an atomic read-modify-write plus the wrapper's branch. Under concurrency that can contend.
+- 01a measures app-mode overhead in a release build, both with an allocation-heavy microbenchmark and with representative app operations (opening the library, rendering a large study set, a backup).
+- The reviewer accepts that overhead, or 01a moves the counter behind a worker-only fast path. That alternative must then show it still counts worker allocations from process start.
 
 **Owner decision, 19 October 2026:** the owner approved direct `flate2` and `weezl` dependencies for bounded decompression. The capped allocator does not need them, so **01a makes no dependency change**. The approval remains available if a later, separately reviewed defence-in-depth pre-scan is justified. The raw-byte pre-scan in revision 2 is withdrawn: as Codex round 2 showed, it could not be shown to cover exactly what `lopdf` decodes. Deadline plus watchdog alone (option (c)) is not proposed for shipping.
 
@@ -214,6 +248,7 @@ Each slice then **stops for authorized integration**. Nothing moves to the next 
      - every restore case in §4.3;
      - partial coverage, with empty text never counting as searchable;
      - argument handling: exact flag, duplicated flag, flag with extra arguments;
+     - allocator breaches on both an aborting path and a fallible `try_reserve` path, each classified `memory_limit` with no success published, and a stack overflow classified `worker_failed`;
      - standard-input fail-closed behavior;
      - a file whose bytes change while its tuple stays the same;
      - no Gemini reachability.
@@ -235,7 +270,7 @@ Each slice then **stops for authorized integration**. Nothing moves to the next 
 ## 6. Decisions
 
 - **Owner (made 19 October 2026):** approved direct `flate2` and `weezl` dependencies. They are not needed by 01a's capped allocator and remain unused unless a later defence-in-depth step is separately reviewed (§4.2).
-- **Reviewer, at 01a:** accept or reject the measured allocator cap and the stated residual risks.
+- **Reviewer, at 01a:** accept or reject the measured allocator cap, the observed footprint overhead, the app-mode cost and the stated residual risks.
 - **Reviewer, now:** confirm the capped-allocator strategy, the content-addressed derived cache with no migration, session-verified readiness, the worker contract and the per-page outcome rules.
 
 Search-engine and folding choices remain with OFFLINE-02.
