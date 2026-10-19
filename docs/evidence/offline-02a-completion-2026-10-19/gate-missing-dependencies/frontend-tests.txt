@@ -1,0 +1,5 @@
+
+> her-flight-deck@0.5.7 test
+> vitest run
+
+sh: vitest: command not found

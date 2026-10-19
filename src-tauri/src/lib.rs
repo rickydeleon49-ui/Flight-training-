@@ -194,6 +194,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             extraction::service::offline_content_readiness,
             extraction::service::prepare_offline_content,
+            extraction::search_api::search_offline_content,
+            extraction::search_api::verify_offline_destination,
             documents::import_document,
             documents::document_path,
             documents::document_exists,

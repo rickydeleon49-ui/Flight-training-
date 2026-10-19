@@ -1,0 +1,87 @@
+[
+  {
+    "name": "native-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "exit": 0,
+    "seconds": 60.552252708
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit": 0,
+    "seconds": 4.092599208000003
+  },
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.29164924999999187
+  },
+  {
+    "name": "cargo-lock",
+    "command": [
+      "npm",
+      "run",
+      "test:cargo-lock"
+    ],
+    "exit": 0,
+    "seconds": 2.4672916250000014
+  },
+  {
+    "name": "whitespace",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.016234291999992934
+  },
+  {
+    "name": "default-release-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "src-tauri/Cargo.toml",
+      "--example",
+      "offline_search_measure"
+    ],
+    "exit": 0,
+    "seconds": 46.512004958000006
+  },
+  {
+    "name": "default-release-gate",
+    "command": [
+      "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/examples/offline_search_measure",
+      "gate",
+      "/Users/rickymac/.codex/task-recovery/offline-02a-self-review-20261019/measure-final/phak"
+    ],
+    "exit": 0,
+    "seconds": 0.17621445800000402
+  }
+]

@@ -1,0 +1,1245 @@
+{
+  "frozenManifestSha256": "390e82343290c6930e203bcf1278e7849b8e7ca8c983713072359b42d77b0384",
+  "harnessSha256": "17fc0807bc6bcc3c6729c463e25fc322403eaae51eb88d1754449bb4b1074703",
+  "workerSha256": "c3756706b50701cf4c8375c9b7fa5b7ae1300e27807afed1dafef6e85bdf29b1",
+  "hardware": {
+    "cpu": "Apple M5",
+    "memoryBytes": 34359738368,
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434\n",
+    "python": "3.9.6"
+  },
+  "reference": {
+    "exclusions": 2,
+    "fixtures": 7,
+    "sqlite": "3.46.0",
+    "peakRssBytes": 10469376
+  },
+  "results": [
+    {
+      "name": "phak",
+      "setup": {
+        "baselineBytes": 2199552,
+        "canonicalBytes": 1766334,
+        "databaseBytes": 5189632,
+        "indexBytes": 2990080,
+        "indexMs": 24.7895,
+        "storageRatio": 1.6928168738188814,
+        "peakRssBytes": 31309824
+      },
+      "auditCases": 18,
+      "processes": [
+        {
+          "firstError": null,
+          "firstQueryMs": 1.491709,
+          "reopenPlusFirstQueryMs": 20.818375,
+          "validationMs": 19.326666,
+          "peakRssBytes": 15155200
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 1.4178330000000001,
+          "reopenPlusFirstQueryMs": 20.828750000000003,
+          "validationMs": 19.410917,
+          "peakRssBytes": 15073280
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 1.4636250000000002,
+          "reopenPlusFirstQueryMs": 20.503166,
+          "validationMs": 19.039541,
+          "peakRssBytes": 15122432
+        }
+      ],
+      "cells": [
+        {
+          "filter": "all",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.7144999999999999,
+          "p95Ms": 0.82275,
+          "maxBytes": 1373,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.373,
+          "p95Ms": 0.405833,
+          "maxBytes": 598,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.463583,
+          "p95Ms": 0.524291,
+          "maxBytes": 1296,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.37637499999999996,
+          "p95Ms": 0.440292,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.35812499999999997,
+          "p95Ms": 0.37775,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.9127500000000001,
+          "p95Ms": 0.9382499999999999,
+          "maxBytes": 1313,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.704042,
+          "p95Ms": 0.720708,
+          "maxBytes": 1373,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.371291,
+          "p95Ms": 0.409333,
+          "maxBytes": 598,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.46599999999999997,
+          "p95Ms": 0.562875,
+          "maxBytes": 1296,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.380542,
+          "p95Ms": 0.39883300000000005,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.357041,
+          "p95Ms": 0.401208,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.9123749999999999,
+          "p95Ms": 0.9432499999999999,
+          "maxBytes": 1313,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.7020000000000001,
+          "p95Ms": 0.7396250000000001,
+          "maxBytes": 1373,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.37108300000000005,
+          "p95Ms": 0.39175,
+          "maxBytes": 598,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.462583,
+          "p95Ms": 0.48225,
+          "maxBytes": 1296,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.376625,
+          "p95Ms": 0.398042,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.356458,
+          "p95Ms": 0.366208,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.9110830000000001,
+          "p95Ms": 0.945,
+          "maxBytes": 1313,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "afh",
+      "setup": {
+        "baselineBytes": 307200,
+        "canonicalBytes": 218417,
+        "databaseBytes": 888832,
+        "indexBytes": 581632,
+        "indexMs": 2.380208,
+        "storageRatio": 2.662942902796028,
+        "peakRssBytes": 15859712
+      },
+      "auditCases": 18,
+      "processes": [
+        {
+          "firstError": null,
+          "firstQueryMs": 1.374667,
+          "reopenPlusFirstQueryMs": 7.998708000000001,
+          "validationMs": 6.624041,
+          "peakRssBytes": 14319616
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 1.342917,
+          "reopenPlusFirstQueryMs": 8.272667,
+          "validationMs": 6.92975,
+          "peakRssBytes": 14778368
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 1.419583,
+          "reopenPlusFirstQueryMs": 8.264415999999999,
+          "validationMs": 6.8448329999999995,
+          "peakRssBytes": 14778368
+        }
+      ],
+      "cells": [
+        {
+          "filter": "all",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.751,
+          "p95Ms": 0.836166,
+          "maxBytes": 4391,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.44125000000000003,
+          "p95Ms": 0.509791,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.580667,
+          "p95Ms": 0.695542,
+          "maxBytes": 1656,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.475083,
+          "p95Ms": 0.60525,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.469292,
+          "p95Ms": 0.517875,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.877208,
+          "p95Ms": 1.08425,
+          "maxBytes": 4643,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.44425,
+          "p95Ms": 0.494083,
+          "maxBytes": 1326,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.369125,
+          "p95Ms": 0.4475,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.368458,
+          "p95Ms": 0.439083,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.415,
+          "p95Ms": 0.474667,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.366458,
+          "p95Ms": 0.452666,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.475667,
+          "p95Ms": 0.552041,
+          "maxBytes": 1436,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.445834,
+          "p95Ms": 0.5372079999999999,
+          "maxBytes": 1326,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.36633299999999996,
+          "p95Ms": 0.414625,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.37116699999999997,
+          "p95Ms": 0.445542,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.407708,
+          "p95Ms": 0.49050000000000005,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.363041,
+          "p95Ms": 0.436166,
+          "maxBytes": 253,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.471125,
+          "p95Ms": 0.549292,
+          "maxBytes": 1436,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "scaled-1000",
+      "setup": {
+        "baselineBytes": 4005888,
+        "canonicalBytes": 3169283,
+        "databaseBytes": 10678272,
+        "indexBytes": 6672384,
+        "indexMs": 54.151333,
+        "storageRatio": 2.105329186443748,
+        "peakRssBytes": 32931840
+      },
+      "auditCases": 18,
+      "processes": [
+        {
+          "firstError": null,
+          "firstQueryMs": 2.452083,
+          "reopenPlusFirstQueryMs": 48.829875,
+          "validationMs": 46.377792,
+          "peakRssBytes": 16547840
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 2.642666,
+          "reopenPlusFirstQueryMs": 49.956375,
+          "validationMs": 47.313709,
+          "peakRssBytes": 16515072
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 2.449042,
+          "reopenPlusFirstQueryMs": 49.249583,
+          "validationMs": 46.800541,
+          "peakRssBytes": 16990208
+        }
+      ],
+      "cells": [
+        {
+          "filter": "all",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 1.339375,
+          "p95Ms": 1.422042,
+          "maxBytes": 3304,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.40254199999999996,
+          "p95Ms": 0.490958,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.427542,
+          "p95Ms": 0.448958,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.635917,
+          "p95Ms": 0.651167,
+          "maxBytes": 713,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.39883300000000005,
+          "p95Ms": 0.444375,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 1.63575,
+          "p95Ms": 1.674291,
+          "maxBytes": 3202,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.809458,
+          "p95Ms": 0.848792,
+          "maxBytes": 1270,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.35716699999999996,
+          "p95Ms": 0.377708,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.386584,
+          "p95Ms": 0.40125,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.434417,
+          "p95Ms": 0.45025000000000004,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.357083,
+          "p95Ms": 0.386541,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.9576250000000001,
+          "p95Ms": 1.000458,
+          "maxBytes": 1219,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 0.80825,
+          "p95Ms": 0.833208,
+          "maxBytes": 1270,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.35966600000000004,
+          "p95Ms": 0.384083,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.39004099999999997,
+          "p95Ms": 0.406083,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 0.435084,
+          "p95Ms": 0.44825000000000004,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.35625,
+          "p95Ms": 0.373708,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 0.956542,
+          "p95Ms": 0.9871249999999999,
+          "maxBytes": 1219,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "scaled-10000",
+      "setup": {
+        "baselineBytes": 40017920,
+        "canonicalBytes": 31550909,
+        "databaseBytes": 101257216,
+        "indexBytes": 61239296,
+        "indexMs": 811.9092909999999,
+        "storageRatio": 1.940967722990168,
+        "peakRssBytes": 68321280
+      },
+      "auditCases": 18,
+      "processes": [
+        {
+          "firstError": null,
+          "firstQueryMs": 14.53,
+          "reopenPlusFirstQueryMs": 573.952,
+          "validationMs": 559.422,
+          "peakRssBytes": 34357248
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 14.174792,
+          "reopenPlusFirstQueryMs": 567.222667,
+          "validationMs": 553.047875,
+          "peakRssBytes": 34390016
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 14.573374999999999,
+          "reopenPlusFirstQueryMs": 573.5410420000001,
+          "validationMs": 558.967667,
+          "peakRssBytes": 34291712
+        }
+      ],
+      "cells": [
+        {
+          "filter": "all",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 12.816291,
+          "p95Ms": 13.729666,
+          "maxBytes": 19889,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 1.060875,
+          "p95Ms": 1.165875,
+          "maxBytes": 5349,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 1.7654159999999999,
+          "p95Ms": 1.896916,
+          "maxBytes": 3168,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 2.689791,
+          "p95Ms": 2.771375,
+          "maxBytes": 2389,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.745459,
+          "p95Ms": 0.838916,
+          "maxBytes": 257,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 15.203,
+          "p95Ms": 16.146417,
+          "maxBytes": 19594,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 5.5371250000000005,
+          "p95Ms": 5.759542000000001,
+          "maxBytes": 1267,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.37108399999999997,
+          "p95Ms": 0.412334,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 0.6408339999999999,
+          "p95Ms": 0.6661250000000001,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 1.011041,
+          "p95Ms": 1.040875,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.35724999999999996,
+          "p95Ms": 0.374542,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 5.814958,
+          "p95Ms": 5.970958,
+          "maxBytes": 1208,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 7.982166,
+          "p95Ms": 8.225375,
+          "maxBytes": 6174,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.5093749999999999,
+          "p95Ms": 0.5748329999999999,
+          "maxBytes": 1107,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 1.0975,
+          "p95Ms": 1.138667,
+          "maxBytes": 652,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 2.146042,
+          "p95Ms": 2.196459,
+          "maxBytes": 1082,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.454959,
+          "p95Ms": 0.482875,
+          "maxBytes": 255,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 8.882084,
+          "p95Ms": 9.182542,
+          "maxBytes": 6022,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "scaled-30000",
+      "setup": {
+        "baselineBytes": 120037376,
+        "canonicalBytes": 94858640,
+        "databaseBytes": 337592320,
+        "indexBytes": 217554944,
+        "indexMs": 2233.387375,
+        "storageRatio": 2.2934647176050595,
+        "peakRssBytes": 138985472
+      },
+      "auditCases": 18,
+      "processes": [
+        {
+          "firstError": null,
+          "firstQueryMs": 33.455416,
+          "reopenPlusFirstQueryMs": 2067.9735819999996,
+          "validationMs": 2034.5181659999998,
+          "peakRssBytes": 35028992
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 33.320707999999996,
+          "reopenPlusFirstQueryMs": 2058.265667,
+          "validationMs": 2024.944959,
+          "peakRssBytes": 34586624
+        },
+        {
+          "firstError": null,
+          "firstQueryMs": 34.01225,
+          "reopenPlusFirstQueryMs": 2045.9197080000001,
+          "validationMs": 2011.9074580000001,
+          "peakRssBytes": 35028992
+        }
+      ],
+      "cells": [
+        {
+          "filter": "all",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 32.169000000000004,
+          "p95Ms": 32.817167,
+          "maxBytes": 20134,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 2.3865000000000003,
+          "p95Ms": 2.49,
+          "maxBytes": 12808,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 5.3055,
+          "p95Ms": 5.790875,
+          "maxBytes": 10750,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 13.461667,
+          "p95Ms": 13.633332999999999,
+          "maxBytes": 9754,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 1.505291,
+          "p95Ms": 1.703167,
+          "maxBytes": 257,
+          "errors": []
+        },
+        {
+          "filter": "all",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 38.692583,
+          "p95Ms": 39.747040999999996,
+          "maxBytes": 19686,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 17.360208,
+          "p95Ms": 19.334291,
+          "maxBytes": 1244,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 0.41162499999999996,
+          "p95Ms": 0.46025,
+          "maxBytes": 661,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 2.9224580000000002,
+          "p95Ms": 3.0242080000000002,
+          "maxBytes": 656,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 3.0325,
+          "p95Ms": 3.133708,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.360333,
+          "p95Ms": 0.390834,
+          "maxBytes": 254,
+          "errors": []
+        },
+        {
+          "filter": "one",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 17.79475,
+          "p95Ms": 18.999375,
+          "maxBytes": 1224,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aircraft",
+          "queryIndex": 0,
+          "samples": 45,
+          "p50Ms": 23.013667,
+          "p95Ms": 23.691833,
+          "maxBytes": 16200,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "aa",
+          "queryIndex": 1,
+          "samples": 45,
+          "p50Ms": 1.0110830000000002,
+          "p95Ms": 1.1134160000000002,
+          "maxBytes": 4698,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "\"density altitude\"",
+          "queryIndex": 2,
+          "samples": 45,
+          "p50Ms": 3.704708,
+          "p95Ms": 3.7784590000000002,
+          "maxBytes": 4378,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "wind shear final approach runway landing pilot airspeed",
+          "queryIndex": 3,
+          "samples": 45,
+          "p50Ms": 9.028416,
+          "p95Ms": 9.204291999999999,
+          "maxBytes": 3034,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "zzqxv",
+          "queryIndex": 4,
+          "samples": 45,
+          "p50Ms": 0.651542,
+          "p95Ms": 0.674834,
+          "maxBytes": 256,
+          "errors": []
+        },
+        {
+          "filter": "quarter",
+          "query": "the",
+          "queryIndex": 5,
+          "samples": 45,
+          "p50Ms": 25.92325,
+          "p95Ms": 26.749417,
+          "maxBytes": 15857,
+          "errors": []
+        }
+      ]
+    }
+  ],
+  "concurrent": {
+    "runs": [
+      {
+        "accepted": true,
+        "attempt": 1,
+        "endFrameMs": 2165.0118749999997,
+        "publishBeganDuringSamples": false,
+        "publishStartMs": 2168.156875,
+        "samples": [
+          {
+            "bytes": 19889,
+            "endMs": 393.225458,
+            "error": null,
+            "ms": 13.789833,
+            "startMs": 379.39745800000003
+          },
+          {
+            "bytes": 19889,
+            "endMs": 406.171833,
+            "error": null,
+            "ms": 12.906416,
+            "startMs": 393.232042
+          },
+          {
+            "bytes": 19889,
+            "endMs": 419.27587500000004,
+            "error": null,
+            "ms": 13.063583999999999,
+            "startMs": 406.178
+          },
+          {
+            "bytes": 19889,
+            "endMs": 432.064625,
+            "error": null,
+            "ms": 12.748375,
+            "startMs": 419.282292
+          },
+          {
+            "bytes": 19889,
+            "endMs": 445.090167,
+            "error": null,
+            "ms": 12.986792000000001,
+            "startMs": 432.070667
+          },
+          {
+            "bytes": 19889,
+            "endMs": 457.952417,
+            "error": null,
+            "ms": 12.822125,
+            "startMs": 445.09625000000005
+          },
+          {
+            "bytes": 19889,
+            "endMs": 471.294458,
+            "error": null,
+            "ms": 13.302666,
+            "startMs": 457.9585
+          },
+          {
+            "bytes": 19889,
+            "endMs": 484.399292,
+            "error": null,
+            "ms": 13.063540999999999,
+            "startMs": 471.30091699999997
+          },
+          {
+            "bytes": 19889,
+            "endMs": 497.822,
+            "error": null,
+            "ms": 13.382167,
+            "startMs": 484.40583300000003
+          },
+          {
+            "bytes": 19889,
+            "endMs": 510.86287500000003,
+            "error": null,
+            "ms": 13.001000000000001,
+            "startMs": 497.82825
+          },
+          {
+            "bytes": 19889,
+            "endMs": 524.2260829999999,
+            "error": null,
+            "ms": 13.321459,
+            "startMs": 510.869083
+          },
+          {
+            "bytes": 19889,
+            "endMs": 537.0337920000001,
+            "error": null,
+            "ms": 12.767000000000001,
+            "startMs": 524.232208
+          },
+          {
+            "bytes": 19889,
+            "endMs": 550.323125,
+            "error": null,
+            "ms": 13.245583,
+            "startMs": 537.04025
+          },
+          {
+            "bytes": 19889,
+            "endMs": 563.0980420000001,
+            "error": null,
+            "ms": 12.720208,
+            "startMs": 550.32925
+          },
+          {
+            "bytes": 19889,
+            "endMs": 576.4123330000001,
+            "error": null,
+            "ms": 13.274,
+            "startMs": 563.106167
+          }
+        ],
+        "workerExit": 0
+      }
+    ],
+    "status": "MEASURED",
+    "peakRssBytes": 559398912,
+    "p95Ms": 13.789833
+  },
+  "targets": {
+    "phakIndexMs": 1000,
+    "rebuild10000Ms": 5000,
+    "validate30000Ms": 1000,
+    "p50_10000Ms": 20,
+    "p95_10000Ms": 50,
+    "p95_30000Ms": 150,
+    "worstP95Ms": 2000,
+    "concurrentP95Ms": 100,
+    "reopen10000Ms": 300,
+    "responseBytes": 65536,
+    "indexStorageRatio": 1.0,
+    "rss30000Bytes": 268435456
+  }
+}

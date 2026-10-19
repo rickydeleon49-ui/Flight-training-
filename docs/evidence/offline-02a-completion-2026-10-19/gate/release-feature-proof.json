@@ -1,0 +1,6 @@
+{
+  "defaultBuildExit": 0,
+  "defaultCommandRefusalExit": 0,
+  "normalRusqliteFunctions": false,
+  "devRusqliteFunctions": true
+}

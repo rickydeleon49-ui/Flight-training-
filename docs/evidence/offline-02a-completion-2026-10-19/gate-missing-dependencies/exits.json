@@ -1,0 +1,11 @@
+[
+  {
+    "name": "frontend-tests",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exit": 127,
+    "seconds": 0.1705179214477539
+  }
+]

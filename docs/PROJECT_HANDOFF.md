@@ -1,3 +1,44 @@
+## OFFLINE-02a independently reviewed and corrected; ready for PR — 19 October 2026
+
+Claude reviewed `codex/offline-02a-completion` independently.
+
+**Review result:**
+- **Checks:** 813 native tests, fmt and strict Clippy pass. No dependency, lockfile, migration or frontend changes. `rusqlite`'s `functions` feature is dev-only. Search stays off in releases.
+- **Budgets:** the owner-approved 750 ms and 3× budgets are recorded, and the original misses are preserved.
+- **Accepted** subject to three corrections, now committed (`f8995ec`):
+  1. **The destination check no longer waits for a preparation in progress.** It hashed through the slot that a preparation holds for up to 120 s; it now hashes without the slot.
+  2. **Coverage counts blank pages as searchable,** as in the readiness summary.
+  3. **Deleted materials and notes without a document** are no longer counted as missing files.
+- **Tests and review:** both regressions fail on the previous source. 814 native tests pass, and fmt, strict Clippy and cargo-lock pass. Codex reviewed the corrections locally: **GREEN**.
+
+**Next:** one push for exact-head CI, then merge, then OFFLINE-02b. To save Actions minutes, the review loop stays local until then.
+
+## OFFLINE-02a corrected and paused by owner — 19 October 2026
+
+**Owner requested finishing current work, then pausing. No further roadmap task or merge now.** [Latest self-review and pause report](OFFLINE_02A_SELF_REVIEW_AND_PAUSE_2026-10-19.md); [resume/reviewer prompt](OFFLINE_02A_FINAL_REVIEW_RESUME_2026-10-19.md); [budget owner decision](OFFLINE_02A_BUDGET_OWNER_DECISION_2026-10-19.md). Codex authored these corrections, so independent acceptance remains pending.
+
+Closed the reproduced missing/changed-trigger validation defect and the after-hash stamp race. Background initialization now reports `index_preparing` before admitting search, distinguishes failed initialization and supports retry/cache replacement. Final native tests: **813 passed / 11 ignored**; strict lint/format/lock/source checks pass. Unchanged frontend evidence (3,728 passes) is reused.
+
+The owner explicitly approved cold 10k ≤750 ms and added index ≤3× canonical text. Final measurements: **588.53 ms**, **1.693×–2.663×**; both amended criteria pass. All 90 exact hit sets/capped prefixes and 4,050 timed searches pass without errors. Warm p95: 15.39 ms at 10k / 38.20 ms at 30k; concurrent 13.78 ms. Original 300 ms/1× failures remain historical evidence. The original 30k ≤1 s or background-before-search rule remains; no proposed 3-second replacement was adopted.
+
+**OFFLINE-02A-COLD/STORAGE:** closed against the documented owner-approved criteria, subject to independent verification. **OFFLINE-02A-REVIEW:** next when the owner resumes; inspect Codex's work, then normal PR and exact-head CI before any merge. Only after accepted integration: 02b search UI/navigation (handle `index_preparing` explicitly) → 02c saved study content → homework → exports. Offline release flags remain off; installed/minimum-spec/pressure gates remain unverified. Do not resume automatically. Earlier entries below are preserved history.
+
+## OFFLINE-02a native implementation complete; acceptance budgets open — 19 October 2026
+
+Codex completed Claude's quota-interrupted cache/search work in the existing `Flight-training-offline-01` worktree on `codex/offline-02a-completion`. [Report](OFFLINE_02A_COMPLETION_REPORT_2026-10-19.md), [independent reviewer handoff](OFFLINE_02A_REVIEWER_HANDOFF_2026-10-19.md), [measured budgets](evidence/offline-02a-completion-2026-10-19/BUDGETS.md). Design rev6 was merged in PR #230 (`123b4fc`); older pending-design entries below are historical. **No 02a acceptance or merge is claimed.**
+
+Functional gate: 3,728 frontend passes; 809 distinct native passes across the full and final service receipts; 26 schema-helper passes; strict lint/type/build/format/lock/immutability checks pass. All 90 independent hit sets and 90 capped prefixes match. Worst warm p95: 15.37 ms at 10k, 38.44 ms at 30k; concurrent 10k: 13.36 ms. Both failed and corrected measurement runs are preserved.
+
+Complete these before accepting 02a or starting 02b:
+
+| Task | Required result | Current evidence |
+| --- | --- | --- |
+| **OFFLINE-02A-REVIEW** | Independent review of Codex's completion and relevant interactions, one consolidated correction report if needed | Pending; source/evidence manifests and reviewer handoff supplied |
+| **OFFLINE-02A-COLD** | 10k reopen + first query ≤300 ms; verify the prescribed background-before-search fallback when 30k validation exceeds 1 s. Keep full first-open checks, deadlines and file-identity invalidation | 570.97 ms at 10k; 2,042.01 ms cold validation at 30k. Validation is background work; thresholds remain visibly missed |
+| **OFFLINE-02A-STORAGE** | Added index ≤1.0× canonical text, or a separately approved representation/contract amendment. Preserve exact snippet/canonical/delete/recovery behavior; never change the denominator or silently relax the budget | 1.693×–2.663× across the frozen corpora; full canonical external content plus inverted index exceeds the target |
+
+Then resume the approved order: **02b search UI/navigation → 02c saved study content → homework → exports**. Native extraction/search and readiness UI remain dormant in releases; neither workflow flag was enabled. Minimum-spec pressure and installed acceptance remain unverified. NFKC is settled; prefix/fuzzy matching and topic aliases were not added. Primary checkout/profile/installers were not touched.
+
 ## OFFLINE-01b merged; OFFLINE-02 search design (revision 6) pending re-review — 19 October 2026
 
 OFFLINE-01b merged as PR #229 (`b65ae4a`) after Codex round 1 was RED and round 2 GREEN. Offline study stays dormant in releases.

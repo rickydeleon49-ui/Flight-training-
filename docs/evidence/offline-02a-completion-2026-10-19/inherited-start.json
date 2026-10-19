@@ -1,0 +1,11 @@
+{
+  "time": "2026-10-19T17:26:55.273796+00:00",
+  "base": "123b4fcecaed3820ec8ecff5c78772a98570d62b",
+  "branch": "claude/offline-02a",
+  "hashes": {
+    "src-tauri/Cargo.toml": "97b39eba91126248933c9d8026f77d4a763b17c084c60e1dcecde9794ea2ec9f",
+    "src-tauri/src/extraction/cache.rs": "5b69042dc9cdbb5906985d4e72148bcb8faa32f60fa8a27321d173fcda9fa4aa",
+    "src-tauri/src/extraction/mod.rs": "994fd14559114616cf13ff850e9396371110c8f1521ac8b30775d9c89fd0e412",
+    "src-tauri/src/extraction/search.rs": "09bd123eae7dab4d0f68ebe9bdb398b7a72595351a91727c5017e39892886082"
+  }
+}

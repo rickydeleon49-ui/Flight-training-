@@ -36,6 +36,12 @@ hex = "0.4"
 rusqlite = { version = "0.32", features = ["backup"] }
 unicode-normalization = "=0.1.25"
 
+[dev-dependencies]
+# Tests only: a test-only SQL function holds a running statement for the
+# OFFLINE-02 deadline tests. `functions` adds no crate; release builds keep
+# the feature set above.
+rusqlite = { version = "0.32", features = ["backup", "functions"] }
+
 [profile.release]
 codegen-units = 1
 lto = true
