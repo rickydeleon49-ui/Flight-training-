@@ -50,6 +50,7 @@ import { useMaterialNotes } from "@/state/useMaterialNotes";
 import { useActionOperations } from "@/state/useActions";
 
 import { canSplitPdfs } from "@/services/pdf";
+import { materialLinkAnchor, resolveMaterialLink, type MaterialLinkTarget } from "@/logic/savedSearch";
 
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
@@ -147,6 +148,38 @@ function MaterialDetailPage() {
   const conversionStatus = practiceMetadata.phase === "loaded" ? practiceMetadata.conversionStatus : null;
   const completedCount = practiceMetadata.phase === "loaded" ? practiceMetadata.completedCount : 0;
   const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
+
+  // A link from offline search (OFFLINE-02c §4): open the guide section,
+  // card or practice question it names, only while it is unchanged.
+  const [linkTarget, setLinkTarget] = useState<MaterialLinkTarget | null>(null);
+  const linkKey = location.search;
+  const practiceRepository = repositories?.practiceSessions;
+  useEffect(() => {
+    let live = true;
+    void resolveMaterialLink(
+      new URLSearchParams(linkKey),
+      studySet ? { summary: studySet.summary, sections: studySet.sections, flashcards: studySet.flashcards } : null,
+      async () => {
+        const active = materialId ? await practiceRepository?.getActiveVersion(materialId) : null;
+        return active ? active.items.map((item) => ({ id: item.id, questionText: item.questionText })) : null;
+      },
+    ).then((target) => {
+      if (!live) return;
+      setLinkTarget(target);
+      if (target?.kind === "card") {
+        setCardIndex(target.index);
+        setCardRevealed(false);
+      }
+    });
+    return () => {
+      live = false;
+    };
+    // Resolved once per link and study-set revision.
+  }, [linkKey, materialId, studySet?.updatedAt, practiceRepository]);
+  useEffect(() => {
+    const anchor = linkTarget ? materialLinkAnchor(linkTarget) : null;
+    if (anchor) document.getElementById(anchor)?.scrollIntoView?.({ block: "center" });
+  }, [linkTarget]);
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );
@@ -404,6 +437,24 @@ function MaterialDetailPage() {
         }
       />
 
+      {linkTarget && (linkTarget.kind === "practice" || linkTarget.kind === "problem") ? (
+        <Card>
+          <CardBody>
+            <div id="search-target-note" className="stack stack--2 search-target" role="status">
+              {linkTarget.kind === "practice" ? (
+                <>
+                  <p className="eyebrow">From your practice test</p>
+                  <p className="wrap-anywhere">{linkTarget.stem}</p>
+                  <p className="tiny muted">The answer stays hidden here. Take the practice test below to answer it.</p>
+                </>
+              ) : (
+                <p className="small">{linkTarget.message}</p>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
       <div className="detail">
         <div className="detail__column">
           {material.filePath ? (
@@ -547,9 +598,18 @@ function MaterialDetailPage() {
                         <p className="eyebrow">Study guide</p>
                         <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
                       </div>
-                      <p className="small ai-copy">{studySet.summary}</p>
+                      <p
+                        id="search-target-summary"
+                        className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
+                      >
+                        {studySet.summary}
+                      </p>
                       {studySet.sections.map((section, index) => (
-                        <div className="ai-guide__section" key={`${section.heading}-${index}`}>
+                        <div
+                          id={`search-target-guide-${index}`}
+                          className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
+                          key={`${section.heading}-${index}`}
+                        >
                           <h4>{section.heading}</h4>
                           <GuideBody className="small" text={section.body} />
                         </div>
@@ -560,7 +620,11 @@ function MaterialDetailPage() {
                     </section>
 
                     {studySet.flashcards.length > 0 ? (
-                      <section className="stack stack--3" aria-labelledby="flashcards-title">
+                      <section
+                        id="search-target-cards"
+                        className={`stack stack--3${linkTarget?.kind === "card" ? " search-target" : ""}`}
+                        aria-labelledby="flashcards-title"
+                      >
                         <div className="row row--between">
                           <div>
                             <p className="eyebrow">Flashcards</p>

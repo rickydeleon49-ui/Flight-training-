@@ -127,3 +127,59 @@ export function savedProblem(check: Exclude<SavedCheck, "ok">): string {
     ? "This study guide has changed since you searched. Search again to find it."
     : "That item isn't here any more.";
 }
+
+/** What a material page link from search points at, once checked. */
+export type MaterialLinkTarget =
+  | { kind: "summary" }
+  | { kind: "guide"; index: number }
+  | { kind: "card"; index: number }
+  | { kind: "practice"; stem: string }
+  | { kind: "problem"; message: string };
+
+/**
+ * Resolve `?guide=`, `?card=` or `?question=` on a material page (§4).
+ * Guides and cards open only while the item's digest equals `rev`;
+ * a practice question is shown by its stem only, never its answer.
+ */
+export async function resolveMaterialLink(
+  params: URLSearchParams,
+  set: { summary: string; sections: Array<{ heading: string; body: string }>; flashcards: Array<{ front: string; back: string }> } | null,
+  practiceItems: () => Promise<Array<{ id: string; questionText: string }> | null>,
+): Promise<MaterialLinkTarget | null> {
+  const guide = params.get("guide");
+  const card = params.get("card");
+  const question = params.get("question");
+  const rev = params.get("rev");
+  if (guide !== null || card !== null) {
+    const passage = guide !== null
+      ? { kind: (guide === "summary" ? "summary" : "guide") as SavedPassage["kind"], recordId: guide }
+      : { kind: "card" as const, recordId: card! };
+    const fields = set ? savedFields(set, passage) : null;
+    if (!set) return { kind: "problem", message: savedProblem("gone") };
+    if (!fields || !rev || (await itemDigest(fields)) !== rev) return { kind: "problem", message: savedProblem("changed") };
+    if (passage.kind === "summary") return { kind: "summary" };
+    const index = Number(passage.recordId);
+    return passage.kind === "guide" ? { kind: "guide", index } : { kind: "card", index };
+  }
+  if (question !== null) {
+    const items = await practiceItems();
+    const item = items?.find((i) => i.id === question);
+    return item ? { kind: "practice", stem: item.questionText } : { kind: "problem", message: "That practice question isn't in this material's current practice test any more." };
+  }
+  return null;
+}
+
+/** The DOM id a search link scrolls to on a material page. */
+export function materialLinkAnchor(target: MaterialLinkTarget): string | null {
+  switch (target.kind) {
+    case "summary":
+      return "search-target-summary";
+    case "guide":
+      return `search-target-guide-${target.index}`;
+    case "card":
+      return "search-target-cards";
+    case "practice":
+    case "problem":
+      return "search-target-note";
+  }
+}

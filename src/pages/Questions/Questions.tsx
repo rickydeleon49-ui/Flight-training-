@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { useSearchFocus } from "@/state/useSearchFocus";
+
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   Badge,
@@ -90,6 +92,20 @@ export function Questions() {
     setFilter(next);
     setVisibleLimit(QUESTION_PAGE_SIZE);
   };
+
+  // A link from offline search opens one question: shown whatever the
+  // filter, and within the shown page.
+  const { focusId, missing } = useSearchFocus(
+    "question",
+    (id) => data.questions.some((question) => question.id === id),
+    (id) => {
+      const list = visible.some((question) => question.id === id) ? visible : data.questions;
+      if (list !== visible) setFilter("all");
+      const at = list.findIndex((question) => question.id === id);
+      if (at >= visibleLimit) setVisibleLimit(at + 1);
+    },
+    `${filter}:${visibleLimit}:${visible.length}`,
+  );
 
   // Unsaved answers, by question id. They live here rather than in each row,
   // so a row leaving the visible page (a new question, a filter change,
@@ -264,6 +280,11 @@ export function Questions() {
                 ))}
               </div>
 
+              {missing ? (
+                <p className="small muted" role="status" style={{ padding: "0 var(--space-5) var(--space-3)" }}>
+                  That item isn't here any more.
+                </p>
+              ) : null}
               {visible.length === 0 ? (
                 <EmptyState
                   icon={<QuestionIcon size={26} />}
@@ -290,6 +311,7 @@ export function Questions() {
                     <QuestionRow
                       key={question.id}
                       question={question}
+                      focused={question.id === focusId}
                       links={links}
                       draft={answerDrafts.get(question.id)?.text}
                       isSaving={savingQuestionIds.has(question.id)}
@@ -369,6 +391,7 @@ interface QuestionLinks {
 
 function QuestionRow({
   question,
+  focused = false,
   links,
   draft,
   isSaving,
@@ -378,6 +401,8 @@ function QuestionRow({
   onDelete,
 }: {
   question: Question;
+  /** Opened from an offline-search link. */
+  focused?: boolean;
   links: QuestionLinks;
   /** The unsaved answer being edited, or undefined when not editing. */
   draft: string | undefined;
@@ -405,7 +430,7 @@ function QuestionRow({
         : "neutral";
 
   return (
-    <div className="question-row">
+    <div id={`question-${question.id}`} className={`question-row${focused ? " search-target" : ""}`}>
       <div className="question-row__main">
         <p className="question-row__text wrap-anywhere">{question.text}</p>
         <div className="question-row__meta">

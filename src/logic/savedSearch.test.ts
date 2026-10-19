@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SavedCoverage } from "@/services/offlineContent";
 
-import { checkSavedHit, itemDigest, savedCoverageSentence, savedDestination, savedFields } from "./savedSearch";
+import { checkSavedHit, itemDigest, resolveMaterialLink, savedCoverageSentence, savedDestination, savedFields } from "./savedSearch";
 
 // Shared vectors, computed outside both implementations; the native tests use the same.
 const VECTORS: Array<[string[], string]> = [
@@ -75,5 +75,32 @@ describe("savedCoverageSentence", () => {
     );
     expect(savedCoverageSentence("too_large", c, 0)).toMatch(/too large to search offline/);
     expect(savedCoverageSentence("unavailable", c, 0)).toMatch(/can't be searched just now/);
+  });
+});
+
+describe("resolveMaterialLink", () => {
+  const params = (q: string) => new URLSearchParams(q);
+  const noItems = async () => null;
+
+  it("opens an unchanged section, summary or card", async () => {
+    const rev = await itemDigest(["Crosswind landings", "Use the wing-low method."]);
+    expect(await resolveMaterialLink(params(`guide=0&rev=${rev}`), set, noItems)).toEqual({ kind: "guide", index: 0 });
+    expect(await resolveMaterialLink(params(`guide=summary&rev=${await itemDigest(["Summary"])}`), set, noItems)).toEqual({ kind: "summary" });
+    expect(await resolveMaterialLink(params(`card=0&rev=${await itemDigest(["a", "b"])}`), set, noItems)).toEqual({ kind: "card", index: 0 });
+  });
+
+  it("refuses changed, missing or unsigned items with the plain fallback", async () => {
+    const changed = { kind: "problem", message: "This study guide has changed since you searched. Search again to find it." };
+    expect(await resolveMaterialLink(params("guide=0&rev=deadbeef"), set, noItems)).toEqual(changed);
+    expect(await resolveMaterialLink(params("guide=0"), set, noItems)).toEqual(changed);
+    expect(await resolveMaterialLink(params("card=9&rev=x"), set, noItems)).toEqual(changed);
+    expect(await resolveMaterialLink(params("card=0&rev=x"), null, noItems)).toEqual({ kind: "problem", message: "That item isn't here any more." });
+  });
+
+  it("shows a practice question by its stem only", async () => {
+    const items = async () => [{ id: "q1", questionText: "Which instrument uses pitot pressure?" }];
+    expect(await resolveMaterialLink(params("question=q1"), set, items)).toEqual({ kind: "practice", stem: "Which instrument uses pitot pressure?" });
+    expect((await resolveMaterialLink(params("question=q9"), set, items))?.kind).toBe("problem");
+    expect(await resolveMaterialLink(params(""), set, items)).toBeNull();
   });
 });

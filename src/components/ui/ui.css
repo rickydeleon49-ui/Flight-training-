@@ -535,3 +535,9 @@ dialog:not([open]) { display: none; }
     transparent 6px 12px
   );
 }
+
+/* An item opened from offline search (OFFLINE-02c): a quiet ring, not color alone. */
+.search-target {
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm, 8px);
+}
