@@ -1,16 +1,25 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import { MATERIAL_TYPE_LABELS, type MaterialType, type StudyMaterial } from "@/domain/types";
 import { coverageSentence, destinationProblem, pagePlace, searchProblem, snippetPieces } from "@/logic/offlineSearch";
+import { checkSavedHit, savedCoverageSentence, savedDestination, savedKindLabel, savedProblem } from "@/logic/savedSearch";
 import {
+  ALL_CONTENT_TYPES,
   OfflineSearchError,
+  SAVED_CONTENT_TYPES,
   offlineStudyEnabled,
   searchOfflineContent,
   verifyOfflineDestination,
+  type ContentType,
+  type SavedGroup,
+  type SavedPassage,
+  type SavedSection,
   type SearchGroup,
   type SearchResponse,
 } from "@/services/offlineContent";
+import { useOptionalAppData } from "@/state/AppDataContext";
 import { navigationMessage, useNavigationController } from "@/state/navigation/useDocumentNavigation";
 
 /** Wait after typing before searching. */
@@ -25,6 +34,29 @@ interface Results {
   coverage: SearchResponse["coverage"];
   nextOffset: number | null;
   moreBeyondCap: boolean;
+  /** Saved study content (OFFLINE-02c), when it was searched. */
+  saved: SavedSection | null;
+}
+
+const DOCUMENTS: readonly ContentType[] = ["documentPages"];
+
+/** Like `appendGroups`, for saved content: by group, then by item. */
+export function appendSavedGroups(shown: SavedGroup[], more: SavedGroup[]): SavedGroup[] {
+  const key = (g: SavedGroup) => `${g.kind}:${g.materialId ?? ""}`;
+  const out = shown.map((g) => ({ ...g, passages: [...g.passages] }));
+  const at = new Map(out.map((g, i) => [key(g), i]));
+  for (const group of more) {
+    const i = at.get(key(group));
+    if (i === undefined) {
+      at.set(key(group), out.length);
+      out.push({ ...group, passages: [...group.passages] });
+      continue;
+    }
+    const existing = out[i]!;
+    const items = new Set(existing.passages.map((p) => `${p.kind}:${p.recordId}`));
+    existing.passages.push(...group.passages.filter((p) => !items.has(`${p.kind}:${p.recordId}`)));
+  }
+  return out;
 }
 
 /**
@@ -57,10 +89,11 @@ type Phase =
   | { kind: "done" };
 
 /**
- * Search inside the text of prepared PDFs (OFFLINE-02b). Shows grouped
- * matches with highlighted snippets, says exactly what was and wasn't
- * searched, and opens a match only after re-checking its file. Renders
- * nothing unless this build opted in.
+ * Search inside the text of prepared PDFs (OFFLINE-02b) and her saved study
+ * content (OFFLINE-02c). Shows grouped matches with highlighted snippets in
+ * two separate sections, says exactly what was and wasn't searched, and
+ * opens a match only after re-checking it. Renders nothing unless this
+ * build opted in.
  */
 export function DocumentSearchPanel(props: { query: string; materials: StudyMaterial[] }) {
   // Whether the build opted in never changes while the app runs, so a
@@ -70,8 +103,12 @@ export function DocumentSearchPanel(props: { query: string; materials: StudyMate
 
 function DocumentSearch({ query, materials }: { query: string; materials: StudyMaterial[] }) {
   const trimmed = query.trim();
-  const ids = materials.filter((m) => m.filePath).map((m) => m.id);
+  // Documents need a file; guides, cards and practice follow every
+  // selected material. The native side tells the two apart.
+  const ids = materials.map((m) => m.id);
   const scope = ids.join("\n");
+  const data = useOptionalAppData()?.data;
+  const navigate = useNavigate();
   const [results, setResults] = useState<Results | null>(null);
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [notes, setNotes] = useState<Record<string, { text: string; error: boolean }>>({});
@@ -97,17 +134,38 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
   const byId = new Map(materials.map((m) => [m.id, m]));
 
   const run = useCallback(
-    async (text: string, materialIds: string[], offset: number, mine: number, attempt = 0): Promise<void> => {
+    async (
+      text: string,
+      materialIds: string[],
+      offset: number,
+      mine: number,
+      types: readonly ContentType[] = ALL_CONTENT_TYPES,
+      attempt = 0,
+    ): Promise<void> => {
       try {
-        const response = await searchOfflineContent(text, materialIds, offset);
+        const response = await searchOfflineContent(text, materialIds, offset, types);
         if (generation.current !== mine) return;
-        setResults((previous) => ({
-          query: text,
-          groups: offset > 0 && previous?.query === text ? appendGroups(previous.groups, response.groups) : response.groups,
-          coverage: response.coverage,
-          nextOffset: response.nextOffset,
-          moreBeyondCap: response.moreBeyondCap,
-        }));
+        const documents = types.includes("documentPages");
+        setResults((previous) => {
+          const paging = offset > 0 && previous?.query === text ? previous : null;
+          const saved = response.saved ?? null;
+          return {
+            query: text,
+            groups: !documents
+              ? (paging?.groups ?? [])
+              : paging
+                ? appendGroups(paging.groups, response.groups)
+                : response.groups,
+            coverage: documents ? response.coverage : (paging?.coverage ?? response.coverage),
+            nextOffset: documents ? response.nextOffset : (paging?.nextOffset ?? null),
+            moreBeyondCap: documents ? response.moreBeyondCap : (paging?.moreBeyondCap ?? false),
+            saved: !saved
+              ? (paging?.saved ?? null)
+              : paging?.saved
+                ? { ...saved, groups: appendSavedGroups(paging.saved.groups, saved.groups) }
+                : saved,
+          };
+        });
         setPhase({ kind: "done" });
       } catch (error) {
         if (generation.current !== mine) return;
@@ -115,7 +173,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         if (code === "index_preparing" && attempt < SETUP_RETRIES) {
           setPhase({ kind: "preparing" });
           window.setTimeout(() => {
-            if (generation.current === mine) void run(text, materialIds, offset, mine, attempt + 1);
+            if (generation.current === mine) void run(text, materialIds, offset, mine, types, attempt + 1);
           }, SETUP_RETRY_MS);
           return;
         }
@@ -154,11 +212,32 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
 
   if (!trimmed) return null;
 
-  const showMore = () => {
-    if (!results || results.nextOffset === null) return;
+  const showMore = (section: "documents" | "saved") => {
+    const next = section === "documents" ? results?.nextOffset : results?.saved?.nextOffset;
+    if (!results || next === null || next === undefined) return;
     const mine = ++generation.current;
     setPhase({ kind: "searching" });
-    void run(results.query, ids, results.nextOffset, mine);
+    void run(results.query, ids, next, mine, section === "documents" ? DOCUMENTS : SAVED_CONTENT_TYPES);
+  };
+
+  // A saved item opens on its own page, after checking it is still the item
+  // that matched (OFFLINE-02c §4).
+  const openSaved = async (group: SavedGroup, passage: SavedPassage) => {
+    const key = `saved:${group.kind}:${group.materialId ?? ""}:${passage.kind}:${passage.recordId}`;
+    retire();
+    const mine = opening.current;
+    const destination = savedDestination(passage, group.materialId);
+    if (!destination || !data) {
+      setNotes((n) => ({ ...n, [key]: { text: savedProblem("gone"), error: true } }));
+      return;
+    }
+    const check = await checkSavedHit(data, passage, group.materialId);
+    if (opening.current !== mine) return;
+    if (check !== "ok") {
+      setNotes((n) => ({ ...n, [key]: { text: savedProblem(check), error: true } }));
+      return;
+    }
+    navigate(destination);
   };
 
   const open = async (materialId: string, sha: string, page: number) => {
@@ -223,8 +302,11 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
   };
 
   const found = results?.groups.length ?? 0;
+  const saved = results?.saved ?? null;
+  const savedFound = saved?.groups.length ?? 0;
 
   return (
+    <>
     <Card>
       <CardHeader title="In your documents" eyebrow="Offline search" />
       <CardBody>
@@ -294,7 +376,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
           ) : null}
           {results && results.nextOffset !== null && phase.kind === "done" ? (
             <div className="row row--wrap">
-              <Button size="small" onClick={showMore}>
+              <Button size="small" onClick={() => showMore("documents")}>
                 Show more matches
               </Button>
             </div>
@@ -305,5 +387,75 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         </div>
       </CardBody>
     </Card>
+    {saved ? (
+      <Card>
+        <CardHeader title="In your saved study content" eyebrow="Offline search" />
+        <CardBody>
+          <div className="stack stack--3">
+            <p className="small muted" role="status">
+              {savedCoverageSentence(saved.state, saved.coverage, savedFound)}
+            </p>
+            {savedFound > 0 ? (
+              <>
+                <p className="tiny muted">
+                  Guides, cards and practice questions are study aids. Check them against FAA guidance and your instructor.
+                </p>
+                <div className="stack stack--3" role="list" aria-label="Matches in your saved study content" onKeyDown={onKeyDown}>
+                  {saved.groups.map((group) => (
+                    <div role="listitem" key={`${group.kind}:${group.materialId ?? ""}`} className="stack stack--2">
+                      <strong className="wrap-anywhere">{group.title}</strong>
+                      {group.passages.map((passage) => {
+                        const key = `saved:${group.kind}:${group.materialId ?? ""}:${passage.kind}:${passage.recordId}`;
+                        const note = notes[key];
+                        const label = savedKindLabel(passage.kind);
+                        const snippetId = `${baseId}-${key}`;
+                        return (
+                          <div key={key} className="stack stack--1">
+                            <button
+                              type="button"
+                              className="button button--secondary button--small"
+                              data-search-result=""
+                              style={{ textAlign: "left", justifyContent: "flex-start", whiteSpace: "normal" }}
+                              aria-label={`${group.title}, ${label}: open it`}
+                              aria-describedby={snippetId}
+                              onClick={() => void openSaved(group, passage)}
+                            >
+                              <span className="stack stack--1">
+                                <span className="tiny">{label}</span>
+                                <span className="small wrap-anywhere" id={snippetId}>
+                                  {snippetPieces(passage.snippet).map((piece, i) =>
+                                    piece.mark ? <mark key={i}>{piece.text}</mark> : <span key={i}>{piece.text}</span>,
+                                  )}
+                                </span>
+                              </span>
+                            </button>
+                            {note ? (
+                              <span className={`tiny${note.error ? " field__error" : " muted"}`} role="status">
+                                {note.text}
+                              </span>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+            {saved.nextOffset !== null && phase.kind === "done" ? (
+              <div className="row row--wrap">
+                <Button size="small" onClick={() => showMore("saved")}>
+                  Show more saved matches
+                </Button>
+              </div>
+            ) : null}
+            {saved.nextOffset === null && saved.moreBeyondCap && phase.kind === "done" ? (
+              <p className="tiny muted">Showing the best matches. Narrow your search to see more.</p>
+            ) : null}
+          </div>
+        </CardBody>
+      </Card>
+    ) : null}
+    </>
   );
 }
