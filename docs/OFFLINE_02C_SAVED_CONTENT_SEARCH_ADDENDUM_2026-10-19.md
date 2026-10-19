@@ -1,6 +1,6 @@
 # OFFLINE-02c: searching saved study content — design addendum — 19 October 2026
 
-**Status: proposal for review, revision 3.** Codex rounds 1 and 2 were RED; §9 and §10 map each finding to its answer. Nothing here is implemented.
+**Status: proposal for review, revision 4.** Codex rounds 1–3 were RED; §9–§11 map each finding to its answer. Nothing here is implemented.
 
 This adds the saved-content part of OFFLINE-02 to the accepted [search design](OFFLINE_02_SEARCH_DESIGN_2026-10-19.md) (revision 6). Everything that design fixes still applies unless changed here:
 - query parsing and literal operators (§3);
@@ -120,13 +120,17 @@ A record hit opens **that record**. Each page gains a small, tested deep link th
 **Content digests for guides and cards.** A section or card index alone could still be valid after she regenerates the set, and would then silently point at different text. A timestamp can't prevent that either: `updated_at` comes from a millisecond clock, so two different saves can share one.
 
 So guide and card hits carry `rev`, a digest of **that item's own stored text**:
-- **What is hashed:** the lowercase hex SHA-256 of the UTF-8 bytes of the original text, never the canonical form. For a section that is `heading + U+0000 + body`; for a card, `front + U+0000 + back`; for the summary, `summary`.
+- **What is hashed:** the lowercase hex SHA-256 of a **length-prefixed** encoding of the item's original fields, never the canonical form.
+  - **The encoding:** each field is written as its UTF-8 byte length in decimal ASCII, then `:`, then its UTF-8 bytes, and the fields are concatenated in order.
+  - **The fields:** a section's are `heading`, then `body`; a card's are `front`, then `back`; the summary's is `summary`.
+  - **Example:** the card `("a\u0000b", "c")` encodes as `3:a\u0000b1:c`, while `("a", "b\u0000c")` encodes as `1:a3:b\u0000c`. So no two different field lists share an encoding, even with embedded NULs.
 - **Who computes it:** the native side computes it during the rebuild. The page computes the same digest from the app's loaded study set, with Web Crypto `SHA-256`.
 - **When the item opens:** only if an item exists at that index **and** its digest equals `rev`. Otherwise the page shows the material with: "This study guide has changed since you searched. Search again to find it."
 - **Identical text is fine:** if a regenerated set happens to keep identical text at that index, opening it shows exactly the text that matched, which is correct.
 - **Tests:**
   - different content saved with an identical `updated_at` is refused;
-  - native and UI digests agree on Unicode, NUL-free and multi-byte fixtures.
+  - native and UI digests agree on Unicode, multi-byte and **embedded-NUL** fixtures;
+  - the two NUL-shifted cards above get different digests.
 - **Notes, questions and practice items** have stable ids, so they need only an existence check.
 
 **Re-checking before navigating.** The UI also confirms the id, or the item and its `rev`, against the app's loaded data before it navigates. No file hashing is involved.
@@ -182,13 +186,19 @@ The generator records the exact octet total and **fails** unless it is under 24 
 
 **Queries:** the same six query types as 02a, with each query's expected hit identities, by category and id, from the reference scan.
 
-**The rebuild-inclusive protocol.** Before **every** rebuild-inclusive sample, warm-ups included, the harness commits a one-row edit through a separate connection. The edit replaces one word of a fixed note's body with `editmarker<n>`, where `n` is the sample number.
+**The rebuild-inclusive protocol.** The generator appends one reserved slot token, `zzeditslot`, to the end of a fixed note's body. It is not drawn from the vocabulary and is not part of any frozen query.
+
+Before **every** rebuild-inclusive sample, warm-ups included, the harness commits a one-row edit through a separate connection. The edit replaces **only that slot**: the current slot token, either `zzeditslot` or the previous `editmarker<n-1>`, becomes `editmarker<n>`, where `n` is the sample number. No other text changes.
 
 A sample counts only if the harness-only diagnostic reports that this search **rebuilt**. A sample that didn't rebuild is reported as an error, not as a time.
 
 **Freshness check, untimed and separate.** After each timed rebuild-inclusive sample, the harness runs one more search: the targeted query `editmarker<n>`, with `contentTypes = ["notes"]`. It must return exactly the edited note. This search is not timed, and it doesn't count toward any sample.
 
-The timed queries' own results are compared only with their frozen expected identities. The edited word is a new, unique token, so it doesn't change any frozen query's expected results. The generator asserts that no frozen query term equals or contains `editmarker`.
+The timed queries' own results are compared only with their frozen expected identities.
+
+**Two asserts keep the edits from disturbing those expectations:**
+- **At freeze time,** the generator asserts that no frozen query term equals or contains `zzeditslot` or `editmarker`, and that the slot is the last token of its note. So replacing it can't remove a word or break a phrase that a frozen query needs.
+- **After each scheduled edit,** the harness reruns the reference scan on the edited note. It asserts that the note's membership in every frozen query's expected set is unchanged. If it changed, the run fails.
 
 **Schedule:**
 - 3 fresh processes;
@@ -261,3 +271,10 @@ Each asserts exact hits **and** exclusions:
 | 2 | `updated_at` doesn't identify a revision | `rev` is the SHA-256 of the item's own stored text, computed the same way natively and in the UI. There are tests for different content with the same timestamp and for digest agreement (§4) |
 | 3 | The `editmarker` acceptance contradicted the frozen queries | Freshness is verified by a separate, untimed targeted search for `editmarker<n>` in notes. Timed queries are compared only with their frozen expected identities, and the generator asserts that no frozen query term contains `editmarker` (§6) |
 | — | Found while revising: the corpus exceeded the 32 MiB preflight | Reduced to 100 materials with 20 sections and 200 cards each. The generator fails unless the total is under 24 MiB (§6) |
+
+## 11. Codex round 3 corrections
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | The NUL separator was ambiguous with embedded NULs | A length-prefixed encoding (`len:bytes` per field), identical natively and in the UI. There are embedded-NUL fixtures, including the two shifted cards (§4) |
+| 2 | The edit could invalidate frozen expectations | A reserved trailing slot token, outside the vocabulary and all queries; only that slot is replaced. Freeze-time asserts, plus a reference-scan check after each edit, confirm that every frozen expected set is unchanged (§6) |
