@@ -15,7 +15,7 @@ import { RATINGS, loadOracle, runOracle } from "./oracle.mjs";
 
 export const SCENARIOS = new URL("../scenarios.json", import.meta.url);
 export const VECTORS = new URL("../reference-vectors.json", import.meta.url);
-export const SCENARIOS_SHA256 = "b5053af276f7670e09d773d3542b7a4b76304492a0e0e6f0c60784162b87dc8f";
+export const SCENARIOS_SHA256 = "c783f59cf276f26a27b872b376f2c73a6fbc3a83e6beb01778069ced8a4f673b";
 
 /** A step's elapsed days: a number, or "scheduled" for the previous interval. */
 function elapsed(step, previous) {

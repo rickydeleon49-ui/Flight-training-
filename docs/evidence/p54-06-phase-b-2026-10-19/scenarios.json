@@ -482,6 +482,22 @@
       ]
     },
     {
+      "id": "bound-stability-ceiling",
+      "category": "bounded-state",
+      "start": {
+        "d": 1,
+        "s": 1000000
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 36500,
+          "scheduledDays": 36500
+        }
+      ]
+    },
+    {
       "id": "round-d-5555-s-1005",
       "category": "rounding-adjacent",
       "start": {

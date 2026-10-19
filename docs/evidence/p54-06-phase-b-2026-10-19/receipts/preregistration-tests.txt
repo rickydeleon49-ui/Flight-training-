@@ -2,51 +2,63 @@ TAP version 13
 # Subtest: every preregistered file matches PREREGISTRATION.sha256
 ok 1 - every preregistered file matches PREREGISTRATION.sha256
   ---
-  duration_ms: 1.039833
+  duration_ms: 1.01425
   type: 'test'
   ...
 # Subtest: a one-byte change to the oracle is refused before it runs
 ok 2 - a one-byte change to the oracle is refused before it runs
   ---
-  duration_ms: 0.856875
+  duration_ms: 0.900333
   type: 'test'
   ...
 # Subtest: changed scenario inputs are refused by their digest
 ok 3 - changed scenario inputs are refused by their digest
   ---
-  duration_ms: 0.344375
+  duration_ms: 0.333833
   type: 'test'
   ...
 # Subtest: the frozen vectors are exactly what the oracle produces from the scenarios
 ok 4 - the frozen vectors are exactly what the oracle produces from the scenarios
   ---
-  duration_ms: 23.508833
+  duration_ms: 24.108084
   type: 'test'
   ...
 # Subtest: the documented oracle limitations stay on record
 ok 5 - the documented oracle limitations stay on record
   ---
-  duration_ms: 0.344083
+  duration_ms: 0.448375
   type: 'test'
   ...
 # Subtest: oracle fuzz is real: one stability, three seeds, different Easy intervals
 ok 6 - oracle fuzz is real: one stability, three seeds, different Easy intervals
   ---
-  duration_ms: 0.750083
+  duration_ms: 0.754875
   type: 'test'
   ...
 # Subtest: contract vectors are hand-specified, unique and use only preregistered expectations
 ok 7 - contract vectors are hand-specified, unique and use only preregistered expectations
   ---
-  duration_ms: 0.221916
+  duration_ms: 0.252542
   type: 'test'
   ...
-1..7
-# tests 7
+# Subtest: contract dates and elapsed floors agree with hand arithmetic
+ok 8 - contract dates and elapsed floors agree with hand arithmetic
+  ---
+  duration_ms: 1.2995
+  type: 'test'
+  ...
+# Subtest: prior-field refusals each change exactly one field of a valid prior
+ok 9 - prior-field refusals each change exactly one field of a valid prior
+  ---
+  duration_ms: 0.373125
+  type: 'test'
+  ...
+1..9
+# tests 9
 # suites 0
-# pass 7
+# pass 9
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 90.92825
+# duration_ms 92.772084

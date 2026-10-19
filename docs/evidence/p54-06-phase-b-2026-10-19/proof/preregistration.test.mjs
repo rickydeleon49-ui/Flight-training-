@@ -43,8 +43,8 @@ test("changed scenario inputs are refused by their digest", () => {
 test("the frozen vectors are exactly what the oracle produces from the scenarios", () => {
   assert.deepEqual(generate(loadScenarios()), vectors());
   const counts = vectors().vectors.reduce((n, v) => n + v.steps.length, 0);
-  assert.equal(vectors().vectors.length, 29);
-  assert.equal(counts, 65);
+  assert.equal(vectors().vectors.length, 30);
+  assert.equal(counts, 66);
 });
 
 test("the documented oracle limitations stay on record", () => {
@@ -54,6 +54,8 @@ test("the documented oracle limitations stay on record", () => {
   assert.equal(cap.easy.scheduledDays, 36502);
   assert.equal(lastStep("bound-tiny-s-same-day").outputs.again.s, 0, "stability can round to 0 (deviation C1)");
   assert.equal(lastStep("oracle-review-zero-elapsed").oracleError, true);
+  const ceiling = lastStep("bound-stability-ceiling").outputs;
+  assert(["hard", "good", "easy"].every((r) => ceiling[r].s > 1_000_000), "stability exceeds the ceiling (deviation C3)");
 });
 
 test("oracle fuzz is real: one stability, three seeds, different Easy intervals", () => {
@@ -67,14 +69,49 @@ test("oracle fuzz is real: one stability, three seeds, different Easy intervals"
 
 test("contract vectors are hand-specified, unique and use only preregistered expectations", () => {
   const { vectors: list } = contract();
-  assert.equal(list.length, 26);
+  assert.equal(list.length, 37);
   assert.equal(new Set(list.map((v) => v.id)).size, list.length);
   const refusals = new Set(["INVALID_RATING", "INVALID_TIME", "UNSUPPORTED_SCHEDULER_VERSION", "INVALID_STATE", "CLOCK_BEHIND_LAST_REVIEW", "DUE_OUT_OF_RANGE"]);
-  const shapes = new Set(["refusal", "elapsedDays", "path", "dueAt", "lapsesDelta", "intervalDays", "s"]);
+  const shapes = new Set(["refusal", "elapsedDays", "path", "dueAt", "lapsesDelta", "intervalDays", "s", "successorAccepted"]);
   for (const v of list) {
     assert(["product", "oracle-parity"].includes(v.config), v.id);
     assert(Object.keys(v.expect).length > 0 && Object.keys(v.expect).every((k) => shapes.has(k)), v.id);
     if (v.expect.refusal) assert(refusals.has(v.expect.refusal), v.id);
   }
   assert.deepEqual(new Set(list.filter((v) => v.expect.refusal).map((v) => v.expect.refusal)), refusals, "every refusal is exercised");
+});
+
+// Independent arithmetic for the hand-written expectations: each is recomputed
+// from `now` and the preregistered rule it encodes, with no scheduler code.
+const DAY = 86_400_000;
+const at = (id) => contract().vectors.find((v) => v.id === id);
+const plus = (iso, ms) => new Date(Date.parse(iso) + ms).toISOString();
+
+test("contract dates and elapsed floors agree with hand arithmetic", () => {
+  assert.equal(at("again-returns-in-10-minutes").expect.dueAt, plus(at("again-returns-in-10-minutes").now, 10 * 60_000));
+  assert.equal(at("new-card-hard-waits-1-day").expect.dueAt, plus(at("new-card-hard-waits-1-day").now, DAY));
+  for (const id of ["product-cap-180-days", "product-cap-holds-after-ordering"]) {
+    assert.equal(at(id).expect.dueAt, plus(at(id).now, 180 * DAY), id);
+  }
+  for (const id of ["accept-equal-clock-is-same-day", "elapsed-floor-just-under-1-day", "elapsed-floor-exactly-1-day", "elapsed-floor-1.999-days"]) {
+    const v = at(id);
+    assert.equal(Math.floor((Date.parse(v.now) - Date.parse(v.prior.lastReviewedAt)) / DAY), v.expect.elapsedDays, id);
+    assert.equal(v.expect.path, v.expect.elapsedDays === 0 ? "same-day" : "review", id);
+  }
+  const overflow = at("refuse-due-past-year-9999");
+  assert(Date.parse(overflow.now) + DAY > Date.parse("9999-12-31T23:59:59.999Z"), "even a 1-day interval overflows");
+  const behind = at("refuse-clock-1ms-behind");
+  assert.equal(Date.parse(behind.prior.lastReviewedAt) - Date.parse(behind.now), 1);
+  for (const id of ["parity-cap-holds-after-ordering", "accept-stability-at-ceiling"]) {
+    const v = at(id);
+    assert(Math.floor((Date.parse(v.now) - Date.parse(v.prior.lastReviewedAt)) / DAY) >= 30000, id);
+  }
+});
+
+test("prior-field refusals each change exactly one field of a valid prior", () => {
+  const valid = at("refuse-unknown-rating").prior;
+  for (const v of contract().vectors.filter((x) => /^refuse-(invalid|missing|noncanonical|negative|fractional|stability)/.test(x.id) && x.expect.refusal === "INVALID_STATE" && !x.id.startsWith("refuse-invalid-state"))) {
+    const changed = Object.keys({ ...valid, ...v.prior }).filter((k) => JSON.stringify(valid[k]) !== JSON.stringify(v.prior[k]));
+    assert.equal(changed.length, 1, `${v.id} changes ${changed}`);
+  }
 });

@@ -5,14 +5,15 @@ Claude froze the phase-B contract before writing any candidate code. It is pendi
 - **Oracle:** the unmodified FSRS4Anki scheduler, release v6.1.3, blob `724a2f4`. Its repository has 4,110 stars and an MIT license. ts-fsrs and fsrs-rs are below the star threshold and are not used.
 - **How the oracle runs:** in an isolated `vm` context, after checking its blob ID and SHA-256.
 - **Vectors:**
-  - 29 oracle scenarios over 65 steps (initial ratings, same-day, on-time chains, lapses, lateness, bounded and rounding-adjacent states);
-  - 26 hand-specified contract vectors (refusals, clocks, overflow, the 180-day product cap, Again policy).
+  - 30 oracle scenarios over 66 steps (initial ratings, same-day, on-time chains, lapses, lateness, bounded and rounding-adjacent states, the stability ceiling);
+  - 37 hand-specified contract vectors (refusals for every prior field and their order, clocks, overflow, the 180-day product cap, the stability ceiling, Again policy).
 - **Tolerances:** difficulty and stability must be exactly equal. Intervals are checked in a range only, because the oracle fuzzes them.
-- **Recorded oracle quirks,** which become candidate deviations C1 and C2:
+- **Recorded oracle quirks,** which become candidate deviations C1–C3:
   - stability can round to 0;
   - ordering pushes intervals past the cap;
+  - stability can grow past the accepted ceiling;
   - a zero-day review throws.
-- **Checks:** the preregistration tests pass 7/7, and the reference check reproduces all vectors.
+- **Checks:** the preregistration tests pass 9/9, and the reference check reproduces all vectors. Codex round 1 was RED on two contract gaps (successor states above the stability bound; no prior-timestamp validation); both are closed.
 
 No candidate, production, dependency, migration or version change. Part 2 (the candidate, measurements against simple-v1 and transition simulations) follows only after this is accepted. [Preregistration](docs/evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.md). Earlier entries remain historical.
 

@@ -259,7 +259,7 @@
       "config": "product",
       "prior": null,
       "rating": "good",
-      "now": "9999-12-30T00:00:00.000Z",
+      "now": "9999-12-31T00:00:00.000Z",
       "expect": {
         "refusal": "DUE_OUT_OF_RANGE"
       }
@@ -450,6 +450,204 @@
       "now": "2026-10-19T15:00:00.000Z",
       "expect": {
         "dueAt": "2026-10-20T15:00:00.000Z"
+      }
+    },
+    {
+      "id": "refuse-invalid-last-reviewed",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "invalid",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-missing-last-reviewed",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-noncanonical-last-reviewed",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-invalid-due",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-02-30T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-negative-reps",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": -1,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-fractional-lapses",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 1.5,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "refuse-stability-above-ceiling",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 1000000.01,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "precedence-rating-before-state",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "invalid",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "skip",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "INVALID_RATING"
+      }
+    },
+    {
+      "id": "precedence-time-before-state",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 5,
+        "s": 10,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "invalid",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00Z",
+      "expect": {
+        "refusal": "INVALID_TIME"
+      }
+    },
+    {
+      "id": "precedence-version-before-state",
+      "config": "product",
+      "prior": {
+        "schedulerVersion": "simple-v1",
+        "d": 5,
+        "s": "NaN",
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "2026-10-09T15:00:00.000Z",
+        "dueAt": "2026-10-09T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "refusal": "UNSUPPORTED_SCHEDULER_VERSION"
+      }
+    },
+    {
+      "id": "accept-stability-at-ceiling",
+      "config": "oracle-parity",
+      "prior": {
+        "schedulerVersion": "fsrs6-candidate-1",
+        "d": 1,
+        "s": 1000000,
+        "reps": 3,
+        "lapses": 0,
+        "lastReviewedAt": "1926-11-12T15:00:00.000Z",
+        "dueAt": "1926-11-12T15:00:00.000Z"
+      },
+      "rating": "good",
+      "now": "2026-10-19T15:00:00.000Z",
+      "expect": {
+        "s": 1000000,
+        "successorAccepted": true
       }
     }
   ]
